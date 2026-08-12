@@ -39,3 +39,34 @@ flowTabs.forEach(tab => {
         }
     });
 });
+
+
+// --- Generic Lightbox ---
+const lightbox = document.createElement('div');
+lightbox.id = 'generic-lightbox';
+lightbox.className = 'lightbox';
+lightbox.innerHTML = '<img src="" alt="Ampliada" />';
+document.body.appendChild(lightbox);
+
+lightbox.addEventListener('click', () => {
+    lightbox.classList.remove('show');
+});
+
+// Make all non-linked images zoomable
+const allImages = document.querySelectorAll('img:not(a img)');
+allImages.forEach(img => {
+    // Skip favicon/logos and tiny images
+    if(img.src.includes('favicon')) return;
+    
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', (e) => {
+        // Try to avoid conflicts with existing manual lightboxes
+        if (img.getAttribute('onclick') && img.getAttribute('onclick').includes('lightbox')) {
+            return;
+        }
+        e.stopPropagation();
+        const lightboxImg = lightbox.querySelector('img');
+        lightboxImg.src = img.src;
+        lightbox.classList.add('show');
+    });
+});

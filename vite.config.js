@@ -9,6 +9,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        deja: resolve(__dirname, 'deja-de-darle-mil-vueltas.html'),
+        p90: resolve(__dirname, 'planificador-90-dias.html'),
+        p180: resolve(__dirname, 'planificador-180-dias.html'),
         aviso: resolve(__dirname, 'aviso-legal.html'),
         privacidad: resolve(__dirname, 'politica-privacidad.html'),
         cookies: resolve(__dirname, 'politica-cookies.html')
