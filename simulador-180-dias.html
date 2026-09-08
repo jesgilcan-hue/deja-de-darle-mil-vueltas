@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador de 1 Día | Planificador 180 Días — Menos Ruido</title>
+    <meta name="description" content="Prueba el método de planificación de 180 días pantalla a pantalla. Dos trimestres de calma y enfoque en papel." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-bg: #f7f5f0;
+            --color-card: #ffffff;
+            --color-paper: #fffefb;
+            --color-paper-line: #dcd7ce;
+            --color-paper-dot: #cfc8bd;
+            --color-text: #212121;
+            --color-text-muted: #66615b;
+            --color-text-faint: #9c9589;
+            --color-accent: #87553b;
+            --color-accent-hover: #70442e;
+            --color-sage: #586851;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --radius-box: 10px;
+            --shadow-card: 0 10px 30px rgba(35, 30, 20, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA SUPERIOR */
+        .topbar {
+            background-color: rgba(247, 245, 240, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .topbar-logo {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .topbar-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: rgba(135, 85, 59, 0.1);
+            color: var(--color-accent);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .topbar-link {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .topbar-link:hover {
+            color: var(--color-text);
+        }
+
+        /* BARRA DE PROGRESO */
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #e8e3d8;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--color-accent);
+            width: 14.28%;
+            transition: width 0.3s ease;
+        }
+
+        /* CONTENEDOR CENTRAL DEL ASISTENTE */
+        .wizard-container {
+            flex: 1;
+            max-width: 680px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2.5rem 1.25rem 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* TARJETA DEL PASO */
+        .step-card {
+            background: var(--color-card);
+            border-radius: 14px;
+            padding: 2.2rem 2rem;
+            box-shadow: var(--shadow-card);
+            border: 1px solid rgba(0,0,0,0.05);
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .step-card.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-kicker-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+        .step-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-sage);
+            background: rgba(88, 104, 81, 0.12);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .step-counter {
+            font-size: 0.8rem;
+            color: var(--color-text-faint);
+            font-weight: 500;
+        }
+
+        .step-title {
+            font-family: var(--font-serif);
+            font-size: 1.85rem;
+            line-height: 1.25;
+            color: var(--color-text);
+            margin-bottom: 0.75rem;
+        }
+        .step-subtitle {
+            font-size: 1rem;
+            color: var(--color-text-muted);
+            line-height: 1.55;
+            margin-bottom: 1.8rem;
+        }
+
+        /* ESTILOS DE TEORÍA */
+        .theory-highlight-box {
+            background: #faf8f5;
+            border-left: 3px solid var(--color-accent);
+            padding: 1.2rem 1.4rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: var(--color-text);
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .book-preview-notice {
+            background: #faf8f5;
+            border: 1px dashed var(--color-paper-line);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            margin: 1.5rem 0;
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+        }
+        .book-preview-notice strong {
+            color: var(--color-text);
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        /* INPUTS MODERNOS */
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+        .form-input-text {
+            width: 100%;
+            background: #faf8f5;
+            border: 1.5px solid var(--color-paper-line);
+            border-radius: 8px;
+            padding: 0.9rem 1.1rem;
+            font-size: 1.05rem;
+            font-family: var(--font-serif);
+            color: var(--color-text);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-input-text:focus {
+            border-color: var(--color-accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+
+        .task-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+        }
+        .task-num-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f0ede6;
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .form-textarea {
+            width: 100%;
+            height: 160px;
+            background: #faf8f5;
+            border: 1.5px solid var(--color-paper-line);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--color-text);
+            outline: none;
+            resize: vertical;
+            transition: all 0.2s;
+        }
+        .form-textarea:focus {
+            border-color: var(--color-accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+
+        .energy-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.6rem;
+            margin: 1.2rem 0 1.8rem;
+        }
+        .energy-btn {
+            background: #faf8f5;
+            border: 2px solid var(--color-paper-line);
+            border-radius: 10px;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .energy-btn:hover {
+            border-color: var(--color-accent);
+            background: #fff;
+        }
+        .energy-btn.selected {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+        }
+        .energy-btn-num {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .energy-btn-sub {
+            font-size: 0.65rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* NAVEGACIÓN */
+        .wizard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid #f0ede6;
+        }
+        .btn-nav-prev {
+            background: transparent;
+            border: 1px solid var(--color-paper-line);
+            color: var(--color-text-muted);
+            padding: 0.75rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-nav-prev:hover {
+            border-color: var(--color-text);
+            color: var(--color-text);
+            background: #fff;
+        }
+        .btn-nav-next {
+            background: var(--color-accent);
+            color: #ffffff;
+            border: none;
+            padding: 0.85rem 1.8rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: auto;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.2);
+        }
+        .btn-nav-next:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* MODAL DE CIERRE CON VALOR DEL LIBRO DE 180 DÍAS */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 1.25rem;
+            overflow-y: auto;
+        }
+        .modal-backdrop.show {
+            display: flex;
+        }
+        .modal-card {
+            background: var(--color-paper);
+            max-width: 510px;
+            width: 100%;
+            border-radius: 14px;
+            padding: 2.2rem 1.8rem;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+            border: 1px solid #e5dfd5;
+            animation: modalFadeIn 0.3s ease;
+            margin: auto;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--color-sage);
+            margin-bottom: 0.5rem;
+        }
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            color: var(--color-text);
+            margin-bottom: 0.6rem;
+            line-height: 1.2;
+        }
+        .modal-desc {
+            font-size: 0.92rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .modal-book-features {
+            background: #faf8f5;
+            border: 1px solid #ede8de;
+            border-radius: 8px;
+            padding: 1rem 1.1rem;
+            text-align: left;
+            margin-bottom: 1.3rem;
+        }
+        .modal-book-features-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-accent);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .modal-book-features ul {
+            list-style: none;
+            padding-left: 0;
+            font-size: 0.84rem;
+            color: var(--color-text);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .modal-book-features li {
+            position: relative;
+            padding-left: 14px;
+            line-height: 1.35;
+        }
+        .modal-book-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--color-sage);
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .modal-buttons-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .btn-amazon-primary {
+            display: block;
+            width: 100%;
+            background: var(--color-accent);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.95rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(135, 85, 59, 0.28);
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .btn-amazon-primary:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-2px);
+        }
+        .btn-pdf-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            background: #faf8f5;
+            border: 1.5px solid var(--color-accent);
+            color: var(--color-accent);
+            padding: 0.85rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-pdf-secondary:hover {
+            background: rgba(135, 85, 59, 0.08);
+            color: var(--color-accent-hover);
+        }
+        .modal-review-link {
+            display: inline-block;
+            margin-top: 1rem;
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        .modal-review-link:hover {
+            color: var(--color-text);
+        }
+
+        /* HOJA INVISIBLE EN PANTALLA */
+        .print-only-sheet {
+            display: none;
+        }
+
+        /* IMPRESIÓN DIRECTA 6x9 */
+        @media print {
+            @page {
+                size: 6in 9in;
+                margin: 0;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #111111 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .topbar,
+            .progress-bar-container,
+            .wizard-container,
+            .modal-backdrop {
+                display: none !important;
+            }
+
+            .print-only-sheet {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 6in !important;
+                height: 9in !important;
+                max-width: 6in !important;
+                min-height: 9in !important;
+                padding: 0.65in 0.55in 0.5in 0.55in !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+                background-color: #fffefb !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .sheet-kicker {
+                font-size: 0.7rem;
+                font-weight: 600;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                color: #888;
+                margin-bottom: 0.3rem;
+            }
+            .sheet-top-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                border-bottom: 1.5px solid #111;
+                padding-bottom: 0.5rem;
+                margin-bottom: 1.4rem;
+            }
+            .sheet-day-title {
+                font-family: Georgia, serif;
+                font-size: 1.7rem;
+                font-weight: 700;
+                color: #111;
+                text-transform: capitalize;
+            }
+            .sheet-date-display {
+                font-size: 0.85rem;
+                color: #666;
+                font-weight: 500;
+            }
+
+            .sheet-section {
+                margin-bottom: 1.3rem;
+            }
+            .sheet-label {
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #111;
+                margin-bottom: 0.4rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .sheet-sublabel {
+                font-family: Georgia, serif;
+                font-style: italic;
+                font-size: 0.75rem;
+                color: #666;
+                font-weight: 400;
+                text-transform: none;
+                letter-spacing: normal;
+            }
+
+            .sheet-priority-box {
+                background: #fbf9f6 !important;
+                border: 1.5px solid #111 !important;
+                border-radius: 6px;
+                padding: 0.7rem 0.9rem;
+                font-family: Georgia, serif;
+                font-size: 1.15rem;
+                color: #111;
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+            }
+            .sheet-priority-marker {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #111;
+                border-radius: 3px;
+                flex-shrink: 0;
+            }
+
+            .sheet-tasks-list {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .sheet-task-row {
+                display: flex;
+                align-items: center;
+                gap: 0.7rem;
+                border-bottom: 1px dashed #ccc;
+                padding-bottom: 0.4rem;
+                font-size: 0.95rem;
+                color: #111;
+                min-height: 28px;
+            }
+            .sheet-task-box {
+                width: 16px;
+                height: 16px;
+                border: 1px solid #555;
+                border-radius: 3px;
+                flex-shrink: 0;
+            }
+
+            .sheet-dot-grid {
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                background-color: #fffefb;
+                background-image: radial-gradient(#bbb 1.2px, transparent 1.2px) !important;
+                background-size: 19px 19px;
+                background-position: 9px 9px;
+                padding: 0.9rem;
+                min-height: 180px;
+                font-family: Georgia, serif;
+                font-size: 0.95rem;
+                line-height: 19px;
+                color: #111;
+                white-space: pre-wrap;
+            }
+
+            .sheet-energy-tracker {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: #ffffff;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 0.6rem 0.9rem;
+            }
+            .sheet-energy-dots {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .sheet-dot {
+                width: 26px;
+                height: 26px;
+                border: 1.5px solid #aaa;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: #333;
+            }
+            .sheet-dot.active {
+                background: #111 !important;
+                border-color: #111 !important;
+                color: #fff !important;
+            }
+
+            .sheet-calm-box {
+                border-bottom: 1px solid #666;
+                padding: 0.3rem 0;
+                font-family: Georgia, serif;
+                font-style: italic;
+                font-size: 1rem;
+                color: #111;
+                min-height: 32px;
+            }
+
+            .sheet-footer {
+                margin-top: auto;
+                padding-top: 1rem;
+                border-top: 1px solid #111;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 0.75rem;
+                color: #666;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+        <div class="topbar-content">
+            <a href="/" class="topbar-logo">
+                Menos Ruido
+                <span class="topbar-tag">Planificador 180 Días</span>
+            </a>
+            <a href="/planificador-180-dias.html" class="topbar-link">← Volver a la Ficha</a>
+        </div>
+    </header>
+
+    <!-- BARRA DE PROGRESO -->
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- CONTENEDOR DEL WIZARD (7 PANTALLAS EN TOTAL) -->
+    <main class="wizard-container">
+
+        <!-- PANTALLA 1: TEORÍA 1 -->
+        <article class="step-card active" id="step-1">
+            <div class="step-kicker-row">
+                <span class="step-badge">Fundamento 01</span>
+                <span class="step-counter">1 de 7</span>
+            </div>
+            <h1 class="step-title">El ruido de las 20 tareas</h1>
+            <p class="step-subtitle">
+                ¿Alguna vez has terminado la jornada agotado sintiendo que no has avanzado en nada de lo que de verdad importaba?
+            </p>
+
+            <div class="theory-highlight-box">
+                «Una lista de 20 tareas no es organización: es ansiedad trasladada al papel.»
+            </div>
+
+            <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.6;">
+                Llenarnos de listas infinitas nos da una falsa sensación de seguridad. Pero al final del día, mirar 15 tareas sin terminar no te hace más productivo; solo te hace sentir que has fallado.
+            </p>
+
+            <div class="book-preview-notice">
+                <strong>📖 Esto es una muestra interactiva</strong>
+                En el cuaderno físico de 180 días encontrarás la teoría desarrollada en profundidad, junto con guías para estructurar tus metas y planificaciones semestrales paso a paso.
+            </div>
+
+            <div class="wizard-nav">
+                <button class="btn-nav-next" onclick="goToStep(2)">
+                    <span>Entendido, siguiente</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </article>
+
+        <!-- PANTALLA 2: TEORÍA 2 -->
+        <article class="step-card" id="step-2">
+            <div class="step-kicker-row">
+                <span class="step-badge">Fundamento 02</span>
+                <span class="step-counter">2 de 7</span>
+            </div>
+            <h1 class="step-title">La regla de la renuncia</h1>
+            <p class="step-subtitle">
+                Tus recursos (tiempo, energía y atención) son finitos. Planificar con calma no consiste en hacerlo todo, sino en decidir qué vas a ignorar hoy.
+            </p>
+
+            <div class="theory-highlight-box">
+                «Decir que sí a lo importante exige, obligatoriamente, decir que no a otras cinco cosas.»
+            </div>
+
+            <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.6;">
+                Si cumples <strong>una sola prioridad al día</strong>, tu jornada habrá sido un éxito rotundo. Este cuaderno te obliga físicamente a elegir porque en su página no caben 20 tareas. Y ese límite del papel es tu mejor aliado.
+            </p>
+
+            <div class="wizard-nav">
+                <button class="btn-nav-prev" onclick="goToStep(1)">← Anterior</button>
+                <button class="btn-nav-next" onclick="goToStep(3)">
+                    <span>Siguiente</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </article>
+
+        <!-- PANTALLA 3: TEORÍA 3 (180 DÍAS = 2 TRIMESTRES) -->
+        <article class="step-card" id="step-3">
+            <div class="step-kicker-row">
+                <span class="step-badge">Fundamento 03</span>
+                <span class="step-counter">3 de 7</span>
+            </div>
+            <h1 class="step-title">180 días: dos trimestres de visión</h1>
+            <p class="step-subtitle">
+                Medio año completo de serenidad y constancia en tu mesa de trabajo.
+            </p>
+
+            <div class="theory-highlight-box">
+                «Dos ciclos de 90 días encadenados: la perspectiva perfecta para ver tu evolución a medio plazo sin perder la cercanía del día a día.»
+            </div>
+
+            <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.6;">
+                El Planificador de 180 Días duplica el recorrido: te acompaña durante 26 semanas completas, permitiéndote cerrar un primer trimestre, descansar, y abordar el segundo con total fluidez.
+            </p>
+
+            <div class="wizard-nav">
+                <button class="btn-nav-prev" onclick="goToStep(2)">← Anterior</button>
+                <button class="btn-nav-next" onclick="goToStep(4)">
+                    <span>Probar con mi día de hoy</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </article>
+
+        <!-- PANTALLA 4: PRÁCTICA 1 (PRIORIDAD) -->
+        <article class="step-card" id="step-4">
+            <div class="step-kicker-row">
+                <span class="step-badge">Paso 1 de 4 · Enfoque</span>
+                <span class="step-counter">4 de 7</span>
+            </div>
+            <h2 class="step-title">¿Cuál es tu única prioridad hoy?</h2>
+            <p class="step-subtitle">
+                Si solo pudieras completar una sola cosa antes de acostarte para sentir que hoy ha valido la pena, ¿cuál sería?
+            </p>
+
+            <div class="input-group">
+                <label class="input-label" for="wizard-priority">La Prioridad del Día (Factible y clara)</label>
+                <input type="text" id="wizard-priority" class="form-input-text" placeholder="Ej: Escribir el borrador de la propuesta para el cliente..." autocomplete="off">
+            </div>
+
+            <div class="wizard-nav">
+                <button class="btn-nav-prev" onclick="goToStep(3)">← Volver a la teoría</button>
+                <button class="btn-nav-next" onclick="goToStep(5)">
+                    <span>Siguiente paso</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </article>
+
+        <!-- PANTALLA 5: PRÁCTICA 2 (TAREAS SECUNDARIAS) -->
+        <article class="step-card" id="step-5">
+            <div class="step-kicker-row">
+                <span class="step-badge">Paso 2 de 4 · Límites</span>
+                <span class="step-counter">5 de 7</span>
+            </div>
+            <h2 class="step-title">Tareas Secundarias (Máximo 3)</h2>
+            <p class="step-subtitle">
+                Cosas accesorias o de mantenimiento que acompañan a tu prioridad. El cuaderno físico solo te deja poner tres a propósito.
+            </p>
+
+            <div class="input-group">
+                <div class="task-input-row">
+                    <span class="task-num-badge">1</span>
+                    <input type="text" id="wizard-task-1" class="form-input-text" placeholder="Tarea secundaria 1..." autocomplete="off">
+                </div>
+                <div class="task-input-row">
+                    <span class="task-num-badge">2</span>
+                    <input type="text" id="wizard-task-2" class="form-input-text" placeholder="Tarea secundaria 2..." autocomplete="off">
+                </div>
+                <div class="task-input-row">
+                    <span class="task-num-badge">3</span>
+                    <input type="text" id="wizard-task-3" class="form-input-text" placeholder="Tarea secundaria 3..." autocomplete="off">
+                </div>
+            </div>
+
+            <div class="wizard-nav">
+                <button class="btn-nav-prev" onclick="goToStep(4)">← Anterior</button>
+                <button class="btn-nav-next" onclick="goToStep(6)">
+                    <span>Siguiente paso</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </article>
+
+        <!-- PANTALLA 6: PRÁCTICA 3 (REFLEXIÓN Y NOTAS) -->
+        <article class="step-card" id="step-6">
+            <div class="step-kicker-row">
+                <span class="step-badge">Paso 3 de 4 · Descarga</span>
+                <span class="step-counter">6 de 7</span>
+            </div>
+            <h2 class="step-title">Espacio de Reflexión y Notas</h2>
+            <p class="step-subtitle">
+                Tu mente es para tener ideas, no para guardarlas. Vuelca aquí pensamientos, apuntes rápidos o cosas que te ronden la cabeza para no olvidarlas.
+            </p>
+
+            <div class="input-group">
+                <label class="input-label" for="wizard-notes">Notas libres del día</label>
+                <textarea id="wizard-notes" class="form-textarea" placeholder="Apunta aquí cualquier pensamiento, idea o desahogo que quieras sacar de tu cabeza..."></textarea>
+            </div>
+
+            <div class="wizard-nav">
+                <button class="btn-nav-prev" onclick="goToStep(5)">← Anterior</button>
+                <button class="btn-nav-next" onclick="goToStep(7)">
+                    <span>Siguiente paso</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </article>
+
+        <!-- PANTALLA 7: PRÁCTICA 4 (ENERGÍA Y CALMA) -->
+        <article class="step-card" id="step-7">
+            <div class="step-kicker-row">
+                <span class="step-badge">Paso 4 de 4 · Bienestar</span>
+                <span class="step-counter">7 de 7</span>
+            </div>
+            <h2 class="step-title">Energía y Momento de Calma</h2>
+            <p class="step-subtitle">
+                Escuchar tu propio cuerpo es parte indispensable de la planificación tranquila.
+            </p>
+
+            <label class="input-label">¿Cómo sientes tu energía y foco hoy?</label>
+            <div class="energy-selector-grid">
+                <div class="energy-btn" data-val="1" onclick="setWizardEnergy(1)">
+                    <span class="energy-btn-num">1</span>
+                    <span class="energy-btn-sub">Cansado</span>
+                </div>
+                <div class="energy-btn" data-val="2" onclick="setWizardEnergy(2)">
+                    <span class="energy-btn-num">2</span>
+                    <span class="energy-btn-sub">Bajo</span>
+                </div>
+                <div class="energy-btn" data-val="3" onclick="setWizardEnergy(3)">
+                    <span class="energy-btn-num">3</span>
+                    <span class="energy-btn-sub">Neutro</span>
+                </div>
+                <div class="energy-btn" data-val="4" onclick="setWizardEnergy(4)">
+                    <span class="energy-btn-num">4</span>
+                    <span class="energy-btn-sub">Bien</span>
+                </div>
+                <div class="energy-btn" data-val="5" onclick="setWizardEnergy(5)">
+                    <span class="energy-btn-num">5</span>
+                    <span class="energy-btn-sub">Enfocado</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="wizard-calm">Un momento de calma de hoy</label>
+                <input type="text" id="wizard-calm" class="form-input-text" placeholder="Ej: Un café sin mirar el móvil, el paseo al volver a casa..." autocomplete="off">
+            </div>
+
+            <div class="wizard-nav">
+                <button class="btn-nav-prev" onclick="goToStep(6)">← Anterior</button>
+                <button class="btn-nav-next" onclick="handleFinishAndOpenModal()">
+                    <span>Siguiente</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </article>
+
+    </main>
+
+    <!-- =======================================================
+         MODAL DE CIERRE CON VALOR DEL LIBRO DE 180 DÍAS
+         ======================================================= -->
+    <div class="modal-backdrop" id="conversion-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeModal()" aria-label="Cerrar">×</button>
+            <div class="modal-badge">Día 1 Completado</div>
+            <h3 class="modal-title">Así de ligera se siente la mente</h3>
+            
+            <p class="modal-desc">
+                Has experimentado la calma de elegir una sola prioridad al día. Pero esta página es solo la punta del iceberg del método.
+            </p>
+
+            <!-- VALOR AÑADIDO DEL LIBRO FÍSICO 180 DÍAS -->
+            <div class="modal-book-features">
+                <span class="modal-book-features-title">En el libro físico de 180 días encontrarás:</span>
+                <ul>
+                    <li><strong>Dos Semestres Completos:</strong> 26 semanas de registro diario como la hoja que acabas de rellenar.</li>
+                    <li><strong>Planificación de la Semana:</strong> Para definir tu foco y tu lista de exclusión (lo que NO harás) cada lunes.</li>
+                    <li><strong>Revisión Semanal:</strong> Para evaluar con amabilidad qué funcionó y ajustar el rumbo cada domingo.</li>
+                    <li><strong>2 Evaluaciones Trimestrales:</strong> Para celebrar avances y resetear objetivos a mitad de camino.</li>
+                </ul>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN -->
+            <div class="modal-buttons-group">
+                <a href="https://link.amazon/B0doI8Yaj" target="_blank" rel="noopener noreferrer" class="btn-amazon-primary">
+                    Quiero los 180 días en papel (Comprar en Amazon)
+                </a>
+
+                <button type="button" class="btn-pdf-secondary" onclick="triggerNativePrint()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span>Descargar / Imprimir mi Día en PDF (6x9)</span>
+                </button>
+            </div>
+
+            <div>
+                <a href="https://www.amazon.es/review/create-review/?ie=UTF8&channel=glance-detail&asin=B0H8C9GG4V" target="_blank" rel="noopener noreferrer" class="modal-review-link">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- =======================================================
+         HOJA FÍSICA INVISIBLE EN PANTALLA (SOLO PARA IMPRESIÓN)
+         ======================================================= -->
+    <aside class="print-only-sheet" aria-hidden="true">
+        <div class="sheet-kicker">Semana 1 / Registro Diario</div>
+        
+        <div class="sheet-top-row">
+            <h3 class="sheet-day-title" id="sheet-day-name">Lunes</h3>
+            <div class="sheet-date-display" id="sheet-full-date">Fecha: __ / __ / ______</div>
+        </div>
+
+        <div class="sheet-section">
+            <div class="sheet-label">
+                <span>LA PRIORIDAD DEL DÍA</span>
+                <span class="sheet-sublabel">Una sola cosa importante y factible</span>
+            </div>
+            <div class="sheet-priority-box">
+                <div class="sheet-priority-marker"></div>
+                <span id="sheet-priority-text" style="font-style: italic; color: #888;">(Sin prioridad asignada)</span>
+            </div>
+        </div>
+
+        <div class="sheet-section">
+            <div class="sheet-label">
+                <span>Tareas Secundarias</span>
+                <span class="sheet-sublabel">Máximo 3, realistas y acotadas</span>
+            </div>
+            <div class="sheet-tasks-list">
+                <div class="sheet-task-row">
+                    <div class="sheet-task-box"></div>
+                    <span id="sheet-task-1-text"></span>
+                </div>
+                <div class="sheet-task-row">
+                    <div class="sheet-task-box"></div>
+                    <span id="sheet-task-2-text"></span>
+                </div>
+                <div class="sheet-task-row">
+                    <div class="sheet-task-box"></div>
+                    <span id="sheet-task-3-text"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sheet-section" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="sheet-label">
+                <span>Espacio de Reflexión y Notas</span>
+                <span class="sheet-sublabel">Retícula de puntos</span>
+            </div>
+            <div class="sheet-dot-grid" id="sheet-notes-text"></div>
+        </div>
+
+        <div class="sheet-section">
+            <div class="sheet-energy-tracker">
+                <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Energía y Foco:</span>
+                <div class="sheet-energy-dots">
+                    <span style="font-size: 0.7rem; font-style: italic; color: #888;">Cansado</span>
+                    <div class="sheet-dot" id="sheet-dot-1">1</div>
+                    <div class="sheet-dot" id="sheet-dot-2">2</div>
+                    <div class="sheet-dot" id="sheet-dot-3">3</div>
+                    <div class="sheet-dot" id="sheet-dot-4">4</div>
+                    <div class="sheet-dot" id="sheet-dot-5">5</div>
+                    <span style="font-size: 0.7rem; font-style: italic; color: #888;">Enfocado</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sheet-section" style="margin-bottom: 0.5rem;">
+            <div class="sheet-label">
+                <span>Un momento de calma de hoy</span>
+            </div>
+            <div class="sheet-calm-box" id="sheet-calm-text"></div>
+        </div>
+
+        <footer class="sheet-footer">
+            <span>Planificador 180 Días · Menos Ruido</span>
+        </footer>
+    </aside>
+
+    <!-- JAVASCRIPT DE CONTROL Y LOCALSTORAGE -->
+    <script>
+        const STORAGE_KEY = 'menos_ruido_simulador_180';
+        let currentStep = 1;
+        const totalSteps = 7;
+
+        let todayDayName = 'Lunes';
+        let todayFullDate = '';
+
+        function initDate() {
+            const now = new Date();
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const months = [
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+            ];
+
+            todayDayName = days[now.getDay()];
+            const dayNum = now.getDate();
+            const monthName = months[now.getMonth()];
+            const year = now.getFullYear();
+
+            todayFullDate = `${dayNum} de ${monthName} de ${year}`;
+            document.getElementById('sheet-day-name').textContent = todayDayName;
+            document.getElementById('sheet-full-date').textContent = todayFullDate;
+        }
+
+        function goToStep(stepNum) {
+            saveData();
+            document.querySelectorAll('.step-card').forEach(card => card.classList.remove('active'));
+            const target = document.getElementById(`step-${stepNum}`);
+            if (target) {
+                target.classList.add('active');
+                currentStep = stepNum;
+                const percentage = (currentStep / totalSteps) * 100;
+                document.getElementById('progress-fill').style.width = `${percentage}%`;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        let selectedEnergyVal = null;
+        function setWizardEnergy(val) {
+            selectedEnergyVal = val;
+            document.querySelectorAll('.energy-btn').forEach(btn => {
+                btn.classList.toggle('selected', parseInt(btn.dataset.val) === val);
+            });
+            saveData();
+        }
+
+        function saveData() {
+            const data = {
+                priority: document.getElementById('wizard-priority')?.value || '',
+                task1: document.getElementById('wizard-task-1')?.value || '',
+                task2: document.getElementById('wizard-task-2')?.value || '',
+                task3: document.getElementById('wizard-task-3')?.value || '',
+                notes: document.getElementById('wizard-notes')?.value || '',
+                energy: selectedEnergyVal,
+                calm: document.getElementById('wizard-calm')?.value || '',
+                lastStep: currentStep
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadData() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                if (data.priority) document.getElementById('wizard-priority').value = data.priority;
+                if (data.task1) document.getElementById('wizard-task-1').value = data.task1;
+                if (data.task2) document.getElementById('wizard-task-2').value = data.task2;
+                if (data.task3) document.getElementById('wizard-task-3').value = data.task3;
+                if (data.notes) document.getElementById('wizard-notes').value = data.notes;
+                if (data.calm) document.getElementById('wizard-calm').value = data.calm;
+                if (data.energy) setWizardEnergy(parseInt(data.energy));
+            } catch (e) {
+                console.error('Error cargando simulador:', e);
+            }
+        }
+
+        function syncToPrintSheet() {
+            const priority = document.getElementById('wizard-priority').value.trim();
+            const priorityEl = document.getElementById('sheet-priority-text');
+            if (priority) {
+                priorityEl.textContent = priority;
+                priorityEl.style.fontStyle = 'normal';
+                priorityEl.style.color = '#111';
+            } else {
+                priorityEl.textContent = '(Sin prioridad asignada)';
+                priorityEl.style.fontStyle = 'italic';
+                priorityEl.style.color = '#888';
+            }
+
+            document.getElementById('sheet-task-1-text').textContent = document.getElementById('wizard-task-1').value.trim() || '—';
+            document.getElementById('sheet-task-2-text').textContent = document.getElementById('wizard-task-2').value.trim() || '—';
+            document.getElementById('sheet-task-3-text').textContent = document.getElementById('wizard-task-3').value.trim() || '—';
+
+            document.getElementById('sheet-notes-text').textContent = document.getElementById('wizard-notes').value.trim() || 'Espacio libre para notas y reflexiones del día...';
+            document.getElementById('sheet-calm-text').textContent = document.getElementById('wizard-calm').value.trim() || '—';
+
+            for (let i = 1; i <= 5; i++) {
+                const dot = document.getElementById(`sheet-dot-${i}`);
+                if (dot) {
+                    dot.classList.toggle('active', i === selectedEnergyVal);
+                }
+            }
+        }
+
+        function handleFinishAndOpenModal() {
+            saveData();
+            syncToPrintSheet();
+            document.getElementById('conversion-modal').classList.add('show');
+        }
+
+        function triggerNativePrint() {
+            syncToPrintSheet();
+            window.print();
+        }
+
+        function closeModal() {
+            document.getElementById('conversion-modal').classList.remove('show');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.id === 'conversion-modal') {
+                closeModal();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initDate();
+            loadData();
+
+            ['wizard-priority', 'wizard-task-1', 'wizard-task-2', 'wizard-task-3', 'wizard-notes', 'wizard-calm'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', saveData);
+            });
+        });
+    </script>
+</body>
+</html>

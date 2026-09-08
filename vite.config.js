@@ -15,7 +15,9 @@ export default defineConfig({
         p180: resolve(__dirname, 'planificador-180-dias.html'),
         aviso: resolve(__dirname, 'aviso-legal.html'),
         privacidad: resolve(__dirname, 'politica-privacidad.html'),
-        cookies: resolve(__dirname, 'politica-cookies.html')
+        cookies: resolve(__dirname, 'politica-cookies.html'),
+        sim90: resolve(__dirname, 'simulador-90-dias.html'),
+        sim180: resolve(__dirname, 'simulador-180-dias.html')
       }
     }
   }
