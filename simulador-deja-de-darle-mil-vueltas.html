@@ -92,6 +92,59 @@
             text-decoration: none;
             transition: color 0.2s;
             cursor: pointer;
+            display: none; /* Oculto en home, visible al iniciar un flujo */
+        }
+        .topbar-link.visible {
+            display: inline-block;
+        }
+
+        /* BARRA DE NAVEGACIÓN Y EDICIÓN RÁPIDA DE LOS 5 PASOS */
+        .steps-nav-bar {
+            background: #ffffff;
+            border: 1px solid var(--color-paper-line);
+            border-radius: 30px;
+            padding: 6px 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(35, 30, 20, 0.04);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .steps-nav-pill {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .steps-nav-pill:hover {
+            background: #f7f5f0;
+            color: var(--color-text);
+        }
+        .steps-nav-pill.active {
+            background: var(--color-accent);
+            color: #ffffff;
+            border-color: var(--color-accent);
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.25);
+        }
+        .steps-nav-pill.completed {
+            color: var(--color-sage);
+            background: var(--color-sage-light);
+        }
+        .steps-nav-pill.completed.active {
+            background: var(--color-accent);
+            color: #ffffff;
         }
         .topbar-link:hover {
             color: var(--color-text);
@@ -673,7 +726,7 @@
 
         /* =======================================================
            HOJAS FÍSICAS PARA IMPRESIÓN DIRECTA (@media print)
-           DISEÑO IDÉNTICO AL LIBRO KDP (6x9 in, sin nº de página)
+           DISEÑO IDÉNTICO AL LIBRO FÍSICO (6x9 in, sin nº de página)
            ======================================================= */
         .print-sheet-wrapper {
             display: none;
@@ -791,7 +844,7 @@
             <a href="/deja-de-darle-mil-vueltas.html" class="topbar-logo">
                 Menos Ruido <span class="topbar-tag">Simulador</span>
             </a>
-            <span class="topbar-link" onclick="resetToHome()">← Elegir otra opción</span>
+            <span class="topbar-link" id="topbar-back" onclick="resetToHome()">← Elegir otra opción</span>
         </div>
     </header>
 
@@ -974,7 +1027,7 @@
                 <div class="print-sheets-catalog">
                     <div class="print-sheets-catalog-title">
                         <span>Página disponible para imprimir</span>
-                        <span>Formato KDP 6x9"</span>
+                        <span>Formato Libro 6x9"</span>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
@@ -995,7 +1048,17 @@
         <!-- ==========================================
              FLUJO B: DECISIÓN IMPORTANTE (5 PASOS)
              ========================================== -->
-        <section id="flow-importante" style="display: none;">
+                <section id="flow-importante" style="display: none;">
+
+            <!-- BARRA DE NAVEGACIÓN Y REVISIÓN DE LOS 5 PASOS -->
+            <div class="steps-nav-bar" id="steps-quick-nav">
+                <button type="button" class="steps-nav-pill active" id="navpill-p1" onclick="jumpToStep('p1')">Paso 1: Frase</button>
+                <button type="button" class="steps-nav-pill" id="navpill-p2" onclick="jumpToStep('p2')">Paso 2: Coste</button>
+                <button type="button" class="steps-nav-pill" id="navpill-p3" onclick="jumpToStep('p3')">Paso 3: Opciones</button>
+                <button type="button" class="steps-nav-pill" id="navpill-p4" onclick="jumpToStep('p4')">Paso 4: Datos</button>
+                <button type="button" class="steps-nav-pill" id="navpill-p5" onclick="jumpToStep('p5')">Paso 5: Miedos</button>
+                <button type="button" class="steps-nav-pill" id="navpill-final" onclick="jumpToStep('final')" style="border: 1px dashed var(--color-accent);">🏁 Resumen final</button>
+            </div>
 
             <!-- ==============================
                  PASO 1: LA DECISIÓN EN UNA FRASE
@@ -1090,7 +1153,7 @@
                 <div class="print-sheets-catalog">
                     <div class="print-sheets-catalog-title">
                         <span>Páginas de trabajo listas</span>
-                        <span>KDP 6x9"</span>
+                        <span>Formato Libro 6x9"</span>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
@@ -1176,7 +1239,7 @@
                 <div class="print-sheets-catalog">
                     <div class="print-sheets-catalog-title">
                         <span>Páginas de trabajo listas</span>
-                        <span>KDP 6x9"</span>
+                        <span>Formato Libro 6x9"</span>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
@@ -1275,7 +1338,7 @@
                 <div class="print-sheets-catalog">
                     <div class="print-sheets-catalog-title">
                         <span>Páginas de trabajo listas</span>
-                        <span>KDP 6x9"</span>
+                        <span>Formato Libro 6x9"</span>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
@@ -1380,7 +1443,7 @@
                 <div class="print-sheets-catalog">
                     <div class="print-sheets-catalog-title">
                         <span>Páginas de trabajo listas</span>
-                        <span>KDP 6x9"</span>
+                        <span>Formato Libro 6x9"</span>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
@@ -1501,35 +1564,50 @@
                             <strong>Paso 01 · La decisión en una frase</strong>
                             <span>La pregunta delimitada</span>
                         </div>
-                        <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir Paso 1</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p1')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir</button>
+                        </div>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
                             <strong>Paso 02 · Qué pasa si no decido</strong>
                             <span>Ventanas de coste 24h, 7d y 30d</span>
                         </div>
-                        <button class="btn-print-single" onclick="printPage('p2')">🖨️ Imprimir Paso 2</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p2')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p2')">🖨️ Imprimir</button>
+                        </div>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
                             <strong>Paso 03 · Opciones reales</strong>
                             <span>Caminos posibles y opciones no realistas</span>
                         </div>
-                        <button class="btn-print-single" onclick="printPage('p3')">🖨️ Imprimir Paso 3</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p3')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p3')">🖨️ Imprimir</button>
+                        </div>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
                             <strong>Paso 04 · Lo que sé / Lo que imagino</strong>
                             <span>Datos comprobados vs ruido</span>
                         </div>
-                        <button class="btn-print-single" onclick="printPage('p4')">🖨️ Imprimir Paso 4</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p4')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p4')">🖨️ Imprimir</button>
+                        </div>
                     </div>
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
                             <strong>Paso 05 · Miedo, deseo y presión</strong>
                             <span>Nombrar las emociones que tiran</span>
                         </div>
-                        <button class="btn-print-single" onclick="printPage('p5')">🖨️ Imprimir Paso 5</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p5')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p5')">🖨️ Imprimir</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1567,7 +1645,7 @@
 
     <!-- ===================================================================
          HOJAS DE TRABAJO INVISIBLES EN PANTALLA, EXACTAS PARA IMPRESIÓN (@media print)
-         RECREACIÓN FIDEDIGNA DEL LIBRO KDP DE 131 PÁGINAS (6x9 in)
+         RECREACIÓN FIDEDIGNA DEL LIBRO FÍSICO DE 131 PÁGINAS (6x9 in)
          =================================================================== -->
     <div class="print-sheet-wrapper" id="printable-container">
         <!-- Se inyectará dinámicamente según la página solicitada -->
@@ -1582,6 +1660,8 @@
             document.getElementById('flow-rapida').style.display = 'none';
             document.getElementById('flow-importante').style.display = 'none';
             document.getElementById('progress-container').style.display = 'none';
+            const backBtn = document.getElementById('topbar-back');
+            if (backBtn) backBtn.classList.remove('visible');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -1589,6 +1669,8 @@
             currentFlow = flowType;
             document.getElementById('view-home').style.display = 'none';
             document.getElementById('progress-container').style.display = 'block';
+            const backBtn = document.getElementById('topbar-back');
+            if (backBtn) backBtn.classList.add('visible');
 
             if (flowType === 'rapida') {
                 document.getElementById('flow-rapida').style.display = 'block';
@@ -1638,6 +1720,31 @@
             'p5-q1': 100
         };
 
+        
+        function updateNavPills(activePillId) {
+            document.querySelectorAll('.steps-nav-pill').forEach(pill => pill.classList.remove('active'));
+            const targetPill = document.getElementById('navpill-' + activePillId);
+            if (targetPill) {
+                targetPill.classList.add('active');
+            }
+        }
+
+        function jumpToStep(stepTarget) {
+            if (stepTarget === 'p1') {
+                goToStepImportante('p1-q1');
+            } else if (stepTarget === 'p2') {
+                goToStepImportante('p2-q1');
+            } else if (stepTarget === 'p3') {
+                goToStepImportante('p3-q1');
+            } else if (stepTarget === 'p4') {
+                goToStepImportante('p4-q1');
+            } else if (stepTarget === 'p5') {
+                goToStepImportante('p5-q1');
+            } else if (stepTarget === 'final') {
+                finishAllSteps();
+            }
+        }
+
         function goToStepImportante(stepKey) {
             document.querySelectorAll('#flow-importante .step-card, #flow-importante .checkpoint-card, #flow-importante .final-hero-card').forEach(el => el.classList.remove('active'));
             const target = document.getElementById('card-' + stepKey);
@@ -1648,6 +1755,11 @@
             }
             const pct = stepProgress[stepKey] || 50;
             document.getElementById('progress-fill').style.width = pct + '%';
+
+            // Actualizar pastilla activa en la barra superior
+            const prefix = stepKey.split('-')[0];
+            updateNavPills(prefix);
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -1664,6 +1776,7 @@
             document.querySelectorAll('#flow-importante .step-card, #flow-importante .checkpoint-card').forEach(el => el.classList.remove('active'));
             document.getElementById('checkpoint-final').classList.add('active');
             document.getElementById('progress-fill').style.width = '100%';
+            updateNavPills('final');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
