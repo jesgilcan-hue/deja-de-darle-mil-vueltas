@@ -2,6 +2,24 @@
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+// Dropdown click/tap toggle (especially for touch/mobile devices)
+document.querySelectorAll('.dropdown > a').forEach(toggle => {
+    toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const parent = toggle.closest('.dropdown');
+        document.querySelectorAll('.dropdown').forEach(d => {
+            if (d !== parent) d.classList.remove('open');
+        });
+        parent.classList.toggle('open');
+    });
+});
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
+    }
+});
+
 // Add smooth scrolling for anchor links (fallback for browsers that don't support smooth scrolling CSS)
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
