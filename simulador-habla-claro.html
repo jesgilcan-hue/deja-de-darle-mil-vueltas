@@ -842,6 +842,15 @@
                 <p class="step-desc">Vacía el ruido de tu cabeza para entrar con una base neutra e inatacable:</p>
 
                 <div class="input-group">
+                    <label class="input-label">Asunto central de la conversación (en una frase):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Reclamación de compensación por horas extra y fijación de nuevos límites de entrega con mi responsable.</div>
+                    <div class="input-wrapper">
+                        <input type="text" id="cmp-p1-asunto" class="step-input" maxlength="100" placeholder="¿Cuál es el motivo o asunto central?..." oninput="updateCounter('cmp-p1-asunto', 'cnt-p1-a', 100)" style="font-size: 0.95rem; padding: 12px 14px;" />
+                        <span class="char-counter" id="cnt-p1-a">0 / 100</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
                     <label class="input-label">1. Los Hechos objetivos (Lo que la cámara grabó):</label>
                     <div class="step-example-hint"><strong>Ejemplo:</strong> El martes se acordó que recibiría el documento a las 10:00 y llegó hoy jueves a las 18:00 sin aviso previo.</div>
                     <div class="input-wrapper">
@@ -1056,7 +1065,7 @@
                     <div class="print-sheet-item">
                         <div class="print-sheet-info">
                             <strong>Paso 01 · Hechos vs. Relatos</strong>
-                            <span>La regla de la cámara de seguridad</span>
+                            <span id="summary-p1-asunto">La regla de la cámara de seguridad</span>
                         </div>
                         <div class="print-sheet-item-actions">
                             <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p1')">✏️ Editar</button>
@@ -1391,16 +1400,27 @@
             document.getElementById('checkpoint-final').classList.add('active');
             document.getElementById('progress-fill').style.width = '100%';
             updateNavPills('final');
+
+            const asunto = document.getElementById('cmp-p1-asunto') ? document.getElementById('cmp-p1-asunto').value.trim() : '';
+            if (asunto) {
+                const summaryEl = document.getElementById('summary-p1-asunto');
+                if (summaryEl) summaryEl.textContent = '«' + asunto + '»';
+                const printAsunto = document.getElementById('p1-print-asunto');
+                if (printAsunto) printAsunto.textContent = asunto;
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-                /* IMPRESIÓN DIRECTA 6x9" EXACTA AL LIBRO */
+        /* IMPRESIÓN DIRECTA 6x9" EXACTA AL LIBRO */
         function printPage(pageKey) {
             document.querySelectorAll('.print-sheet-wrapper').forEach(el => el.classList.remove('print-active'));
 
             if (pageKey === 'p1') {
+                const asunto = (document.getElementById('cmp-p1-asunto') && document.getElementById('cmp-p1-asunto').value.trim()) || 'Preparación de conversación difícil';
                 const hechos = document.getElementById('cmp-p1-hechos').value.trim() || '• 1. Hechos objetivos constatados durante los últimos días.';
                 const relato = document.getElementById('cmp-p1-relato').value.trim() || '• Interpretaciones o suposiciones que reconozco y dejo fuera de la reunión.';
+                document.getElementById('p1-print-asunto').textContent = asunto;
                 document.getElementById('p-print-p1-hechos').textContent = hechos;
                 document.getElementById('p-print-p1-relato').textContent = relato;
                 document.getElementById('sheet-print-p1').classList.add('print-active');
