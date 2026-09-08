@@ -18,7 +18,8 @@ export default defineConfig({
         cookies: resolve(__dirname, 'politica-cookies.html'),
         sim90: resolve(__dirname, 'simulador-90-dias.html'),
         sim180: resolve(__dirname, 'simulador-180-dias.html'),
-        simdeja: resolve(__dirname, 'simulador-deja-de-darle-mil-vueltas.html')
+        simdeja: resolve(__dirname, 'simulador-deja-de-darle-mil-vueltas.html'),
+        simhabla: resolve(__dirname, 'simulador-habla-claro.html')
       }
     }
   }

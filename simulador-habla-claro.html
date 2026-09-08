@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador Interactivo | Habla Claro — Menos Ruido</title>
+    <meta name="description" content="Prepara tu conversación difícil paso a paso antes de entrar al conflicto. Sin rodeos, con templanza y precisión." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-bg: #f7f5f0;
+            --color-card: #ffffff;
+            --color-paper: #fffefb;
+            --color-paper-line: #dcd7ce;
+            --color-paper-dot: #cfc8bd;
+            --color-text: #212121;
+            --color-text-muted: #66615b;
+            --color-text-faint: #9c9589;
+            --color-accent: #87553b;
+            --color-accent-hover: #70442e;
+            --color-sage: #586851;
+            --color-sage-light: rgba(88, 104, 81, 0.12);
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --radius-box: 10px;
+            --shadow-card: 0 10px 30px rgba(35, 30, 20, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA SUPERIOR */
+        .topbar {
+            background-color: rgba(247, 245, 240, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .topbar-logo {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .topbar-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: rgba(135, 85, 59, 0.1);
+            color: var(--color-accent);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .topbar-link {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+            cursor: pointer;
+            display: none;
+        }
+        .topbar-link.visible {
+            display: inline-block;
+        }
+        .topbar-link:hover {
+            color: var(--color-accent);
+        }
+
+        /* BARRA DE NAVEGACIÓN ENTRE PASOS */
+        .steps-nav-bar {
+            background: #ffffff;
+            border: 1px solid var(--color-paper-line);
+            border-radius: 30px;
+            padding: 6px 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(35, 30, 20, 0.04);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .steps-nav-pill {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .steps-nav-pill:hover {
+            background: #f7f5f0;
+            color: var(--color-text);
+        }
+        .steps-nav-pill.active {
+            background: var(--color-accent);
+            color: #ffffff;
+            border-color: var(--color-accent);
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.25);
+        }
+
+        .progress-track {
+            height: 3px;
+            background: #e5e0d8;
+            width: 100%;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--color-accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .sim-container {
+            max-width: 800px;
+            margin: 2.5rem auto 4rem;
+            padding: 0 1.25rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* HERO INICIAL */
+        .intro-hero {
+            background: var(--color-card);
+            border-radius: var(--radius-box);
+            padding: 3rem 2.25rem;
+            box-shadow: var(--shadow-card);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .intro-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            background: rgba(135, 85, 59, 0.08);
+            padding: 5px 14px;
+            border-radius: 20px;
+            margin-bottom: 1.25rem;
+        }
+        .intro-hero h1 {
+            font-family: var(--font-serif);
+            font-size: 2.35rem;
+            line-height: 1.25;
+            color: var(--color-text);
+            margin-bottom: 1rem;
+        }
+        .intro-hero p {
+            font-size: 1.05rem;
+            color: var(--color-text-muted);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+        .intro-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            text-align: left;
+            margin-bottom: 2.5rem;
+        }
+        .intro-feature-item {
+            background: #faf8f5;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-paper-line);
+        }
+        .intro-feature-item strong {
+            display: block;
+            font-size: 0.92rem;
+            color: var(--color-accent);
+            margin-bottom: 0.25rem;
+        }
+        .intro-feature-item span {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            line-height: 1.4;
+        }
+
+        /* TARJETAS DE PASO */
+        .step-card {
+            background: var(--color-card);
+            border-radius: var(--radius-box);
+            box-shadow: var(--shadow-card);
+            padding: 2.5rem 2rem;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .step-card.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-kicker {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .step-title {
+            font-family: var(--font-serif);
+            font-size: 1.85rem;
+            color: var(--color-text);
+            margin-bottom: 0.75rem;
+            line-height: 1.25;
+        }
+        .step-desc {
+            font-size: 1rem;
+            color: var(--color-text-muted);
+            margin-bottom: 1.75rem;
+            line-height: 1.6;
+        }
+
+        /* CUADRO DE TEORÍA DEL LIBRO */
+        .theory-box {
+            background: #faf8f5;
+            border-left: 3.5px solid var(--color-accent);
+            padding: 1.25rem 1.4rem;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 2rem;
+        }
+        .theory-box h4 {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            color: var(--color-text);
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .theory-box p {
+            font-size: 0.92rem;
+            color: var(--color-text-muted);
+            line-height: 1.55;
+            margin-bottom: 0.4rem;
+        }
+        .theory-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* FORMULARIO Y ENTRADA DE DATOS */
+        .input-group {
+            margin-bottom: 1.75rem;
+        }
+        .input-label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--color-text);
+            margin-bottom: 0.45rem;
+        }
+        .step-example-hint {
+            font-size: 0.82rem;
+            color: #7b7468;
+            background: #fbf9f4;
+            border: 1px dashed #ded7cb;
+            border-radius: 6px;
+            padding: 0.6rem 0.85rem;
+            margin-bottom: 0.6rem;
+            line-height: 1.4;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .step-input {
+            width: 100%;
+            background: #fdfcf9;
+            border: 1.5px solid var(--color-paper-line);
+            border-radius: 6px;
+            padding: 0.85rem 1rem;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            color: var(--color-text);
+            transition: all 0.2s;
+        }
+        .step-input:focus {
+            border-color: var(--color-accent);
+            background: #ffffff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+        textarea.step-input {
+            min-height: 85px;
+            resize: vertical;
+        }
+        .char-counter {
+            display: block;
+            text-align: right;
+            font-size: 0.72rem;
+            color: var(--color-text-faint);
+            margin-top: 0.3rem;
+        }
+
+        /* BOTONES DE NAVEGACIÓN */
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f0ece1;
+            gap: 1rem;
+        }
+        .btn-prev {
+            background: transparent;
+            border: 1px solid #d5cec2;
+            color: var(--color-text-muted);
+            padding: 0.75rem 1.4rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-prev:hover {
+            background: #eee9e0;
+            color: var(--color-text);
+        }
+        .btn-next {
+            background: var(--color-accent);
+            border: none;
+            color: #ffffff;
+            padding: 0.75rem 1.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-next:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* CATÁLOGO DE PÁGINAS IMPRIMIBLES */
+        .print-sheets-catalog {
+            background: #faf8f5;
+            border: 1px solid var(--color-paper-line);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        .print-sheets-catalog-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .print-sheet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e8e3d8;
+            border-radius: 6px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+            gap: 1rem;
+        }
+        .print-sheet-item:last-child {
+            margin-bottom: 0;
+        }
+        .print-sheet-info strong {
+            display: block;
+            font-size: 0.92rem;
+            color: var(--color-text);
+        }
+        .print-sheet-info span {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+        .print-sheet-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .btn-print-single {
+            background: #fdfcf9;
+            border: 1.5px solid var(--color-accent);
+            color: var(--color-accent);
+            font-weight: 600;
+            font-size: 0.82rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+        .btn-print-single:hover {
+            background: var(--color-accent);
+            color: #ffffff;
+        }
+
+        @media (max-width: 640px) {
+            .print-sheet-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+            .print-sheet-item-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+                width: 100%;
+            }
+            .print-sheet-item-actions .btn-print-single {
+                justify-content: center;
+                padding: 0.6rem 0.5rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* PANTALLA FINAL */
+        .final-hero-card {
+            background: var(--color-card);
+            border-radius: var(--radius-box);
+            box-shadow: var(--shadow-card);
+            padding: 3rem 2.25rem;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+            text-align: center;
+        }
+        .final-hero-card.active {
+            display: block;
+        }
+        .final-pill {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            background: rgba(135, 85, 59, 0.1);
+            padding: 5px 14px;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+        }
+        .final-hero-card h2 {
+            font-family: var(--font-serif);
+            font-size: 2.1rem;
+            line-height: 1.25;
+            color: var(--color-text);
+            margin-bottom: 1rem;
+        }
+        .final-hero-card p {
+            font-size: 1.02rem;
+            color: var(--color-text-muted);
+            max-width: 580px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+        .book-deliverables-box {
+            background: #faf8f5;
+            border: 1px solid var(--color-paper-line);
+            border-radius: 8px;
+            padding: 1.75rem;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+        .book-deliverables-box h4 {
+            font-family: var(--font-serif);
+            font-size: 1.15rem;
+            color: var(--color-text);
+            margin-bottom: 0.75rem;
+        }
+        .deliverables-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.6rem;
+        }
+        .deliverables-list li {
+            font-size: 0.9rem;
+            color: #4b463f;
+            position: relative;
+            padding-left: 1.5rem;
+            line-height: 1.4;
+        }
+        .deliverables-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--color-sage);
+            font-weight: bold;
+        }
+        .btn-amazon-cta {
+            display: inline-block;
+            background: var(--color-accent);
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.05rem;
+            font-weight: 700;
+            padding: 1.1rem 2.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 18px rgba(135, 85, 59, 0.35);
+            transition: all 0.2s;
+        }
+        .btn-amazon-cta:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-2px);
+        }
+        .amazon-review-link {
+            display: block;
+            margin-top: 1.25rem;
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            text-decoration: underline;
+        }
+
+                /* =======================================================
+           HOJAS FÍSICAS PARA IMPRESIÓN DIRECTA (@media print)
+           DISEÑO IDÉNTICO AL LIBRO FÍSICO HABLA CLARO (6x9 in)
+           Basado exactamente en Habla_Claro/scripts/generate_interior.py
+           ======================================================= */
+        .print-sheet-wrapper {
+            display: none !important;
+        }
+
+        @media print {
+            @page {
+                size: 6in 9in;
+                margin: 0;
+            }
+            body {
+                background: #ffffff !important;
+                color: #1a1a1a !important;
+                font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
+            }
+            .topbar, .progress-track, .sim-container {
+                display: none !important;
+            }
+            .print-sheet-wrapper.print-active {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 6in;
+                height: 9in;
+                box-sizing: border-box;
+                padding: 0.50in 0.45in 0.50in 0.50in; /* Margen simétrico/gutter */
+                background: #ffffff;
+                color: #1a1a1a;
+            }
+
+            /* Running Header exacto del libro */
+            .book-running-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                font-size: 7pt;
+                font-weight: 300;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                color: #666666;
+                padding-bottom: 4pt;
+                border-bottom: 0.35pt solid #d8d6d0;
+                margin-bottom: 12pt;
+            }
+
+            /* Título y subtítulo de la ficha */
+            .book-ficha-header {
+                margin-bottom: 12pt;
+                padding-bottom: 5pt;
+                border-bottom: 0.6pt solid #2a2a2a;
+            }
+            .book-ficha-title {
+                font-size: 9pt;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                color: #1a1a1a;
+                text-transform: uppercase;
+                margin-bottom: 2pt;
+            }
+            .book-ficha-subtitle {
+                font-family: 'Playfair Display', Georgia, serif;
+                font-style: italic;
+                font-size: 8.5pt;
+                color: #666666;
+            }
+
+            /* Metadatos de la cabecera (Persona, Asunto, etc.) */
+            .book-meta-row {
+                display: flex;
+                align-items: center;
+                font-size: 7.5pt;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8pt;
+                color: #1a1a1a;
+            }
+            .book-meta-label {
+                margin-right: 6pt;
+                white-space: nowrap;
+            }
+            .book-meta-line {
+                flex: 1;
+                border-bottom: 0.5pt solid #c0beb8;
+                padding-left: 6pt;
+                font-family: 'Playfair Display', Georgia, serif;
+                font-style: italic;
+                font-size: 8pt;
+                font-weight: normal;
+                text-transform: none;
+                color: #2a2a2a;
+                padding-bottom: 1pt;
+            }
+
+            /* Cajas estructuradas (draw_boxed_section) */
+            .book-box {
+                border: 0.5pt solid #c0beb8;
+                border-radius: 3pt;
+                background: #ffffff;
+                margin-bottom: 14pt;
+                padding: 10pt 12pt;
+                position: relative;
+                box-sizing: border-box;
+            }
+            .book-box.filled {
+                background: #f5f4f0 !important;
+            }
+            .book-box-header {
+                margin-bottom: 8pt;
+            }
+            .book-box-title {
+                font-size: 8pt;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+                color: #1a1a1a;
+                margin-bottom: 2pt;
+            }
+            .book-box-subtitle {
+                font-family: 'Playfair Display', Georgia, serif;
+                font-style: italic;
+                font-size: 7.5pt;
+                color: #444444;
+                line-height: 1.3;
+            }
+
+            /* Texto de usuario dentro de la caja con líneas pautadas de fondo (ruled lines) */
+            .book-box-content {
+                font-family: 'Playfair Display', Georgia, serif;
+                font-size: 9pt;
+                line-height: 20pt;
+                color: #2a2a2a;
+                white-space: pre-wrap;
+                min-height: 120pt;
+                background-image: repeating-linear-gradient(
+                    to bottom,
+                    transparent,
+                    transparent 19pt,
+                    #c0beb8 19pt,
+                    #c0beb8 20pt
+                );
+                background-position: 0 4pt;
+                padding-top: 2pt;
+            }
+            .book-box-content.compact {
+                min-height: 80pt;
+                line-height: 20pt;
+            }
+            .book-box-content.tall {
+                min-height: 180pt;
+                line-height: 20pt;
+            }
+
+            /* Footer editorial exacto */
+            .book-running-footer {
+                position: absolute;
+                bottom: 0.40in;
+                left: 0.50in;
+                right: 0.45in;
+                display: flex;
+                justify-content: space-between;
+                font-size: 6.8pt;
+                color: #999999;
+                border-top: 0.35pt solid #d8d6d0;
+                padding-top: 5pt;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+        <div class="topbar-content">
+            <a href="./habla-claro.html" class="topbar-logo">
+                <span>Habla Claro</span>
+                <span class="topbar-tag">Simulador</span>
+            </a>
+            <a class="topbar-link" id="btn-topbar-reset" onclick="resetToHome()">← Volver al inicio</a>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </header>
+
+    <main class="sim-container">
+
+        <!-- ==========================================
+             PANTALLA 0: INTRODUCCIÓN Y CONTEXTO
+             ========================================== -->
+        <div id="screen-home">
+            <div class="intro-hero">
+                <span class="intro-badge">Muestra Interactiva Guiada</span>
+                <h1>Pensar en papel antes de entrar al conflicto</h1>
+                <p>La incomodidad de una conversación difícil dura minutos. El coste de evitarla dura meses. Prepara en 4 pasos tu próxima conversación clave para entrar con templanza y sin improvisar:</p>
+
+                <div class="intro-features">
+                    <div class="intro-feature-item">
+                        <strong>1. Hechos vs. Relatos</strong>
+                        <span>Desactiva la reactividad hablando como una cámara de seguridad.</span>
+                    </div>
+                    <div class="intro-feature-item">
+                        <strong>2. Objetivo y Línea Roja</strong>
+                        <span>Define tu mínimo innegociable antes de entrar a la reunión.</span>
+                    </div>
+                    <div class="intro-feature-item">
+                        <strong>3. El Guion Mínimo</strong>
+                        <span>Apertura neutral y petición directa sin sobreexplicaciones.</span>
+                    </div>
+                    <div class="intro-feature-item">
+                        <strong>4. Plan de Desescalada</strong>
+                        <span>Respuestas ensayadas ante hostilidad o intentos de desvío.</span>
+                    </div>
+                </div>
+
+                <button class="btn-next" style="margin: 0 auto; padding: 1rem 2.5rem; font-size: 1.05rem;" onclick="startMethod()">
+                    Comenzar Preparación (Paso 1 de 4) →
+                </button>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             EL MÉTODO COMPLETO EN 4 PASOS
+             ========================================== -->
+        <div id="flow-method" style="display: none;">
+
+            <!-- Barra interactiva de pills (P1 a P4 + Resumen) -->
+            <div class="steps-nav-bar">
+                <button class="steps-nav-pill active" id="navpill-p1" onclick="jumpToStep('p1')">Paso 1: Hechos</button>
+                <button class="steps-nav-pill" id="navpill-p2" onclick="jumpToStep('p2')">Paso 2: Objetivo</button>
+                <button class="steps-nav-pill" id="navpill-p3" onclick="jumpToStep('p3')">Paso 3: Guion</button>
+                <button class="steps-nav-pill" id="navpill-p4" onclick="jumpToStep('p4')">Paso 4: Desescalada</button>
+                <button class="steps-nav-pill" id="navpill-final" onclick="jumpToStep('final')">Resumen Final</button>
+            </div>
+
+            <!-- PASO 1: TEORÍA -->
+            <div class="step-card" id="card-p1-theory">
+                <div class="step-kicker">🎯 Paso 01 · Fundamento Metodológico</div>
+                <h2 class="step-title">Hechos vs. Relatos</h2>
+                <p class="step-desc">El 80% del conflicto surge de la película mental que nos montamos sobre lo que la otra persona piensa o pretende.</p>
+
+                <div class="theory-box">
+                    <h4>La regla de la cámara de seguridad</h4>
+                    <p>Escribe únicamente lo que una cámara con audio habría grabado: fechas, palabras textuales, entregas no hechas.</p>
+                    <p>Si dices <em>«Es que nunca valoras mi trabajo»</em>, la otra persona se defenderá al instante. Si dices <em>«En las últimas dos reuniones no se incluyó mi propuesta técnica»</em>, partes de un hecho objetivo imposible de discutir.</p>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="resetToHome()">← Inicio</button>
+                    <button class="btn-next" onclick="goToStep('p1-q1')">Escribir mis Hechos →</button>
+                </div>
+            </div>
+
+            <!-- PASO 1: PREGUNTAS -->
+            <div class="step-card" id="card-p1-q1">
+                <div class="step-kicker">🎯 Paso 01 · Ejercicio en Papel</div>
+                <h2 class="step-title">Separa la realidad de la interpretación</h2>
+                <p class="step-desc">Vacía el ruido de tu cabeza para entrar con una base neutra e inatacable:</p>
+
+                <div class="input-group">
+                    <label class="input-label">1. Los Hechos objetivos (Lo que la cámara grabó):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> El martes se acordó que recibiría el documento a las 10:00 y llegó hoy jueves a las 18:00 sin aviso previo.</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p1-hechos" class="step-input" maxlength="160" placeholder="Solo fechas, datos y hechos innegables..." oninput="updateCounter('cmp-p1-hechos', 'cnt-p1-h', 160)"></textarea>
+                        <span class="char-counter" id="cnt-p1-h">0 / 160</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">2. El Relato que me estaba contando (Mis suposiciones):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Siento que lo hace a propósito para dejarme en evidencia ante el equipo y no le importa mi tiempo.</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p1-relato" class="step-input" maxlength="160" placeholder="Las sospechas o juicios que ahora reconozco y dejo fuera de la reunión..." oninput="updateCounter('cmp-p1-relato', 'cnt-p1-r', 160)"></textarea>
+                        <span class="char-counter" id="cnt-p1-r">0 / 160</span>
+                    </div>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStep('p1-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="goToStep('p2-theory')">Ir al Paso 2: Objetivo →</button>
+                </div>
+            </div>
+
+            <!-- PASO 2: TEORÍA -->
+            <div class="step-card" id="card-p2-theory">
+                <div class="step-kicker">🎯 Paso 02 · Fundamento Metodológico</div>
+                <h2 class="step-title">El Objetivo Real y la Línea Roja</h2>
+                <p class="step-desc">Si no sabes cuál es tu mínimo aceptable, terminarás cediendo por el simple deseo de que acabe la incomodidad del momento.</p>
+
+                <div class="theory-box">
+                    <h4>No vayas a tener la razón: ve a cerrar un acuerdo</h4>
+                    <p>El ego quiere desahogarse, reprochar y tener la última palabra. La templanza busca un resultado concreto que te devuelva la paz.</p>
+                    <p>Fija de antemano qué necesitas que cambie a partir de mañana y qué compromiso <strong>no vas a aceptar bajo ningún concepto</strong>.</p>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStep('p1-q1')">← Paso 1</button>
+                    <button class="btn-next" onclick="goToStep('p2-q1')">Definir mi Objetivo →</button>
+                </div>
+            </div>
+
+            <!-- PASO 2: PREGUNTAS -->
+            <div class="step-card" id="card-p2-q1">
+                <div class="step-kicker">🎯 Paso 02 · Ejercicio en Papel</div>
+                <h2 class="step-title">Tu meta concreta y tu límite innegociable</h2>
+                <p class="step-desc">La claridad de tus límites es lo que te mantendrá sereno cuando haya tensión:</p>
+
+                <div class="input-group">
+                    <label class="input-label">1. ¿Cuál es el resultado mínimo aceptable?</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Fijar un calendario cerrado de entregas semanales con 48h de margen de revisión.</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p2-meta" class="step-input" maxlength="160" placeholder="El acuerdo verificable que quiero alcanzar..." oninput="updateCounter('cmp-p2-meta', 'cnt-p2-m', 160)"></textarea>
+                        <span class="char-counter" id="cnt-p2-m">0 / 160</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">2. ¿Qué NO estoy dispuesto a negociar o ceder? (Mi Línea Roja):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> No aceptaré asumir horas extra de madrugada para compensar retrasos ajenos.</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p2-limite" class="step-input" maxlength="160" placeholder="El límite innegociable que hoy voy a sostener..." oninput="updateCounter('cmp-p2-limite', 'cnt-p2-l', 160)"></textarea>
+                        <span class="char-counter" id="cnt-p2-l">0 / 160</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">3. Miedo interno que me frena y cómo le quito poder:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Temor: «Pensará que no estoy comprometido». Realidad fría: «Si ocurre, recordaré que mi productividad en horario habitual es excelente».</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p2-miedo" class="step-input" maxlength="160" placeholder="Escribe tu temor y la respuesta fría con la que le quitas poder..." oninput="updateCounter('cmp-p2-miedo', 'cnt-p2-mie', 160)"></textarea>
+                        <span class="char-counter" id="cnt-p2-mie">0 / 160</span>
+                    </div>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStep('p2-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="goToStep('p3-theory')">Ir al Paso 3: Guion →</button>
+                </div>
+            </div>
+
+            <!-- PASO 3: TEORÍA -->
+            <div class="step-card" id="card-p3-theory">
+                <div class="step-kicker">🎯 Paso 03 · Fundamento Metodológico</div>
+                <h2 class="step-title">El Guion Mínimo en 3 Fases</h2>
+                <p class="step-desc">Cuantas más justificaciones y rodeos des, más débil sonará tu mensaje. Menos es más.</p>
+
+                <div class="theory-box">
+                    <h4>Estructura limpia sin rodeos</h4>
+                    <p><strong>1. Apertura neutral:</strong> Invita a hablar sin tono acusatorio (<em>«Quiero comentar un tema de los proyectos para que coordinemos mejor»</em>).</p>
+                    <p><strong>2. Planteamiento del problema:</strong> Un hecho concreto sin adjetivos emocionales.</p>
+                    <p><strong>3. Petición directa:</strong> Lo que necesitas a partir de hoy, formulado en positivo.</p>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStep('p2-q1')">← Paso 2</button>
+                    <button class="btn-next" onclick="goToStep('p3-q1')">Redactar el Guion →</button>
+                </div>
+            </div>
+
+            <!-- PASO 3: PREGUNTAS -->
+            <div class="step-card" id="card-p3-q1">
+                <div class="step-kicker">🎯 Paso 03 · Ejercicio en Papel</div>
+                <h2 class="step-title">El Guion Mínimo de 3 Bloques</h2>
+                <p class="step-desc">Un mensaje estructurado en 3 partes limpias desarma cualquier discusión antes de empezar:</p>
+
+                <div class="input-group">
+                    <label class="input-label">1. Apertura Neutral (Sin juicios ni acusaciones):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> «Quiero comentar contigo la dinámica de las últimas semanas para coordinar mejor los proyectos.»</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p3-apertura" class="step-input" maxlength="150" placeholder="Empieza con: «Quiero hablar de...» o «He notado que...»" oninput="updateCounter('cmp-p3-apertura', 'cnt-p3-a', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p3-a">0 / 150</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">2. Exposición del Problema (Basado estrictamente en Hechos):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> «Están entrando solicitudes a última hora de la tarde que requieren atención inmediata al día siguiente.»</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p3-problema" class="step-input" maxlength="150" placeholder="Describe la situación objetiva sin adjetivos agresivos..." oninput="updateCounter('cmp-p3-problema', 'cnt-p3-pr', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p3-pr">0 / 150</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">3. La Petición Concreta o Límite Firme:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> «A partir de la próxima semana, necesito que las especificaciones lleguen cerradas con 48h de antelación.»</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p3-peticion" class="step-input" maxlength="150" placeholder="Qué decisión has tomado o qué cambio específico necesitas..." oninput="updateCounter('cmp-p3-peticion', 'cnt-p3-p', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p3-p">0 / 150</span>
+                    </div>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStep('p3-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="goToStep('p4-theory')">Ir al Paso 4: Desescalada →</button>
+                </div>
+            </div>
+
+            <!-- PASO 4: TEORÍA -->
+            <div class="step-card" id="card-p4-theory">
+                <div class="step-kicker">🎯 Paso 04 · Fundamento Metodológico</div>
+                <h2 class="step-title">Plan de Desescalada</h2>
+                <p class="step-desc">Tú controlas tu claridad; no controlas la reacción del otro. Pero sí puedes anticipar sus reacciones típicas para no caer en la trampa.</p>
+
+                <div class="theory-box">
+                    <h4>La fórmula «Si dice X, respondo Y»</h4>
+                    <p>Cuando alguien se siente confrontado suele recurrir a: <strong>atacar</strong>, <strong>victimizarse</strong> o <strong>desviar el tema</strong>.</p>
+                    <p>Si ensayas en papel tu respuesta con voz calmada antes de entrar, no habrá sorpresa que te haga perder el centro.</p>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStep('p3-q1')">← Paso 3</button>
+                    <button class="btn-next" onclick="goToStep('p4-q1')">Anticipar Respuestas →</button>
+                </div>
+            </div>
+
+            <!-- PASO 4: PREGUNTAS -->
+            <div class="step-card" id="card-p4-q1">
+                <div class="step-kicker">🎯 Paso 04 · Ejercicio en Papel</div>
+                <h2 class="step-title">Anticipación y Plan de Desescalada</h2>
+                <p class="step-desc">Prepara tus réplicas de templanza para sostener tu postura pase lo que pase:</p>
+
+                <div class="input-group">
+                    <label class="input-label">1. Escenario A: Si reacciona a la defensiva o ataca...</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> «Entiendo que el ritmo es alto para todos; justo por eso necesitamos fijar este acuerdo ahora.»</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p4-ataque" class="step-input" maxlength="150" placeholder="Mi respuesta de desescalada (Pausa 5s, calma y vuelta al guion)..." oninput="updateCounter('cmp-p4-ataque', 'cnt-p4-a', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p4-a">0 / 150</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">2. Escenario B: Si intenta desviar el tema o culpabilizar (Técnica del Disco Rayado):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> «Podemos agendar otra charla para revisar eso; hoy lo indispensable es cerrar este punto.»</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p4-desvio" class="step-input" maxlength="150" placeholder="Mi respuesta de desescalada (Redirigir al objetivo principal)..." oninput="updateCounter('cmp-p4-desvio', 'cnt-p4-d', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p4-d">0 / 150</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">3. Señal de Alarma: ¿Cuándo pausar la conversación?</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Si hay gritos o descalificaciones personales: «Veo que el tono no permite avanzar. Dejemos reposar este punto y retomamos mañana con calma.»</div>
+                    <div class="input-wrapper">
+                        <textarea id="cmp-p4-alarma" class="step-input" maxlength="150" placeholder="Criterio claro y frase para retirarte si la situación se vuelve circular u hostil..." oninput="updateCounter('cmp-p4-alarma', 'cnt-p4-al', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p4-al">0 / 150</span>
+                    </div>
+                </div>
+
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStep('p4-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="finishMethod()">Completar los 4 Pasos →</button>
+                </div>
+            </div>
+
+            <!-- CHECKPOINT FINAL: RESUMEN Y LAS 4 PÁGINAS -->
+            <div class="final-hero-card" id="checkpoint-final">
+                <span class="final-pill">Conversación Estructurada</span>
+                <h2>Has preparado el 100% de la fase previa a la reunión</h2>
+                <p>
+                    Tienes los hechos delimitados, tu objetivo fijado, tu línea roja protegida y tus respuestas ensayadas para mantener la serenidad pase lo que pase.
+                </p>
+
+                <!-- Catálogo completo de las 4 páginas del libro -->
+                <div class="print-sheets-catalog" style="max-width: 600px; margin: 0 auto 2.25rem;">
+                    <div class="print-sheets-catalog-title">
+                        <span>Tus 4 Páginas de Preparación Previa Listas para Imprimir (Páginas 1 a 4 de la Ficha)</span>
+                        <span>Formato Libro 6x9"</span>
+                    </div>
+                    
+                    <!-- Página 1 -->
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 01 · Hechos vs. Relatos</strong>
+                            <span>La regla de la cámara de seguridad</span>
+                        </div>
+                        <div class="print-sheet-item-actions">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p1')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir</button>
+                        </div>
+                    </div>
+
+                    <!-- Página 2 -->
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 02 · El Objetivo y la Línea Roja</strong>
+                            <span>Tu meta verificable y tu límite innegociable</span>
+                        </div>
+                        <div class="print-sheet-item-actions">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p2')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p2')">🖨️ Imprimir</button>
+                        </div>
+                    </div>
+
+                    <!-- Página 3 -->
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 03 · El Guion Mínimo</strong>
+                            <span>Apertura neutral y petición directa sin rodeos</span>
+                        </div>
+                        <div class="print-sheet-item-actions">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p3')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p3')">🖨️ Imprimir</button>
+                        </div>
+                    </div>
+
+                    <!-- Página 4 -->
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 04 · Plan de Desescalada</strong>
+                            <span>Respuestas ensayadas ante ataque o desvíos</span>
+                        </div>
+                        <div class="print-sheet-item-actions">
+                            <button class="btn-print-single" style="border-color: #9c9589; color: var(--color-text);" onclick="jumpToStep('p4')">✏️ Editar</button>
+                            <button class="btn-print-single" onclick="printPage('p4')">🖨️ Imprimir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gancho al contenido completo del libro físico -->
+                <!-- Cuadro explicativo de lo que falta: Cierre Post-Conversación -->
+                <div class="book-deliverables-box" style="background: #fdfcf9; border-left: 4px solid var(--color-accent); margin-bottom: 1.75rem;">
+                    <h4 style="color: var(--color-accent); margin-bottom: 0.5rem;">⚠️ La conversación no termina cuando sales de la sala: El Cierre</h4>
+                    <p style="font-size: 0.92rem; color: var(--color-text-muted); line-height: 1.55; margin-bottom: 0.75rem;">
+                        En este simulador has preparado la <strong>fase previa (los 4 pasos de apertura y templanza)</strong>. Pero el 50% del éxito de una conversación reside en lo que ocurre después.
+                    </p>
+                    <p style="font-size: 0.92rem; color: #1a1a1a; font-weight: 600; margin-bottom: 0;">
+                        En el cuaderno físico queda el cierre post-conversacional con la evaluación de los hechos y los acuerdos y seguimiento.
+                    </p>
+                </div>
+
+                <div class="book-deliverables-box">
+                    <h4>Contenido Completo del Cuaderno Físico (128 páginas):</h4>
+                    <ul class="deliverables-list">
+                        <li><strong>15 Fichas Prácticas de Preparación Profunda:</strong> Con los 4 pasos previos + el cierre post-conversacional completo.</li>
+                        <li><strong>El Caso Práctico Maestro:</strong> Un ejemplo real guiado y resuelto de principio a fin sobre cómo negociar límites y horarios sin quemarse.</li>
+                        <li><strong>Botiquín táctico con 6 herramientas rápidas de asertividad:</strong> Guiones listos para usar: decir NO sin justificarse, el banco de niebla, frenar interrupciones y cerrar bucles.</li>
+                        <li><strong>Protocolos de control de ritmo y templanza:</strong> La regla del silencio deliberado de 5 segundos, postura corporal y contacto visual.</li>
+                        <li><strong>6 Fórmulas de Asertividad Rápida:</strong> Protocolos de emergencia verbal ante imprevistos cuando no hay tiempo de preparación.</li>
+                    </ul>
+                </div>
+
+                <a href="https://www.amazon.es/dp/B0HGBQH446" target="_blank" rel="noopener noreferrer" class="btn-amazon-cta">
+                    Pedir Habla Claro en Amazon →
+                </a>
+                <a href="https://www.amazon.es/review/create-review/?ie=UTF8&channel=glance-detail&asin=B0HGBQH446" target="_blank" rel="noopener noreferrer" class="amazon-review-link">
+                    ¿Ya tienes el cuaderno físico? Deja tu reseña en Amazon ★
+                </a>
+            </div>
+
+        </div>
+
+    </main>
+
+        <!-- =======================================================
+         PLANTILLAS IMPRIMIBLES EXACTAS DEL LIBRO HABLA CLARO
+         (Idénticas al PDF generado por ReportLab en generate_interior.py)
+         100% INVISIBLES EN PANTALLA
+         ======================================================= -->
+
+    <!-- HOJA 1: FICHA [01/15] - PÁG 1: DESCARGA Y CLARIFICACIÓN -->
+    <div class="print-sheet-wrapper" id="sheet-print-p1">
+        <div class="book-running-header">
+            <span>HABLA CLARO</span>
+            <span>FICHA DE PREPARACIÓN [01/15]</span>
+        </div>
+
+        <div class="book-ficha-header">
+            <div class="book-ficha-title">FICHA DE PREPARACIÓN [01/15]</div>
+            <div class="book-ficha-subtitle">Paso 1: Descarga y Clarificación</div>
+        </div>
+
+        <div class="book-meta-row">
+            <span class="book-meta-label">ASUNTO CENTRAL (EN UNA FRASE):</span>
+            <div class="book-meta-line" id="p1-print-asunto">Preparación de conversación difícil</div>
+        </div>
+
+        <!-- Caja 1: Hechos (Lo Innegable) -->
+        <div class="book-box" style="margin-bottom: 14pt;">
+            <div class="book-box-header">
+                <div class="book-box-title">HECHOS (LO INNEGABLE)</div>
+                <div class="book-box-subtitle">Datos objetivos, fechas, mensajes verificables. Sin interpretaciones.</div>
+            </div>
+            <div class="book-box-content" id="p-print-p1-hechos">[Sin hechos registrados]</div>
+        </div>
+
+        <!-- Caja 2: Relatos a Descartar -->
+        <div class="book-box filled">
+            <div class="book-box-header">
+                <div class="book-box-title">RELATOS A DESCARTAR</div>
+                <div class="book-box-subtitle">Lo que mi cabeza añade: juicios, sospechas, motivos ocultos. PARA DEJAR FUERA.</div>
+            </div>
+            <div class="book-box-content" id="p-print-p1-relato">[Sin relato registrado]</div>
+        </div>
+
+        <div class="book-running-footer">
+            <span>EDITORIAL MENOS RUIDO</span>
+            <span>MÉTODO DE 4 PASOS · PÁGINA 1</span>
+        </div>
+    </div>
+
+    <!-- HOJA 2: FICHA [01/15] - PÁG 2: OBJETIVOS Y LÍMITES DUROS -->
+    <div class="print-sheet-wrapper" id="sheet-print-p2">
+        <div class="book-running-header">
+            <span>HABLA CLARO</span>
+            <span>FICHA DE PREPARACIÓN [01/15]</span>
+        </div>
+
+        <div class="book-ficha-header">
+            <div class="book-ficha-title">FICHA DE PREPARACIÓN [01/15]</div>
+            <div class="book-ficha-subtitle">Paso 2: Objetivos y Límites Duros</div>
+        </div>
+
+        <!-- Caja 1: Resultado mínimo aceptable -->
+        <div class="book-box">
+            <div class="book-box-header">
+                <div class="book-box-title">¿CUÁL ES EL RESULTADO MÍNIMO ACEPTABLE?</div>
+                <div class="book-box-subtitle">El objetivo pragmático y concreto de este encuentro.</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p2-meta">[Sin resultado registrado]</div>
+        </div>
+
+        <!-- Caja 2: Límite duro no negociable -->
+        <div class="book-box">
+            <div class="book-box-header">
+                <div class="book-box-title">¿QUÉ NO ESTOY DISPUESTO A NEGOCIAR O CEDER?</div>
+                <div class="book-box-subtitle">Mi límite no negociable. La línea que no voy a cruzar.</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p2-limite">[Sin línea roja registrada]</div>
+        </div>
+
+        <!-- Caja 3: Miedo interno aislado -->
+        <div class="book-box filled">
+            <div class="book-box-header">
+                <div class="book-box-title">MIEDO INTERNO QUE ME FRENA Y CÓMO LE QUITO PODER</div>
+                <div class="book-box-subtitle">Temor: '¿Qué pasará si...?'. Realidad fría: 'Si ocurre, haré...'</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p2-miedo">[Sin miedo registrado]</div>
+        </div>
+
+        <div class="book-running-footer">
+            <span>EDITORIAL MENOS RUIDO</span>
+            <span>MÉTODO DE 4 PASOS · PÁGINA 2</span>
+        </div>
+    </div>
+
+    <!-- HOJA 3: FICHA [01/15] - PÁG 3: EL GUION MÍNIMO DE 3 BLOQUES -->
+    <div class="print-sheet-wrapper" id="sheet-print-p3">
+        <div class="book-running-header">
+            <span>HABLA CLARO</span>
+            <span>FICHA DE PREPARACIÓN [01/15]</span>
+        </div>
+
+        <div class="book-ficha-header">
+            <div class="book-ficha-title">FICHA DE PREPARACIÓN [01/15]</div>
+            <div class="book-ficha-subtitle">Paso 3: El Guion Mínimo de 3 Bloques</div>
+        </div>
+
+        <!-- Caja 1: Apertura Neutral -->
+        <div class="book-box">
+            <div class="book-box-header">
+                <div class="book-box-title">1. APERTURA NEUTRAL (SIN JUICIOS NI ACUSACIONES)</div>
+                <div class="book-box-subtitle">Empieza con: «Quiero hablar de...» o «He notado que...»</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p3-apertura">[Sin apertura registrada]</div>
+        </div>
+
+        <!-- Caja 2: Exposición del Problema -->
+        <div class="book-box">
+            <div class="book-box-header">
+                <div class="book-box-title">2. EXPOSICIÓN DEL PROBLEMA (BASADO EN HECHOS)</div>
+                <div class="book-box-subtitle">Describe la situación objetiva sin adjetivos agresivos.</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p3-problema">[Sin exposición registrada]</div>
+        </div>
+
+        <!-- Caja 3: La Petición Concreta -->
+        <div class="book-box">
+            <div class="book-box-header">
+                <div class="book-box-title">3. LA PETICIÓN CONCRETA O LÍMITE FIRME</div>
+                <div class="book-box-subtitle">Qué decisión he tomado o qué cambio específico necesito.</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p3-peticion">[Sin petición registrada]</div>
+        </div>
+
+        <div class="book-running-footer">
+            <span>EDITORIAL MENOS RUIDO</span>
+            <span>MÉTODO DE 4 PASOS · PÁGINA 3</span>
+        </div>
+    </div>
+
+    <!-- HOJA 4: FICHA [01/15] - PÁG 4: ANTICIPACIÓN Y PLAN DE DESESCALADA -->
+    <div class="print-sheet-wrapper" id="sheet-print-p4">
+        <div class="book-running-header">
+            <span>HABLA CLARO</span>
+            <span>FICHA DE PREPARACIÓN [01/15]</span>
+        </div>
+
+        <div class="book-ficha-header">
+            <div class="book-ficha-title">FICHA DE PREPARACIÓN [01/15]</div>
+            <div class="book-ficha-subtitle">Paso 4: Anticipación y Plan de Desescalada</div>
+        </div>
+
+        <!-- Caja 1: Escenario A (Defensiva/Ataque) -->
+        <div class="book-box">
+            <div class="book-box-header">
+                <div class="book-box-title">ESCENARIO A: SI REACCIONA A LA DEFENSIVA O ATACA...</div>
+                <div class="book-box-subtitle">Mi respuesta de desescalada (Mantener la calma, volver al guion):</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p4-ataque">[Sin respuesta registrada]</div>
+        </div>
+
+        <!-- Caja 2: Escenario B (Desvío de tema) -->
+        <div class="book-box">
+            <div class="book-box-header">
+                <div class="book-box-title">ESCENARIO B: SI INTENTA DESVIAR EL TEMA (DISCO RAYADO)...</div>
+                <div class="book-box-subtitle">Mi respuesta de desescalada (Redirigir al objetivo principal):</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p4-desvio">[Sin respuesta registrada]</div>
+        </div>
+
+        <!-- Caja 3: Señal de Alarma -->
+        <div class="book-box filled">
+            <div class="book-box-header">
+                <div class="book-box-title">SEÑAL DE ALARMA: ¿CUÁNDO PAUSAR LA CONVERSACIÓN?</div>
+                <div class="book-box-subtitle">Criterio claro para retirarse si la situación se vuelve hostil o circular.</div>
+            </div>
+            <div class="book-box-content compact" id="p-print-p4-alarma">Si la otra persona recurre a descalificaciones personales, gritos o interrupciones sistemáticas: «Veo que el tono no permite avanzar. Dejemos reposar este punto y retomamos la reunión mañana con calma.»</div>
+        </div>
+
+        <div class="book-running-footer">
+            <span>EDITORIAL MENOS RUIDO</span>
+            <span>MÉTODO DE 4 PASOS · PÁGINA 4</span>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        function updateCounter(inputId, counterId, maxLen) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(counterId);
+            if (input && counter) {
+                counter.textContent = `${input.value.length} / ${maxLen}`;
+            }
+        }
+
+        function resetToHome() {
+            document.getElementById('screen-home').style.display = 'block';
+            document.getElementById('flow-method').style.display = 'none';
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('btn-topbar-reset').classList.remove('visible');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startMethod() {
+            document.getElementById('screen-home').style.display = 'none';
+            document.getElementById('flow-method').style.display = 'block';
+            document.getElementById('btn-topbar-reset').classList.add('visible');
+            goToStep('p1-theory');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const stepProgress = {
+            'p1-theory': 12,
+            'p1-q1': 25,
+            'p2-theory': 37,
+            'p2-q1': 50,
+            'p3-theory': 62,
+            'p3-q1': 75,
+            'p4-theory': 87,
+            'p4-q1': 100
+        };
+
+        function updateNavPills(activePillId) {
+            document.querySelectorAll('.steps-nav-pill').forEach(pill => pill.classList.remove('active'));
+            const target = document.getElementById('navpill-' + activePillId);
+            if (target) {
+                target.classList.add('active');
+            }
+        }
+
+        function jumpToStep(target) {
+            if (target === 'p1') goToStep('p1-q1');
+            else if (target === 'p2') goToStep('p2-q1');
+            else if (target === 'p3') goToStep('p3-q1');
+            else if (target === 'p4') goToStep('p4-q1');
+            else if (target === 'final') finishMethod();
+        }
+
+        function goToStep(stepKey) {
+            document.querySelectorAll('#flow-method .step-card, #flow-method .final-hero-card').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('card-' + stepKey);
+            if (target) {
+                target.classList.add('active');
+            }
+            const pct = stepProgress[stepKey] || 50;
+            document.getElementById('progress-fill').style.width = pct + '%';
+
+            const prefix = stepKey.split('-')[0];
+            updateNavPills(prefix);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function finishMethod() {
+            document.querySelectorAll('#flow-method .step-card').forEach(el => el.classList.remove('active'));
+            document.getElementById('checkpoint-final').classList.add('active');
+            document.getElementById('progress-fill').style.width = '100%';
+            updateNavPills('final');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+                /* IMPRESIÓN DIRECTA 6x9" EXACTA AL LIBRO */
+        function printPage(pageKey) {
+            document.querySelectorAll('.print-sheet-wrapper').forEach(el => el.classList.remove('print-active'));
+
+            if (pageKey === 'p1') {
+                const hechos = document.getElementById('cmp-p1-hechos').value.trim() || '• 1. Hechos objetivos constatados durante los últimos días.';
+                const relato = document.getElementById('cmp-p1-relato').value.trim() || '• Interpretaciones o suposiciones que reconozco y dejo fuera de la reunión.';
+                document.getElementById('p-print-p1-hechos').textContent = hechos;
+                document.getElementById('p-print-p1-relato').textContent = relato;
+                document.getElementById('sheet-print-p1').classList.add('print-active');
+            } else if (pageKey === 'p2') {
+                const meta = document.getElementById('cmp-p2-meta').value.trim() || '• Alcanzar un acuerdo verificable con plazos claros.';
+                const limite = document.getElementById('cmp-p2-limite').value.trim() || '• No asumir responsabilidades ni condiciones fuera de lo acordado.';
+                const miedo = document.getElementById('cmp-p2-miedo').value.trim() || 'Temor: «Que la conversación genere tensión o rechazo».\nRealidad fría: Expresar límites con respeto protege la relación a largo plazo.';
+                document.getElementById('p-print-p2-meta').textContent = meta;
+                document.getElementById('p-print-p2-limite').textContent = limite;
+                document.getElementById('p-print-p2-miedo').textContent = miedo;
+                document.getElementById('sheet-print-p2').classList.add('print-active');
+            } else if (pageKey === 'p3') {
+                const apertura = document.getElementById('cmp-p3-apertura').value.trim() || '«Quiero que revisemos este punto para que podamos coordinarnos mejor a partir de ahora.»';
+                const problema = document.getElementById('cmp-p3-problema').value.trim() || (document.getElementById('cmp-p1-hechos').value.trim() || 'Exposición neutral basada en hechos objetivos.');
+                const peticion = document.getElementById('cmp-p3-peticion').value.trim() || '«Necesito que a partir de esta semana mantengamos este acuerdo de forma regular.»';
+                document.getElementById('p-print-p3-apertura').textContent = apertura;
+                document.getElementById('p-print-p3-problema').textContent = problema;
+                document.getElementById('p-print-p3-peticion').textContent = peticion;
+                document.getElementById('sheet-print-p3').classList.add('print-active');
+            } else if (pageKey === 'p4') {
+                const ataque = document.getElementById('cmp-p4-ataque').value.trim() || 'Pausa de 5 segundos + tono plano: «Entiendo que la situación genera presión; precisamente por eso necesitamos fijar este marco de trabajo.»';
+                const desvio = document.getElementById('cmp-p4-desvio').value.trim() || 'Técnica del Disco Rayado: «Podemos tratar ese tema más adelante; hoy lo indispensable es resolver este acuerdo.»';
+                const alarma = document.getElementById('cmp-p4-alarma').value.trim() || 'Si hay gritos o descalificaciones: «Veo que el tono no permite avanzar. Dejemos reposar este punto y retomamos mañana con calma.»';
+                document.getElementById('p-print-p4-ataque').textContent = ataque;
+                document.getElementById('p-print-p4-desvio').textContent = desvio;
+                document.getElementById('p-print-p4-alarma').textContent = alarma;
+                document.getElementById('sheet-print-p4').classList.add('print-active');
+            }
+
+            window.print();
+        }
+    </script>
+</body>
+</html>
