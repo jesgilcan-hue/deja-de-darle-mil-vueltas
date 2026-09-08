@@ -730,25 +730,47 @@
                 size: 6in 9in;
                 margin: 0;
             }
-            body {
+            html, body {
                 background: #ffffff !important;
                 color: #1a1a1a !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+                height: auto !important;
+                min-height: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
                 font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
             }
-            .topbar, .topbar-content, .topbar-nav, footer, .footer, .footer-content, .footer-bottom, .progress-track, .sim-container {
+            header, nav, .navbar, .topbar, .topbar-content, .topbar-nav,
+            footer, .footer, .footer-content, .footer-bottom,
+            .progress-track, .sim-container,
+            .modal-backdrop, .lightbox, #cover-lightbox {
+                display: none !important;
+            }
+            .print-sheet-wrapper {
                 display: none !important;
             }
             .print-sheet-wrapper.print-active {
-                display: block !important;
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 6in;
-                height: 9in;
-                box-sizing: border-box;
-                padding: 0.50in 0.45in 0.50in 0.50in; /* Margen simétrico/gutter */
-                background: #ffffff;
-                color: #1a1a1a;
+                display: flex !important;
+                flex-direction: column !important;
+                position: relative !important;
+                width: 6in !important;
+                height: 9in !important;
+                max-width: 6in !important;
+                min-height: 9in !important;
+                box-sizing: border-box !important;
+                padding: 0.50in 0.45in 0.50in 0.50in !important;
+                background: #ffffff !important;
+                color: #1a1a1a !important;
+                margin: 0 auto !important;
+                page-break-inside: avoid !important;
+                page-break-after: always !important;
+                break-after: page !important;
+            }
+            .print-sheet-wrapper.print-active:last-of-type {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
             }
 
             /* Running Header exacto del libro */
@@ -1275,6 +1297,13 @@
                             <button class="btn-print-single" onclick="printPage('p4')">🖨️ Imprimir</button>
                         </div>
                     </div>
+
+                    <!-- Botón para imprimir el cuaderno completo -->
+                    <div style="margin-top: 1.25rem; text-align: center;">
+                        <button type="button" class="btn-primary" style="padding: 14px 28px; font-size: 1rem; width: 100%; box-shadow: 0 4px 15px rgba(135,85,59,0.25);" onclick="printPage('all')">
+                            🖨️ Imprimir Ficha Completa (las 4 páginas juntas en PDF 6x9)
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Gancho al contenido completo del libro físico -->
@@ -1575,7 +1604,10 @@
             else if (target === 'final') finishMethod();
         }
 
+        let currentStep = 'p1-q1';
+
         function goToStep(stepKey) {
+            currentStep = stepKey;
             document.querySelectorAll('#flow-method .step-card, #flow-method .final-hero-card').forEach(el => el.classList.remove('active'));
             const target = document.getElementById('card-' + stepKey);
             if (target) {
@@ -1586,11 +1618,13 @@
 
             const prefix = stepKey.split('-')[0];
             updateNavPills(prefix);
+            updatePrintActiveSheet();
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function finishMethod() {
+            currentStep = 'final';
             document.querySelectorAll('#flow-method .step-card').forEach(el => el.classList.remove('active'));
             document.getElementById('checkpoint-final').classList.add('active');
             document.getElementById('progress-fill').style.width = '100%';
@@ -1604,49 +1638,133 @@
                 if (printAsunto) printAsunto.textContent = asunto;
             }
 
+            updatePrintActiveSheet();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updatePrintActiveSheet() {
+            document.querySelectorAll('.print-sheet-wrapper').forEach(el => el.classList.remove('print-active'));
+            if (currentStep === 'final') {
+                ['p1', 'p2', 'p3', 'p4'].forEach(k => {
+                    syncSheetData(k);
+                    const s = document.getElementById('sheet-print-' + k);
+                    if (s) s.classList.add('print-active');
+                });
+            } else if (currentStep && currentStep.startsWith('p2')) {
+                syncSheetData('p2');
+                const s = document.getElementById('sheet-print-p2');
+                if (s) s.classList.add('print-active');
+            } else if (currentStep && currentStep.startsWith('p3')) {
+                syncSheetData('p3');
+                const s = document.getElementById('sheet-print-p3');
+                if (s) s.classList.add('print-active');
+            } else if (currentStep && currentStep.startsWith('p4')) {
+                syncSheetData('p4');
+                const s = document.getElementById('sheet-print-p4');
+                if (s) s.classList.add('print-active');
+            } else {
+                syncSheetData('p1');
+                const s = document.getElementById('sheet-print-p1');
+                if (s) s.classList.add('print-active');
+            }
+        }
+
+        /* SINCRONIZACIÓN Y RENDERIZADO DE PLANTILLAS IMPRIMIBLES */
+        function syncSheetData(key) {
+            if (key === 'p1') {
+                const asunto = (document.getElementById('cmp-p1-asunto') && document.getElementById('cmp-p1-asunto').value.trim()) || 'Preparación de conversación difícil';
+                const hechos = (document.getElementById('cmp-p1-hechos') && document.getElementById('cmp-p1-hechos').value.trim()) || '• 1. Hechos objetivos constatados durante los últimos días.';
+                const relato = (document.getElementById('cmp-p1-relato') && document.getElementById('cmp-p1-relato').value.trim()) || '• Interpretaciones o suposiciones que reconozco y dejo fuera de la reunión.';
+                const asuntoEl = document.getElementById('p1-print-asunto');
+                if (asuntoEl) asuntoEl.textContent = asunto;
+                const hechosEl = document.getElementById('p-print-p1-hechos');
+                if (hechosEl) hechosEl.textContent = hechos;
+                const relatoEl = document.getElementById('p-print-p1-relato');
+                if (relatoEl) relatoEl.textContent = relato;
+            } else if (key === 'p2') {
+                const meta = (document.getElementById('cmp-p2-meta') && document.getElementById('cmp-p2-meta').value.trim()) || '• Alcanzar un acuerdo verificable con plazos claros.';
+                const limite = (document.getElementById('cmp-p2-limite') && document.getElementById('cmp-p2-limite').value.trim()) || '• No asumir responsabilidades ni condiciones fuera de lo acordado.';
+                const miedo = (document.getElementById('cmp-p2-miedo') && document.getElementById('cmp-p2-miedo').value.trim()) || 'Temor: «Que la conversación genere tensión o rechazo».\nRealidad fría: Expresar límites con respeto protege la relación a largo plazo.';
+                const metaEl = document.getElementById('p-print-p2-meta');
+                if (metaEl) metaEl.textContent = meta;
+                const limiteEl = document.getElementById('p-print-p2-limite');
+                if (limiteEl) limiteEl.textContent = limite;
+                const miedoEl = document.getElementById('p-print-p2-miedo');
+                if (miedoEl) miedoEl.textContent = miedo;
+            } else if (key === 'p3') {
+                const apertura = (document.getElementById('cmp-p3-apertura') && document.getElementById('cmp-p3-apertura').value.trim()) || '«Quiero que revisemos este punto para que podamos coordinarnos mejor a partir de ahora.»';
+                const problema = (document.getElementById('cmp-p3-problema') && document.getElementById('cmp-p3-problema').value.trim()) || (document.getElementById('cmp-p1-hechos') && document.getElementById('cmp-p1-hechos').value.trim()) || 'Exposición neutral basada en hechos objetivos.';
+                const peticion = (document.getElementById('cmp-p3-peticion') && document.getElementById('cmp-p3-peticion').value.trim()) || '«Necesito que a partir de esta semana mantengamos este acuerdo de forma regular.»';
+                const aperturaEl = document.getElementById('p-print-p3-apertura');
+                if (aperturaEl) aperturaEl.textContent = apertura;
+                const problemaEl = document.getElementById('p-print-p3-problema');
+                if (problemaEl) problemaEl.textContent = problema;
+                const peticionEl = document.getElementById('p-print-p3-peticion');
+                if (peticionEl) peticionEl.textContent = peticion;
+            } else if (key === 'p4') {
+                const ataque = (document.getElementById('cmp-p4-ataque') && document.getElementById('cmp-p4-ataque').value.trim()) || 'Pausa de 5 segundos + tono plano: «Entiendo que la situación genera presión; precisamente por eso necesitamos fijar este marco de trabajo.»';
+                const desvio = (document.getElementById('cmp-p4-desvio') && document.getElementById('cmp-p4-desvio').value.trim()) || 'Técnica del Disco Rayado: «Podemos tratar ese tema más adelante; hoy lo indispensable es resolver este acuerdo.»';
+                const alarma = (document.getElementById('cmp-p4-alarma') && document.getElementById('cmp-p4-alarma').value.trim()) || 'Si hay gritos o descalificaciones: «Veo que el tono no permite avanzar. Dejemos reposar este punto y retomamos mañana con calma.»';
+                const ataqueEl = document.getElementById('p-print-p4-ataque');
+                if (ataqueEl) ataqueEl.textContent = ataque;
+                const desvioEl = document.getElementById('p-print-p4-desvio');
+                if (desvioEl) desvioEl.textContent = desvio;
+                const alarmaEl = document.getElementById('p-print-p4-alarma');
+                if (alarmaEl) alarmaEl.textContent = alarma;
+            }
         }
 
         /* IMPRESIÓN DIRECTA 6x9" EXACTA AL LIBRO */
         function printPage(pageKey) {
             document.querySelectorAll('.print-sheet-wrapper').forEach(el => el.classList.remove('print-active'));
 
-            if (pageKey === 'p1') {
-                const asunto = (document.getElementById('cmp-p1-asunto') && document.getElementById('cmp-p1-asunto').value.trim()) || 'Preparación de conversación difícil';
-                const hechos = document.getElementById('cmp-p1-hechos').value.trim() || '• 1. Hechos objetivos constatados durante los últimos días.';
-                const relato = document.getElementById('cmp-p1-relato').value.trim() || '• Interpretaciones o suposiciones que reconozco y dejo fuera de la reunión.';
-                document.getElementById('p1-print-asunto').textContent = asunto;
-                document.getElementById('p-print-p1-hechos').textContent = hechos;
-                document.getElementById('p-print-p1-relato').textContent = relato;
-                document.getElementById('sheet-print-p1').classList.add('print-active');
-            } else if (pageKey === 'p2') {
-                const meta = document.getElementById('cmp-p2-meta').value.trim() || '• Alcanzar un acuerdo verificable con plazos claros.';
-                const limite = document.getElementById('cmp-p2-limite').value.trim() || '• No asumir responsabilidades ni condiciones fuera de lo acordado.';
-                const miedo = document.getElementById('cmp-p2-miedo').value.trim() || 'Temor: «Que la conversación genere tensión o rechazo».\nRealidad fría: Expresar límites con respeto protege la relación a largo plazo.';
-                document.getElementById('p-print-p2-meta').textContent = meta;
-                document.getElementById('p-print-p2-limite').textContent = limite;
-                document.getElementById('p-print-p2-miedo').textContent = miedo;
-                document.getElementById('sheet-print-p2').classList.add('print-active');
-            } else if (pageKey === 'p3') {
-                const apertura = document.getElementById('cmp-p3-apertura').value.trim() || '«Quiero que revisemos este punto para que podamos coordinarnos mejor a partir de ahora.»';
-                const problema = document.getElementById('cmp-p3-problema').value.trim() || (document.getElementById('cmp-p1-hechos').value.trim() || 'Exposición neutral basada en hechos objetivos.');
-                const peticion = document.getElementById('cmp-p3-peticion').value.trim() || '«Necesito que a partir de esta semana mantengamos este acuerdo de forma regular.»';
-                document.getElementById('p-print-p3-apertura').textContent = apertura;
-                document.getElementById('p-print-p3-problema').textContent = problema;
-                document.getElementById('p-print-p3-peticion').textContent = peticion;
-                document.getElementById('sheet-print-p3').classList.add('print-active');
-            } else if (pageKey === 'p4') {
-                const ataque = document.getElementById('cmp-p4-ataque').value.trim() || 'Pausa de 5 segundos + tono plano: «Entiendo que la situación genera presión; precisamente por eso necesitamos fijar este marco de trabajo.»';
-                const desvio = document.getElementById('cmp-p4-desvio').value.trim() || 'Técnica del Disco Rayado: «Podemos tratar ese tema más adelante; hoy lo indispensable es resolver este acuerdo.»';
-                const alarma = document.getElementById('cmp-p4-alarma').value.trim() || 'Si hay gritos o descalificaciones: «Veo que el tono no permite avanzar. Dejemos reposar este punto y retomamos mañana con calma.»';
-                document.getElementById('p-print-p4-ataque').textContent = ataque;
-                document.getElementById('p-print-p4-desvio').textContent = desvio;
-                document.getElementById('p-print-p4-alarma').textContent = alarma;
-                document.getElementById('sheet-print-p4').classList.add('print-active');
+            if (pageKey === 'all') {
+                ['p1', 'p2', 'p3', 'p4'].forEach(k => {
+                    syncSheetData(k);
+                    const sheet = document.getElementById('sheet-print-' + k);
+                    if (sheet) sheet.classList.add('print-active');
+                });
+            } else {
+                syncSheetData(pageKey);
+                const sheet = document.getElementById('sheet-print-' + pageKey);
+                if (sheet) sheet.classList.add('print-active');
             }
 
-            window.print();
+            setTimeout(() => {
+                window.print();
+            }, 60);
         }
+
+        // Auto-activar plantilla correspondiente si el usuario pulsa Ctrl+P / Cmd+P
+        window.addEventListener('beforeprint', () => {
+            const hasActive = document.querySelector('.print-sheet-wrapper.print-active');
+            if (!hasActive) {
+                if (currentStep && currentStep.startsWith('p2')) {
+                    syncSheetData('p2');
+                    document.getElementById('sheet-print-p2').classList.add('print-active');
+                } else if (currentStep && currentStep.startsWith('p3')) {
+                    syncSheetData('p3');
+                    document.getElementById('sheet-print-p3').classList.add('print-active');
+                } else if (currentStep && currentStep.startsWith('p4')) {
+                    syncSheetData('p4');
+                    document.getElementById('sheet-print-p4').classList.add('print-active');
+                } else if (currentStep === 'final') {
+                    ['p1', 'p2', 'p3', 'p4'].forEach(k => {
+                        syncSheetData(k);
+                        document.getElementById('sheet-print-' + k).classList.add('print-active');
+                    });
+                } else {
+                    syncSheetData('p1');
+                    document.getElementById('sheet-print-p1').classList.add('print-active');
+                }
+            }
+        });
+
+        window.addEventListener('afterprint', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.print-sheet-wrapper').forEach(el => el.classList.remove('print-active'));
+            }, 400);
+        });
 
         // Año actual en el footer
         const simYear = document.getElementById('sim-year');
@@ -1668,6 +1786,14 @@
             if (!e.target.closest('.dropdown')) {
                 document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
             }
+        });
+
+        // Inicializar ficha activa en carga inicial y mantenerla sincronizada
+        updatePrintActiveSheet();
+        document.querySelectorAll('.step-input').forEach(input => {
+            input.addEventListener('input', () => {
+                updatePrintActiveSheet();
+            });
         });
     </script>
 </body>
