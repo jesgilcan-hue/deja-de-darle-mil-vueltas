@@ -17,7 +17,9 @@ export default defineConfig({
         privacidad: resolve(__dirname, 'politica-privacidad.html'),
         cookies: resolve(__dirname, 'politica-cookies.html'),
         sim90: resolve(__dirname, 'simulador-90-dias.html'),
-        sim180: resolve(__dirname, 'simulador-180-dias.html')
+        sim180: resolve(__dirname, 'simulador-180-dias.html'),
+        simdeja: resolve(__dirname, 'simulador-deja-de-darle-mil-vueltas.html'),
+        simdejav3: resolve(__dirname, 'simulador-deja-de-darle-mil-vueltas-v3.html')
       }
     }
   }

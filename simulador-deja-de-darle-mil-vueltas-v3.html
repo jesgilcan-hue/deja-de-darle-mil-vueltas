@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador de Decisiones | Deja de darle mil vueltas — Menos Ruido</title>
+    <meta name="description" content="Prueba el método para tomar decisiones sin sobreanálisis. Pantalla a pantalla, con calma y claridad." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-bg: #f7f5f0;
+            --color-card: #ffffff;
+            --color-paper: #fffefb;
+            --color-paper-line: #dcd7ce;
+            --color-paper-dot: #cfc8bd;
+            --color-text: #212121;
+            --color-text-muted: #66615b;
+            --color-text-faint: #9c9589;
+            --color-accent: #87553b;
+            --color-accent-hover: #70442e;
+            --color-sage: #586851;
+            --color-sage-light: rgba(88, 104, 81, 0.12);
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --radius-box: 10px;
+            --shadow-card: 0 10px 30px rgba(35, 30, 20, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA SUPERIOR */
+        .topbar {
+            background-color: rgba(247, 245, 240, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .topbar-logo {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .topbar-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: rgba(135, 85, 59, 0.1);
+            color: var(--color-accent);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .topbar-link {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+        .topbar-link:hover {
+            color: var(--color-text);
+        }
+
+        /* BARRA DE PROGRESO */
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #e8e3d8;
+            display: none;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--color-accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .main-container {
+            flex: 1;
+            max-width: 780px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2.5rem 1.25rem 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* VISTA DE ELECCIÓN INICIAL */
+        .choice-hero {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .choice-hero-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            background: rgba(135, 85, 59, 0.08);
+            padding: 5px 14px;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+        }
+        .choice-hero h1 {
+            font-family: var(--font-serif);
+            font-size: 2.25rem;
+            line-height: 1.25;
+            color: var(--color-text);
+            margin-bottom: 0.85rem;
+        }
+        .choice-hero p {
+            font-size: 1.05rem;
+            color: var(--color-text-muted);
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        .path-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 640px) {
+            .path-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .path-card {
+            background: var(--color-card);
+            border: 2px solid transparent;
+            border-radius: var(--radius-box);
+            padding: 2rem 1.75rem;
+            box-shadow: var(--shadow-card);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .path-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--color-accent);
+            box-shadow: 0 16px 35px rgba(35, 30, 20, 0.1);
+        }
+        .path-card-kicker {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .path-card h2 {
+            font-family: var(--font-serif);
+            font-size: 1.45rem;
+            line-height: 1.25;
+            margin-bottom: 0.65rem;
+            color: var(--color-text);
+        }
+        .path-card p {
+            font-size: 0.92rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+        .path-card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--color-text-faint);
+            border-top: 1px solid #f0ece1;
+            padding-top: 1rem;
+        }
+        .path-card-btn {
+            color: var(--color-accent);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .book-scope-banner {
+            background: #fff;
+            border: 1px dashed var(--color-paper-line);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            font-size: 0.88rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            box-shadow: var(--shadow-card);
+        }
+        @media (max-width: 640px) {
+            .book-scope-banner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* TARJETAS DEL ASISTENTE */
+        .step-card {
+            background: var(--color-card);
+            border-radius: var(--radius-box);
+            box-shadow: var(--shadow-card);
+            padding: 2.25rem;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .step-card.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        .step-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-sage);
+            background: var(--color-sage-light);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .step-badge.theory {
+            color: var(--color-accent);
+            background: rgba(135, 85, 59, 0.1);
+        }
+        .step-counter {
+            font-size: 0.8rem;
+            color: var(--color-text-faint);
+            font-weight: 500;
+        }
+
+        .step-title {
+            font-family: var(--font-serif);
+            font-size: 1.85rem;
+            line-height: 1.25;
+            color: var(--color-text);
+            margin-bottom: 0.75rem;
+        }
+        .step-description {
+            font-size: 1rem;
+            color: var(--color-text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.8rem;
+        }
+
+        /* CAJAS DE TEORÍA DEL LIBRO */
+        .theory-quote-box {
+            background: #faf8f5;
+            border-left: 3.5px solid var(--color-accent);
+            padding: 1.25rem 1.4rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: var(--color-text);
+            font-size: 1.08rem;
+            line-height: 1.55;
+        }
+        .theory-text-block {
+            font-size: 0.96rem;
+            color: var(--color-text);
+            line-height: 1.65;
+            margin-bottom: 1.25rem;
+        }
+        .theory-bullets {
+            list-style: none;
+            padding-left: 0;
+            margin: 1.25rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .theory-bullets li {
+            position: relative;
+            padding-left: 1.5rem;
+            font-size: 0.94rem;
+            color: var(--color-text);
+            line-height: 1.45;
+        }
+        .theory-bullets li::before {
+            content: '—';
+            position: absolute;
+            left: 0;
+            color: var(--color-accent);
+            font-weight: bold;
+        }
+
+        /* INPUTS Y FORMULARIOS */
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+        .step-example-hint {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            background: #fdfcf9;
+            border-left: 2.5px solid #d4cebe;
+            padding: 0.45rem 0.75rem;
+            margin-bottom: 0.6rem;
+            border-radius: 0 4px 4px 0;
+            font-style: italic;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .step-input {
+            width: 100%;
+            background: #faf8f5;
+            border: 1.5px solid var(--color-paper-line);
+            border-radius: 8px;
+            padding: 0.85rem 1.1rem;
+            font-size: 1.02rem;
+            font-family: var(--font-serif);
+            color: var(--color-text);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .step-input:focus {
+            border-color: var(--color-accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+        textarea.step-input {
+            resize: vertical;
+            min-height: 90px;
+            line-height: 1.5;
+        }
+        .char-counter {
+            display: block;
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--color-text-faint);
+            margin-top: 0.35rem;
+        }
+
+        /* BARRA DE NAVEGACIÓN ENTRE PASOS */
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f0ede6;
+        }
+        .btn-prev {
+            background: transparent;
+            border: 1px solid #dcd7ce;
+            color: var(--color-text-muted);
+            padding: 0.75rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-prev:hover {
+            border-color: var(--color-text);
+            color: var(--color-text);
+        }
+        .btn-next {
+            background: var(--color-accent);
+            color: #ffffff;
+            border: none;
+            padding: 0.75rem 1.75rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-next:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* CHECKPOINT / HITO TRAS COMPLETAR UN PASO */
+        .checkpoint-card {
+            background: var(--color-card);
+            border-radius: var(--radius-box);
+            box-shadow: var(--shadow-card);
+            padding: 2.5rem 2.25rem;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+            text-align: center;
+        }
+        .checkpoint-card.active {
+            display: block;
+        }
+        .checkpoint-icon {
+            font-size: 2.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .checkpoint-title {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--color-text);
+        }
+        .checkpoint-subtitle {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            max-width: 520px;
+            margin: 0 auto 2rem;
+            line-height: 1.55;
+        }
+
+        /* LISTA DE PÁGINAS DISPONIBLES PARA IMPRIMIR EN EL CHECKPOINT */
+        .print-sheets-catalog {
+            background: #faf8f5;
+            border: 1px solid var(--color-paper-line);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        .print-sheets-catalog-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .print-sheet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e8e3d8;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.6rem;
+            transition: all 0.2s;
+        }
+        .print-sheet-item:last-child {
+            margin-bottom: 0;
+        }
+        .print-sheet-info strong {
+            display: block;
+            font-size: 0.92rem;
+            color: var(--color-text);
+        }
+        .print-sheet-info span {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+        .btn-print-single {
+            background: #fdfcf9;
+            border: 1.5px solid var(--color-accent);
+            color: var(--color-accent);
+            font-weight: 600;
+            font-size: 0.82rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+        .btn-print-single:hover {
+            background: var(--color-accent);
+            color: #ffffff;
+        }
+
+        .checkpoint-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .btn-continue-step {
+            background: var(--color-sage);
+            color: #ffffff;
+            border: none;
+            padding: 0.85rem 2rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-continue-step:hover {
+            background: #465440;
+            transform: translateY(-1px);
+        }
+
+        /* PANTALLA FINAL (TRAS EL PASO 5) */
+        .final-hero-card {
+            background: var(--color-card);
+            border-radius: var(--radius-box);
+            box-shadow: var(--shadow-card);
+            padding: 3rem 2.25rem;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+            text-align: center;
+        }
+        .final-hero-card.active {
+            display: block;
+        }
+        .final-pill {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            background: rgba(135, 85, 59, 0.1);
+            padding: 5px 14px;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+        }
+        .final-hero-card h2 {
+            font-family: var(--font-serif);
+            font-size: 2.1rem;
+            line-height: 1.25;
+            color: var(--color-text);
+            margin-bottom: 1rem;
+        }
+        .final-hero-card p {
+            font-size: 1.02rem;
+            color: var(--color-text-muted);
+            max-width: 580px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+        .book-deliverables-box {
+            background: #faf8f5;
+            border: 1px solid var(--color-paper-line);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 0 auto 2.5rem;
+            max-width: 600px;
+            text-align: left;
+        }
+        .book-deliverables-box h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-accent);
+            margin-bottom: 1rem;
+        }
+        .deliverables-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+        }
+        @media (max-width: 560px) {
+            .deliverables-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        .deliverables-list li {
+            position: relative;
+            padding-left: 1.3rem;
+            font-size: 0.88rem;
+            color: var(--color-text);
+            line-height: 1.4;
+        }
+        .deliverables-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--color-sage);
+            font-weight: bold;
+        }
+
+        .btn-amazon-cta {
+            display: inline-block;
+            background: var(--color-accent);
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.05rem;
+            font-weight: 700;
+            padding: 1.1rem 2.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 18px rgba(135, 85, 59, 0.35);
+            transition: all 0.2s;
+        }
+        .btn-amazon-cta:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-2px);
+        }
+        .amazon-review-link {
+            display: block;
+            margin-top: 1.25rem;
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            text-decoration: underline;
+        }
+        .amazon-review-link:hover {
+            color: var(--color-text);
+        }
+
+        /* =======================================================
+           HOJAS FÍSICAS PARA IMPRESIÓN DIRECTA (@media print)
+           DISEÑO IDÉNTICO AL LIBRO KDP (6x9 in, sin nº de página)
+           ======================================================= */
+        .print-sheet-wrapper {
+            display: none;
+        }
+
+        @media print {
+            @page {
+                size: 6in 9in;
+                margin: 0;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #111111 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .topbar,
+            .progress-bar-container,
+            .main-container {
+                display: none !important;
+            }
+
+            .print-sheet-wrapper {
+                display: block !important;
+            }
+
+            .kdp-sheet {
+                width: 6in !important;
+                height: 9in !important;
+                max-width: 6in !important;
+                min-height: 9in !important;
+                padding: 0.65in 0.6in 0.55in 0.6in !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+                background-color: #fffefb !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+                font-family: 'Times New Roman', Times, Georgia, serif;
+                color: #111111;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .kdp-header-num {
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 8pt;
+                font-weight: bold;
+                letter-spacing: 0.8pt;
+                text-transform: uppercase;
+                color: #595959;
+                margin-bottom: 2pt;
+            }
+            .kdp-header-title {
+                font-family: 'Times New Roman', Times, Georgia, serif;
+                font-size: 18pt;
+                font-weight: bold;
+                color: #111;
+                line-height: 1.15;
+                margin-bottom: 8pt;
+            }
+            .kdp-intro-para {
+                font-size: 9pt;
+                line-height: 1.35;
+                color: #333;
+                margin-bottom: 12pt;
+            }
+
+            .kdp-field {
+                margin-bottom: 11pt;
+            }
+            .kdp-field-label {
+                font-family: 'Times New Roman', Times, Georgia, serif;
+                font-size: 9.5pt;
+                font-weight: bold;
+                color: #111;
+                margin-bottom: 3pt;
+            }
+            .kdp-user-text {
+                font-family: 'Times New Roman', Times, Georgia, serif;
+                font-size: 9.5pt;
+                color: #111;
+                line-height: 1.35;
+                min-height: 14pt;
+                padding-bottom: 2pt;
+            }
+            .kdp-dotted-line {
+                border-bottom: 1px dotted #888;
+                height: 14pt;
+                margin-bottom: 1pt;
+            }
+
+            .kdp-footer {
+                display: flex;
+                justify-content: space-between;
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 7.5pt;
+                color: #777;
+                border-top: 0.5pt solid #ddd;
+                padding-top: 5pt;
+                margin-top: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+        <div class="topbar-content">
+            <a href="/deja-de-darle-mil-vueltas.html" class="topbar-logo">
+                Menos Ruido <span class="topbar-tag">Simulador</span>
+            </a>
+            <span class="topbar-link" onclick="resetToHome()">← Elegir otra opción</span>
+        </div>
+    </header>
+
+    <!-- BARRA DE PROGRESO -->
+    <div class="progress-bar-container" id="progress-container">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+
+    <main class="main-container">
+
+        <!-- ==========================================
+             PANTALLA DE INICIO: ELECCIÓN DE CAMINO
+             ========================================== -->
+        <section id="view-home" style="display: block;">
+            <div class="choice-hero">
+                <span class="choice-hero-badge">Método Editorial Menos Ruido</span>
+                <h1>¿Qué tipo de decisión tienes <span>entre manos</span>?</h1>
+                <p>El libro físico distingue dos ritmos: un atajo para cerrar preguntas pequeñas del día a día, o el recorrido guiado para decisiones que necesitan mesa propia.</p>
+            </div>
+
+            <div class="path-cards-grid">
+                <!-- Opción 1: Decisión Rápida -->
+                <div class="path-card" onclick="startFlow('rapida')">
+                    <div>
+                        <span class="path-card-kicker">⚡ Atajo de 5 minutos</span>
+                        <h2>Decisión Rápida</h2>
+                        <p>Para dudas cotidianas que se han alargado más de la cuenta: responder un mensaje, una compra pequeña, un plan o un límite.</p>
+                    </div>
+                    <div class="path-card-meta">
+                        <span>Paso a paso guiado</span>
+                        <span class="path-card-btn">Comenzar atajo →</span>
+                    </div>
+                </div>
+
+                <!-- Opción 2: Decisión Importante (5 Pasos) -->
+                <div class="path-card" onclick="startFlow('importante')">
+                    <div>
+                        <span class="path-card-kicker">🧭 El Método Completo</span>
+                        <h2>Decisión Importante</h2>
+                        <p>Para decisiones con más capas (trabajo, dinero, tiempo, relaciones). Muestra interactiva de los primeros 5 pasos con teoría y páginas de trabajo.</p>
+                    </div>
+                    <div class="path-card-meta">
+                        <span>5 Pasos interactivos</span>
+                        <span class="path-card-btn">Iniciar método →</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="book-scope-banner">
+                <div>
+                    <strong>Muestra interactiva de decisiones cotidianas e importantes.</strong> En el libro físico completo de 131 páginas encontrarás los 10 pasos completos (incluida la matriz de comparación, carta al yo futuro y revisión sin castigo), 12 herramientas de apoyo y 24 páginas libres punteadas.
+                </div>
+                <a href="https://www.amazon.es/dp/B0H3KBSC78" target="_blank" rel="noopener noreferrer" style="color: var(--color-accent); font-weight: 700; text-decoration: none; white-space: nowrap;">Ver libro en Amazon →</a>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             FLUJO A: DECISIÓN RÁPIDA (ATAJO)
+             ========================================== -->
+        <section id="flow-rapida" style="display: none;">
+            <!-- RÁPIDA - PASO 1 (TEORÍA) -->
+            <div class="step-card" id="card-rapida-1">
+                <div class="step-top-row">
+                    <span class="step-badge theory">Decisiones rápidas · Teoría</span>
+                    <span class="step-counter">1 de 4</span>
+                </div>
+                <h2 class="step-title">La decisión que solo necesita bajar el volumen</h2>
+                <div class="theory-quote-box">
+                    «No todas las decisiones piden una investigación. Algunas solo necesitan que dejes de sostenerlas con la mente abierta todo el día.»
+                </div>
+                <p class="theory-text-block">
+                    Decidir qué responder, si comprar algo pequeño, si aceptar un plan o si hacer una llamada puede ocupar más espacio del que merece. En esta parte no buscamos una revelación definitiva; buscamos una <strong>opción suficientemente buena</strong> que puedas escribir, mirar y cerrar con una acción de 24 horas.
+                </p>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="resetToHome()">← Volver</button>
+                    <button class="btn-next" onclick="nextStepRapida(2)">Entendido, empezar →</button>
+                </div>
+            </div>
+
+            <!-- RÁPIDA - PASO 2 (PREGUNTAS 1 Y 2) -->
+            <div class="step-card" id="card-rapida-2">
+                <div class="step-top-row">
+                    <span class="step-badge">Decisiones rápidas · Práctica</span>
+                    <span class="step-counter">2 de 4</span>
+                </div>
+                <h2 class="step-title">Ponle nombre a la duda</h2>
+                <p class="step-description">Escribe rápido. Aquí no buscas una respuesta perfecta, sino acotar la pregunta en una sola frase.</p>
+                <div class="input-group">
+                    <label class="input-label">Fecha o momento:</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="rap-fecha" class="step-input" maxlength="35" placeholder="Ej: Martes por la mañana" oninput="updateCounter('rap-fecha', 'cnt-rap-fecha', 35)">
+                        <span class="char-counter" id="cnt-rap-fecha">0 / 35</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Estoy decidiendo si...</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Compro la cafetera nueva o sigo usando la actual.</div>
+                    <div class="input-wrapper">
+                        <input type="text" id="rap-duda" class="step-input" maxlength="110" placeholder="Escribe aquí tu duda concreta..." oninput="updateCounter('rap-duda', 'cnt-rap-duda', 110)">
+                        <span class="char-counter" id="cnt-rap-duda">0 / 110</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="nextStepRapida(1)">← Anterior</button>
+                    <button class="btn-next" onclick="nextStepRapida(3)">Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- RÁPIDA - PASO 3 (OPCIONES Y COSTE DE NO DECIDIR) -->
+            <div class="step-card" id="card-rapida-3">
+                <div class="step-top-row">
+                    <span class="step-badge">Decisiones rápidas · Práctica</span>
+                    <span class="step-counter">3 de 4</span>
+                </div>
+                <h2 class="step-title">Opciones y coste de esperar</h2>
+                <p class="step-description">Mira qué pasa si no cierras hoy y cuál es tu alternativa razonable.</p>
+                <div class="input-group">
+                    <label class="input-label">Mis opciones reales son:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> A) Comprarla hoy aprovechando el descuento / B) Esperar 3 meses.</div>
+                    <div class="input-wrapper">
+                        <textarea id="rap-opciones" class="step-input" maxlength="160" placeholder="Escribe tus 2 opciones..." oninput="updateCounter('rap-opciones', 'cnt-rap-opc', 160)"></textarea>
+                        <span class="char-counter" id="cnt-rap-opc">0 / 160</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Si no decido hoy, el coste será:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Seguir mirando comparativas en internet y perder 2 horas más.</div>
+                    <div class="input-wrapper">
+                        <input type="text" id="rap-coste" class="step-input" maxlength="120" placeholder="Qué coste mental o de tiempo pagas..." oninput="updateCounter('rap-coste', 'cnt-rap-coste', 120)">
+                        <span class="char-counter" id="cnt-rap-coste">0 / 120</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="nextStepRapida(2)">← Anterior</button>
+                    <button class="btn-next" onclick="nextStepRapida(4)">Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- RÁPIDA - PASO 4 (ELECCIÓN Y ACCIÓN DE 24H) -->
+            <div class="step-card" id="card-rapida-4">
+                <div class="step-top-row">
+                    <span class="step-badge">Decisiones rápidas · Cierre</span>
+                    <span class="step-counter">4 de 4</span>
+                </div>
+                <h2 class="step-title">Opción viable y acción en 24h</h2>
+                <p class="step-description">Toca la realidad con un gesto pequeño y deja de revisar mentalmente.</p>
+                <div class="input-group">
+                    <label class="input-label">La opción suficientemente buena ahora es:</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="rap-eleccion" class="step-input" maxlength="110" placeholder="Tu elección razonable..." oninput="updateCounter('rap-eleccion', 'cnt-rap-elec', 110)">
+                        <span class="char-counter" id="cnt-rap-elec">0 / 110</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Primer paso concreto en 24 horas:</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="rap-paso24" class="step-input" maxlength="110" placeholder="Ej: Mandar el mensaje / Hacer el pedido / Decir que no..." oninput="updateCounter('rap-paso24', 'cnt-rap-p24', 110)">
+                        <span class="char-counter" id="cnt-rap-p24">0 / 110</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Qué dejaré de revisar después de hacerlo:</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="rap-parar" class="step-input" maxlength="100" placeholder="Ej: No volveré a buscar modelos en Amazon ni pensaré si fue perfecto." oninput="updateCounter('rap-parar', 'cnt-rap-parar', 100)">
+                        <span class="char-counter" id="cnt-rap-parar">0 / 100</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="nextStepRapida(3)">← Anterior</button>
+                    <button class="btn-next" onclick="finishRapida()">Completar y ver página →</button>
+                </div>
+            </div>
+
+            <!-- CHECKPOINT DECISIÓN RÁPIDA -->
+            <div class="checkpoint-card" id="checkpoint-rapida">
+                <div class="checkpoint-icon">✨</div>
+                <h2 class="checkpoint-title">Decisión Rápida Completada</h2>
+                <p class="checkpoint-subtitle">Has bajado el volumen a la duda y tienes un primer paso para las próximas 24 horas. Puedes imprimir tu hoja de trabajo con el diseño del libro o volver al inicio.</p>
+
+                <div class="print-sheets-catalog">
+                    <div class="print-sheets-catalog-title">
+                        <span>Página disponible para imprimir</span>
+                        <span>Formato KDP 6x9"</span>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Atajo de claridad · Decisión rápida</strong>
+                            <span>Página de trabajo con tu duda y tu acción de 24h</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('rapida-1')">🖨️ Imprimir página</button>
+                    </div>
+                </div>
+
+                <div class="checkpoint-actions">
+                    <a href="https://www.amazon.es/dp/B0H3KBSC78" target="_blank" rel="noopener noreferrer" class="btn-amazon-cta" style="padding: 0.85rem 1.75rem; font-size: 0.95rem;">Ver libro en Amazon →</a>
+                    <button class="btn-prev" onclick="resetToHome()">Volver al inicio</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             FLUJO B: DECISIÓN IMPORTANTE (5 PASOS)
+             ========================================== -->
+        <section id="flow-importante" style="display: none;">
+
+            <!-- ==============================
+                 PASO 1: LA DECISIÓN EN UNA FRASE
+                 ============================== -->
+            <!-- P1: Teoría -->
+            <div class="step-card" id="card-p1-theory">
+                <div class="step-top-row">
+                    <span class="step-badge theory">Paso 01 · Teoría</span>
+                    <span class="step-counter">Paso 1: Preparación</span>
+                </div>
+                <h2 class="step-title">Antes de nombrar la decisión</h2>
+                <div class="theory-quote-box">
+                    «Una decisión confusa suele crecer porque intenta resolver demasiadas cosas a la vez. Nombrar no resuelve, pero reduce el tamaño de la nube.»
+                </div>
+                <p class="theory-text-block">
+                    Cuando escribes la decisión en una sola frase, empiezas a separar la pregunta real de todo lo que se ha pegado alrededor: miedo a decepcionar, ganas de acertar, presión externa o fantasías de una opción perfecta.
+                </p>
+                <p class="theory-text-block" style="font-size: 0.9rem; color: var(--color-text-muted);">
+                    <em>Nota del libro:</em> Si tu frase empieza por «qué hago con mi vida», es demasiado grande. Bájala hasta que puedas escribir un primer paso real.
+                </p>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="resetToHome()">← Volver</button>
+                    <button class="btn-next" onclick="goToStepImportante('p1-q1')">Escribir mi frase →</button>
+                </div>
+            </div>
+
+            <!-- P1: Pregunta 1 y 2 (Fecha y Frase) -->
+            <div class="step-card" id="card-p1-q1">
+                <div class="step-top-row">
+                    <span class="step-badge">Paso 01 · La decisión en una frase</span>
+                    <span class="step-counter">Paso 1: Parte 1 de 2</span>
+                </div>
+                <h2 class="step-title">¿Qué estás decidiendo exactamente?</h2>
+                <p class="step-description">La primera escena del recorrido es humilde: una frase. No una vida entera, solo la pregunta que hoy necesita forma.</p>
+                <div class="input-group">
+                    <label class="input-label">Fecha o contexto de esta decisión:</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="imp-p1-fecha" class="step-input" maxlength="40" placeholder="Ej: Septiembre 2026 / Decisión laboral" oninput="updateCounter('imp-p1-fecha', 'cnt-p1-f', 40)">
+                        <span class="char-counter" id="cnt-p1-f">0 / 40</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Estoy decidiendo si...</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Estoy decidiendo si dejo mi empleo actual en diciembre o pido una reducción de jornada.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p1-frase" class="step-input" maxlength="160" placeholder="Define con precisión qué estás decidiendo..." oninput="updateCounter('imp-p1-frase', 'cnt-p1-fra', 160)"></textarea>
+                        <span class="char-counter" id="cnt-p1-fra">0 / 160</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStepImportante('p1-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="goToStepImportante('p1-q2')">Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- P1: Pregunta 3 y 4 (Límites y lo que sí decido) -->
+            <div class="step-card" id="card-p1-q2">
+                <div class="step-top-row">
+                    <span class="step-badge">Paso 01 · La decisión en una frase</span>
+                    <span class="step-counter">Paso 1: Parte 2 de 2</span>
+                </div>
+                <h2 class="step-title">Ponle límites a la decisión</h2>
+                <p class="step-description">Una buena frase de decisión dice qué entra y qué se queda fuera para que no te abrume.</p>
+                <div class="input-group">
+                    <label class="input-label">Esta decisión NO incluye:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> No incluye decidir dónde viviré en 5 años ni qué opinará toda mi familia.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p1-noincluye" class="step-input" maxlength="150" placeholder="Qué cosas NO estás intentando resolver hoy..." oninput="updateCounter('imp-p1-noincluye', 'cnt-p1-no', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p1-no">0 / 150</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">La parte que sí puedo decidir ahora es:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Si pido la reunión con mi responsable el próximo lunes.</div>
+                    <div class="input-wrapper">
+                        <input type="text" id="imp-p1-sidecido" class="step-input" maxlength="120" placeholder="La pieza concreta que sí está en tus manos..." oninput="updateCounter('imp-p1-sidecido', 'cnt-p1-si', 120)">
+                        <span class="char-counter" id="cnt-p1-si">0 / 120</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStepImportante('p1-q1')">← Anterior</button>
+                    <button class="btn-next" onclick="reachCheckpoint(1)">Cerrar Paso 1 →</button>
+                </div>
+            </div>
+
+            <!-- CHECKPOINT TRAS PASO 1 -->
+            <div class="checkpoint-card" id="checkpoint-p1">
+                <div class="checkpoint-icon">🌱</div>
+                <h2 class="checkpoint-title">Paso 1 Completado: La decisión nombrada</h2>
+                <p class="checkpoint-subtitle">Acabas de acotar tu duda. Has separado lo que sí puedes decidir hoy de lo que no entra en esta conversación. Puedes imprimir esta primera página o continuar al Paso 2.</p>
+
+                <div class="print-sheets-catalog">
+                    <div class="print-sheets-catalog-title">
+                        <span>Páginas de trabajo listas</span>
+                        <span>KDP 6x9"</span>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 01 · La decisión en una frase</strong>
+                            <span>Tu pregunta acotada y delimitada sin ruido</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir Paso 1</button>
+                    </div>
+                </div>
+
+                <div class="checkpoint-actions">
+                    <button class="btn-continue-step" onclick="goToStepImportante('p2-theory')">Continuar al Paso 2: Coste de no decidir →</button>
+                </div>
+            </div>
+
+
+            <!-- ==============================
+                 PASO 2: EL COSTE DE NO DECIDIR
+                 ============================== -->
+            <!-- P2: Teoría -->
+            <div class="step-card" id="card-p2-theory">
+                <div class="step-top-row">
+                    <span class="step-badge theory">Paso 02 · Teoría</span>
+                    <span class="step-counter">Paso 2: Preparación</span>
+                </div>
+                <h2 class="step-title">El coste de dejar una pregunta abierta</h2>
+                <div class="theory-quote-box">
+                    «No decidir también ocupa espacio. No es una postura neutral: consume atención, descanso y oportunidades.»
+                </div>
+                <p class="theory-text-block">
+                    La pregunta no es solo qué pasa si eliges mal; conviene mirar qué pasa si sigues sosteniendo la duda sin moverla. Esta parte mira 3 ventanas de tiempo: <strong>24 horas, 7 días y 30 días</strong> para que el coste deje de ser abstracto.
+                </p>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="reachCheckpoint(1)">← Volver al Paso 1</button>
+                    <button class="btn-next" onclick="goToStepImportante('p2-q1')">Calcular el coste →</button>
+                </div>
+            </div>
+
+            <!-- P2: Preguntas (24h, 7d, 30d) -->
+            <div class="step-card" id="card-p2-q1">
+                <div class="step-top-row">
+                    <span class="step-badge">Paso 02 · Qué pasa si no decido</span>
+                    <span class="step-counter">Paso 2: Práctica</span>
+                </div>
+                <h2 class="step-title">Mira las tres ventanas de tiempo</h2>
+                <p class="step-description">Lo que hoy parece pequeño puede revelar que ya estás pagando un precio alto en energía y descanso.</p>
+                <div class="input-group">
+                    <label class="input-label">Si no decido en 24 horas, probablemente...</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Pasaré otra tarde con la cabeza dispersa sin disfrutar de mi descanso.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p2-24h" class="step-input" maxlength="130" placeholder="Qué gesto aplazas o qué coste pagas hoy..." oninput="updateCounter('imp-p2-24h', 'cnt-p2-24', 130)"></textarea>
+                        <span class="char-counter" id="cnt-p2-24">0 / 130</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Si no decido en 7 días, probablemente...</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Se me acumulará la tensión laboral y la opción inicial perderá fuerza.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p2-7d" class="step-input" maxlength="130" placeholder="Qué se acumula si sigues igual una semana..." oninput="updateCounter('imp-p2-7d', 'cnt-p2-7d', 130)"></textarea>
+                        <span class="char-counter" id="cnt-p2-7d">0 / 130</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Si no decido en 30 días, probablemente...</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Habré normalizado vivir con esta frustración y habré perdido el tren.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p2-30d" class="step-input" maxlength="130" placeholder="Qué coste tiene convertir la espera en hábito..." oninput="updateCounter('imp-p2-30d', 'cnt-p2-30d', 130)"></textarea>
+                        <span class="char-counter" id="cnt-p2-30d">0 / 130</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStepImportante('p2-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="reachCheckpoint(2)">Cerrar Paso 2 →</button>
+                </div>
+            </div>
+
+            <!-- CHECKPOINT TRAS PASO 2 -->
+            <div class="checkpoint-card" id="checkpoint-p2">
+                <div class="checkpoint-icon">⏱️</div>
+                <h2 class="checkpoint-title">Paso 2 Completado: El coste visible</h2>
+                <p class="checkpoint-subtitle">Ahora sabes exactamente lo que te cuesta postergar. Ya no es una nube abstracta. Puedes imprimir tus páginas del Paso 1 y Paso 2, o avanzar al Paso 3.</p>
+
+                <div class="print-sheets-catalog">
+                    <div class="print-sheets-catalog-title">
+                        <span>Páginas de trabajo listas</span>
+                        <span>KDP 6x9"</span>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 01 · La decisión en una frase</strong>
+                            <span>Tu pregunta acotada y delimitada</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir Paso 1</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 02 · Qué pasa si no decido</strong>
+                            <span>Ventanas de coste en 24h, 7 días y 30 días</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p2')">🖨️ Imprimir Paso 2</button>
+                    </div>
+                </div>
+
+                <div class="checkpoint-actions">
+                    <button class="btn-continue-step" onclick="goToStepImportante('p3-theory')">Continuar al Paso 3: Opciones reales →</button>
+                </div>
+            </div>
+
+
+            <!-- ==============================
+                 PASO 3: OPCIONES REALES
+                 ============================== -->
+            <!-- P3: Teoría -->
+            <div class="step-card" id="card-p3-theory">
+                <div class="step-top-row">
+                    <span class="step-badge theory">Paso 03 · Teoría</span>
+                    <span class="step-counter">Paso 3: Preparación</span>
+                </div>
+                <h2 class="step-title">Antes de listar opciones</h2>
+                <div class="theory-quote-box">
+                    «No todas las opciones que aparecen en la cabeza son opciones reales. Algunas son deseos sin primer paso y otras son miedos disfrazados de plan.»
+                </div>
+                <p class="theory-text-block">
+                    Una opción real no tiene que ser perfecta ni definitiva, pero <strong>sí debe tener alguna puerta de entrada tangible</strong>: una llamada, una prueba, una conversación o una fecha. También puede aparecer una tercera opción intermedia (una versión pequeña) que desbloquee los dos extremos.
+                </p>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="reachCheckpoint(2)">← Volver al Paso 2</button>
+                    <button class="btn-next" onclick="goToStepImportante('p3-q1')">Listar opciones reales →</button>
+                </div>
+            </div>
+
+            <!-- P3: Preguntas (Opción A, B, C y no realista) -->
+            <div class="step-card" id="card-p3-q1">
+                <div class="step-top-row">
+                    <span class="step-badge">Paso 03 · Opciones reales</span>
+                    <span class="step-counter">Paso 3: Práctica</span>
+                </div>
+                <h2 class="step-title">Separa lo posible de lo imaginado</h2>
+                <p class="step-description">Define qué caminos tienen un primer paso real hoy y qué opción suena bien pero no es realista ahora.</p>
+                
+                <div class="input-group">
+                    <label class="input-label">Opción A (Primer paso real y qué aceptarías):</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="imp-p3-opca" class="step-input" maxlength="130" placeholder="Opción A: Primer paso y qué peaje tendrías que aceptar..." oninput="updateCounter('imp-p3-opca', 'cnt-p3-a', 130)">
+                        <span class="char-counter" id="cnt-p3-a">0 / 130</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Opción B (Primer paso real y qué aceptarías):</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="imp-p3-opcb" class="step-input" maxlength="130" placeholder="Opción B: Primer paso y qué peaje tendrías que aceptar..." oninput="updateCounter('imp-p3-opcb', 'cnt-p3-b', 130)">
+                        <span class="char-counter" id="cnt-p3-b">0 / 130</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Opción C o prueba pequeña intermedia:</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="imp-p3-opcc" class="step-input" maxlength="130" placeholder="Un camino intermedio o ensayo pequeño..." oninput="updateCounter('imp-p3-opcc', 'cnt-p3-c', 130)">
+                        <span class="char-counter" id="cnt-p3-c">0 / 130</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">La opción que suena bien pero NO es realista ahora:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Dejarlo todo e irme a vivir al campo sin ahorros.</div>
+                    <div class="input-wrapper">
+                        <input type="text" id="imp-p3-fantasia" class="step-input" maxlength="120" placeholder="La fantasía que no debe competir en igualdad..." oninput="updateCounter('imp-p3-fantasia', 'cnt-p3-fan', 120)">
+                        <span class="char-counter" id="cnt-p3-fan">0 / 120</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStepImportante('p3-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="reachCheckpoint(3)">Cerrar Paso 3 →</button>
+                </div>
+            </div>
+
+            <!-- CHECKPOINT TRAS PASO 3 -->
+            <div class="checkpoint-card" id="checkpoint-p3">
+                <div class="checkpoint-icon">🛤️</div>
+                <h2 class="checkpoint-title">Paso 3 Completado: Opciones sobre la mesa</h2>
+                <p class="checkpoint-subtitle">Has descartado fantasías y tienes tus caminos posibles bien identificados. Puedes imprimir cualquiera de las 3 páginas o continuar al Paso 4.</p>
+
+                <div class="print-sheets-catalog">
+                    <div class="print-sheets-catalog-title">
+                        <span>Páginas de trabajo listas</span>
+                        <span>KDP 6x9"</span>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 01 · La decisión en una frase</strong>
+                            <span>Tu pregunta acotada y delimitada</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir Paso 1</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 02 · Qué pasa si no decido</strong>
+                            <span>Ventanas de coste en 24h, 7 días y 30 días</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p2')">🖨️ Imprimir Paso 2</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 03 · Opciones reales</strong>
+                            <span>Caminos posibles y opción no realista</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p3')">🖨️ Imprimir Paso 3</button>
+                    </div>
+                </div>
+
+                <div class="checkpoint-actions">
+                    <button class="btn-continue-step" onclick="goToStepImportante('p4-theory')">Continuar al Paso 4: Lo que sé / Lo que imagino →</button>
+                </div>
+            </div>
+
+
+            <!-- ==============================
+                 PASO 4: LO QUE SÉ / LO QUE IMAGINO
+                 ============================== -->
+            <!-- P4: Teoría -->
+            <div class="step-card" id="card-p4-theory">
+                <div class="step-top-row">
+                    <span class="step-badge theory">Paso 04 · Teoría</span>
+                    <span class="step-counter">Paso 4: Preparación</span>
+                </div>
+                <h2 class="step-title">Cuando la decisión se mezcla</h2>
+                <div class="theory-quote-box">
+                    «Muchas decisiones se vuelven pesadas porque todo se coloca en el mismo estante: un dato comprobado pesa igual que una sospecha o un cansancio.»
+                </div>
+                <p class="theory-text-block">
+                    Distinguir baja la intensidad sin negar la importancia. Un <strong>dato</strong> es lo que ya puedes comprobar. Una <strong>suposición</strong> puede ser razonable pero no está probada. Y el <strong>ruido</strong> es lo que se repite por prisa o cansancio sin aportar nada nuevo.
+                </p>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="reachCheckpoint(3)">← Volver al Paso 3</button>
+                    <button class="btn-next" onclick="goToStepImportante('p4-q1')">Separar datos y ruido →</button>
+                </div>
+            </div>
+
+            <!-- P4: Preguntas (Datos, Suposiciones, Ruido, Comprobación) -->
+            <div class="step-card" id="card-p4-q1">
+                <div class="step-top-row">
+                    <span class="step-badge">Paso 04 · Lo que sé / Lo que imagino</span>
+                    <span class="step-counter">Paso 4: Práctica</span>
+                </div>
+                <h2 class="step-title">Separa la información real del ruido</h2>
+                <p class="step-description">Coloca cada elemento en su estante correspondiente para no comparar cosas desiguales.</p>
+
+                <div class="input-group">
+                    <label class="input-label">Datos comprobados (cifras, hechos, fechas):</label>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p4-datos" class="step-input" maxlength="150" placeholder="Lo que es un hecho seguro y comprobado..." oninput="updateCounter('imp-p4-datos', 'cnt-p4-dat', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p4-dat">0 / 150</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Suposiciones o historias que me cuento:</label>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p4-supuestos" class="step-input" maxlength="150" placeholder="Cosas que creo que pasarán pero aún no tengo pruebas..." oninput="updateCounter('imp-p4-supuestos', 'cnt-p4-sup', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p4-sup">0 / 150</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Ruido sin información (prisa, miedo, cansancio):</label>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p4-ruido" class="step-input" maxlength="130" placeholder="Pensamientos que solo repiten urgencia sin datos nuevos..." oninput="updateCounter('imp-p4-ruido', 'cnt-p4-rui', 130)"></textarea>
+                        <span class="char-counter" id="cnt-p4-rui">0 / 130</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Una cosa que puedo comprobar antes de seguir pensando:</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="imp-p4-comprobar" class="step-input" maxlength="120" placeholder="Ej: Mirar mi saldo real / Preguntar las condiciones exactas..." oninput="updateCounter('imp-p4-comprobar', 'cnt-p4-comp', 120)">
+                        <span class="char-counter" id="cnt-p4-comp">0 / 120</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStepImportante('p4-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="reachCheckpoint(4)">Cerrar Paso 4 →</button>
+                </div>
+            </div>
+
+            <!-- CHECKPOINT TRAS PASO 4 -->
+            <div class="checkpoint-card" id="checkpoint-p4">
+                <div class="checkpoint-icon">🔍</div>
+                <h2 class="checkpoint-title">Paso 4 Completado: Claridad sobre los datos</h2>
+                <p class="checkpoint-subtitle">Has bajado la niebla. Ahora distingues los hechos de las historias mentales. Puedes imprimir tus hojas de los Pasos 1 al 4 o pasar al Paso 5.</p>
+
+                <div class="print-sheets-catalog">
+                    <div class="print-sheets-catalog-title">
+                        <span>Páginas de trabajo listas</span>
+                        <span>KDP 6x9"</span>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 01 · La decisión en una frase</strong>
+                            <span>Pregunta acotada</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir Paso 1</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 02 · Qué pasa si no decido</strong>
+                            <span>Coste de no decidir</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p2')">🖨️ Imprimir Paso 2</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 03 · Opciones reales</strong>
+                            <span>Caminos posibles</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p3')">🖨️ Imprimir Paso 3</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 04 · Lo que sé / Lo que imagino</strong>
+                            <span>Datos vs Supuestos vs Ruido</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p4')">🖨️ Imprimir Paso 4</button>
+                    </div>
+                </div>
+
+                <div class="checkpoint-actions">
+                    <button class="btn-continue-step" onclick="goToStepImportante('p5-theory')">Continuar al Paso 5: Miedo, deseo y presión →</button>
+                </div>
+            </div>
+
+
+            <!-- ==============================
+                 PASO 5: MIEDO, DESEO Y PRESIÓN
+                 ============================== -->
+            <!-- P5: Teoría -->
+            <div class="step-card" id="card-p5-theory">
+                <div class="step-top-row">
+                    <span class="step-badge theory">Paso 05 · Teoría</span>
+                    <span class="step-counter">Paso 5: Preparación</span>
+                </div>
+                <h2 class="step-title">Antes de escuchar miedo, deseo y presión</h2>
+                <div class="theory-quote-box">
+                    «No todo lo que empuja merece obediencia. No todo lo que asusta significa peligro.»
+                </div>
+                <p class="theory-text-block">
+                    El miedo intenta protegerte. El deseo señala una necesidad real o una vía de escape. La presión ajena puede traer información o intentar empujarte hacia una vida que no es la tuya. Escucharlas no te obliga a obedecerlas; te permite saber de dónde viene cada impulso.
+                </p>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="reachCheckpoint(4)">← Volver al Paso 4</button>
+                    <button class="btn-next" onclick="goToStepImportante('p5-q1')">Nombrar las tres voces →</button>
+                </div>
+            </div>
+
+            <!-- P5: Preguntas (Miedo, Deseo, Presión) -->
+            <div class="step-card" id="card-p5-q1">
+                <div class="step-top-row">
+                    <span class="step-badge">Paso 05 · Miedo, deseo y presión</span>
+                    <span class="step-counter">Paso 5: Práctica</span>
+                </div>
+                <h2 class="step-title">Escuchar sin obedecer a ciegas</h2>
+                <p class="step-description">Ponle nombre a lo que temes, a lo que anhelas y a las expectativas ajenas que estás cargando.</p>
+
+                <div class="input-group">
+                    <label class="input-label">Lo que me da miedo (¿Qué intenta proteger?):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Temo equivocarme y quedarme sin ahorros. Intenta proteger mi tranquilidad financiera.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p5-miedo" class="step-input" maxlength="150" placeholder="Escribe el miedo y qué intenta cuidar..." oninput="updateCounter('imp-p5-miedo', 'cnt-p5-mie', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p5-mie">0 / 150</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Lo que deseo que ocurra de verdad:</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> Deseo tener tardes tranquilas y no sentirme quemado cada domingo por la tarde.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p5-deseo" class="step-input" maxlength="150" placeholder="El deseo honesto que hay detrás..." oninput="updateCounter('imp-p5-deseo', 'cnt-p5-des', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p5-des">0 / 150</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">La presión externa que no quiero obedecer (¿De quién viene?):</label>
+                    <div class="step-example-hint"><strong>Ejemplo:</strong> La expectativa de ascender en el sector solo para demostrar que tengo éxito.</div>
+                    <div class="input-wrapper">
+                        <textarea id="imp-p5-presion" class="step-input" maxlength="150" placeholder="La voz de otros que no tiene por qué mandar aquí..." oninput="updateCounter('imp-p5-presion', 'cnt-p5-pre', 150)"></textarea>
+                        <span class="char-counter" id="cnt-p5-pre">0 / 150</span>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <button class="btn-prev" onclick="goToStepImportante('p5-theory')">← Teoría</button>
+                    <button class="btn-next" onclick="finishAllSteps()">Completar los 5 Pasos →</button>
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 PANTALLA FINAL: CHECKPOINT COMPLETO (PASOS 1-5)
+                 Y GANCHO PERSUASIVO AL LIBRO FÍSICO
+                 ========================================== -->
+            <div class="final-hero-card" id="checkpoint-final">
+                <span class="final-pill">Muestra Interactiva Completada</span>
+                <h2>Has despejado el 80% del ruido inicial</h2>
+                <p>
+                    Has formulado tu decisión, calculado el coste de esperar, delimitado opciones reales, separado datos de sospechas y escuchado tus emociones sin obedecerlas a ciegas.
+                </p>
+
+                <!-- Catálogo completo de hojas listas para imprimir -->
+                <div class="print-sheets-catalog" style="max-width: 600px; margin: 0 auto 2.25rem;">
+                    <div class="print-sheets-catalog-title">
+                        <span>Tus 5 Páginas del Libro Listas para Imprimir</span>
+                        <span>Formato 6x9"</span>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 01 · La decisión en una frase</strong>
+                            <span>La pregunta delimitada</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p1')">🖨️ Imprimir Paso 1</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 02 · Qué pasa si no decido</strong>
+                            <span>Ventanas de coste 24h, 7d y 30d</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p2')">🖨️ Imprimir Paso 2</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 03 · Opciones reales</strong>
+                            <span>Caminos posibles y opciones no realistas</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p3')">🖨️ Imprimir Paso 3</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 04 · Lo que sé / Lo que imagino</strong>
+                            <span>Datos comprobados vs ruido</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p4')">🖨️ Imprimir Paso 4</button>
+                    </div>
+                    <div class="print-sheet-item">
+                        <div class="print-sheet-info">
+                            <strong>Paso 05 · Miedo, deseo y presión</strong>
+                            <span>Nombrar las emociones que tiran</span>
+                        </div>
+                        <button class="btn-print-single" onclick="printPage('p5')">🖨️ Imprimir Paso 5</button>
+                    </div>
+                </div>
+
+                <!-- Gancho al libro físico completo -->
+                <div class="book-deliverables-box">
+                    <h4>¿Qué te espera en el libro físico completo (131 páginas)?</h4>
+                    <ul class="deliverables-list">
+                        <li><strong>Paso 6:</strong> Matriz simple de comparación (impacto, esfuerzo, reversibilidad y paz mental).</li>
+                        <li><strong>Paso 7:</strong> El mini experimento (probar antes de comprometerte).</li>
+                        <li><strong>Paso 8:</strong> Carta al yo futuro (acuerdos contigo mismo).</li>
+                        <li><strong>Paso 9:</strong> El plan de 24 horas y fecha de cierre.</li>
+                        <li><strong>Paso 10:</strong> Revisar el proceso sin castigo ni culpa.</li>
+                        <li><strong>12 Herramientas de apoyo:</strong> Botiquín para atascos específicos.</li>
+                        <li><strong>4 Casos Reales resueltos:</strong> Ejemplos paso a paso de principio a fin.</li>
+                        <li><strong>24 Páginas Libres punteadas:</strong> Espacio limpio para pensar a mano sin pantallas.</li>
+                    </ul>
+                </div>
+
+                <a href="https://www.amazon.es/dp/B0H3KBSC78" target="_blank" rel="noopener noreferrer" class="btn-amazon-cta">
+                    Conseguir el libro en Amazon →
+                </a>
+
+                <a href="https://www.amazon.es/review/create-review/?ie=UTF8&channel=glance-detail&asin=B0H3KBSC78" target="_blank" rel="noopener noreferrer" class="amazon-review-link">
+                    ¿Ya has leído el libro? Deja tu valoración en Amazon aquí
+                </a>
+
+                <div style="margin-top: 1.5rem;">
+                    <button class="btn-prev" onclick="resetToHome()">Volver al inicio</button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ===================================================================
+         HOJAS DE TRABAJO INVISIBLES EN PANTALLA, EXACTAS PARA IMPRESIÓN (@media print)
+         RECREACIÓN FIDEDIGNA DEL LIBRO KDP DE 131 PÁGINAS (6x9 in)
+         =================================================================== -->
+    <div class="print-sheet-wrapper" id="printable-container">
+        <!-- Se inyectará dinámicamente según la página solicitada -->
+    </div>
+
+    <!-- SCRIPT DE NAVEGACIÓN Y GENERACIÓN DE IMPRESIÓN -->
+    <script>
+        let currentFlow = ''; // 'rapida' o 'importante'
+
+        function resetToHome() {
+            document.getElementById('view-home').style.display = 'block';
+            document.getElementById('flow-rapida').style.display = 'none';
+            document.getElementById('flow-importante').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startFlow(flowType) {
+            currentFlow = flowType;
+            document.getElementById('view-home').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'block';
+
+            if (flowType === 'rapida') {
+                document.getElementById('flow-rapida').style.display = 'block';
+                document.getElementById('flow-importante').style.display = 'none';
+                nextStepRapida(1);
+            } else {
+                document.getElementById('flow-importante').style.display = 'block';
+                document.getElementById('flow-rapida').style.display = 'none';
+                goToStepImportante('p1-theory');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* LÓGICA FLUJO RÁPIDA */
+        function nextStepRapida(stepNum) {
+            document.querySelectorAll('#flow-rapida .step-card, #flow-rapida .checkpoint-card').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('card-rapida-' + stepNum);
+            if (target) {
+                target.classList.add('active');
+                const inp = target.querySelector('input, textarea');
+                if (inp) setTimeout(() => inp.focus(), 150);
+            }
+            const pct = (stepNum / 4) * 100;
+            document.getElementById('progress-fill').style.width = pct + '%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function finishRapida() {
+            document.querySelectorAll('#flow-rapida .step-card').forEach(el => el.classList.remove('active'));
+            document.getElementById('checkpoint-rapida').classList.add('active');
+            document.getElementById('progress-fill').style.width = '100%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* LÓGICA FLUJO IMPORTANTE */
+        const stepProgress = {
+            'p1-theory': 10,
+            'p1-q1': 16,
+            'p1-q2': 20,
+            'p2-theory': 30,
+            'p2-q1': 40,
+            'p3-theory': 50,
+            'p3-q1': 60,
+            'p4-theory': 70,
+            'p4-q1': 80,
+            'p5-theory': 90,
+            'p5-q1': 100
+        };
+
+        function goToStepImportante(stepKey) {
+            document.querySelectorAll('#flow-importante .step-card, #flow-importante .checkpoint-card, #flow-importante .final-hero-card').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('card-' + stepKey);
+            if (target) {
+                target.classList.add('active');
+                const inp = target.querySelector('input, textarea');
+                if (inp) setTimeout(() => inp.focus(), 150);
+            }
+            const pct = stepProgress[stepKey] || 50;
+            document.getElementById('progress-fill').style.width = pct + '%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function reachCheckpoint(pNum) {
+            document.querySelectorAll('#flow-importante .step-card, #flow-importante .checkpoint-card').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('checkpoint-p' + pNum);
+            if (target) {
+                target.classList.add('active');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function finishAllSteps() {
+            document.querySelectorAll('#flow-importante .step-card, #flow-importante .checkpoint-card').forEach(el => el.classList.remove('active'));
+            document.getElementById('checkpoint-final').classList.add('active');
+            document.getElementById('progress-fill').style.width = '100%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateCounter(inputId, counterId, maxLen) {
+            const el = document.getElementById(inputId);
+            const cnt = document.getElementById(counterId);
+            if (!el || !cnt) return;
+            const len = el.value.length;
+            cnt.innerText = `${len} / ${maxLen}`;
+            if (len >= maxLen) {
+                cnt.style.color = '#c26d53';
+                cnt.style.fontWeight = '700';
+            } else {
+                cnt.style.color = 'var(--color-text-faint)';
+                cnt.style.fontWeight = '500';
+            }
+        }
+
+        /* ===================================================================
+           LÓGICA DE IMPRESIÓN DE CADA PÁGINA (KDP EXACTO, SIN NÚMERO DE PÁGINA)
+           =================================================================== */
+        function printPage(pageKey) {
+            const container = document.getElementById('printable-container');
+            container.innerHTML = ''; // Limpiar
+
+            if (pageKey === 'rapida-1') {
+                const fecha = document.getElementById('rap-fecha').value.trim() || 'Fecha: ________________________';
+                const duda = document.getElementById('rap-duda').value.trim();
+                const opciones = document.getElementById('rap-opciones').value.trim();
+                const coste = document.getElementById('rap-coste').value.trim();
+                const eleccion = document.getElementById('rap-eleccion').value.trim();
+                const paso24 = document.getElementById('rap-paso24').value.trim();
+                const parar = document.getElementById('rap-parar').value.trim();
+
+                container.innerHTML = `
+                    <div class="kdp-sheet">
+                        <div>
+                            <div class="kdp-header-num">DECISIONES RÁPIDAS</div>
+                            <div class="kdp-header-title">Atajo de claridad</div>
+                            <p class="kdp-intro-para">Usa esta página cuando la decisión sea pequeña y corregible. Escribe rápido: aquí no buscas una respuesta perfecta, sino una opción suficientemente buena para dejar de gastar atención de más.</p>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Fecha o momento</div>
+                                <div class="kdp-user-text">${fecha}</div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Estoy decidiendo si...</div>
+                                <div class="kdp-user-text">${duda || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Mis opciones reales son</div>
+                                <div class="kdp-user-text">${opciones || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Si no decido hoy, el coste será</div>
+                                <div class="kdp-user-text">${coste || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">La opción suficientemente buena ahora es</div>
+                                <div class="kdp-user-text">${eleccion || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field" style="margin-top: 14pt; border-top: 0.5pt solid #ccc; padding-top: 8pt;">
+                                <div class="kdp-field-label">Una acción pequeña (Primer paso en 24 horas)</div>
+                                <div class="kdp-user-text"><strong>${paso24 || ''}</strong></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Qué dejaré de revisar después de hacerlo</div>
+                                <div class="kdp-user-text">${parar || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+                        </div>
+
+                        <div class="kdp-footer">
+                            <span>Decisiones rápidas · Cuaderno de trabajo</span>
+                            <span>Editorial Menos Ruido · Deja de darle mil vueltas</span>
+                        </div>
+                    </div>
+                `;
+            } else if (pageKey === 'p1') {
+                const fecha = document.getElementById('imp-p1-fecha').value.trim() || 'Fecha: ________________________';
+                const frase = document.getElementById('imp-p1-frase').value.trim();
+                const noincluye = document.getElementById('imp-p1-noincluye').value.trim();
+                const sidecido = document.getElementById('imp-p1-sidecido').value.trim();
+
+                container.innerHTML = `
+                    <div class="kdp-sheet">
+                        <div>
+                            <div class="kdp-header-num">PASO 01</div>
+                            <div class="kdp-header-title">La decisión en una frase</div>
+                            <p class="kdp-intro-para">La primera escena del recorrido es humilde: una frase. No una vida entera, no una identidad, no una sentencia definitiva. Solo la pregunta que hoy necesita forma.</p>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Fecha o contexto de esta decisión</div>
+                                <div class="kdp-user-text">${fecha}</div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Estoy decidiendo si...</div>
+                                <div class="kdp-user-text">${frase || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Esta decisión NO incluye</div>
+                                <div class="kdp-user-text">${noincluye || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">La parte que sí puedo decidir ahora es</div>
+                                <div class="kdp-user-text">${sidecido || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+                        </div>
+
+                        <div class="kdp-footer">
+                            <span>Paso 01 · La decisión en una frase</span>
+                            <span>Editorial Menos Ruido · Deja de darle mil vueltas</span>
+                        </div>
+                    </div>
+                `;
+            } else if (pageKey === 'p2') {
+                const c24 = document.getElementById('imp-p2-24h').value.trim();
+                const c7d = document.getElementById('imp-p2-7d').value.trim();
+                const c30d = document.getElementById('imp-p2-30d').value.trim();
+
+                container.innerHTML = `
+                    <div class="kdp-sheet">
+                        <div>
+                            <div class="kdp-header-num">PASO 02</div>
+                            <div class="kdp-header-title">Qué pasa si no decido</div>
+                            <p class="kdp-intro-para">No decidir también ocupa espacio. Mira qué pasa si sigues sosteniendo la decisión sin moverla a través de tres ventanas de tiempo concretas.</p>
+
+                            <div class="kdp-field" style="margin-top: 15pt;">
+                                <div class="kdp-field-label">Si no decido en 24 horas, probablemente...</div>
+                                <div class="kdp-user-text">${c24 || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field" style="margin-top: 15pt;">
+                                <div class="kdp-field-label">Si no decido en 7 días, probablemente...</div>
+                                <div class="kdp-user-text">${c7d || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field" style="margin-top: 15pt;">
+                                <div class="kdp-field-label">Si no decido en 30 días, probablemente...</div>
+                                <div class="kdp-user-text">${c30d || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+                        </div>
+
+                        <div class="kdp-footer">
+                            <span>Paso 02 · Qué pasa si no decido</span>
+                            <span>Editorial Menos Ruido · Deja de darle mil vueltas</span>
+                        </div>
+                    </div>
+                `;
+            } else if (pageKey === 'p3') {
+                const opcA = document.getElementById('imp-p3-opca').value.trim();
+                const opcB = document.getElementById('imp-p3-opcb').value.trim();
+                const opcC = document.getElementById('imp-p3-opcc').value.trim();
+                const fan = document.getElementById('imp-p3-fantasia').value.trim();
+
+                container.innerHTML = `
+                    <div class="kdp-sheet">
+                        <div>
+                            <div class="kdp-header-num">PASO 03</div>
+                            <div class="kdp-header-title">Opciones reales</div>
+                            <p class="kdp-intro-para">Una opción real tiene algún primer paso. No tiene que ser perfecta, pero sí tiene que existir en tu vida actual. Las fantasías y los castigos impulsivos no deben competir como caminos equivalentes.</p>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Opción A (Primer paso real y qué tendría que aceptar)</div>
+                                <div class="kdp-user-text">${opcA || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Opción B (Primer paso real y qué tendría que aceptar)</div>
+                                <div class="kdp-user-text">${opcB || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Opción C o prueba pequeña intermedia</div>
+                                <div class="kdp-user-text">${opcC || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field" style="margin-top: 14pt;">
+                                <div class="kdp-field-label">La opción que suena bien pero no es realista ahora</div>
+                                <div class="kdp-user-text">${fan || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+                        </div>
+
+                        <div class="kdp-footer">
+                            <span>Paso 03 · Opciones reales</span>
+                            <span>Editorial Menos Ruido · Deja de darle mil vueltas</span>
+                        </div>
+                    </div>
+                `;
+            } else if (pageKey === 'p4') {
+                const dat = document.getElementById('imp-p4-datos').value.trim();
+                const sup = document.getElementById('imp-p4-supuestos').value.trim();
+                const rui = document.getElementById('imp-p4-ruido').value.trim();
+                const comp = document.getElementById('imp-p4-comprobar').value.trim();
+
+                container.innerHTML = `
+                    <div class="kdp-sheet">
+                        <div>
+                            <div class="kdp-header-num">PASO 04</div>
+                            <div class="kdp-header-title">Lo que sé / lo que imagino</div>
+                            <p class="kdp-intro-para">Aquí la decisión empieza a respirar. Un dato no pesa igual que una suposición. Una sospecha no pesa igual que una cifra. Un miedo no pesa igual que una señal comprobable.</p>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Datos comprobados</div>
+                                <div class="kdp-user-text">${dat || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Suposiciones o historias</div>
+                                <div class="kdp-user-text">${sup || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Ruido sin información (presión, prisa, cansancio)</div>
+                                <div class="kdp-user-text">${rui || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field">
+                                <div class="kdp-field-label">Una cosa que puedo comprobar antes de seguir pensando</div>
+                                <div class="kdp-user-text">${comp || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+                        </div>
+
+                        <div class="kdp-footer">
+                            <span>Paso 04 · Lo que sé / lo que imagino</span>
+                            <span>Editorial Menos Ruido · Deja de darle mil vueltas</span>
+                        </div>
+                    </div>
+                `;
+            } else if (pageKey === 'p5') {
+                const mie = document.getElementById('imp-p5-miedo').value.trim();
+                const des = document.getElementById('imp-p5-deseo').value.trim();
+                const pre = document.getElementById('imp-p5-presion').value.trim();
+
+                container.innerHTML = `
+                    <div class="kdp-sheet">
+                        <div>
+                            <div class="kdp-header-num">PASO 05</div>
+                            <div class="kdp-header-title">Miedo, deseo y presión</div>
+                            <p class="kdp-intro-para">No todo lo que empuja merece obediencia. No todo lo que asusta significa peligro. Separar estas tres voces te permite escucharlas sin dejar que manden a ciegas.</p>
+
+                            <div class="kdp-field" style="margin-top: 14pt;">
+                                <div class="kdp-field-label">Lo que me da miedo (¿Qué intenta proteger?)</div>
+                                <div class="kdp-user-text">${mie || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field" style="margin-top: 14pt;">
+                                <div class="kdp-field-label">Lo que deseo que ocurra</div>
+                                <div class="kdp-user-text">${des || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+
+                            <div class="kdp-field" style="margin-top: 14pt;">
+                                <div class="kdp-field-label">La presión externa que no quiero obedecer automáticamente (¿De quién viene?)</div>
+                                <div class="kdp-user-text">${pre || ''}</div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                                <div class="kdp-dotted-line"></div>
+                            </div>
+                        </div>
+
+                        <div class="kdp-footer">
+                            <span>Paso 05 · Miedo, deseo y presión</span>
+                            <span>Editorial Menos Ruido · Deja de darle mil vueltas</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Lanzar ventana de impresión del navegador
+            setTimeout(() => {
+                window.print();
+            }, 200);
+        }
+    </script>
+</body>
+</html>
