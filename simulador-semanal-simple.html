@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador | Planificador Atemporal Semanal y Mensual — Menos Ruido</title>
+    <meta name="description" content="Prueba gratis el método del Planificador Atemporal Semanal y Mensual en formato apaisado. Organiza tu semana con foco y sin pantallas." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-bg: #f7f5f0;
+            --color-card: #ffffff;
+            --color-paper: #fffefb;
+            --color-paper-line: #dcd7ce;
+            --color-paper-dot: #cfc8bd;
+            --color-text: #212121;
+            --color-text-muted: #66615b;
+            --color-text-faint: #9c9589;
+            --color-accent: #87553b;
+            --color-accent-hover: #70442e;
+            --color-forest: #2b3a32;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --radius-box: 10px;
+            --shadow-card: 0 10px 30px rgba(35, 30, 20, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background-color: rgba(247, 245, 240, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .topbar-logo {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .topbar-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: rgba(43, 58, 50, 0.1);
+            color: var(--color-forest);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .topbar-link {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .topbar-link:hover {
+            color: var(--color-text);
+        }
+
+        .topbar-nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .topbar-nav a {
+            text-decoration: none;
+            color: var(--color-text);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .topbar-nav a:hover {
+            color: var(--color-forest);
+        }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 220px;
+            box-shadow: 0 10px 25px rgba(35, 30, 20, 0.12);
+            z-index: 1001;
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.06);
+            top: 100%;
+            left: 0;
+            padding: 0.5rem 0;
+        }
+        .dropdown-content a {
+            color: var(--color-text);
+            padding: 10px 16px;
+            text-decoration: none;
+            display: block;
+            font-weight: 400 !important;
+            font-size: 0.85rem;
+        }
+        .dropdown-content a:hover {
+            background-color: #f7f5f0;
+            color: var(--color-forest);
+        }
+        .dropdown:hover .dropdown-content,
+        .dropdown.open .dropdown-content {
+            display: block;
+        }
+        .btn-topbar-book {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--color-forest);
+            text-decoration: none;
+            border: 1px solid var(--color-forest);
+            padding: 5px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-topbar-book:hover {
+            background: var(--color-forest);
+            color: #ffffff;
+        }
+        @media (max-width: 768px) {
+            .topbar-content {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                padding: 0.65rem 1rem;
+            }
+            .topbar-nav {
+                gap: 0.85rem;
+            }
+            .topbar-nav a {
+                font-size: 0.82rem;
+            }
+            .btn-topbar-book {
+                display: none;
+            }
+            .dropdown-content {
+                right: 0;
+                left: auto;
+            }
+        }
+
+        /* FOOTER CORPORATIVO */
+        .footer {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            padding: 3.5rem 1.5rem 2.5rem;
+            margin-top: 5rem;
+        }
+        .footer-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 2.5rem;
+        }
+        .footer-col h3 {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+        .footer-col p {
+            opacity: 0.75;
+            font-size: 0.88rem;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+        .footer-col h4 {
+            font-size: 0.92rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.85rem;
+            color: #ffffff;
+        }
+        .footer-col a {
+            display: block;
+            color: rgba(255,255,255,0.75);
+            text-decoration: none;
+            font-size: 0.88rem;
+            margin-bottom: 0.5rem;
+            transition: color 0.2s;
+        }
+        .footer-col a:hover {
+            color: #ffffff;
+        }
+        .footer-bottom {
+            max-width: 900px;
+            margin: 2.5rem auto 0;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.82rem;
+            opacity: 0.6;
+            text-align: center;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: rgba(0,0,0,0.05);
+        }
+        .progress-fill {
+            height: 100%;
+            width: 25%;
+            background-color: var(--color-forest);
+            transition: width 0.3s ease;
+        }
+
+        .main-container {
+            max-width: 850px;
+            margin: 2.5rem auto 4rem;
+            padding: 0 1.25rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        .step-card {
+            display: none;
+            background: var(--color-card);
+            border-radius: var(--radius-box);
+            padding: 2.5rem 2.8rem;
+            box-shadow: var(--shadow-card);
+            border: 1px solid rgba(0,0,0,0.04);
+            animation: fadeIn 0.35s ease forwards;
+        }
+        .step-card.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        .step-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-forest);
+            background: rgba(43, 58, 50, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .step-counter {
+            font-size: 0.85rem;
+            color: var(--color-text-faint);
+            font-weight: 500;
+        }
+
+        .step-title {
+            font-family: var(--font-serif);
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 0.6rem;
+            line-height: 1.25;
+        }
+        .step-subtitle {
+            font-size: 1rem;
+            color: var(--color-text-muted);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .theory-highlight-box {
+            background-color: var(--color-bg);
+            border-left: 3px solid var(--color-forest);
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 2rem;
+            font-style: italic;
+            font-size: 0.95rem;
+            color: var(--color-forest);
+        }
+
+        .input-group {
+            margin-bottom: 1.75rem;
+        }
+        .input-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .input-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-text);
+        }
+        .char-counter {
+            font-size: 0.75rem;
+            color: var(--color-text-faint);
+        }
+
+        .form-input-text {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--color-paper-line);
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            color: var(--color-text);
+            background-color: var(--color-paper);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input-text:focus {
+            outline: none;
+            border-color: var(--color-forest);
+            box-shadow: 0 0 0 3px rgba(43, 58, 50, 0.1);
+        }
+
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .day-input-card {
+            background: #faf8f5;
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .buttons-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        .btn-prev {
+            background: none;
+            border: 1px solid var(--color-paper-line);
+            color: var(--color-text-muted);
+            padding: 0.75rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-prev:hover {
+            color: var(--color-text);
+            border-color: var(--color-text-muted);
+        }
+        .btn-next {
+            background-color: var(--color-forest);
+            color: #ffffff;
+            border: none;
+            padding: 0.75rem 1.8rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-left: auto;
+        }
+        .btn-next:hover {
+            background-color: #1b2620;
+        }
+
+        /* =======================================================
+           MODAL DE FINALIZACIÓN
+           ======================================================= */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(20, 25, 22, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 580px;
+            width: 100%;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            text-align: center;
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.85rem;
+            margin-bottom: 0.75rem;
+            color: var(--color-forest);
+        }
+        .modal-desc {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.75rem;
+        }
+        .modal-book-features {
+            background: #f7f5f0;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.75rem;
+            text-align: left;
+            font-size: 0.88rem;
+            border-left: 3px solid var(--color-forest);
+        }
+        .modal-book-features-title {
+            font-weight: 700;
+            color: var(--color-forest);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .modal-book-features ul {
+            padding-left: 1.25rem;
+            color: var(--color-text);
+        }
+        .modal-book-features li {
+            margin-bottom: 0.35rem;
+        }
+        .modal-buttons-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .btn-amazon-primary {
+            background: var(--color-forest);
+            color: white;
+            padding: 0.95rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+            display: block;
+        }
+        .btn-amazon-primary:hover {
+            background: #1b2620;
+        }
+        .btn-pdf-secondary {
+            background: white;
+            color: var(--color-text);
+            border: 1.5px solid var(--color-paper-line);
+            padding: 0.85rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-pdf-secondary:hover {
+            border-color: var(--color-text);
+        }
+        .modal-review-link {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            text-decoration: underline;
+        }
+
+        /* =======================================================
+           HOJA PARA IMPRESIÓN DIRECTA (@media print)
+           Exactamente 1:1 con la página del libro de imprenta (8.25x6 in)
+           ======================================================= */
+        .print-sheet-wrapper {
+            display: none;
+        }
+
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .topbar, .progress-bar-container, .main-container, .modal-overlay, footer {
+                display: none !important;
+            }
+            .print-sheet-wrapper {
+                display: flex !important;
+                justify-content: center;
+                align-items: center;
+                width: 100vw;
+                height: 100vh;
+                padding: 0.25in;
+                box-sizing: border-box;
+                background: white;
+            }
+            .print-sheet-wrapper svg {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+        <div class="topbar-content">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <a href="/" class="topbar-logo">
+                    <span>Menos Ruido</span>
+                </a>
+                <span class="topbar-tag">Planificador Semanal Atemporal</span>
+            </div>
+            <nav class="topbar-nav">
+                <a href="/">Home</a>
+                <div class="dropdown">
+                    <a href="/#libros" style="cursor: default;">Libros ▾</a>
+                    <div class="dropdown-content">
+                        <a href="/habla-claro.html">Habla Claro</a>
+                        <a href="/deja-de-darle-mil-vueltas.html">Deja de darle mil vueltas</a>
+                        <a href="/planificador-90-dias.html">Planificador de 90 Días</a>
+                        <a href="/planificador-180-dias.html">Planificador de 180 Días</a>
+                        <a href="/planificador-semanal-simple.html">Planificador Semanal Atemporal</a>
+                        <a href="/planificador-semanal-reversible.html">Planificador Semanal Reversible</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" style="cursor: default;">Simuladores ▾</a>
+                    <div class="dropdown-content">
+                        <a href="/simulador-habla-claro.html">Habla Claro</a>
+                        <a href="/simulador-deja-de-darle-mil-vueltas.html">Deja de darle mil vueltas</a>
+                        <a href="/simulador-90-dias.html">Planificador de 90 Días</a>
+                        <a href="/simulador-180-dias.html">Planificador de 180 Días</a>
+                        <a href="/simulador-semanal-simple.html" style="font-weight: 600; color: var(--color-forest);">Planificador Semanal Atemporal</a>
+                        <a href="/simulador-semanal-reversible.html">Planificador Semanal Reversible</a>
+                    </div>
+                </div>
+            </nav>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <a href="/planificador-semanal-simple.html" class="btn-topbar-book">Ver Planificador</a>
+            </div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- PASO 1: SEMANA Y FOCO -->
+        <section class="step-card active" id="step-1">
+            <div class="step-header">
+                <span class="step-tag">Paso 1 de 4</span>
+                <span class="step-counter">Horizonte de la Semana</span>
+            </div>
+            <h1 class="step-title">Fija el rumbo antes de abrir los días</h1>
+            <p class="step-subtitle">En Menos Ruido primero definimos qué semana es y cuál es tu único foco semanal para no saturar tu mente.</p>
+
+            <div class="theory-highlight-box">
+                «Si todo es urgente esta semana, nada es importante. Elige una sola dirección clara.»
+            </div>
+
+            <div class="input-group">
+                <div class="input-label-row">
+                    <label class="input-label" for="input-week-dates">Fechas de la semana</label>
+                    <span class="char-counter"><span id="count-dates">0</span>/40</span>
+                </div>
+                <input type="text" id="input-week-dates" class="form-input-text" maxlength="40" placeholder="Ej: 14 al 20 de Octubre" oninput="updateCounts()" />
+            </div>
+
+            <div class="input-group">
+                <div class="input-label-row">
+                    <label class="input-label" for="input-week-focus">Foco de la semana / Nota principal</label>
+                    <span class="char-counter"><span id="count-focus">0</span>/60</span>
+                </div>
+                <input type="text" id="input-week-focus" class="form-input-text" maxlength="60" placeholder="¿Qué único resultado hará que esta semana valga la pena?" oninput="updateCounts()" />
+            </div>
+
+            <div class="buttons-nav">
+                <button type="button" class="btn-next" onclick="goToStep(2)">Continuar: Lunes a Jueves →</button>
+            </div>
+        </section>
+
+        <!-- PASO 2: LUNES A JUEVES -->
+        <section class="step-card" id="step-2">
+            <div class="step-header">
+                <span class="step-tag">Paso 2 de 4</span>
+                <span class="step-counter">Primera Mitad</span>
+            </div>
+            <h2 class="step-title">De Lunes a Jueves</h2>
+            <p class="step-subtitle">Asigna una prioridad principal a cada día. El espacio limitado protege tu energía de listas interminables.</p>
+
+            <div class="theory-highlight-box">
+                «El principio de una sola prioridad: el espacio físico deliberadamente acotado te obliga a decidir qué es lo irrenunciable de cada jornada.»
+            </div>
+
+            <div class="day-grid">
+                <div class="day-input-card">
+                    <div class="input-label-row">
+                        <label class="input-label" for="input-lunes">Lunes</label>
+                        <span class="char-counter"><span id="count-lunes">0</span>/65</span>
+                    </div>
+                    <input type="text" id="input-lunes" class="form-input-text" maxlength="65" placeholder="Prioridad clave del lunes..." oninput="updateCounts()" />
+                </div>
+                <div class="day-input-card">
+                    <div class="input-label-row">
+                        <label class="input-label" for="input-martes">Martes</label>
+                        <span class="char-counter"><span id="count-martes">0</span>/65</span>
+                    </div>
+                    <input type="text" id="input-martes" class="form-input-text" maxlength="65" placeholder="Prioridad clave del martes..." oninput="updateCounts()" />
+                </div>
+                <div class="day-input-card">
+                    <div class="input-label-row">
+                        <label class="input-label" for="input-miercoles">Miércoles</label>
+                        <span class="char-counter"><span id="count-miercoles">0</span>/65</span>
+                    </div>
+                    <input type="text" id="input-miercoles" class="form-input-text" maxlength="65" placeholder="Prioridad clave del miércoles..." oninput="updateCounts()" />
+                </div>
+                <div class="day-input-card">
+                    <div class="input-label-row">
+                        <label class="input-label" for="input-jueves">Jueves</label>
+                        <span class="char-counter"><span id="count-jueves">0</span>/65</span>
+                    </div>
+                    <input type="text" id="input-jueves" class="form-input-text" maxlength="65" placeholder="Prioridad clave del jueves..." oninput="updateCounts()" />
+                </div>
+            </div>
+
+            <div class="buttons-nav">
+                <button type="button" class="btn-prev" onclick="goToStep(1)">← Atrás</button>
+                <button type="button" class="btn-next" onclick="goToStep(3)">Continuar: Viernes a Domingo →</button>
+            </div>
+        </section>
+
+        <!-- PASO 3: VIERNES A DOMINGO -->
+        <section class="step-card" id="step-3">
+            <div class="step-header">
+                <span class="step-tag">Paso 3 de 4</span>
+                <span class="step-counter">Cierre y Fin de Semana</span>
+            </div>
+            <h2 class="step-title">Viernes, Sábado y Domingo</h2>
+            <p class="step-subtitle">El fin de semana no es para acumular urgencias. Planifícalo para descansar o realizar actividades con significado.</p>
+
+            <div class="theory-highlight-box">
+                «El ritmo del descanso: un fin de semana planificado para recuperar energía evita que comiences el lunes agotado por inercia.»
+            </div>
+
+            <div class="day-grid">
+                <div class="day-input-card">
+                    <div class="input-label-row">
+                        <label class="input-label" for="input-viernes">Viernes</label>
+                        <span class="char-counter"><span id="count-viernes">0</span>/65</span>
+                    </div>
+                    <input type="text" id="input-viernes" class="form-input-text" maxlength="65" placeholder="Cierre de semana..." oninput="updateCounts()" />
+                </div>
+                <div class="day-input-card">
+                    <div class="input-label-row">
+                        <label class="input-label" for="input-sabado">Sábado</label>
+                        <span class="char-counter"><span id="count-sabado">0</span>/65</span>
+                    </div>
+                    <input type="text" id="input-sabado" class="form-input-text" maxlength="65" placeholder="Tiempo libre, paseo, familia..." oninput="updateCounts()" />
+                </div>
+                <div class="day-input-card">
+                    <div class="input-label-row">
+                        <label class="input-label" for="input-domingo">Domingo</label>
+                        <span class="char-counter"><span id="count-domingo">0</span>/65</span>
+                    </div>
+                    <input type="text" id="input-domingo" class="form-input-text" maxlength="65" placeholder="Desconexión y preparación tranquila..." oninput="updateCounts()" />
+                </div>
+            </div>
+
+            <div class="buttons-nav">
+                <button type="button" class="btn-prev" onclick="goToStep(2)">← Atrás</button>
+                <button type="button" class="btn-next" onclick="goToStep(4)">Continuar: Tareas Secundarias →</button>
+            </div>
+        </section>
+
+        <!-- PASO 4: TAREAS SECUNDARIAS (DIRECTO A MODAL) -->
+        <section class="step-card" id="step-4">
+            <div class="step-header">
+                <span class="step-tag">Paso 4 de 4</span>
+                <span class="step-counter">Vaciado Mental</span>
+            </div>
+            <h2 class="step-title">Tareas Secundarias e Ideas Importantes</h2>
+            <p class="step-subtitle">La franja inferior de la página te permite vaciar gestiones menores o llamadas sin interrumpir el foco de tus días.</p>
+
+            <div class="theory-highlight-box">
+                «Buffer mental: anota los compromisos satélite para liberarlos de tu memoria de trabajo, sin permitir que desplacen tu foco central.»
+            </div>
+
+            <div class="input-group">
+                <div class="input-label-row">
+                    <label class="input-label" for="input-secundarias">Tareas secundarias o recordatorios (máx. 140 car.)</label>
+                    <span class="char-counter"><span id="count-secundarias">0</span>/140</span>
+                </div>
+                <textarea id="input-secundarias" class="form-input-text" rows="3" maxlength="140" placeholder="• Comprar billetes • Enviar presupuesto • Revisar cita médico..." oninput="updateCounts()"></textarea>
+            </div>
+
+            <div class="buttons-nav">
+                <button type="button" class="btn-prev" onclick="goToStep(3)">← Atrás</button>
+                <button type="button" class="btn-next" onclick="openCompletionModal()" style="background: var(--color-forest);">Ver Ficha de Imprenta →</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER CORPORATIVO -->
+    <footer class="footer">
+        <div class="container" style="max-width: 900px; margin: 0 auto;">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem; color: #ffffff;">Menos Ruido</h3>
+                    <p style="opacity: 0.8; font-size: 0.9rem; color: rgba(255,255,255,0.75); max-width: 320px; line-height: 1.5;">Cuadernos guiados y herramientas analógicas para pensar en papel.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navegación</h4>
+                    <a href="/">Página Principal</a>
+                    <a href="/#libros">Catálogo de Libros</a>
+                    <a href="/planificador-semanal-simple.html">Planificador Semanal Atemporal</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="#" onclick="event.preventDefault(); navigator.clipboard.writeText('contacto@editorialmenosruido.com'); const original = this.innerText; this.innerText = '¡Copiado al portapapeles!'; setTimeout(() => this.innerText = original, 2000);">Contacto</a>
+                    <a href="./aviso-legal.html" target="_blank">Aviso Legal</a>
+                    <a href="./politica-privacidad.html" target="_blank">Política de Privacidad</a>
+                    <a href="./politica-cookies.html" target="_blank">Política de Cookies</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Menos Ruido. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE FINALIZACIÓN ESPECÍFICO PLANIFICADOR SEMANAL -->
+    <div class="modal-overlay" id="completion-modal">
+        <div class="modal-card">
+            <h3 class="modal-title">Tu semana en papel</h3>
+            <p class="modal-desc">
+                Has experimentado la claridad de organizar 7 días con espacio limpio y foco. El Planificador Atemporal Semanal y Mensual de Menos Ruido traslada esta serenidad a tu escritorio: un formato apaisado horizontal (8.25 x 6 pulgadas) diseñado para mantenerse abierto bajo el monitor, con 53 semanas continuas de planificación y sin pantallas.
+            </p>
+
+            <div class="modal-book-features">
+                <span class="modal-book-features-title">En el libro físico de 108 páginas encontrarás:</span>
+                <ul>
+                    <li><strong>Guía de Fundamentos y Metodología:</strong> Instrucciones paso a paso que explican cómo funciona cada parte del cuaderno y cómo planificar con calma y constancia.</li>
+                    <li><strong>Formato Apaisado de Escritorio:</strong> Proporción 8.25 x 6 pulgadas que no invade tu espacio de trabajo.</li>
+                    <li><strong>53 Semanas Atemporales:</strong> Doble página por semana con foco claro, días amplios y tareas secundarias.</li>
+                    <li><strong>12 Vistas Mensuales y Habit Tracker:</strong> Mapa global de meses y seguimiento de hábitos.</li>
+                    <li><strong>Metas y Proyectos Trimestrales:</strong> Fichas para convertir tus objetivos en pasos realizables.</li>
+                </ul>
+            </div>
+
+            <div class="modal-buttons-group">
+                <a href="https://www.amazon.es/dp/B0H3LFFDKB" target="_blank" rel="noopener noreferrer" class="btn-amazon-primary">
+                    Comprar Planificador Semanal en Amazon
+                </a>
+                <button type="button" class="btn-pdf-secondary" onclick="triggerNativePrint()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span>Descargar / Imprimir mi Semana en PDF</span>
+                </button>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <a href="https://www.amazon.es/review/create-review/?ie=UTF8&channel=glance-detail&asin=B0H3LFFDKB" target="_blank" rel="noopener noreferrer" class="modal-review-link">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- WRAPPER PARA IMPRESIÓN DIRECTA (@media print) -->
+    <div class="print-sheet-wrapper" id="print-sheet-container">
+        <!-- SVG se clona aquí antes de imprimir -->
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        function updateCounts() {
+            document.getElementById('count-dates').textContent = (document.getElementById('input-week-dates').value || '').length;
+            document.getElementById('count-focus').textContent = (document.getElementById('input-week-focus').value || '').length;
+            document.getElementById('count-lunes').textContent = (document.getElementById('input-lunes').value || '').length;
+            document.getElementById('count-martes').textContent = (document.getElementById('input-martes').value || '').length;
+            document.getElementById('count-miercoles').textContent = (document.getElementById('input-miercoles').value || '').length;
+            document.getElementById('count-jueves').textContent = (document.getElementById('input-jueves').value || '').length;
+            document.getElementById('count-viernes').textContent = (document.getElementById('input-viernes').value || '').length;
+            document.getElementById('count-sabado').textContent = (document.getElementById('input-sabado').value || '').length;
+            document.getElementById('count-domingo').textContent = (document.getElementById('input-domingo').value || '').length;
+            document.getElementById('count-secundarias').textContent = (document.getElementById('input-secundarias').value || '').length;
+        }
+
+        function escapeXml(unsafe) {
+            return unsafe
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function splitTextLines(text, maxCharsPerLine = 34) {
+            if (!text) return ['', ''];
+            const words = text.split(' ');
+            let line1 = '';
+            let line2 = '';
+            for (const word of words) {
+                if ((line1 + ' ' + word).trim().length <= maxCharsPerLine && !line2) {
+                    line1 = (line1 + ' ' + word).trim();
+                } else {
+                    line2 = (line2 + ' ' + word).trim();
+                }
+            }
+            return [line1, line2];
+        }
+
+        function generateSvgContent() {
+            const dates = escapeXml(document.getElementById('input-week-dates').value || '');
+            const focus = escapeXml(document.getElementById('input-week-focus').value || '');
+            const lun = escapeXml(document.getElementById('input-lunes').value || '');
+            const mar = escapeXml(document.getElementById('input-martes').value || '');
+            const mie = escapeXml(document.getElementById('input-miercoles').value || '');
+            const jue = escapeXml(document.getElementById('input-jueves').value || '');
+            const vie = escapeXml(document.getElementById('input-viernes').value || '');
+            const sab = escapeXml(document.getElementById('input-sabado').value || '');
+            const dom = escapeXml(document.getElementById('input-domingo').value || '');
+            const sec = escapeXml(document.getElementById('input-secundarias').value || '');
+
+            const [lun1, lun2] = splitTextLines(lun);
+            const [mar1, mar2] = splitTextLines(mar);
+            const [mie1, mie2] = splitTextLines(mie);
+            const [jue1, jue2] = splitTextLines(jue);
+            const [vie1, vie2] = splitTextLines(vie);
+            const [sab1, sab2] = splitTextLines(sab);
+            const [dom1, dom2] = splitTextLines(dom);
+            const [foc1, foc2] = splitTextLines(focus);
+            const [sec1, sec2] = splitTextLines(sec, 70);
+
+            const datesDisplay = dates ? `SEMANA DEL:  ${dates}` : `SEMANA DEL:                             AL                             `;
+
+            return `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 594 432" style="background-color: #ffffff; width: 100%; height: auto;">
+                <rect x="0" y="0" width="594" height="432" fill="#ffffff" />
+                
+                <text x="28" y="38" font-family="Arial, Helvetica, sans-serif" font-size="8.5" font-weight="bold" fill="rgb(89, 89, 89)">PLANIFICACIÓN SEMANAL</text>
+                <line x1="28" y1="43" x2="551" y2="43" stroke="rgb(38, 38, 38)" stroke-width="0.5" stroke-linecap="round" />
+                
+                <text x="28" y="60" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" fill="rgb(26, 26, 26)">${datesDisplay}</text>
+                
+                <!-- Caja Izquierda: Lunes a Jueves -->
+                <rect x="28" y="77" width="254" height="280" fill="#ffffff" stroke="rgb(77, 77, 77)" stroke-width="0.6" />
+                
+                <!-- LUNES -->
+                <text x="38" y="91" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="rgb(51, 51, 51)">LUNES</text>
+                <line x1="38" y1="95" x2="272" y2="95" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="38" y="112" font-family="Georgia, serif" font-size="8.5" fill="#111111">${lun1}</text>
+                <text x="38" y="127" font-family="Georgia, serif" font-size="8.5" fill="#111111">${lun2}</text>
+                <line x1="28" y1="147" x2="282" y2="147" stroke="rgb(51, 51, 51)" stroke-width="0.4" stroke-linecap="round" />
+                
+                <!-- MARTES -->
+                <text x="38" y="161" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="rgb(51, 51, 51)">MARTES</text>
+                <line x1="38" y1="165" x2="272" y2="165" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="38" y="182" font-family="Georgia, serif" font-size="8.5" fill="#111111">${mar1}</text>
+                <text x="38" y="197" font-family="Georgia, serif" font-size="8.5" fill="#111111">${mar2}</text>
+                <line x1="28" y1="217" x2="282" y2="217" stroke="rgb(51, 51, 51)" stroke-width="0.4" stroke-linecap="round" />
+                
+                <!-- MIÉRCOLES -->
+                <text x="38" y="231" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="rgb(51, 51, 51)">MIÉRCOLES</text>
+                <line x1="38" y1="235" x2="272" y2="235" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="38" y="252" font-family="Georgia, serif" font-size="8.5" fill="#111111">${mie1}</text>
+                <text x="38" y="267" font-family="Georgia, serif" font-size="8.5" fill="#111111">${mie2}</text>
+                <line x1="28" y1="287" x2="282" y2="287" stroke="rgb(51, 51, 51)" stroke-width="0.4" stroke-linecap="round" />
+                
+                <!-- JUEVES -->
+                <text x="38" y="301" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="rgb(51, 51, 51)">JUEVES</text>
+                <line x1="38" y1="305" x2="272" y2="305" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="38" y="322" font-family="Georgia, serif" font-size="8.5" fill="#111111">${jue1}</text>
+                <text x="38" y="337" font-family="Georgia, serif" font-size="8.5" fill="#111111">${jue2}</text>
+                
+                <!-- Caja Derecha: Viernes a Domingo + Foco -->
+                <rect x="297" y="77" width="254" height="280" fill="#ffffff" stroke="rgb(77, 77, 77)" stroke-width="0.6" />
+                
+                <!-- VIERNES -->
+                <text x="307" y="91" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="rgb(51, 51, 51)">VIERNES</text>
+                <line x1="307" y1="95" x2="541" y2="95" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="307" y="112" font-family="Georgia, serif" font-size="8.5" fill="#111111">${vie1}</text>
+                <text x="307" y="127" font-family="Georgia, serif" font-size="8.5" fill="#111111">${vie2}</text>
+                <line x1="297" y1="147" x2="551" y2="147" stroke="rgb(51, 51, 51)" stroke-width="0.4" stroke-linecap="round" />
+                
+                <!-- SÁBADO -->
+                <text x="307" y="161" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="rgb(51, 51, 51)">SÁBADO</text>
+                <line x1="307" y1="165" x2="541" y2="165" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="307" y="182" font-family="Georgia, serif" font-size="8.5" fill="#111111">${sab1}</text>
+                <text x="307" y="197" font-family="Georgia, serif" font-size="8.5" fill="#111111">${sab2}</text>
+                <line x1="297" y1="217" x2="551" y2="217" stroke="rgb(51, 51, 51)" stroke-width="0.4" stroke-linecap="round" />
+                
+                <!-- DOMINGO -->
+                <text x="307" y="231" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="rgb(51, 51, 51)">DOMINGO</text>
+                <line x1="307" y1="235" x2="541" y2="235" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="307" y="252" font-family="Georgia, serif" font-size="8.5" fill="#111111">${dom1}</text>
+                <text x="307" y="267" font-family="Georgia, serif" font-size="8.5" fill="#111111">${dom2}</text>
+                <line x1="297" y1="287" x2="551" y2="287" stroke="rgb(51, 51, 51)" stroke-width="0.4" stroke-linecap="round" />
+                
+                <!-- FOCO DE LA SEMANA / NOTAS -->
+                <text x="307" y="301" font-family="Georgia, serif" font-size="8" font-weight="normal" fill="#d98a6c">FOCO DE LA SEMANA / NOTAS</text>
+                <line x1="307" y1="305" x2="541" y2="305" stroke="rgb(38, 38, 38)" stroke-width="0.4" stroke-linecap="round" />
+                <text x="307" y="322" font-family="Georgia, serif" font-size="8.5" font-weight="bold" fill="#1f2421">${foc1}</text>
+                <text x="307" y="337" font-family="Georgia, serif" font-size="8.5" fill="#333333">${foc2}</text>
+                
+                <!-- Tareas Secundarias -->
+                <text x="28" y="369" font-family="Arial, Helvetica, sans-serif" font-size="7.5" font-weight="bold" fill="rgb(77, 77, 77)">TAREAS SECUNDARIAS / IDEAS IMPORTANTES</text>
+                <text x="28" y="381" font-family="Georgia, serif" font-size="8" fill="#333333">${sec1}</text>
+                <text x="28" y="392" font-family="Georgia, serif" font-size="8.5" fill="#333333">${sec2}</text>
+                
+                <!-- Footer -->
+                <line x1="28" y1="398" x2="551" y2="398" stroke="rgb(38, 38, 38)" stroke-width="0.5" stroke-linecap="round" />
+                <text x="28" y="410" font-family="Arial, Helvetica, sans-serif" font-size="7.8" fill="rgb(115, 115, 115)">55</text>
+                <text x="506" y="410" font-family="Arial, Helvetica, sans-serif" font-size="7.8" fill="rgb(115, 115, 115)">Menos Ruido</text>
+            </svg>
+            `;
+        }
+
+        function goToStep(stepNum) {
+            document.querySelectorAll('.step-card').forEach(card => card.classList.remove('active'));
+            const target = document.getElementById(`step-${stepNum}`);
+            if (target) {
+                target.classList.add('active');
+                currentStep = stepNum;
+                const percentage = (currentStep / totalSteps) * 100;
+                document.getElementById('progress-fill').style.width = `${percentage}%`;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function openCompletionModal() {
+            const svgHtml = generateSvgContent();
+            document.getElementById('print-sheet-container').innerHTML = svgHtml;
+            document.getElementById('completion-modal').classList.add('active');
+        }
+
+        function triggerNativePrint() {
+            const svgHtml = generateSvgContent();
+            document.getElementById('print-sheet-container').innerHTML = svgHtml;
+            window.print();
+        }
+
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('completion-modal');
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Inicializar contadores
+        updateCounts();
+    </script>
+</body>
+</html>
