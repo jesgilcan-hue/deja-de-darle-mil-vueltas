@@ -27,7 +27,11 @@ export default defineConfig({
         lecturas: resolve(__dirname, 'lecturas.html'),
         ensayoNo: resolve(__dirname, 'como-decir-que-no-en-el-trabajo.html'),
         ensayoSobrepensar: resolve(__dirname, 'como-dejar-de-sobrepensar-las-decisiones.html'),
-        ensayo90Dias: resolve(__dirname, 'planificacion-trimestral-90-dias.html')
+        ensayo90Dias: resolve(__dirname, 'planificacion-trimestral-90-dias.html'),
+        fatigaDecision: resolve(__dirname, 'la-fatiga-por-decision.html'),
+        listasInfinitas: resolve(__dirname, 'la-trampa-de-las-listas-infinitas.html'),
+        falsaUrgencia: resolve(__dirname, 'la-falsa-urgencia-y-el-mensaje-inmediato.html'),
+        papelPantalla: resolve(__dirname, 'por-que-el-papel-ordena-lo-que-la-pantalla-satura.html')
       }
     }
   }
