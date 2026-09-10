@@ -23,7 +23,11 @@ export default defineConfig({
         simdeja: resolve(__dirname, 'simulador-deja-de-darle-mil-vueltas.html'),
         simhabla: resolve(__dirname, 'simulador-habla-claro.html'),
         simuladorSimple: resolve(__dirname, 'simulador-semanal-simple.html'),
-        simuladorReversible: resolve(__dirname, 'simulador-semanal-reversible.html')
+        simuladorReversible: resolve(__dirname, 'simulador-semanal-reversible.html'),
+        lecturas: resolve(__dirname, 'lecturas.html'),
+        ensayoNo: resolve(__dirname, 'como-decir-que-no-en-el-trabajo.html'),
+        ensayoSobrepensar: resolve(__dirname, 'como-dejar-de-sobrepensar-las-decisiones.html'),
+        ensayo90Dias: resolve(__dirname, 'planificacion-trimestral-90-dias.html')
       }
     }
   }
