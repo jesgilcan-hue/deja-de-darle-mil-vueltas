@@ -1,0 +1,427 @@
+/* Estilos para el Recomendador Diagnóstico Interactivo - Menos Ruido V1 */
+
+.diagnostic-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(18, 20, 24, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.diagnostic-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.diagnostic-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 760px;
+  max-height: 90vh;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.diagnostic-header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid #f0eee9;
+  background: #faf9f6;
+  position: relative;
+}
+
+.diagnostic-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  color: #71717a;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.diagnostic-close:hover {
+  color: #18181b;
+}
+
+.diagnostic-progress-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.diagnostic-step-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent, #8c533e);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.diagnostic-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #e4e2dd;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.diagnostic-progress-fill {
+  height: 100%;
+  background: var(--color-accent, #8c533e);
+  width: 20%;
+  transition: width 0.4s ease;
+}
+
+.diagnostic-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.diagnostic-question-title {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #1c1917;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.diagnostic-question-desc {
+  font-size: 0.95rem;
+  color: #78716c;
+  margin-bottom: 1.5rem;
+}
+
+.diagnostic-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.diagnostic-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: #ffffff;
+  border: 1.5px solid #e7e5e4;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: inherit;
+  color: #292524;
+}
+
+.diagnostic-option:hover {
+  border-color: var(--color-accent, #8c533e);
+  background: #fdfbf9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.diagnostic-option.selected {
+  border-color: var(--color-accent, #8c533e);
+  background: #fcf8f5;
+  box-shadow: 0 0 0 2px rgba(140, 83, 62, 0.15);
+}
+
+.diagnostic-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #f5f5f4;
+  color: #57534e;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.diagnostic-option:hover .diagnostic-badge,
+.diagnostic-option.selected .diagnostic-badge {
+  background: var(--color-accent, #8c533e);
+  color: #ffffff;
+}
+
+.diagnostic-option-text {
+  font-size: 0.98rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: #292524;
+}
+
+.diagnostic-footer {
+  padding: 1rem 2rem;
+  border-top: 1px solid #f0eee9;
+  background: #faf9f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.diagnostic-btn-back {
+  background: none;
+  border: 1px solid #d6d3d1;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  color: #57534e;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diagnostic-btn-back:hover:not(:disabled) {
+  background: #f5f5f4;
+  color: #1c1917;
+  border-color: #a8a29e;
+}
+
+.diagnostic-btn-back:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.diagnostic-btn-early-exit {
+  background: none;
+  border: none;
+  color: var(--color-accent, #8c533e);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.diagnostic-btn-early-exit:hover {
+  background: rgba(140, 83, 62, 0.08);
+  color: #6e3d2c;
+}
+
+/* Pantalla de Resultados */
+.result-screen {
+  animation: fadeInResult 0.4s ease;
+}
+
+@keyframes fadeInResult {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-badge-header {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent, #8c533e);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 0.5rem;
+}
+
+.result-main-card {
+  display: flex;
+  gap: 1.75rem;
+  align-items: flex-start;
+  margin-bottom: 1.75rem;
+}
+
+.result-image-box {
+  width: 170px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.result-image-box img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.result-info-box {
+  flex-grow: 1;
+}
+
+.result-book-title {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1c1917;
+  margin-bottom: 0.35rem;
+  line-height: 1.25;
+}
+
+.result-book-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-accent, #8c533e);
+  margin-bottom: 0.75rem;
+}
+
+.result-rationale {
+  font-size: 0.92rem;
+  color: #57534e;
+  line-height: 1.5;
+  background: #faf9f6;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--color-accent, #8c533e);
+}
+
+.result-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #292524;
+  text-transform: uppercase;
+  letter-spacing: 0.75px;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.result-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.result-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #3f3f46;
+}
+
+.match-icon {
+  color: #15803d;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-size: 1rem;
+  margin-top: -1px;
+}
+
+.spec-icon {
+  color: #78716c;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: -3px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f0eee9;
+}
+
+.result-actions .btn-primary,
+.result-actions .btn-secondary {
+  flex: 1;
+  min-width: 170px;
+  text-align: center;
+  padding: 0.85rem 1rem;
+  font-size: 0.92rem;
+}
+
+.result-restart-wrap {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.btn-restart {
+  background: none;
+  border: none;
+  color: #78716c;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.btn-restart:hover {
+  color: #1c1917;
+}
+
+@media (max-width: 640px) {
+  .diagnostic-modal {
+    max-height: 95vh;
+  }
+  .diagnostic-body {
+    padding: 1.25rem;
+  }
+  .result-main-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .result-image-box {
+    width: 140px;
+  }
+  .result-rationale {
+    text-align: left;
+  }
+  .result-actions {
+    flex-direction: column;
+  }
+  .result-actions .btn-primary,
+  .result-actions .btn-secondary {
+    width: 100%;
+  }
+  .diagnostic-footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+  }
+  .diagnostic-btn-back {
+    order: 2;
+    text-align: center;
+  }
+  .diagnostic-btn-early-exit {
+    order: 1;
+    text-align: center;
+    justify-content: center;
+  }
+}
