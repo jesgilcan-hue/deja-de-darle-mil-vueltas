@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
       amazonLink: 'https://www.amazon.es/dp/B0HGBQH446',
       rationale: 'Diseñado específicamente para vaciar la cabeza, desactivar la reactividad emocional y estructurar argumentos indiscutibles antes de entrar a una conversación incómoda.',
       allSpecs: [
-        'Formato libro ergonómico de 6 x 9 pulgadas (15,2 x 22,8 cm) para llevar en la mochila o maletín',
+        'Formato libro ergonómico de 6 x 9 pulgadas (15,2 x 22,9 cm) para llevar en la mochila o maletín',
         '128 páginas en papel crema mate premium antirreflejos de alto gramaje',
         'Filtro Hechos vs. Relatos para separar la realidad de la interpretación subjetiva',
         'El Guion Mínimo de Apertura: estructura tus primeros 20 segundos con serenidad y firmeza',
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       amazonLink: 'https://www.amazon.es/dp/B0H3KBSC78',
       rationale: 'La herramienta práctica para sacar un dilema de la mente y ponerlo sobre la mesa. Desbloquea la parálisis por análisis y convierte la rumiación en un siguiente paso amable.',
       allSpecs: [
-        'Formato libro estándar de 6 x 9 pulgadas (130 páginas) para escribir cómodamente en cualquier lugar',
+        'Formato libro estándar de 6 x 9 pulgadas (15,2 x 22,9 cm) (130 páginas) para escribir cómodamente en cualquier lugar',
         'Papel blanco de alto contraste libre de sangrado, apto para lápiz, bolígrafo o pluma',
         'Atajo para decisiones rápidas y recorrido guiado completo para dilemas importantes',
         'Ejercicios para separar datos objetivos, suposiciones, miedo, deseo y presión externa',
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Metodología de Prioridad Única Diaria: foco absoluto en lo verdaderamente importante',
         'Plantillas de seguimiento mensual de hábitos (Habit Tracker) integradas',
         'Espacio dedicado a reflexiones de cierre de semana y bienestar personal',
-        'Formato vertical manejable de 6 x 9 pulgadas con cubierta mate suave al tacto',
+        'Formato vertical manejable de 6 x 9 pulgadas (15,2 x 22,9 cm) con cubierta mate suave al tacto',
         'Celdas limpias con casillas de verificación [ ] para tus prioridades'
       ]
     },
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Completamente atemporal y sin fechas fijas: tú marcas el ritmo de trabajo',
         'Foco diario anti-burnout con espacio para la prioridad reina del día',
         'Espacios de retrospectiva quincenal y mensual para evaluar constancia y salud mental',
-        'Formato vertical de 6 x 9 pulgadas, encuadernación sólida y papel de alto gramaje',
+        'Formato vertical de 6 x 9 pulgadas (15,2 x 22,9 cm), encuadernación sólida y papel de alto gramaje',
         'Cubierta mate aterciopelada de tacto sobrio y elegante'
       ]
     },
@@ -250,8 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
       options: [
         {
           badge: 'A',
-          text: 'Formato libro clásico (6x9"), discreto y manejable para llevar en la mochila y preparar mi charla en cualquier lugar.',
-          featureMatch: 'Formato ergonómico de 6x9 pulgadas discreto para llevar siempre contigo',
+          text: 'Formato libro clásico de 6x9 pulgadas (15,2 x 22,9 cm), discreto y manejable para llevar en la mochila y preparar mi charla en cualquier lugar.',
+          featureMatch: 'Formato ergonómico de 6x9 pulgadas (15,2 x 22,9 cm) discreto para llevar siempre contigo',
           scores: { habla: 10 },
           next: 'RESULT'
         },
@@ -421,15 +421,15 @@ document.addEventListener('DOMContentLoaded', () => {
       options: [
         {
           badge: 'A',
-          text: 'Formato horizontal apaisado (8.25x6"): que descanse abierto bajo el teclado de mi ordenador sin estorbar con el ratón.',
-          featureMatch: 'Formato apaisado de escritorio (8.25 x 6 pulgadas) para descansar bajo el teclado',
+          text: 'Formato horizontal apaisado de 8.25x6 pulgadas (21 x 15,2 cm): que descanse abierto bajo el teclado de mi ordenador sin estorbar con el ratón.',
+          featureMatch: 'Formato apaisado de escritorio (8.25 x 6 pulgadas / 21 x 15,2 cm) para descansar bajo el teclado',
           scores: { psimple: 8, preversible: 8, p90: -5, p180: -5 },
           next: 'q_plan_philosophy'
         },
         {
           badge: 'B',
-          text: 'Formato vertical tradicional (6x9"): cómodo para mover entre la oficina, casa, sofá o llevar en la mochila.',
-          featureMatch: 'Formato vertical manejable de 6 x 9 pulgadas para llevar en la mochila',
+          text: 'Formato vertical tradicional de 6x9 pulgadas (15,2 x 22,9 cm): cómodo para mover entre la oficina, casa, sofá o llevar en la mochila.',
+          featureMatch: 'Formato vertical manejable de 6 x 9 pulgadas (15,2 x 22,9 cm) para llevar en la mochila',
           scores: { p90: 8, p180: 8, psimple: -5, preversible: -5 },
           next: 'q_plan_philosophy'
         },
@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     q_plan_final_vertical: {
       step: 5,
       totalSteps: 5,
-      title: 'Para tu planificador de foco diario en formato libro (6x9"), ¿qué ritmo prefieres?',
+      title: 'Para tu planificador de foco diario en formato libro de 6x9 pulgadas (15,2 x 22,9 cm), ¿qué ritmo prefieres?',
       desc: 'Decisión final de horizonte (elige una de las dos opciones):',
       options: [
         {
@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
         {
           badge: 'A',
           text: 'Formato apaisado para trabajar bajo el teclado con vista panorámica de lunes a domingo (53 semanas).',
-          featureMatch: 'Formato apaisado de escritorio (8.25 x 6 pulgadas) para descansar bajo el teclado',
+          featureMatch: 'Formato apaisado de escritorio (8.25 x 6 pulgadas / 21 x 15,2 cm) para descansar bajo el teclado',
           scores: { preversible: 12, psimple: 10, p90: -10, p180: -10 },
           next: 'RESULT'
         },

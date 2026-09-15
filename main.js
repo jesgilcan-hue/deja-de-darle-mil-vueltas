@@ -20,6 +20,14 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// Close mobile drawer on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('nav-open')) {
+        document.body.classList.remove('nav-open');
+    }
+});
+
+
 // Add smooth scrolling for anchor links (fallback for browsers that don't support smooth scrolling CSS)
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
