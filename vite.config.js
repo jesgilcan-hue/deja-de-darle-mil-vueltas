@@ -31,7 +31,8 @@ export default defineConfig({
         fatigaDecision: resolve(__dirname, 'la-fatiga-por-decision.html'),
         listasInfinitas: resolve(__dirname, 'la-trampa-de-las-listas-infinitas.html'),
         falsaUrgencia: resolve(__dirname, 'la-falsa-urgencia-y-el-mensaje-inmediato.html'),
-        papelPantalla: resolve(__dirname, 'por-que-el-papel-ordena-lo-que-la-pantalla-satura.html')
+        papelPantalla: resolve(__dirname, 'por-que-el-papel-ordena-lo-que-la-pantalla-satura.html'),
+        links: resolve(__dirname, 'links.html')
       }
     }
   }

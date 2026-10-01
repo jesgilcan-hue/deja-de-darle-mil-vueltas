@@ -96,3 +96,82 @@ allImages.forEach(img => {
         lightbox.classList.add('show');
     });
 });
+
+
+// --- In-Browser YouTube Video Modal ---
+window.openVideoModal = function(videoId, title) {
+  let overlay = document.getElementById('video-modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'video-modal-overlay';
+    overlay.className = 'video-modal-overlay';
+    overlay.innerHTML = `
+      <div class="video-modal-dialog">
+        <div class="video-modal-header">
+          <span class="video-modal-title" id="video-modal-title-text">${title || 'Vídeo explicativo'}</span>
+          <button type="button" class="video-modal-close" aria-label="Cerrar vídeo" onclick="closeVideoModal()">×</button>
+        </div>
+        <div class="video-modal-iframe-wrap">
+          <iframe id="video-modal-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) window.closeVideoModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('active')) {
+        window.closeVideoModal();
+      }
+    });
+  }
+  const titleEl = document.getElementById('video-modal-title-text');
+  if (titleEl && title) titleEl.textContent = title;
+  const iframe = document.getElementById('video-modal-iframe');
+  if (iframe) {
+    let id = videoId || 'dQw4w9WgXcQ';
+    if (id.includes('youtube.com') || id.includes('youtu.be')) {
+      const match = id.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      if (match) id = match[1];
+    }
+    iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+  }
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeVideoModal = function() {
+  const overlay = document.getElementById('video-modal-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+    const iframe = document.getElementById('video-modal-iframe');
+    if (iframe) iframe.src = '';
+    document.body.style.overflow = '';
+  }
+};
+
+window.toggleArticleVideo = function(videoId) {
+  const box = document.getElementById('article-video-box');
+  const iframe = document.getElementById('article-video-iframe');
+  if (!box) return;
+
+  const isHidden = box.style.display === 'none' || !box.style.display;
+  if (isHidden) {
+    if (iframe) {
+      let id = videoId || iframe.dataset.videoid || 'dQw4w9WgXcQ';
+      if (id.includes('youtube.com') || id.includes('youtu.be')) {
+        const match = id.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        if (match) id = match[1];
+      }
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0';
+    }
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    box.style.display = 'none';
+    if (iframe) {
+      iframe.src = '';
+    }
+  }
+};

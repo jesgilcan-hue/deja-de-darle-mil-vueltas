@@ -574,6 +574,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Auto-apertura si se accede con parámetro o hash de test
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('diagnostico') === 'open' || window.location.hash === '#diagnostico-test') {
+    setTimeout(() => {
+      openModal();
+    }, 250);
+  }
+
   function openModal() {
     resetState();
     overlay.classList.add('active');
