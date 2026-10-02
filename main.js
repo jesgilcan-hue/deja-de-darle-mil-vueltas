@@ -67,34 +67,133 @@ flowTabs.forEach(tab => {
 });
 
 
-// --- Generic Lightbox ---
+// --- Generic Enhanced Lightbox with Multi-level Zoom ---
 const lightbox = document.createElement('div');
 lightbox.id = 'generic-lightbox';
 lightbox.className = 'lightbox';
-lightbox.innerHTML = '<img src="" alt="Ampliada" />';
+lightbox.setAttribute('role', 'dialog');
+lightbox.setAttribute('aria-modal', 'true');
+lightbox.innerHTML = `
+  <div class="lightbox-topbar">
+    <div class="lightbox-hint" id="lightbox-hint">🔍 Clic en la foto para ampliar</div>
+    <div class="lightbox-actions">
+      <button type="button" class="lightbox-btn" id="lightbox-zoom-out" title="Reducir zoom" aria-label="Reducir zoom">−</button>
+      <button type="button" class="lightbox-btn lightbox-btn-text" id="lightbox-zoom-reset" title="Ajustar a pantalla">1x</button>
+      <button type="button" class="lightbox-btn" id="lightbox-zoom-in" title="Aumentar zoom" aria-label="Aumentar zoom">+</button>
+      <button type="button" class="lightbox-btn lightbox-btn-close" id="lightbox-close" title="Cerrar (Esc)" aria-label="Cerrar">✕</button>
+    </div>
+  </div>
+  <div class="lightbox-wrap" id="lightbox-wrap">
+    <img id="lightbox-img" src="" alt="Vista ampliada" />
+  </div>
+`;
 document.body.appendChild(lightbox);
 
-lightbox.addEventListener('click', () => {
-    lightbox.classList.remove('show');
+const ZOOM_LEVELS = [1, 1.8, 2.6];
+let currentZoomIndex = 0;
+
+function applyZoom(index) {
+  currentZoomIndex = (index + ZOOM_LEVELS.length) % ZOOM_LEVELS.length;
+  const zoom = ZOOM_LEVELS[currentZoomIndex];
+  const wrap = document.getElementById('lightbox-wrap');
+  const img = document.getElementById('lightbox-img');
+  const hint = document.getElementById('lightbox-hint');
+  const resetBtn = document.getElementById('lightbox-zoom-reset');
+
+  if (currentZoomIndex === 0) {
+    lightbox.classList.remove('is-zoomed');
+    img.style.maxWidth = '90vw';
+    img.style.maxHeight = '85vh';
+    img.style.width = 'auto';
+    img.style.minWidth = '';
+    img.style.cursor = 'zoom-in';
+    if (hint) hint.textContent = '🔍 Clic en la foto para ampliar (Zoom)';
+    if (resetBtn) resetBtn.textContent = '1x';
+  } else {
+    lightbox.classList.add('is-zoomed');
+    const pct = Math.round(zoom * 100);
+    img.style.maxWidth = 'none';
+    img.style.maxHeight = 'none';
+    img.style.width = (zoom * 75) + 'vw';
+    img.style.minWidth = Math.min(1800, Math.round(zoom * 650)) + 'px';
+    img.style.cursor = currentZoomIndex === ZOOM_LEVELS.length - 1 ? 'zoom-out' : 'zoom-in';
+    if (hint) hint.textContent = `🔍 Zoom: ${pct}% (Clic para más zoom / alejar)`;
+    if (resetBtn) resetBtn.textContent = `${zoom}x`;
+  }
+}
+
+function closeLightbox() {
+  lightbox.classList.remove('show');
+  lightbox.classList.remove('is-zoomed');
+  applyZoom(0);
+  document.body.style.overflow = '';
+}
+
+function openLightbox(src, alt) {
+  const img = document.getElementById('lightbox-img');
+  img.src = src;
+  img.alt = alt || 'Vista ampliada';
+  applyZoom(0);
+  lightbox.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+const lightboxImg = lightbox.querySelector('#lightbox-img');
+lightboxImg.addEventListener('click', (e) => {
+  e.stopPropagation();
+  let nextIndex = (currentZoomIndex + 1) % ZOOM_LEVELS.length;
+  applyZoom(nextIndex);
+});
+
+document.getElementById('lightbox-zoom-in').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (currentZoomIndex < ZOOM_LEVELS.length - 1) {
+    applyZoom(currentZoomIndex + 1);
+  }
+});
+
+document.getElementById('lightbox-zoom-out').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (currentZoomIndex > 0) {
+    applyZoom(currentZoomIndex - 1);
+  }
+});
+
+document.getElementById('lightbox-zoom-reset').addEventListener('click', (e) => {
+  e.stopPropagation();
+  applyZoom(0);
+});
+
+document.getElementById('lightbox-close').addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeLightbox();
+});
+
+lightbox.addEventListener('click', (e) => {
+  if (e.target === lightbox || e.target.id === 'lightbox-wrap') {
+    closeLightbox();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && lightbox.classList.contains('show')) {
+    closeLightbox();
+  }
 });
 
 // Make all non-linked images zoomable
 const allImages = document.querySelectorAll('img:not(a img)');
 allImages.forEach(img => {
-    // Skip favicon/logos and tiny images
-    if(img.src.includes('favicon')) return;
-    
-    img.style.cursor = 'zoom-in';
-    img.addEventListener('click', (e) => {
-        // Try to avoid conflicts with existing manual lightboxes
-        if (img.getAttribute('onclick') && img.getAttribute('onclick').includes('lightbox')) {
-            return;
-        }
-        e.stopPropagation();
-        const lightboxImg = lightbox.querySelector('img');
-        lightboxImg.src = img.src;
-        lightbox.classList.add('show');
-    });
+  if (img.src.includes('favicon') || img.classList.contains('no-lightbox')) return;
+  
+  img.style.cursor = 'zoom-in';
+  img.addEventListener('click', (e) => {
+    if (img.getAttribute('onclick') && img.getAttribute('onclick').includes('lightbox')) {
+      return;
+    }
+    e.stopPropagation();
+    openLightbox(img.src, img.alt);
+  });
 });
 
 
