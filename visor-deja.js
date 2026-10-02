@@ -28,20 +28,18 @@ function playPaperSound() {
         const data = buffer.getChannelData(0);
 
         for (let i = 0; i < bufferSize; i++) {
-            // White noise with subtle pink falloff
             data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.8);
         }
 
         const noise = audioCtx.createBufferSource();
         noise.buffer = buffer;
 
-        // Filter to mimic physical book paper friction (bandpass 1200 Hz)
+        // Filter to mimic physical book paper friction (bandpass 1400 Hz)
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'bandpass';
         filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
         filter.Q.setValueAtTime(1.2, audioCtx.currentTime);
 
-        // Volume envelope (gentle ramp up and decay)
         const gainNode = audioCtx.createGain();
         gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.28, audioCtx.currentTime + 0.03);
@@ -68,17 +66,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!bookEl) return;
 
-    // Detect mobile for initial responsive dimensions
+    // Calculate dynamic base dimensions for PageFlip to guarantee it never overflows laptop screens
     const isMobile = window.innerWidth < 768;
+    const availH = Math.max(380, window.innerHeight - 130);
+    const maxPageH = Math.min(680, Math.round(availH * 0.96));
+    const maxPageW = Math.round(maxPageH * (440 / 660));
 
     const pageFlip = new PageFlip(bookEl, {
-        width: 440, // Base page width in px
-        height: 660, // Base page height in px (ratio 2:3 identical to 6x9 in)
+        width: 440,
+        height: 660,
         size: 'stretch',
-        minWidth: 280,
-        maxWidth: 600,
-        minHeight: 420,
-        maxHeight: 900,
+        minWidth: 200,
+        maxWidth: maxPageW,
+        minHeight: 300,
+        maxHeight: maxPageH,
         showCover: true,
         maxShadowOpacity: 0.45,
         showPageCorners: true,
@@ -90,11 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileScrollSupport: false
     });
 
-    // Load from static DOM elements inside #book-container
     const pageElements = document.querySelectorAll('.page-sheet');
     pageFlip.loadFromHTML(pageElements);
 
-    // Update Page Indicator function
     function updatePageIndicator() {
         const total = pageFlip.getPageCount();
         const current = pageFlip.getCurrentPageIndex();
@@ -114,14 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (orientation === 'landscape') {
                 const left = current;
                 const right = current + 1 <= total - 1 ? current + 1 : current;
-                pageLabel.textContent = `Páginas ${left} - ${right} de ${total}`;
+                pageLabel.textContent = `${left} - ${right} de ${total}`;
             } else {
-                pageLabel.textContent = `Página ${current + 1} de ${total}`;
+                pageLabel.textContent = `${current + 1} de ${total}`;
             }
         }
     }
 
-    // Flip sound and change events
     pageFlip.on('flip', (e) => {
         playPaperSound();
         updatePageIndicator();
@@ -135,12 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     pageFlip.on('init', () => {
         updatePageIndicator();
-        // Hide loader once ready
         const loader = document.getElementById('book-loader');
         if (loader) loader.classList.add('hidden');
     });
 
-    // Controls
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
             initAudio();
@@ -155,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Keyboard support
     window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight' || e.key === 'PageDown') {
             initAudio();
@@ -166,26 +161,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Sound toggle
     if (soundToggle) {
         soundToggle.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
             soundToggle.classList.toggle('muted', !soundEnabled);
             const icon = soundToggle.querySelector('.sound-icon');
-            const text = soundToggle.querySelector('.sound-text');
             if (soundEnabled) {
                 if (icon) icon.textContent = '🔊';
-                if (text) text.textContent = 'Silenciar';
+                soundToggle.title = 'Silenciar sonido de papel';
                 initAudio();
                 playPaperSound();
             } else {
                 if (icon) icon.textContent = '🔇';
-                if (text) text.textContent = 'Activar sonido';
+                soundToggle.title = 'Activar sonido de pasar página';
             }
         });
     }
 
-    // Fullscreen toggle
     if (fullscreenToggle) {
         fullscreenToggle.addEventListener('click', () => {
             if (!document.fullscreenElement) {
@@ -206,7 +198,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Unlock audio on first user touch or click
+    // --- Controles de Zoom ---
+    const zoomInBtn = document.getElementById('btn-zoom-in');
+    const zoomOutBtn = document.getElementById('btn-zoom-out');
+    const zoomLabel = document.getElementById('zoom-level');
+    const bookWrapper = document.querySelector('.book-wrapper');
+
+    const zoomSteps = [0.5, 0.65, 0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
+    const defaultZoomIdx = 4; // 1.0 (100%)
+    let currentZoomIdx = defaultZoomIdx;
+
+    function applyZoom(idx) {
+        currentZoomIdx = Math.max(0, Math.min(zoomSteps.length - 1, idx));
+        const scale = zoomSteps[currentZoomIdx];
+        if (bookWrapper) {
+            bookWrapper.style.transform = scale === 1.0 ? '' : `scale(${scale})`;
+        }
+        if (zoomLabel) {
+            zoomLabel.textContent = `${Math.round(scale * 100)}%`;
+        }
+        if (zoomOutBtn) zoomOutBtn.disabled = currentZoomIdx === 0;
+        if (zoomInBtn) zoomInBtn.disabled = currentZoomIdx === zoomSteps.length - 1;
+    }
+
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => applyZoom(currentZoomIdx + 1));
+    }
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => applyZoom(currentZoomIdx - 1));
+    }
+    if (zoomLabel) {
+        zoomLabel.addEventListener('click', () => applyZoom(defaultZoomIdx)); // Reset to 100%
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if ((e.key === '+' || e.key === '=') && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            applyZoom(currentZoomIdx + 1);
+        } else if (e.key === '-' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            applyZoom(currentZoomIdx - 1);
+        } else if (e.key === '0' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            applyZoom(defaultZoomIdx);
+        }
+    });
+
     window.addEventListener('click', () => initAudio(), { once: true });
     window.addEventListener('touchstart', () => initAudio(), { once: true });
 });

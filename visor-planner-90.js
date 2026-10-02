@@ -22,6 +22,7 @@ function playPaperSound() {
         initAudio();
         if (!audioCtx) return;
 
+        // Generate synthetic paper rustle/swish noise
         const bufferSize = audioCtx.sampleRate * 0.18; // 180ms
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -33,6 +34,7 @@ function playPaperSound() {
         const noise = audioCtx.createBufferSource();
         noise.buffer = buffer;
 
+        // Filter to mimic physical book paper friction (bandpass 1400 Hz)
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'bandpass';
         filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
@@ -64,14 +66,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!bookEl) return;
 
+    // Calculate dynamic base dimensions for PageFlip to guarantee it never overflows laptop screens
+    const isMobile = window.innerWidth < 768;
+    const availH = Math.max(380, window.innerHeight - 130);
+    const maxPageH = Math.min(680, Math.round(availH * 0.96));
+    const maxPageW = Math.round(maxPageH * (440 / 660));
+
     const pageFlip = new PageFlip(bookEl, {
         width: 440,
         height: 660,
         size: 'stretch',
-        minWidth: 280,
-        maxWidth: 600,
-        minHeight: 420,
-        maxHeight: 900,
+        minWidth: 200,
+        maxWidth: maxPageW,
+        minHeight: 300,
+        maxHeight: maxPageH,
         showCover: true,
         maxShadowOpacity: 0.45,
         showPageCorners: true,
@@ -105,9 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (orientation === 'landscape') {
                 const left = current;
                 const right = current + 1 <= total - 1 ? current + 1 : current;
-                pageLabel.textContent = `Páginas ${left} - ${right} de ${total}`;
+                pageLabel.textContent = `${left} - ${right} de ${total}`;
             } else {
-                pageLabel.textContent = `Página ${current + 1} de ${total}`;
+                pageLabel.textContent = `${current + 1} de ${total}`;
             }
         }
     }
@@ -143,20 +151,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+            initAudio();
+            pageFlip.flipNext();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            initAudio();
+            pageFlip.flipPrev();
+        }
+    });
+
     if (soundToggle) {
         soundToggle.addEventListener('click', () => {
-            initAudio();
             soundEnabled = !soundEnabled;
             soundToggle.classList.toggle('muted', !soundEnabled);
             const icon = soundToggle.querySelector('.sound-icon');
-            const text = soundToggle.querySelector('.sound-text');
             if (soundEnabled) {
                 if (icon) icon.textContent = '🔊';
-                if (text) text.textContent = 'Sonido activado';
+                soundToggle.title = 'Silenciar sonido de papel';
+                initAudio();
                 playPaperSound();
             } else {
                 if (icon) icon.textContent = '🔇';
-                if (text) text.textContent = 'Activar sonido';
+                soundToggle.title = 'Activar sonido de pasar página';
             }
         });
     }
@@ -165,28 +182,68 @@ document.addEventListener('DOMContentLoaded', () => {
         fullscreenToggle.addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
-                    console.warn(`Error trying to enable fullscreen: ${err.message}`);
+                    console.log('Error attempting fullscreen:', err);
                 });
+                fullscreenToggle.classList.add('active');
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
                 }
+                fullscreenToggle.classList.remove('active');
             }
         });
 
         document.addEventListener('fullscreenchange', () => {
-            const isFull = !!document.fullscreenElement;
-            fullscreenToggle.classList.toggle('active', isFull);
+            fullscreenToggle.classList.toggle('active', !!document.fullscreenElement);
         });
     }
 
+    // --- Controles de Zoom ---
+    const zoomInBtn = document.getElementById('btn-zoom-in');
+    const zoomOutBtn = document.getElementById('btn-zoom-out');
+    const zoomLabel = document.getElementById('zoom-level');
+    const bookWrapper = document.querySelector('.book-wrapper');
+
+    const zoomSteps = [0.5, 0.65, 0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
+    const defaultZoomIdx = 4; // 1.0 (100%)
+    let currentZoomIdx = defaultZoomIdx;
+
+    function applyZoom(idx) {
+        currentZoomIdx = Math.max(0, Math.min(zoomSteps.length - 1, idx));
+        const scale = zoomSteps[currentZoomIdx];
+        if (bookWrapper) {
+            bookWrapper.style.transform = scale === 1.0 ? '' : `scale(${scale})`;
+        }
+        if (zoomLabel) {
+            zoomLabel.textContent = `${Math.round(scale * 100)}%`;
+        }
+        if (zoomOutBtn) zoomOutBtn.disabled = currentZoomIdx === 0;
+        if (zoomInBtn) zoomInBtn.disabled = currentZoomIdx === zoomSteps.length - 1;
+    }
+
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => applyZoom(currentZoomIdx + 1));
+    }
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => applyZoom(currentZoomIdx - 1));
+    }
+    if (zoomLabel) {
+        zoomLabel.addEventListener('click', () => applyZoom(defaultZoomIdx)); // Reset to 100%
+    }
+
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight' || e.key === ' ') {
-            initAudio();
-            pageFlip.flipNext();
-        } else if (e.key === 'ArrowLeft') {
-            initAudio();
-            pageFlip.flipPrev();
+        if ((e.key === '+' || e.key === '=') && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            applyZoom(currentZoomIdx + 1);
+        } else if (e.key === '-' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            applyZoom(currentZoomIdx - 1);
+        } else if (e.key === '0' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            applyZoom(defaultZoomIdx);
         }
     });
+
+    window.addEventListener('click', () => initAudio(), { once: true });
+    window.addEventListener('touchstart', () => initAudio(), { once: true });
 });
