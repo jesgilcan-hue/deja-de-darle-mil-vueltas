@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aplicaciones | Menos Ruido</title>
+  <meta name="description" content="Ecosistema de aplicaciones y herramientas de Menos Ruido." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Favicon & PWA -->
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#87553b" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Menos Ruido" />
+
+  <!-- Tipografías -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --bg: #f3eee5;
+      --bg-card: #ffffff;
+      --text: #212121;
+      --text-muted: #666059;
+      --accent: #87553b;
+      --accent-hover: #70442e;
+      --accent-light: rgba(135, 85, 59, 0.12);
+      --green-dark: #22382c;
+      --border: rgba(33, 33, 33, 0.1);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
+      --shadow-hover: 0 16px 40px -8px rgba(0, 0, 0, 0.09);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* PANTALLA DE BLOQUEO CON PIN */
+    #pin-screen {
+      position: fixed;
+      inset: 0;
+      background-color: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 9999;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    #pin-screen.unlocked {
+      opacity: 0;
+      transform: scale(0.97);
+      pointer-events: none;
+    }
+
+    .pin-box {
+      max-width: 340px;
+      width: 100%;
+      text-align: center;
+      background: var(--bg-card);
+      padding: 36px 28px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--border);
+    }
+
+    .pin-logo {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 16px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .pin-brand {
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .pin-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--text);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .pin-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .pin-dots {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .pin-dot.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: scale(1.15);
+    }
+
+    .pin-dot.error {
+      background: #c94a4a !important;
+      border-color: #c94a4a !important;
+    }
+
+    .pin-dot.success {
+      background: #2b7a4b !important;
+      border-color: #2b7a4b !important;
+    }
+
+    .shake {
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .keypad-btn {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .keypad-btn:active {
+      background: var(--accent);
+      color: #ffffff;
+      transform: scale(0.94);
+    }
+
+    .keypad-btn.action {
+      font-size: 0.85rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .keypad-btn.action:active {
+      color: var(--text);
+      background: transparent;
+    }
+
+    .pin-error-msg {
+      height: 18px;
+      font-size: 0.8rem;
+      color: #c94a4a;
+      margin-top: 10px;
+    }
+
+    /* HUB DE APLICACIONES */
+    #apps-hub {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    #apps-hub.visible {
+      display: block;
+      opacity: 1;
+    }
+
+    /* HEADER */
+    .hub-header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(243, 238, 229, 0.85);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .hub-header-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hub-logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .hub-logo-img {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .hub-logo-text {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .hub-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-text-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-text-link:hover {
+      color: var(--text);
+    }
+
+    .btn-lock {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-lock:hover {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+
+    /* HERO */
+    .hub-hero {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 56px 24px 36px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 5px 12px;
+      border-radius: 50px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .hub-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .hub-hero p {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* GRID DE TARJETAS */
+    .hub-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 12px 24px 60px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+
+    /* TARJETA PRINCIPAL DESTACADA (PWA ACTIVA) */
+    .app-card-featured {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 36px;
+      align-items: center;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .app-card-featured:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .featured-info {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .app-header-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .app-icon-large {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .app-title-group h2 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .badge-status-active {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #2b7a4b;
+      background: #eaf5ee;
+      padding: 4px 10px;
+      border-radius: 50px;
+      width: fit-content;
+    }
+
+    .badge-status-active::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2b7a4b;
+    }
+
+    .app-description {
+      font-size: 0.98rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .app-features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .app-features-list li {
+      font-size: 0.88rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-features-list li::before {
+      content: '✓';
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .install-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn-install-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 14px 24px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+    }
+
+    .btn-install-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-installed-state {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #eaf5ee;
+      color: #2b7a4b;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: 1px solid rgba(43, 122, 75, 0.2);
+    }
+
+    /* BLOQUE PUENTE QR (ESCRITORIO) */
+    .featured-qr-box {
+      background: var(--bg);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qr-badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .qr-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .qr-image-wrap {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      display: inline-block;
+      margin: 4px 0;
+    }
+
+    .qr-image-wrap img {
+      width: 160px;
+      height: 160px;
+      display: block;
+    }
+
+    .qr-reassurance {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      max-width: 260px;
+    }
+
+    /* TARJETAS SECUNDARIAS (PRÓXIMAMENTE) */
+    .secondary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 8px;
+    }
+
+    .app-card-secondary {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+      position: relative;
+    }
+
+    .badge-status-dev {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 3px 9px;
+      border-radius: 50px;
+      width: fit-content;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .secondary-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+
+    .app-card-secondary h3 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .app-card-secondary p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .btn-disabled {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--text-muted);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: 1px dashed var(--border);
+      cursor: default;
+      width: fit-content;
+    }
+
+    /* MODAL GUÍA DE INSTALACIÓN IOS */
+    .ios-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 10000;
+      padding: 16px;
+    }
+
+    .ios-modal-overlay.open {
+      display: flex;
+    }
+
+    .ios-modal-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      max-width: 440px;
+      width: 100%;
+      padding: 28px 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .ios-modal-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .ios-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .ios-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+
+    .ios-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+
+    .ios-icon-tag {
+      display: inline-block;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .btn-close-modal {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    /* FOOTER */
+    .hub-footer {
+      text-align: center;
+      padding: 36px 24px 48px;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 820px) {
+      .app-card-featured {
+        grid-template-columns: 1fr;
+        padding: 28px 20px;
+        gap: 28px;
+      }
+      .featured-qr-box {
+        display: none; /* En móvil no tiene sentido mostrar el QR de escanear */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. PANTALLA DE ACCESO POR PIN (1111) -->
+  <div id="pin-screen">
+    <div class="pin-box" id="pin-box">
+      <img src="/icons/icon-192.png" alt="Menos Ruido" class="pin-logo" />
+      <div class="pin-brand">Menos Ruido</div>
+      <h2 class="pin-title">Acceso Privado</h2>
+      <p class="pin-desc">Introduce tu código de 4 dígitos para acceder al espacio de aplicaciones.</p>
+
+      <div class="pin-dots">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+
+      <!-- Teclado en pantalla para móvil / click -->
+      <div class="keypad">
+        <button type="button" class="keypad-btn" data-digit="1">1</button>
+        <button type="button" class="keypad-btn" data-digit="2">2</button>
+        <button type="button" class="keypad-btn" data-digit="3">3</button>
+        <button type="button" class="keypad-btn" data-digit="4">4</button>
+        <button type="button" class="keypad-btn" data-digit="5">5</button>
+        <button type="button" class="keypad-btn" data-digit="6">6</button>
+        <button type="button" class="keypad-btn" data-digit="7">7</button>
+        <button type="button" class="keypad-btn" data-digit="8">8</button>
+        <button type="button" class="keypad-btn" data-digit="9">9</button>
+        <button type="button" class="keypad-btn action" id="btn-clear">Limpiar</button>
+        <button type="button" class="keypad-btn" data-digit="0">0</button>
+        <button type="button" class="keypad-btn action" id="btn-delete">⌫</button>
+      </div>
+
+      <div class="pin-error-msg" id="pin-error"></div>
+    </div>
+  </div>
+
+  <!-- 2. HUB DE APLICACIONES (DESBLOQUEADO) -->
+  <div id="apps-hub">
+    
+    <!-- Cabecera mínima -->
+    <header class="hub-header">
+      <div class="hub-header-container">
+        <a href="/" class="hub-logo-wrap">
+          <img src="/icons/icon-192.png" alt="Menos Ruido Logo" class="hub-logo-img" />
+          <span class="hub-logo-text">Menos Ruido</span>
+        </a>
+        <div class="hub-nav-actions">
+          <a href="/" class="btn-text-link">← Volver a la web</a>
+          <button type="button" class="btn-lock" id="btn-lock" title="Bloquear con PIN">🔒 Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hub-hero">
+      <span class="hero-badge">Ecosistema Privado</span>
+      <h1>Aplicaciones de Menos Ruido</h1>
+      <p>
+        Herramientas analógicas en tu pantalla de inicio: sin notificaciones invasivas, sin publicidad y diseñadas para acompañar tu pensamiento en papel.
+      </p>
+    </section>
+
+    <!-- Grid de Aplicaciones -->
+    <main class="hub-grid">
+
+      <!-- TARJETA 1: PWA PRINCIPAL (ACTIVA) -->
+      <article class="app-card-featured">
+        <div class="featured-info">
+          <div class="app-header-row">
+            <img src="/icons/icon-192.png" alt="Icono Menos Ruido" class="app-icon-large" />
+            <div class="app-title-group">
+              <span class="badge-status-active">Disponible para instalar</span>
+              <h2>Menos Ruido</h2>
+            </div>
+          </div>
+
+          <p class="app-description">
+            Todo el catálogo editorial, la biblioteca de lecturas, simuladores interactivos de cuadernos y visores 3D accesibles al instante desde el escritorio o tu pantalla de inicio.
+          </p>
+
+          <ul class="app-features-list">
+            <li>Funciona de forma fluida y sin conexión a redes saturadas.</li>
+            <li>Acceso directo sin barras de navegador ni pestañas innecesarias.</li>
+            <li>100% privada, sin rastreadores ni alertas imprevistas.</li>
+          </ul>
+
+          <div class="install-actions">
+            <!-- Estado si ya está instalada -->
+            <div id="state-installed" class="btn-installed-state" style="display: none;">
+              <span>✓ Aplicación ya instalada en este dispositivo</span>
+            </div>
+
+            <!-- Botón de instalación / apertura -->
+            <button type="button" id="btn-install-app" class="btn-install-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span id="install-btn-text">Instalar en este dispositivo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Columna de Código QR (Solo visible en pantallas de ordenador/tablet) -->
+        <aside class="featured-qr-box">
+          <span class="qr-badge">Puente Móvil</span>
+          <div class="qr-title">Instalar en tu teléfono</div>
+          <div class="qr-image-wrap">
+            <img src="/images/qr-apps.png" alt="Código QR para instalar en móvil" />
+          </div>
+          <p class="qr-reassurance">
+            Escanea este código con la cámara de tu móvil para abrir esta misma pantalla en tu teléfono. Podrás decidir si instalarla con un solo toque.
+          </p>
+        </aside>
+      </article>
+
+      <!-- TARJETAS SECUNDARIAS (PRÓXIMAMENTE) -->
+      <section class="secondary-grid">
+
+        <!-- TARJETA 2: Diseña tu propio libro -->
+        <article class="app-card-secondary">
+          <div>
+            <div class="secondary-icon">📖</div>
+            <span class="badge-status-dev">En desarrollo</span>
+            <h3>Diseña tu propio libro</h3>
+            <p>
+              Herramienta intuitiva para estructurar, personalizar pautas y componer los interiores de tus propios cuadernos, diarios o manuales en papel a medida.
+            </p>
+          </div>
+          <div>
+            <span class="btn-disabled">Próximamente</span>
+          </div>
+        </article>
+
+        <!-- TARJETA 3: Cuaderno de Entrenamiento -->
+        <article class="app-card-secondary">
+          <div>
+            <div class="secondary-icon">⚡</div>
+            <span class="badge-status-dev">En desarrollo</span>
+            <h3>Cuaderno de Entrenamiento</h3>
+            <p>
+              Registro sobrio y silencioso de tus sesiones de fuerza, cargas y repeticiones. Almacenamiento 100% privado en tu teléfono móvil.
+            </p>
+          </div>
+          <div>
+            <span class="btn-disabled">Próximamente</span>
+          </div>
+        </article>
+
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="hub-footer">
+      <p>© 2026 Menos Ruido · Pensar en papel</p>
+    </footer>
+
+  </div>
+
+  <!-- 3. MODAL DE AYUDA PARA IOS SAFARI -->
+  <div class="ios-modal-overlay" id="ios-modal">
+    <div class="ios-modal-card">
+      <h3>Instalar en tu iPhone o iPad</h3>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">
+        En dispositivos Apple, la instalación se realiza en dos toques sencillos desde Safari:
+      </p>
+
+      <div class="ios-steps">
+        <div class="ios-step">
+          <div class="ios-step-num">1</div>
+          <div>
+            Pulsa el botón <strong>Compartir</strong> <span class="ios-icon-tag">⎋</span> (el icono del cuadrado con una flecha hacia arriba) en la barra inferior de Safari.
+          </div>
+        </div>
+        <div class="ios-step">
+          <div class="ios-step-num">2</div>
+          <div>
+            Desplázate hacia abajo y selecciona <strong>«Añadir a pantalla de inicio»</strong> <span class="ios-icon-tag">⊞</span>.
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-close-modal" id="btn-close-ios-modal">Entendido</button>
+    </div>
+  </div>
+
+  <!-- SCRIPT DE CONTROL PWA Y PIN -->
+  <script>
+    (function() {
+      const CORRECT_PIN = '1111';
+      let currentPin = '';
+
+      // Elementos DOM PIN
+      const pinScreen = document.getElementById('pin-screen');
+      const pinBox = document.getElementById('pin-box');
+      const pinError = document.getElementById('pin-error');
+      const dots = [
+        document.getElementById('dot-0'),
+        document.getElementById('dot-1'),
+        document.getElementById('dot-2'),
+        document.getElementById('dot-3')
+      ];
+
+      // Elementos DOM Hub
+      const appsHub = document.getElementById('apps-hub');
+      const btnLock = document.getElementById('btn-lock');
+      const btnInstall = document.getElementById('btn-install-app');
+      const stateInstalled = document.getElementById('state-installed');
+      const installBtnText = document.getElementById('install-btn-text');
+      const iosModal = document.getElementById('ios-modal');
+      const btnCloseIosModal = document.getElementById('btn-close-ios-modal');
+
+      // 1. GESTIÓN DEL PIN
+      function updateDots() {
+        dots.forEach((dot, index) => {
+          if (index < currentPin.length) {
+            dot.classList.add('filled');
+          } else {
+            dot.classList.remove('filled', 'error', 'success');
+          }
+        });
+      }
+
+      function checkPin() {
+        if (currentPin.length !== 4) return;
+
+        if (currentPin === CORRECT_PIN) {
+          dots.forEach(d => d.classList.add('success'));
+          sessionStorage.setItem('mr_apps_unlocked', '1');
+          setTimeout(() => {
+            pinScreen.classList.add('unlocked');
+            appsHub.classList.add('visible');
+          }, 250);
+        } else {
+          dots.forEach(d => d.classList.add('error'));
+          pinBox.classList.add('shake');
+          pinError.textContent = 'Código incorrecto';
+          setTimeout(() => {
+            currentPin = '';
+            pinBox.classList.remove('shake');
+            pinError.textContent = '';
+            updateDots();
+          }, 600);
+        }
+      }
+
+      function addDigit(digit) {
+        if (currentPin.length >= 4) return;
+        currentPin += digit;
+        updateDots();
+        if (currentPin.length === 4) {
+          checkPin();
+        }
+      }
+
+      function removeDigit() {
+        if (currentPin.length > 0) {
+          currentPin = currentPin.slice(0, -1);
+          pinError.textContent = '';
+          updateDots();
+        }
+      }
+
+      function clearPin() {
+        currentPin = '';
+        pinError.textContent = '';
+        updateDots();
+      }
+
+      // Eventos teclado en pantalla
+      document.querySelectorAll('.keypad-btn[data-digit]').forEach(btn => {
+        btn.addEventListener('click', () => addDigit(btn.getAttribute('data-digit')));
+      });
+      document.getElementById('btn-delete').addEventListener('click', removeDigit);
+      document.getElementById('btn-clear').addEventListener('click', clearPin);
+
+      // Eventos teclado físico (PC/Mac)
+      window.addEventListener('keydown', (e) => {
+        if (sessionStorage.getItem('mr_apps_unlocked') === '1') return;
+        if (e.key >= '0' && e.key <= '9') {
+          addDigit(e.key);
+        } else if (e.key === 'Backspace') {
+          removeDigit();
+        } else if (e.key === 'Escape') {
+          clearPin();
+        }
+      });
+
+      // Botón Bloquear / Salir
+      btnLock.addEventListener('click', () => {
+        sessionStorage.removeItem('mr_apps_unlocked');
+        clearPin();
+        pinScreen.classList.remove('unlocked');
+        appsHub.classList.remove('visible');
+      });
+
+      // Comprobar si ya estaba desbloqueado en la sesión
+      if (sessionStorage.getItem('mr_apps_unlocked') === '1') {
+        pinScreen.classList.add('unlocked');
+        appsHub.classList.add('visible');
+      }
+
+      // 2. GESTIÓN PWA E INSTALACIÓN INTELIGENTE
+      let deferredPrompt = null;
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+      if (isStandalone) {
+        // Ya está instalada
+        btnInstall.style.display = 'none';
+        stateInstalled.style.display = 'inline-flex';
+      }
+
+      // Captura del prompt nativo (Chrome / Android / Edge)
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!isStandalone) {
+          installBtnText.textContent = 'Instalar en tu pantalla de inicio';
+        }
+      });
+
+      window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        btnInstall.style.display = 'none';
+        stateInstalled.style.display = 'inline-flex';
+      });
+
+      // Click en botón Instalar
+      btnInstall.addEventListener('click', async () => {
+        if (isStandalone) {
+          window.location.href = '/';
+          return;
+        }
+
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            btnInstall.style.display = 'none';
+            stateInstalled.style.display = 'inline-flex';
+          }
+          deferredPrompt = null;
+        } else if (isIOS) {
+          // Mostrar instrucciones visuales para Safari iOS
+          iosModal.classList.add('open');
+        } else {
+          // Navegador de escritorio o sin soporte directo de evento
+          alert('Para instalar esta aplicación, haz clic en el icono de instalación (⊞ o flecha hacia abajo) situado en la barra de direcciones de tu navegador.');
+        }
+      });
+
+      btnCloseIosModal.addEventListener('click', () => {
+        iosModal.classList.remove('open');
+      });
+      iosModal.addEventListener('click', (e) => {
+        if (e.target === iosModal) iosModal.classList.remove('open');
+      });
+
+      // 3. REGISTRO DEL SERVICE WORKER
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+
+    })();
+  </script>
+</body>
+</html>
