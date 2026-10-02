@@ -260,3 +260,100 @@ if ('serviceWorker' in navigator) {
   }
 })();
 
+// Renderizar estantería visual en el menú móvil para Cuadernos
+(function initMobileBookshelf() {
+  const dropdownContent = document.querySelector('.dropdown .dropdown-content');
+  if (!dropdownContent) return;
+
+  // Marcar los links antiguos como legacy para que en móvil los oculte el CSS
+  dropdownContent.querySelectorAll('a').forEach(a => {
+    if (!a.classList.contains('mobile-book-card')) {
+      a.classList.add('legacy-link');
+    }
+  });
+
+  // Evitar duplicados si ya se inicializó
+  if (dropdownContent.querySelector('.mobile-bookshelf')) return;
+
+  const bookshelf = document.createElement('div');
+  bookshelf.className = 'mobile-bookshelf';
+  bookshelf.innerHTML = `
+    <!-- Habla Claro -->
+    <a href="/habla-claro.html" class="mobile-book-card">
+      <img src="/cover_habla.jpg" alt="Habla Claro" class="mobile-book-thumb" loading="lazy" />
+      <div class="mobile-book-info">
+        <span class="mobile-book-title">Habla Claro</span>
+        <span class="mobile-book-subtitle">Comunicación y límites</span>
+      </div>
+    </a>
+
+    <!-- Deja de darle mil vueltas -->
+    <a href="/deja-de-darle-mil-vueltas.html" class="mobile-book-card">
+      <img src="/cover_deja.jpg" alt="Deja de darle mil vueltas" class="mobile-book-thumb" loading="lazy" />
+      <div class="mobile-book-info">
+        <span class="mobile-book-title">Deja de darle mil vueltas</span>
+        <span class="mobile-book-subtitle">Toma de decisiones</span>
+      </div>
+    </a>
+
+    <!-- Planificadores Desplegables -->
+    <div class="mobile-planners-accordion">
+      <button type="button" class="mobile-planners-toggle">
+        <span>Planificadores</span>
+        <span class="toggle-icon">▾</span>
+      </button>
+      <div class="mobile-planners-list">
+        <a href="/planificador-90-dias.html" class="mobile-book-card sub-card">
+          <img src="/cover_90.jpg" alt="Planificador 90 Días" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Planificador 90 Días</span>
+            <span class="mobile-book-subtitle">Enfoque trimestral</span>
+          </div>
+        </a>
+        <a href="/planificador-180-dias.html" class="mobile-book-card sub-card">
+          <img src="/cover_180.jpg" alt="Planificador 180 Días" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Planificador 180 Días</span>
+            <span class="mobile-book-subtitle">Hábito semestral</span>
+          </div>
+        </a>
+        <a href="/planificador-semanal-simple.html" class="mobile-book-card sub-card">
+          <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Simple" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Semanal Atemporal</span>
+            <span class="mobile-book-subtitle">Edición simple</span>
+          </div>
+        </a>
+        <a href="/planificador-semanal-reversible.html" class="mobile-book-card sub-card">
+          <img src="/cover_semanal_reversible.jpg" alt="Planificador Semanal Reversible" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Semanal Reversible</span>
+            <span class="mobile-book-subtitle">Edición doble entrada</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  `;
+
+  // Cerrar menú al hacer clic en cualquier enlace
+  bookshelf.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.body.classList.remove('nav-open');
+    });
+  });
+
+  // Toggle de Planificadores (sin cerrar el menú padre)
+  const plannersToggle = bookshelf.querySelector('.mobile-planners-toggle');
+  const plannersAccordion = bookshelf.querySelector('.mobile-planners-accordion');
+  if (plannersToggle && plannersAccordion) {
+    plannersToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      plannersAccordion.classList.toggle('open');
+    });
+  }
+
+  dropdownContent.appendChild(bookshelf);
+})();
+
+
