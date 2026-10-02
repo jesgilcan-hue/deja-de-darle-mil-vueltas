@@ -184,3 +184,79 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+// Integración de Submenú Contextual en el Drawer Móvil (Opción 3)
+(function initMobileContextualSubnav() {
+  const bookSubnav = document.querySelector('.book-subnav');
+  const drawerNav = document.querySelector('.navbar nav');
+  if (!bookSubnav || !drawerNav) return;
+
+  const titleEl = bookSubnav.querySelector('.book-subnav-title');
+  const links = bookSubnav.querySelectorAll('.book-subnav-links a');
+  const btn3D = bookSubnav.querySelector('.subnav-3d-btn');
+  const btnBuy = bookSubnav.querySelector('.subnav-buy');
+
+  const contextBox = document.createElement('div');
+  contextBox.className = 'nav-drawer-context';
+
+  const titleText = titleEl ? titleEl.textContent.trim() : 'Este Cuaderno';
+  contextBox.innerHTML = `
+    <div class="nav-drawer-context-header">
+      <span class="nav-drawer-context-badge">Estás viendo</span>
+      <h3 class="nav-drawer-context-title">${titleText}</h3>
+    </div>
+    <div class="nav-drawer-context-links"></div>
+    <div class="nav-drawer-context-actions"></div>
+  `;
+
+  const linksContainer = contextBox.querySelector('.nav-drawer-context-links');
+  links.forEach(a => {
+    const clone = document.createElement('a');
+    clone.href = a.getAttribute('href');
+    clone.innerHTML = a.innerHTML;
+    clone.className = 'nav-drawer-context-link' + (a.classList.contains('active') ? ' active' : '');
+    clone.addEventListener('click', () => {
+      document.body.classList.remove('nav-open');
+    });
+    linksContainer.appendChild(clone);
+  });
+
+  const actionsContainer = contextBox.querySelector('.nav-drawer-context-actions');
+  if (btn3D) {
+    const clone3D = document.createElement('button');
+    clone3D.type = 'button';
+    clone3D.className = 'nav-drawer-context-btn-3d';
+    clone3D.innerHTML = '<span>📖</span> Hojear en 3D';
+    clone3D.addEventListener('click', () => {
+      document.body.classList.remove('nav-open');
+      if (typeof openBookModal === 'function') {
+        openBookModal();
+      } else {
+        const modal = document.getElementById('book-modal-backdrop');
+        if (modal) modal.classList.add('active');
+      }
+    });
+    actionsContainer.appendChild(clone3D);
+  }
+
+  if (btnBuy) {
+    const cloneBuy = document.createElement('a');
+    cloneBuy.href = btnBuy.getAttribute('href');
+    cloneBuy.target = '_blank';
+    cloneBuy.rel = 'noopener noreferrer';
+    cloneBuy.className = 'btn-primary nav-drawer-context-btn-buy';
+    cloneBuy.textContent = btnBuy.textContent ? btnBuy.textContent.trim() : 'Comprar en Amazon';
+    cloneBuy.addEventListener('click', () => {
+      document.body.classList.remove('nav-open');
+    });
+    actionsContainer.appendChild(cloneBuy);
+  }
+
+  const drawerHeader = drawerNav.querySelector('.nav-drawer-header');
+  if (drawerHeader) {
+    drawerHeader.insertAdjacentElement('afterend', contextBox);
+  } else {
+    drawerNav.prepend(contextBox);
+  }
+})();
+
