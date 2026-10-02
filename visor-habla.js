@@ -167,15 +167,14 @@ document.addEventListener('DOMContentLoaded', () => {
             soundEnabled = !soundEnabled;
             soundToggle.classList.toggle('muted', !soundEnabled);
             const icon = soundToggle.querySelector('.sound-icon');
-            const text = soundToggle.querySelector('.sound-text');
             if (soundEnabled) {
                 if (icon) icon.textContent = '🔊';
-                if (text) text.textContent = 'Silenciar';
+                soundToggle.title = 'Silenciar sonido de papel';
                 initAudio();
                 playPaperSound();
             } else {
                 if (icon) icon.textContent = '🔇';
-                if (text) text.textContent = 'Activar sonido';
+                soundToggle.title = 'Activar sonido de pasar página';
             }
         });
     }
