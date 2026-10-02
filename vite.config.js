@@ -32,7 +32,8 @@ export default defineConfig({
         listasInfinitas: resolve(__dirname, 'la-trampa-de-las-listas-infinitas.html'),
         falsaUrgencia: resolve(__dirname, 'la-falsa-urgencia-y-el-mensaje-inmediato.html'),
         papelPantalla: resolve(__dirname, 'por-que-el-papel-ordena-lo-que-la-pantalla-satura.html'),
-        links: resolve(__dirname, 'links.html')
+        links: resolve(__dirname, 'links.html'),
+        visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html')
       }
     }
   }

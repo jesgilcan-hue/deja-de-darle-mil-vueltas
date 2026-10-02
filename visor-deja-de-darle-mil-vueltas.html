@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 3D Interactivo — Deja de darle mil vueltas | Editorial Menos Ruido</title>
+    <meta name="description" content="Hojea en 3D el cuaderno guiado 'Deja de darle mil vueltas' con sonido realista y páginas originales de alta resolución.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-viewer: #1a1816;
+            --bg-surface: #24211e;
+            --bg-surface-elevated: #2d2925;
+            --color-text-main: #f5f2eb;
+            --color-text-muted: #a69e94;
+            --color-accent: #c47c5d;
+            --color-accent-hover: #d98e6e;
+            --font-serif: 'Newsreader', Georgia, serif;
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-viewer);
+            font-family: var(--font-sans);
+            color: var(--color-text-main);
+        }
+
+        .viewer-layout {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: radial-gradient(circle at 50% 40%, #292521 0%, #171513 100%);
+            position: relative;
+        }
+
+        /* --- Header Superior --- */
+        .viewer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            background: rgba(26, 24, 22, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            color: var(--color-text-main);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .book-identity {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-title {
+            font-family: var(--font-serif);
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--color-text-main);
+            letter-spacing: -0.01em;
+        }
+
+        .book-subtitle {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-amazon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background-color: var(--color-accent);
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(196, 124, 93, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .btn-amazon:hover {
+            background-color: var(--color-accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(196, 124, 93, 0.5);
+        }
+
+        /* --- Área de Lectura Central (Book Stage) --- */
+        .viewer-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 1rem;
+        }
+
+        /* Luces y sombras de ambientación */
+        .stage-spotlight {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 85%;
+            max-width: 1000px;
+            max-height: 800px;
+            background: radial-gradient(ellipse at center, rgba(255, 240, 220, 0.05) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .book-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+        }
+
+        #book-container {
+            margin: auto;
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+
+        /* Elementos de página para PageFlip */
+        .page-sheet {
+            background-color: #faf7f2;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            user-select: none;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.03);
+        }
+
+        .page-sheet img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Efecto de lomo / costura interior */
+        .page-sheet.--left::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 28px;
+            height: 100%;
+            background: linear-gradient(to left, rgba(0,0,0,0.12), rgba(0,0,0,0));
+            pointer-events: none;
+        }
+
+        .page-sheet.--right::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 28px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.12), rgba(0,0,0,0));
+            pointer-events: none;
+        }
+
+        /* Portada y contraportada con brillo realista */
+        .page-sheet[data-density="hard"] {
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+        }
+
+        /* --- Barra de Controles Inferior --- */
+        .viewer-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+            padding: 0.85rem 1.5rem;
+            background: rgba(26, 24, 22, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--color-text-main);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-counter {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-muted);
+            min-width: 140px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .tool-divider {
+            width: 1px;
+            height: 22px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .secondary-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pill-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--color-text-muted);
+            padding: 0.4rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .pill-btn:hover {
+            color: var(--color-text-main);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pill-btn.muted {
+            opacity: 0.7;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .keyboard-hint {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .kbd-key {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 0.1rem 0.35rem;
+            font-size: 0.7rem;
+            font-family: monospace;
+        }
+
+        /* --- Loader Inicial --- */
+        .book-loader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-viewer);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            z-index: 100;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .book-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: var(--color-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .book-subtitle, .keyboard-hint, .tool-divider {
+                display: none;
+            }
+            .viewer-header {
+                padding: 0.5rem 0.85rem;
+            }
+            .viewer-toolbar {
+                padding: 0.65rem 1rem;
+                gap: 0.75rem;
+            }
+            .page-counter {
+                min-width: 110px;
+                font-size: 0.8rem;
+            }
+            .btn-amazon span.text {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-layout">
+        <!-- Loader -->
+        <div id="book-loader" class="book-loader">
+            <div class="spinner"></div>
+            <p style="font-size: 0.9rem; color: var(--color-text-muted);">Cargando páginas del cuaderno...</p>
+        </div>
+
+        <!-- Header -->
+        <header class="viewer-header">
+            <div class="header-left">
+                <a href="/deja-de-darle-mil-vueltas.html" class="btn-back" title="Volver a la ficha del cuaderno">
+                    <span>←</span> Ficha del cuaderno
+                </a>
+                <div class="book-identity">
+                    <h1 class="book-title">Deja de darle mil vueltas</h1>
+                    <span class="book-subtitle">Muestra interactiva • 16 páginas originales</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="https://www.amazon.es/dp/B0H3KBSC78" target="_blank" rel="noopener noreferrer" class="btn-amazon">
+                    <span>🛒</span> <span class="text">Comprar en Amazon</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Stage Central -->
+        <main class="viewer-stage">
+            <div class="stage-spotlight"></div>
+            <div class="book-wrapper">
+                <div id="book-container">
+                    <!-- 16 Páginas Renderizadas del Interior y Portada -->
+                    <!-- 1. Portada -->
+                    <div class="page-sheet" data-density="hard">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_01.webp" alt="Portada: Deja de darle mil vueltas" />
+                    </div>
+                    <!-- 2. Página 0 (Reverso en blanco de la portada) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_02.webp" alt="Página 0: Reverso de portada" />
+                    </div>
+                    <!-- 3. Portadilla (Interior p. 1) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_03.webp" alt="Portadilla interior: Para cuando pensar más ya no te está ayudando" />
+                    </div>
+                    <!-- 4. Antes de usarlo (Interior p. 2) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_04.webp" alt="Antes de usarlo: Herramienta práctica de escritura" />
+                    </div>
+                    <!-- 5. Índice general (Interior p. 3) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_05.webp" alt="Índice: Mapa general de capítulos" />
+                    </div>
+                    <!-- 6. Portadilla interior complementaria (Interior p. 4) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_06.webp" alt="Portadilla: Deja de darle mil vueltas" />
+                    </div>
+                    <!-- 7. Sección 2: Decisiones rápidas (Interior p. 13) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_07.webp" alt="Sección 2: Decisiones rápidas" />
+                    </div>
+                    <!-- 8. Mapa de decisiones rápidas (Interior p. 14) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_08.webp" alt="Decisiones rápidas: Un atajo para cerrar preguntas pequeñas" />
+                    </div>
+                    <!-- 9. La decisión que solo necesita bajar el volumen (Interior p. 15) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_09.webp" alt="La decisión que solo necesita bajar el volumen" />
+                    </div>
+                    <!-- 10. TRABAJO: Atajo de claridad (Interior p. 16) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_10.webp" alt="Plantilla de trabajo: Atajo de claridad" />
+                    </div>
+                    <!-- 11. Sección 3: Decisiones importantes (Interior p. 19) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_11.webp" alt="Sección 3: Decisiones importantes" />
+                    </div>
+                    <!-- 12. Paso 10: Si salió distinto a lo esperado (Interior p. 44) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_12.webp" alt="Paso 10: Si salió distinto a lo esperado" />
+                    </div>
+                    <!-- 13. CIERRE: El método en una página (Interior p. 45) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_13.webp" alt="Cierre: El método en una página" />
+                    </div>
+                    <!-- 14. Gracias por llegar hasta aquí (Interior p. 131) -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_14.webp" alt="Gracias por llegar hasta aquí" />
+                    </div>
+                    <!-- 15. Reverso en blanco de la contraportada -->
+                    <div class="page-sheet">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_15.webp" alt="Reverso interior de contraportada" />
+                    </div>
+                    <!-- 16. Contraportada con código de barras Amazon KDP -->
+                    <div class="page-sheet" data-density="hard">
+                        <img src="/books/deja-de-darle-mil-vueltas/page_16.webp" alt="Contraportada con código de barras KDP" />
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Barra Inferior de Navegación -->
+        <footer class="viewer-toolbar">
+            <div class="nav-controls">
+                <button id="btn-prev" class="control-btn" aria-label="Página anterior" title="Página anterior (←)">
+                    <span>‹</span>
+                </button>
+                <div id="page-indicator" class="page-counter">Cargando...</div>
+                <button id="btn-next" class="control-btn" aria-label="Página siguiente" title="Página siguiente (→)">
+                    <span>›</span>
+                </button>
+            </div>
+
+            <div class="tool-divider"></div>
+
+            <div class="secondary-controls">
+                <button id="btn-sound-toggle" class="pill-btn muted" aria-label="Activar o silenciar sonido de pasar página" title="Sonido de papel al hojear">
+                    <span class="sound-icon">🔇</span>
+                    <span class="sound-text">Activar sonido</span>
+                </button>
+                <button id="btn-fullscreen" class="pill-btn" aria-label="Pantalla completa" title="Alternar pantalla completa">
+                    <span>⛶</span>
+                    <span>Pantalla completa</span>
+                </button>
+            </div>
+
+            <div class="tool-divider"></div>
+
+            <div class="keyboard-hint">
+                <span>Navega con</span>
+                <span class="kbd-key">←</span>
+                <span class="kbd-key">→</span>
+                <span>o arrastrando</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script del Visor -->
+    <script type="module" src="./visor-deja.js"></script>
+</body>
+</html>
