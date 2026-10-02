@@ -89,37 +89,62 @@ lightbox.innerHTML = `
 `;
 document.body.appendChild(lightbox);
 
-const ZOOM_LEVELS = [1, 1.8, 2.6];
+const ZOOM_LEVELS = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
 let currentZoomIndex = 0;
 
+function updateZoomControls() {
+  const zoomInBtn = document.getElementById('lightbox-zoom-in');
+  const zoomOutBtn = document.getElementById('lightbox-zoom-out');
+  if (zoomInBtn) {
+    const isMax = currentZoomIndex >= ZOOM_LEVELS.length - 1;
+    zoomInBtn.style.opacity = isMax ? '0.35' : '1';
+    zoomInBtn.style.cursor = isMax ? 'default' : 'pointer';
+  }
+  if (zoomOutBtn) {
+    const isMin = currentZoomIndex <= 0;
+    zoomOutBtn.style.opacity = isMin ? '0.35' : '1';
+    zoomOutBtn.style.cursor = isMin ? 'default' : 'pointer';
+  }
+}
+
 function applyZoom(index) {
-  currentZoomIndex = (index + ZOOM_LEVELS.length) % ZOOM_LEVELS.length;
+  currentZoomIndex = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, index));
   const zoom = ZOOM_LEVELS[currentZoomIndex];
-  const wrap = document.getElementById('lightbox-wrap');
   const img = document.getElementById('lightbox-img');
   const hint = document.getElementById('lightbox-hint');
   const resetBtn = document.getElementById('lightbox-zoom-reset');
 
   if (currentZoomIndex === 0) {
     lightbox.classList.remove('is-zoomed');
+    img.removeAttribute('data-base-w');
+    img.removeAttribute('data-base-h');
     img.style.maxWidth = '90vw';
     img.style.maxHeight = '85vh';
     img.style.width = 'auto';
-    img.style.minWidth = '';
+    img.style.height = 'auto';
     img.style.cursor = 'zoom-in';
-    if (hint) hint.textContent = '🔍 Clic en la foto para ampliar (Zoom)';
+    if (hint) hint.textContent = '🔍 Clic en la foto para ampliar (Zoom 1.2x)';
     if (resetBtn) resetBtn.textContent = '1x';
   } else {
     lightbox.classList.add('is-zoomed');
-    const pct = Math.round(zoom * 100);
+    let baseW = img.getAttribute('data-base-w') ? parseFloat(img.getAttribute('data-base-w')) : img.clientWidth;
+    let baseH = img.getAttribute('data-base-h') ? parseFloat(img.getAttribute('data-base-h')) : img.clientHeight;
+    if (!img.getAttribute('data-base-w') && baseW > 0) {
+      img.setAttribute('data-base-w', baseW);
+      img.setAttribute('data-base-h', baseH);
+    }
+    const targetW = Math.round(baseW * zoom);
+    const targetH = Math.round(baseH * zoom);
     img.style.maxWidth = 'none';
     img.style.maxHeight = 'none';
-    img.style.width = (zoom * 75) + 'vw';
-    img.style.minWidth = Math.min(1800, Math.round(zoom * 650)) + 'px';
+    img.style.width = targetW + 'px';
+    img.style.height = targetH + 'px';
     img.style.cursor = currentZoomIndex === ZOOM_LEVELS.length - 1 ? 'zoom-out' : 'zoom-in';
-    if (hint) hint.textContent = `🔍 Zoom: ${pct}% (Clic para más zoom / alejar)`;
-    if (resetBtn) resetBtn.textContent = `${zoom}x`;
+    const isMax = currentZoomIndex === ZOOM_LEVELS.length - 1;
+    if (hint) hint.textContent = isMax ? `🔍 Zoom: ${zoom.toFixed(1)}x (Máximo) - Clic para alejar` : `🔍 Zoom: ${zoom.toFixed(1)}x (${Math.round(zoom * 100)}%)`;
+    if (resetBtn) resetBtn.textContent = `${zoom.toFixed(1)}x`;
   }
+  updateZoomControls();
 }
 
 function closeLightbox() {
@@ -131,6 +156,8 @@ function closeLightbox() {
 
 function openLightbox(src, alt) {
   const img = document.getElementById('lightbox-img');
+  img.removeAttribute('data-base-w');
+  img.removeAttribute('data-base-h');
   img.src = src;
   img.alt = alt || 'Vista ampliada';
   applyZoom(0);
@@ -141,7 +168,7 @@ function openLightbox(src, alt) {
 const lightboxImg = lightbox.querySelector('#lightbox-img');
 lightboxImg.addEventListener('click', (e) => {
   e.stopPropagation();
-  let nextIndex = (currentZoomIndex + 1) % ZOOM_LEVELS.length;
+  let nextIndex = currentZoomIndex < ZOOM_LEVELS.length - 1 ? currentZoomIndex + 1 : 0;
   applyZoom(nextIndex);
 });
 
