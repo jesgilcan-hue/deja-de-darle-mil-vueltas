@@ -34,7 +34,9 @@ export default defineConfig({
         papelPantalla: resolve(__dirname, 'por-que-el-papel-ordena-lo-que-la-pantalla-satura.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
-        visorHabla: resolve(__dirname, 'visor-habla-claro.html')
+        visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
+        visorSimple: resolve(__dirname, 'visor-planificador-semanal-simple.html'),
+        visorReversible: resolve(__dirname, 'visor-planificador-semanal-reversible.html')
       }
     }
   }

@@ -65,7 +65,12 @@
                 <a href="#faq">❓ Preguntas</a>
                 <a href="#lecturas-asociadas">🎬 Lecturas y vídeos</a>
             </div>
-            <a href="https://www.amazon.es/dp/B0HGFF6772" target="_blank" rel="noopener noreferrer" class="btn-primary subnav-buy">Comprar en Amazon</a>
+            <div class="subnav-actions-group">
+                <button type="button" class="subnav-3d-btn" onclick="openBookModal()">
+                    <span>📖</span> Hojear en 3D
+                </button>
+                <a href="https://www.amazon.es/dp/B0HGFF6772" target="_blank" rel="noopener noreferrer" class="btn-primary subnav-buy">Comprar en Amazon</a>
+            </div>
         </div>
     </nav>
 
@@ -86,8 +91,11 @@
                         </ul>
                     </div>
 
-                    <div class="cta-group fade-in-up delay-2">
+                    <div class="cta-group fade-in-up delay-2" style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
                         <a href="https://www.amazon.es/dp/B0HGFF6772" target="_blank" rel="noopener noreferrer" class="btn-primary">Comprar en Amazon</a>
+                        <button type="button" class="btn-secondary" onclick="openBookModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <span>📖</span> Hojear en 3D
+                        </button>
                     </div>
                 </div>
 
@@ -167,6 +175,20 @@
                         </div>
                         <h4 style="margin-top: 1rem; font-family: var(--font-display); font-size: 1.15rem;">Vista Mensual Panorámica (12 meses)</h4>
                         <p style="font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.6; margin-top: 0.35rem;">Planificación mensual abierta tanto para objetivos de trabajo como para compromisos de tu vida personal.</p>
+                    </div>
+                </div>
+
+                <!-- BANNER DESTACADO: HOJEAR CUADERNO EN 3D -->
+                <div style="background: linear-gradient(135deg, #24201c 0%, #171513 100%); border-radius: 12px; padding: 2rem 2.25rem; margin-top: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.12); max-width: 980px; margin-left: auto; margin-right: auto; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+                    <div style="max-width: 580px;">
+                        <span style="background: rgba(196, 124, 93, 0.2); color: #d98e6e; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 0.6rem;">Experiencia interactiva</span>
+                        <h3 style="font-family: var(--font-display); font-size: 1.35rem; color: #f5f2eb; margin-bottom: 0.4rem; letter-spacing: -0.01em;">¿Quieres hojearlo como si lo tuvieras en las manos?</h3>
+                        <p style="font-size: 0.92rem; color: #a69e94; line-height: 1.6; margin: 0;">Hojea una muestra de 16 páginas originales en alta resolución: doble entrada tête-bêche, vistas semanales y mensuales.</p>
+                    </div>
+                    <div>
+                        <button type="button" onclick="openBookModal()" class="btn-primary" style="background: var(--color-accent); color: #ffffff; padding: 0.85rem 1.6rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(196, 124, 93, 0.4); transition: all 0.2s ease;">
+                            <span>📖</span> Abrir Visor 3D del Planificador
+                        </button>
                     </div>
                 </div>
 
@@ -485,6 +507,51 @@
 
                 window.addEventListener('scroll', onScroll, { passive: true });
                 onScroll();
+            }
+        });
+    </script>
+    <!-- MODAL POP-UP VISOR 3D -->
+    <div id="book-modal" class="book-modal-backdrop" onclick="handleModalBackdropClick(event)" aria-hidden="true" role="dialog">
+        <div class="book-modal-window">
+            <button type="button" class="book-modal-close-btn" onclick="closeBookModal()" aria-label="Cerrar visor">✕</button>
+            <iframe id="book-modal-frame" class="book-modal-iframe" title="Visor 3D del planificador" loading="lazy"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function openBookModal() {
+            const modal = document.getElementById('book-modal');
+            const frame = document.getElementById('book-modal-frame');
+            if (modal && frame) {
+                frame.src = '/visor-planificador-semanal-reversible.html';
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeBookModal() {
+            const modal = document.getElementById('book-modal');
+            const frame = document.getElementById('book-modal-frame');
+            if (modal) {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+                if (frame) {
+                    frame.src = 'about:blank';
+                }
+            }
+        }
+
+        function handleModalBackdropClick(event) {
+            if (event.target.id === 'book-modal') {
+                closeBookModal();
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeBookModal();
             }
         });
     </script>
