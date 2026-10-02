@@ -854,7 +854,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="result-actions">
           <a href="${book.webLink}" class="btn-secondary">Ver libro en la web</a>
-          <a href="${book.simLink}" class="btn-secondary">Probar simulador gratis</a>
+          <a href="${book.simLink}" target="_blank" rel="noopener noreferrer" class="btn-secondary">Pruébalo y descárgalo</a>
           <a href="${book.amazonLink}" target="_blank" rel="noopener noreferrer" class="btn-primary">Comprar en Amazon</a>
         </div>
 
