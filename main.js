@@ -185,166 +185,191 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Integración de Submenú Contextual en el Drawer Móvil (Opción 3)
-(function initMobileContextualSubnav() {
+// Menú lateral universal (Drawer para móvil y escritorio activable por las 3 rayitas)
+(function initUniversalDrawer() {
+  if (document.getElementById('site-drawer')) return;
+
+  const drawer = document.createElement('aside');
+  drawer.id = 'site-drawer';
+  drawer.className = 'site-drawer';
+  drawer.setAttribute('aria-label', 'Menú de navegación lateral');
+
+  // Cabecera del drawer con título y botón de cierre
+  const drawerHeader = document.createElement('div');
+  drawerHeader.className = 'site-drawer-header';
+  drawerHeader.innerHTML = `
+    <span class="site-drawer-title">Menos Ruido</span>
+    <button type="button" class="site-drawer-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  `;
+  drawer.appendChild(drawerHeader);
+
+  // Contenedor scrollable
+  const drawerBody = document.createElement('div');
+  drawerBody.className = 'site-drawer-body';
+
+  // Si la página actual tiene submenú contextual (.book-subnav), insertamos su bloque al principio del drawer
   const bookSubnav = document.querySelector('.book-subnav');
-  const drawerNav = document.querySelector('.navbar nav');
-  if (!bookSubnav || !drawerNav) return;
+  if (bookSubnav) {
+    const titleEl = bookSubnav.querySelector('.book-subnav-title');
+    const links = bookSubnav.querySelectorAll('.book-subnav-links a');
+    const btn3D = bookSubnav.querySelector('.subnav-3d-btn');
+    const btnBuy = bookSubnav.querySelector('.subnav-buy');
 
-  const titleEl = bookSubnav.querySelector('.book-subnav-title');
-  const links = bookSubnav.querySelectorAll('.book-subnav-links a');
-  const btn3D = bookSubnav.querySelector('.subnav-3d-btn');
-  const btnBuy = bookSubnav.querySelector('.subnav-buy');
+    const contextBox = document.createElement('div');
+    contextBox.className = 'nav-drawer-context';
 
-  const contextBox = document.createElement('div');
-  contextBox.className = 'nav-drawer-context';
+    const titleText = titleEl ? titleEl.textContent.trim() : 'Este Cuaderno';
+    contextBox.innerHTML = `
+      <div class="nav-drawer-context-header">
+        <span class="nav-drawer-context-badge">Estás viendo</span>
+        <h3 class="nav-drawer-context-title">${titleText}</h3>
+      </div>
+      <div class="nav-drawer-context-links"></div>
+      <div class="nav-drawer-context-actions"></div>
+    `;
 
-  const titleText = titleEl ? titleEl.textContent.trim() : 'Este Cuaderno';
-  contextBox.innerHTML = `
-    <div class="nav-drawer-context-header">
-      <span class="nav-drawer-context-badge">Estás viendo</span>
-      <h3 class="nav-drawer-context-title">${titleText}</h3>
-    </div>
-    <div class="nav-drawer-context-links"></div>
-    <div class="nav-drawer-context-actions"></div>
-  `;
-
-  const linksContainer = contextBox.querySelector('.nav-drawer-context-links');
-  links.forEach(a => {
-    const clone = document.createElement('a');
-    clone.href = a.getAttribute('href');
-    clone.innerHTML = a.innerHTML;
-    clone.className = 'nav-drawer-context-link' + (a.classList.contains('active') ? ' active' : '');
-    clone.addEventListener('click', () => {
-      document.body.classList.remove('nav-open');
+    const linksContainer = contextBox.querySelector('.nav-drawer-context-links');
+    links.forEach(a => {
+      const clone = document.createElement('a');
+      clone.href = a.getAttribute('href');
+      clone.innerHTML = a.innerHTML;
+      clone.className = 'nav-drawer-context-link' + (a.classList.contains('active') ? ' active' : '');
+      clone.addEventListener('click', () => {
+        document.body.classList.remove('nav-open');
+      });
+      linksContainer.appendChild(clone);
     });
-    linksContainer.appendChild(clone);
-  });
 
-  const actionsContainer = contextBox.querySelector('.nav-drawer-context-actions');
-  if (btn3D) {
-    const clone3D = document.createElement('button');
-    clone3D.type = 'button';
-    clone3D.className = 'nav-drawer-context-btn-3d';
-    clone3D.innerHTML = '<span>📖</span> Hojear en 3D';
-    clone3D.addEventListener('click', () => {
-      document.body.classList.remove('nav-open');
-      if (typeof openBookModal === 'function') {
-        openBookModal();
-      } else {
-        const modal = document.getElementById('book-modal-backdrop');
-        if (modal) modal.classList.add('active');
-      }
-    });
-    actionsContainer.appendChild(clone3D);
-  }
-
-  if (btnBuy) {
-    const cloneBuy = document.createElement('a');
-    cloneBuy.href = btnBuy.getAttribute('href');
-    cloneBuy.target = '_blank';
-    cloneBuy.rel = 'noopener noreferrer';
-    cloneBuy.className = 'btn-primary nav-drawer-context-btn-buy';
-    cloneBuy.textContent = btnBuy.textContent ? btnBuy.textContent.trim() : 'Comprar en Amazon';
-    cloneBuy.addEventListener('click', () => {
-      document.body.classList.remove('nav-open');
-    });
-    actionsContainer.appendChild(cloneBuy);
-  }
-
-  const drawerHeader = drawerNav.querySelector('.nav-drawer-header');
-  if (drawerHeader) {
-    drawerHeader.insertAdjacentElement('afterend', contextBox);
-  } else {
-    drawerNav.prepend(contextBox);
-  }
-})();
-
-// Renderizar estantería visual en el menú móvil para Cuadernos
-(function initMobileBookshelf() {
-  const dropdownContent = document.querySelector('.dropdown .dropdown-content');
-  if (!dropdownContent) return;
-
-  // Marcar los links antiguos como legacy para que en móvil los oculte el CSS
-  dropdownContent.querySelectorAll('a').forEach(a => {
-    if (!a.classList.contains('mobile-book-card')) {
-      a.classList.add('legacy-link');
+    const actionsContainer = contextBox.querySelector('.nav-drawer-context-actions');
+    if (btn3D) {
+      const clone3D = document.createElement('button');
+      clone3D.type = 'button';
+      clone3D.className = 'nav-drawer-context-btn-3d';
+      clone3D.innerHTML = '<span>📖</span> Hojear en 3D';
+      clone3D.addEventListener('click', () => {
+        document.body.classList.remove('nav-open');
+        if (typeof openBookModal === 'function') {
+          openBookModal();
+        } else {
+          const modal = document.getElementById('book-modal-backdrop');
+          if (modal) modal.classList.add('is-open');
+        }
+      });
+      actionsContainer.appendChild(clone3D);
     }
-  });
 
-  // Evitar duplicados si ya se inicializó
-  if (dropdownContent.querySelector('.mobile-bookshelf')) return;
+    if (btnBuy) {
+      const cloneBuy = document.createElement('a');
+      cloneBuy.href = btnBuy.getAttribute('href');
+      cloneBuy.target = '_blank';
+      cloneBuy.rel = 'noopener noreferrer';
+      cloneBuy.className = 'btn-primary nav-drawer-context-btn-buy';
+      cloneBuy.textContent = btnBuy.textContent ? btnBuy.textContent.trim() : 'Comprar en Amazon';
+      cloneBuy.addEventListener('click', () => {
+        document.body.classList.remove('nav-open');
+      });
+      actionsContainer.appendChild(cloneBuy);
+    }
 
-  const bookshelf = document.createElement('div');
-  bookshelf.className = 'mobile-bookshelf';
-  bookshelf.innerHTML = `
-    <!-- Habla Claro -->
-    <a href="/habla-claro.html" class="mobile-book-card">
-      <img src="/cover_habla.jpg" alt="Habla Claro" class="mobile-book-thumb" loading="lazy" />
-      <div class="mobile-book-info">
-        <span class="mobile-book-title">Habla Claro</span>
-        <span class="mobile-book-subtitle">Comunicación y límites</span>
-      </div>
-    </a>
+    drawerBody.appendChild(contextBox);
 
-    <!-- Deja de darle mil vueltas -->
-    <a href="/deja-de-darle-mil-vueltas.html" class="mobile-book-card">
-      <img src="/cover_deja.jpg" alt="Deja de darle mil vueltas" class="mobile-book-thumb" loading="lazy" />
-      <div class="mobile-book-info">
-        <span class="mobile-book-title">Deja de darle mil vueltas</span>
-        <span class="mobile-book-subtitle">Toma de decisiones</span>
-      </div>
-    </a>
+    // Scrollspy para sincronizar la sección activa en el submenú del drawer
+    const drawerLinks = linksContainer.querySelectorAll('.nav-drawer-context-link');
+    const sections = document.querySelectorAll('section[id], header[id]');
+    if (drawerLinks.length && sections.length) {
+      window.addEventListener('scroll', () => {
+        let current = '';
+        const scrollPos = window.scrollY + 140;
+        sections.forEach(s => {
+          const top = s.offsetTop;
+          const height = s.offsetHeight;
+          if (scrollPos >= top && scrollPos < top + height) {
+            current = '#' + s.getAttribute('id');
+          }
+        });
+        drawerLinks.forEach(l => {
+          if (l.getAttribute('href') === current) {
+            l.classList.add('active');
+          } else {
+            l.classList.remove('active');
+          }
+        });
+      }, { passive: true });
+    }
+  }
 
-    <!-- Planificadores Desplegables -->
-    <div class="mobile-planners-accordion">
-      <button type="button" class="mobile-planners-toggle">
-        <span>Planificadores</span>
-        <span class="toggle-icon">▾</span>
-      </button>
-      <div class="mobile-planners-list">
-        <a href="/planificador-90-dias.html" class="mobile-book-card sub-card">
-          <img src="/cover_90.jpg" alt="Planificador 90 Días" class="mobile-book-thumb" loading="lazy" />
-          <div class="mobile-book-info">
-            <span class="mobile-book-title">Planificador 90 Días</span>
-            <span class="mobile-book-subtitle">Enfoque trimestral</span>
-          </div>
-        </a>
-        <a href="/planificador-180-dias.html" class="mobile-book-card sub-card">
-          <img src="/cover_180.jpg" alt="Planificador 180 Días" class="mobile-book-thumb" loading="lazy" />
-          <div class="mobile-book-info">
-            <span class="mobile-book-title">Planificador 180 Días</span>
-            <span class="mobile-book-subtitle">Hábito semestral</span>
-          </div>
-        </a>
-        <a href="/planificador-semanal-simple.html" class="mobile-book-card sub-card">
-          <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Simple" class="mobile-book-thumb" loading="lazy" />
-          <div class="mobile-book-info">
-            <span class="mobile-book-title">Semanal Atemporal</span>
-            <span class="mobile-book-subtitle">Edición simple</span>
-          </div>
-        </a>
-        <a href="/planificador-semanal-reversible.html" class="mobile-book-card sub-card">
-          <img src="/cover_semanal_reversible.jpg" alt="Planificador Semanal Reversible" class="mobile-book-thumb" loading="lazy" />
-          <div class="mobile-book-info">
-            <span class="mobile-book-title">Semanal Reversible</span>
-            <span class="mobile-book-subtitle">Edición doble entrada</span>
-          </div>
-        </a>
+  // Navegación principal del sitio dentro del drawer
+  const siteNav = document.createElement('div');
+  siteNav.className = 'site-drawer-nav';
+  siteNav.innerHTML = `
+    <a href="/" class="site-drawer-link" onclick="document.body.classList.remove('nav-open')">Home</a>
+    <div class="site-drawer-section-title">Cuadernos</div>
+    <div class="mobile-bookshelf">
+      <!-- Habla Claro -->
+      <a href="/habla-claro.html" class="mobile-book-card" onclick="document.body.classList.remove('nav-open')">
+        <img src="/cover_habla.jpg" alt="Habla Claro" class="mobile-book-thumb" loading="lazy" />
+        <div class="mobile-book-info">
+          <span class="mobile-book-title">Habla Claro</span>
+          <span class="mobile-book-subtitle">Comunicación y límites</span>
+        </div>
+      </a>
+      <!-- Deja de darle mil vueltas -->
+      <a href="/deja-de-darle-mil-vueltas.html" class="mobile-book-card" onclick="document.body.classList.remove('nav-open')">
+        <img src="/cover_deja.jpg" alt="Deja de darle mil vueltas" class="mobile-book-thumb" loading="lazy" />
+        <div class="mobile-book-info">
+          <span class="mobile-book-title">Deja de darle mil vueltas</span>
+          <span class="mobile-book-subtitle">Toma de decisiones</span>
+        </div>
+      </a>
+      <!-- Planificadores Desplegables -->
+      <div class="mobile-planners-accordion">
+        <button type="button" class="mobile-planners-toggle">
+          <span>Planificadores</span>
+          <span class="toggle-icon">▾</span>
+        </button>
+        <div class="mobile-planners-list">
+          <a href="/planificador-90-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <img src="/cover_90.jpg" alt="Planificador 90 Días" class="mobile-book-thumb" loading="lazy" />
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Planificador 90 Días</span>
+              <span class="mobile-book-subtitle">Enfoque trimestral</span>
+            </div>
+          </a>
+          <a href="/planificador-180-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <img src="/cover_180.jpg" alt="Planificador 180 Días" class="mobile-book-thumb" loading="lazy" />
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Planificador 180 Días</span>
+              <span class="mobile-book-subtitle">Hábito semestral</span>
+            </div>
+          </a>
+          <a href="/planificador-semanal-simple.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Simple" class="mobile-book-thumb" loading="lazy" />
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Semanal Atemporal</span>
+              <span class="mobile-book-subtitle">Edición simple</span>
+            </div>
+          </a>
+          <a href="/planificador-semanal-reversible.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <img src="/cover_semanal_reversible.jpg" alt="Planificador Semanal Reversible" class="mobile-book-thumb" loading="lazy" />
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Semanal Reversible</span>
+              <span class="mobile-book-subtitle">Edición doble entrada</span>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
+    <a href="/lecturas.html" class="site-drawer-link" onclick="document.body.classList.remove('nav-open')">Lecturas & Vídeos</a>
   `;
 
-  // Cerrar menú al hacer clic en cualquier enlace
-  bookshelf.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      document.body.classList.remove('nav-open');
-    });
-  });
-
-  // Toggle de Planificadores (sin cerrar el menú padre)
-  const plannersToggle = bookshelf.querySelector('.mobile-planners-toggle');
-  const plannersAccordion = bookshelf.querySelector('.mobile-planners-accordion');
+  // Toggle de Planificadores (sin cerrar el drawer)
+  const plannersToggle = siteNav.querySelector('.mobile-planners-toggle');
+  const plannersAccordion = siteNav.querySelector('.mobile-planners-accordion');
   if (plannersToggle && plannersAccordion) {
     plannersToggle.addEventListener('click', (e) => {
       e.preventDefault();
@@ -353,7 +378,16 @@ if ('serviceWorker' in navigator) {
     });
   }
 
-  dropdownContent.appendChild(bookshelf);
+  drawerBody.appendChild(siteNav);
+  drawer.appendChild(drawerBody);
+  document.body.appendChild(drawer);
+
+  // Cerrar con tecla Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('nav-open')) {
+      document.body.classList.remove('nav-open');
+    }
+  });
 })();
 
 
