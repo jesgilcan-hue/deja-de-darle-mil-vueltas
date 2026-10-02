@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 3D Interactivo — Planificador 90 Días | Editorial Menos Ruido</title>
+    <meta name="description" content="Hojea en 3D el Planificador de 90 Días de Editorial Menos Ruido con sonido realista y páginas originales de alta resolución.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-viewer: #1a1816;
+            --bg-surface: #24211e;
+            --bg-surface-elevated: #2d2925;
+            --color-text-main: #f5f2eb;
+            --color-text-muted: #a69e94;
+            --color-accent: #c47c5d;
+            --color-accent-hover: #d98e6e;
+            --font-serif: 'Newsreader', Georgia, serif;
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-viewer);
+            font-family: var(--font-sans);
+            color: var(--color-text-main);
+        }
+
+        .viewer-layout {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: radial-gradient(circle at 50% 40%, #292521 0%, #171513 100%);
+            position: relative;
+        }
+
+        /* Header Superior */
+        .viewer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            background: rgba(26, 24, 22, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 50;
+        }
+
+        .header-book-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .book-badge {
+            background: rgba(196, 124, 93, 0.2);
+            color: var(--color-accent-hover);
+            border: 1px solid rgba(196, 124, 93, 0.35);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .book-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-main-title {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--color-text-main);
+            line-height: 1.2;
+        }
+
+        .book-subtitle {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            line-height: 1.2;
+        }
+
+        /* Escenario Central 3D */
+        .viewer-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 1rem;
+        }
+
+        .stage-spotlight {
+            position: absolute;
+            width: 75vw;
+            height: 75vh;
+            background: radial-gradient(circle, rgba(196, 124, 93, 0.06) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .book-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 96vw;
+            max-height: 82vh;
+            filter: drop-shadow(0 25px 35px rgba(0, 0, 0, 0.65)) drop-shadow(0 10px 15px rgba(0, 0, 0, 0.45));
+        }
+
+        #book-container {
+            display: none;
+        }
+
+        /* Loader */
+        .book-loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            background: var(--bg-viewer);
+            z-index: 40;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .book-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--color-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loader-text {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            letter-spacing: 0.03em;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Estilos de las Páginas */
+        .page-sheet {
+            background-color: #fdfbf7;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.04);
+        }
+
+        .page-sheet img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .page-sheet.--left::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 28px;
+            height: 100%;
+            background: linear-gradient(to left, rgba(0,0,0,0.12), rgba(0,0,0,0));
+            pointer-events: none;
+        }
+
+        .page-sheet.--right::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 28px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.12), rgba(0,0,0,0));
+            pointer-events: none;
+        }
+
+        .page-sheet[data-density="hard"] {
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+        }
+
+        /* Toolbar */
+        .viewer-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+            padding: 0.85rem 1.5rem;
+            background: rgba(26, 24, 22, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--color-text-main);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-counter {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-muted);
+            min-width: 140px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .tool-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .secondary-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .pill-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--color-text-muted);
+            padding: 0.45rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s ease;
+        }
+
+        .pill-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--color-text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pill-btn.muted {
+            opacity: 0.7;
+        }
+
+        .pill-btn.muted .sound-icon {
+            filter: grayscale(1);
+        }
+
+        @media (max-width: 640px) {
+            .secondary-controls span:last-child {
+                display: none;
+            }
+            .page-counter {
+                min-width: 100px;
+                font-size: 0.8rem;
+            }
+            .viewer-toolbar {
+                gap: 0.75rem;
+                padding: 0.6rem 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-layout">
+        <!-- Loader inicial -->
+        <div id="book-loader" class="book-loader">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Abriendo el Planificador 90 Días...</div>
+        </div>
+
+        <!-- Header Superior -->
+        <header class="viewer-header">
+            <div class="header-book-info">
+                <span class="book-badge">Visor 3D</span>
+                <div class="book-titles">
+                    <span class="book-main-title">Planificador de 90 Días</span>
+                    <span class="book-subtitle">Muestra interactiva • 16 páginas originales</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stage Central -->
+        <main class="viewer-stage">
+            <div class="stage-spotlight"></div>
+            <div class="book-wrapper">
+                <div id="book-container">
+                    <!-- 16 Páginas Renderizadas del Interior y Portada -->
+                    <!-- 1. Portada -->
+                    <div class="page-sheet" data-density="hard">
+                        <img src="/books/planificador-90-dias/page_01.webp" alt="Portada: Planificador 90 Días" />
+                    </div>
+                    <!-- 2. Página 0 (Reverso en blanco de la portada) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_02.webp" alt="Página 0: Cortesía en blanco" />
+                    </div>
+                    <!-- 3. Portadilla (Interior p. 1) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_03.webp" alt="Portadilla: Planificador 90 Días" />
+                    </div>
+                    <!-- 4. Créditos (Interior p. 2) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_04.webp" alt="Aviso legal y créditos" />
+                    </div>
+                    <!-- 5. Antes de usarlo (Interior p. 3) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_05.webp" alt="Antes de usarlo: Herramienta práctica" />
+                    </div>
+                    <!-- 6. Filosofía: Pensar en papel (Interior p. 8) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_06.webp" alt="Pensar en papel: El móvil como ruido" />
+                    </div>
+                    <!-- 7. El enfoque de 90 días (Interior p. 9) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_07.webp" alt="El enfoque de 90 días: Planificar por trimestres" />
+                    </div>
+                    <!-- 8. Plan Trimestral (Interior p. 14) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_08.webp" alt="Sección: Plan Trimestral (Metas e hitos)" />
+                    </div>
+                    <!-- 9. Rastreador de hábitos global (Interior p. 18) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_09.webp" alt="Rastreador de hábitos global S1 a S13" />
+                    </div>
+                    <!-- 10. Sección: Registro Diario (Interior p. 19) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_10.webp" alt="Sección: Registro Diario (13 semanas)" />
+                    </div>
+                    <!-- 11. Semana 1: Planificación semanal (Interior p. 20) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_11.webp" alt="Semana 1: Planificación de la semana" />
+                    </div>
+                    <!-- 12. Registro Diario Martes (Interior p. 22) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_12.webp" alt="Registro Diario: Martes" />
+                    </div>
+                    <!-- 13. Registro Diario Miércoles (Interior p. 23) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_13.webp" alt="Registro Diario: Miércoles" />
+                    </div>
+                    <!-- 14. Agradecimientos (Interior p. 149) -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_14.webp" alt="Agradecimientos: Gracias por llegar hasta aquí" />
+                    </div>
+                    <!-- 15. Reverso en blanco de la contraportada -->
+                    <div class="page-sheet">
+                        <img src="/books/planificador-90-dias/page_15.webp" alt="Reverso interior de contraportada" />
+                    </div>
+                    <!-- 16. Contraportada con código de barras Amazon KDP -->
+                    <div class="page-sheet" data-density="hard">
+                        <img src="/books/planificador-90-dias/page_16.webp" alt="Contraportada con código de barras KDP" />
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Barra Inferior de Navegación -->
+        <footer class="viewer-toolbar">
+            <div class="nav-controls">
+                <button id="btn-prev" class="control-btn" aria-label="Página anterior" title="Página anterior (←)">
+                    <span>‹</span>
+                </button>
+                <div id="page-indicator" class="page-counter">Cargando...</div>
+                <button id="btn-next" class="control-btn" aria-label="Página siguiente" title="Página siguiente (→)">
+                    <span>›</span>
+                </button>
+            </div>
+
+            <div class="tool-divider"></div>
+
+            <div class="secondary-controls">
+                <button id="btn-sound-toggle" class="pill-btn muted" aria-label="Activar o silenciar sonido de pasar página" title="Sonido de papel al hojear">
+                    <span class="sound-icon">🔇</span>
+                    <span class="sound-text">Activar sonido</span>
+                </button>
+                <button id="btn-fullscreen" class="pill-btn" aria-label="Pantalla completa" title="Alternar pantalla completa">
+                    <span>⛶</span>
+                    <span>Pantalla completa</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script PageFlip Modular -->
+    <script type="module" src="/visor-planner-90.js"></script>
+</body>
+</html>

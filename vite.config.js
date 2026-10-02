@@ -36,7 +36,9 @@ export default defineConfig({
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
         visorSimple: resolve(__dirname, 'visor-planificador-semanal-simple.html'),
-        visorReversible: resolve(__dirname, 'visor-planificador-semanal-reversible.html')
+        visorReversible: resolve(__dirname, 'visor-planificador-semanal-reversible.html'),
+        visor90: resolve(__dirname, 'visor-planificador-90-dias.html'),
+        visor180: resolve(__dirname, 'visor-planificador-180-dias.html')
       }
     }
   }
