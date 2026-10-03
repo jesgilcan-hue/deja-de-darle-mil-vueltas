@@ -39,7 +39,8 @@ export default defineConfig({
         visorReversible: resolve(__dirname, 'visor-planificador-semanal-reversible.html'),
         visor90: resolve(__dirname, 'visor-planificador-90-dias.html'),
         visor180: resolve(__dirname, 'visor-planificador-180-dias.html'),
-        apps: resolve(__dirname, 'apps.html')
+        apps: resolve(__dirname, 'apps.html'),
+        generador: resolve(__dirname, 'generador.html')
       }
     }
   }
