@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseñador Interactivo de PDF · Planificador Menos Ruido (V5)</title>
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --sage: #586851;
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px 16px 60px;
+        }
+
+        .header-container {
+            max-width: 1220px;
+            margin: 0 auto 16px;
+            text-align: center;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #1e1916;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 720px;
+            margin: 0 auto 18px;
+        }
+
+        /* ========================================================
+           BARRA SUPERIOR CON CÍRCULOS CLICABLES (SIN DESPLEGABLES)
+           ======================================================== */
+        .customizer-bar {
+            max-width: 1220px;
+            margin: 0 auto 24px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 22px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .customizer-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .customizer-label {
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #666;
+        }
+
+        .circles-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Botón circular seleccionable */
+        .opt-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #faf8f5;
+            border: 1.5px solid #dcd7ce;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            position: relative;
+            user-select: none;
+            padding: 0;
+        }
+
+        .opt-circle:hover {
+            border-color: #a89f91;
+            transform: translateY(-1px);
+        }
+
+        /* Estado ACTIVO: fondo gris más oscuro, hundido con sombra interior */
+        .opt-circle.active {
+            background: #4a453f !important;
+            border-color: #322e2a !important;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+            transform: translateY(1px);
+        }
+
+        .opt-circle.active svg * {
+            stroke: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        .opt-circle.active svg line,
+        .opt-circle.active svg rect[fill="none"],
+        .opt-circle.active svg circle[fill="none"] {
+            fill: none !important;
+        }
+
+        /* ========================================================
+           SECCIÓN DE ORDEN: PILL CARDS ARRASTRABLES (1, 2, 3, 4)
+           ======================================================== */
+        .order-chips-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .drag-chip {
+            background: #faf8f5;
+            border: 1.5px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 4px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: grab;
+            transition: all 0.2s;
+            user-select: none;
+            min-width: 58px;
+        }
+
+        .drag-chip:active {
+            cursor: grabbing;
+        }
+
+        .drag-chip.dragging {
+            opacity: 0.4;
+            border-color: var(--accent);
+            background: #f1ebd8;
+        }
+
+        .drag-chip.drag-over {
+            border-color: var(--accent);
+            transform: scale(1.05);
+            background: #ede6da;
+        }
+
+        .chip-num {
+            font-size: 0.65rem;
+            font-weight: 800;
+            background: var(--accent);
+            color: #fff;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2px;
+        }
+
+        .chip-name {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* ========================================================
+           LAYOUT PRINCIPAL (PANEL FORMULARIO + HOJA PREVIEW)
+           ======================================================== */
+        .main-layout {
+            max-width: 1220px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 980px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* PANEL DE ENTRADA */
+        .controls-panel {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .panel-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-actions-quick {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-quick {
+            background: #f3efe8;
+            border: none;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-quick:hover {
+            background: #e6dfd3;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .section-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .section-title-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-remove-section {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.05rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: all 0.15s;
+        }
+
+        .btn-remove-section:hover {
+            color: #d33;
+            background: rgba(220, 50, 50, 0.08);
+        }
+
+        .btn-restore-section {
+            background: #f4efe8;
+            border: 1px dashed #c0b7a8;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 14px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .btn-restore-section:hover {
+            background: #e9e2d5;
+            border-color: var(--accent);
+        }
+
+        .btn-add-item {
+            background: #f4efe8;
+            border: 1px solid #dcd7ce;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-add-item:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .item-input-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .btn-remove-item {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .btn-remove-item:hover {
+            color: #c44;
+        }
+
+        .label-hint {
+            font-weight: 400;
+            text-transform: none;
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 0.9rem;
+            border: 1.5px solid #e0dbd1;
+            border-radius: 6px;
+            background: #faf9f6;
+            color: #222;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: #fff;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-group-primary {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #efeae1;
+        }
+
+        .btn-cta {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px 18px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .btn-cta:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-cta-blank {
+            background: #ffffff;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+            padding: 11px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cta-blank:hover {
+            background: rgba(135, 85, 59, 0.06);
+        }
+
+        /* ========================================================
+           VISTA PREVIA EN PAPEL (6x9 PROPORCIÓN EDITORIAL)
+           ======================================================== */
+        .preview-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .preview-header-bar {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .paper-sheet {
+            width: 100%;
+            max-width: 520px;
+            aspect-ratio: 6 / 9;
+            background-color: var(--paper-color);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+            border-radius: 4px;
+            border: 1px solid #e7e2d8;
+            padding: 34px 30px 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            transition: background 0.2s;
+        }
+
+        .sheet-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #222;
+            padding-bottom: 6px;
+            margin-bottom: 16px;
+        }
+
+        .sheet-day {
+            font-family: var(--font-serif);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .sheet-date {
+            font-size: 0.82rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .sheet-block {
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+
+        .sheet-block-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #111;
+            margin-bottom: 6px;
+        }
+
+        .sheet-block-label .sub {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-weight: normal;
+            font-size: 0.72rem;
+            text-transform: none;
+            letter-spacing: 0;
+            color: #777;
+        }
+
+        /* CAJA DE PRIORIDAD */
+        .priority-box {
+            background: #faf8f5;
+            border: 1.5px solid #222;
+            border-radius: 6px;
+            padding: 10px 14px;
+            min-height: 48px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .priority-box.style-linea-lateral {
+            border: none;
+            border-left: 4px solid var(--accent);
+            border-radius: 0;
+            background: #fbf9f6;
+        }
+
+        .priority-square {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #222;
+            border-radius: 3px;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        .priority-square.circle {
+            border-radius: 50%;
+        }
+
+        .priority-text {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            color: #111;
+            line-height: 1.35;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            flex: 1;
+        }
+
+        /* TAREAS SECUNDARIAS */
+        .task-list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .task-item-view {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 4px;
+            min-height: 24px;
+        }
+
+        .task-item-view.line-suave {
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .task-item-view.line-solida {
+            border-bottom: 1px solid #c2bbae;
+        }
+
+        .task-item-view.line-sin {
+            border-bottom: none;
+            background: #faf8f5;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .task-box-square {
+            width: 12px;
+            height: 12px;
+            border: 1.5px solid #444;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .task-box-square.circle {
+            border-radius: 50%;
+        }
+
+        .task-content-view {
+            font-size: 0.85rem;
+            color: #222;
+        }
+
+        /* HÁBITOS DINÁMICOS */
+        .habits-row-view {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            align-items: center;
+            padding: 8px 12px;
+            background: #fbf9f6;
+            border-radius: 6px;
+            border: 1px solid #eee7dd;
+            font-size: 0.78rem;
+        }
+
+        .habit-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .habit-check {
+            width: 12px;
+            height: 12px;
+            border: 1.5px solid var(--accent);
+            border-radius: 2px;
+        }
+
+        .habit-check.circle {
+            border-radius: 50%;
+        }
+
+        /* ESPACIO DE NOTAS */
+        .notes-view {
+            flex: 1;
+            min-height: 85px;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.82rem;
+            color: #444;
+            line-height: 1.5;
+            background-color: #faf9f6;
+            border: 1px solid #ede8de;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            box-sizing: border-box;
+            width: 100%;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .notes-view.bg-dots {
+            background-image: radial-gradient(#d0c8be 1px, transparent 1px);
+            background-size: 14px 14px;
+        }
+
+        .notes-view.bg-lines {
+            background-image: linear-gradient(#ded9d0 1px, transparent 1px);
+            background-size: 100% 22px;
+            line-height: 22px;
+        }
+
+        .notes-view.bg-grid {
+            background-image: 
+                linear-gradient(to right, #e2ddd4 1px, transparent 1px),
+                linear-gradient(to bottom, #e2ddd4 1px, transparent 1px);
+            background-size: 15px 15px;
+        }
+
+        .notes-view.bg-blank {
+            background-image: none;
+        }
+
+        /* FOOTER EDITORIAL */
+        .sheet-footer {
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid #e0dad0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.68rem;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .sheet-footer-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .status-msg {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--sage);
+            font-weight: 600;
+            margin-top: 8px;
+            min-height: 18px;
+        }
+    </style>
+    <!-- Script de jsPDF local UMD (100% offline) -->
+    <script src="./jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="header-container">
+        <span class="tag-pill">Herramienta Interactiva · 100% Offline</span>
+        <h1>Generador Interactivo de PDF · Planificador</h1>
+        <p class="subtitle">Haz clic en los círculos superiores para elegir el estilo visual a tu gusto y completa tu jornada en el panel para generar tu hoja lista para imprimir.</p>
+    </div>
+
+    <!-- ========================================================
+         BARRA SUPERIOR CON CÍRCULOS CLICABLES Y REORDENACIÓN ARRASTRABLE
+         ======================================================== -->
+    <div class="customizer-bar">
+        <!-- 1. RAYADO: PUNTOS, LÍNEAS, CUADRÍCULA, EN BLANCO -->
+        <div class="customizer-group">
+            <span class="customizer-label">Rayado</span>
+            <div class="circles-row">
+                <!-- Puntos -->
+                <button type="button" class="opt-circle active" id="btn-rayado-dots" title="Puntos" onclick="setRayado('dots')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="6" cy="6" r="1.5" fill="#87553b"/>
+                        <circle cx="12" cy="6" r="1.5" fill="#87553b"/>
+                        <circle cx="18" cy="6" r="1.5" fill="#87553b"/>
+                        <circle cx="6" cy="12" r="1.5" fill="#87553b"/>
+                        <circle cx="12" cy="12" r="1.5" fill="#87553b"/>
+                        <circle cx="18" cy="12" r="1.5" fill="#87553b"/>
+                        <circle cx="6" cy="18" r="1.5" fill="#87553b"/>
+                        <circle cx="12" cy="18" r="1.5" fill="#87553b"/>
+                        <circle cx="18" cy="18" r="1.5" fill="#87553b"/>
+                    </svg>
+                </button>
+                <!-- Líneas -->
+                <button type="button" class="opt-circle" id="btn-rayado-lines" title="Líneas" onclick="setRayado('lines')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <line x1="4" y1="6" x2="20" y2="6" stroke="#87553b" stroke-width="2"/>
+                        <line x1="4" y1="12" x2="20" y2="12" stroke="#87553b" stroke-width="2"/>
+                        <line x1="4" y1="18" x2="20" y2="18" stroke="#87553b" stroke-width="2"/>
+                    </svg>
+                </button>
+                <!-- Cuadrícula -->
+                <button type="button" class="opt-circle" id="btn-rayado-grid" title="Cuadrícula" onclick="setRayado('grid')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="#87553b" stroke-width="1.8"/>
+                        <line x1="12" y1="4" x2="12" y2="20" stroke="#87553b" stroke-width="1.5"/>
+                        <line x1="4" y1="12" x2="20" y2="12" stroke="#87553b" stroke-width="1.5"/>
+                    </svg>
+                </button>
+                <!-- En blanco -->
+                <button type="button" class="opt-circle" id="btn-rayado-blank" title="En blanco" onclick="setRayado('blank')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="#87553b" stroke-width="1.8" stroke-dasharray="3 3"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. LÍNEAS DE TAREAS: PUNTOS SUSPENSIVOS, CONTINUA, SIN LÍNEAS -->
+        <div class="customizer-group">
+            <span class="customizer-label">Líneas Tareas</span>
+            <div class="circles-row">
+                <!-- Puntos suspensivos -->
+                <button type="button" class="opt-circle active" id="btn-lineas-dotted" title="Línea de puntos suspensivos" onclick="setLineas('dotted')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <line x1="3" y1="8" x2="21" y2="8" stroke="#87553b" stroke-width="2" stroke-dasharray="2 3"/>
+                        <line x1="3" y1="16" x2="21" y2="16" stroke="#87553b" stroke-width="2" stroke-dasharray="2 3"/>
+                    </svg>
+                </button>
+                <!-- Línea continua -->
+                <button type="button" class="opt-circle" id="btn-lineas-solid" title="Línea continua" onclick="setLineas('solid')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <line x1="3" y1="8" x2="21" y2="8" stroke="#87553b" stroke-width="2.2"/>
+                        <line x1="3" y1="16" x2="21" y2="16" stroke="#87553b" stroke-width="2.2"/>
+                    </svg>
+                </button>
+                <!-- Sin líneas -->
+                <button type="button" class="opt-circle" id="btn-lineas-none" title="Sin líneas" onclick="setLineas('none')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <rect x="4" y="6" width="16" height="4" rx="1" fill="#87553b" opacity="0.35"/>
+                        <rect x="4" y="14" width="16" height="4" rx="1" fill="#87553b" opacity="0.35"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. CAJA PRIORIDAD: CERRADA, LÍNEA LATERAL -->
+        <div class="customizer-group">
+            <span class="customizer-label">Caja Prioridad</span>
+            <div class="circles-row">
+                <!-- Caja cerrada -->
+                <button type="button" class="opt-circle active" id="btn-caja-caja" title="Caja cerrada" onclick="setCaja('caja')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="#87553b" stroke-width="2"/>
+                    </svg>
+                </button>
+                <!-- Línea lateral -->
+                <button type="button" class="opt-circle" id="btn-caja-lateral" title="Línea lateral" onclick="setCaja('lateral')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <line x1="5" y1="4" x2="5" y2="20" stroke="#87553b" stroke-width="4"/>
+                        <line x1="8" y1="8" x2="19" y2="8" stroke="#87553b" stroke-width="1.5" opacity="0.5"/>
+                        <line x1="8" y1="14" x2="16" y2="14" stroke="#87553b" stroke-width="1.5" opacity="0.5"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. CASILLAS: CUADRADO, CÍRCULO -->
+        <div class="customizer-group">
+            <span class="customizer-label">Casillas</span>
+            <div class="circles-row">
+                <!-- Cuadrado -->
+                <button type="button" class="opt-circle active" id="btn-check-square" title="Cuadrado" onclick="setCheck('square')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="#87553b" stroke-width="2.2"/>
+                    </svg>
+                </button>
+                <!-- Círculo -->
+                <button type="button" class="opt-circle" id="btn-check-circle" title="Círculo" onclick="setCheck('circle')">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="7" fill="none" stroke="#87553b" stroke-width="2.2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- PANEL DE CONTROL / TEXTOS DIRECTOS -->
+        <div class="controls-panel">
+            <div class="panel-title">
+                <span>Tu Día en Papel</span>
+                <div class="panel-actions-quick">
+                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
+                    <button type="button" class="btn-quick" onclick="clearData()">Limpiar</button>
+                </div>
+            </div>
+
+            <div class="two-cols form-group">
+                <div>
+                    <label for="input-day" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Día</label>
+                    <input type="text" id="input-day" value="Martes" maxlength="20" placeholder="Ej. Martes" oninput="renderPreview()">
+                </div>
+                <div>
+                    <label for="input-date" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Fecha</label>
+                    <input type="text" id="input-date" value="06 / 10 / 2026" placeholder="DD / MM / AAAA" oninput="handleDateInput(this)">
+                </div>
+            </div>
+
+            <!-- 1. PRIORIDAD DEL DÍA -->
+            <button type="button" class="btn-restore-section" id="btn-restore-priority" onclick="restoreSection('priority')">+ Volver a añadir Prioridad del Día</button>
+            <div class="form-group" id="form-group-priority">
+                <div class="section-header-row">
+                    <div class="section-title-label">
+                        <span>1. La Prioridad Única del Día</span>
+                        <span class="label-hint">(Innegociable)</span>
+                    </div>
+                    <button type="button" class="btn-remove-section" title="Quitar sección" onclick="removeSection('priority')">✕</button>
+                </div>
+                <input type="text" id="input-priority" value="Revisar y definir la estrategia de lanzamiento Q4" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="renderPreview()">
+            </div>
+
+            <!-- 2. TAREAS SECUNDARIAS (MÁXIMO 3) -->
+            <button type="button" class="btn-restore-section" id="btn-restore-tasks" onclick="restoreSection('tasks')">+ Volver a añadir Tareas Secundarias</button>
+            <div class="form-group" id="form-group-tasks">
+                <div class="section-header-row">
+                    <div class="section-title-label">
+                        <span>2. Tareas Secundarias</span>
+                        <span class="label-hint">(Máximo 3)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button type="button" class="btn-add-item" id="btn-add-task" onclick="addNewTask()">+ Añadir</button>
+                        <button type="button" class="btn-remove-section" title="Quitar todas las tareas" onclick="removeSection('tasks')">✕</button>
+                    </div>
+                </div>
+                <div id="tasks-inputs-container">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+            <!-- 3. HÁBITOS CLAVE -->
+            <button type="button" class="btn-restore-section" id="btn-restore-habits" onclick="restoreSection('habits')">+ Volver a añadir Hábitos Clave</button>
+            <div class="form-group" id="form-group-habits">
+                <div class="section-header-row">
+                    <div class="section-title-label">
+                        <span>3. Hábitos Clave</span>
+                        <span class="label-hint">(Rutinas)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button type="button" class="btn-add-item" id="btn-add-habit" onclick="addNewHabit()">+ Añadir</button>
+                        <button type="button" class="btn-remove-section" title="Quitar todos los hábitos" onclick="removeSection('habits')">✕</button>
+                    </div>
+                </div>
+                <div id="habits-inputs-container">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+            <!-- 4. NOTAS (CON PREGUNTA EN EL ENCABEZADO Y ÁREA EN BLANCO PARA RELLENAR) -->
+            <button type="button" class="btn-restore-section" id="btn-restore-notes" onclick="restoreSection('notes')">+ Volver a añadir Notas</button>
+            <div class="form-group" id="form-group-notes">
+                <div class="section-header-row">
+                    <div class="section-title-label">
+                        <span>4. Notas</span>
+                        <span class="label-hint">(¿Qué salió bien hoy y qué puedo mejorar para mañana?)</span>
+                    </div>
+                    <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
+                </div>
+                <textarea id="input-notes" rows="4" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="input-format" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Formato de Exportación PDF</label>
+                <select id="input-format">
+                    <option value="6x9">Formato Libro KDP 6" x 9" (152 x 229 mm) — Escala Real</option>
+                    <option value="a4">Formato DIN A4 (210 x 297 mm) — Impresora Doméstica</option>
+                </select>
+            </div>
+
+            <div class="btn-group-primary">
+                <button type="button" class="btn-cta" onclick="generateInteractivePDF(false)">
+                    <span>📥</span> Descargar PDF Personalizado (Con Datos)
+                </button>
+                <button type="button" class="btn-cta-blank" onclick="generateInteractivePDF(true)">
+                    <span>📄</span> Descargar Plantilla Limpia en Blanco (Para Lápiz)
+                </button>
+            </div>
+            <div class="status-msg" id="status-msg"></div>
+        </div>
+
+        <!-- VISTA PREVIA EN DIRECTO -->
+        <div class="preview-wrapper">
+            <div class="preview-header-bar">
+                <span>👁️ Vista Previa en Vivo</span>
+                <span>Proporción Menos Ruido</span>
+            </div>
+
+            <div class="paper-sheet" id="paper-sheet">
+                <div class="sheet-top">
+                    <div class="sheet-day" id="view-day">Martes</div>
+                    <div class="sheet-date" id="view-date">06 / 10 / 2026</div>
+                </div>
+
+                <!-- CONTENEDOR DE BLOQUES REORDENABLES -->
+                <div id="dynamic-blocks-wrapper" style="display: flex; flex-direction: column; flex: 1;">
+                    <!-- PRIORIDAD ÚNICA -->
+                    <div class="sheet-block" id="block-priority">
+                        <div class="sheet-block-label">
+                            <span>La Prioridad del Día</span>
+                            <span class="sub">Una sola cosa importante y factible</span>
+                        </div>
+                        <div class="priority-box" id="view-priority-box">
+                            <div class="priority-square" id="view-priority-check"></div>
+                            <div class="priority-text" id="view-priority">Revisar y definir la estrategia de lanzamiento Q4</div>
+                        </div>
+                    </div>
+
+                    <!-- TAREAS SECUNDARIAS -->
+                    <div class="sheet-block" id="block-tasks">
+                        <div class="sheet-block-label">
+                            <span>Tareas Secundarias</span>
+                        </div>
+                        <div class="task-list-view" id="view-tasks-container">
+                            <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- HÁBITOS DINÁMICOS -->
+                    <div class="sheet-block" id="block-habits">
+                        <div class="sheet-block-label">
+                            <span>Hábitos Clave</span>
+                        </div>
+                        <div class="habits-row-view" id="view-habits-container">
+                            <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- ESPACIO DE NOTAS -->
+                    <div class="sheet-block" id="block-notes" style="flex: 1; display: flex; flex-direction: column;">
+                        <div class="sheet-block-label">
+                            <span>Notas</span>
+                            <span class="sub" style="font-size:0.7rem; font-style:italic;">¿Qué salió bien hoy y qué puedo mejorar para mañana?</span>
+                        </div>
+                        <div class="notes-view bg-dots" id="view-notes">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</div>
+                    </div>
+                </div>
+
+                <!-- FOOTER EDITORIAL -->
+                <div class="sheet-footer">
+                    <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
+                    <a href="https://editorialmenosruido.com" target="_blank" class="sheet-footer-link">editorialmenosruido.com</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE ESTILOS ACTIVOS
+        let activeStyles = {
+            rayado: 'dots',
+            lineas: 'dotted',
+            caja: 'caja',
+            check: 'square'
+        };
+
+        // LISTA Y ORDEN DE SECCIONES (ARRASTRABLES 1, 2, 3, 4)
+        let sectionsOrder = [
+            { id: 'priority', name: 'Prioridad' },
+            { id: 'tasks', name: 'Tareas' },
+            { id: 'habits', name: 'Hábitos' },
+            { id: 'notes', name: 'Notas' }
+        ];
+
+        let sectionStates = {
+            priority: true,
+            tasks: true,
+            habits: true,
+            notes: true
+        };
+
+        let tasksList = [
+            "Enviar presupuestos pendientes a imprenta",
+            "Caminar 30 min sin mirar el teléfono",
+            "Organizar bandeja de entrada a cero"
+        ];
+
+        let habitsList = [
+            "Lectura: 20 páginas",
+            "Agua: 2 litros"
+        ];
+
+        // FUNCIONES DE SELECCIÓN POR CÍRCULOS
+        function setRayado(val) {
+            activeStyles.rayado = val;
+            ['dots', 'lines', 'grid', 'blank'].forEach(k => {
+                const btn = document.getElementById(`btn-rayado-${k}`);
+                if (btn) btn.classList.toggle('active', k === val);
+            });
+            const notesEl = document.getElementById('view-notes');
+            notesEl.className = 'notes-view';
+            notesEl.classList.add(`bg-${val}`);
+            showStatus(`Rayado: ${val}`);
+        }
+
+        function setLineas(val) {
+            activeStyles.lineas = val;
+            ['dotted', 'solid', 'none'].forEach(k => {
+                const btn = document.getElementById(`btn-lineas-${k}`);
+                if (btn) btn.classList.toggle('active', k === val);
+            });
+            renderTasksPreview();
+            showStatus(`Líneas de tareas actualizadas`);
+        }
+
+        function setCaja(val) {
+            activeStyles.caja = val;
+            ['caja', 'lateral'].forEach(k => {
+                const btn = document.getElementById(`btn-caja-${k}`);
+                if (btn) btn.classList.toggle('active', k === val);
+            });
+            const pBox = document.getElementById('view-priority-box');
+            pBox.className = 'priority-box';
+            if (val === 'lateral') pBox.classList.add('style-linea-lateral');
+            showStatus(`Caja de prioridad actualizada`);
+        }
+
+        function setCheck(val) {
+            activeStyles.check = val;
+            ['square', 'circle'].forEach(k => {
+                const btn = document.getElementById(`btn-check-${k}`);
+                if (btn) btn.classList.toggle('active', k === val);
+            });
+            const isCircle = val === 'circle';
+            const pCheck = document.getElementById('view-priority-check');
+            if (pCheck) pCheck.classList.toggle('circle', isCircle);
+            renderTasksPreview();
+            renderHabitsPreview();
+            showStatus(`Casillas: ${val}`);
+        }
+
+        // ========================================================
+        // TAREAS SECUNDARIAS
+        // ========================================================
+        function renderTasksInputs() {
+            const container = document.getElementById('tasks-inputs-container');
+            container.innerHTML = '';
+
+            tasksList.forEach((task, idx) => {
+                const row = document.createElement('div');
+                row.className = 'item-input-row';
+                row.innerHTML = `
+                    <input type="text" value="${task}" placeholder="Tarea ${idx + 1}" oninput="updateTaskValue(${idx}, this.value)">
+                    <button type="button" class="btn-remove-item" title="Eliminar tarea" onclick="removeTaskItem(${idx})">✕</button>
+                `;
+                container.appendChild(row);
+            });
+
+            if (tasksList.length === 0) {
+                document.getElementById('block-tasks').style.display = 'none';
+            } else if (sectionStates.tasks) {
+                document.getElementById('block-tasks').style.display = 'block';
+            }
+
+            document.getElementById('btn-add-task').style.display = tasksList.length >= 3 ? 'none' : 'inline-flex';
+            renderTasksPreview();
+        }
+
+        function updateTaskValue(idx, val) {
+            tasksList[idx] = val;
+            renderTasksPreview();
+        }
+
+        function addNewTask() {
+            if (tasksList.length >= 3) return;
+            tasksList.push('');
+            sectionStates.tasks = true;
+            document.getElementById('form-group-tasks').style.display = 'block';
+            document.getElementById('btn-restore-tasks').style.display = 'none';
+            renderTasksInputs();
+            showStatus('Tarea añadida.');
+        }
+
+        function removeTaskItem(idx) {
+            tasksList.splice(idx, 1);
+            if (tasksList.length === 0) {
+                removeSection('tasks');
+            } else {
+                renderTasksInputs();
+            }
+            showStatus('Tarea eliminada.');
+        }
+
+        function renderTasksPreview() {
+            const container = document.getElementById('view-tasks-container');
+            container.innerHTML = '';
+            const isCircle = activeStyles.check === 'circle';
+            const lineas = activeStyles.lineas;
+
+            tasksList.forEach((task) => {
+                const row = document.createElement('div');
+                let lineClass = 'task-item-view';
+                if (lineas === 'dotted') lineClass += ' line-suave';
+                if (lineas === 'solid') lineClass += ' line-solida';
+                if (lineas === 'none') lineClass += ' line-sin';
+                row.className = lineClass;
+
+                row.innerHTML = `
+                    <div class="task-box-square ${isCircle ? 'circle' : ''}"></div>
+                    <div class="task-content-view">${task.trim()}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // ========================================================
+        // HÁBITOS CLAVE
+        // ========================================================
+        function renderHabitsInputs() {
+            const container = document.getElementById('habits-inputs-container');
+            container.innerHTML = '';
+
+            habitsList.forEach((habit, idx) => {
+                const row = document.createElement('div');
+                row.className = 'item-input-row';
+                row.innerHTML = `
+                    <input type="text" value="${habit}" placeholder="Hábito ${idx + 1}" oninput="updateHabitValue(${idx}, this.value)">
+                    <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
+                `;
+                container.appendChild(row);
+            });
+
+            if (habitsList.length === 0) {
+                document.getElementById('block-habits').style.display = 'none';
+            } else if (sectionStates.habits) {
+                document.getElementById('block-habits').style.display = 'block';
+            }
+
+            document.getElementById('btn-add-habit').style.display = habitsList.length >= 5 ? 'none' : 'inline-flex';
+            renderHabitsPreview();
+        }
+
+        function updateHabitValue(idx, val) {
+            habitsList[idx] = val;
+            renderHabitsPreview();
+        }
+
+        function addNewHabit() {
+            if (habitsList.length >= 5) return;
+            habitsList.push('');
+            sectionStates.habits = true;
+            document.getElementById('form-group-habits').style.display = 'block';
+            document.getElementById('btn-restore-habits').style.display = 'none';
+            renderHabitsInputs();
+            showStatus('Hábito añadido.');
+        }
+
+        function removeHabitItem(idx) {
+            habitsList.splice(idx, 1);
+            if (habitsList.length === 0) {
+                removeSection('habits');
+            } else {
+                renderHabitsInputs();
+            }
+            showStatus('Hábito eliminado.');
+        }
+
+        function renderHabitsPreview() {
+            const container = document.getElementById('view-habits-container');
+            container.innerHTML = '';
+            const isCircle = activeStyles.check === 'circle';
+
+            habitsList.forEach((habit) => {
+                const pill = document.createElement('div');
+                pill.className = 'habit-pill';
+                pill.innerHTML = `
+                    <div class="habit-check ${isCircle ? 'circle' : ''}"></div>
+                    <span>${habit.trim()}</span>
+                `;
+                container.appendChild(pill);
+            });
+        }
+
+        // ========================================================
+        // QUITAR Y RESTAURAR SECCIONES COMPLETAS
+        // ========================================================
+        function removeSection(secId) {
+            sectionStates[secId] = false;
+            document.getElementById(`form-group-${secId}`).style.display = 'none';
+            document.getElementById(`btn-restore-${secId}`).style.display = 'block';
+            document.getElementById(`block-${secId}`).style.display = 'none';
+            showStatus(`Sección eliminada.`);
+        }
+
+        function restoreSection(secId) {
+            sectionStates[secId] = true;
+            document.getElementById(`form-group-${secId}`).style.display = 'block';
+            document.getElementById(`btn-restore-${secId}`).style.display = 'none';
+            document.getElementById(`block-${secId}`).style.display = (secId === 'notes') ? 'flex' : 'block';
+
+            if (secId === 'tasks' && tasksList.length === 0) {
+                tasksList = ['Nueva tarea'];
+                renderTasksInputs();
+            }
+            if (secId === 'habits' && habitsList.length === 0) {
+                habitsList = ['Nuevo hábito'];
+                renderHabitsInputs();
+            }
+            showStatus(`Sección restaurada.`);
+        }
+
+        // AUTO-FORMATO INTELIGENTE DE FECHA (ej. si escribe 03102026 -> 03 / 10 / 2026)
+        function handleDateInput(input) {
+            let val = input.value.replace(/\D/g, ''); // Solo números
+            if (val.length > 8) val = val.substring(0, 8);
+
+            if (val.length >= 5) {
+                input.value = `${val.substring(0, 2)} / ${val.substring(2, 4)} / ${val.substring(4)}`;
+            } else if (val.length >= 3) {
+                input.value = `${val.substring(0, 2)} / ${val.substring(2)}`;
+            } else {
+                input.value = val;
+            }
+            renderPreview();
+        }
+
+        // ========================================================
+        // VISTA PREVIA Y ACCIONES (LIMPIAR, EJEMPLO)
+        // ========================================================
+        function renderPreview() {
+            const dayInput = document.getElementById('input-day').value.trim();
+            const dateInput = document.getElementById('input-date').value.trim();
+            const priority = document.getElementById('input-priority').value.trim();
+            const notes = document.getElementById('input-notes').value.trim();
+
+            // Si está vacío al limpiar, mostrar un indicador visual limpio que preserve el espacio
+            document.getElementById('view-day').textContent = dayInput || 'Día';
+            document.getElementById('view-date').textContent = dateInput ? `Fecha: ${dateInput}` : 'Fecha: __ / __ / ______';
+            document.getElementById('view-priority').textContent = priority;
+            document.getElementById('view-notes').textContent = notes || '';
+        }
+
+        function loadExampleData() {
+            document.getElementById('input-day').value = 'Miércoles';
+            document.getElementById('input-date').value = '14 / 10 / 2026';
+            document.getElementById('input-priority').value = 'Escribir el primer borrador del nuevo proyecto';
+            tasksList = [
+                'Responder correos urgentes (11:00 a 11:30)',
+                'Revisar cuentas del trimestre',
+                'Comprar cuaderno de repuesto'
+            ];
+            habitsList = ['Cero redes antes de las 10:00', 'Paseo vespertino de 20 min', 'Lectura antes de dormir'];
+            document.getElementById('input-notes').value = 'Logré avanzar 2 horas seguidas sin interrupciones en la prioridad principal. Para mañana necesito definir la reunión con el equipo a primera hora.';
+
+            ['priority', 'tasks', 'habits', 'notes'].forEach(sec => {
+                sectionStates[sec] = true;
+                document.getElementById(`form-group-${sec}`).style.display = 'block';
+                document.getElementById(`btn-restore-${sec}`).style.display = 'none';
+                document.getElementById(`block-${sec}`).style.display = (sec === 'notes') ? 'flex' : 'block';
+            });
+
+            renderTasksInputs();
+            renderHabitsInputs();
+            renderPreview();
+            showStatus('Ejemplo cargado.');
+        }
+
+        // LIMPIAR: CONSERVA DÍA, FECHA, PRIORIDAD, 3 TAREAS VACÍAS, 1 HÁBITO VACÍO Y NOTAS LIMPIAS
+        function clearData() {
+            document.getElementById('input-day').value = '';
+            document.getElementById('input-date').value = '';
+            document.getElementById('input-priority').value = '';
+
+            tasksList = ['', '', '']; // 3 tareas preparadas
+            habitsList = [''];         // 1 hábito preparado
+
+            ['priority', 'tasks', 'habits', 'notes'].forEach(sec => {
+                sectionStates[sec] = true;
+                document.getElementById(`form-group-${sec}`).style.display = 'block';
+                document.getElementById(`btn-restore-${sec}`).style.display = 'none';
+                document.getElementById(`block-${sec}`).style.display = (sec === 'notes') ? 'flex' : 'block';
+            });
+
+            renderTasksInputs();
+            renderHabitsInputs();
+            document.getElementById('input-notes').value = '';
+            renderPreview();
+            showStatus('Limpio: estructura lista con 3 tareas y 1 hábito.');
+        }
+
+        function showStatus(text) {
+            const el = document.getElementById('status-msg');
+            el.textContent = text;
+            setTimeout(() => {
+                if (el.textContent === text) el.textContent = '';
+            }, 3000);
+        }
+
+        // ========================================================
+        // GENERADOR VECTORIAL REAL EN PDF CON jsPDF (100% OFFLINE)
+        // ========================================================
+        function generateInteractivePDF(isBlankTemplate) {
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar la librería jsPDF.');
+                return;
+            }
+
+            const formatChoice = document.getElementById('input-format').value;
+            let doc;
+
+            if (formatChoice === '6x9') {
+                doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [152.4, 228.6] });
+            } else {
+                doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            }
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 16;
+            const contentWidth = pageWidth - (margin * 2);
+
+            // Fondo crema
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+            const rayado = activeStyles.rayado;
+            const lineas = activeStyles.lineas;
+            const caja = activeStyles.caja;
+            const isCircle = activeStyles.check === 'circle';
+
+            const day = isBlankTemplate ? '' : (document.getElementById('input-day').value.trim() || 'Martes');
+            const date = isBlankTemplate ? '__ / __ / ______' : (document.getElementById('input-date').value.trim() || '__ / __ / ______');
+            const priority = isBlankTemplate ? '' : document.getElementById('input-priority').value.trim();
+            const notes = isBlankTemplate ? '' : document.getElementById('input-notes').value.trim();
+
+            let y = margin + 4;
+
+            // Kicker
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.setTextColor(135, 85, 59);
+            doc.text('PLANIFICADOR MENOS RUIDO · REGISTRO DIARIO', margin, y);
+            y += 6;
+
+            // Encabezado
+            doc.setFont('times', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(30, 25, 22);
+            if (day) {
+                doc.text(day, margin, y);
+            }
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(100, 95, 90);
+            doc.text(`Fecha: ${date}`, pageWidth - margin, y, { align: 'right' });
+            y += 4;
+
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.4);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 8;
+
+            function drawPriorityBlock() {
+                if (!sectionStates.priority) return;
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(30, 25, 22);
+                doc.text('LA PRIORIDAD DEL DÍA', margin, y);
+
+                doc.setFont('times', 'italic');
+                doc.setFontSize(7.5);
+                doc.setTextColor(120, 115, 110);
+                doc.text('(Una sola cosa importante y factible)', margin + 42, y);
+                y += 3;
+
+                const priorityBoxHeight = 15;
+                if (caja === 'lateral') {
+                    doc.setFillColor(251, 249, 246);
+                    doc.rect(margin, y, contentWidth, priorityBoxHeight, 'F');
+                    doc.setDrawColor(135, 85, 59);
+                    doc.setLineWidth(1.2);
+                    doc.line(margin, y, margin, y + priorityBoxHeight);
+                } else {
+                    doc.setFillColor(250, 248, 245);
+                    doc.setDrawColor(35, 30, 25);
+                    doc.setLineWidth(0.35);
+                    doc.roundedRect(margin, y, contentWidth, priorityBoxHeight, 2, 2, 'FD');
+                }
+
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.3);
+                if (isCircle) {
+                    doc.circle(margin + 6, y + 7.5, 2.2, 'S');
+                } else {
+                    doc.rect(margin + 4, y + 5.5, 4.4, 4.4);
+                }
+
+                if (priority) {
+                    doc.setFont('times', 'normal');
+                    doc.setFontSize(10.5);
+                    doc.setTextColor(25, 20, 15);
+                    doc.text(priority, margin + 12, y + 9.5, { maxWidth: contentWidth - 16 });
+                }
+                y += priorityBoxHeight + 8;
+            }
+
+            function drawTasksBlock() {
+                if (!sectionStates.tasks || tasksList.length === 0) return;
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(30, 25, 22);
+                doc.text('TAREAS SECUNDARIAS', margin, y);
+
+                doc.setFont('times', 'italic');
+                doc.setFontSize(7.5);
+                doc.setTextColor(120, 115, 110);
+                doc.text('(Máximo 3)', margin + 38, y);
+                y += 4;
+
+                tasksList.forEach((taskText) => {
+                    doc.setDrawColor(60, 55, 50);
+                    doc.setLineWidth(0.25);
+                    if (isCircle) {
+                        doc.circle(margin + 4, y + 2, 2, 'S');
+                    } else {
+                        doc.rect(margin + 2, y, 3.8, 3.8);
+                    }
+
+                    if (taskText) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(8.5);
+                        doc.setTextColor(30, 25, 22);
+                        doc.text(taskText, margin + 9, y + 3);
+                    }
+
+                    if (lineas !== 'none') {
+                        doc.setDrawColor(215, 210, 202);
+                        doc.setLineWidth(lineas === 'dotted' ? 0.15 : 0.25);
+                        doc.line(margin + 9, y + 4.5, pageWidth - margin, y + 4.5);
+                    }
+                    y += 7.5;
+                });
+                y += 3;
+            }
+
+            function drawHabitsBlock() {
+                if (!sectionStates.habits || habitsList.length === 0) return;
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(30, 25, 22);
+                doc.text('HÁBITOS CLAVE', margin, y);
+                y += 3.5;
+
+                const habitBoxHeight = Math.ceil(habitsList.length / 2) * 6.5 + 4;
+                doc.setFillColor(252, 250, 247);
+                doc.setDrawColor(220, 215, 208);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(margin, y, contentWidth, habitBoxHeight, 1.5, 1.5, 'FD');
+
+                const colW = contentWidth / 2;
+                habitsList.forEach((hText, idx) => {
+                    const row = Math.floor(idx / 2);
+                    const col = idx % 2;
+                    const itemX = margin + (col * colW);
+                    const itemY = y + 2.5 + (row * 6.5);
+
+                    doc.setDrawColor(135, 85, 59);
+                    if (isCircle) {
+                        doc.circle(itemX + 6, itemY + 2.2, 1.8, 'S');
+                    } else {
+                        doc.rect(itemX + 4, itemY + 0.5, 3.6, 3.6);
+                    }
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.8);
+                    doc.setTextColor(40, 35, 30);
+                    const displayH = isBlankTemplate ? '_____________________' : (hText.trim());
+                    if (displayH) {
+                        doc.text(displayH, itemX + 10, itemY + 3.2);
+                    }
+                });
+
+                y += habitBoxHeight + 8;
+            }
+
+            function drawNotesBlock() {
+                if (!sectionStates.notes) return;
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(30, 25, 22);
+                doc.text('NOTAS', margin, y);
+
+                doc.setFont('times', 'italic');
+                doc.setFontSize(7.2);
+                doc.setTextColor(120, 115, 110);
+                doc.text('(¿Qué salió bien hoy y qué puedo mejorar para mañana?)', margin + 16, y);
+                y += 3.5;
+
+                const notesHeight = pageHeight - y - margin - 12;
+                if (notesHeight > 20) {
+                    doc.setFillColor(252, 250, 247);
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(margin, y, contentWidth, notesHeight, 2, 2, 'FD');
+
+                    if (rayado === 'dots') {
+                        doc.setFillColor(195, 188, 178);
+                        for (let px = margin + 4; px <= margin + contentWidth - 4; px += 5) {
+                            for (let py = y + 4; py <= y + notesHeight - 4; py += 5) {
+                                doc.circle(px, py, 0.18, 'F');
+                            }
+                        }
+                    } else if (rayado === 'lines') {
+                        doc.setDrawColor(220, 215, 208);
+                        doc.setLineWidth(0.2);
+                        for (let py = y + 7; py <= y + notesHeight - 4; py += 6.5) {
+                            doc.line(margin + 4, py, margin + contentWidth - 4, py);
+                        }
+                    } else if (rayado === 'grid') {
+                        doc.setDrawColor(225, 220, 214);
+                        doc.setLineWidth(0.15);
+                        for (let px = margin + 4; px <= margin + contentWidth - 4; px += 5) {
+                            doc.line(px, y + 4, px, y + notesHeight - 4);
+                        }
+                        for (let py = y + 4; py <= y + notesHeight - 4; py += 5) {
+                            doc.line(margin + 4, py, margin + contentWidth - 4, py);
+                        }
+                    }
+
+                    if (notes) {
+                        doc.setFont('times', 'normal');
+                        doc.setFontSize(9);
+                        doc.setTextColor(35, 30, 25);
+                        doc.text(notes, margin + 4, y + 7, { maxWidth: contentWidth - 8, lineHeightFactor: 1.4 });
+                    }
+                }
+            }
+
+            // DIBUJAR EN EL ORDEN PERFECTO FIJO EDITORIAL: PRIORIDAD -> TAREAS -> HÁBITOS -> NOTAS
+            drawPriorityBlock();
+            drawTasksBlock();
+            drawHabitsBlock();
+            drawNotesBlock();
+
+            // Footer
+            const footY = pageHeight - margin + 2;
+            doc.setDrawColor(215, 210, 202);
+            doc.setLineWidth(0.2);
+            doc.line(margin, footY - 3, pageWidth - margin, footY - 3);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.5);
+            doc.setTextColor(140, 135, 130);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN', margin, footY);
+            doc.setTextColor(135, 85, 59);
+            doc.textWithLink('editorialmenosruido.com', pageWidth - margin, footY, { url: 'https://editorialmenosruido.com', align: 'right' });
+
+            const filename = isBlankTemplate 
+                ? 'Planificador_Menos_Ruido_Plantilla_Blanco.pdf' 
+                : `Planificador_Menos_Ruido_${day.toLowerCase() || 'dia'}.pdf`;
+
+            doc.save(filename);
+            showStatus(`✓ Archivo "${filename}" descargado.`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTasksInputs();
+            renderHabitsInputs();
+            renderPreview();
+        });
+    </script>
+</body>
+</html>
