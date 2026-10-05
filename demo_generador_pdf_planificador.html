@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador Diario en Papel · Editorial Menos Ruido</title>
+    <title>Generador Planificador Diario · Menos Ruido</title>
 
     <!-- Vercel Web Analytics & Speed Insights -->
     <script>
@@ -1186,11 +1186,11 @@
                     <div class="section-title-label">
                         <span>4. Notas</span>
                         <span class="label-hint">(Reflexión del día)</span>
-                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">161/1150</span>
+                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">161/850</span>
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
-                <textarea id="input-notes" rows="6" maxlength="1150" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
+                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
             </div>
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
@@ -1548,10 +1548,10 @@
         // ========================================================
         function getDynamicNotesMaxLength() {
             const habitCount = (sectionStates.habits && habitsList) ? habitsList.length : 0;
-            if (!sectionStates.habits || habitCount === 0) return 1400;
-            if (habitCount <= 3) return 1150;
-            if (habitCount === 4) return 1000;
-            return 850; // 5 hábitos
+            if (!sectionStates.habits || habitCount === 0) return 1000;
+            if (habitCount <= 3) return 850;
+            if (habitCount === 4) return 720;
+            return 600; // 5 hábitos
         }
 
         function updateNotesLimit() {
@@ -2076,13 +2076,32 @@
                         docInstance.roundedRect(margin, y, contentWidth, notesHeight, 2, 2, 'FD');
 
                         // Siempre en blanco (rayado = 'blank')
-                        if (!isBlankTemplate && notes) {
+                        if (!isBlankTemplate && notes && notes.trim()) {
+                            const maxNotesHeight = notesHeight - 9;
+                            let notesFontSize = 8.6;
+                            const notesLineHeight = 1.35;
                             docInstance.setFont('times', 'normal');
-                            docInstance.setFontSize(9.2);
+                            docInstance.setFontSize(notesFontSize);
                             docInstance.setTextColor(35, 30, 25);
-                            docInstance.text(notes, margin + 4, y + 6.5, { 
-                                maxWidth: contentWidth - 8, 
-                                lineHeightFactor: 1.4 
+
+                            let noteLines = docInstance.splitTextToSize(notes.trim(), contentWidth - 8);
+                            let totalTextHeight = noteLines.length * (notesFontSize * 0.352778 * notesLineHeight);
+
+                            while (totalTextHeight > maxNotesHeight && notesFontSize > 6.6) {
+                                notesFontSize -= 0.25;
+                                docInstance.setFontSize(notesFontSize);
+                                noteLines = docInstance.splitTextToSize(notes.trim(), contentWidth - 8);
+                                totalTextHeight = noteLines.length * (notesFontSize * 0.352778 * notesLineHeight);
+                            }
+
+                            const maxLinesAllowed = Math.floor(maxNotesHeight / (notesFontSize * 0.352778 * notesLineHeight));
+                            if (noteLines.length > maxLinesAllowed) {
+                                noteLines = noteLines.slice(0, maxLinesAllowed);
+                            }
+
+                            const lineSpacing = notesFontSize * 0.352778 * notesLineHeight;
+                            noteLines.forEach((tLine, lineIdx) => {
+                                docInstance.text(tLine, margin + 4, y + 5.5 + (lineIdx * lineSpacing));
                             });
                         }
                     }

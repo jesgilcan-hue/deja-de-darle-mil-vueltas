@@ -41,8 +41,8 @@ export default defineConfig({
         visor180: resolve(__dirname, 'visor-planificador-180-dias.html'),
         apps: resolve(__dirname, 'apps.html'),
         generador: resolve(__dirname, 'generador.html'),
-        planificadorDiario: resolve(__dirname, 'planificador-diario.html'),
-        planificadorSemanal: resolve(__dirname, 'planificador-semanal.html'),
+        generadorPlanificadorDiario: resolve(__dirname, 'generador-planificador-diario.html'),
+        generadorPlanificadorSemanal: resolve(__dirname, 'generador-planificador-semanal.html'),
         generadorDiario: resolve(__dirname, 'demo_generador_pdf_planificador.html'),
         generadorSemanal: resolve(__dirname, 'demo_generador_pdf_planificador_semanal.html')
       }
