@@ -857,22 +857,22 @@
               Espacio para diseñar, personalizar y descargar plantillas y hojas de planificación listas para imprimir en papel de alta resolución.
             </p>
             <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
-              <a href="/generador.html" target="_blank" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #ffffff; border: 1.5px solid var(--accent); border-radius: var(--radius-sm); text-decoration: none; color: var(--accent); font-size: 0.9rem; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+              <a href="/generador.html" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #ffffff; border: 1.5px solid var(--accent); border-radius: var(--radius-sm); text-decoration: none; color: var(--accent); font-size: 0.9rem; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
                 <span>✨ Ver Hub de Generadores</span>
                 <span>Entrar ↗</span>
               </a>
-              <a href="/generador-planificador-diario.html" target="_blank" style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-sm); text-decoration: none; color: var(--text); font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">
+              <a href="/generador-planificador-diario.html" style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-sm); text-decoration: none; color: var(--text); font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">
                 <span>📋 Generador Planificador Diario</span>
                 <span style="color: #666;">Abrir ↗</span>
               </a>
-              <a href="/generador-planificador-semanal.html" target="_blank" style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-sm); text-decoration: none; color: var(--text); font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">
+              <a href="/generador-planificador-semanal.html" style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-sm); text-decoration: none; color: var(--text); font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">
                 <span>🗓️ Generador Planificador Semanal</span>
                 <span style="color: #666;">Abrir ↗</span>
               </a>
             </div>
           </div>
           <div style="margin-top: 12px;">
-            <a href="/generador.html" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: #fff; text-decoration: none; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 600; width: 100%; box-shadow: 0 4px 12px rgba(135,85,59,0.22); transition: all 0.2s;">
+            <a href="/generador.html" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: #fff; text-decoration: none; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 600; width: 100%; box-shadow: 0 4px 12px rgba(135,85,59,0.22); transition: all 0.2s;">
               <span>🚀 Abrir Hub de Material Gratis</span>
             </a>
           </div>
@@ -973,6 +973,11 @@
       const btnCloseIosModal = document.getElementById('btn-close-ios-modal');
 
       // 1. GESTIÓN DEL PIN
+      function unlockApps() {
+        pinScreen.classList.add('unlocked');
+        appsHub.classList.add('visible');
+      }
+
       function updateDots() {
         dots.forEach((dot, index) => {
           if (index < currentPin.length) {
@@ -988,10 +993,16 @@
 
         if (currentPin === CORRECT_PIN) {
           dots.forEach(d => d.classList.add('success'));
+          localStorage.setItem('mr_apps_unlocked', '1');
           sessionStorage.setItem('mr_apps_unlocked', '1');
           setTimeout(() => {
-            pinScreen.classList.add('unlocked');
-            appsHub.classList.add('visible');
+            const params = new URLSearchParams(window.location.search);
+            const returnUrl = params.get('return');
+            if (returnUrl) {
+              window.location.replace(returnUrl);
+              return;
+            }
+            unlockApps();
           }, 250);
         } else {
           dots.forEach(d => d.classList.add('error'));
@@ -1038,7 +1049,7 @@
 
       // Eventos teclado físico (PC/Mac)
       window.addEventListener('keydown', (e) => {
-        if (sessionStorage.getItem('mr_apps_unlocked') === '1') return;
+        if (localStorage.getItem('mr_apps_unlocked') === '1' || sessionStorage.getItem('mr_apps_unlocked') === '1') return;
         if (e.key >= '0' && e.key <= '9') {
           addDigit(e.key);
         } else if (e.key === 'Backspace') {
@@ -1050,15 +1061,23 @@
 
       // Botón Bloquear / Salir
       btnLock.addEventListener('click', () => {
+        localStorage.removeItem('mr_apps_unlocked');
         sessionStorage.removeItem('mr_apps_unlocked');
         clearPin();
         pinScreen.classList.remove('unlocked');
         appsHub.classList.remove('visible');
       });
 
-      // El usuario siempre debe introducir el código 1111 al acceder a Apps
-      // Al acertarlo, se guarda sessionStorage para navegar al generador y planificadores
-      sessionStorage.removeItem('mr_apps_unlocked');
+      // Comprobar si ya se desbloqueó previamente (persistencia en navegador)
+      if (localStorage.getItem('mr_apps_unlocked') === '1' || sessionStorage.getItem('mr_apps_unlocked') === '1') {
+        const params = new URLSearchParams(window.location.search);
+        const returnUrl = params.get('return');
+        if (returnUrl) {
+          window.location.replace(returnUrl);
+        } else {
+          unlockApps();
+        }
+      }
 
       // 2. GESTIÓN PWA E INSTALACIÓN INTELIGENTE
       let deferredPrompt = null;
