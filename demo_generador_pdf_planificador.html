@@ -229,6 +229,56 @@
             align-items: start;
         }
 
+        .main-layout.preview-hidden {
+            display: flex !important;
+            justify-content: center !important;
+        }
+
+        .main-layout.preview-hidden .controls-panel {
+            max-width: 660px !important;
+            width: 100% !important;
+            margin: 0 auto !important;
+        }
+
+        .main-layout.preview-hidden .preview-wrapper {
+            display: none !important;
+        }
+
+        /* BOTÓN VISTA PREVIA EN TIEMPO REAL */
+        .toggle-preview-wrapper {
+            margin-bottom: 14px;
+        }
+
+        .btn-toggle-preview {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 10px 14px;
+            background: #faf8f5;
+            border: 1.5px solid #ded9d0;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #4a453f;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .btn-toggle-preview:hover {
+            background: #f2ece2;
+            border-color: #baa495;
+            transform: translateY(-1px);
+        }
+
+        .btn-toggle-preview.is-hidden {
+            background: #fdfbf7;
+            color: #777;
+            border-style: dashed;
+        }
+
         @media (max-width: 980px) {
             .main-layout {
                 grid-template-columns: 1fr;
@@ -558,8 +608,8 @@
             padding: 10px 14px;
             min-height: 48px;
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
+            align-items: center;
+            gap: 12px;
             box-sizing: border-box;
             width: 100%;
         }
@@ -577,7 +627,7 @@
             border: 2px solid #222;
             border-radius: 3px;
             flex-shrink: 0;
-            margin-top: 3px;
+            margin-top: 0;
         }
 
         .priority-square.circle {
@@ -1114,6 +1164,7 @@
             <div class="panel-title">
                 <span>Tu Día en Papel</span>
                 <div class="panel-actions-quick">
+                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" title="Mostrar u ocultar vista previa en tiempo real" onclick="toggleLivePreview()">👁️ Vista previa</button>
                     <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
                     <button type="button" class="btn-quick" onclick="clearData()">Limpiar</button>
                 </div>
@@ -1195,6 +1246,14 @@
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
             <input type="hidden" id="input-format" value="6x9">
+
+            <!-- BOTÓN VISTA PREVIA EN TIEMPO REAL ENCIMA DE DESCARGAR -->
+            <div class="toggle-preview-wrapper">
+                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview active" onclick="toggleLivePreview()">
+                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️</span>
+                    <span id="toggle-preview-text">Vista previa en tiempo real: Activada</span>
+                </button>
+            </div>
 
             <div class="btn-group-primary">
                 <button type="button" class="btn-cta" onclick="openDownloadModal(false)">
@@ -1385,6 +1444,36 @@
                 document.body.appendChild(ifr);
                 setTimeout(() => ifr.remove(), 4000);
             } catch(e) {}
+        }
+
+        // CONTROL DE VISIBILIDAD DE VISTA PREVIA EN TIEMPO REAL
+        let isPreviewVisible = true;
+
+        function toggleLivePreview() {
+            isPreviewVisible = !isPreviewVisible;
+            const layout = document.querySelector('.main-layout');
+            const icon = document.getElementById('toggle-preview-icon');
+            const text = document.getElementById('toggle-preview-text');
+            const btn = document.getElementById('btn-toggle-preview');
+            const btnTop = document.getElementById('btn-toggle-preview-top');
+
+            if (layout) {
+                if (isPreviewVisible) {
+                    layout.classList.remove('preview-hidden');
+                    if (btn) btn.classList.remove('is-hidden');
+                    if (icon) icon.textContent = '👁️';
+                    if (text) text.textContent = 'Vista previa en tiempo real: Activada';
+                    if (btnTop) btnTop.innerHTML = '👁️ Vista previa';
+                    showStatus('Vista previa activada.');
+                } else {
+                    layout.classList.add('preview-hidden');
+                    if (btn) btn.classList.add('is-hidden');
+                    if (icon) icon.textContent = '👁️‍🗨️';
+                    if (text) text.textContent = 'Vista previa en tiempo real: Oculta (Clic para ver)';
+                    if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
+                    showStatus('Vista previa oculta. Tu día en papel centrado.');
+                }
+            }
         }
 
         // CONFIGURACIÓN DE ESTILOS ACTIVOS
@@ -1919,7 +2008,15 @@
                     docInstance.text('(Una sola cosa importante y factible)', margin + 42, y);
                     y += 3;
 
-                    const priorityBoxHeight = 15;
+                    const maxPWidth = contentWidth - 16;
+                    docInstance.setFont('times', 'normal');
+                    docInstance.setFontSize(10.2);
+                    const pLines = (priority && priority.trim()) ? docInstance.splitTextToSize(priority.trim(), maxPWidth) : [];
+                    const numPLines = Math.max(1, pLines.length);
+                    const pLineHeight = 4.8;
+                    const totalPTextH = numPLines * pLineHeight;
+                    const priorityBoxHeight = Math.max(15, totalPTextH + 7.5);
+
                     if (caja === 'lateral') {
                         docInstance.setFillColor(251, 249, 246);
                         docInstance.rect(margin, y, contentWidth, priorityBoxHeight, 'F');
@@ -1933,19 +2030,24 @@
                         docInstance.roundedRect(margin, y, contentWidth, priorityBoxHeight, 2, 2, 'FD');
                     }
 
+                    // Checkbox exactamente centrado en el medio vertical de la caja
                     docInstance.setDrawColor(40, 35, 30);
                     docInstance.setLineWidth(0.3);
+                    const checkSize = 4.2;
+                    const checkY = y + ((priorityBoxHeight - checkSize) / 2);
                     if (isCircle) {
-                        docInstance.circle(margin + 6, y + 7.5, 2.2, 'S');
+                        docInstance.circle(margin + 6, y + (priorityBoxHeight / 2), 2.1, 'S');
                     } else {
-                        docInstance.rect(margin + 4, y + 5.5, 4.4, 4.4);
+                        docInstance.rect(margin + 4, checkY, checkSize, checkSize);
                     }
 
-                    if (priority) {
-                        docInstance.setFont('times', 'normal');
-                        docInstance.setFontSize(10.5);
+                    // Texto exactamente centrado en el medio vertical de la caja
+                    if (pLines.length > 0) {
                         docInstance.setTextColor(25, 20, 15);
-                        docInstance.text(priority, margin + 12, y + 9.5, { maxWidth: contentWidth - 16 });
+                        const startBaselineY = y + ((priorityBoxHeight - totalPTextH) / 2) + 3.6;
+                        pLines.forEach((lineText, lIdx) => {
+                            docInstance.text(lineText, margin + 12, startBaselineY + (lIdx * pLineHeight));
+                        });
                     }
                     y += priorityBoxHeight + 8;
                 }
@@ -2134,11 +2236,24 @@
                 renderSinglePage(doc, i);
             }
 
-            const filename = isBlankTemplate 
-                ? (pagesToRender > 1 
-                    ? `Planificador_Menos_Ruido_Plantilla_${pagesToRender}_dias.pdf` 
-                    : 'Planificador_Menos_Ruido_Plantilla_Blanco.pdf')
-                : `Planificador_Menos_Ruido_${userDay.toLowerCase() || 'dia'}.pdf`;
+            let filename = '';
+            if (isBlankTemplate) {
+                filename = pagesToRender > 1 
+                    ? `Menos_Ruido_Plantilla_Diaria_${pagesToRender}_dias.pdf` 
+                    : 'Menos_Ruido_Plantilla_Diaria.pdf';
+            } else {
+                const cleanDay = (userDay || '').trim().replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '_');
+                const cleanDate = (userDate || '').trim().replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+                if (cleanDay && cleanDate) {
+                    filename = `Menos_Ruido_Planificador_Diario_${cleanDay}_${cleanDate}.pdf`;
+                } else if (cleanDay) {
+                    filename = `Menos_Ruido_Planificador_Diario_${cleanDay}.pdf`;
+                } else if (cleanDate) {
+                    filename = `Menos_Ruido_Planificador_Diario_${cleanDate}.pdf`;
+                } else {
+                    filename = 'Menos_Ruido_Planificador_Diario.pdf';
+                }
+            }
 
             doc.save(filename);
             showStatus(`✓ Archivo "${filename}" descargado.`);

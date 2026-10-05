@@ -94,6 +94,56 @@
             }
         }
 
+        .app-layout.preview-hidden {
+            display: flex !important;
+            justify-content: center !important;
+        }
+
+        .app-layout.preview-hidden .controls-panel {
+            max-width: 660px !important;
+            width: 100% !important;
+            margin: 0 auto !important;
+        }
+
+        .app-layout.preview-hidden .preview-column {
+            display: none !important;
+        }
+
+        /* BOTÓN VISTA PREVIA EN TIEMPO REAL */
+        .toggle-preview-wrapper {
+            margin-bottom: 6px;
+        }
+
+        .btn-toggle-preview {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 10px 14px;
+            background: #faf8f5;
+            border: 1.5px solid #ded9d0;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #4a453f;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .btn-toggle-preview:hover {
+            background: #f2ece2;
+            border-color: #baa495;
+            transform: translateY(-1px);
+        }
+
+        .btn-toggle-preview.is-hidden {
+            background: #fdfbf7;
+            color: #777;
+            border-style: dashed;
+        }
+
         /* PANEL DE CONTROLES */
         .controls-panel {
             background: #ffffff;
@@ -842,6 +892,7 @@
             <div class="panel-header-top">
                 <span class="panel-heading-text">Tu Semana en Papel</span>
                 <div class="panel-actions-quick">
+                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" onclick="toggleLivePreview()">👁️ Vista previa</button>
                     <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
                     <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
                 </div>
@@ -916,6 +967,14 @@
 
             <!-- Formato predeterminado y gestión transparente -->
             <input type="hidden" id="select-format" value="apaisado">
+
+            <!-- BOTÓN VISTA PREVIA EN TIEMPO REAL ENCIMA DE DESCARGAR -->
+            <div class="toggle-preview-wrapper">
+                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview active" onclick="toggleLivePreview()">
+                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️</span>
+                    <span id="toggle-preview-text">Vista previa en tiempo real: Activada</span>
+                </button>
+            </div>
 
             <!-- BOTONES DE ACCIÓN PRINCIPALES -->
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
@@ -1143,6 +1202,36 @@
                 document.body.appendChild(ifr);
                 setTimeout(() => ifr.remove(), 4000);
             } catch(e) {}
+        }
+
+        // CONTROL DE VISIBILIDAD DE VISTA PREVIA EN TIEMPO REAL
+        let isPreviewVisible = true;
+
+        function toggleLivePreview() {
+            isPreviewVisible = !isPreviewVisible;
+            const layout = document.querySelector('.app-layout');
+            const icon = document.getElementById('toggle-preview-icon');
+            const text = document.getElementById('toggle-preview-text');
+            const btn = document.getElementById('btn-toggle-preview');
+            const btnTop = document.getElementById('btn-toggle-preview-top');
+
+            if (layout) {
+                if (isPreviewVisible) {
+                    layout.classList.remove('preview-hidden');
+                    if (btn) btn.classList.remove('is-hidden');
+                    if (icon) icon.textContent = '👁️';
+                    if (text) text.textContent = 'Vista previa en tiempo real: Activada';
+                    if (btnTop) btnTop.innerHTML = '👁️ Vista previa';
+                    showToast('Vista previa activada.');
+                } else {
+                    layout.classList.add('preview-hidden');
+                    if (btn) btn.classList.add('is-hidden');
+                    if (icon) icon.textContent = '👁️‍🗨️';
+                    if (text) text.textContent = 'Vista previa en tiempo real: Oculta (Clic para ver)';
+                    if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
+                    showToast('Vista previa oculta. Tu semana en papel centrada.');
+                }
+            }
         }
 
         // ESTADO DE CONFIGURACIÓN
@@ -1592,11 +1681,20 @@
                 renderWeeklyPage(doc, i);
             }
 
-            const fileName = isBlankModal
-                ? (pagesToRender > 1
-                    ? ('Planificador_Semanal_Menos_Ruido_' + pagesToRender + '_semanas.pdf')
-                    : 'Planificador_Semanal_Menos_Ruido_Plantilla_Blanco.pdf')
-                : 'Planificador_Semanal_Menos_Ruido_Personalizado.pdf';
+            let fileName = '';
+            if (isBlankModal) {
+                fileName = pagesToRender > 1
+                    ? `Menos_Ruido_Plantilla_Semanal_${pagesToRender}_semanas.pdf`
+                    : 'Menos_Ruido_Plantilla_Semanal.pdf';
+            } else {
+                const weekVal = (document.getElementById('input-week')?.value || '').trim();
+                const cleanWeek = weekVal.replace(/[^0-9]/g, '');
+                if (cleanWeek) {
+                    fileName = `Menos_Ruido_Planificador_Semanal_Semana_${cleanWeek}.pdf`;
+                } else {
+                    fileName = 'Menos_Ruido_Planificador_Semanal.pdf';
+                }
+            }
 
             doc.save(fileName);
             showToast('✓ Archivo "' + fileName + '" descargado.');
