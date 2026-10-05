@@ -101,7 +101,7 @@
         }
 
         .app-layout.preview-hidden .preview-column {
-            display: none;
+            display: none !important;
         }
 
         /* PANEL DE CONTROLES (IZQUIERDA) */
@@ -237,6 +237,46 @@
             box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
         }
 
+        /* GESTIÓN DINÁMICA DE METAS */
+        .item-input-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .btn-remove-item {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            transition: color 0.2s;
+            margin-top: 6px;
+        }
+
+        .btn-remove-item:hover {
+            color: #c44;
+        }
+
+        .btn-add-item {
+            background: #f1ede5;
+            border: 1px dashed #d5cfc5;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add-item:hover {
+            background: #e8e2d7;
+        }
+
         /* BOTONES DE TOGGLE Y ACCIÓN */
         .toggle-preview-wrapper {
             margin-top: 4px;
@@ -345,7 +385,6 @@
             aspect-ratio: 8.25 / 6;
             box-sizing: border-box;
             position: relative;
-            overflow: hidden;
         }
 
         .preview-kicker {
@@ -368,7 +407,7 @@
 
         .preview-main-title {
             font-family: var(--font-serif);
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: #211c19;
             letter-spacing: -0.2px;
@@ -382,7 +421,7 @@
             text-transform: uppercase;
         }
 
-        /* ESTRUCTURA SUPERIOR: 3 METAS CLAVE + 4 HITOS DEL MES */
+        /* ESTRUCTURA SUPERIOR: 3 METAS + HITOS */
         .preview-top-split {
             display: grid;
             grid-template-columns: 1.15fr 1fr;
@@ -398,6 +437,8 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
+            min-height: 80px;
+            box-sizing: border-box;
         }
 
         .preview-card-title {
@@ -429,6 +470,11 @@
             margin-top: 2px;
         }
 
+        .preview-goal-text {
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
         /* CUADRÍCULA MENSUAL (7 DÍAS x 5 SEMANAS) */
         .preview-month-calendar {
             flex: 1;
@@ -439,6 +485,7 @@
             overflow: hidden;
             margin-bottom: 10px;
             background: #ffffff;
+            min-height: 160px;
         }
 
         .calendar-weekdays-row {
@@ -477,6 +524,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            min-height: 28px;
         }
 
         .calendar-day-cell:nth-child(7n) {
@@ -488,13 +536,18 @@
         }
 
         .calendar-day-num {
-            font-size: 0.6rem;
-            color: #8c857b;
-            font-weight: 600;
+            font-size: 0.62rem;
+            color: #555;
+            font-weight: 700;
             align-self: flex-start;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            padding: 0 3px;
+            line-height: 1.2;
+            background: #fcfbfa;
         }
 
-        /* SECCIÓN INFERIOR: NOTAS & BALANCE DEL MES */
+        /* SECCIÓN INFERIOR: NOTAS & BALANCE */
         .preview-bottom-notes {
             border: 1px solid #dfd9ce;
             border-radius: 4px;
@@ -504,6 +557,7 @@
             display: flex;
             flex-direction: column;
             gap: 3px;
+            box-sizing: border-box;
         }
 
         .preview-bottom-label {
@@ -517,7 +571,10 @@
         .preview-bottom-text {
             font-size: 0.72rem;
             color: #333;
-            line-height: 1.3;
+            line-height: 1.35;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .preview-sheet-footer {
@@ -545,11 +602,11 @@
             z-index: 1000;
         }
 
-        /* MODAL DE DESCARGA */
+        /* MODAL POP-UP EDITORIAL COMPLETO CON LIBROS AMAZON */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(20, 18, 16, 0.55);
+            background: rgba(20, 18, 16, 0.65);
             backdrop-filter: blur(4px);
             display: none;
             align-items: center;
@@ -562,24 +619,37 @@
             display: flex;
         }
 
-        .modal-box {
+        .modal-card {
             background: #ffffff;
-            border-radius: 12px;
-            max-width: 480px;
+            border-radius: 14px;
+            max-width: 540px;
             width: 100%;
-            padding: 26px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            padding: 24px 22px;
+            box-shadow: 0 24px 50px rgba(0,0,0,0.22);
             position: relative;
             animation: modalIn 0.25s ease-out;
+            max-height: 92vh;
+            overflow-y: auto;
+            text-align: center;
         }
 
         @keyframes modalIn {
-            from { transform: translateY(12px); opacity: 0; }
+            from { transform: translateY(14px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
-        .modal-header {
-            margin-bottom: 16px;
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #f1ede5;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            color: #666;
+            cursor: pointer;
         }
 
         .modal-badge {
@@ -600,13 +670,13 @@
         }
 
         .modal-desc {
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             color: #666;
-            margin-top: 6px;
+            margin-top: 4px;
             line-height: 1.45;
         }
 
-        .modal-control-row {
+        .modal-pages-selector {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -614,18 +684,19 @@
             border: 1px solid #eae5dc;
             padding: 12px 14px;
             border-radius: 8px;
-            margin: 14px 0;
+            margin: 12px 0;
+            text-align: left;
         }
 
-        .counter-btn-group {
+        .pages-stepper {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .counter-btn {
-            width: 32px;
-            height: 32px;
+        .btn-step {
+            width: 30px;
+            height: 30px;
             border: 1px solid #d5cfc5;
             background: #ffffff;
             border-radius: 6px;
@@ -633,58 +704,132 @@
             font-weight: 600;
             color: var(--accent);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .counter-val {
+        .pages-count-display {
             font-size: 1.1rem;
             font-weight: 700;
             color: #222;
-            min-width: 24px;
+            min-width: 20px;
             text-align: center;
         }
 
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 18px;
-        }
-
         .btn-modal-download {
-            flex: 1;
+            width: 100%;
             background: var(--accent);
             color: #ffffff;
             border: none;
-            padding: 12px 18px;
+            padding: 13px 20px;
             border-radius: 8px;
+            font-size: 0.96rem;
             font-weight: 600;
             cursor: pointer;
+            margin-top: 10px;
             transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(135,85,59,0.25);
         }
 
         .btn-modal-download:hover {
             background: var(--accent-hover);
         }
 
-        .btn-modal-cancel {
-            background: #f1ede5;
-            color: #666;
-            border: none;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
+        /* SECCIÓN LIBROS RECOMENDADOS EN MODAL */
+        .modal-books-section {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid #efeae1;
+            text-align: left;
         }
 
-        /* RESPONSIVE */
+        .modal-books-header {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .modal-books-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-book-card {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-book-thumb {
+            width: 42px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            background: #e5ded5;
+        }
+
+        .modal-book-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .modal-book-badge {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .modal-book-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #222;
+            line-height: 1.2;
+        }
+
+        .btn-book-amazon {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: var(--accent);
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            margin-top: 2px;
+        }
+
+        /* RESPONSIVE MÓVIL OPTIMIZADO */
         @media (max-width: 900px) {
             .app-layout {
                 grid-template-columns: 1fr;
             }
             .preview-column {
-                position: static;
+                position: static !important;
+                margin-bottom: 50px !important;
+                width: 100% !important;
+            }
+            .preview-sheet-frame {
+                aspect-ratio: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                padding: 16px 14px 20px !important;
+                margin-bottom: 40px !important;
+            }
+            .modal-books-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -723,7 +868,7 @@
                 </div>
             </div>
 
-            <!-- 1. MES Y AÑO -->
+            <!-- 1. MES Y AÑO CON NUMERACIÓN AUTOMÁTICA -->
             <div class="section-box">
                 <div class="section-header-title">
                     <span>1. Mes y Año</span>
@@ -731,58 +876,71 @@
                 </div>
                 <div class="two-cols">
                     <div class="control-group">
-                        <label for="input-month-name">Mes</label>
-                        <input type="text" id="input-month-name" placeholder="Ej: Noviembre" oninput="renderPreview()">
+                        <label for="input-month-select">Mes</label>
+                        <select id="input-month-select" onchange="handleMonthChange()">
+                            <option value="">(En blanco / Atemporal)</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11" selected>Noviembre</option>
+                            <option value="12">Diciembre</option>
+                            <option value="custom">Personalizado...</option>
+                        </select>
+                        <input type="text" id="input-month-custom" maxlength="15" placeholder="Nombre del mes" style="display: none; margin-top: 4px;" oninput="renderPreview()">
                     </div>
                     <div class="control-group">
-                        <label for="input-month-year">Año</label>
-                        <input type="number" id="input-month-year" placeholder="Ej: 2026" min="2024" max="2035" oninput="renderPreview()">
+                        <label for="input-month-year">Año (1900-3000)</label>
+                        <input type="number" id="input-month-year" min="1900" max="3000" placeholder="Ej: 2026" oninput="handleYearInput(this)">
                     </div>
                 </div>
+                <div class="control-group" style="margin-top: -4px;">
+                    <label style="font-size:0.75rem; color:#666; font-weight:normal;">
+                        <input type="checkbox" id="check-auto-calendar" checked onchange="renderPreview()" style="width:auto; margin-right:6px;">
+                        Numerar días automáticamente en la cuadrícula
+                    </label>
+                </div>
             </div>
 
-            <!-- 2. LAS 3 METAS O PRIORIDADES DEL MES -->
+            <!-- 2. METAS DEL MES (MÁXIMO 3, DINÁMICAS) -->
             <div class="section-box">
                 <div class="section-header-title">
-                    <span>2. Las 3 Metas Clave del Mes</span>
-                    <span>🎯</span>
+                    <span>2. Tres Metas del Mes</span>
+                    <button type="button" class="btn-add-item" id="btn-add-goal" onclick="addNewGoal()">+ Añadir meta</button>
                 </div>
-                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 3 prioridades estratégicas innegociables para todo el mes.</p>
-                <div class="control-group">
-                    <label for="input-goal-1">Meta 1 (Prioridad principal)</label>
-                    <textarea id="input-goal-1" maxlength="120" rows="2" placeholder="Ej: Cerrar la maquetación y pruebas de imprenta del nuevo libro..." oninput="renderPreview()"></textarea>
-                </div>
-                <div class="control-group">
-                    <label for="input-goal-2">Meta 2</label>
-                    <textarea id="input-goal-2" maxlength="120" rows="2" placeholder="Ej: Diseñar la portada final y los módulos de Contenido A+..." oninput="renderPreview()"></textarea>
-                </div>
-                <div class="control-group">
-                    <label for="input-goal-3">Meta 3</label>
-                    <textarea id="input-goal-3" maxlength="120" rows="2" placeholder="Ej: Mantener 3 mañanas por semana sin reuniones para escribir..." oninput="renderPreview()"></textarea>
+                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 3 prioridades clave innegociables para todo el mes.</p>
+                <div id="goals-container">
+                    <!-- Inyectado dinámicamente -->
                 </div>
             </div>
 
-            <!-- 3. FECHAS CLAVE / HITOS IMPORTANTES -->
+            <!-- 3. FECHAS CLAVE / HITOS IMPORTANTES (MÁX 140 CARACTERES) -->
             <div class="section-box">
                 <div class="section-header-title">
                     <span>3. Hitos y Fechas Clave</span>
                     <span>📍</span>
                 </div>
                 <div class="control-group">
-                    <label for="input-hitos">Fechas importantes del mes <span class="char-count" id="count-hitos">0/240</span></label>
-                    <textarea id="input-hitos" maxlength="240" rows="3" placeholder="• Día 10: Entrega de galeradas finales&#10;• Día 18: Revisión de pruebas de color&#10;• Día 28: Lanzamiento oficial" oninput="renderPreview()"></textarea>
+                    <label for="input-hitos">Fechas clave señaladas <span class="char-count" id="count-hitos">0/140</span></label>
+                    <textarea id="input-hitos" maxlength="140" rows="3" placeholder="• Día 10: Entrega manuscrito&#10;• Día 18: Revisión de pruebas&#10;• Día 28: Lanzamiento oficial" oninput="autoResizeTextarea(this); renderPreview();"></textarea>
                 </div>
             </div>
 
-            <!-- 4. NOTAS Y BALANCE MENSUAL -->
+            <!-- 4. NOTAS Y BALANCE MENSUAL (MÁX 220 CARACTERES) -->
             <div class="section-box">
                 <div class="section-header-title">
                     <span>4. Notas y Balance de Cierre</span>
                     <span>📝</span>
                 </div>
                 <div class="control-group">
-                    <label for="input-notes">Espacio de notas y balance <span class="char-count" id="count-notes">0/320</span></label>
-                    <textarea id="input-notes" maxlength="320" rows="3" placeholder="Anota aprendizajes del mes, qué hábitos se consolidaron y qué se transfiere al mes siguiente..." oninput="renderPreview()"></textarea>
+                    <label for="input-notes">Notas y reflexión del mes <span class="char-count" id="count-notes">0/220</span></label>
+                    <textarea id="input-notes" maxlength="220" rows="3" placeholder="Anota aprendizajes del mes, qué hábitos se consolidaron y qué se transfiere al mes siguiente..." oninput="autoResizeTextarea(this); renderPreview();"></textarea>
                 </div>
             </div>
 
@@ -822,27 +980,18 @@
                     <div class="preview-date-text" id="prev-dates-text">MES: ________ · AÑO: ____</div>
                 </div>
 
-                <!-- BLOQUE SUPERIOR: 3 METAS + HITOS -->
+                <!-- BLOQUE SUPERIOR: TRES METAS DEL MES + HITOS -->
                 <div class="preview-top-split">
                     <div class="preview-card-box">
-                        <div class="preview-card-title">🎯 3 METAS INNEGOCIABLES DEL MES</div>
-                        <div class="preview-goal-item">
-                            <div class="preview-goal-box"></div>
-                            <span id="prev-goal-1-text"></span>
-                        </div>
-                        <div class="preview-goal-item">
-                            <div class="preview-goal-box"></div>
-                            <span id="prev-goal-2-text"></span>
-                        </div>
-                        <div class="preview-goal-item">
-                            <div class="preview-goal-box"></div>
-                            <span id="prev-goal-3-text"></span>
+                        <div class="preview-card-title">🎯 TRES METAS DEL MES</div>
+                        <div id="prev-goals-preview-list">
+                            <!-- Metas dinámicas -->
                         </div>
                     </div>
 
                     <div class="preview-card-box">
                         <div class="preview-card-title">📍 HITOS Y FECHAS CLAVE</div>
-                        <div id="prev-hitos-text" style="font-size:0.72rem; color:#333; line-height:1.35; white-space:pre-line;"></div>
+                        <div id="prev-hitos-text" style="font-size:0.72rem; color:#333; line-height:1.35; white-space:pre-line; word-break:break-word;"></div>
                     </div>
                 </div>
 
@@ -881,63 +1030,104 @@
     <!-- TOAST NOTIFICACIÓN -->
     <div class="toast-notify" id="toast-msg"></div>
 
-    <!-- MODAL DE DESCARGA -->
+    <!-- MODAL POP-UP EDITORIAL COMPLETO CON LIBROS AMAZON -->
     <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
-        <div class="modal-box">
-            <div class="modal-header">
-                <span class="modal-badge" id="modal-badge-label">Plantilla Mensual</span>
-                <h3 class="modal-title" id="modal-title-label">Descargar Planificador Mensual</h3>
-                <p class="modal-desc" id="modal-desc-label">Exporta tu hoja en PDF vectorial a 300 DPI lista para imprimir en papel.</p>
-            </div>
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <span class="modal-badge" id="modal-badge-label">Descarga Lista</span>
+            <h3 class="modal-title" id="modal-title-label">Tu Planificador Mensual en Papel</h3>
+            <p class="modal-desc" id="modal-desc-label">Exporta tu PDF vectorial listo para imprimir o usar en tu escritorio.</p>
 
             <!-- OPCIÓN MESES EN BLANCO -->
             <div id="modal-blank-options" style="display: none;">
-                <div class="modal-control-row">
+                <div class="modal-pages-selector">
                     <div>
-                        <strong style="font-size: 0.9rem; color: #222; display:block;">Número de meses a generar</strong>
-                        <span style="font-size: 0.78rem; color: #777;">De 1 a 3 meses en un único archivo</span>
+                        <strong style="font-size: 0.88rem; color: #222; display:block;">Número de meses a generar</strong>
+                        <span style="font-size: 0.76rem; color: #777;">De 1 a 3 meses en un único archivo PDF</span>
                     </div>
-                    <div class="counter-btn-group">
-                        <button type="button" class="counter-btn" onclick="changeMonthsCount(-1)">−</button>
-                        <span class="counter-val" id="modal-months-count">1</span>
-                        <button type="button" class="counter-btn" onclick="changeMonthsCount(1)">+</button>
+                    <div class="pages-stepper">
+                        <button type="button" class="btn-step" onclick="changeMonthsCount(-1)">−</button>
+                        <span class="pages-count-display" id="modal-months-count">1</span>
+                        <button type="button" class="btn-step" onclick="changeMonthsCount(1)">+</button>
                     </div>
                 </div>
             </div>
 
             <!-- SELECTOR DE FORMATO -->
-            <div class="control-group" style="margin-top: 10px;">
-                <label for="modal-select-format" style="margin-bottom: 4px;">Formato de Impresión</label>
-                <select id="modal-select-format">
-                    <option value="apaisado">Libro Apaisado 8.25" × 6" (Encuadernable)</option>
-                    <option value="a4">Folio Estándar DIN A4 Apaisado</option>
+            <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin: 10px 0;">
+                <label for="modal-select-format" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
+                <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
+                    <option value="apaisado">Formato Libro Apaisado 8.25" × 6" (Encuadernable)</option>
+                    <option value="a4">Formato Folio DIN A4 Apaisado (297 × 210 mm)</option>
                 </select>
             </div>
 
-            <div class="modal-actions">
-                <button type="button" class="btn-modal-cancel" onclick="closeDownloadModal()">Cancelar</button>
-                <button type="button" class="btn-modal-download" onclick="executeMonthlyDownload()" id="modal-download-btn-text">Descargar PDF</button>
+            <button type="button" class="btn-modal-download" onclick="executeMonthlyDownload()" id="modal-download-btn-text">
+                📥 Descargar PDF ahora
+            </button>
+
+            <!-- CUADERNOS FÍSICOS EN AMAZON -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 4px 0 12px 0;">
+                    Esta hoja mensual te permite coordinar tus metas de un vistazo, pero la metodología completa para consolidar foco a 90 o 180 días está en nuestros cuadernos encuadernados de Editorial Menos Ruido para no perder tus avances.
+                </p>
+                <div class="modal-books-grid">
+                    <!-- Planificador 90 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Enfoque trimestral</span>
+                            <h4 class="modal-book-title">Planificador 90 Días</h4>
+                            <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_mensual' })">
+                                Amazon ↗
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Planificador 180 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_180.jpg" alt="Planificador 180 Días" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Hábito semestral</span>
+                            <h4 class="modal-book-title">Planificador 180 Días</h4>
+                            <a href="/ir/amazon-180-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_180_dias', origen: 'modal_mensual' })">
+                                Amazon ↗
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         // ========================================================
-        // ESTADO GLOBAL Y EJEMPLO EDITORIAL MENOS RUIDO
+        // ESTADO GLOBAL Y EJEMPLO EDITORIAL
         // ========================================================
         let isPreviewVisible = false;
         let isExampleActive = false;
         let isBlankModal = false;
         let modalMonthsCount = 1;
 
+        const MONTH_NAMES = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ];
+
+        let goalsList = ['', '', ''];
+
         const MONTHLY_EXAMPLE = {
-            month: 'Noviembre',
+            monthNum: '11',
+            monthName: 'Noviembre',
             year: '2026',
-            goal1: 'Cerrar la maquetación y pruebas de imprenta del nuevo libro de foco.',
-            goal2: 'Diseñar la portada final y los módulos de Contenido A+ para Amazon.',
-            goal3: 'Mantener 3 mañanas por semana sin reuniones para escribir en calma.',
-            hitos: '• Día 05: Entrega del primer manuscrito revisado\n• Día 16: Validación de pruebas de color en papel crema\n• Día 27: Campaña de preventa y catálogo editorial',
-            notes: 'Este mes el foco estuvo en no dispersarse con proyectos secundarios. Se consolidó el hábito de cerrar la jornada 30 minutos antes para planificar el día siguiente en papel.'
+            goals: [
+                'Cerrar la maquetación y pruebas de imprenta del nuevo libro de foco.',
+                'Diseñar la portada final y los módulos de Contenido A+ para Amazon.',
+                'Mantener 3 mañanas por semana sin reuniones para escribir en calma.'
+            ],
+            hitos: '• Día 05: Entrega del primer manuscrito revisado\n• Día 16: Pruebas de color en papel crema\n• Día 27: Campaña de preventa y catálogo',
+            notes: 'Este mes el foco estuvo en no dispersarse con proyectos secundarios. Se consolidó el hábito de cerrar la jornada 30 minutos antes para planificar en papel.'
         };
 
         // AUTO-EXPAND TEXTAREAS
@@ -947,18 +1137,173 @@
             el.style.height = (el.scrollHeight + 2) + 'px';
         }
 
-        // GENERAR CASILLAS DEL CALENDARIO
-        function initCalendarGrid() {
+        // CONTROL DE MES
+        function handleMonthChange() {
+            const select = document.getElementById('input-month-select');
+            const customInput = document.getElementById('input-month-custom');
+            if (select.value === 'custom') {
+                customInput.style.display = 'block';
+            } else {
+                customInput.style.display = 'none';
+            }
+            renderPreview();
+        }
+
+        function getActiveMonthText() {
+            const select = document.getElementById('input-month-select');
+            const customInput = document.getElementById('input-month-custom');
+            if (!select) return '';
+            if (select.value === 'custom') {
+                return (customInput?.value || '').trim();
+            }
+            if (select.value && select.value !== 'blank') {
+                const idx = parseInt(select.value, 10) - 1;
+                return MONTH_NAMES[idx] || '';
+            }
+            return '';
+        }
+
+        function handleYearInput(input) {
+            if (!input) return;
+            // Solo dígitos
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value.length > 4) {
+                input.value = input.value.slice(0, 4);
+            }
+            renderPreview();
+        }
+
+        // GESTIÓN DINÁMICA DE METAS (0 A 3)
+        function renderGoalsInputs() {
+            const container = document.getElementById('goals-container');
+            const btnAdd = document.getElementById('btn-add-goal');
+            if (!container) return;
+            container.innerHTML = '';
+
+            goalsList.forEach((goal, idx) => {
+                const row = document.createElement('div');
+                row.className = 'item-input-row';
+                row.innerHTML = `
+                    <textarea class="goal-input-field" rows="2" maxlength="100" placeholder="Meta ${idx + 1}" oninput="autoResizeTextarea(this); updateGoalValue(${idx}, this.value)">${goal}</textarea>
+                    <button type="button" class="btn-remove-item" title="Eliminar meta" onclick="removeGoalItem(${idx})">✕</button>
+                `;
+                container.appendChild(row);
+                const ta = row.querySelector('textarea');
+                if (ta) autoResizeTextarea(ta);
+            });
+
+            if (btnAdd) {
+                btnAdd.style.display = goalsList.length >= 3 ? 'none' : 'inline-block';
+            }
+            renderGoalsPreview();
+        }
+
+        function updateGoalValue(idx, val) {
+            goalsList[idx] = val;
+            renderGoalsPreview();
+        }
+
+        function addNewGoal() {
+            if (goalsList.length >= 3) return;
+            goalsList.push('');
+            renderGoalsInputs();
+            showToast('Meta añadida.');
+        }
+
+        function removeGoalItem(idx) {
+            goalsList.splice(idx, 1);
+            renderGoalsInputs();
+            showToast('Meta eliminada.');
+        }
+
+        function renderGoalsPreview() {
+            const container = document.getElementById('prev-goals-preview-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const userHasGoals = goalsList.some(g => g.trim().length > 0);
+            let goalsToRender = [];
+
+            if (userHasGoals) {
+                goalsToRender = goalsList.map(g => g.trim()).filter(g => g.length > 0);
+            } else if (isExampleActive) {
+                goalsToRender = MONTHLY_EXAMPLE.goals;
+            } else {
+                goalsToRender = goalsList.map(() => '');
+            }
+
+            if (goalsToRender.length === 0) {
+                container.innerHTML = '<span style="font-size:0.7rem; color:#999; font-style:italic;">(Sin metas definidas)</span>';
+                return;
+            }
+
+            goalsToRender.forEach(gText => {
+                const item = document.createElement('div');
+                item.className = 'preview-goal-item';
+                item.innerHTML = `
+                    <div class="preview-goal-box"></div>
+                    <span class="preview-goal-text">${gText}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // CALENDARIO AUTOMÁTICO
+        function calculateMonthGrid(yearNum, monthNum) {
+            // monthNum: 1 a 12
+            if (!yearNum || !monthNum || yearNum < 1900 || yearNum > 3000) return null;
+            const monthIdx = monthNum - 1;
+            // 0=Domingo, 1=Lunes... convertir a 0=Lunes, 6=Domingo
+            const jsDay = new Date(yearNum, monthIdx, 1).getDay();
+            const startCol = (jsDay + 6) % 7; 
+            const totalDays = new Date(yearNum, monthIdx + 1, 0).getDate();
+            return { startCol, totalDays };
+        }
+
+        function renderCalendarGrid() {
             const grid = document.getElementById('calendar-days-grid');
             if (!grid) return;
             grid.innerHTML = '';
-            for (let i = 1; i <= 35; i++) {
+
+            const isAuto = document.getElementById('check-auto-calendar')?.checked;
+            const select = document.getElementById('input-month-select');
+            const yearInput = document.getElementById('input-month-year');
+            const mVal = select ? select.value : '';
+            const yVal = yearInput ? parseInt(yearInput.value, 10) : null;
+
+            let calInfo = null;
+            if (isAuto && mVal && mVal !== 'custom' && mVal !== 'blank' && yVal && yVal >= 1900 && yVal <= 3000) {
+                calInfo = calculateMonthGrid(yVal, parseInt(mVal, 10));
+            } else if (isExampleActive && isAuto) {
+                calInfo = calculateMonthGrid(2026, 11);
+            }
+
+            for (let i = 0; i < 35; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'calendar-day-cell';
-                const num = document.createElement('span');
-                num.className = 'calendar-day-num';
-                num.textContent = isExampleActive ? (i <= 30 ? i : '') : '';
-                cell.appendChild(num);
+                
+                let dayNumber = '';
+                if (calInfo) {
+                    const dayIdx = i - calInfo.startCol + 1;
+                    if (dayIdx >= 1 && dayIdx <= calInfo.totalDays) {
+                        dayNumber = dayIdx.toString();
+                    }
+                }
+
+                if (dayNumber) {
+                    const numSpan = document.createElement('span');
+                    numSpan.className = 'calendar-day-num';
+                    numSpan.textContent = dayNumber;
+                    cell.appendChild(numSpan);
+                } else {
+                    // Cuadradito vacío para escribir con boli si no hay número
+                    const emptySquare = document.createElement('span');
+                    emptySquare.className = 'calendar-day-num';
+                    emptySquare.style.color = '#ccc';
+                    emptySquare.textContent = ' ';
+                    cell.appendChild(emptySquare);
+                }
+
                 grid.appendChild(cell);
             }
         }
@@ -968,17 +1313,26 @@
             const layout = document.querySelector('.app-layout');
             const btn = document.getElementById('btn-toggle-preview');
             const text = document.getElementById('toggle-preview-text');
+            const icon = document.getElementById('toggle-preview-icon');
             const btnTop = document.getElementById('btn-toggle-preview-top');
 
             isPreviewVisible = !isPreviewVisible;
 
             if (isPreviewVisible) {
                 layout.classList.remove('preview-hidden');
+                if (icon) icon.textContent = '👁️';
                 if (text) text.textContent = 'Vista previa: Activada';
                 if (btnTop) btnTop.innerHTML = '👁️ Ocultar previa';
                 showToast('Vista previa activada.');
+                if (window.innerWidth <= 900) {
+                    setTimeout(() => {
+                        const col = document.querySelector('.preview-column');
+                        if (col) col.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                }
             } else {
                 layout.classList.add('preview-hidden');
+                if (icon) icon.textContent = '👁️‍🗨️';
                 if (text) text.textContent = 'Vista previa: Oculta (Clic para ver)';
                 if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
                 showToast('Vista previa oculta. Tu mes en papel centrado.');
@@ -987,46 +1341,50 @@
 
         // ACTUALIZAR VISTA PREVIA
         function renderPreview() {
-            const monthInput = document.getElementById('input-month-name')?.value.trim() || '';
-            const yearInput = document.getElementById('input-month-year')?.value.trim() || '';
-            const g1Input = document.getElementById('input-goal-1')?.value.trim() || '';
-            const g2Input = document.getElementById('input-goal-2')?.value.trim() || '';
-            const g3Input = document.getElementById('input-goal-3')?.value.trim() || '';
+            const activeMonth = getActiveMonthText();
+            const yearInput = document.getElementById('input-month-year');
+            const yearVal = yearInput ? yearInput.value.trim() : '';
+
             const hitosInput = document.getElementById('input-hitos')?.value || '';
             const notesInput = document.getElementById('input-notes')?.value || '';
 
             // Contadores
             const countHitos = document.getElementById('count-hitos');
-            if (countHitos) countHitos.textContent = hitosInput.length + '/240';
+            if (countHitos) countHitos.textContent = hitosInput.length + '/140';
             const countNotes = document.getElementById('count-notes');
-            if (countNotes) countNotes.textContent = notesInput.length + '/320';
+            if (countNotes) countNotes.textContent = notesInput.length + '/220';
 
-            // Mes y Año
+            // Cabecera Mes / Año
             const prevDates = document.getElementById('prev-dates-text');
             if (prevDates) {
-                const m = monthInput || (isExampleActive ? MONTHLY_EXAMPLE.month : '');
-                const y = yearInput || (isExampleActive ? MONTHLY_EXAMPLE.year : '');
+                const m = activeMonth || (isExampleActive ? MONTHLY_EXAMPLE.monthName : '');
+                const y = yearVal || (isExampleActive ? MONTHLY_EXAMPLE.year : '');
                 if (m && y) {
                     prevDates.textContent = `MES: ${m.toUpperCase()} · AÑO: ${y}`;
                 } else if (m) {
                     prevDates.textContent = `MES: ${m.toUpperCase()} · AÑO: ____`;
+                } else if (y) {
+                    prevDates.textContent = `MES: ________ · AÑO: ${y}`;
                 } else {
                     prevDates.textContent = 'MES: ________ · AÑO: ____';
                 }
             }
 
             // Metas
-            document.getElementById('prev-goal-1-text').textContent = g1Input || (isExampleActive ? MONTHLY_EXAMPLE.goal1 : '');
-            document.getElementById('prev-goal-2-text').textContent = g2Input || (isExampleActive ? MONTHLY_EXAMPLE.goal2 : '');
-            document.getElementById('prev-goal-3-text').textContent = g3Input || (isExampleActive ? MONTHLY_EXAMPLE.goal3 : '');
+            renderGoalsPreview();
 
             // Hitos
-            document.getElementById('prev-hitos-text').textContent = hitosInput.trim() ? hitosInput : (isExampleActive ? MONTHLY_EXAMPLE.hitos : '');
+            document.getElementById('prev-hitos-text').textContent = hitosInput.trim() 
+                ? hitosInput 
+                : (isExampleActive ? MONTHLY_EXAMPLE.hitos : '');
 
             // Notas
-            document.getElementById('prev-notes-text').textContent = notesInput.trim() ? notesInput : (isExampleActive ? MONTHLY_EXAMPLE.notes : '');
+            document.getElementById('prev-notes-text').textContent = notesInput.trim() 
+                ? notesInput 
+                : (isExampleActive ? MONTHLY_EXAMPLE.notes : '');
 
-            initCalendarGrid();
+            // Calendario
+            renderCalendarGrid();
         }
 
         // RELLENAR EJEMPLO (deja inputs limpios y muestra en preview)
@@ -1042,13 +1400,24 @@
         // LIMPIAR
         function clearAllData() {
             isExampleActive = false;
-            ['input-month-name', 'input-month-year', 'input-goal-1', 'input-goal-2', 'input-goal-3', 'input-hitos', 'input-notes'].forEach(id => {
+            const select = document.getElementById('input-month-select');
+            if (select) select.value = '';
+            const customInput = document.getElementById('input-month-custom');
+            if (customInput) { customInput.value = ''; customInput.style.display = 'none'; }
+            const yearInput = document.getElementById('input-month-year');
+            if (yearInput) yearInput.value = '';
+            
+            goalsList = ['', '', ''];
+            renderGoalsInputs();
+
+            ['input-hitos', 'input-notes'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.value = '';
                     el.style.height = '';
                 }
             });
+
             renderPreview();
             showToast('✓ Formulario y vista previa limpiados.');
         }
@@ -1081,13 +1450,13 @@
                 modalMonthsCount = 1;
                 const countEl = document.getElementById('modal-months-count');
                 if (countEl) countEl.textContent = '1';
-                if (btnText) btnText.textContent = 'Descargar 1 mes limpio en PDF';
+                if (btnText) btnText.innerHTML = '📥 Descargar 1 mes limpio en PDF';
             } else {
                 if (badge) badge.textContent = 'PDF Personalizado con Tus Metas';
                 if (title) title.textContent = 'Tu Planificación Mensual Lista';
                 if (desc) desc.textContent = 'Descarga tu mes en Formato Libro Apaisado 8.25" x 6" o DIN A4 con todos tus textos maquetados.';
                 if (blankOpts) blankOpts.style.display = 'none';
-                if (btnText) btnText.textContent = 'Descargar mi PDF personalizado';
+                if (btnText) btnText.innerHTML = '📥 Descargar mi PDF personalizado';
             }
 
             modal.classList.add('active');
@@ -1110,7 +1479,7 @@
             if (countEl) countEl.textContent = modalMonthsCount;
             const btnText = document.getElementById('modal-download-btn-text');
             if (btnText && isBlankModal) {
-                btnText.textContent = `Descargar ${modalMonthsCount} ${modalMonthsCount === 1 ? 'mes limpio' : 'meses limpios'} en PDF`;
+                btnText.innerHTML = `📥 Descargar ${modalMonthsCount} ${modalMonthsCount === 1 ? 'mes limpio' : 'meses limpios'} en PDF`;
             }
         }
 
@@ -1140,21 +1509,32 @@
 
             const pagesToRender = isBlankModal ? modalMonthsCount : 1;
 
-            const mInput = document.getElementById('input-month-name')?.value.trim() || '';
-            const yInput = document.getElementById('input-month-year')?.value.trim() || '';
-            const g1Input = document.getElementById('input-goal-1')?.value.trim() || '';
-            const g2Input = document.getElementById('input-goal-2')?.value.trim() || '';
-            const g3Input = document.getElementById('input-goal-3')?.value.trim() || '';
-            const hitosInput = document.getElementById('input-hitos')?.value.trim() || '';
-            const notesInput = document.getElementById('input-notes')?.value.trim() || '';
+            const activeMonth = isBlankModal ? '' : (getActiveMonthText() || (isExampleActive ? MONTHLY_EXAMPLE.monthName : ''));
+            const yearInput = document.getElementById('input-month-year');
+            const activeYear = isBlankModal ? '' : (yearInput?.value.trim() || (isExampleActive ? MONTHLY_EXAMPLE.year : ''));
 
-            const activeMonth = isBlankModal ? '' : (mInput || (isExampleActive ? MONTHLY_EXAMPLE.month : ''));
-            const activeYear = isBlankModal ? '' : (yInput || (isExampleActive ? MONTHLY_EXAMPLE.year : ''));
-            const activeG1 = isBlankModal ? '' : (g1Input || (isExampleActive ? MONTHLY_EXAMPLE.goal1 : ''));
-            const activeG2 = isBlankModal ? '' : (g2Input || (isExampleActive ? MONTHLY_EXAMPLE.goal2 : ''));
-            const activeG3 = isBlankModal ? '' : (g3Input || (isExampleActive ? MONTHLY_EXAMPLE.goal3 : ''));
+            const userHasGoals = goalsList.some(g => g.trim().length > 0);
+            const activeGoals = isBlankModal 
+                ? [] 
+                : (userHasGoals ? goalsList.filter(g => g.trim().length > 0) : (isExampleActive ? MONTHLY_EXAMPLE.goals : []));
+
+            const hitosInput = document.getElementById('input-hitos')?.value.trim() || '';
             const activeHitos = isBlankModal ? '' : (hitosInput || (isExampleActive ? MONTHLY_EXAMPLE.hitos : ''));
+
+            const notesInput = document.getElementById('input-notes')?.value.trim() || '';
             const activeNotes = isBlankModal ? '' : (notesInput || (isExampleActive ? MONTHLY_EXAMPLE.notes : ''));
+
+            // Calendario
+            const isAuto = document.getElementById('check-auto-calendar')?.checked;
+            const select = document.getElementById('input-month-select');
+            const mVal = select ? select.value : '';
+            const yVal = activeYear ? parseInt(activeYear, 10) : null;
+            let calInfo = null;
+            if (!isBlankModal && isAuto && mVal && mVal !== 'custom' && mVal !== 'blank' && yVal && yVal >= 1900 && yVal <= 3000) {
+                calInfo = calculateMonthGrid(yVal, parseInt(mVal, 10));
+            } else if (!isBlankModal && isExampleActive && isAuto) {
+                calInfo = calculateMonthGrid(2026, 11);
+            }
 
             for (let page = 0; page < pagesToRender; page++) {
                 if (page > 0) doc.addPage(pageDims, orientation);
@@ -1198,11 +1578,11 @@
                 doc.line(m, y, pw - m, y);
                 y += 4;
 
-                // 1. BLOQUE SUPERIOR: 3 METAS (IZQ) + HITOS (DCHA)
-                const topBoxH = 25;
+                // 1. BLOQUE SUPERIOR: TRES METAS DEL MES (IZQ) + HITOS (DCHA)
+                const topBoxH = 26;
                 const colW = (contentW - 6) / 2;
 
-                // Tarjeta 1: 3 Metas clave
+                // Tarjeta 1: Metas
                 doc.setFillColor(251, 249, 245);
                 doc.setDrawColor(220, 215, 205);
                 doc.setLineWidth(0.2);
@@ -1211,9 +1591,8 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
-                doc.text('3 METAS INNEGOCIABLES DEL MES', m + 3.5, y + 4);
+                doc.text('TRES METAS DEL MES', m + 3.5, y + 4);
 
-                const goalsArr = [activeG1, activeG2, activeG3];
                 let goalY = y + 8;
                 for (let g = 0; g < 3; g++) {
                     doc.setDrawColor(120, 115, 110);
@@ -1223,8 +1602,8 @@
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7.2);
                     doc.setTextColor(35, 30, 25);
-                    if (goalsArr[g]) {
-                        const gLines = doc.splitTextToSize(goalsArr[g], colW - 12);
+                    if (activeGoals[g]) {
+                        const gLines = doc.splitTextToSize(activeGoals[g], colW - 12);
                         doc.text(gLines[0] || '', m + 8, goalY);
                     } else {
                         doc.setDrawColor(225, 220, 212);
@@ -1263,7 +1642,7 @@
                 y += topBoxH + 4;
 
                 // 2. CUADRÍCULA MENSUAL (7 COLUMNAS x 5 FILAS)
-                const calH = ph - y - m - 20; // altura disponible para la cuadrícula
+                const calH = ph - y - m - 20;
                 const cellW = contentW / 7;
                 const headerH = 5;
                 const rowH = (calH - headerH) / 5;
@@ -1293,11 +1672,27 @@
                     doc.setLineWidth(0.18);
                     doc.line(m, rowY, m + contentW, rowY);
 
-                    // Pequeño recuadro para número de día en cada casilla
                     for (let c = 0; c < 7; c++) {
                         const cellX = m + (c * cellW);
-                        doc.setDrawColor(230, 225, 218);
-                        doc.rect(cellX + 1.5, rowY + 1.5, 3.5, 3.5);
+                        const cellIndex = (r * 7) + c;
+                        
+                        let cellNum = '';
+                        if (calInfo) {
+                            const dayNum = cellIndex - calInfo.startCol + 1;
+                            if (dayNum >= 1 && dayNum <= calInfo.totalDays) {
+                                cellNum = dayNum.toString();
+                            }
+                        }
+
+                        doc.setDrawColor(225, 220, 212);
+                        doc.rect(cellX + 1.2, rowY + 1.2, 3.6, 3.6);
+
+                        if (cellNum) {
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6);
+                            doc.setTextColor(60, 55, 50);
+                            doc.text(cellNum, cellX + 3, rowY + 3.8, { align: 'center' });
+                        }
                     }
                 }
 
@@ -1308,7 +1703,7 @@
 
                 y += calH + 3.5;
 
-                // 3. SECCIÓN INFERIOR: NOTAS & BALANCE DE CIERRE
+                // 3. SECCIÓN INFERIOR: NOTAS & BALANCE
                 const notesH = ph - y - m - 4;
                 if (notesH > 8) {
                     doc.setFillColor(250, 248, 245);
@@ -1340,7 +1735,7 @@
                 doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
             }
 
-            // NOMENCLATURA EXACTA SEGÚN ESTÁNDAR
+            // NOMENCLATURA EXACTA
             let fileName = '';
             if (isBlankModal) {
                 fileName = pagesToRender > 1 
@@ -1358,7 +1753,6 @@
             doc.save(fileName);
             showToast('✓ Archivo "' + fileName + '" descargado.');
 
-            // Métricas
             registrarMetricaGratis('/metricas/descarga-pdf-generador-mensual.html');
             trackVercelEvent('descarga_pdf', {
                 herramienta: 'generador_mensual',
@@ -1368,7 +1762,6 @@
             });
         }
 
-        // TELEMETRÍA Y MÉTRICAS GRATUITAS
         function registrarMetricaGratis(paginaVirtual) {
             try {
                 if (window.va) {
@@ -1387,6 +1780,7 @@
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
+            renderGoalsInputs();
             renderPreview();
             document.querySelectorAll('textarea').forEach(ta => {
                 ta.addEventListener('input', function() {
