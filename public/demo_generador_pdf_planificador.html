@@ -1072,15 +1072,24 @@
             background: var(--accent-hover);
         }
     </style>
+    <!-- Protección de acceso por código PIN 1111 -->
+    <script>
+        if (sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html');
+        }
+    </script>
     <!-- Script de jsPDF local UMD (100% offline) -->
     <script src="./jspdf.umd.min.js"></script>
 </head>
 <body>
 
     <div class="header-container">
-        <span class="tag-pill">Herramienta Interactiva · 100% Offline</span>
-        <h1>Generador de Planificador Diario</h1>
-        <p class="subtitle">Estructura tu día con una sola prioridad innegociable, organiza tus tareas secundarias, tus hábitos clave y tus notas de reflexión. Imprime tu PDF relleno o en blanco para rellenarlo posteriormente a mano sin saturación digital.</p>
+        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
+        <div>
+            <span class="tag-pill">Herramienta Interactiva · 100% Offline</span>
+            <h1>Generador de Planificador Diario</h1>
+            <p class="subtitle">Estructura tu día con una sola prioridad innegociable, organiza tus tareas secundarias, tus hábitos clave y tus notas de reflexión. Imprime tu PDF relleno o en blanco para rellenarlo posteriormente a mano sin saturación digital.</p>
+        </div>
     </div>
 
     <!-- ========================================================
@@ -1158,13 +1167,13 @@
         </div>
     </div>
 
-    <div class="main-layout">
+    <div class="main-layout preview-hidden">
         <!-- PANEL DE CONTROL / TEXTOS DIRECTOS -->
         <div class="controls-panel">
             <div class="panel-title">
                 <span>Tu Día en Papel</span>
                 <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" title="Mostrar u ocultar vista previa en tiempo real" onclick="toggleLivePreview()">👁️ Vista previa</button>
+                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" title="Mostrar u ocultar vista previa" onclick="toggleLivePreview()">👁️‍🗨️ Ver previa</button>
                     <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
                     <button type="button" class="btn-quick" onclick="clearData()">Limpiar</button>
                 </div>
@@ -1173,11 +1182,11 @@
             <div class="two-cols form-group">
                 <div>
                     <label for="input-day" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Día</label>
-                    <input type="text" id="input-day" value="Martes" maxlength="20" placeholder="Ej. Martes" oninput="renderPreview()">
+                    <input type="text" id="input-day" value="" maxlength="20" placeholder="Ej. Martes" oninput="renderPreview()">
                 </div>
                 <div>
                     <label for="input-date" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Fecha</label>
-                    <input type="text" id="input-date" value="06 / 10 / 2026" placeholder="DD / MM / AAAA" oninput="handleDateInput(this)">
+                    <input type="text" id="input-date" value="" placeholder="DD / MM / AAAA" oninput="handleDateInput(this)">
                 </div>
             </div>
 
@@ -1191,7 +1200,7 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección" onclick="removeSection('priority')">✕</button>
                 </div>
-                <input type="text" id="input-priority" value="Revisar y definir la estrategia de lanzamiento Q4" maxlength="120" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="renderPreview()">
+                <input type="text" id="input-priority" value="" maxlength="120" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="renderPreview()">
             </div>
 
             <!-- 2. TAREAS SECUNDARIAS (MÁXIMO 3) -->
@@ -1237,21 +1246,21 @@
                     <div class="section-title-label">
                         <span>4. Notas</span>
                         <span class="label-hint">(Reflexión del día)</span>
-                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">161/850</span>
+                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">0/850</span>
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
-                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
+                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()"></textarea>
             </div>
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
             <input type="hidden" id="input-format" value="6x9">
 
-            <!-- BOTÓN VISTA PREVIA EN TIEMPO REAL ENCIMA DE DESCARGAR -->
+            <!-- BOTÓN VISTA PREVIA ENCIMA DE DESCARGAR -->
             <div class="toggle-preview-wrapper">
-                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview active" onclick="toggleLivePreview()">
-                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️</span>
-                    <span id="toggle-preview-text">Vista previa en tiempo real: Activada</span>
+                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview is-hidden" onclick="toggleLivePreview()">
+                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️‍🗨️</span>
+                    <span id="toggle-preview-text">Vista previa: Oculta (Clic para ver)</span>
                 </button>
             </div>
 
@@ -1266,11 +1275,10 @@
             <div class="status-msg" id="status-msg"></div>
         </div>
 
-        <!-- VISTA PREVIA EN DIRECTO -->
+        <!-- VISTA PREVIA -->
         <div class="preview-wrapper">
             <div class="preview-header-bar">
-                <span>👁️ Vista Previa en Vivo</span>
-                <span>Proporción Menos Ruido</span>
+                <span>👁️ Vista previa</span>
             </div>
 
             <div class="paper-sheet" id="paper-sheet">
@@ -1446,8 +1454,22 @@
             } catch(e) {}
         }
 
-        // CONTROL DE VISIBILIDAD DE VISTA PREVIA EN TIEMPO REAL
-        let isPreviewVisible = true;
+        // CONTROL DE VISIBILIDAD DE VISTA PREVIA
+        let isPreviewVisible = false;
+        let isExampleActive = false;
+
+        const DAILY_EXAMPLE = {
+            day: 'Miércoles',
+            date: '14 / 10 / 2026',
+            priority: 'Escribir el primer borrador del nuevo proyecto',
+            tasks: [
+                'Responder correos urgentes (11:00 a 11:30)',
+                'Revisar cuentas del trimestre',
+                'Comprar cuaderno de repuesto'
+            ],
+            habits: ['Cero redes antes de las 10:00', 'Paseo vespertino de 20 min', 'Lectura antes de dormir'],
+            notes: 'Logré avanzar 2 horas seguidas sin interrupciones en la prioridad principal. Para mañana necesito definir la reunión con el equipo a primera hora.'
+        };
 
         function toggleLivePreview() {
             isPreviewVisible = !isPreviewVisible;
@@ -1462,14 +1484,14 @@
                     layout.classList.remove('preview-hidden');
                     if (btn) btn.classList.remove('is-hidden');
                     if (icon) icon.textContent = '👁️';
-                    if (text) text.textContent = 'Vista previa en tiempo real: Activada';
+                    if (text) text.textContent = 'Vista previa: Activada';
                     if (btnTop) btnTop.innerHTML = '👁️ Vista previa';
                     showStatus('Vista previa activada.');
                 } else {
                     layout.classList.add('preview-hidden');
                     if (btn) btn.classList.add('is-hidden');
                     if (icon) icon.textContent = '👁️‍🗨️';
-                    if (text) text.textContent = 'Vista previa en tiempo real: Oculta (Clic para ver)';
+                    if (text) text.textContent = 'Vista previa: Oculta (Clic para ver)';
                     if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
                     showStatus('Vista previa oculta. Tu día en papel centrado.');
                 }
@@ -1492,16 +1514,8 @@
             notes: true
         };
 
-        let tasksList = [
-            "Enviar presupuestos pendientes a imprenta",
-            "Caminar 30 min sin mirar el teléfono",
-            "Organizar bandeja de entrada a cero"
-        ];
-
-        let habitsList = [
-            "Lectura: 20 páginas",
-            "Agua: 2 litros"
-        ];
+        let tasksList = ['', '', ''];
+        let habitsList = ['', ''];
 
         // FUNCIONES DE SELECCIÓN POR CÍRCULOS
         function setRayado(val) {
@@ -1616,7 +1630,18 @@
             const isCircle = activeStyles.check === 'circle';
             const lineas = activeStyles.lineas;
 
-            tasksList.forEach((task) => {
+            const userHasTasks = tasksList.some(t => t.trim().length > 0);
+            let tasksToRender = [];
+
+            if (userHasTasks) {
+                tasksToRender = tasksList.map(t => t.trim());
+            } else if (isExampleActive) {
+                tasksToRender = DAILY_EXAMPLE.tasks;
+            } else {
+                tasksToRender = tasksList.map(() => '');
+            }
+
+            tasksToRender.forEach((task) => {
                 const row = document.createElement('div');
                 let lineClass = 'task-item-view';
                 if (lineas === 'dotted') lineClass += ' line-suave';
@@ -1626,7 +1651,7 @@
 
                 row.innerHTML = `
                     <div class="task-box-square ${isCircle ? 'circle' : ''}"></div>
-                    <div class="task-content-view">${task.trim()}</div>
+                    <div class="task-content-view">${task}</div>
                 `;
                 container.appendChild(row);
             });
@@ -1727,12 +1752,23 @@
             container.innerHTML = '';
             const isCircle = activeStyles.check === 'circle';
 
-            habitsList.forEach((habit) => {
+            const userHasHabits = habitsList.some(h => h.trim().length > 0);
+            let habitsToRender = [];
+
+            if (userHasHabits) {
+                habitsToRender = habitsList.map(h => h.trim());
+            } else if (isExampleActive) {
+                habitsToRender = DAILY_EXAMPLE.habits;
+            } else {
+                habitsToRender = habitsList.map(() => '');
+            }
+
+            habitsToRender.forEach((habit) => {
                 const pill = document.createElement('div');
                 pill.className = 'habit-pill';
                 pill.innerHTML = `
                     <div class="habit-check ${isCircle ? 'circle' : ''}"></div>
-                    <span style="font-size:0.82rem; color:#333; line-height:1.2;">${habit.trim()}</span>
+                    <span style="font-size:0.82rem; color:#333; line-height:1.2;">${habit}</span>
                 `;
                 container.appendChild(pill);
             });
@@ -1758,11 +1794,11 @@
             document.getElementById(`block-${secId}`).style.display = (secId === 'notes') ? 'flex' : 'block';
 
             if (secId === 'tasks' && tasksList.length === 0) {
-                tasksList = ['Nueva tarea'];
+                tasksList = [''];
                 renderTasksInputs();
             }
             if (secId === 'habits' && habitsList.length === 0) {
-                habitsList = ['Nuevo hábito'];
+                habitsList = [''];
                 renderHabitsInputs();
             }
             updateNotesLimit();
@@ -1790,62 +1826,59 @@
         function renderPreview() {
             const dayInput = document.getElementById('input-day').value.trim();
             const dateInput = document.getElementById('input-date').value.trim();
-            const priority = document.getElementById('input-priority').value.trim();
-            const notes = document.getElementById('input-notes').value.trim();
+            const priorityInput = document.getElementById('input-priority').value.trim();
+            const notesInput = document.getElementById('input-notes').value.trim();
 
-            document.getElementById('view-day').textContent = dayInput || 'Día';
-            document.getElementById('view-date').textContent = dateInput ? `Fecha: ${dateInput}` : 'Fecha: __ / __ / ______';
-            document.getElementById('view-priority').textContent = priority;
-            document.getElementById('view-notes').textContent = notes || '';
+            const finalDay = dayInput || (isExampleActive ? DAILY_EXAMPLE.day : 'Día');
+            const finalDate = dateInput ? `Fecha: ${dateInput}` : (isExampleActive ? `Fecha: ${DAILY_EXAMPLE.date}` : 'Fecha: __ / __ / ______');
+            const finalPriority = priorityInput || (isExampleActive ? DAILY_EXAMPLE.priority : '');
+            const finalNotes = notesInput || (isExampleActive ? DAILY_EXAMPLE.notes : '');
+
+            document.getElementById('view-day').textContent = finalDay;
+            document.getElementById('view-date').textContent = finalDate;
+            document.getElementById('view-priority').textContent = finalPriority;
+            document.getElementById('view-notes').textContent = finalNotes;
+
+            renderTasksPreview();
+            renderHabitsPreview();
             updateNotesLimit();
         }
 
         function loadExampleData() {
-            document.getElementById('input-day').value = 'Miércoles';
-            document.getElementById('input-date').value = '14 / 10 / 2026';
-            document.getElementById('input-priority').value = 'Escribir el primer borrador del nuevo proyecto';
-            tasksList = [
-                'Responder correos urgentes (11:00 a 11:30)',
-                'Revisar cuentas del trimestre',
-                'Comprar cuaderno de repuesto'
-            ];
-            habitsList = ['Cero redes antes de las 10:00', 'Paseo vespertino de 20 min', 'Lectura antes de dormir'];
-            document.getElementById('input-notes').value = 'Logré avanzar 2 horas seguidas sin interrupciones en la prioridad principal. Para mañana necesito definir la reunión con el equipo a primera hora.';
-
-            ['priority', 'tasks', 'habits', 'notes'].forEach(sec => {
-                sectionStates[sec] = true;
-                document.getElementById(`form-group-${sec}`).style.display = 'block';
-                document.getElementById(`btn-restore-${sec}`).style.display = 'none';
-                document.getElementById(`block-${sec}`).style.display = (sec === 'notes') ? 'flex' : 'block';
-            });
-
-            renderTasksInputs();
-            renderHabitsInputs();
+            isExampleActive = true;
+            // La vista previa muestra el ejemplo completo, mientras el formulario se mantiene limpio
+            if (!isPreviewVisible) {
+                toggleLivePreview();
+            }
             renderPreview();
-            showStatus('Ejemplo cargado.');
+            showStatus('Ejemplo visual mostrado en la vista previa.');
         }
 
-        // LIMPIAR: CONSERVA DÍA, FECHA, PRIORIDAD, 3 TAREAS VACÍAS, 1 HÁBITO VACÍO Y NOTAS LIMPIAS
+        // LIMPIAR: DEJA EL FORMULARIO Y LA VISTA PREVIA COMPLETAMENTE VACÍOS
         function clearData() {
+            isExampleActive = false;
             document.getElementById('input-day').value = '';
             document.getElementById('input-date').value = '';
             document.getElementById('input-priority').value = '';
+            document.getElementById('input-notes').value = '';
 
-            tasksList = ['', '', '']; // 3 tareas preparadas
-            habitsList = [''];         // 1 hábito preparado
+            tasksList = ['', '', ''];
+            habitsList = ['', ''];
 
             ['priority', 'tasks', 'habits', 'notes'].forEach(sec => {
                 sectionStates[sec] = true;
-                document.getElementById(`form-group-${sec}`).style.display = 'block';
-                document.getElementById(`btn-restore-${sec}`).style.display = 'none';
-                document.getElementById(`block-${sec}`).style.display = (sec === 'notes') ? 'flex' : 'block';
+                const fg = document.getElementById(`form-group-${sec}`);
+                if (fg) fg.style.display = 'block';
+                const br = document.getElementById(`btn-restore-${sec}`);
+                if (br) br.style.display = 'none';
+                const bl = document.getElementById(`block-${sec}`);
+                if (bl) bl.style.display = (sec === 'notes') ? 'flex' : 'block';
             });
 
             renderTasksInputs();
             renderHabitsInputs();
-            document.getElementById('input-notes').value = '';
             renderPreview();
-            showStatus('Limpio: estructura lista con 3 tareas y 1 hábito.');
+            showStatus('Formulario y vista previa limpiados.');
         }
 
         function showStatus(text) {
@@ -1949,10 +1982,25 @@
             const caja = activeStyles.caja;
             const isCircle = activeStyles.check === 'circle';
 
-            const userDay = isBlankTemplate ? '' : (document.getElementById('input-day').value.trim() || 'Martes');
-            const userDate = isBlankTemplate ? '__ / __ / ______' : (document.getElementById('input-date').value.trim() || '__ / __ / ______');
-            const priority = isBlankTemplate ? '' : document.getElementById('input-priority').value.trim();
-            const notes = isBlankTemplate ? '' : document.getElementById('input-notes').value.trim();
+            const dayInputVal = document.getElementById('input-day').value.trim();
+            const dateInputVal = document.getElementById('input-date').value.trim();
+            const priorityInputVal = document.getElementById('input-priority').value.trim();
+            const notesInputVal = document.getElementById('input-notes').value.trim();
+
+            const userDay = isBlankTemplate ? '' : (dayInputVal || (isExampleActive ? DAILY_EXAMPLE.day : ''));
+            const userDate = isBlankTemplate ? '__ / __ / ______' : (dateInputVal || (isExampleActive ? DAILY_EXAMPLE.date : '__ / __ / ______'));
+            const priority = isBlankTemplate ? '' : (priorityInputVal || (isExampleActive ? DAILY_EXAMPLE.priority : ''));
+            const notes = isBlankTemplate ? '' : (notesInputVal || (isExampleActive ? DAILY_EXAMPLE.notes : ''));
+
+            const userHasTasks = tasksList.some(t => t.trim().length > 0);
+            const activeTasksList = isBlankTemplate 
+                ? ['', '', ''] 
+                : (userHasTasks ? tasksList : (isExampleActive ? DAILY_EXAMPLE.tasks : ['', '', '']));
+
+            const userHasHabits = habitsList.some(h => h.trim().length > 0);
+            const activeHabitsList = isBlankTemplate 
+                ? ['', ''] 
+                : (userHasHabits ? habitsList : (isExampleActive ? DAILY_EXAMPLE.habits : ['', '']));
 
             const pagesToRender = isBlankTemplate ? Math.max(1, Math.min(7, pageCount)) : 1;
 
@@ -2053,7 +2101,7 @@
                 }
 
                 // 2. TAREAS SECUNDARIAS
-                if (sectionStates.tasks && tasksList.length > 0) {
+                if (sectionStates.tasks && activeTasksList.length > 0) {
                     docInstance.setFont('helvetica', 'bold');
                     docInstance.setFontSize(8);
                     docInstance.setTextColor(30, 25, 22);
@@ -2065,7 +2113,7 @@
                     docInstance.text('(Máximo 3)', margin + 38, y);
                     y += 4;
 
-                    tasksList.forEach((taskText) => {
+                    activeTasksList.forEach((taskText) => {
                         docInstance.setDrawColor(60, 55, 50);
                         docInstance.setLineWidth(0.25);
                         if (isCircle) {
@@ -2113,7 +2161,7 @@
                 }
 
                 // 3. HÁBITOS CLAVE (Líneas completas apiladas una debajo de otra)
-                if (sectionStates.habits && habitsList.length > 0) {
+                if (sectionStates.habits && activeHabitsList.length > 0) {
                     docInstance.setFont('helvetica', 'bold');
                     docInstance.setFontSize(8);
                     docInstance.setTextColor(30, 25, 22);
@@ -2121,13 +2169,13 @@
                     y += 4;
 
                     const habitRowHeight = 6.8;
-                    const habitBoxHeight = (habitsList.length * habitRowHeight) + 3;
+                    const habitBoxHeight = (activeHabitsList.length * habitRowHeight) + 3;
                     docInstance.setFillColor(252, 250, 247);
                     docInstance.setDrawColor(220, 215, 208);
                     docInstance.setLineWidth(0.2);
                     docInstance.roundedRect(margin, y, contentWidth, habitBoxHeight, 1.5, 1.5, 'FD');
 
-                    habitsList.forEach((hText, idx) => {
+                    activeHabitsList.forEach((hText, idx) => {
                         const itemY = y + 2.5 + (idx * habitRowHeight);
 
                         docInstance.setDrawColor(135, 85, 59);
@@ -2147,7 +2195,7 @@
                             docInstance.text(displayH, margin + 9.5, itemY + 3.0, { maxWidth: contentWidth - 14 });
                         }
 
-                        if (idx < habitsList.length - 1) {
+                        if (idx < activeHabitsList.length - 1) {
                             docInstance.setDrawColor(230, 225, 218);
                             docInstance.setLineWidth(0.15);
                             docInstance.line(margin + 9.5, itemY + 4.8, margin + contentWidth - 4, itemY + 4.8);

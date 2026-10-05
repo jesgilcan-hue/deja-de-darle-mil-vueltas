@@ -870,6 +870,12 @@
         }
     </style>
 
+    <!-- Protección de acceso por código PIN 1111 -->
+    <script>
+        if (sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html');
+        }
+    </script>
     <!-- Script de jsPDF local UMD (100% offline y compatible con CSP) -->
     <script src="./jspdf.umd.min.js"></script>
 </head>
@@ -884,7 +890,7 @@
         </div>
     </div>
 
-    <div class="app-layout">
+    <div class="app-layout preview-hidden">
         <!-- COLUMNA IZQUIERDA: CONTROLES -->
         <aside class="controls-panel">
             
@@ -892,7 +898,7 @@
             <div class="panel-header-top">
                 <span class="panel-heading-text">Tu Semana en Papel</span>
                 <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" onclick="toggleLivePreview()">👁️ Vista previa</button>
+                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" onclick="toggleLivePreview()">👁️‍🗨️ Ver previa</button>
                     <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
                     <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
                 </div>
@@ -968,11 +974,11 @@
             <!-- Formato predeterminado y gestión transparente -->
             <input type="hidden" id="select-format" value="apaisado">
 
-            <!-- BOTÓN VISTA PREVIA EN TIEMPO REAL ENCIMA DE DESCARGAR -->
+            <!-- BOTÓN VISTA PREVIA ENCIMA DE DESCARGAR -->
             <div class="toggle-preview-wrapper">
-                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview active" onclick="toggleLivePreview()">
-                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️</span>
-                    <span id="toggle-preview-text">Vista previa en tiempo real: Activada</span>
+                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview is-hidden" onclick="toggleLivePreview()">
+                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️‍🗨️</span>
+                    <span id="toggle-preview-text">Vista previa: Oculta (Clic para ver)</span>
                 </button>
             </div>
 
@@ -989,11 +995,10 @@
             </div>
         </aside>
 
-        <!-- COLUMNA DERECHA: VISTA PREVIA EN VIVO -->
+        <!-- COLUMNA DERECHA: VISTA PREVIA -->
         <main class="preview-column">
             <div class="preview-banner">
-                <span>👁️ <strong>Vista previa en tiempo real</strong> (escala horizontal)</span>
-                <span style="font-size: 0.72rem; color: #888;">Escritorio / Papel crema mate</span>
+                <span>👁️ <strong>Vista previa</strong></span>
             </div>
 
             <!-- HOJA FÍSICA HORIZONTAL PROPORCIONADA Y ELEGANTE -->
@@ -1015,28 +1020,28 @@
                             <div class="preview-day-head">
                                 <span class="preview-day-name">LUNES</span>
                             </div>
-                            <div class="preview-day-text" id="prev-lunes-text">Definir objetivos prioritarios de la semana</div>
+                            <div class="preview-day-text" id="prev-lunes-text"></div>
                         </div>
 
                         <div class="preview-day-row">
                             <div class="preview-day-head">
                                 <span class="preview-day-name">MARTES</span>
                             </div>
-                            <div class="preview-day-text" id="prev-martes-text">Bloque de trabajo profundo de 9:00 a 12:00</div>
+                            <div class="preview-day-text" id="prev-martes-text"></div>
                         </div>
 
                         <div class="preview-day-row">
                             <div class="preview-day-head">
                                 <span class="preview-day-name">MIÉRCOLES</span>
                             </div>
-                            <div class="preview-day-text" id="prev-miercoles-text">Revisión de avances intermedios</div>
+                            <div class="preview-day-text" id="prev-miercoles-text"></div>
                         </div>
 
                         <div class="preview-day-row">
                             <div class="preview-day-head">
                                 <span class="preview-day-name">JUEVES</span>
                             </div>
-                            <div class="preview-day-text" id="prev-jueves-text">Cierre de entregas y comunicación externa</div>
+                            <div class="preview-day-text" id="prev-jueves-text"></div>
                         </div>
                     </div>
 
@@ -1044,28 +1049,28 @@
                     <div class="preview-column-card">
                         <div class="preview-focus-card">
                             <div class="preview-focus-title">FOCO DE LA SEMANA</div>
-                            <div class="preview-focus-content" id="prev-focus-text">Avanzar el borrador editorial y blindar 2 tardes sin reuniones ni pantallas.</div>
+                            <div class="preview-focus-content" id="prev-focus-text"></div>
                         </div>
 
                         <div class="preview-day-row">
                             <div class="preview-day-head">
                                 <span class="preview-day-name">VIERNES</span>
                             </div>
-                            <div class="preview-day-text" id="prev-viernes-text">Bandeja a cero y balance semanal</div>
+                            <div class="preview-day-text" id="prev-viernes-text"></div>
                         </div>
 
                         <div class="preview-day-row">
                             <div class="preview-day-head">
                                 <span class="preview-day-name">SÁBADO</span>
                             </div>
-                            <div class="preview-day-text" id="prev-sabado-text">Paseo largo analógico y descanso</div>
+                            <div class="preview-day-text" id="prev-sabado-text"></div>
                         </div>
 
                         <div class="preview-day-row">
                             <div class="preview-day-head">
                                 <span class="preview-day-name">DOMINGO</span>
                             </div>
-                            <div class="preview-day-text" id="prev-domingo-text">Planificación relajada de la próxima semana</div>
+                            <div class="preview-day-text" id="prev-domingo-text"></div>
                         </div>
                     </div>
 
@@ -1077,7 +1082,7 @@
                         <span>TAREAS SECUNDARIAS / NOTAS IMPORTANTES</span>
                     </div>
                     <div class="preview-bottom-box rayado-blank" id="prev-bottom-box">
-                        <div id="prev-secundarias-text">• Enviar presupuestos pendientes a imprenta&#10;• Caminar 30 min sin teléfono&#10;• Ordenar mesa de trabajo</div>
+                        <div id="prev-secundarias-text"></div>
                     </div>
                 </div>
 
@@ -1204,8 +1209,22 @@
             } catch(e) {}
         }
 
-        // CONTROL DE VISIBILIDAD DE VISTA PREVIA EN TIEMPO REAL
-        let isPreviewVisible = true;
+        // CONTROL DE VISIBILIDAD DE VISTA PREVIA
+        let isPreviewVisible = false;
+        let isExampleActive = false;
+
+        const WEEKLY_EXAMPLE = {
+            weekNumber: 42,
+            focus: 'Cerrar el primer borrador del nuevo libro y blindar 2 mañanas completas para trabajo creativo sin interrupciones.',
+            lunes: 'Planificar prioridades semanales y preparar esquema de trabajo',
+            martes: 'Bloque de escritura profunda de 9:00 a 12:30',
+            miercoles: 'Revisar cuentas del mes y avance de entregas',
+            jueves: 'Cierre de presupuestos y llamadas con la imprenta',
+            viernes: 'Revisión general, archivar notas y bandeja a cero',
+            sabado: 'Caminata por la naturaleza, lectura y descanso analógico',
+            domingo: 'Revisión suave de la semana y preparación del lunes',
+            secundarias: '• Renovar tintas para la pluma\n• Organizar mesa de trabajo y carpetas físicas\n• Desconectar el móvil antes de cenar'
+        };
 
         function toggleLivePreview() {
             isPreviewVisible = !isPreviewVisible;
@@ -1220,14 +1239,14 @@
                     layout.classList.remove('preview-hidden');
                     if (btn) btn.classList.remove('is-hidden');
                     if (icon) icon.textContent = '👁️';
-                    if (text) text.textContent = 'Vista previa en tiempo real: Activada';
+                    if (text) text.textContent = 'Vista previa: Activada';
                     if (btnTop) btnTop.innerHTML = '👁️ Vista previa';
                     showToast('Vista previa activada.');
                 } else {
                     layout.classList.add('preview-hidden');
                     if (btn) btn.classList.add('is-hidden');
                     if (icon) icon.textContent = '👁️‍🗨️';
-                    if (text) text.textContent = 'Vista previa en tiempo real: Oculta (Clic para ver)';
+                    if (text) text.textContent = 'Vista previa: Oculta (Clic para ver)';
                     if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
                     showToast('Vista previa oculta. Tu semana en papel centrada.');
                 }
@@ -1252,15 +1271,17 @@
         function handleDatesInput() {
             const input = document.getElementById('input-week-number');
             const prev = document.getElementById('prev-dates-text');
-            if (!input || !prev) return;
+            if (!prev) return;
 
-            let raw = input.value.replace(/[^0-9]/g, '');
-            if (raw.length > 0) {
-                let num = parseInt(raw, 10);
-                if (num > 55) num = 55;
-                if (num < 1) num = 1;
-                input.value = num;
-                prev.textContent = 'SEMANA: ' + num;
+            let num = input ? input.value.replace(/[^0-9]/g, '') : '';
+            if (num.length > 0) {
+                let n = parseInt(num, 10);
+                if (n > 55) n = 55;
+                if (n < 1) n = 1;
+                if (input) input.value = n;
+                prev.textContent = 'SEMANA: ' + n;
+            } else if (isExampleActive) {
+                prev.textContent = 'SEMANA: ' + WEEKLY_EXAMPLE.weekNumber;
             } else {
                 prev.textContent = 'SEMANA: ____';
             }
@@ -1270,40 +1291,31 @@
             const input = document.getElementById('input-week-focus');
             const count = document.getElementById('count-focus');
             const prev = document.getElementById('prev-focus-text');
-            if (!input || !count || !prev) return;
+            if (!prev) return;
 
-            const val = input.value.trim();
-            count.textContent = val.length + '/140';
-            prev.textContent = val ? val : 'Avanzar el borrador editorial y blindar 2 tardes sin reuniones ni pantallas.';
+            const val = input ? input.value.trim() : '';
+            if (count) count.textContent = val.length + '/140';
+            prev.textContent = val || (isExampleActive ? WEEKLY_EXAMPLE.focus : '');
         }
 
         function handleDayInput(day) {
             const input = document.getElementById('input-' + day);
             const prev = document.getElementById('prev-' + day + '-text');
-            if (!input || !prev) return;
+            if (!prev) return;
 
-            const val = input.value.trim();
-            const defaults = {
-                lunes: 'Definir objetivos prioritarios de la semana',
-                martes: 'Bloque de trabajo profundo de 9:00 a 12:00',
-                miercoles: 'Revisión de avances intermedios',
-                jueves: 'Cierre de entregas y comunicación externa',
-                viernes: 'Bandeja a cero y balance semanal',
-                sabado: 'Paseo largo analógico y descanso',
-                domingo: 'Planificación relajada de la próxima semana'
-            };
-            prev.textContent = val ? val : (defaults[day] || '');
+            const val = input ? input.value.trim() : '';
+            prev.textContent = val || (isExampleActive ? (WEEKLY_EXAMPLE[day] || '') : '');
         }
 
         function handleSecundariasInput() {
             const input = document.getElementById('input-secundarias');
             const count = document.getElementById('count-secundarias');
             const prev = document.getElementById('prev-secundarias-text');
-            if (!input || !prev) return;
+            if (!prev) return;
 
-            const val = input.value;
+            const val = input ? input.value : '';
             if (count) count.textContent = val.length + '/320';
-            prev.textContent = val.trim() ? val : '• Enviar presupuestos pendientes a imprenta\n• Caminar 30 min sin teléfono\n• Organizar mesa de trabajo';
+            prev.textContent = val.trim() ? val : (isExampleActive ? WEEKLY_EXAMPLE.secundarias : '');
         }
 
         function renderPreview() {
@@ -1314,30 +1326,26 @@
         }
 
         function loadExampleData() {
-            document.getElementById('input-week-number').value = '42';
-            document.getElementById('input-week-focus').value = 'Cerrar el primer borrador del nuevo libro y blindar 2 mañanas completas para trabajo creativo sin interrupciones.';
-            document.getElementById('input-lunes').value = 'Planificar prioridades semanales y preparar esquema de trabajo';
-            document.getElementById('input-martes').value = 'Bloque de escritura profunda de 9:00 a 12:30';
-            document.getElementById('input-miercoles').value = 'Revisar cuentas del mes y avance de entregas';
-            document.getElementById('input-jueves').value = 'Cierre de presupuestos y llamadas con la imprenta';
-            document.getElementById('input-viernes').value = 'Revisión general, archivar notas y bandeja a cero';
-            document.getElementById('input-sabado').value = 'Caminata por la naturaleza, lectura y descanso analógico';
-            document.getElementById('input-domingo').value = 'Revisión suave de la semana y preparación del lunes';
-            document.getElementById('input-secundarias').value = '• Renovar tintas para la pluma\n• Organizar mesa de trabajo y carpetas físicas\n• Desconectar el móvil antes de cenar';
+            isExampleActive = true;
+            // No modificamos los inputs en Tu Semana en Papel: se mantienen limpios
+            if (!isPreviewVisible) {
+                toggleLivePreview();
+            }
             renderPreview();
-            showToast('✓ Ejemplo editorial cargado.');
+            showToast('✓ Ejemplo visual mostrado en la vista previa.');
         }
 
         function clearAllData() {
-            document.getElementById('input-week-number').value = '';
-            document.getElementById('input-week-focus').value = '';
+            isExampleActive = false;
+            if (document.getElementById('input-week-number')) document.getElementById('input-week-number').value = '';
+            if (document.getElementById('input-week-focus')) document.getElementById('input-week-focus').value = '';
             ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(function(d) {
                 const el = document.getElementById('input-' + d);
                 if (el) el.value = '';
             });
-            document.getElementById('input-secundarias').value = '';
+            if (document.getElementById('input-secundarias')) document.getElementById('input-secundarias').value = '';
             renderPreview();
-            showToast('✓ Formulario limpiado.');
+            showToast('✓ Formulario y vista previa limpiados.');
         }
 
         function showToast(msg) {
@@ -1428,21 +1436,25 @@
                 format: pageDims
             });
 
-            const userWeekNum = isBlankModal ? '' : (document.getElementById('input-week-number').value.trim());
+            const weekNumVal = document.getElementById('input-week-number').value.trim();
+            const userWeekNum = isBlankModal ? '' : (weekNumVal || (isExampleActive ? String(WEEKLY_EXAMPLE.weekNumber) : ''));
             const userDates = isBlankModal ? 'SEMANA: ____' : (userWeekNum ? ('SEMANA: ' + userWeekNum) : 'SEMANA: ____');
-            const userFocus = isBlankModal ? '' : document.getElementById('input-week-focus').value.trim();
+            
+            const focusVal = document.getElementById('input-week-focus').value.trim();
+            const userFocus = isBlankModal ? '' : (focusVal || (isExampleActive ? WEEKLY_EXAMPLE.focus : ''));
 
             const daysData = {
-                lunes: isBlankModal ? '' : document.getElementById('input-lunes').value.trim(),
-                martes: isBlankModal ? '' : document.getElementById('input-martes').value.trim(),
-                miercoles: isBlankModal ? '' : document.getElementById('input-miercoles').value.trim(),
-                jueves: isBlankModal ? '' : document.getElementById('input-jueves').value.trim(),
-                viernes: isBlankModal ? '' : document.getElementById('input-viernes').value.trim(),
-                sabado: isBlankModal ? '' : document.getElementById('input-sabado').value.trim(),
-                domingo: isBlankModal ? '' : document.getElementById('input-domingo').value.trim()
+                lunes: isBlankModal ? '' : (document.getElementById('input-lunes').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.lunes : '')),
+                martes: isBlankModal ? '' : (document.getElementById('input-martes').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.martes : '')),
+                miercoles: isBlankModal ? '' : (document.getElementById('input-miercoles').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.miercoles : '')),
+                jueves: isBlankModal ? '' : (document.getElementById('input-jueves').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.jueves : '')),
+                viernes: isBlankModal ? '' : (document.getElementById('input-viernes').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.viernes : '')),
+                sabado: isBlankModal ? '' : (document.getElementById('input-sabado').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.sabado : '')),
+                domingo: isBlankModal ? '' : (document.getElementById('input-domingo').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.domingo : ''))
             };
 
-            const userSecundarias = isBlankModal ? '' : document.getElementById('input-secundarias').value.trim();
+            const secVal = document.getElementById('input-secundarias').value.trim();
+            const userSecundarias = isBlankModal ? '' : (secVal || (isExampleActive ? WEEKLY_EXAMPLE.secundarias : ''));
             const pagesToRender = isBlankModal ? modalWeeksCount : 1;
 
             function renderWeeklyPage(docInstance, pageIndex) {
