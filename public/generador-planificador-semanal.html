@@ -1214,8 +1214,7 @@
             }
         }
 
-        function handleDatesInput() {
-            isExampleActive = false;
+        function updateDatesPreview() {
             const input = document.getElementById('input-week-number');
             const prev = document.getElementById('prev-dates-text');
             if (!prev) return;
@@ -1225,7 +1224,6 @@
                 let n = parseInt(num, 10);
                 if (n > 55) n = 55;
                 if (n < 1) n = 1;
-                if (input) input.value = n;
                 prev.textContent = 'SEMANA: ' + n;
             } else if (isExampleActive) {
                 prev.textContent = 'SEMANA: ' + WEEKLY_EXAMPLE.weekNumber;
@@ -1234,20 +1232,38 @@
             }
         }
 
-        function handleFocusInput() {
+        function handleDatesInput() {
             isExampleActive = false;
+            const input = document.getElementById('input-week-number');
+            if (input && input.value) {
+                let num = input.value.replace(/[^0-9]/g, '');
+                if (num.length > 0) {
+                    let n = parseInt(num, 10);
+                    if (n > 55) n = 55;
+                    if (n < 1) n = 1;
+                    input.value = n;
+                }
+            }
+            updateDatesPreview();
+        }
+
+        function updateFocusPreview() {
             const input = document.getElementById('input-week-focus');
             const count = document.getElementById('count-focus');
             const prev = document.getElementById('prev-focus-text');
             if (!prev) return;
 
             const val = input ? input.value.trim() : '';
-            if (count) count.textContent = val.length + '/140';
+            if (count) count.textContent = (input ? input.value.length : 0) + '/140';
             prev.textContent = val || (isExampleActive ? WEEKLY_EXAMPLE.focus : '');
         }
 
-        function handleDayInput(day) {
+        function handleFocusInput() {
             isExampleActive = false;
+            updateFocusPreview();
+        }
+
+        function updateDayPreview(day) {
             const input = document.getElementById('input-' + day);
             const prev = document.getElementById('prev-' + day + '-text');
             if (!prev) return;
@@ -1256,8 +1272,12 @@
             prev.textContent = val || (isExampleActive ? (WEEKLY_EXAMPLE[day] || '') : '');
         }
 
-        function handleSecundariasInput() {
+        function handleDayInput(day) {
             isExampleActive = false;
+            updateDayPreview(day);
+        }
+
+        function updateSecundariasPreview() {
             const input = document.getElementById('input-secundarias');
             const count = document.getElementById('count-secundarias');
             const prev = document.getElementById('prev-secundarias-text');
@@ -1268,11 +1288,16 @@
             prev.textContent = val.trim() ? val : (isExampleActive ? WEEKLY_EXAMPLE.secundarias : '');
         }
 
+        function handleSecundariasInput() {
+            isExampleActive = false;
+            updateSecundariasPreview();
+        }
+
         function renderPreview() {
-            handleDatesInput();
-            handleFocusInput();
-            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(handleDayInput);
-            handleSecundariasInput();
+            updateDatesPreview();
+            updateFocusPreview();
+            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(updateDayPreview);
+            updateSecundariasPreview();
         }
 
         // RELLENAR EJEMPLO (Solo se proyecta en la vista previa, sin rellenar los inputs del formulario)

@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador Planificador Anual · Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.08);
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
+        }
+
+        .header-container {
+            max-width: 1320px;
+            margin: 0 auto 16px;
+            text-align: center;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 1.95rem;
+            color: #1a1614;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .app-layout {
+            max-width: 1360px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(360px, 480px) minmax(480px, 1fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        /* PANEL DE CONTROLES (IZQUIERDA) */
+        .controls-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 20px 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #efeae1;
+        }
+
+        .panel-heading-text {
+            font-size: 1.15rem;
+            font-family: var(--font-serif);
+            font-weight: 700;
+            color: #1e1916;
+        }
+
+        .panel-actions-quick {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-quick {
+            background: #f3efe8;
+            border: none;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-quick:hover {
+            background: #e7dfd2;
+            color: var(--accent-hover);
+        }
+
+        .section-box {
+            border: 1px solid #ebe6dc;
+            background: #faf9f6;
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-header-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4a453e;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .char-count {
+            font-size: 0.72rem;
+            color: #999;
+            font-weight: normal;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 8px 11px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px 11px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.84rem;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            resize: vertical;
+            overflow-y: auto;
+            line-height: 1.4;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+
+        /* GESTIÓN DINÁMICA DE PRIORIDADES */
+        .item-input-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .btn-remove-item {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px 6px;
+            line-height: 1;
+            transition: color 0.2s;
+            margin-top: 4px;
+        }
+
+        .btn-remove-item:hover {
+            color: #c44;
+        }
+
+        .btn-add-item {
+            background: #f4efe8;
+            border: 1px solid #dcd7ce;
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add-item:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        /* BOTONES DE DESCARGA */
+        .btn-primary-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 7px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s, transform 0.15s;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+            width: 100%;
+        }
+
+        .btn-primary-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-action {
+            background: #ffffff;
+            color: #4a453e;
+            border: 1.5px solid #d0c8bd;
+            padding: 10px 16px;
+            border-radius: 7px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .btn-secondary-action:hover {
+            background: #f7f5f0;
+            border-color: #baa;
+            color: var(--accent);
+        }
+
+        /* COLUMNA DERECHA: VISTA PREVIA */
+        .preview-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: sticky;
+            top: 16px;
+        }
+
+        .preview-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1ede5;
+            border: 1px solid #e1dcce;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #665f54;
+            box-sizing: border-box;
+        }
+
+        /* HOJA EDITORIAL ANUAL */
+        .preview-sheet-frame {
+            background: var(--paper-color);
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 22px 24px 18px;
+            box-shadow: 0 12px 34px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 8.25 / 6;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .preview-kicker {
+            font-size: 0.62rem;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .preview-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #28231e;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+        }
+
+        .preview-main-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #211c19;
+            letter-spacing: -0.2px;
+        }
+
+        .preview-date-text {
+            font-size: 0.82rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #444;
+            text-transform: uppercase;
+        }
+
+        /* ESTRUCTURA SUPERIOR: 3 PRIORIDADES ESTRATÉGICAS */
+        .preview-top-priorities {
+            border: 1px solid #dfd9ce;
+            border-radius: 4px;
+            padding: 8px 12px;
+            background: #fbf9f5;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-sizing: border-box;
+        }
+
+        .preview-priorities-title {
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 2px;
+        }
+
+        .preview-priorities-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .preview-priority-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: #2b2723;
+            line-height: 1.3;
+        }
+
+        .preview-priority-box {
+            width: 9px;
+            height: 9px;
+            border: 1px solid #777;
+            border-radius: 2px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .preview-priority-text {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        /* CUADRÍCULA DE 12 MESES (4 TRIMESTRES x 3 MESES) */
+        .annual-grid-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+            min-height: 0;
+        }
+
+        .annual-month-card {
+            border: 1px solid #e2ddd3;
+            border-radius: 4px;
+            background: #ffffff;
+            padding: 5px 7px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .annual-month-header {
+            font-size: 0.64rem;
+            font-weight: 800;
+            color: #2b2622;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #eee8df;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .annual-month-quarter {
+            font-size: 0.55rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .annual-month-content {
+            font-family: var(--font-serif);
+            font-size: 0.68rem;
+            color: #333;
+            line-height: 1.3;
+            white-space: pre-wrap;
+            word-break: break-word;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* FOOTER EDITORIAL DE LA HOJA */
+        .preview-sheet-footer {
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.58rem;
+            color: #8e8880;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        /* TOAST DE ESTADO */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #2b2724;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        /* MODAL POP-UP */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 18, 16, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 540px;
+            width: 100%;
+            padding: 24px 22px;
+            box-shadow: 0 24px 50px rgba(0,0,0,0.22);
+            position: relative;
+            animation: modalIn 0.25s ease-out;
+            max-height: 92vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        @keyframes modalIn {
+            from { transform: translateY(14px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #f1ede5;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #e3ded5;
+            color: #111;
+        }
+
+        .modal-badge {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            background: var(--accent-light);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1a1614;
+            margin-bottom: 4px;
+        }
+
+        .modal-desc {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .btn-modal-download {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+
+        .btn-modal-download:hover {
+            background: var(--accent-hover);
+        }
+
+        .modal-books-section {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 10px;
+            padding: 14px 12px;
+            text-align: left;
+        }
+
+        .modal-books-header {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .modal-books-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-book-card {
+            background: #ffffff;
+            border: 1px solid #dfd9ce;
+            border-radius: 6px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-book-thumb {
+            width: 40px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 3px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        .modal-book-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .modal-book-badge {
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .modal-book-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #222;
+            line-height: 1.2;
+        }
+
+        .btn-book-amazon {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: var(--accent);
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            margin-top: 2px;
+        }
+
+        /* GRID DE MESES EN EL FORMULARIO */
+        .form-months-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .form-month-card {
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 6px;
+            padding: 7px 9px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .form-month-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-month-card textarea {
+            padding: 5px 8px;
+            font-size: 0.8rem;
+            min-height: 42px;
+        }
+
+        /* RESPONSIVE MÓVIL OPTIMIZADO */
+        @media (max-width: 900px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+            .preview-column {
+                position: static !important;
+                margin-bottom: 50px !important;
+                width: 100% !important;
+            }
+            .preview-sheet-frame {
+                aspect-ratio: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                padding: 16px 14px 20px !important;
+                margin-bottom: 40px !important;
+            }
+            .preview-priorities-grid {
+                grid-template-columns: 1fr !important;
+                gap: 6px !important;
+            }
+            .annual-grid-container {
+                grid-template-columns: 1fr 1fr !important;
+                grid-template-rows: auto !important;
+            }
+            .modal-books-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 520px) {
+            .form-months-grid {
+                grid-template-columns: 1fr;
+            }
+            .annual-grid-container {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+
+    <!-- Protección de acceso por código PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
+    <script src="./jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="header-container">
+        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
+        <div>
+            <span class="tag-pill">Herramienta Editorial Gratuita</span>
+            <h1>Generador de Planificador Anual</h1>
+            <p class="subtitle">Visión panorámica de los 12 meses en un único plano estratégico. Anticipa grandes hitos, periodos de descanso y proyectos a largo plazo sin saturación digital.</p>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- COLUMNA IZQUIERDA: CONTROLES -->
+        <aside class="controls-panel">
+            
+            <div class="panel-header-top">
+                <span class="panel-heading-text">Tu Año en Papel</span>
+                <div class="panel-actions-quick">
+                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
+                    <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
+                </div>
+            </div>
+
+            <!-- 1. AÑO Y LEMA / VISIÓN ESTRATÉGICA -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>1. Año y Lema Estratégico</span>
+                    <span>🗓️</span>
+                </div>
+                <div class="control-group">
+                    <label for="input-annual-year">Año (1900 a 3000)</label>
+                    <input type="number" id="input-annual-year" min="1900" max="3000" placeholder="Ej: 2027" oninput="handleYearInput(this)">
+                </div>
+                <div class="control-group">
+                    <label for="input-annual-motto">Lema o intención anual (máx 120 caracteres) <span class="char-count" id="count-motto">0/120</span></label>
+                    <textarea id="input-annual-motto" maxlength="120" rows="2" placeholder="Ej: Menos proyectos abiertos, mayor profundidad y foco analógico..." oninput="handleMottoInput(this)"></textarea>
+                </div>
+            </div>
+
+            <!-- 2. PRIORIDADES ESTRATÉGICAS (MÁXIMO 3) -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>2. Prioridades del Año</span>
+                    <button type="button" class="btn-add-item" id="btn-add-priority" onclick="addNewPriority()">+ Añadir</button>
+                </div>
+                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 3 grandes objetivos innegociables para los 12 meses.</p>
+                <div id="priorities-container">
+                    <!-- Inyectado dinámicamente -->
+                </div>
+            </div>
+
+            <!-- 3. HITOS POR MES (ENERO A DICIEMBRE) -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>3. Hitos por Mes (Enero a Diciembre)</span>
+                    <span>📍</span>
+                </div>
+                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">Anota el foco principal o fecha señalada para cada mes (máx 80 caracteres por mes).</p>
+                <div class="form-months-grid">
+                    <div class="form-month-card">
+                        <span class="form-month-label">Enero (Q1)</span>
+                        <textarea id="input-m-1" maxlength="80" rows="2" placeholder="Foco de enero..." oninput="handleMonthInput(1)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Febrero (Q1)</span>
+                        <textarea id="input-m-2" maxlength="80" rows="2" placeholder="Foco de febrero..." oninput="handleMonthInput(2)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Marzo (Q1)</span>
+                        <textarea id="input-m-3" maxlength="80" rows="2" placeholder="Foco de marzo..." oninput="handleMonthInput(3)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Abril (Q2)</span>
+                        <textarea id="input-m-4" maxlength="80" rows="2" placeholder="Foco de abril..." oninput="handleMonthInput(4)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Mayo (Q2)</span>
+                        <textarea id="input-m-5" maxlength="80" rows="2" placeholder="Foco de mayo..." oninput="handleMonthInput(5)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Junio (Q2)</span>
+                        <textarea id="input-m-6" maxlength="80" rows="2" placeholder="Foco de junio..." oninput="handleMonthInput(6)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Julio (Q3)</span>
+                        <textarea id="input-m-7" maxlength="80" rows="2" placeholder="Foco de julio..." oninput="handleMonthInput(7)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Agosto (Q3)</span>
+                        <textarea id="input-m-8" maxlength="80" rows="2" placeholder="Foco de agosto..." oninput="handleMonthInput(8)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Septiembre (Q3)</span>
+                        <textarea id="input-m-9" maxlength="80" rows="2" placeholder="Foco de septiembre..." oninput="handleMonthInput(9)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Octubre (Q4)</span>
+                        <textarea id="input-m-10" maxlength="80" rows="2" placeholder="Foco de octubre..." oninput="handleMonthInput(10)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Noviembre (Q4)</span>
+                        <textarea id="input-m-11" maxlength="80" rows="2" placeholder="Foco de noviembre..." oninput="handleMonthInput(11)"></textarea>
+                    </div>
+                    <div class="form-month-card">
+                        <span class="form-month-label">Diciembre (Q4)</span>
+                        <textarea id="input-m-12" maxlength="80" rows="2" placeholder="Foco de diciembre..." oninput="handleMonthInput(12)"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 6px;">
+                <button type="button" class="btn-primary-action" onclick="openDownloadModal(false)">
+                    <span>📥</span>
+                    <span>Descargar mi PDF personalizado (Con datos)</span>
+                </button>
+                <button type="button" class="btn-secondary-action" onclick="openDownloadModal(true)">
+                    <span>📄</span>
+                    <span>Descargar plantilla limpia en blanco (Para escribir a mano)</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- COLUMNA DERECHA: VISTA PREVIA -->
+        <main class="preview-column">
+            <div class="preview-banner">
+                <span>👁️ <strong>Vista previa</strong></span>
+            </div>
+
+            <!-- HOJA EDITORIAL HORIZONTAL PROPORCIONADA -->
+            <div class="preview-sheet-frame" id="live-sheet-preview">
+                
+                <div class="preview-kicker">MENOS RUIDO · SISTEMA DE PLANIFICACIÓN ANUAL</div>
+                
+                <div class="preview-header-line">
+                    <div>
+                        <div class="preview-main-title">Planificación Anual</div>
+                        <div style="font-size: 0.68rem; color: #666; font-style: italic; margin-top: 1px;" id="prev-motto-text"></div>
+                    </div>
+                    <div class="preview-date-text" id="prev-year-text">AÑO: ____</div>
+                </div>
+
+                <!-- 1. TRES PRIORIDADES ESTRATÉGICAS SUPERIORES -->
+                <div class="preview-top-priorities">
+                    <div class="preview-priorities-title" id="prev-priorities-title">🎯 PRIORIDADES ESTRATÉGICAS DEL AÑO</div>
+                    <div class="preview-priorities-grid" id="prev-priorities-container">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- 2. CUADRÍCULA DE LOS 12 MESES (4 COLUMNAS x 3 FILAS) -->
+                <div class="annual-grid-container" id="annual-grid-container">
+                    <!-- Mes 1 a 12 inyectados -->
+                </div>
+
+                <!-- 3. FOOTER EDITORIAL -->
+                <div class="preview-sheet-footer">
+                    <span>MENOS RUIDO · VISTA ANUAL PANORÁMICA</span>
+                    <span>editorialmenosruido.com</span>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST DE NOTIFICACIÓN -->
+    <div class="toast-notify" id="toast-msg"></div>
+
+    <!-- MODAL POP-UP DE DESCARGA Y COMPRA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <span class="modal-badge" id="modal-badge-label">Descarga Lista</span>
+            <h3 class="modal-title" id="modal-title-label">Tu Año en Papel</h3>
+            <p class="modal-desc" id="modal-desc-label">Genera tu PDF vectorial de alta definición calibrado para lápiz o pluma estilográfica.</p>
+
+            <div class="control-group" style="text-align: left; margin-bottom: 16px;">
+                <label for="modal-select-format" style="font-size: 0.8rem; font-weight: 700; color: #444; margin-bottom: 4px;">Formato de papel:</label>
+                <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
+                    <option value="apaisado">Formato Libro 8.25" × 6" (210 × 152 mm)</option>
+                    <option value="a4">Formato DIN A4 (297 × 210 mm)</option>
+                </select>
+            </div>
+
+            <button type="button" class="btn-modal-download" onclick="executeAnnualDownload()" id="modal-download-btn-text">
+                📥 Descargar PDF ahora
+            </button>
+
+            <!-- CUADERNOS FÍSICOS EN AMAZON -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 4px 0 12px 0;">
+                    Esta hoja panorámica te permite ver todo tu año en un vistazo, pero la metodología completa para consolidar foco a 90 o 180 días está en nuestros cuadernos de Editorial Menos Ruido para no perder tus avances.
+                </p>
+                <div class="modal-books-grid">
+                    <!-- Planificador 90 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Enfoque trimestral</span>
+                            <h4 class="modal-book-title">Planificador 90 Días</h4>
+                            <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_anual' })">
+                                Amazon ↗
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Planificador 180 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_180.jpg" alt="Planificador 180 Días" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Hábito semestral</span>
+                            <h4 class="modal-book-title">Planificador 180 Días</h4>
+                            <a href="/ir/amazon-180-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_180_dias', origen: 'modal_anual' })">
+                                Amazon ↗
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================================
+        // ESTADO GLOBAL Y EJEMPLO EDITORIAL
+        // ========================================================
+        let isExampleActive = false;
+        let isBlankModal = false;
+
+        const MONTH_NAMES = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ];
+
+        let prioritiesList = ['', '', ''];
+
+        const ANNUAL_EXAMPLE = {
+            year: '2027',
+            motto: 'Menos proyectos abiertos simultáneamente, mayor profundidad y blindaje analógico para el trabajo creativo.',
+            priorities: [
+                'Publicar y maquetar los 2 nuevos títulos editoriales de la colección.',
+                'Cimentar el hábito de desconexión analógica 1 fin de semana al mes.',
+                'Alcanzar la sostenibilidad operativa sin depender de urgencias digitales.'
+            ],
+            months: {
+                1: 'Definición de objetivos Q1 y esquema inicial',
+                2: 'Bloque de redacción manuscrita del manuscrito',
+                3: 'Cierre del primer borrador y revisión editorial',
+                4: 'Corrección de pruebas de imprenta y diseño A+',
+                5: 'Pruebas físicas de color en papel crema mate',
+                6: 'Lanzamiento del primer libro y balance de Q2',
+                7: 'Mes de desconexión, naturaleza y lecturas pausadas',
+                8: 'Estructuración del segundo libro del año',
+                9: 'Retorno al estudio y segundo ciclo de escritura',
+                10: 'Revisión final de galeradas y campaña de preventa',
+                11: 'Distribución y pruebas de imprenta final',
+                12: 'Balance anual, descanso y cierre de cuentas en calma'
+            }
+        };
+
+        // AUTO-EXPAND TEXTAREAS
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        }
+
+        // CONTROL DE AÑO Y LEMA
+        function handleYearInput(input) {
+            isExampleActive = false;
+            if (!input) return;
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value.length > 4) {
+                input.value = input.value.slice(0, 4);
+            }
+            updateYearPreview();
+        }
+
+        function updateYearPreview() {
+            const input = document.getElementById('input-annual-year');
+            const prev = document.getElementById('prev-year-text');
+            if (!prev) return;
+            const y = input ? input.value.trim() : '';
+            if (y) {
+                prev.textContent = 'AÑO: ' + y;
+            } else if (isExampleActive) {
+                prev.textContent = 'AÑO: ' + ANNUAL_EXAMPLE.year;
+            } else {
+                prev.textContent = 'AÑO: ____';
+            }
+        }
+
+        function handleMottoInput(textarea) {
+            isExampleActive = false;
+            autoResizeTextarea(textarea);
+            updateMottoPreview();
+        }
+
+        function updateMottoPreview() {
+            const input = document.getElementById('input-annual-motto');
+            const count = document.getElementById('count-motto');
+            const prev = document.getElementById('prev-motto-text');
+            if (count && input) count.textContent = input.value.length + '/120';
+            if (!prev) return;
+            const val = input ? input.value.trim() : '';
+            prev.textContent = val || (isExampleActive ? ANNUAL_EXAMPLE.motto : '');
+        }
+
+        // PRIORIDADES DINÁMICAS (0 A 3)
+        function renderPrioritiesInputs() {
+            const container = document.getElementById('priorities-container');
+            const btnAdd = document.getElementById('btn-add-priority');
+            if (!container) return;
+            container.innerHTML = '';
+
+            prioritiesList.forEach((p, idx) => {
+                const row = document.createElement('div');
+                row.className = 'item-input-row';
+                row.innerHTML = `
+                    <textarea class="priority-input-field" rows="2" maxlength="110" placeholder="Prioridad ${idx + 1}" oninput="isExampleActive = false; autoResizeTextarea(this); updatePriorityValue(${idx}, this.value)">${p}</textarea>
+                    <button type="button" class="btn-remove-item" title="Eliminar prioridad" onclick="removePriorityItem(${idx})">✕</button>
+                `;
+                container.appendChild(row);
+                const ta = row.querySelector('textarea');
+                if (ta) autoResizeTextarea(ta);
+            });
+
+            if (btnAdd) {
+                btnAdd.style.display = prioritiesList.length >= 3 ? 'none' : 'inline-block';
+            }
+            updatePrioritiesPreview();
+        }
+
+        function updatePriorityValue(idx, val) {
+            isExampleActive = false;
+            prioritiesList[idx] = val;
+            updatePrioritiesPreview();
+        }
+
+        function addNewPriority() {
+            if (prioritiesList.length >= 3) return;
+            isExampleActive = false;
+            prioritiesList.push('');
+            renderPrioritiesInputs();
+            showToast('Prioridad añadida.');
+        }
+
+        function removePriorityItem(idx) {
+            isExampleActive = false;
+            prioritiesList.splice(idx, 1);
+            renderPrioritiesInputs();
+            showToast('Prioridad eliminada.');
+        }
+
+        function updatePrioritiesPreview() {
+            const container = document.getElementById('prev-priorities-container');
+            const titleEl = document.getElementById('prev-priorities-title');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const userHasP = prioritiesList.some(p => p.trim().length > 0);
+            let pToRender = [];
+
+            if (userHasP) {
+                pToRender = prioritiesList.map(p => p.trim()).filter(p => p.length > 0);
+            } else if (isExampleActive) {
+                pToRender = ANNUAL_EXAMPLE.priorities;
+            } else {
+                pToRender = prioritiesList.map(() => '');
+            }
+
+            if (titleEl) {
+                titleEl.textContent = (pToRender.length === 1) ? '🎯 PRIORIDAD ESTRATÉGICA DEL AÑO' : '🎯 PRIORIDADES ESTRATÉGICAS DEL AÑO';
+            }
+
+            if (pToRender.length === 0) {
+                container.innerHTML = '<span style="font-size:0.7rem; color:#999; font-style:italic;">(Sin prioridades definidas)</span>';
+                return;
+            }
+
+            pToRender.forEach(text => {
+                const item = document.createElement('div');
+                item.className = 'preview-priority-item';
+                item.innerHTML = `
+                    <div class="preview-priority-box"></div>
+                    <span class="preview-priority-text">${text}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // MESES (1 A 12)
+        function handleMonthInput(mIdx) {
+            isExampleActive = false;
+            const input = document.getElementById('input-m-' + mIdx);
+            if (input) autoResizeTextarea(input);
+            updateMonthPreview(mIdx);
+        }
+
+        function updateMonthPreview(mIdx) {
+            const cardContent = document.getElementById('prev-month-content-' + mIdx);
+            if (!cardContent) return;
+            const input = document.getElementById('input-m-' + mIdx);
+            const val = input ? input.value.trim() : '';
+            cardContent.textContent = val || (isExampleActive ? (ANNUAL_EXAMPLE.months[mIdx] || '') : '');
+        }
+
+        function renderMonthsCardsPreview() {
+            const container = document.getElementById('annual-grid-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (let m = 1; m <= 12; m++) {
+                const qNum = Math.ceil(m / 3);
+                const card = document.createElement('div');
+                card.className = 'annual-month-card';
+                card.innerHTML = `
+                    <div class="annual-month-header">
+                        <span>${MONTH_NAMES[m - 1]}</span>
+                        <span class="annual-month-quarter">Q${qNum}</span>
+                    </div>
+                    <div class="annual-month-content" id="prev-month-content-${m}"></div>
+                `;
+                container.appendChild(card);
+                updateMonthPreview(m);
+            }
+        }
+
+        // RENDER GENERAL
+        function renderPreview() {
+            updateYearPreview();
+            updateMottoPreview();
+            updatePrioritiesPreview();
+            for (let m = 1; m <= 12; m++) {
+                updateMonthPreview(m);
+            }
+        }
+
+        // RELLENAR EJEMPLO (Solo se proyecta en la vista previa, sin rellenar los inputs del formulario)
+        function loadExampleData() {
+            isExampleActive = true;
+            renderPreview();
+            showToast('✓ Ejemplo proyectado en la vista previa.');
+        }
+
+        // LIMPIAR
+        function clearAllData() {
+            isExampleActive = false;
+            const yInput = document.getElementById('input-annual-year');
+            if (yInput) yInput.value = '';
+            const mInput = document.getElementById('input-annual-motto');
+            if (mInput) { mInput.value = ''; mInput.style.height = ''; }
+
+            prioritiesList = ['', '', ''];
+            renderPrioritiesInputs();
+
+            for (let m = 1; m <= 12; m++) {
+                const el = document.getElementById('input-m-' + m);
+                if (el) { el.value = ''; el.style.height = ''; }
+            }
+
+            renderPreview();
+            showToast('✓ Formulario y vista previa limpiados.');
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-msg');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
+
+        // MODAL HANDLERS
+        function openDownloadModal(isBlank) {
+            isBlankModal = !!isBlank;
+            const modal = document.getElementById('download-modal');
+            if (!modal) return;
+
+            const badge = document.getElementById('modal-badge-label');
+            const title = document.getElementById('modal-title-label');
+            const desc = document.getElementById('modal-desc-label');
+            const btnText = document.getElementById('modal-download-btn-text');
+
+            if (isBlank) {
+                if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
+                if (title) title.textContent = 'Tu Año en Papel (Para Rellenar a Mano)';
+                if (desc) desc.textContent = 'Descarga la cuadrícula anual limpia lista para lápiz o pluma en Formato Libro 8.25" × 6" (210 × 152 mm) o Folio DIN A4.';
+                if (btnText) btnText.innerHTML = '📥 Descargar plantilla anual limpia en PDF';
+            } else {
+                if (badge) badge.textContent = 'PDF Personalizado con Tus Hitos';
+                if (title) title.textContent = 'Tu Planificación Anual Lista';
+                if (desc) desc.textContent = 'Descarga tu plano anual en Formato Libro 8.25" × 6" (210 × 152 mm) o DIN A4 con todos tus textos maquetados.';
+                if (btnText) btnText.innerHTML = '📥 Descargar mi PDF personalizado';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'download-modal') {
+                closeDownloadModal();
+            }
+        }
+
+        // ========================================================
+        // MOTOR DE EXPORTACIÓN PDF VECTORIAL (jsPDF)
+        // ========================================================
+        function executeAnnualDownload() {
+            closeDownloadModal();
+
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar la librería jsPDF.');
+                return;
+            }
+
+            const formatChoice = document.getElementById('modal-select-format').value;
+            // 8.25" x 6" = [209.55, 152.4] mm
+            const isBookFormat = (formatChoice === 'apaisado');
+            const pageDims = isBookFormat ? [209.55, 152.4] : 'a4';
+            const orientation = 'landscape';
+
+            let doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: pageDims
+            });
+
+            const pw = doc.internal.pageSize.getWidth();
+            const ph = doc.internal.pageSize.getHeight();
+            const m = 14; // margen en mm
+            const contentW = pw - (m * 2);
+
+            // Fondo crema editorial
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pw, ph, 'F');
+
+            let y = m + 2;
+
+            // Datos activos
+            const yearInput = document.getElementById('input-annual-year');
+            const activeYear = isBlankModal ? '' : (yearInput?.value.trim() || (isExampleActive ? ANNUAL_EXAMPLE.year : ''));
+
+            const mottoInput = document.getElementById('input-annual-motto')?.value.trim() || '';
+            const activeMotto = isBlankModal ? '' : (mottoInput || (isExampleActive ? ANNUAL_EXAMPLE.motto : ''));
+
+            const userHasP = prioritiesList.some(p => p.trim().length > 0);
+            const activePriorities = isBlankModal 
+                ? [] 
+                : (userHasP ? prioritiesList.filter(p => p.trim().length > 0) : (isExampleActive ? ANNUAL_EXAMPLE.priorities : []));
+
+            // Kicker superior
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.8);
+            doc.setTextColor(135, 85, 59);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN ANUAL', m, y);
+            y += 4.5;
+
+            // Título principal y Año
+            doc.setFont('times', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(30, 25, 22);
+            doc.text('Planificación Anual', m, y);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.5);
+            doc.setTextColor(70, 65, 60);
+            const headerYearText = activeYear ? `AÑO: ${activeYear}` : 'AÑO: ________';
+            doc.text(headerYearText, pw - m, y, { align: 'right' });
+            y += 2.5;
+
+            // Lema anual sutil si existe
+            if (activeMotto) {
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(7.2);
+                doc.setTextColor(90, 85, 80);
+                const mottoLines = doc.splitTextToSize(`«${activeMotto}»`, contentW - 35);
+                doc.text(mottoLines[0] || '', m, y + 1.5);
+                y += 4;
+            }
+
+            // Línea divisoria
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.35);
+            doc.line(m, y, pw - m, y);
+            y += 3.5;
+
+            // 1. BLOQUE SUPERIOR: PRIORIDADES DEL AÑO
+            const topBoxH = 15;
+            doc.setFillColor(251, 249, 245);
+            doc.setDrawColor(220, 215, 205);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(m, y, contentW, topBoxH, 1.5, 1.5, 'FD');
+
+            const prioTitle = (activePriorities.length === 1) ? 'PRIORIDAD ESTRATÉGICA DEL AÑO' : 'PRIORIDADES ESTRATÉGICAS DEL AÑO';
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.4);
+            doc.setTextColor(135, 85, 59);
+            doc.text(prioTitle, m + 3.5, y + 3.8);
+
+            // 3 columnas para las 3 prioridades
+            const pColW = (contentW - 8) / 3;
+            for (let i = 0; i < 3; i++) {
+                const pX = m + 3.5 + (i * pColW);
+                const pY = y + 7.5;
+                
+                doc.setDrawColor(120, 115, 110);
+                doc.setLineWidth(0.25);
+                doc.rect(pX, pY - 2.5, 2.8, 2.8);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(35, 30, 25);
+                if (activePriorities[i]) {
+                    const lines = doc.splitTextToSize(activePriorities[i], pColW - 6);
+                    doc.text(lines.slice(0, 2), pX + 4.5, pY);
+                } else {
+                    doc.setDrawColor(225, 220, 212);
+                    doc.line(pX + 4.5, pY, pX + pColW - 2, pY);
+                }
+            }
+
+            y += topBoxH + 3.5;
+
+            // 2. CUADRÍCULA DE LOS 12 MESES (4 COLUMNAS x 3 FILAS)
+            const availableH = ph - y - m - 8;
+            const gridCols = 4;
+            const gridRows = 3;
+            const cardGap = 2.5;
+            const cardW = (contentW - (cardGap * (gridCols - 1))) / gridCols;
+            const cardH = (availableH - (cardGap * (gridRows - 1))) / gridRows;
+
+            for (let row = 0; row < gridRows; row++) {
+                for (let col = 0; col < gridCols; col++) {
+                    const mIndex = (row * gridCols) + col + 1;
+                    const cX = m + (col * (cardW + cardGap));
+                    const cY = y + (row * (cardH + cardGap));
+
+                    // Fondo tarjeta mes
+                    doc.setFillColor(255, 255, 255);
+                    doc.setDrawColor(220, 215, 205);
+                    doc.setLineWidth(0.18);
+                    doc.roundedRect(cX, cY, cardW, cardH, 1, 1, 'FD');
+
+                    // Cabecera mes
+                    doc.setFillColor(248, 245, 239);
+                    doc.rect(cX, cY, cardW, 4.2, 'F');
+                    doc.line(cX, cY + 4.2, cX + cardW, cY + 4.2);
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.4);
+                    doc.setTextColor(45, 40, 35);
+                    doc.text(MONTH_NAMES[mIndex - 1].toUpperCase(), cX + 2, cY + 3.1);
+
+                    const qNum = Math.ceil(mIndex / 3);
+                    doc.setFontSize(5.5);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text(`Q${qNum}`, cX + cardW - 2, cY + 3.1, { align: 'right' });
+
+                    // Contenido del mes
+                    const mInputVal = document.getElementById('input-m-' + mIndex)?.value.trim() || '';
+                    const mText = isBlankModal ? '' : (mInputVal || (isExampleActive ? (ANNUAL_EXAMPLE.months[mIndex] || '') : ''));
+
+                    if (mText) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(6.5);
+                        doc.setTextColor(40, 35, 30);
+                        const cleanText = mText.replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '-');
+                        const mLines = doc.splitTextToSize(cleanText, cardW - 4);
+                        doc.text(mLines.slice(0, 5), cX + 2, cY + 7.5);
+                    } else {
+                        // Líneas sutiles para escribir a mano
+                        for (let l = 0; l < 4; l++) {
+                            const lineY = cY + 8 + (l * 4.2);
+                            if (lineY < cY + cardH - 2) {
+                                doc.setDrawColor(235, 230, 222);
+                                doc.line(cX + 2, lineY, cX + cardW - 2, lineY);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. FOOTER EDITORIAL
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6);
+            doc.setTextColor(140, 135, 130);
+            doc.text('MENOS RUIDO · VISTA ANUAL PANORÁMICA', m, ph - m + 2);
+            doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
+
+            // NOMENCLATURA EXACTA: Menos_Ruido_Planificador_Anual_${anio}.pdf
+            let fileName = '';
+            if (isBlankModal) {
+                fileName = 'Menos_Ruido_Plantilla_Anual.pdf';
+            } else {
+                const cleanYear = (activeYear || '').toString().trim().replace(/[^0-9]/g, '');
+                if (cleanYear) {
+                    fileName = `Menos_Ruido_Planificador_Anual_${cleanYear}.pdf`;
+                } else {
+                    fileName = 'Menos_Ruido_Planificador_Anual.pdf';
+                }
+            }
+
+            doc.save(fileName);
+            showToast('✓ Archivo "' + fileName + '" descargado.');
+
+            registrarMetricaGratis('/metricas/descarga-pdf-generador-anual.html');
+            trackVercelEvent('descarga_pdf', {
+                herramienta: 'generador_anual',
+                tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado',
+                formato: formatChoice
+            });
+        }
+
+        function registrarMetricaGratis(paginaVirtual) {
+            try {
+                if (window.va) {
+                    window.va('pageview', { url: paginaVirtual });
+                }
+            } catch (err) {}
+        }
+
+        function trackVercelEvent(nombreEvento, datos) {
+            try {
+                if (window.va) {
+                    window.va('event', { name: nombreEvento, data: datos });
+                }
+            } catch (err) {}
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPrioritiesInputs();
+            renderMonthsCardsPreview();
+            renderPreview();
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+                autoResizeTextarea(ta);
+            });
+        });
+    </script>
+</body>
+</html>
