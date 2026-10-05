@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador Planificador Mensual · Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.08);
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
+        }
+
+        .header-container {
+            max-width: 1240px;
+            margin: 0 auto 16px;
+            text-align: center;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 50px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 1.95rem;
+            color: #1a1614;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        /* LAYOUT PRINCIPAL: CONTROLES CENTRADOS Y VISTA PREVIA DESPLEGABLE */
+        .app-layout {
+            max-width: 1360px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(360px, 480px) minmax(480px, 1fr);
+            gap: 28px;
+            align-items: start;
+            transition: all 0.3s ease;
+        }
+
+        /* Estado inicial: formulario centrado */
+        .app-layout.preview-hidden {
+            grid-template-columns: minmax(360px, 620px);
+            justify-content: center;
+        }
+
+        .app-layout.preview-hidden .preview-column {
+            display: none;
+        }
+
+        /* PANEL DE CONTROLES (IZQUIERDA) */
+        .controls-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 20px 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #efeae1;
+        }
+
+        .panel-heading-text {
+            font-size: 1.15rem;
+            font-family: var(--font-serif);
+            font-weight: 700;
+            color: #1e1916;
+        }
+
+        .panel-actions-quick {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-quick {
+            background: #f3efe8;
+            border: none;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-quick:hover {
+            background: #e6dfd3;
+            color: var(--accent-hover);
+        }
+
+        .section-box {
+            border: 1px solid #ebe6dc;
+            background: #faf9f6;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-header-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #4a453e;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .char-count {
+            font-size: 0.75rem;
+            color: #999;
+            font-weight: normal;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            resize: vertical;
+            overflow-y: auto;
+            line-height: 1.4;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            min-height: 46px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+
+        /* BOTONES DE TOGGLE Y ACCIÓN */
+        .toggle-preview-wrapper {
+            margin-top: 4px;
+        }
+
+        .btn-toggle-preview {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 14px;
+            background: #f4efe7;
+            border: 1px solid #dfd8cc;
+            border-radius: 6px;
+            color: #635b50;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-toggle-preview:hover {
+            background: #eae2d6;
+            color: #3f3930;
+        }
+
+        .btn-primary-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 13px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.22);
+            width: 100%;
+        }
+
+        .btn-primary-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-action {
+            background: #ffffff;
+            color: #555;
+            border: 1px solid #d5cfc5;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .btn-secondary-action:hover {
+            background: #f7f5f0;
+            border-color: #baa;
+            color: var(--accent);
+        }
+
+        /* COLUMNA DERECHA: VISTA PREVIA */
+        .preview-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: sticky;
+            top: 16px;
+        }
+
+        .preview-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1ede5;
+            border: 1px solid #e1dcce;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #665f54;
+            box-sizing: border-box;
+        }
+
+        /* HOJA EDITORIAL HORIZONTAL PROPORCIONADA */
+        .preview-sheet-frame {
+            background: var(--paper-color);
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 22px 24px 18px;
+            box-shadow: 0 12px 34px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 8.25 / 6;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-kicker {
+            font-size: 0.62rem;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .preview-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #28231e;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+        }
+
+        .preview-main-title {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #211c19;
+            letter-spacing: -0.2px;
+        }
+
+        .preview-date-text {
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+        }
+
+        /* ESTRUCTURA SUPERIOR: 3 METAS CLAVE + 4 HITOS DEL MES */
+        .preview-top-split {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .preview-card-box {
+            border: 1px solid #dfd9ce;
+            border-radius: 4px;
+            padding: 8px 10px;
+            background: #fbf9f5;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .preview-card-title {
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .preview-goal-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #2b2723;
+            line-height: 1.3;
+        }
+
+        .preview-goal-box {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #888;
+            border-radius: 2px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* CUADRÍCULA MENSUAL (7 DÍAS x 5 SEMANAS) */
+        .preview-month-calendar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #d5cfc4;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            background: #ffffff;
+        }
+
+        .calendar-weekdays-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #f4efe7;
+            border-bottom: 1px solid #d5cfc4;
+            text-align: center;
+        }
+
+        .calendar-weekday-cell {
+            padding: 4px 2px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #4a453e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-right: 1px solid #e3dec3;
+        }
+
+        .calendar-weekday-cell:last-child {
+            border-right: none;
+        }
+
+        .calendar-days-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+        }
+
+        .calendar-day-cell {
+            border-right: 1px solid #eee8df;
+            border-bottom: 1px solid #eee8df;
+            padding: 2px 4px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-day-cell:nth-child(7n) {
+            border-right: none;
+        }
+
+        .calendar-day-cell:nth-child(n+29) {
+            border-bottom: none;
+        }
+
+        .calendar-day-num {
+            font-size: 0.6rem;
+            color: #8c857b;
+            font-weight: 600;
+            align-self: flex-start;
+        }
+
+        /* SECCIÓN INFERIOR: NOTAS & BALANCE DEL MES */
+        .preview-bottom-notes {
+            border: 1px solid #dfd9ce;
+            border-radius: 4px;
+            padding: 6px 10px;
+            background: #faf8f5;
+            min-height: 38px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .preview-bottom-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #665f54;
+        }
+
+        .preview-bottom-text {
+            font-size: 0.72rem;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .preview-sheet-footer {
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.58rem;
+            color: #8e8880;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        /* TOAST DE ESTADO */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #2b2724;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        /* MODAL DE DESCARGA */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 18, 16, 0.55);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 12px;
+            max-width: 480px;
+            width: 100%;
+            padding: 26px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+            animation: modalIn 0.25s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { transform: translateY(12px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            margin-bottom: 16px;
+        }
+
+        .modal-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #201c19;
+            font-weight: 700;
+        }
+
+        .modal-desc {
+            font-size: 0.88rem;
+            color: #666;
+            margin-top: 6px;
+            line-height: 1.45;
+        }
+
+        .modal-control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #faf8f5;
+            border: 1px solid #eae5dc;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin: 14px 0;
+        }
+
+        .counter-btn-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .counter-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d5cfc5;
+            background: #ffffff;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .counter-val {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #222;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .btn-modal-download {
+            flex: 1;
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-download:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-modal-cancel {
+            background: #f1ede5;
+            color: #666;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+            .preview-column {
+                position: static;
+            }
+        }
+    </style>
+
+    <!-- Protección de acceso por código PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
+    <script src="./jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="header-container">
+        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
+        <div>
+            <span class="tag-pill">Herramienta Editorial Gratuita</span>
+            <h1>Generador de Planificador Mensual</h1>
+            <p class="subtitle">Visión panorámica de 30 días para anticipar hitos, definir tus 3 metas innegociables del mes y escribir con calma sin agobio digital.</p>
+        </div>
+    </div>
+
+    <div class="app-layout preview-hidden">
+        <!-- COLUMNA IZQUIERDA: CONTROLES -->
+        <aside class="controls-panel">
+            
+            <div class="panel-header-top">
+                <span class="panel-heading-text">Tu Mes en Papel</span>
+                <div class="panel-actions-quick">
+                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" onclick="toggleLivePreview()">👁️‍🗨️ Ver previa</button>
+                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
+                    <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
+                </div>
+            </div>
+
+            <!-- 1. MES Y AÑO -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>1. Mes y Año</span>
+                    <span>🗓️</span>
+                </div>
+                <div class="two-cols">
+                    <div class="control-group">
+                        <label for="input-month-name">Mes</label>
+                        <input type="text" id="input-month-name" placeholder="Ej: Noviembre" oninput="renderPreview()">
+                    </div>
+                    <div class="control-group">
+                        <label for="input-month-year">Año</label>
+                        <input type="number" id="input-month-year" placeholder="Ej: 2026" min="2024" max="2035" oninput="renderPreview()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. LAS 3 METAS O PRIORIDADES DEL MES -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>2. Las 3 Metas Clave del Mes</span>
+                    <span>🎯</span>
+                </div>
+                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 3 prioridades estratégicas innegociables para todo el mes.</p>
+                <div class="control-group">
+                    <label for="input-goal-1">Meta 1 (Prioridad principal)</label>
+                    <textarea id="input-goal-1" maxlength="120" rows="2" placeholder="Ej: Cerrar la maquetación y pruebas de imprenta del nuevo libro..." oninput="renderPreview()"></textarea>
+                </div>
+                <div class="control-group">
+                    <label for="input-goal-2">Meta 2</label>
+                    <textarea id="input-goal-2" maxlength="120" rows="2" placeholder="Ej: Diseñar la portada final y los módulos de Contenido A+..." oninput="renderPreview()"></textarea>
+                </div>
+                <div class="control-group">
+                    <label for="input-goal-3">Meta 3</label>
+                    <textarea id="input-goal-3" maxlength="120" rows="2" placeholder="Ej: Mantener 3 mañanas por semana sin reuniones para escribir..." oninput="renderPreview()"></textarea>
+                </div>
+            </div>
+
+            <!-- 3. FECHAS CLAVE / HITOS IMPORTANTES -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>3. Hitos y Fechas Clave</span>
+                    <span>📍</span>
+                </div>
+                <div class="control-group">
+                    <label for="input-hitos">Fechas importantes del mes <span class="char-count" id="count-hitos">0/240</span></label>
+                    <textarea id="input-hitos" maxlength="240" rows="3" placeholder="• Día 10: Entrega de galeradas finales&#10;• Día 18: Revisión de pruebas de color&#10;• Día 28: Lanzamiento oficial" oninput="renderPreview()"></textarea>
+                </div>
+            </div>
+
+            <!-- 4. NOTAS Y BALANCE MENSUAL -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>4. Notas y Balance de Cierre</span>
+                    <span>📝</span>
+                </div>
+                <div class="control-group">
+                    <label for="input-notes">Espacio de notas y balance <span class="char-count" id="count-notes">0/320</span></label>
+                    <textarea id="input-notes" maxlength="320" rows="3" placeholder="Anota aprendizajes del mes, qué hábitos se consolidaron y qué se transfiere al mes siguiente..." oninput="renderPreview()"></textarea>
+                </div>
+            </div>
+
+            <!-- BOTONES DE DESCARGA Y VISTA PREVIA -->
+            <div class="toggle-preview-wrapper">
+                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview" onclick="toggleLivePreview()">
+                    <span id="toggle-preview-icon">👁️‍🗨️</span>
+                    <span id="toggle-preview-text">Vista previa: Oculta (Clic para ver)</span>
+                </button>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <button type="button" class="btn-primary-action" onclick="openDownloadModal(false)">
+                    <span>📥</span>
+                    <span>Descargar mi PDF personalizado (Con datos)</span>
+                </button>
+                <button type="button" class="btn-secondary-action" onclick="openDownloadModal(true)">
+                    <span>📄</span>
+                    <span>Descargar plantilla limpia en blanco (1 a 3 meses)</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- COLUMNA DERECHA: VISTA PREVIA -->
+        <main class="preview-column">
+            <div class="preview-banner">
+                <span>👁️ <strong>Vista previa</strong></span>
+            </div>
+
+            <!-- HOJA FÍSICA HORIZONTAL -->
+            <div class="preview-sheet-frame" id="live-sheet-preview">
+                
+                <div class="preview-kicker">MENOS RUIDO · SISTEMA DE PLANIFICACIÓN MENSUAL</div>
+                
+                <div class="preview-header-line">
+                    <div class="preview-main-title">Planificación Mensual</div>
+                    <div class="preview-date-text" id="prev-dates-text">MES: ________ · AÑO: ____</div>
+                </div>
+
+                <!-- BLOQUE SUPERIOR: 3 METAS + HITOS -->
+                <div class="preview-top-split">
+                    <div class="preview-card-box">
+                        <div class="preview-card-title">🎯 3 METAS INNEGOCIABLES DEL MES</div>
+                        <div class="preview-goal-item">
+                            <div class="preview-goal-box"></div>
+                            <span id="prev-goal-1-text"></span>
+                        </div>
+                        <div class="preview-goal-item">
+                            <div class="preview-goal-box"></div>
+                            <span id="prev-goal-2-text"></span>
+                        </div>
+                        <div class="preview-goal-item">
+                            <div class="preview-goal-box"></div>
+                            <span id="prev-goal-3-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="preview-card-box">
+                        <div class="preview-card-title">📍 HITOS Y FECHAS CLAVE</div>
+                        <div id="prev-hitos-text" style="font-size:0.72rem; color:#333; line-height:1.35; white-space:pre-line;"></div>
+                    </div>
+                </div>
+
+                <!-- CUADRÍCULA MENSUAL (7 DÍAS x 5 SEMANAS) -->
+                <div class="preview-month-calendar">
+                    <div class="calendar-weekdays-row">
+                        <div class="calendar-weekday-cell">LUN</div>
+                        <div class="calendar-weekday-cell">MAR</div>
+                        <div class="calendar-weekday-cell">MIÉ</div>
+                        <div class="calendar-weekday-cell">JUE</div>
+                        <div class="calendar-weekday-cell">VIE</div>
+                        <div class="calendar-weekday-cell">SÁB</div>
+                        <div class="calendar-weekday-cell">DOM</div>
+                    </div>
+                    <div class="calendar-days-grid" id="calendar-days-grid">
+                        <!-- 35 casillas inyectadas dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- SECCIÓN INFERIOR: NOTAS & BALANCE -->
+                <div class="preview-bottom-notes">
+                    <div class="preview-bottom-label">NOTAS Y BALANCE DE CIERRE MENSUAL</div>
+                    <div class="preview-bottom-text" id="prev-notes-text"></div>
+                </div>
+
+                <!-- FOOTER EDITORIAL -->
+                <div class="preview-sheet-footer">
+                    <span>MENOS RUIDO · VISTA MENSUAL ATEMPORAL</span>
+                    <span>editorialmenosruido.com</span>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST NOTIFICACIÓN -->
+    <div class="toast-notify" id="toast-msg"></div>
+
+    <!-- MODAL DE DESCARGA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-badge" id="modal-badge-label">Plantilla Mensual</span>
+                <h3 class="modal-title" id="modal-title-label">Descargar Planificador Mensual</h3>
+                <p class="modal-desc" id="modal-desc-label">Exporta tu hoja en PDF vectorial a 300 DPI lista para imprimir en papel.</p>
+            </div>
+
+            <!-- OPCIÓN MESES EN BLANCO -->
+            <div id="modal-blank-options" style="display: none;">
+                <div class="modal-control-row">
+                    <div>
+                        <strong style="font-size: 0.9rem; color: #222; display:block;">Número de meses a generar</strong>
+                        <span style="font-size: 0.78rem; color: #777;">De 1 a 3 meses en un único archivo</span>
+                    </div>
+                    <div class="counter-btn-group">
+                        <button type="button" class="counter-btn" onclick="changeMonthsCount(-1)">−</button>
+                        <span class="counter-val" id="modal-months-count">1</span>
+                        <button type="button" class="counter-btn" onclick="changeMonthsCount(1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SELECTOR DE FORMATO -->
+            <div class="control-group" style="margin-top: 10px;">
+                <label for="modal-select-format" style="margin-bottom: 4px;">Formato de Impresión</label>
+                <select id="modal-select-format">
+                    <option value="apaisado">Libro Apaisado 8.25" × 6" (Encuadernable)</option>
+                    <option value="a4">Folio Estándar DIN A4 Apaisado</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeDownloadModal()">Cancelar</button>
+                <button type="button" class="btn-modal-download" onclick="executeMonthlyDownload()" id="modal-download-btn-text">Descargar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================================
+        // ESTADO GLOBAL Y EJEMPLO EDITORIAL MENOS RUIDO
+        // ========================================================
+        let isPreviewVisible = false;
+        let isExampleActive = false;
+        let isBlankModal = false;
+        let modalMonthsCount = 1;
+
+        const MONTHLY_EXAMPLE = {
+            month: 'Noviembre',
+            year: '2026',
+            goal1: 'Cerrar la maquetación y pruebas de imprenta del nuevo libro de foco.',
+            goal2: 'Diseñar la portada final y los módulos de Contenido A+ para Amazon.',
+            goal3: 'Mantener 3 mañanas por semana sin reuniones para escribir en calma.',
+            hitos: '• Día 05: Entrega del primer manuscrito revisado\n• Día 16: Validación de pruebas de color en papel crema\n• Día 27: Campaña de preventa y catálogo editorial',
+            notes: 'Este mes el foco estuvo en no dispersarse con proyectos secundarios. Se consolidó el hábito de cerrar la jornada 30 minutos antes para planificar el día siguiente en papel.'
+        };
+
+        // AUTO-EXPAND TEXTAREAS
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        }
+
+        // GENERAR CASILLAS DEL CALENDARIO
+        function initCalendarGrid() {
+            const grid = document.getElementById('calendar-days-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            for (let i = 1; i <= 35; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day-cell';
+                const num = document.createElement('span');
+                num.className = 'calendar-day-num';
+                num.textContent = isExampleActive ? (i <= 30 ? i : '') : '';
+                cell.appendChild(num);
+                grid.appendChild(cell);
+            }
+        }
+
+        // TOGGLE VISTA PREVIA
+        function toggleLivePreview() {
+            const layout = document.querySelector('.app-layout');
+            const btn = document.getElementById('btn-toggle-preview');
+            const text = document.getElementById('toggle-preview-text');
+            const btnTop = document.getElementById('btn-toggle-preview-top');
+
+            isPreviewVisible = !isPreviewVisible;
+
+            if (isPreviewVisible) {
+                layout.classList.remove('preview-hidden');
+                if (text) text.textContent = 'Vista previa: Activada';
+                if (btnTop) btnTop.innerHTML = '👁️ Ocultar previa';
+                showToast('Vista previa activada.');
+            } else {
+                layout.classList.add('preview-hidden');
+                if (text) text.textContent = 'Vista previa: Oculta (Clic para ver)';
+                if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
+                showToast('Vista previa oculta. Tu mes en papel centrado.');
+            }
+        }
+
+        // ACTUALIZAR VISTA PREVIA
+        function renderPreview() {
+            const monthInput = document.getElementById('input-month-name')?.value.trim() || '';
+            const yearInput = document.getElementById('input-month-year')?.value.trim() || '';
+            const g1Input = document.getElementById('input-goal-1')?.value.trim() || '';
+            const g2Input = document.getElementById('input-goal-2')?.value.trim() || '';
+            const g3Input = document.getElementById('input-goal-3')?.value.trim() || '';
+            const hitosInput = document.getElementById('input-hitos')?.value || '';
+            const notesInput = document.getElementById('input-notes')?.value || '';
+
+            // Contadores
+            const countHitos = document.getElementById('count-hitos');
+            if (countHitos) countHitos.textContent = hitosInput.length + '/240';
+            const countNotes = document.getElementById('count-notes');
+            if (countNotes) countNotes.textContent = notesInput.length + '/320';
+
+            // Mes y Año
+            const prevDates = document.getElementById('prev-dates-text');
+            if (prevDates) {
+                const m = monthInput || (isExampleActive ? MONTHLY_EXAMPLE.month : '');
+                const y = yearInput || (isExampleActive ? MONTHLY_EXAMPLE.year : '');
+                if (m && y) {
+                    prevDates.textContent = `MES: ${m.toUpperCase()} · AÑO: ${y}`;
+                } else if (m) {
+                    prevDates.textContent = `MES: ${m.toUpperCase()} · AÑO: ____`;
+                } else {
+                    prevDates.textContent = 'MES: ________ · AÑO: ____';
+                }
+            }
+
+            // Metas
+            document.getElementById('prev-goal-1-text').textContent = g1Input || (isExampleActive ? MONTHLY_EXAMPLE.goal1 : '');
+            document.getElementById('prev-goal-2-text').textContent = g2Input || (isExampleActive ? MONTHLY_EXAMPLE.goal2 : '');
+            document.getElementById('prev-goal-3-text').textContent = g3Input || (isExampleActive ? MONTHLY_EXAMPLE.goal3 : '');
+
+            // Hitos
+            document.getElementById('prev-hitos-text').textContent = hitosInput.trim() ? hitosInput : (isExampleActive ? MONTHLY_EXAMPLE.hitos : '');
+
+            // Notas
+            document.getElementById('prev-notes-text').textContent = notesInput.trim() ? notesInput : (isExampleActive ? MONTHLY_EXAMPLE.notes : '');
+
+            initCalendarGrid();
+        }
+
+        // RELLENAR EJEMPLO (deja inputs limpios y muestra en preview)
+        function loadExampleData() {
+            isExampleActive = true;
+            if (!isPreviewVisible) {
+                toggleLivePreview();
+            }
+            renderPreview();
+            showToast('✓ Ejemplo visual mostrado en la vista previa.');
+        }
+
+        // LIMPIAR
+        function clearAllData() {
+            isExampleActive = false;
+            ['input-month-name', 'input-month-year', 'input-goal-1', 'input-goal-2', 'input-goal-3', 'input-hitos', 'input-notes'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                    el.style.height = '';
+                }
+            });
+            renderPreview();
+            showToast('✓ Formulario y vista previa limpiados.');
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-msg');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
+
+        // MODAL HANDLERS
+        function openDownloadModal(isBlank) {
+            isBlankModal = !!isBlank;
+            const modal = document.getElementById('download-modal');
+            if (!modal) return;
+
+            const blankOpts = document.getElementById('modal-blank-options');
+            const badge = document.getElementById('modal-badge-label');
+            const title = document.getElementById('modal-title-label');
+            const desc = document.getElementById('modal-desc-label');
+            const btnText = document.getElementById('modal-download-btn-text');
+
+            if (isBlank) {
+                if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
+                if (title) title.textContent = 'Tu Mes en Papel (Para Rellenar a Mano)';
+                if (desc) desc.textContent = 'Descarga la cuadrícula mensual limpia lista para lápiz o pluma estilográfica en formato Libro o Folio DIN A4.';
+                if (blankOpts) blankOpts.style.display = 'block';
+                modalMonthsCount = 1;
+                const countEl = document.getElementById('modal-months-count');
+                if (countEl) countEl.textContent = '1';
+                if (btnText) btnText.textContent = 'Descargar 1 mes limpio en PDF';
+            } else {
+                if (badge) badge.textContent = 'PDF Personalizado con Tus Metas';
+                if (title) title.textContent = 'Tu Planificación Mensual Lista';
+                if (desc) desc.textContent = 'Descarga tu mes en Formato Libro Apaisado 8.25" x 6" o DIN A4 con todos tus textos maquetados.';
+                if (blankOpts) blankOpts.style.display = 'none';
+                if (btnText) btnText.textContent = 'Descargar mi PDF personalizado';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'download-modal') {
+                closeDownloadModal();
+            }
+        }
+
+        function changeMonthsCount(delta) {
+            modalMonthsCount = Math.max(1, Math.min(3, modalMonthsCount + delta));
+            const countEl = document.getElementById('modal-months-count');
+            if (countEl) countEl.textContent = modalMonthsCount;
+            const btnText = document.getElementById('modal-download-btn-text');
+            if (btnText && isBlankModal) {
+                btnText.textContent = `Descargar ${modalMonthsCount} ${modalMonthsCount === 1 ? 'mes limpio' : 'meses limpios'} en PDF`;
+            }
+        }
+
+        // ========================================================
+        // MOTOR DE EXPORTACIÓN PDF VECTORIAL (jsPDF)
+        // ========================================================
+        function executeMonthlyDownload() {
+            closeDownloadModal();
+
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar la librería jsPDF.');
+                return;
+            }
+
+            const formatChoice = document.getElementById('modal-select-format').value;
+            // 8.25" x 6" = [209.55, 152.4] mm
+            const isBookFormat = (formatChoice === 'apaisado');
+            const pageDims = isBookFormat ? [209.55, 152.4] : 'a4';
+            const orientation = 'landscape';
+
+            let doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: pageDims
+            });
+
+            const pagesToRender = isBlankModal ? modalMonthsCount : 1;
+
+            const mInput = document.getElementById('input-month-name')?.value.trim() || '';
+            const yInput = document.getElementById('input-month-year')?.value.trim() || '';
+            const g1Input = document.getElementById('input-goal-1')?.value.trim() || '';
+            const g2Input = document.getElementById('input-goal-2')?.value.trim() || '';
+            const g3Input = document.getElementById('input-goal-3')?.value.trim() || '';
+            const hitosInput = document.getElementById('input-hitos')?.value.trim() || '';
+            const notesInput = document.getElementById('input-notes')?.value.trim() || '';
+
+            const activeMonth = isBlankModal ? '' : (mInput || (isExampleActive ? MONTHLY_EXAMPLE.month : ''));
+            const activeYear = isBlankModal ? '' : (yInput || (isExampleActive ? MONTHLY_EXAMPLE.year : ''));
+            const activeG1 = isBlankModal ? '' : (g1Input || (isExampleActive ? MONTHLY_EXAMPLE.goal1 : ''));
+            const activeG2 = isBlankModal ? '' : (g2Input || (isExampleActive ? MONTHLY_EXAMPLE.goal2 : ''));
+            const activeG3 = isBlankModal ? '' : (g3Input || (isExampleActive ? MONTHLY_EXAMPLE.goal3 : ''));
+            const activeHitos = isBlankModal ? '' : (hitosInput || (isExampleActive ? MONTHLY_EXAMPLE.hitos : ''));
+            const activeNotes = isBlankModal ? '' : (notesInput || (isExampleActive ? MONTHLY_EXAMPLE.notes : ''));
+
+            for (let page = 0; page < pagesToRender; page++) {
+                if (page > 0) doc.addPage(pageDims, orientation);
+
+                const pw = doc.internal.pageSize.getWidth();
+                const ph = doc.internal.pageSize.getHeight();
+                const m = 14; // margen en mm
+                const contentW = pw - (m * 2);
+
+                // Fondo crema editorial
+                doc.setFillColor(255, 254, 251);
+                doc.rect(0, 0, pw, ph, 'F');
+
+                let y = m + 2;
+
+                // Kicker superior
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(135, 85, 59);
+                doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN MENSUAL', m, y);
+                y += 4.5;
+
+                // Título principal y Mes / Año
+                doc.setFont('times', 'bold');
+                doc.setFontSize(16);
+                doc.setTextColor(30, 25, 22);
+                doc.text('Planificación Mensual', m, y);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(80, 75, 70);
+                const headerDateText = activeMonth 
+                    ? `MES: ${activeMonth.toUpperCase()} ${activeYear ? ' · AÑO: ' + activeYear : ''}` 
+                    : 'MES: ____________  ·  AÑO: ______';
+                doc.text(headerDateText, pw - m, y, { align: 'right' });
+                y += 2.5;
+
+                // Línea divisoria
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.35);
+                doc.line(m, y, pw - m, y);
+                y += 4;
+
+                // 1. BLOQUE SUPERIOR: 3 METAS (IZQ) + HITOS (DCHA)
+                const topBoxH = 25;
+                const colW = (contentW - 6) / 2;
+
+                // Tarjeta 1: 3 Metas clave
+                doc.setFillColor(251, 249, 245);
+                doc.setDrawColor(220, 215, 205);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(m, y, colW, topBoxH, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(135, 85, 59);
+                doc.text('3 METAS INNEGOCIABLES DEL MES', m + 3.5, y + 4);
+
+                const goalsArr = [activeG1, activeG2, activeG3];
+                let goalY = y + 8;
+                for (let g = 0; g < 3; g++) {
+                    doc.setDrawColor(120, 115, 110);
+                    doc.setLineWidth(0.25);
+                    doc.rect(m + 3.5, goalY - 2.5, 2.8, 2.8);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(35, 30, 25);
+                    if (goalsArr[g]) {
+                        const gLines = doc.splitTextToSize(goalsArr[g], colW - 12);
+                        doc.text(gLines[0] || '', m + 8, goalY);
+                    } else {
+                        doc.setDrawColor(225, 220, 212);
+                        doc.line(m + 8, goalY, m + colW - 3.5, goalY);
+                    }
+                    goalY += 5.5;
+                }
+
+                // Tarjeta 2: Hitos y fechas clave
+                const col2X = m + colW + 6;
+                doc.setFillColor(251, 249, 245);
+                doc.setDrawColor(220, 215, 205);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(col2X, y, colW, topBoxH, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(135, 85, 59);
+                doc.text('HITOS Y FECHAS CLAVE', col2X + 3.5, y + 4);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(40, 35, 30);
+                if (activeHitos) {
+                    const hLines = doc.splitTextToSize(activeHitos, colW - 8);
+                    hLines.slice(0, 4).forEach((hl, hIdx) => {
+                        doc.text(hl, col2X + 3.5, y + 8.5 + (hIdx * 4.2));
+                    });
+                } else {
+                    for (let h = 0; h < 3; h++) {
+                        doc.setDrawColor(225, 220, 212);
+                        doc.line(col2X + 3.5, y + 9 + (h * 5.2), col2X + colW - 3.5, y + 9 + (h * 5.2));
+                    }
+                }
+
+                y += topBoxH + 4;
+
+                // 2. CUADRÍCULA MENSUAL (7 COLUMNAS x 5 FILAS)
+                const calH = ph - y - m - 20; // altura disponible para la cuadrícula
+                const cellW = contentW / 7;
+                const headerH = 5;
+                const rowH = (calH - headerH) / 5;
+
+                // Cabecera días
+                doc.setFillColor(244, 239, 231);
+                doc.setDrawColor(210, 205, 195);
+                doc.setLineWidth(0.2);
+                doc.rect(m, y, contentW, headerH, 'FD');
+
+                const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(60, 55, 50);
+                dayNames.forEach((dName, dIdx) => {
+                    const dX = m + (dIdx * cellW) + (cellW / 2);
+                    doc.text(dName, dX, y + 3.5, { align: 'center' });
+                    if (dIdx > 0) {
+                        doc.line(m + (dIdx * cellW), y, m + (dIdx * cellW), y + calH);
+                    }
+                });
+
+                // Rejilla de 5 filas
+                for (let r = 0; r < 5; r++) {
+                    const rowY = y + headerH + (r * rowH);
+                    doc.setDrawColor(220, 215, 205);
+                    doc.setLineWidth(0.18);
+                    doc.line(m, rowY, m + contentW, rowY);
+
+                    // Pequeño recuadro para número de día en cada casilla
+                    for (let c = 0; c < 7; c++) {
+                        const cellX = m + (c * cellW);
+                        doc.setDrawColor(230, 225, 218);
+                        doc.rect(cellX + 1.5, rowY + 1.5, 3.5, 3.5);
+                    }
+                }
+
+                // Borde exterior cuadrícula
+                doc.setDrawColor(180, 175, 165);
+                doc.setLineWidth(0.3);
+                doc.rect(m, y, contentW, calH);
+
+                y += calH + 3.5;
+
+                // 3. SECCIÓN INFERIOR: NOTAS & BALANCE DE CIERRE
+                const notesH = ph - y - m - 4;
+                if (notesH > 8) {
+                    doc.setFillColor(250, 248, 245);
+                    doc.setDrawColor(220, 215, 205);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(m, y, contentW, notesH, 1.5, 1.5, 'FD');
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.4);
+                    doc.setTextColor(110, 105, 95);
+                    doc.text('NOTAS Y BALANCE DE CIERRE MENSUAL', m + 3.5, y + 3.5);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+                    doc.setTextColor(40, 35, 30);
+                    if (activeNotes) {
+                        const nLines = doc.splitTextToSize(activeNotes, contentW - 8);
+                        nLines.slice(0, 2).forEach((nl, nIdx) => {
+                            doc.text(nl, m + 3.5, y + 7 + (nIdx * 3.8));
+                        });
+                    }
+                }
+
+                // 4. FOOTER EDITORIAL
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6);
+                doc.setTextColor(140, 135, 130);
+                doc.text('MENOS RUIDO · VISTA MENSUAL ATEMPORAL', m, ph - m + 2);
+                doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
+            }
+
+            // NOMENCLATURA EXACTA SEGÚN ESTÁNDAR
+            let fileName = '';
+            if (isBlankModal) {
+                fileName = pagesToRender > 1 
+                    ? `Menos_Ruido_Plantilla_Mensual_${pagesToRender}_meses.pdf` 
+                    : 'Menos_Ruido_Plantilla_Mensual.pdf';
+            } else {
+                const cleanMonth = activeMonth.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '_');
+                if (cleanMonth) {
+                    fileName = `Menos_Ruido_Planificador_Mensual_${cleanMonth}.pdf`;
+                } else {
+                    fileName = 'Menos_Ruido_Planificador_Mensual.pdf';
+                }
+            }
+
+            doc.save(fileName);
+            showToast('✓ Archivo "' + fileName + '" descargado.');
+
+            // Métricas
+            registrarMetricaGratis('/metricas/descarga-pdf-generador-mensual.html');
+            trackVercelEvent('descarga_pdf', {
+                herramienta: 'generador_mensual',
+                tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado',
+                meses: pagesToRender,
+                formato: formatChoice
+            });
+        }
+
+        // TELEMETRÍA Y MÉTRICAS GRATUITAS
+        function registrarMetricaGratis(paginaVirtual) {
+            try {
+                if (window.va) {
+                    window.va('pageview', { url: paginaVirtual });
+                }
+            } catch (err) {}
+        }
+
+        function trackVercelEvent(nombreEvento, datos) {
+            try {
+                if (window.va) {
+                    window.va('event', { name: nombreEvento, data: datos });
+                }
+            } catch (err) {}
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPreview();
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+                autoResizeTextarea(ta);
+            });
+        });
+    </script>
+</body>
+</html>
