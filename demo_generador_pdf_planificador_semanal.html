@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseñador Interactivo de PDF · Planificador Semanal Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --forest: #2b3a31;
+            --sage: #586851;
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px 16px 60px;
+        }
+
+        .header-container {
+            max-width: 1320px;
+            margin: 0 auto 16px;
+            text-align: center;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #1e1916;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            max-width: 660px;
+            margin: 0 auto 18px;
+        }
+
+        .app-layout {
+            max-width: 1360px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 1080px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* PANEL DE CONTROLES */
+        .controls-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-box {
+            border: 1px solid #ebe6dc;
+            background: #faf9f6;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-header-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #4a453e;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .char-count {
+            font-size: 0.75rem;
+            color: #999;
+            font-weight: normal;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 56px;
+        }
+
+        .days-grid-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 520px) {
+            .days-grid-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .day-input-card {
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 6px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .day-label-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .day-input-card input {
+            padding: 5px 8px;
+            font-size: 0.82rem;
+            border: 1px solid #e0dbd0;
+        }
+
+        .style-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .style-pill-btn {
+            background: #ffffff;
+            border: 1px solid #d5cfc5;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .style-pill-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .style-pill-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* BOTONES PRINCIPALES */
+        .btn-main-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 13px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+            width: 100%;
+        }
+
+        .btn-main-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #ffffff;
+            color: #3e3832;
+            border: 1.5px solid #d0c8bd;
+            padding: 11px 18px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn-secondary-action:hover {
+            background: #faf8f5;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-clear {
+            background: none;
+            border: none;
+            font-size: 0.8rem;
+            color: #888;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 4px;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .btn-clear:hover {
+            color: #333;
+        }
+
+        /* COLUMNA DERECHA: VISTA PREVIA */
+        .preview-column {
+            position: sticky;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .preview-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1ede5;
+            border: 1px solid #e1dcce;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #665f54;
+        }
+
+        .preview-sheet-frame {
+            background: var(--paper-color);
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 24px 28px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            min-height: 480px;
+            aspect-ratio: 8.25 / 6;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* ELEMENTOS DEL PLANIFICADOR SEMANAL EN VISTA PREVIA */
+        .preview-kicker {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .preview-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #2b2520;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+
+        .preview-main-title {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e1916;
+        }
+
+        .preview-date-text {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+
+        /* CUADRÍCULA SEMANAL 2 COLUMNAS */
+        .preview-week-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            flex: 1;
+        }
+
+        .preview-column-card {
+            background: #ffffff;
+            border: 1px solid #cfc7b9;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-day-row {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eae5db;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-height: 52px;
+        }
+
+        .preview-day-row:last-child {
+            border-bottom: none;
+        }
+
+        .preview-day-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-day-name {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #2b2520;
+        }
+
+        .preview-day-text {
+            font-size: 0.8rem;
+            color: #333;
+            font-family: Georgia, serif;
+            line-height: 1.35;
+            min-height: 18px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .preview-focus-card {
+            background: #faf8f5;
+            padding: 8px 10px;
+            border-bottom: 1px solid #eae5db;
+        }
+
+        .preview-focus-title {
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent);
+            margin-bottom: 3px;
+        }
+
+        .preview-focus-content {
+            font-family: Georgia, serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #1e1916;
+            line-height: 1.35;
+            min-height: 20px;
+        }
+
+        /* SECCIÓN INFERIOR: TAREAS SECUNDARIAS / NOTAS */
+        .preview-bottom-section {
+            margin-top: 10px;
+            border-top: 1px solid #2b2520;
+            padding-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .preview-bottom-label {
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .preview-bottom-box {
+            background: #faf8f5;
+            border: 1px solid #e5dfd3;
+            border-radius: 4px;
+            padding: 7px 10px;
+            min-height: 48px;
+            font-size: 0.78rem;
+            color: #333;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .preview-bottom-box.rayado-dots {
+            background-image: radial-gradient(#c5bcb0 0.85px, transparent 0.85px);
+            background-size: 10px 10px;
+        }
+
+        .preview-bottom-box.rayado-lines {
+            background-image: repeating-linear-gradient(transparent, transparent 15px, #e2dcd1 15px, #e2dcd1 16px);
+        }
+
+        .preview-bottom-box.rayado-grid {
+            background-size: 12px 12px;
+            background-image: linear-gradient(to right, #ece6dc 1px, transparent 1px), linear-gradient(to bottom, #ece6dc 1px, transparent 1px);
+        }
+
+        .preview-sheet-footer {
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.62rem;
+            color: #888;
+            border-top: 1px solid #e0dacd;
+            padding-top: 4px;
+        }
+
+        /* MODAL POP-UP DE DESCARGA */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 25, 20, 0.68);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 540px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 26px 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            position: relative;
+            text-align: center;
+            animation: modalFadeIn 0.25s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: #888;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .modal-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: rgba(135, 85, 59, 0.1);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.45rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+
+        .modal-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .modal-pages-selector {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-pages-label {
+            font-size: 0.84rem;
+            font-weight: 700;
+            text-align: left;
+        }
+
+        .modal-pages-hint {
+            font-size: 0.72rem;
+            color: #777;
+            display: block;
+            font-weight: 400;
+        }
+
+        .pages-stepper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid #d5cebf;
+            background: #fff;
+            color: #333;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .pages-count-display {
+            font-size: 1rem;
+            font-weight: 700;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .btn-modal-download {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 13px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+        }
+
+        .modal-books-section {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+        }
+
+        .modal-books-header {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .modal-books-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .modal-books-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-book-card {
+            background: #ffffff;
+            border: 1px solid #e0d9cc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-book-thumb {
+            width: 38px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+            flex-shrink: 0;
+        }
+
+        .modal-book-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .modal-book-badge {
+            font-size: 0.58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: block;
+        }
+
+        .modal-book-title {
+            font-family: var(--font-serif);
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: #1a1715;
+            margin: 1px 0 3px 0;
+            line-height: 1.2;
+        }
+
+        .btn-book-amazon {
+            display: inline-block;
+            background: var(--accent);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-book-amazon:hover {
+            background: #6e442e;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e1916;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            display: none;
+            z-index: 10000;
+        }
+    </style>
+
+    <!-- jsPDF para generación vectorial -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="header-container">
+        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
+        <div>
+            <span class="tag-pill">Herramienta Editorial Gratuita</span>
+            <h1>Generador de Planificador Semanal</h1>
+            <p class="subtitle">Estructura tus 7 días en un único plano horizontal. Elige el formato apaisado (8.25"×6") o folio A4 y exporta tu PDF vectorial para imprimir o escribir a mano.</p>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- COLUMNA IZQUIERDA: CONTROLES -->
+        <aside class="controls-panel">
+            
+            <!-- 1. ENCABEZADO Y FECHAS -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>1. Fechas de la Semana</span>
+                    <span>🗓️</span>
+                </div>
+                <div class="control-group">
+                    <label for="input-week-dates">Rango de fechas de la semana <span class="char-count" id="count-dates">0/40</span></label>
+                    <input type="text" id="input-week-dates" maxlength="40" placeholder="Ej: Del 12 al 18 de Octubre" oninput="handleDatesInput()">
+                </div>
+                <div class="control-group">
+                    <label for="input-week-focus">Foco principal de la semana (1 meta clave) <span class="char-count" id="count-focus">0/100</span></label>
+                    <textarea id="input-week-focus" maxlength="100" placeholder="Ej: Cerrar la propuesta de diseño y avanzar 3 capítulos del libro..." oninput="handleFocusInput()"></textarea>
+                </div>
+            </div>
+
+            <!-- 2. DÍAS LABORABLES Y FIN DE SEMANA -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>2. Prioridades por Día (Lunes a Domingo)</span>
+                    <span>✏️</span>
+                </div>
+                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">Anota el objetivo principal de cada jornada o déjalo en blanco para escribir a lápiz.</p>
+                <div class="days-grid-inputs">
+                    <div class="day-input-card">
+                        <span class="day-label-tag">Lunes</span>
+                        <input type="text" id="input-lunes" maxlength="70" placeholder="Prioridad del lunes..." oninput="handleDayInput('lunes')">
+                    </div>
+                    <div class="day-input-card">
+                        <span class="day-label-tag">Martes</span>
+                        <input type="text" id="input-martes" maxlength="70" placeholder="Prioridad del martes..." oninput="handleDayInput('martes')">
+                    </div>
+                    <div class="day-input-card">
+                        <span class="day-label-tag">Miércoles</span>
+                        <input type="text" id="input-miercoles" maxlength="70" placeholder="Prioridad del miércoles..." oninput="handleDayInput('miercoles')">
+                    </div>
+                    <div class="day-input-card">
+                        <span class="day-label-tag">Jueves</span>
+                        <input type="text" id="input-jueves" maxlength="70" placeholder="Prioridad del jueves..." oninput="handleDayInput('jueves')">
+                    </div>
+                    <div class="day-input-card">
+                        <span class="day-label-tag">Viernes</span>
+                        <input type="text" id="input-viernes" maxlength="70" placeholder="Prioridad del viernes..." oninput="handleDayInput('viernes')">
+                    </div>
+                    <div class="day-input-card">
+                        <span class="day-label-tag">Sábado</span>
+                        <input type="text" id="input-sabado" maxlength="70" placeholder="Descanso / Recados..." oninput="handleDayInput('sabado')">
+                    </div>
+                </div>
+                <div class="day-input-card" style="margin-top: 4px;">
+                    <span class="day-label-tag">Domingo (Balance y Desconexión)</span>
+                    <input type="text" id="input-domingo" maxlength="70" placeholder="Revisión de la semana / Pausa..." oninput="handleDayInput('domingo')">
+                </div>
+            </div>
+
+            <!-- 3. TAREAS SECUNDARIAS / NOTAS INFERIORES -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>3. Tareas Secundarias / Notas</span>
+                    <span>📝</span>
+                </div>
+                <div class="control-group">
+                    <label for="input-secundarias">Tareas secundarias o ideas importantes</label>
+                    <textarea id="input-secundarias" placeholder="• Enviar presupuestos&#10;• Comprar recambios de pluma&#10;• Organizar carpetas del ordenador" oninput="handleSecundariasInput()"></textarea>
+                </div>
+            </div>
+
+            <!-- 4. ESTILO Y FORMATO DE IMPRESIÓN -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>4. Opciones de Diseño y Hoja</span>
+                    <span>📐</span>
+                </div>
+                <div class="control-group">
+                    <label>Rayado de notas inferiores</label>
+                    <div class="style-pills">
+                        <button type="button" class="style-pill-btn active" id="btn-rayado-dots" onclick="setStyle('rayado', 'dots')">Puntos (Bullet)</button>
+                        <button type="button" class="style-pill-btn" id="btn-rayado-lines" onclick="setStyle('rayado', 'lines')">Líneas suaves</button>
+                        <button type="button" class="style-pill-btn" id="btn-rayado-grid" onclick="setStyle('rayado', 'grid')">Cuadrícula</button>
+                        <button type="button" class="style-pill-btn" id="btn-rayado-blank" onclick="setStyle('rayado', 'blank')">Limpio / Blanco</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="select-format">Formato de página PDF</label>
+                    <select id="select-format" onchange="renderPreview()">
+                        <option value="apaisado" selected>Formato Cuaderno Apaisado 8.25" x 6" (21 x 15,2 cm)</option>
+                        <option value="a4">Folio Estándar DIN A4 Apaisado (29,7 x 21 cm)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN -->
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
+                <button type="button" class="btn-main-action" onclick="openDownloadModal(false)">
+                    <span>📥</span>
+                    <span>Descargar mi PDF semanal personalizado</span>
+                </button>
+                <button type="button" class="btn-secondary-action" onclick="openDownloadModal(true)">
+                    <span>📄</span>
+                    <span>Descargar plantilla limpia en blanco (1 a 4 semanas)</span>
+                </button>
+                <button type="button" class="btn-clear" onclick="clearAllData()">Limpiar formulario y empezar de cero</button>
+            </div>
+        </aside>
+
+        <!-- COLUMNA DERECHA: VISTA PREVIA EN VIVO -->
+        <main class="preview-column">
+            <div class="preview-banner">
+                <span>👁️ <strong>Vista previa en tiempo real</strong> (escala horizontal)</span>
+                <span style="font-size: 0.72rem; color: #888;">Escritorio / Papel crema mate</span>
+            </div>
+
+            <!-- HOJA FÍSICA HORIZONTAL -->
+            <div class="preview-sheet-frame" id="live-sheet-preview">
+                
+                <div class="preview-kicker">MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL</div>
+                
+                <div class="preview-header-line">
+                    <div class="preview-main-title">Planificación Semanal</div>
+                    <div class="preview-date-text" id="prev-dates-text">SEMANA DEL:  __ / __ / ____  AL  __ / __ / ____</div>
+                </div>
+
+                <!-- CUADRÍCULA 2 COLUMNAS -->
+                <div class="preview-week-grid">
+                    
+                    <!-- COLUMNA IZQUIERDA: LUNES A JUEVES -->
+                    <div class="preview-column-card">
+                        <div class="preview-day-row">
+                            <div class="preview-day-head">
+                                <span class="preview-day-name">LUNES</span>
+                            </div>
+                            <div class="preview-day-text" id="prev-lunes-text">Definir objetivos prioritarios de la semana</div>
+                        </div>
+
+                        <div class="preview-day-row">
+                            <div class="preview-day-head">
+                                <span class="preview-day-name">MARTES</span>
+                            </div>
+                            <div class="preview-day-text" id="prev-martes-text">Bloque de trabajo profundo de 9:00 a 12:00</div>
+                        </div>
+
+                        <div class="preview-day-row">
+                            <div class="preview-day-head">
+                                <span class="preview-day-name">MIÉRCOLES</span>
+                            </div>
+                            <div class="preview-day-text" id="prev-miercoles-text">Revisión de avances intermedios</div>
+                        </div>
+
+                        <div class="preview-day-row">
+                            <div class="preview-day-head">
+                                <span class="preview-day-name">JUEVES</span>
+                            </div>
+                            <div class="preview-day-text" id="prev-jueves-text">Cierre de entregas y comunicación externa</div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMNA DERECHA: VIERNES A DOMINGO + FOCO -->
+                    <div class="preview-column-card">
+                        <div class="preview-focus-card">
+                            <div class="preview-focus-title">★ FOCO DE LA SEMANA (META CLAVE)</div>
+                            <div class="preview-focus-content" id="prev-focus-text">Avanzar el borrador editorial y blindar 2 tardes sin reuniones ni pantallas.</div>
+                        </div>
+
+                        <div class="preview-day-row">
+                            <div class="preview-day-head">
+                                <span class="preview-day-name">VIERNES</span>
+                            </div>
+                            <div class="preview-day-text" id="prev-viernes-text">Bandeja a cero y balance semanal</div>
+                        </div>
+
+                        <div class="preview-day-row">
+                            <div class="preview-day-head">
+                                <span class="preview-day-name">SÁBADO</span>
+                            </div>
+                            <div class="preview-day-text" id="prev-sabado-text">Paseo largo analógico y descanso</div>
+                        </div>
+
+                        <div class="preview-day-row">
+                            <div class="preview-day-head">
+                                <span class="preview-day-name">DOMINGO</span>
+                            </div>
+                            <div class="preview-day-text" id="prev-domingo-text">Planificación relajada de la próxima semana</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SECCIÓN INFERIOR: TAREAS SECUNDARIAS / NOTAS -->
+                <div class="preview-bottom-section">
+                    <div class="preview-bottom-label">
+                        <span>TAREAS SECUNDARIAS / NOTAS IMPORTANTES</span>
+                        <span id="prev-style-badge" style="font-weight: normal; color: #888;">Retícula de puntos</span>
+                    </div>
+                    <div class="preview-bottom-box rayado-dots" id="prev-bottom-box">
+                        <div id="prev-secundarias-text">• Enviar presupuestos pendientes a imprenta&#10;• Caminar 30 min sin teléfono&#10;• Ordenar mesa de trabajo</div>
+                    </div>
+                </div>
+
+                <!-- FOOTER EDITORIAL -->
+                <div class="preview-sheet-footer">
+                    <span>MENOS RUIDO · VISTA SEMANAL ATEMPORAL</span>
+                    <span>editorialmenosruido.com</span>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA Y COMPRA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <span class="modal-badge" id="modal-badge-label">Descarga Lista</span>
+            <h3 class="modal-title" id="modal-title-label">Tu Semana en Papel</h3>
+            <p class="modal-desc" id="modal-desc-label">Genera tu PDF vectorial de alta definición listo para imprimir o utilizar.</p>
+
+            <!-- SELECTOR DE SEMANAS (SOLO EN PLANTILLA LIMPIA) -->
+            <div class="modal-pages-selector" id="modal-weeks-selector">
+                <div>
+                    <span class="modal-pages-label">¿Cuántas semanas quieres imprimir?</span>
+                    <span class="modal-pages-hint">Elige de 1 a 4 semanas para tener un mes completo encadenado en un solo PDF.</span>
+                </div>
+                <div class="pages-stepper">
+                    <button type="button" class="btn-step" onclick="changeWeeksCount(-1)">−</button>
+                    <span class="pages-count-display" id="modal-weeks-count">1</span>
+                    <button type="button" class="btn-step" onclick="changeWeeksCount(1)">+</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn-modal-download" onclick="executeWeeklyDownload()">
+                <span>📥 Descargar PDF ahora</span>
+            </button>
+
+            <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN SEMANAL EN AMAZON -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 0 0 12px 0;">
+                    El método completo está en nuestros libros de Editorial Menos Ruido. Toda la metodología y estructura estratégica está explicada en ellos, ideales para tener 53 semanas reunidas en un solo lugar y evitar el desorden de hojas sueltas. Si te gusta la sensación de planificar en papel con claridad y sin ruido, el cuaderno físico te dará la experiencia completa y duradera.
+                </p>
+
+                <div class="modal-books-grid">
+                    <!-- 1. Semanal Atemporal -->
+                    <div class="modal-book-card">
+                        <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Atemporal" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Formato Apaisado</span>
+                            <h4 class="modal-book-title">Planificador Semanal</h4>
+                            <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-semanal-simple.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 2. Semanal Reversible -->
+                    <div class="modal-book-card">
+                        <img src="/cover_semanal_reversible.jpg" alt="Semanal Reversible" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Doble Portada</span>
+                            <h4 class="modal-book-title">Semanal Reversible</h4>
+                            <a href="/ir/amazon-semanal-reversible.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'semanal_reversible', origen: 'modal_generador_semanal' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-semanal-reversible.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENLACE RESEÑA -->
+            <div style="text-align: center; margin-top: 14px;">
+                <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal' })">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-msg" id="toast-msg"></div>
+
+    <script>
+        // ANALÍTICA VERCEL: TRACKING DE EVENTOS
+        function trackVercelEvent(name, data = {}) {
+            try {
+                if (typeof window.va === 'function') {
+                    window.va('event', { name: name, data: data });
+                }
+            } catch(e) {
+                console.warn('[Vercel Analytics]', e);
+            }
+        }
+
+        // MÉTRICA VERCEL GRATIS (TABLA PAGES)
+        function registrarMetricaGratis(url) {
+            try {
+                const ifr = document.createElement('iframe');
+                ifr.style.display = 'none';
+                ifr.src = url;
+                document.body.appendChild(ifr);
+                setTimeout(() => ifr.remove(), 4000);
+            } catch(e) {}
+        }
+
+        // ESTADO DE CONFIGURACIÓN
+        let activeRayado = 'dots';
+        let isBlankModal = false;
+        let modalWeeksCount = 1;
+
+        function setStyle(type, val) {
+            if (type === 'rayado') {
+                activeRayado = val;
+                document.querySelectorAll('.style-pill-btn').forEach(b => b.classList.remove('active'));
+                const btn = document.getElementById(`btn-rayado-${val}`);
+                if (btn) btn.classList.add('active');
+
+                const box = document.getElementById('prev-bottom-box');
+                box.className = 'preview-bottom-box';
+                if (val === 'dots') box.classList.add('rayado-dots');
+                else if (val === 'lines') box.classList.add('rayado-lines');
+                else if (val === 'grid') box.classList.add('rayado-grid');
+
+                const badge = document.getElementById('prev-style-badge');
+                const labels = {
+                    dots: 'Retícula de puntos',
+                    lines: 'Líneas suaves',
+                    grid: 'Cuadrícula',
+                    blank: 'Papel limpio'
+                };
+                badge.textContent = labels[val] || '';
+            }
+        }
+
+        function handleDatesInput() {
+            const val = document.getElementById('input-week-dates').value.trim();
+            document.getElementById('count-dates').textContent = `${val.length}/40`;
+            document.getElementById('prev-dates-text').textContent = val 
+                ? `SEMANA: ${val}` 
+                : 'SEMANA DEL:  __ / __ / ____  AL  __ / __ / ____';
+        }
+
+        function handleFocusInput() {
+            const val = document.getElementById('input-week-focus').value.trim();
+            document.getElementById('count-focus').textContent = `${val.length}/100`;
+            document.getElementById('prev-focus-text').textContent = val 
+                ? val 
+                : 'Avanzar el borrador editorial y blindar 2 tardes sin reuniones ni pantallas.';
+        }
+
+        function handleDayInput(day) {
+            const val = document.getElementById(`input-${day}`).value.trim();
+            const prev = document.getElementById(`prev-${day}-text`);
+            const defaults = {
+                lunes: 'Definir objetivos prioritarios de la semana',
+                martes: 'Bloque de trabajo profundo de 9:00 a 12:00',
+                miercoles: 'Revisión de avances intermedios',
+                jueves: 'Cierre de entregas y comunicación externa',
+                viernes: 'Bandeja a cero y balance semanal',
+                sabado: 'Paseo largo analógico y descanso',
+                domingo: 'Planificación relajada de la próxima semana'
+            };
+            prev.textContent = val ? val : defaults[day];
+        }
+
+        function handleSecundariasInput() {
+            const val = document.getElementById('input-secundarias').value.trim();
+            const prev = document.getElementById('prev-secundarias-text');
+            prev.textContent = val ? val : '• Enviar presupuestos pendientes a imprenta\n• Caminar 30 min sin teléfono\n• Ordenar mesa de trabajo';
+        }
+
+        function renderPreview() {
+            handleDatesInput();
+            handleFocusInput();
+            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(handleDayInput);
+            handleSecundariasInput();
+        }
+
+        function clearAllData() {
+            document.getElementById('input-week-dates').value = '';
+            document.getElementById('input-week-focus').value = '';
+            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(d => {
+                document.getElementById(`input-${d}`).value = '';
+            });
+            document.getElementById('input-secundarias').value = '';
+            renderPreview();
+            showToast('✓ Formulario limpiado.');
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-msg');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
+
+        // MODAL HANDLERS
+        function openDownloadModal(isBlank) {
+            isBlankModal = isBlank;
+            const modal = document.getElementById('download-modal');
+            const weeksSelector = document.getElementById('modal-weeks-selector');
+            const badge = document.getElementById('modal-badge-label');
+            const title = document.getElementById('modal-title-label');
+            const desc = document.getElementById('modal-desc-label');
+
+            if (isBlank) {
+                badge.textContent = 'Plantilla Limpia en Blanco';
+                title.textContent = 'Tu Semana en Papel (Para Rellenar a Mano)';
+                desc.textContent = 'Descarga la cuadrícula semanal limpia lista para lápiz, bolígrafo o pluma estilográfica.';
+                weeksSelector.style.display = 'flex';
+                modalWeeksCount = 1;
+                document.getElementById('modal-weeks-count').textContent = '1';
+            } else {
+                badge.textContent = 'PDF Personalizado con Tus Tareas';
+                title.textContent = 'Tu Planificación Semanal Lista';
+                desc.textContent = 'Descarga tu semana organizada con todos tus textos maquetados a escala vectorial de alta resolución.';
+                weeksSelector.style.display = 'none';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('download-modal').classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.id === 'download-modal') {
+                closeDownloadModal();
+            }
+        }
+
+        function changeWeeksCount(delta) {
+            modalWeeksCount = Math.max(1, Math.min(4, modalWeeksCount + delta));
+            document.getElementById('modal-weeks-count').textContent = modalWeeksCount;
+        }
+
+        // EXPORTACIÓN A PDF VECTORIAL (jsPDF)
+        function executeWeeklyDownload() {
+            closeDownloadModal();
+            const { jsPDF } = window.jspdf;
+
+            const formatChoice = document.getElementById('select-format').value;
+            // 8.25" x 6" en mm: 209.55 x 152.4 mm (landscape)
+            const isCustomBook = formatChoice === 'apaisado';
+            const pageDims = isCustomBook ? [209.5, 152.4] : 'a4';
+
+            let doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: pageDims
+            });
+
+            const userDates = isBlankModal ? 'SEMANA DEL:                             AL                             ' : (document.getElementById('input-week-dates').value.trim() || 'SEMANA ACTUAL');
+            const userFocus = isBlankModal ? '' : document.getElementById('input-week-focus').value.trim();
+
+            const daysData = {
+                lunes: isBlankModal ? '' : document.getElementById('input-lunes').value.trim(),
+                martes: isBlankModal ? '' : document.getElementById('input-martes').value.trim(),
+                miercoles: isBlankModal ? '' : document.getElementById('input-miercoles').value.trim(),
+                jueves: isBlankModal ? '' : document.getElementById('input-jueves').value.trim(),
+                viernes: isBlankModal ? '' : document.getElementById('input-viernes').value.trim(),
+                sabado: isBlankModal ? '' : document.getElementById('input-sabado').value.trim(),
+                domingo: isBlankModal ? '' : document.getElementById('input-domingo').value.trim()
+            };
+
+            const userSecundarias = isBlankModal ? '' : document.getElementById('input-secundarias').value.trim();
+            const pagesToRender = isBlankModal ? modalWeeksCount : 1;
+
+            function renderWeeklyPage(docInstance, pageIndex) {
+                const pWidth = docInstance.internal.pageSize.getWidth();
+                const pHeight = docInstance.internal.pageSize.getHeight();
+                const margin = 14;
+                const cWidth = pWidth - (margin * 2);
+
+                // Fondo crema editorial
+                docInstance.setFillColor(255, 254, 251);
+                docInstance.rect(0, 0, pWidth, pHeight, 'F');
+
+                let y = margin + 4;
+
+                // Kicker superior
+                docInstance.setFont('helvetica', 'bold');
+                docInstance.setFontSize(7.5);
+                docInstance.setTextColor(135, 85, 59);
+                docInstance.text('PLANIFICADOR MENOS RUIDO · VISTA SEMANAL HORIZONTAL', margin, y);
+                y += 5;
+
+                // Título y Rango de Fechas
+                docInstance.setFont('times', 'bold');
+                docInstance.setFontSize(15);
+                docInstance.setTextColor(30, 25, 22);
+                docInstance.text('Planificación Semanal', margin, y);
+
+                docInstance.setFont('helvetica', 'bold');
+                docInstance.setFontSize(8.5);
+                docInstance.setTextColor(90, 85, 80);
+                const datesLabel = isBlankModal ? 'SEMANA DEL:   ____ / ____        AL   ____ / ____' : `SEMANA: ${userDates}`;
+                docInstance.text(datesLabel, pWidth - margin, y, { align: 'right' });
+                y += 4;
+
+                // Línea separadora
+                docInstance.setDrawColor(40, 35, 30);
+                docInstance.setLineWidth(0.4);
+                docInstance.line(margin, y, pWidth - margin, y);
+                y += 6;
+
+                // Distribución en 2 Columnas
+                const colWidth = (cWidth - 8) / 2;
+                const gridTop = y;
+                const gridHeight = pHeight - gridTop - 34; // Deja espacio para secundarias y footer
+
+                // Marco Columna Izquierda (Lunes a Jueves)
+                docInstance.setFillColor(255, 255, 255);
+                docInstance.setDrawColor(180, 175, 165);
+                docInstance.setLineWidth(0.3);
+                docInstance.roundedRect(margin, gridTop, colWidth, gridHeight, 2, 2, 'FD');
+
+                // Marco Columna Derecha (Foco + Viernes a Domingo)
+                docInstance.roundedRect(margin + colWidth + 8, gridTop, colWidth, gridHeight, 2, 2, 'FD');
+
+                // DIBUJAR COLUMNA IZQUIERDA (4 bloques: Lun, Mar, Mié, Jue)
+                const leftRowH = gridHeight / 4;
+                const leftDays = [
+                    { key: 'lunes', label: 'LUNES', text: daysData.lunes },
+                    { key: 'martes', label: 'MARTES', text: daysData.martes },
+                    { key: 'miercoles', label: 'MIÉRCOLES', text: daysData.miercoles },
+                    { key: 'jueves', label: 'JUEVES', text: daysData.jueves }
+                ];
+
+                leftDays.forEach((item, idx) => {
+                    const rowY = gridTop + (idx * leftRowH);
+                    docInstance.setFont('helvetica', 'bold');
+                    docInstance.setFontSize(7.5);
+                    docInstance.setTextColor(40, 35, 30);
+                    docInstance.text(item.label, margin + 4, rowY + 5.5);
+
+                    // Pequeña línea bajo el día
+                    docInstance.setDrawColor(210, 205, 195);
+                    docInstance.setLineWidth(0.2);
+                    docInstance.line(margin + 4, rowY + 7, margin + colWidth - 4, rowY + 7);
+
+                    if (item.text) {
+                        docInstance.setFont('times', 'normal');
+                        docInstance.setFontSize(9);
+                        docInstance.setTextColor(25, 20, 15);
+                        docInstance.text(item.text, margin + 4, rowY + 11.5, { maxWidth: colWidth - 8, lineHeightFactor: 1.3 });
+                    }
+
+                    // Línea divisoria entre días
+                    if (idx < 3) {
+                        docInstance.setDrawColor(220, 215, 205);
+                        docInstance.setLineWidth(0.25);
+                        docInstance.line(margin, rowY + leftRowH, margin + colWidth, rowY + leftRowH);
+                    }
+                });
+
+                // DIBUJAR COLUMNA DERECHA (Foco + Vie, Sáb, Dom)
+                const rightColX = margin + colWidth + 8;
+                const focusH = gridHeight * 0.28;
+                const rightRemainingH = gridHeight - focusH;
+                const rightRowH = rightRemainingH / 3;
+
+                // 1. Foco
+                docInstance.setFillColor(250, 248, 244);
+                docInstance.rect(rightColX, gridTop, colWidth, focusH, 'F');
+                docInstance.setFont('helvetica', 'bold');
+                docInstance.setFontSize(7.5);
+                docInstance.setTextColor(135, 85, 59);
+                docInstance.text('★ FOCO DE LA SEMANA (META CLAVE)', rightColX + 4, gridTop + 5.5);
+                docInstance.setDrawColor(200, 190, 180);
+                docInstance.setLineWidth(0.2);
+                docInstance.line(rightColX + 4, gridTop + 7, rightColX + colWidth - 4, gridTop + 7);
+
+                if (userFocus) {
+                    docInstance.setFont('times', 'bold');
+                    docInstance.setFontSize(9);
+                    docInstance.setTextColor(30, 25, 20);
+                    docInstance.text(userFocus, rightColX + 4, gridTop + 11.5, { maxWidth: colWidth - 8, lineHeightFactor: 1.3 });
+                }
+
+                // Línea bajo el Foco
+                docInstance.setDrawColor(210, 205, 195);
+                docInstance.setLineWidth(0.3);
+                docInstance.line(rightColX, gridTop + focusH, rightColX + colWidth, gridTop + focusH);
+
+                // 2. Viernes, Sábado, Domingo
+                const rightDays = [
+                    { key: 'viernes', label: 'VIERNES', text: daysData.viernes },
+                    { key: 'sabado', label: 'SÁBADO', text: daysData.sabado },
+                    { key: 'domingo', label: 'DOMINGO', text: daysData.domingo }
+                ];
+
+                rightDays.forEach((item, idx) => {
+                    const rowY = gridTop + focusH + (idx * rightRowH);
+                    docInstance.setFont('helvetica', 'bold');
+                    docInstance.setFontSize(7.5);
+                    docInstance.setTextColor(40, 35, 30);
+                    docInstance.text(item.label, rightColX + 4, rowY + 5.5);
+
+                    docInstance.setDrawColor(210, 205, 195);
+                    docInstance.setLineWidth(0.2);
+                    docInstance.line(rightColX + 4, rowY + 7, rightColX + colWidth - 4, rowY + 7);
+
+                    if (item.text) {
+                        docInstance.setFont('times', 'normal');
+                        docInstance.setFontSize(9);
+                        docInstance.setTextColor(25, 20, 15);
+                        docInstance.text(item.text, rightColX + 4, rowY + 11.5, { maxWidth: colWidth - 8, lineHeightFactor: 1.3 });
+                    }
+
+                    if (idx < 2) {
+                        docInstance.setDrawColor(220, 215, 205);
+                        docInstance.setLineWidth(0.25);
+                        docInstance.line(rightColX, rowY + rightRowH, rightColX + colWidth, rowY + rightRowH);
+                    }
+                });
+
+                // SECCIÓN INFERIOR: TAREAS SECUNDARIAS / NOTAS
+                const secTop = gridTop + gridHeight + 5;
+                const secHeight = pHeight - secTop - margin - 4;
+
+                docInstance.setFont('helvetica', 'bold');
+                docInstance.setFontSize(7.5);
+                docInstance.setTextColor(60, 55, 50);
+                docInstance.text('TAREAS SECUNDARIAS / NOTAS IMPORTANTES', margin, secTop);
+
+                // Cuadro de notas con rayado seleccionado
+                const boxY = secTop + 2.5;
+                docInstance.setFillColor(252, 250, 247);
+                docInstance.setDrawColor(215, 210, 202);
+                docInstance.setLineWidth(0.25);
+                docInstance.roundedRect(margin, boxY, cWidth, secHeight, 1.5, 1.5, 'FD');
+
+                if (activeRayado === 'dots') {
+                    docInstance.setFillColor(190, 183, 173);
+                    for (let px = margin + 4; px <= margin + cWidth - 4; px += 5) {
+                        for (let py = boxY + 4; py <= boxY + secHeight - 3; py += 5) {
+                            docInstance.circle(px, py, 0.18, 'F');
+                        }
+                    }
+                } else if (activeRayado === 'lines') {
+                    docInstance.setDrawColor(220, 215, 208);
+                    docInstance.setLineWidth(0.2);
+                    for (let py = boxY + 5; py <= boxY + secHeight - 2; py += 5) {
+                        docInstance.line(margin + 4, py, margin + cWidth - 4, py);
+                    }
+                } else if (activeRayado === 'grid') {
+                    docInstance.setDrawColor(225, 220, 214);
+                    docInstance.setLineWidth(0.15);
+                    for (let px = margin + 4; px <= margin + cWidth - 4; px += 5) {
+                        docInstance.line(px, boxY + 2, px, boxY + secHeight - 2);
+                    }
+                    for (let py = boxY + 4; py <= boxY + secHeight - 2; py += 5) {
+                        docInstance.line(margin + 4, py, margin + cWidth - 4, py);
+                    }
+                }
+
+                if (userSecundarias) {
+                    docInstance.setFont('times', 'normal');
+                    docInstance.setFontSize(8.5);
+                    docInstance.setTextColor(30, 25, 20);
+                    docInstance.text(userSecundarias, margin + 4, boxY + 5, { maxWidth: cWidth - 8, lineHeightFactor: 1.35 });
+                }
+
+                // FOOTER EDITORIAL
+                const footY = pHeight - margin + 2;
+                docInstance.setDrawColor(215, 210, 202);
+                docInstance.setLineWidth(0.2);
+                docInstance.line(margin, footY - 2.5, pWidth - margin, footY - 2.5);
+
+                docInstance.setFont('helvetica', 'normal');
+                docInstance.setFontSize(6.5);
+                docInstance.setTextColor(140, 135, 130);
+
+                const footerText = pagesToRender > 1
+                    ? `MENOS RUIDO · VISTA SEMANAL HORIZONTAL (SEMANA ${pageIndex + 1} DE ${pagesToRender})`
+                    : 'MENOS RUIDO · VISTA SEMANAL HORIZONTAL';
+                docInstance.text(footerText, margin, footY);
+
+                docInstance.setTextColor(135, 85, 59);
+                docInstance.textWithLink('editorialmenosruido.com', pWidth - margin, footY, { url: 'https://editorialmenosruido.com', align: 'right' });
+            }
+
+            // Renderizar páginas
+            for (let i = 0; i < pagesToRender; i++) {
+                if (i > 0) {
+                    doc.addPage(pageDims, 'landscape');
+                }
+                renderWeeklyPage(doc, i);
+            }
+
+            const fileName = isBlankModal
+                ? (pagesToRender > 1
+                    ? `Planificador_Semanal_Menos_Ruido_${pagesToRender}_semanas.pdf`
+                    : 'Planificador_Semanal_Menos_Ruido_Plantilla_Blanco.pdf')
+                : 'Planificador_Semanal_Menos_Ruido_Personalizado.pdf';
+
+            doc.save(fileName);
+            showToast(`✓ Archivo "${fileName}" descargado.`);
+
+            // Métricas
+            registrarMetricaGratis('/metricas/descarga-pdf-generador-semanal.html');
+            trackVercelEvent('descarga_pdf', {
+                herramienta: 'generador_semanal',
+                tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado',
+                semanas: pagesToRender,
+                formato: formatChoice,
+                rayado: activeRayado
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPreview();
+        });
+    </script>
+</body>
+</html>
