@@ -466,30 +466,37 @@
         }
 
         .preview-focus-card {
-            background: #faf8f4;
+            background: #ffffff;
             border: none;
-            border-bottom: 1px solid #ddd7cc;
+            border-bottom: 1px dashed #e8e2d8;
             margin: 0;
-            padding: 8px 12px;
-            flex-shrink: 0;
+            padding: 5px 12px 4px 12px;
+            box-sizing: border-box;
+            min-height: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
 
         .preview-focus-title {
-            font-size: 0.65rem;
+            font-size: 0.66rem;
             font-weight: 800;
             color: var(--accent);
-            letter-spacing: 0.6px;
-            margin-bottom: 3px;
+            letter-spacing: 0.8px;
+            line-height: 1.1;
+            margin-bottom: 2px;
         }
 
         .preview-focus-content {
             font-family: var(--font-serif);
-            font-size: 0.76rem;
+            font-size: 0.75rem;
             color: #1e1916;
             font-weight: 600;
             line-height: 1.3;
             white-space: pre-wrap;
             word-break: break-word;
+            margin-top: 1px;
         }
 
         /* TAREAS SECUNDARIAS / NOTAS CON RESPIRO */
@@ -840,15 +847,15 @@
                 </div>
             </div>
 
-            <!-- 1. SEMANA (1 AL 54) -->
+            <!-- 1. SEMANA (1 AL 55) -->
             <div class="section-box">
                 <div class="section-header-title">
                     <span>1. Semana del Año</span>
                     <span>🗓️</span>
                 </div>
                 <div class="control-group">
-                    <label for="input-week-number">Semana (1 a 54)</label>
-                    <input type="number" id="input-week-number" min="1" max="54" placeholder="Ej: 42" oninput="handleDatesInput()">
+                    <label for="input-week-number">Semana (1 a 55)</label>
+                    <input type="number" id="input-week-number" min="1" max="55" placeholder="Ej: 42" oninput="handleDatesInput()">
                 </div>
                 <div class="control-group">
                     <label for="input-week-focus">Foco principal de la semana (1 meta clave) <span class="char-count" id="count-focus">0/140</span></label>
@@ -895,43 +902,20 @@
                 </div>
             </div>
 
-            <!-- 3. TAREAS SECUNDARIAS / NOTAS INFERIORES CON LÍMITE AJUSTADO AL PAPEL -->
+            <!-- 3. TAREAS SECUNDARIAS / NOTAS INFERIORES CON LÍMITE A 320 CARACTERES -->
             <div class="section-box">
                 <div class="section-header-title">
                     <span>3. Tareas Secundarias / Notas</span>
                     <span>📝</span>
                 </div>
                 <div class="control-group">
-                    <label for="input-secundarias">Tareas secundarias o notas importantes <span class="char-count" id="count-secundarias">0/160</span></label>
-                    <textarea id="input-secundarias" maxlength="160" rows="3" placeholder="• Enviar presupuestos&#10;• Comprar recambios de pluma&#10;• Organizar carpetas del ordenador" oninput="handleSecundariasInput()"></textarea>
+                    <label for="input-secundarias">Tareas secundarias o notas importantes <span class="char-count" id="count-secundarias">0/320</span></label>
+                    <textarea id="input-secundarias" maxlength="320" rows="3" placeholder="• Enviar presupuestos&#10;• Comprar recambios de pluma&#10;• Organizar carpetas del ordenador" oninput="handleSecundariasInput()"></textarea>
                 </div>
             </div>
 
-            <!-- 4. OPCIONES DE DISEÑO Y HOJA -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>4. Opciones de Diseño y Hoja</span>
-                    <span>📐</span>
-                </div>
-                <div class="control-group">
-                    <label>Rayado de notas inferiores</label>
-                    <div class="style-pills">
-                        <button type="button" class="style-pill-btn active" id="btn-rayado-dots" onclick="setStyle('rayado', 'dots')">Puntos</button>
-                        <button type="button" class="style-pill-btn" id="btn-rayado-lines" onclick="setStyle('rayado', 'lines')">Líneas</button>
-                        <button type="button" class="style-pill-btn" id="btn-rayado-grid" onclick="setStyle('rayado', 'grid')">Cuadrícula</button>
-                        <button type="button" class="style-pill-btn" id="btn-rayado-blank" onclick="setStyle('rayado', 'blank')">Limpio / Blanco</button>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <label for="select-format">Formato de página para plantilla en blanco</label>
-                    <select id="select-format" onchange="renderPreview()">
-                        <option value="apaisado" selected>Formato Libro Apaisado 8.25" x 6" (21 x 15,2 cm) — Escala Real</option>
-                        <option value="a4">Folio Estándar DIN A4 Apaisado (29,7 x 21 cm) — Impresora Doméstica</option>
-                    </select>
-                    <span style="font-size: 0.72rem; color: #888; margin-top: 2px;">El PDF personalizado con datos se descarga siempre a escala real en Formato Libro Apaisado 8.25" x 6".</span>
-                </div>
-            </div>
+            <!-- Formato predeterminado y gestión transparente -->
+            <input type="hidden" id="select-format" value="apaisado">
 
             <!-- BOTONES DE ACCIÓN PRINCIPALES -->
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
@@ -1000,7 +984,7 @@
                     <!-- COLUMNA DERECHA: VIERNES A DOMINGO + FOCO -->
                     <div class="preview-column-card">
                         <div class="preview-focus-card">
-                            <div class="preview-focus-title">FOCO DE LA SEMANA (META CLAVE)</div>
+                            <div class="preview-focus-title">FOCO DE LA SEMANA</div>
                             <div class="preview-focus-content" id="prev-focus-text">Avanzar el borrador editorial y blindar 2 tardes sin reuniones ni pantallas.</div>
                         </div>
 
@@ -1033,7 +1017,7 @@
                     <div class="preview-bottom-label">
                         <span>TAREAS SECUNDARIAS / NOTAS IMPORTANTES</span>
                     </div>
-                    <div class="preview-bottom-box rayado-dots" id="prev-bottom-box">
+                    <div class="preview-bottom-box rayado-blank" id="prev-bottom-box">
                         <div id="prev-secundarias-text">• Enviar presupuestos pendientes a imprenta&#10;• Caminar 30 min sin teléfono&#10;• Ordenar mesa de trabajo</div>
                     </div>
                 </div>
@@ -1162,24 +1146,16 @@
         }
 
         // ESTADO DE CONFIGURACIÓN
-        let activeRayado = 'dots';
+        let activeRayado = 'blank';
         let isBlankModal = false;
         let modalWeeksCount = 1;
 
         function setStyle(type, val) {
             if (type === 'rayado') {
-                activeRayado = val;
-                document.querySelectorAll('.style-pill-btn').forEach(b => b.classList.remove('active'));
-                const btn = document.getElementById('btn-rayado-' + val);
-                if (btn) btn.classList.add('active');
-
+                activeRayado = 'blank';
                 const box = document.getElementById('prev-bottom-box');
                 if (box) {
-                    box.className = 'preview-bottom-box';
-                    if (val === 'dots') box.classList.add('rayado-dots');
-                    else if (val === 'lines') box.classList.add('rayado-lines');
-                    else if (val === 'grid') box.classList.add('rayado-grid');
-                    else if (val === 'blank') box.classList.add('rayado-blank');
+                    box.className = 'preview-bottom-box rayado-blank';
                 }
             }
         }
@@ -1192,7 +1168,7 @@
             let raw = input.value.replace(/[^0-9]/g, '');
             if (raw.length > 0) {
                 let num = parseInt(raw, 10);
-                if (num > 54) num = 54;
+                if (num > 55) num = 55;
                 if (num < 1) num = 1;
                 input.value = num;
                 prev.textContent = 'SEMANA: ' + num;
@@ -1237,7 +1213,7 @@
             if (!input || !prev) return;
 
             const val = input.value;
-            if (count) count.textContent = val.length + '/160';
+            if (count) count.textContent = val.length + '/320';
             prev.textContent = val.trim() ? val : '• Enviar presupuestos pendientes a imprenta\n• Caminar 30 min sin teléfono\n• Organizar mesa de trabajo';
         }
 
@@ -1481,31 +1457,25 @@
                 const rightRowH = rightRemainingH / 3;
 
                 // 1. Foco
-                docInstance.setFillColor(250, 248, 244);
-                docInstance.rect(rightColX, gridTop, colWidth, focusH, 'F');
-                
+                // 1. Foco (Limpio y blanco, sin líneas que lo encierren)
                 docInstance.setFont('helvetica', 'bold');
                 docInstance.setFontSize(isCustomBook ? 7.5 : 9);
                 docInstance.setTextColor(135, 85, 59);
-                docInstance.text('FOCO DE LA SEMANA (META CLAVE)', rightColX + 4, gridTop + (isCustomBook ? 5 : 6));
-                
-                docInstance.setDrawColor(200, 190, 180);
-                docInstance.setLineWidth(0.2);
-                docInstance.line(rightColX + 4, gridTop + (isCustomBook ? 6.5 : 8), rightColX + colWidth - 4, gridTop + (isCustomBook ? 6.5 : 8));
+                docInstance.text('FOCO DE LA SEMANA', rightColX + 4, gridTop + (isCustomBook ? 5 : 6));
 
                 if (userFocus) {
                     docInstance.setFont('times', 'bold');
                     docInstance.setFontSize(isCustomBook ? 8.2 : 9.8);
                     docInstance.setTextColor(30, 25, 20);
-                    docInstance.text(userFocus, rightColX + 4, gridTop + (isCustomBook ? 10.2 : 12.5), { 
+                    docInstance.text(userFocus, rightColX + 4, gridTop + (isCustomBook ? 9.5 : 11.5), { 
                         maxWidth: colWidth - 8, 
                         lineHeightFactor: 1.25 
                     });
                 }
 
-                // Línea divisoria bajo el Foco
-                docInstance.setDrawColor(210, 205, 195);
-                docInstance.setLineWidth(0.3);
+                // Línea divisoria entre el Foco y el Viernes (idéntica a la separación entre días)
+                docInstance.setDrawColor(220, 215, 205);
+                docInstance.setLineWidth(0.25);
                 docInstance.line(rightColX, gridTop + focusH, rightColX + colWidth, gridTop + focusH);
 
                 // 2. Viernes, Sábado, Domingo (con altura suficiente para 3 líneas completas)
