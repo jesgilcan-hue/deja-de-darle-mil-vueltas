@@ -259,7 +259,10 @@
             color: #222;
             outline: none;
             resize: vertical;
+            overflow-y: auto;
+            line-height: 1.4;
             transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
         }
 
         input[type="number"]:focus, textarea:focus, select:focus {
@@ -1335,15 +1338,32 @@
             showToast('✓ Ejemplo visual mostrado en la vista previa.');
         }
 
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        }
+
         function clearAllData() {
             isExampleActive = false;
             if (document.getElementById('input-week-number')) document.getElementById('input-week-number').value = '';
-            if (document.getElementById('input-week-focus')) document.getElementById('input-week-focus').value = '';
+            if (document.getElementById('input-week-focus')) {
+                const el = document.getElementById('input-week-focus');
+                el.value = '';
+                el.style.height = '';
+            }
             ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(function(d) {
                 const el = document.getElementById('input-' + d);
-                if (el) el.value = '';
+                if (el) {
+                    el.value = '';
+                    el.style.height = '';
+                }
             });
-            if (document.getElementById('input-secundarias')) document.getElementById('input-secundarias').value = '';
+            if (document.getElementById('input-secundarias')) {
+                const el = document.getElementById('input-secundarias');
+                el.value = '';
+                el.style.height = '';
+            }
             renderPreview();
             showToast('✓ Formulario y vista previa limpiados.');
         }
@@ -1728,6 +1748,12 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             renderPreview();
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+                autoResizeTextarea(ta);
+            });
         });
     </script>
 </body>

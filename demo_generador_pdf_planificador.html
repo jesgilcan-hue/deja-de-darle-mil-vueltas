@@ -407,9 +407,9 @@
 
         .item-input-row {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 6px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .btn-remove-item {
@@ -418,9 +418,10 @@
             color: #999;
             font-size: 1.1rem;
             cursor: pointer;
-            padding: 0 4px;
+            padding: 4px;
             line-height: 1;
             transition: color 0.2s;
+            margin-top: 6px;
         }
 
         .btn-remove-item:hover {
@@ -444,6 +445,7 @@
             color: #222;
             font-family: inherit;
             transition: border-color 0.2s;
+            box-sizing: border-box;
         }
 
         input[type="text"]:focus, textarea:focus, select:focus {
@@ -454,7 +456,19 @@
 
         textarea {
             resize: vertical;
-            min-height: 70px;
+            overflow-y: auto;
+            min-height: 48px;
+            line-height: 1.4;
+        }
+
+        .task-input-field {
+            min-height: 46px;
+            font-size: 0.88rem;
+        }
+
+        .habit-input-field {
+            min-height: 40px;
+            font-size: 0.85rem;
         }
 
         .two-cols {
@@ -1205,7 +1219,7 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección" onclick="removeSection('priority')">✕</button>
                 </div>
-                <input type="text" id="input-priority" value="" maxlength="120" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="renderPreview()">
+                <textarea id="input-priority" rows="2" maxlength="120" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="autoResizeTextarea(this); renderPreview();"></textarea>
             </div>
 
             <!-- 2. TAREAS SECUNDARIAS (MÁXIMO 3) -->
@@ -1255,7 +1269,7 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
-                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()"></textarea>
+                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="autoResizeTextarea(this); renderPreview();"></textarea>
             </div>
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
@@ -1581,10 +1595,12 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <input type="text" value="${task}" maxlength="130" placeholder="Tarea ${idx + 1}" oninput="updateTaskValue(${idx}, this.value)">
+                    <textarea class="task-input-field" rows="2" maxlength="130" placeholder="Tarea ${idx + 1}" oninput="autoResizeTextarea(this); updateTaskValue(${idx}, this.value)">${task}</textarea>
                     <button type="button" class="btn-remove-item" title="Eliminar tarea" onclick="removeTaskItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
+                const ta = row.querySelector('textarea');
+                if (ta) autoResizeTextarea(ta);
             });
 
             const blockTasks = document.getElementById('block-tasks');
@@ -1701,10 +1717,12 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <input type="text" value="${habit}" maxlength="65" placeholder="Hábito ${idx + 1}" oninput="updateHabitValue(${idx}, this.value)">
+                    <textarea class="habit-input-field" rows="1" maxlength="65" placeholder="Hábito ${idx + 1}" oninput="autoResizeTextarea(this); updateHabitValue(${idx}, this.value)">${habit}</textarea>
                     <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
+                const ta = row.querySelector('textarea');
+                if (ta) autoResizeTextarea(ta);
             });
 
             const blockHabits = document.getElementById('block-habits');
@@ -1859,13 +1877,21 @@
             showStatus('Ejemplo visual mostrado en la vista previa.');
         }
 
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        }
+
         // LIMPIAR: DEJA EL FORMULARIO Y LA VISTA PREVIA COMPLETAMENTE VACÍOS
         function clearData() {
             isExampleActive = false;
             document.getElementById('input-day').value = '';
             document.getElementById('input-date').value = '';
-            document.getElementById('input-priority').value = '';
-            document.getElementById('input-notes').value = '';
+            const pInput = document.getElementById('input-priority');
+            if (pInput) { pInput.value = ''; pInput.style.height = ''; }
+            const nInput = document.getElementById('input-notes');
+            if (nInput) { nInput.value = ''; nInput.style.height = ''; }
 
             tasksList = ['', '', ''];
             habitsList = ['', ''];
@@ -2334,6 +2360,12 @@
             renderTasksInputs();
             renderHabitsInputs();
             renderPreview();
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+                autoResizeTextarea(ta);
+            });
         });
     </script>
 </body>
