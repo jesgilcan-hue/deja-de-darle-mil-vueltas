@@ -416,25 +416,29 @@
             background: #ffffff;
             border: 1px solid #ddd7cc;
             border-radius: 6px;
-            padding: 8px 12px;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: stretch;
             min-height: 0;
+            overflow: hidden;
         }
 
         .preview-day-row {
+            flex: 1;
             display: flex;
             flex-direction: column;
+            justify-content: flex-start;
             gap: 2px;
             border-bottom: 1px dashed #e8e2d8;
-            padding-bottom: 4px;
-            padding-top: 2px;
+            padding: 5px 12px 4px 12px;
+            box-sizing: border-box;
+            min-height: 0;
         }
 
         .preview-day-row:last-child {
             border-bottom: none;
-            padding-bottom: 0;
+            padding-bottom: 4px;
         }
 
         .preview-day-head {
@@ -448,6 +452,7 @@
             font-weight: 800;
             color: #2b2622;
             letter-spacing: 0.8px;
+            line-height: 1.1;
         }
 
         .preview-day-text {
@@ -457,16 +462,16 @@
             line-height: 1.3;
             white-space: pre-wrap;
             word-break: break-word;
+            margin-top: 1px;
         }
 
         .preview-focus-card {
             background: #faf8f4;
             border: none;
-            border-bottom: 1px solid #e2ddd3;
-            margin: -8px -12px 6px -12px;
+            border-bottom: 1px solid #ddd7cc;
+            margin: 0;
             padding: 8px 12px;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
+            flex-shrink: 0;
         }
 
         .preview-focus-title {
@@ -818,7 +823,7 @@
         <div>
             <span class="tag-pill">Herramienta Editorial Gratuita</span>
             <h1>Generador de Planificador Semanal</h1>
-            <p class="subtitle">Estructura tus 7 días en un único plano horizontal. Elige el formato apaisado (8.25"×6") o folio A4 y exporta tu PDF vectorial para imprimir o escribir a mano.</p>
+            <p class="subtitle">Estructura tus 7 días en un único plano horizontal. Imprime tu PDF relleno o en blanco para rellenarlo posteriormente a mano sin saturación digital.</p>
         </div>
     </div>
 
@@ -919,11 +924,12 @@
                 </div>
 
                 <div class="control-group">
-                    <label for="select-format">Formato de página PDF</label>
+                    <label for="select-format">Formato de página para plantilla en blanco</label>
                     <select id="select-format" onchange="renderPreview()">
                         <option value="apaisado" selected>Formato Libro Apaisado 8.25" x 6" (21 x 15,2 cm) — Escala Real</option>
                         <option value="a4">Folio Estándar DIN A4 Apaisado (29,7 x 21 cm) — Impresora Doméstica</option>
                     </select>
+                    <span style="font-size: 0.72rem; color: #888; margin-top: 2px;">El PDF personalizado con datos se descarga siempre a escala real en Formato Libro Apaisado 8.25" x 6".</span>
                 </div>
             </div>
 
@@ -1050,21 +1056,37 @@
             <h3 class="modal-title" id="modal-title-label">Tu Semana en Papel</h3>
             <p class="modal-desc" id="modal-desc-label">Genera tu PDF vectorial de alta definición listo para imprimir o utilizar.</p>
 
-            <!-- SELECTOR DE SEMANAS (SOLO EN PLANTILLA LIMPIA) -->
-            <div class="modal-pages-selector" id="modal-weeks-selector">
-                <div>
-                    <span class="modal-pages-label">¿Cuántas semanas quieres imprimir?</span>
-                    <span class="modal-pages-hint">Elige de 1 a 4 semanas para tener un mes completo encadenado en un solo PDF.</span>
+            <!-- OPCIONES PARA PLANTILLA LIMPIA EN BLANCO: SEMANAS Y FORMATO -->
+            <div id="modal-blank-options" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+                <div class="modal-pages-selector" id="modal-weeks-selector" style="display: flex; margin-bottom: 0;">
+                    <div>
+                        <span class="modal-pages-label">¿Cuántas semanas quieres imprimir?</span>
+                        <span class="modal-pages-hint">Elige de 1 a 4 semanas para tener un mes completo encadenado en un solo PDF.</span>
+                    </div>
+                    <div class="pages-stepper">
+                        <button type="button" class="btn-step" onclick="changeWeeksCount(-1)">−</button>
+                        <span class="pages-count-display" id="modal-weeks-count">1</span>
+                        <button type="button" class="btn-step" onclick="changeWeeksCount(1)">+</button>
+                    </div>
                 </div>
-                <div class="pages-stepper">
-                    <button type="button" class="btn-step" onclick="changeWeeksCount(-1)">−</button>
-                    <span class="pages-count-display" id="modal-weeks-count">1</span>
-                    <button type="button" class="btn-step" onclick="changeWeeksCount(1)">+</button>
+
+                <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px;">
+                    <label for="modal-select-format-weekly" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
+                    <select id="modal-select-format-weekly" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;" onchange="document.getElementById('select-format').value = this.value">
+                        <option value="apaisado">Formato Libro Apaisado 8.25" x 6" (21 x 15,2 cm) — Escala Real</option>
+                        <option value="a4">Folio Estándar DIN A4 Apaisado (29,7 x 21 cm) — Impresora Doméstica</option>
+                    </select>
                 </div>
             </div>
 
+            <!-- AVISO DE FORMATO PARA PERSONALIZADO -->
+            <div id="modal-personalized-format-info" style="display: block; text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+                <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px;">Formato de exportación:</span>
+                <span style="font-size: 0.82rem; color: #333;">Formato Libro Apaisado 8.25" x 6" (21 x 15,2 cm) — Escala Real</span>
+            </div>
+
             <button type="button" class="btn-modal-download" onclick="executeWeeklyDownload()">
-                <span>📥 Descargar PDF ahora</span>
+                <span>📥 <span id="modal-download-btn-text">Descargar PDF ahora</span></span>
             </button>
 
             <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN SEMANAL EN AMAZON -->
@@ -1267,24 +1289,32 @@
             const modal = document.getElementById('download-modal');
             if (!modal) return;
 
-            const weeksSelector = document.getElementById('modal-weeks-selector');
+            const blankOpts = document.getElementById('modal-blank-options');
+            const persInfo = document.getElementById('modal-personalized-format-info');
             const badge = document.getElementById('modal-badge-label');
             const title = document.getElementById('modal-title-label');
             const desc = document.getElementById('modal-desc-label');
+            const btnText = document.getElementById('modal-download-btn-text');
 
             if (isBlank) {
                 if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
                 if (title) title.textContent = 'Tu Semana en Papel (Para Rellenar a Mano)';
-                if (desc) desc.textContent = 'Descarga la cuadrícula semanal limpia lista para lápiz, bolígrafo o pluma estilográfica.';
-                if (weeksSelector) weeksSelector.style.display = 'flex';
+                if (desc) desc.textContent = 'Descarga la cuadrícula semanal limpia lista para lápiz o pluma estilográfica en formato Libro o Folio DIN A4.';
+                if (blankOpts) blankOpts.style.display = 'flex';
+                if (persInfo) persInfo.style.display = 'none';
                 modalWeeksCount = 1;
                 const countEl = document.getElementById('modal-weeks-count');
                 if (countEl) countEl.textContent = '1';
+                const modalFormat = document.getElementById('modal-select-format-weekly');
+                if (modalFormat) modalFormat.value = document.getElementById('select-format').value;
+                if (btnText) btnText.textContent = 'Descargar 1 semana limpia en PDF';
             } else {
                 if (badge) badge.textContent = 'PDF Personalizado con Tus Tareas';
                 if (title) title.textContent = 'Tu Planificación Semanal Lista';
-                if (desc) desc.textContent = 'Descarga tu semana organizada con todos tus textos maquetados a escala vectorial de alta resolución.';
-                if (weeksSelector) weeksSelector.style.display = 'none';
+                if (desc) desc.textContent = 'Descarga tu semana en Formato Libro Apaisado 8.25" x 6" a escala real con todos tus textos maquetados.';
+                if (blankOpts) blankOpts.style.display = 'none';
+                if (persInfo) persInfo.style.display = 'block';
+                if (btnText) btnText.textContent = 'Descargar mi PDF personalizado';
             }
 
             modal.classList.add('active');
@@ -1305,6 +1335,10 @@
             modalWeeksCount = Math.max(1, Math.min(4, modalWeeksCount + delta));
             const countEl = document.getElementById('modal-weeks-count');
             if (countEl) countEl.textContent = modalWeeksCount;
+            const btnText = document.getElementById('modal-download-btn-text');
+            if (btnText && isBlankModal) {
+                btnText.textContent = `Descargar ${modalWeeksCount} ${modalWeeksCount === 1 ? 'semana limpia' : 'semanas limpias'} en PDF`;
+            }
         }
 
         // EXPORTACIÓN A PDF VECTORIAL (jsPDF) CALIBRADO Y EQUILIBRADO
@@ -1318,8 +1352,9 @@
             }
 
             const formatChoice = document.getElementById('select-format').value;
+            // REGLA: Personalizado se descarga siempre en Formato Libro Apaisado 8.25" x 6"; en blanco se puede elegir entre Libro Apaisado o DIN A4
+            const isCustomBook = isBlankModal ? (formatChoice === 'apaisado') : true;
             // 8.25" x 6" en mm: 209.5 x 152.4 mm (landscape)
-            const isCustomBook = formatChoice === 'apaisado';
             const pageDims = isCustomBook ? [209.5, 152.4] : 'a4';
 
             let doc = new jsPDFClass({

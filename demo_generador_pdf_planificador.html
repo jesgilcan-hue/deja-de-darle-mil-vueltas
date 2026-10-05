@@ -1022,7 +1022,7 @@
     <div class="header-container">
         <span class="tag-pill">Herramienta Interactiva · 100% Offline</span>
         <h1>Generador de Planificador Diario</h1>
-        <p class="subtitle">Estructura tu día con una sola prioridad innegociable, organiza tus tareas secundarias, tus hábitos clave y tus notas de reflexión. Exporta tu PDF vectorial para imprimir o escribir a mano sin saturación digital.</p>
+        <p class="subtitle">Estructura tu día con una sola prioridad innegociable, organiza tus tareas secundarias, tus hábitos clave y tus notas de reflexión. Imprime tu PDF relleno o en blanco para rellenarlo posteriormente a mano sin saturación digital.</p>
     </div>
 
     <!-- ========================================================
@@ -1222,15 +1222,16 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
-                <textarea id="input-notes" rows="4" maxlength="280" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
+                <textarea id="input-notes" rows="4" maxlength="560" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
             </div>
 
-            <div class="form-group">
-                <label for="input-format" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Formato de Exportación PDF</label>
+            <div class="form-group" id="format-selection-group">
+                <label for="input-format" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Formato de Plantilla en Blanco</label>
                 <select id="input-format">
-                    <option value="6x9">Formato Libro 6" x 9" (152 x 229 mm) — Escala Real</option>
+                    <option value="6x9" selected>Formato Libro 6" x 9" (152 x 229 mm) — Escala Real</option>
                     <option value="a4">Formato DIN A4 (210 x 297 mm) — Impresora Doméstica</option>
                 </select>
+                <span style="font-size:0.72rem; color:#888; margin-top:2px; display:block;">El PDF personalizado con datos se descarga siempre a escala real en Formato Libro 6" x 9".</span>
             </div>
 
             <div class="btn-group-primary">
@@ -1318,17 +1319,33 @@
             <h3 class="modal-title" id="modal-title-text">Tu Planificador en Papel</h3>
             <p class="modal-desc" id="modal-desc-text">Descarga tu PDF vectorial de alta resolución listo para imprimir o usar.</p>
 
-            <!-- SELECTOR DE NÚMERO DE PÁGINAS (SOLO PARA PLANTILLA EN BLANCO: 1 A 7) -->
-            <div class="modal-pages-selector" id="modal-pages-selector">
-                <div>
-                    <span class="modal-pages-label">¿Cuántos días quieres imprimir?</span>
-                    <span class="modal-pages-hint">Elige del 1 al 7 para tener un PDF con varios días (ej. 2 para fin de semana o 7 para la semana completa).</span>
+            <!-- SELECTOR DE NÚMERO DE PÁGINAS Y FORMATO (SOLO PARA PLANTILLA EN BLANCO: 1 A 7) -->
+            <div id="modal-blank-options-daily" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+                <div class="modal-pages-selector" id="modal-pages-selector" style="display: flex; margin-bottom: 0;">
+                    <div>
+                        <span class="modal-pages-label">¿Cuántos días quieres imprimir?</span>
+                        <span class="modal-pages-hint">Elige del 1 al 7 para tener un PDF con varios días (ej. 2 para fin de semana o 7 para la semana completa).</span>
+                    </div>
+                    <div class="pages-stepper">
+                        <button type="button" class="btn-step" onclick="changePagesCount(-1)">−</button>
+                        <span class="pages-count-display" id="modal-pages-count">1</span>
+                        <button type="button" class="btn-step" onclick="changePagesCount(1)">+</button>
+                    </div>
                 </div>
-                <div class="pages-stepper">
-                    <button type="button" class="btn-step" onclick="changePagesCount(-1)">−</button>
-                    <span class="pages-count-display" id="modal-pages-count">1</span>
-                    <button type="button" class="btn-step" onclick="changePagesCount(1)">+</button>
+
+                <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px;">
+                    <label for="modal-select-format-daily" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
+                    <select id="modal-select-format-daily" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;" onchange="document.getElementById('input-format').value = this.value">
+                        <option value="6x9">Formato Libro 6" x 9" (152 x 229 mm) — Escala Real</option>
+                        <option value="a4">Formato DIN A4 (210 x 297 mm) — Impresora Doméstica</option>
+                    </select>
                 </div>
+            </div>
+
+            <!-- AVISO DE FORMATO PARA PERSONALIZADO -->
+            <div id="modal-personalized-format-info-daily" style="display: block; text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+                <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px;">Formato de exportación:</span>
+                <span style="font-size: 0.82rem; color: #333;">Formato Libro 6" x 9" (152 x 229 mm) — Escala Real</span>
             </div>
 
             <div class="modal-actions-grid">
@@ -1770,7 +1787,8 @@
         function openDownloadModal(isBlank) {
             modalIsBlank = !!isBlank;
             const modal = document.getElementById('download-modal');
-            const pagesSelector = document.getElementById('modal-pages-selector');
+            const blankOpts = document.getElementById('modal-blank-options-daily');
+            const persInfo = document.getElementById('modal-personalized-format-info-daily');
             const badgeText = document.getElementById('modal-badge-text');
             const titleText = document.getElementById('modal-title-text');
             const descText = document.getElementById('modal-desc-text');
@@ -1779,17 +1797,21 @@
             if (modalIsBlank) {
                 modalPagesCount = 1;
                 document.getElementById('modal-pages-count').textContent = '1';
-                pagesSelector.style.display = 'flex';
+                if (blankOpts) blankOpts.style.display = 'flex';
+                if (persInfo) persInfo.style.display = 'none';
                 badgeText.textContent = 'Plantilla Limpia en Blanco';
                 titleText.textContent = 'Tu Plantilla Lista para Imprimir';
-                descText.textContent = 'Descarga tu diseño limpio sin rellenar en alta resolución para usar con lápiz o pluma.';
+                descText.textContent = 'Descarga tu diseño limpio sin rellenar en alta resolución para usar con lápiz o pluma en formato Libro 6"x9" o DIN A4.';
                 btnLabel.textContent = 'Descargar 1 página limpia en PDF';
+                const modalFormat = document.getElementById('modal-select-format-daily');
+                if (modalFormat) modalFormat.value = document.getElementById('input-format').value;
             } else {
                 modalPagesCount = 1;
-                pagesSelector.style.display = 'none';
+                if (blankOpts) blankOpts.style.display = 'none';
+                if (persInfo) persInfo.style.display = 'block';
                 badgeText.textContent = 'Planificador Personalizado';
                 titleText.textContent = 'Tu Planificador Diario en Papel';
-                descText.textContent = 'Descarga tu diseño vectorial con tus prioridades, tareas y notas del día listo para imprimir.';
+                descText.textContent = 'Descarga tu diseño en Formato Libro 6" x 9" a escala real con tus prioridades, tareas y notas del día.';
                 btnLabel.textContent = 'Descargar mi PDF personalizado';
             }
 
@@ -1811,7 +1833,7 @@
             modalPagesCount = Math.max(1, Math.min(7, modalPagesCount + delta));
             document.getElementById('modal-pages-count').textContent = modalPagesCount;
             const btnLabel = document.getElementById('modal-download-btn-label');
-            if (btnLabel) {
+            if (btnLabel && modalIsBlank) {
                 btnLabel.textContent = `Descargar ${modalPagesCount} ${modalPagesCount === 1 ? 'página limpia' : 'páginas limpias'} en PDF`;
             }
         }
@@ -1833,7 +1855,8 @@
             }
 
             const formatChoice = document.getElementById('input-format').value;
-            const is6x9 = formatChoice === '6x9';
+            // REGLA: Personalizado se descarga siempre en Formato Libro 6" x 9"; en blanco se puede elegir entre 6"x9" o DIN A4
+            const is6x9 = isBlankTemplate ? (formatChoice === '6x9') : true;
             const pageDimensions = is6x9 ? [152.4, 228.6] : 'a4';
 
             let doc = new jsPDF({
