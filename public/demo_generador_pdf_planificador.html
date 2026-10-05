@@ -229,56 +229,6 @@
             align-items: start;
         }
 
-        .main-layout.preview-hidden {
-            display: flex !important;
-            justify-content: center !important;
-        }
-
-        .main-layout.preview-hidden .controls-panel {
-            max-width: 660px !important;
-            width: 100% !important;
-            margin: 0 auto !important;
-        }
-
-        .main-layout.preview-hidden .preview-wrapper {
-            display: none !important;
-        }
-
-        /* BOTÓN VISTA PREVIA EN TIEMPO REAL */
-        .toggle-preview-wrapper {
-            margin-bottom: 14px;
-        }
-
-        .btn-toggle-preview {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-            padding: 10px 14px;
-            background: #faf8f5;
-            border: 1.5px solid #ded9d0;
-            border-radius: 8px;
-            font-size: 0.84rem;
-            font-weight: 700;
-            color: #4a453f;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-
-        .btn-toggle-preview:hover {
-            background: #f2ece2;
-            border-color: #baa495;
-            transform: translateY(-1px);
-        }
-
-        .btn-toggle-preview.is-hidden {
-            background: #fdfbf7;
-            color: #777;
-            border-style: dashed;
-        }
-
         @media (max-width: 980px) {
             .main-layout {
                 grid-template-columns: 1fr;
@@ -288,8 +238,8 @@
                 width: 100% !important;
             }
             .paper-sheet {
-                min-height: auto !important;
-                padding: 20px 16px 24px !important;
+                min-height: 720px;
+                padding: 26px 20px 22px;
                 margin-bottom: 40px !important;
             }
         }
@@ -1195,13 +1145,12 @@
         </div>
     </div>
 
-    <div class="main-layout preview-hidden">
+    <div class="main-layout">
         <!-- PANEL DE CONTROL / TEXTOS DIRECTOS -->
         <div class="controls-panel">
             <div class="panel-title">
                 <span>Tu Día en Papel</span>
                 <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" title="Mostrar u ocultar vista previa" onclick="toggleLivePreview()">👁️‍🗨️ Ver previa</button>
                     <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
                     <button type="button" class="btn-quick" onclick="clearData()">Limpiar</button>
                 </div>
@@ -1283,14 +1232,6 @@
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
             <input type="hidden" id="input-format" value="6x9">
-
-            <!-- BOTÓN VISTA PREVIA ENCIMA DE DESCARGAR -->
-            <div class="toggle-preview-wrapper">
-                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview is-hidden" onclick="toggleLivePreview()">
-                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️‍🗨️</span>
-                    <span id="toggle-preview-text">Vista previa: Oculta (Clic para ver)</span>
-                </button>
-            </div>
 
             <div class="btn-group-primary">
                 <button type="button" class="btn-cta" onclick="openDownloadModal(false)">
@@ -1393,8 +1334,8 @@
                 <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px;">
                     <label for="modal-select-format-daily" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
                     <select id="modal-select-format-daily" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;" onchange="document.getElementById('input-format').value = this.value">
-                        <option value="6x9">Formato Libro 6" x 9" (152 x 229 mm)</option>
-                        <option value="a4">Formato DIN A4 (210 x 297 mm)</option>
+                        <option value="6x9">Formato Libro (152 × 229 mm)</option>
+                        <option value="a4">Formato DIN A4 (210 × 297 mm)</option>
                     </select>
                 </div>
             </div>
@@ -1402,7 +1343,7 @@
             <!-- AVISO DE FORMATO PARA PERSONALIZADO -->
             <div id="modal-personalized-format-info-daily" style="display: block; text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
                 <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px;">Formato de exportación:</span>
-                <span style="font-size: 0.82rem; color: #333;">Formato Libro 6" x 9" (152 x 229 mm)</span>
+                <span style="font-size: 0.82rem; color: #333;">Formato Libro (152 × 229 mm)</span>
             </div>
 
             <div class="modal-actions-grid">
@@ -1498,39 +1439,6 @@
             habits: ['Cero redes antes de las 10:00', 'Paseo vespertino de 20 min', 'Lectura antes de dormir'],
             notes: 'Logré avanzar 2 horas seguidas sin interrupciones en la prioridad principal. Para mañana necesito definir la reunión con el equipo a primera hora.'
         };
-
-        function toggleLivePreview() {
-            isPreviewVisible = !isPreviewVisible;
-            const layout = document.querySelector('.main-layout');
-            const icon = document.getElementById('toggle-preview-icon');
-            const text = document.getElementById('toggle-preview-text');
-            const btn = document.getElementById('btn-toggle-preview');
-            const btnTop = document.getElementById('btn-toggle-preview-top');
-
-            if (layout) {
-                if (isPreviewVisible) {
-                    layout.classList.remove('preview-hidden');
-                    if (btn) btn.classList.remove('is-hidden');
-                    if (icon) icon.textContent = '👁️';
-                    if (text) text.textContent = 'Vista previa: Activada';
-                    if (btnTop) btnTop.innerHTML = '👁️ Vista previa';
-                    showStatus('Vista previa activada.');
-                    if (window.innerWidth <= 900) {
-                        setTimeout(() => {
-                            const prev = document.querySelector('.preview-wrapper');
-                            if (prev) prev.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 100);
-                    }
-                } else {
-                    layout.classList.add('preview-hidden');
-                    if (btn) btn.classList.add('is-hidden');
-                    if (icon) icon.textContent = '👁️‍🗨️';
-                    if (text) text.textContent = 'Vista previa: Oculta (Clic para ver)';
-                    if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
-                    showStatus('Vista previa oculta. Tu día en papel centrado.');
-                }
-            }
-        }
 
         // CONFIGURACIÓN DE ESTILOS ACTIVOS
         let activeStyles = {
@@ -1884,12 +1792,24 @@
 
         function loadExampleData() {
             isExampleActive = true;
-            // La vista previa muestra el ejemplo completo, mientras el formulario se mantiene limpio
-            if (!isPreviewVisible) {
-                toggleLivePreview();
+            document.getElementById('input-day').value = DAILY_EXAMPLE.day;
+            document.getElementById('input-date').value = DAILY_EXAMPLE.date;
+            const pInput = document.getElementById('input-priority');
+            if (pInput) {
+                pInput.value = DAILY_EXAMPLE.priority;
+                autoResizeTextarea(pInput);
             }
+            tasksList = [...DAILY_EXAMPLE.tasks];
+            habitsList = [...DAILY_EXAMPLE.habits];
+            const nInput = document.getElementById('input-notes');
+            if (nInput) {
+                nInput.value = DAILY_EXAMPLE.notes;
+                autoResizeTextarea(nInput);
+            }
+            renderTasksInputs();
+            renderHabitsInputs();
             renderPreview();
-            showStatus('Ejemplo visual mostrado en la vista previa.');
+            showStatus('✓ Ejemplo editorial cargado en el formulario y en la vista previa.');
         }
 
         function autoResizeTextarea(el) {
@@ -1959,7 +1879,7 @@
                 if (persInfo) persInfo.style.display = 'none';
                 badgeText.textContent = 'Plantilla Limpia en Blanco';
                 titleText.textContent = 'Tu Plantilla Lista para Imprimir';
-                descText.textContent = 'Descarga tu diseño limpio sin rellenar en alta resolución para usar con lápiz o pluma en formato Libro 6"x9" o DIN A4.';
+                descText.textContent = 'Descarga tu diseño limpio sin rellenar en alta resolución para usar con lápiz o pluma en Formato Libro (152 × 229 mm) o DIN A4.';
                 btnLabel.textContent = 'Descargar 1 página limpia en PDF';
                 const modalFormat = document.getElementById('modal-select-format-daily');
                 if (modalFormat) modalFormat.value = document.getElementById('input-format').value;
@@ -1969,7 +1889,7 @@
                 if (persInfo) persInfo.style.display = 'block';
                 badgeText.textContent = 'Planificador Personalizado';
                 titleText.textContent = 'Tu Planificador Diario en Papel';
-                descText.textContent = 'Descarga tu diseño en Formato Libro 6" x 9" con tus prioridades, tareas y notas del día.';
+                descText.textContent = 'Descarga tu diseño en Formato Libro (152 × 229 mm) con tus prioridades, tareas y notas del día.';
                 btnLabel.textContent = 'Descargar mi PDF personalizado';
             }
 

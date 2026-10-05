@@ -94,16 +94,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Estado inicial: formulario centrado */
-        .app-layout.preview-hidden {
-            grid-template-columns: minmax(360px, 620px);
-            justify-content: center;
-        }
-
-        .app-layout.preview-hidden .preview-column {
-            display: none !important;
-        }
-
         /* PANEL DE CONTROLES (IZQUIERDA) */
         .controls-panel {
             background: #ffffff;
@@ -855,14 +845,13 @@
         </div>
     </div>
 
-    <div class="app-layout preview-hidden">
+    <div class="app-layout">
         <!-- COLUMNA IZQUIERDA: CONTROLES -->
         <aside class="controls-panel">
             
             <div class="panel-header-top">
                 <span class="panel-heading-text">Tu Mes en Papel</span>
                 <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" onclick="toggleLivePreview()">👁️‍🗨️ Ver previa</button>
                     <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
                     <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
                 </div>
@@ -911,7 +900,7 @@
             <!-- 2. METAS DEL MES (MÁXIMO 3, DINÁMICAS) -->
             <div class="section-box">
                 <div class="section-header-title">
-                    <span>2. Tres Metas del Mes</span>
+                    <span>2. Metas del Mes</span>
                     <button type="button" class="btn-add-item" id="btn-add-goal" onclick="addNewGoal()">+ Añadir meta</button>
                 </div>
                 <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 3 prioridades clave innegociables para todo el mes.</p>
@@ -920,15 +909,15 @@
                 </div>
             </div>
 
-            <!-- 3. FECHAS CLAVE / HITOS IMPORTANTES (MÁX 140 CARACTERES) -->
+            <!-- 3. FECHAS CLAVE / HITOS IMPORTANTES (HASTA 300 CARACTERES) -->
             <div class="section-box">
                 <div class="section-header-title">
                     <span>3. Hitos y Fechas Clave</span>
                     <span>📍</span>
                 </div>
                 <div class="control-group">
-                    <label for="input-hitos">Fechas clave señaladas <span class="char-count" id="count-hitos">0/140</span></label>
-                    <textarea id="input-hitos" maxlength="140" rows="3" placeholder="• Día 10: Entrega manuscrito&#10;• Día 18: Revisión de pruebas&#10;• Día 28: Lanzamiento oficial" oninput="autoResizeTextarea(this); renderPreview();"></textarea>
+                    <label for="input-hitos">Fechas clave señaladas <span class="char-count" id="count-hitos">0/300</span></label>
+                    <textarea id="input-hitos" maxlength="300" rows="3" placeholder="• Día 10: Entrega del manuscrito&#10;• Día 18: Revisión de pruebas&#10;• Día 28: Lanzamiento oficial" oninput="autoResizeTextarea(this); renderPreview();"></textarea>
                 </div>
             </div>
 
@@ -944,14 +933,6 @@
                 </div>
             </div>
 
-            <!-- BOTONES DE DESCARGA Y VISTA PREVIA -->
-            <div class="toggle-preview-wrapper">
-                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview" onclick="toggleLivePreview()">
-                    <span id="toggle-preview-icon">👁️‍🗨️</span>
-                    <span id="toggle-preview-text">Vista previa: Oculta (Clic para ver)</span>
-                </button>
-            </div>
-
             <div style="margin-top: 10px;">
                 <button type="button" class="btn-primary-action" onclick="openDownloadModal(false)">
                     <span>📥</span>
@@ -964,7 +945,7 @@
             </div>
         </aside>
 
-        <!-- COLUMNA DERECHA: VISTA PREVIA -->
+        <!-- COLUMNA DERECHA: VISTA PREVIA SIEMPRE VISIBLE -->
         <main class="preview-column">
             <div class="preview-banner">
                 <span>👁️ <strong>Vista previa</strong></span>
@@ -980,10 +961,10 @@
                     <div class="preview-date-text" id="prev-dates-text">MES: ________ · AÑO: ____</div>
                 </div>
 
-                <!-- BLOQUE SUPERIOR: TRES METAS DEL MES + HITOS -->
+                <!-- BLOQUE SUPERIOR: METAS DEL MES + HITOS -->
                 <div class="preview-top-split">
                     <div class="preview-card-box">
-                        <div class="preview-card-title">🎯 TRES METAS DEL MES</div>
+                        <div class="preview-card-title" id="prev-goals-title">🎯 METAS DEL MES</div>
                         <div id="prev-goals-preview-list">
                             <!-- Metas dinámicas -->
                         </div>
@@ -1057,8 +1038,8 @@
             <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin: 10px 0;">
                 <label for="modal-select-format" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
                 <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
-                    <option value="apaisado">Formato Libro Apaisado 8.25" × 6" (Encuadernable)</option>
-                    <option value="a4">Formato Folio DIN A4 Apaisado (297 × 210 mm)</option>
+                    <option value="apaisado">Formato Libro (210 × 152 mm)</option>
+                    <option value="a4">Formato DIN A4 (297 × 210 mm)</option>
                 </select>
             </div>
 
@@ -1070,7 +1051,7 @@
             <div class="modal-books-section">
                 <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
                 <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 4px 0 12px 0;">
-                    Esta hoja mensual te permite coordinar tus metas de un vistazo, pero la metodología completa para consolidar foco a 90 o 180 días está en nuestros cuadernos encuadernados de Editorial Menos Ruido para no perder tus avances.
+                    Esta hoja mensual te permite coordinar tus metas de un vistazo, pero la metodología completa para consolidar foco a 90 o 180 días está en nuestros cuadernos de Editorial Menos Ruido para no perder tus avances.
                 </p>
                 <div class="modal-books-grid">
                     <!-- Planificador 90 Días -->
@@ -1232,6 +1213,11 @@
                 goalsToRender = goalsList.map(() => '');
             }
 
+            const titleEl = document.getElementById('prev-goals-title');
+            if (titleEl) {
+                titleEl.textContent = (goalsToRender.length === 1) ? '🎯 META DEL MES' : '🎯 METAS DEL MES';
+            }
+
             if (goalsToRender.length === 0) {
                 container.innerHTML = '<span style="font-size:0.7rem; color:#999; font-style:italic;">(Sin metas definidas)</span>';
                 return;
@@ -1308,37 +1294,6 @@
             }
         }
 
-        // TOGGLE VISTA PREVIA
-        function toggleLivePreview() {
-            const layout = document.querySelector('.app-layout');
-            const btn = document.getElementById('btn-toggle-preview');
-            const text = document.getElementById('toggle-preview-text');
-            const icon = document.getElementById('toggle-preview-icon');
-            const btnTop = document.getElementById('btn-toggle-preview-top');
-
-            isPreviewVisible = !isPreviewVisible;
-
-            if (isPreviewVisible) {
-                layout.classList.remove('preview-hidden');
-                if (icon) icon.textContent = '👁️';
-                if (text) text.textContent = 'Vista previa: Activada';
-                if (btnTop) btnTop.innerHTML = '👁️ Ocultar previa';
-                showToast('Vista previa activada.');
-                if (window.innerWidth <= 900) {
-                    setTimeout(() => {
-                        const col = document.querySelector('.preview-column');
-                        if (col) col.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                }
-            } else {
-                layout.classList.add('preview-hidden');
-                if (icon) icon.textContent = '👁️‍🗨️';
-                if (text) text.textContent = 'Vista previa: Oculta (Clic para ver)';
-                if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
-                showToast('Vista previa oculta. Tu mes en papel centrado.');
-            }
-        }
-
         // ACTUALIZAR VISTA PREVIA
         function renderPreview() {
             const activeMonth = getActiveMonthText();
@@ -1350,7 +1305,7 @@
 
             // Contadores
             const countHitos = document.getElementById('count-hitos');
-            if (countHitos) countHitos.textContent = hitosInput.length + '/140';
+            if (countHitos) countHitos.textContent = hitosInput.length + '/300';
             const countNotes = document.getElementById('count-notes');
             if (countNotes) countNotes.textContent = notesInput.length + '/220';
 
@@ -1387,14 +1342,34 @@
             renderCalendarGrid();
         }
 
-        // RELLENAR EJEMPLO (deja inputs limpios y muestra en preview)
+        // RELLENAR EJEMPLO (Carga siempre el ejemplo en inputs y vista previa, incluso si ya había texto)
         function loadExampleData() {
             isExampleActive = true;
-            if (!isPreviewVisible) {
-                toggleLivePreview();
+            
+            const select = document.getElementById('input-month-select');
+            if (select) select.value = MONTHLY_EXAMPLE.monthNum;
+            const customInput = document.getElementById('input-month-custom');
+            if (customInput) { customInput.value = ''; customInput.style.display = 'none'; }
+            const yearInput = document.getElementById('input-month-year');
+            if (yearInput) yearInput.value = MONTHLY_EXAMPLE.year;
+            
+            goalsList = [...MONTHLY_EXAMPLE.goals];
+            renderGoalsInputs();
+
+            const hitosEl = document.getElementById('input-hitos');
+            if (hitosEl) {
+                hitosEl.value = MONTHLY_EXAMPLE.hitos;
+                autoResizeTextarea(hitosEl);
             }
+
+            const notesEl = document.getElementById('input-notes');
+            if (notesEl) {
+                notesEl.value = MONTHLY_EXAMPLE.notes;
+                autoResizeTextarea(notesEl);
+            }
+
             renderPreview();
-            showToast('✓ Ejemplo visual mostrado en la vista previa.');
+            showToast('✓ Ejemplo editorial cargado en el formulario y en la vista previa.');
         }
 
         // LIMPIAR
@@ -1588,13 +1563,15 @@
                 doc.setLineWidth(0.2);
                 doc.roundedRect(m, y, colW, topBoxH, 1.5, 1.5, 'FD');
 
+                const goalsCardTitle = (activeGoals.length === 1) ? 'META DEL MES' : 'METAS DEL MES';
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
-                doc.text('TRES METAS DEL MES', m + 3.5, y + 4);
+                doc.text(goalsCardTitle, m + 3.5, y + 4);
 
                 let goalY = y + 8;
-                for (let g = 0; g < 3; g++) {
+                const numGoalsToDraw = Math.max(1, Math.min(3, activeGoals.length || 3));
+                for (let g = 0; g < numGoalsToDraw; g++) {
                     doc.setDrawColor(120, 115, 110);
                     doc.setLineWidth(0.25);
                     doc.rect(m + 3.5, goalY - 2.5, 2.8, 2.8);
@@ -1627,10 +1604,12 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7);
                 doc.setTextColor(40, 35, 30);
-                if (activeHitos) {
-                    const hLines = doc.splitTextToSize(activeHitos, colW - 8);
-                    hLines.slice(0, 4).forEach((hl, hIdx) => {
-                        doc.text(hl, col2X + 3.5, y + 8.5 + (hIdx * 4.2));
+                if (activeHitos && activeHitos.trim()) {
+                    // Sanear viñetas unicode para total compatibilidad con jsPDF
+                    const cleanHitos = activeHitos.replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '-');
+                    const hLines = doc.splitTextToSize(cleanHitos, colW - 7);
+                    hLines.slice(0, 5).forEach((hl, hIdx) => {
+                        doc.text(hl, col2X + 3.5, y + 8 + (hIdx * 3.8));
                     });
                 } else {
                     for (let h = 0; h < 3; h++) {
@@ -1735,18 +1714,23 @@
                 doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
             }
 
-            // NOMENCLATURA EXACTA
+            // NOMENCLATURA EXACTA: menos-ruido-planificador-mensual, el mes y el año
             let fileName = '';
             if (isBlankModal) {
                 fileName = pagesToRender > 1 
-                    ? `Menos_Ruido_Plantilla_Mensual_${pagesToRender}_meses.pdf` 
-                    : 'Menos_Ruido_Plantilla_Mensual.pdf';
+                    ? `menos-ruido-plantilla-mensual-${pagesToRender}-meses.pdf` 
+                    : 'menos-ruido-plantilla-mensual.pdf';
             } else {
-                const cleanMonth = activeMonth.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '_');
-                if (cleanMonth) {
-                    fileName = `Menos_Ruido_Planificador_Mensual_${cleanMonth}.pdf`;
+                const cleanMonth = (activeMonth || '').toLowerCase().trim().replace(/[^a-z0-9áéíóúñ]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                const cleanYear = (activeYear || '').toString().trim().replace(/[^0-9]/g, '');
+                if (cleanMonth && cleanYear) {
+                    fileName = `menos-ruido-planificador-mensual-${cleanMonth}-${cleanYear}.pdf`;
+                } else if (cleanMonth) {
+                    fileName = `menos-ruido-planificador-mensual-${cleanMonth}.pdf`;
+                } else if (cleanYear) {
+                    fileName = `menos-ruido-planificador-mensual-${cleanYear}.pdf`;
                 } else {
-                    fileName = 'Menos_Ruido_Planificador_Mensual.pdf';
+                    fileName = 'menos-ruido-planificador-mensual.pdf';
                 }
             }
 

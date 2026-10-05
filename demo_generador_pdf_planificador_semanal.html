@@ -101,35 +101,13 @@
                 width: 100% !important;
             }
             .preview-sheet-frame {
-                aspect-ratio: auto !important;
-                min-height: auto !important;
-                overflow: visible !important;
-                padding: 16px 14px 22px !important;
+                min-height: 460px;
+                padding: 18px 16px 18px !important;
                 margin-bottom: 40px !important;
             }
         }
 
-        .app-layout.preview-hidden {
-            display: flex !important;
-            justify-content: center !important;
-        }
-
-        .app-layout.preview-hidden .controls-panel {
-            max-width: 660px !important;
-            width: 100% !important;
-            margin: 0 auto !important;
-        }
-
-        .app-layout.preview-hidden .preview-column {
-            display: none !important;
-        }
-
-        /* BOTÓN VISTA PREVIA EN TIEMPO REAL */
-        .toggle-preview-wrapper {
-            margin-bottom: 6px;
-        }
-
-        .btn-toggle-preview {
+        /* PANEL DE CONTROLES */
             width: 100%;
             display: flex;
             align-items: center;
@@ -908,7 +886,7 @@
         </div>
     </div>
 
-    <div class="app-layout preview-hidden">
+    <div class="app-layout">
         <!-- COLUMNA IZQUIERDA: CONTROLES -->
         <aside class="controls-panel">
             
@@ -916,7 +894,6 @@
             <div class="panel-header-top">
                 <span class="panel-heading-text">Tu Semana en Papel</span>
                 <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" id="btn-toggle-preview-top" onclick="toggleLivePreview()">👁️‍🗨️ Ver previa</button>
                     <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
                     <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
                 </div>
@@ -991,14 +968,6 @@
 
             <!-- Formato predeterminado y gestión transparente -->
             <input type="hidden" id="select-format" value="apaisado">
-
-            <!-- BOTÓN VISTA PREVIA ENCIMA DE DESCARGAR -->
-            <div class="toggle-preview-wrapper">
-                <button type="button" id="btn-toggle-preview" class="btn-toggle-preview is-hidden" onclick="toggleLivePreview()">
-                    <span id="toggle-preview-icon" style="font-size:1.05rem;">👁️‍🗨️</span>
-                    <span id="toggle-preview-text">Vista previa: Oculta (Clic para ver)</span>
-                </button>
-            </div>
 
             <!-- BOTONES DE ACCIÓN PRINCIPALES -->
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
@@ -1139,8 +1108,8 @@
                 <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px;">
                     <label for="modal-select-format-weekly" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
                     <select id="modal-select-format-weekly" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;" onchange="document.getElementById('select-format').value = this.value">
-                        <option value="apaisado">Formato Libro Apaisado 8.25" x 6" (21 x 15,2 cm)</option>
-                        <option value="a4">Folio Estándar DIN A4 Apaisado (29,7 x 21 cm)</option>
+                        <option value="apaisado">Formato Libro (210 × 152 mm)</option>
+                        <option value="a4">Formato DIN A4 (297 × 210 mm)</option>
                     </select>
                 </div>
             </div>
@@ -1148,7 +1117,7 @@
             <!-- AVISO DE FORMATO PARA PERSONALIZADO -->
             <div id="modal-personalized-format-info" style="display: block; text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
                 <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px;">Formato de exportación:</span>
-                <span style="font-size: 0.82rem; color: #333;">Formato Libro Apaisado 8.25" x 6" (21 x 15,2 cm)</span>
+                <span style="font-size: 0.82rem; color: #333;">Formato Libro (210 × 152 mm)</span>
             </div>
 
             <button type="button" class="btn-modal-download" onclick="executeWeeklyDownload()">
@@ -1244,39 +1213,6 @@
             secundarias: '• Renovar tintas para la pluma\n• Organizar mesa de trabajo y carpetas físicas\n• Desconectar el móvil antes de cenar'
         };
 
-        function toggleLivePreview() {
-            isPreviewVisible = !isPreviewVisible;
-            const layout = document.querySelector('.app-layout');
-            const icon = document.getElementById('toggle-preview-icon');
-            const text = document.getElementById('toggle-preview-text');
-            const btn = document.getElementById('btn-toggle-preview');
-            const btnTop = document.getElementById('btn-toggle-preview-top');
-
-            if (layout) {
-                if (isPreviewVisible) {
-                    layout.classList.remove('preview-hidden');
-                    if (btn) btn.classList.remove('is-hidden');
-                    if (icon) icon.textContent = '👁️';
-                    if (text) text.textContent = 'Vista previa: Activada';
-                    if (btnTop) btnTop.innerHTML = '👁️ Vista previa';
-                    showToast('Vista previa activada.');
-                    if (window.innerWidth <= 900) {
-                        setTimeout(() => {
-                            const col = document.querySelector('.preview-column');
-                            if (col) col.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 100);
-                    }
-                } else {
-                    layout.classList.add('preview-hidden');
-                    if (btn) btn.classList.add('is-hidden');
-                    if (icon) icon.textContent = '👁️‍🗨️';
-                    if (text) text.textContent = 'Vista previa: Oculta (Clic para ver)';
-                    if (btnTop) btnTop.innerHTML = '👁️‍🗨️ Ver previa';
-                    showToast('Vista previa oculta. Tu semana en papel centrada.');
-                }
-            }
-        }
-
         // ESTADO DE CONFIGURACIÓN
         let activeRayado = 'blank';
         let isBlankModal = false;
@@ -1349,14 +1285,31 @@
             handleSecundariasInput();
         }
 
+        // RELLENAR EJEMPLO (Carga siempre los datos en el formulario y en la vista previa, aunque ya hubiera texto)
         function loadExampleData() {
             isExampleActive = true;
-            // No modificamos los inputs en Tu Semana en Papel: se mantienen limpios
-            if (!isPreviewVisible) {
-                toggleLivePreview();
+            const weekInput = document.getElementById('input-week-number');
+            if (weekInput) weekInput.value = WEEKLY_EXAMPLE.weekNumber;
+            
+            const focusEl = document.getElementById('input-week-focus');
+            if (focusEl) {
+                focusEl.value = WEEKLY_EXAMPLE.focus;
+                autoResizeTextarea(focusEl);
+            }
+            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(d => {
+                const dayEl = document.getElementById('input-' + d);
+                if (dayEl) {
+                    dayEl.value = WEEKLY_EXAMPLE[d] || '';
+                    autoResizeTextarea(dayEl);
+                }
+            });
+            const secEl = document.getElementById('input-secundarias');
+            if (secEl) {
+                secEl.value = WEEKLY_EXAMPLE.secundarias;
+                autoResizeTextarea(secEl);
             }
             renderPreview();
-            showToast('✓ Ejemplo visual mostrado en la vista previa.');
+            showToast('✓ Ejemplo editorial cargado en el formulario y en la vista previa.');
         }
 
         function autoResizeTextarea(el) {
