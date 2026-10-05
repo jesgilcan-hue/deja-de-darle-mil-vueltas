@@ -300,6 +300,10 @@
             transform: translateY(1px);
         }
 
+        .opt-circle svg {
+            pointer-events: none;
+        }
+
         .opt-circle.active svg * {
             stroke: #ffffff !important;
             fill: #ffffff !important;
@@ -309,6 +313,10 @@
         .opt-circle.active svg rect[fill="none"],
         .opt-circle.active svg circle[fill="none"] {
             fill: none !important;
+        }
+
+        .opt-circle:active, .btn-quick:active, .btn-main-action:active, .btn-secondary-action:active, .btn-step:active {
+            transform: scale(0.96);
         }
 
         .panel-header-top {
@@ -647,21 +655,25 @@
         /* MODAL POP-UP DE DESCARGA */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            inset: 0;
             background: rgba(30, 25, 20, 0.68);
             backdrop-filter: blur(4px);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
             padding: 16px;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
         }
 
         .modal-overlay.active {
-            display: flex;
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
 
         .modal-card {
@@ -886,11 +898,12 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.25);
             display: none;
             z-index: 10000;
+            pointer-events: none;
         }
     </style>
 
-    <!-- jsPDF para generación vectorial -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Script de jsPDF local UMD (100% offline y compatible con CSP) -->
+    <script src="./jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -1362,20 +1375,24 @@
             // Aplicar en la vista previa del pautado
             if (type === 'rayado') {
                 const box = document.getElementById('prev-bottom-box');
-                box.className = 'preview-bottom-box';
-                if (val === 'dots') box.classList.add('rayado-dots');
-                else if (val === 'lines') box.classList.add('rayado-lines');
-                else if (val === 'grid') box.classList.add('rayado-grid');
-                else if (val === 'blank') box.classList.add('rayado-blank');
+                if (box) {
+                    box.className = 'preview-bottom-box';
+                    if (val === 'dots') box.classList.add('rayado-dots');
+                    else if (val === 'lines') box.classList.add('rayado-lines');
+                    else if (val === 'grid') box.classList.add('rayado-grid');
+                    else if (val === 'blank') box.classList.add('rayado-blank');
+                }
 
                 const badge = document.getElementById('prev-style-badge');
-                const labels = {
-                    dots: 'Retícula de puntos',
-                    lines: 'Líneas suaves',
-                    grid: 'Cuadrícula',
-                    blank: 'Papel limpio'
-                };
-                badge.textContent = labels[val] || '';
+                if (badge) {
+                    const labels = {
+                        dots: 'Retícula de puntos',
+                        lines: 'Líneas suaves',
+                        grid: 'Cuadrícula',
+                        blank: 'Papel limpio'
+                    };
+                    badge.textContent = labels[val] || '';
+                }
             }
 
             // Aplicar estilo de caja foco
@@ -1399,6 +1416,12 @@
             // Actualizar casillas o viñetas
             renderPreview();
         }
+
+        // Alias para compatibilidad
+        function setRayado(val) { setStyle('rayado', val); }
+        function setLineas(val) { setStyle('lineas', val); }
+        function setCaja(val) { setStyle('caja', val); }
+        function setCheck(val) { setStyle('check', val); }
 
         function handleDatesInput() {
             const val = document.getElementById('input-week-dates').value.trim();
@@ -1479,51 +1502,58 @@
 
         // MODAL HANDLERS
         function openDownloadModal(isBlank) {
-            isBlankModal = isBlank;
+            isBlankModal = !!isBlank;
             const modal = document.getElementById('download-modal');
+            if (!modal) return;
+
             const weeksSelector = document.getElementById('modal-weeks-selector');
             const badge = document.getElementById('modal-badge-label');
             const title = document.getElementById('modal-title-label');
             const desc = document.getElementById('modal-desc-label');
 
             if (isBlank) {
-                badge.textContent = 'Plantilla Limpia en Blanco';
-                title.textContent = 'Tu Semana en Papel (Para Rellenar a Mano)';
-                desc.textContent = 'Descarga la cuadrícula semanal limpia lista para lápiz, bolígrafo o pluma estilográfica.';
-                weeksSelector.style.display = 'flex';
+                if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
+                if (title) title.textContent = 'Tu Semana en Papel (Para Rellenar a Mano)';
+                if (desc) desc.textContent = 'Descarga la cuadrícula semanal limpia lista para lápiz, bolígrafo o pluma estilográfica.';
+                if (weeksSelector) weeksSelector.style.display = 'flex';
                 modalWeeksCount = 1;
-                document.getElementById('modal-weeks-count').textContent = '1';
+                const countDisplay = document.getElementById('modal-weeks-count');
+                if (countDisplay) countDisplay.textContent = '1';
             } else {
-                badge.textContent = 'PDF Personalizado con Tus Tareas';
-                title.textContent = 'Tu Planificación Semanal Lista';
-                desc.textContent = 'Descarga tu semana organizada con todos tus textos maquetados a escala vectorial de alta resolución.';
-                weeksSelector.style.display = 'none';
+                if (badge) badge.textContent = 'PDF Personalizado con Tus Tareas';
+                if (title) title.textContent = 'Tu Planificación Semanal Lista';
+                if (desc) desc.textContent = 'Descarga tu semana organizada con todos tus textos maquetados a escala vectorial de alta resolución.';
+                if (weeksSelector) weeksSelector.style.display = 'none';
             }
 
             modal.classList.add('active');
         }
 
         function closeDownloadModal() {
-            document.getElementById('download-modal').classList.remove('active');
+            const modal = document.getElementById('download-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
         }
 
         function closeModalOnBackdrop(e) {
-            if (e.target.id === 'download-modal') {
+            if (e && e.target && e.target.id === 'download-modal') {
                 closeDownloadModal();
             }
         }
 
         function changeWeeksCount(delta) {
             modalWeeksCount = Math.max(1, Math.min(4, modalWeeksCount + delta));
-            document.getElementById('modal-weeks-count').textContent = modalWeeksCount;
+            const countDisplay = document.getElementById('modal-weeks-count');
+            if (countDisplay) countDisplay.textContent = modalWeeksCount;
         }
 
         // EXPORTACIÓN A PDF VECTORIAL (jsPDF)
         function executeWeeklyDownload() {
             closeDownloadModal();
-            const { jsPDF } = window.jspdf || {};
+            const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
             if (!jsPDF) {
-                alert('La librería de generación PDF está cargándose o bloqueada en tu navegador. Por favor recarga la página.');
+                alert('La librería de generación PDF está terminando de cargarse. Por favor espera 1 segundo y pulsa de nuevo.');
                 return;
             }
 
@@ -1867,7 +1897,50 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderPreview();
+            try {
+                renderPreview();
+            } catch (err) {
+                console.error('[Semanal Preview Error]', err);
+            }
+
+            // Enlazar listeners explícitos por código para navegadores que bloqueen atributos inline onclick
+            try {
+                // Botones de personalización circulares
+                const circleBtns = document.querySelectorAll('.opt-circle');
+                circleBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.id || '';
+                        if (id.startsWith('btn-rayado-')) setStyle('rayado', id.replace('btn-rayado-', ''));
+                        else if (id.startsWith('btn-lineas-')) setStyle('lineas', id.replace('btn-lineas-', ''));
+                        else if (id.startsWith('btn-caja-')) setStyle('caja', id.replace('btn-caja-', ''));
+                        else if (id.startsWith('btn-check-')) setStyle('check', id.replace('btn-check-', ''));
+                    });
+                });
+
+                // Botones rápidos
+                const btnEjemplo = document.querySelector("button[onclick*='loadExampleData']");
+                if (btnEjemplo) btnEjemplo.addEventListener('click', loadExampleData);
+
+                const btnLimpiar = document.querySelector("button[onclick*='clearAllData']");
+                if (btnLimpiar) btnLimpiar.addEventListener('click', clearAllData);
+
+                // Botones de acción principales
+                const btnMain = document.querySelector('.btn-main-action');
+                if (btnMain) btnMain.addEventListener('click', () => openDownloadModal(false));
+
+                const btnSec = document.querySelector('.btn-secondary-action');
+                if (btnSec) btnSec.addEventListener('click', () => openDownloadModal(true));
+
+                // Botón de modal de descarga
+                const btnModalDl = document.querySelector('.btn-modal-download');
+                if (btnModalDl) btnModalDl.addEventListener('click', executeWeeklyDownload);
+
+                // Botón de cerrar modal
+                const btnModalClose = document.querySelector('.modal-close-btn');
+                if (btnModalClose) btnModalClose.addEventListener('click', closeDownloadModal);
+            } catch (bindErr) {
+                console.warn('[EventListener Binding Warn]', bindErr);
+            }
         });
     </script>
 </body>

@@ -40,7 +40,9 @@ export default defineConfig({
         visor90: resolve(__dirname, 'visor-planificador-90-dias.html'),
         visor180: resolve(__dirname, 'visor-planificador-180-dias.html'),
         apps: resolve(__dirname, 'apps.html'),
-        generador: resolve(__dirname, 'generador.html')
+        generador: resolve(__dirname, 'generador.html'),
+        generadorDiario: resolve(__dirname, 'demo_generador_pdf_planificador.html'),
+        generadorSemanal: resolve(__dirname, 'demo_generador_pdf_planificador_semanal.html')
       }
     }
   }
