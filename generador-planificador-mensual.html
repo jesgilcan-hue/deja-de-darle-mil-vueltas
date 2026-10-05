@@ -822,6 +822,12 @@
                 grid-template-columns: 1fr;
             }
         }
+        @media (max-width: 550px) {
+            .preview-top-split {
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+            }
+        }
     </style>
 
     <!-- Protección de acceso por código PIN 1111 -->
@@ -878,11 +884,11 @@
                             <option value="8">Agosto</option>
                             <option value="9">Septiembre</option>
                             <option value="10">Octubre</option>
-                            <option value="11" selected>Noviembre</option>
+                            <option value="11">Noviembre</option>
                             <option value="12">Diciembre</option>
                             <option value="custom">Personalizado...</option>
                         </select>
-                        <input type="text" id="input-month-custom" maxlength="15" placeholder="Nombre del mes" style="display: none; margin-top: 4px;" oninput="renderPreview()">
+                        <input type="text" id="input-month-custom" maxlength="15" placeholder="Nombre del mes" style="display: none; margin-top: 4px;" oninput="isExampleActive = false; renderPreview();">
                     </div>
                     <div class="control-group">
                         <label for="input-month-year">Año (1900-3000)</label>
@@ -917,7 +923,7 @@
                 </div>
                 <div class="control-group">
                     <label for="input-hitos">Fechas clave señaladas <span class="char-count" id="count-hitos">0/300</span></label>
-                    <textarea id="input-hitos" maxlength="300" rows="3" placeholder="• Día 10: Entrega del manuscrito&#10;• Día 18: Revisión de pruebas&#10;• Día 28: Lanzamiento oficial" oninput="autoResizeTextarea(this); renderPreview();"></textarea>
+                    <textarea id="input-hitos" maxlength="300" rows="3" placeholder="• Día 10: Entrega del manuscrito&#10;• Día 18: Revisión de pruebas&#10;• Día 28: Lanzamiento oficial" oninput="isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
                 </div>
             </div>
 
@@ -929,7 +935,7 @@
                 </div>
                 <div class="control-group">
                     <label for="input-notes">Notas y reflexión del mes <span class="char-count" id="count-notes">0/220</span></label>
-                    <textarea id="input-notes" maxlength="220" rows="3" placeholder="Anota aprendizajes del mes, qué hábitos se consolidaron y qué se transfiere al mes siguiente..." oninput="autoResizeTextarea(this); renderPreview();"></textarea>
+                    <textarea id="input-notes" maxlength="220" rows="3" placeholder="Anota aprendizajes del mes, qué hábitos se consolidaron y qué se transfiere al mes siguiente..." oninput="isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
                 </div>
             </div>
 
@@ -1120,6 +1126,7 @@
 
         // CONTROL DE MES
         function handleMonthChange() {
+            isExampleActive = false;
             const select = document.getElementById('input-month-select');
             const customInput = document.getElementById('input-month-custom');
             if (select.value === 'custom') {
@@ -1146,6 +1153,7 @@
 
         function handleYearInput(input) {
             if (!input) return;
+            isExampleActive = false;
             // Solo dígitos
             input.value = input.value.replace(/[^0-9]/g, '');
             if (input.value.length > 4) {
@@ -1180,18 +1188,21 @@
         }
 
         function updateGoalValue(idx, val) {
+            isExampleActive = false;
             goalsList[idx] = val;
             renderGoalsPreview();
         }
 
         function addNewGoal() {
             if (goalsList.length >= 3) return;
+            isExampleActive = false;
             goalsList.push('');
             renderGoalsInputs();
             showToast('Meta añadida.');
         }
 
         function removeGoalItem(idx) {
+            isExampleActive = false;
             goalsList.splice(idx, 1);
             renderGoalsInputs();
             showToast('Meta eliminada.');

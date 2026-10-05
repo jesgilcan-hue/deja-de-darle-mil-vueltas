@@ -95,46 +95,32 @@
         }
 
         @media (max-width: 900px) {
+            body {
+                padding: 16px 10px 50px;
+            }
             .preview-column {
                 position: static !important;
-                margin-bottom: 50px !important;
+                margin-bottom: 40px !important;
                 width: 100% !important;
             }
             .preview-sheet-frame {
-                min-height: 460px;
-                padding: 18px 16px 18px !important;
-                margin-bottom: 40px !important;
+                aspect-ratio: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                padding: 18px 14px 16px !important;
+                margin-bottom: 30px !important;
+                width: 100% !important;
             }
-        }
-
-        /* PANEL DE CONTROLES */
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-            padding: 10px 14px;
-            background: #faf8f5;
-            border: 1.5px solid #ded9d0;
-            border-radius: 8px;
-            font-size: 0.84rem;
-            font-weight: 700;
-            color: #4a453f;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-
-        .btn-toggle-preview:hover {
-            background: #f2ece2;
-            border-color: #baa495;
-            transform: translateY(-1px);
-        }
-
-        .btn-toggle-preview.is-hidden {
-            background: #fdfbf7;
-            color: #777;
-            border-style: dashed;
+            .preview-week-grid {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+            .preview-bottom-box {
+                height: auto !important;
+                min-height: 64px !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
         }
 
         /* PANEL DE CONTROLES */
@@ -1229,6 +1215,7 @@
         }
 
         function handleDatesInput() {
+            isExampleActive = false;
             const input = document.getElementById('input-week-number');
             const prev = document.getElementById('prev-dates-text');
             if (!prev) return;
@@ -1248,6 +1235,7 @@
         }
 
         function handleFocusInput() {
+            isExampleActive = false;
             const input = document.getElementById('input-week-focus');
             const count = document.getElementById('count-focus');
             const prev = document.getElementById('prev-focus-text');
@@ -1259,6 +1247,7 @@
         }
 
         function handleDayInput(day) {
+            isExampleActive = false;
             const input = document.getElementById('input-' + day);
             const prev = document.getElementById('prev-' + day + '-text');
             if (!prev) return;
@@ -1268,6 +1257,7 @@
         }
 
         function handleSecundariasInput() {
+            isExampleActive = false;
             const input = document.getElementById('input-secundarias');
             const count = document.getElementById('count-secundarias');
             const prev = document.getElementById('prev-secundarias-text');
@@ -1285,31 +1275,11 @@
             handleSecundariasInput();
         }
 
-        // RELLENAR EJEMPLO (Carga siempre los datos en el formulario y en la vista previa, aunque ya hubiera texto)
+        // RELLENAR EJEMPLO (Solo se proyecta en la vista previa, sin rellenar los inputs del formulario)
         function loadExampleData() {
             isExampleActive = true;
-            const weekInput = document.getElementById('input-week-number');
-            if (weekInput) weekInput.value = WEEKLY_EXAMPLE.weekNumber;
-            
-            const focusEl = document.getElementById('input-week-focus');
-            if (focusEl) {
-                focusEl.value = WEEKLY_EXAMPLE.focus;
-                autoResizeTextarea(focusEl);
-            }
-            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(d => {
-                const dayEl = document.getElementById('input-' + d);
-                if (dayEl) {
-                    dayEl.value = WEEKLY_EXAMPLE[d] || '';
-                    autoResizeTextarea(dayEl);
-                }
-            });
-            const secEl = document.getElementById('input-secundarias');
-            if (secEl) {
-                secEl.value = WEEKLY_EXAMPLE.secundarias;
-                autoResizeTextarea(secEl);
-            }
             renderPreview();
-            showToast('✓ Ejemplo editorial cargado en el formulario y en la vista previa.');
+            showToast('✓ Ejemplo proyectado en la vista previa.');
         }
 
         function autoResizeTextarea(el) {

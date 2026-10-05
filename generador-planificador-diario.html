@@ -1159,7 +1159,7 @@
             <div class="two-cols form-group">
                 <div>
                     <label for="input-day" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Día</label>
-                    <input type="text" id="input-day" value="" maxlength="20" placeholder="Ej. Martes" oninput="renderPreview()">
+                    <input type="text" id="input-day" value="" maxlength="20" placeholder="Ej. Martes" oninput="isExampleActive = false; renderPreview();">
                 </div>
                 <div>
                     <label for="input-date" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Fecha</label>
@@ -1177,7 +1177,7 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección" onclick="removeSection('priority')">✕</button>
                 </div>
-                <textarea id="input-priority" rows="2" maxlength="120" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="autoResizeTextarea(this); renderPreview();"></textarea>
+                <textarea id="input-priority" rows="2" maxlength="120" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
             </div>
 
             <!-- 2. TAREAS SECUNDARIAS (MÁXIMO 3) -->
@@ -1227,7 +1227,7 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
-                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="autoResizeTextarea(this); renderPreview();"></textarea>
+                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
             </div>
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
@@ -1543,12 +1543,14 @@
         }
 
         function updateTaskValue(idx, val) {
+            isExampleActive = false;
             tasksList[idx] = val;
             renderTasksPreview();
         }
 
         function addNewTask() {
             if (tasksList.length >= 3) return;
+            isExampleActive = false;
             tasksList.push('');
             sectionStates.tasks = true;
             document.getElementById('form-group-tasks').style.display = 'block';
@@ -1558,6 +1560,7 @@
         }
 
         function removeTaskItem(idx) {
+            isExampleActive = false;
             tasksList.splice(idx, 1);
             if (tasksList.length === 0) {
                 removeSection('tasks');
@@ -1666,12 +1669,14 @@
         }
 
         function updateHabitValue(idx, val) {
+            isExampleActive = false;
             habitsList[idx] = val;
             renderHabitsPreview();
         }
 
         function addNewHabit() {
             if (habitsList.length >= 5) return;
+            isExampleActive = false;
             habitsList.push('');
             sectionStates.habits = true;
             document.getElementById('form-group-habits').style.display = 'block';
@@ -1682,6 +1687,7 @@
         }
 
         function removeHabitItem(idx) {
+            isExampleActive = false;
             habitsList.splice(idx, 1);
             if (habitsList.length === 0) {
                 removeSection('habits');
@@ -1725,6 +1731,7 @@
         // QUITAR Y RESTAURAR SECCIONES COMPLETAS
         // ========================================================
         function removeSection(secId) {
+            isExampleActive = false;
             sectionStates[secId] = false;
             document.getElementById(`form-group-${secId}`).style.display = 'none';
             document.getElementById(`btn-restore-${secId}`).style.display = 'block';
@@ -1734,6 +1741,7 @@
         }
 
         function restoreSection(secId) {
+            isExampleActive = false;
             sectionStates[secId] = true;
             document.getElementById(`form-group-${secId}`).style.display = 'block';
             document.getElementById(`btn-restore-${secId}`).style.display = 'none';
@@ -1753,6 +1761,7 @@
 
         // AUTO-FORMATO INTELIGENTE DE FECHA (ej. si escribe 03102026 -> 03 / 10 / 2026)
         function handleDateInput(input) {
+            isExampleActive = false;
             let val = input.value.replace(/\D/g, ''); // Solo números
             if (val.length > 8) val = val.substring(0, 8);
 
@@ -1790,26 +1799,11 @@
             updateNotesLimit();
         }
 
+        // RELLENAR EJEMPLO (Solo se proyecta en la vista previa, sin rellenar los inputs del formulario)
         function loadExampleData() {
             isExampleActive = true;
-            document.getElementById('input-day').value = DAILY_EXAMPLE.day;
-            document.getElementById('input-date').value = DAILY_EXAMPLE.date;
-            const pInput = document.getElementById('input-priority');
-            if (pInput) {
-                pInput.value = DAILY_EXAMPLE.priority;
-                autoResizeTextarea(pInput);
-            }
-            tasksList = [...DAILY_EXAMPLE.tasks];
-            habitsList = [...DAILY_EXAMPLE.habits];
-            const nInput = document.getElementById('input-notes');
-            if (nInput) {
-                nInput.value = DAILY_EXAMPLE.notes;
-                autoResizeTextarea(nInput);
-            }
-            renderTasksInputs();
-            renderHabitsInputs();
             renderPreview();
-            showStatus('✓ Ejemplo editorial cargado en el formulario y en la vista previa.');
+            showStatus('✓ Ejemplo proyectado en la vista previa.');
         }
 
         function autoResizeTextarea(el) {
