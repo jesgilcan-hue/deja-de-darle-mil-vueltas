@@ -640,23 +640,30 @@
             color: #222;
         }
 
-        /* HÁBITOS DINÁMICOS */
+        /* HÁBITOS DINÁMICOS EN LÍNEAS COMPLETAS */
         .habits-row-view {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px 16px;
-            align-items: center;
+            flex-direction: column;
+            gap: 6px;
             padding: 8px 12px;
-            background: #fbf9f6;
+            background: #faf8f5;
             border-radius: 6px;
             border: 1px solid #eee7dd;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
         }
 
         .habit-pill {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            width: 100%;
+            border-bottom: 1px dashed #e8e2d8;
+            padding-bottom: 4px;
+        }
+
+        .habit-pill:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
         .habit-check {
@@ -664,6 +671,7 @@
             height: 12px;
             border: 1.5px solid var(--accent);
             border-radius: 2px;
+            flex-shrink: 0;
         }
 
         .habit-check.circle {
@@ -1029,48 +1037,7 @@
          BARRA SUPERIOR CON CÍRCULOS CLICABLES Y REORDENACIÓN ARRASTRABLE
          ======================================================== -->
     <div class="customizer-bar">
-        <!-- 1. RAYADO: PUNTOS, LÍNEAS, CUADRÍCULA, EN BLANCO -->
-        <div class="customizer-group">
-            <span class="customizer-label">Rayado</span>
-            <div class="circles-row">
-                <!-- Puntos -->
-                <button type="button" class="opt-circle active" id="btn-rayado-dots" title="Puntos" onclick="setRayado('dots')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <circle cx="6" cy="6" r="1.5" fill="#87553b"/>
-                        <circle cx="12" cy="6" r="1.5" fill="#87553b"/>
-                        <circle cx="18" cy="6" r="1.5" fill="#87553b"/>
-                        <circle cx="6" cy="12" r="1.5" fill="#87553b"/>
-                        <circle cx="12" cy="12" r="1.5" fill="#87553b"/>
-                        <circle cx="18" cy="12" r="1.5" fill="#87553b"/>
-                        <circle cx="6" cy="18" r="1.5" fill="#87553b"/>
-                        <circle cx="12" cy="18" r="1.5" fill="#87553b"/>
-                        <circle cx="18" cy="18" r="1.5" fill="#87553b"/>
-                    </svg>
-                </button>
-                <!-- Líneas -->
-                <button type="button" class="opt-circle" id="btn-rayado-lines" title="Líneas" onclick="setRayado('lines')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <line x1="4" y1="6" x2="20" y2="6" stroke="#87553b" stroke-width="2"/>
-                        <line x1="4" y1="12" x2="20" y2="12" stroke="#87553b" stroke-width="2"/>
-                        <line x1="4" y1="18" x2="20" y2="18" stroke="#87553b" stroke-width="2"/>
-                    </svg>
-                </button>
-                <!-- Cuadrícula -->
-                <button type="button" class="opt-circle" id="btn-rayado-grid" title="Cuadrícula" onclick="setRayado('grid')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="#87553b" stroke-width="1.8"/>
-                        <line x1="12" y1="4" x2="12" y2="20" stroke="#87553b" stroke-width="1.5"/>
-                        <line x1="4" y1="12" x2="20" y2="12" stroke="#87553b" stroke-width="1.5"/>
-                    </svg>
-                </button>
-                <!-- En blanco -->
-                <button type="button" class="opt-circle" id="btn-rayado-blank" title="En blanco" onclick="setRayado('blank')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="#87553b" stroke-width="1.8" stroke-dasharray="3 3"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
+
 
         <!-- 2. LÍNEAS DE TAREAS: PUNTOS SUSPENSIVOS, CONTINUA, SIN LÍNEAS -->
         <div class="customizer-group">
@@ -1219,20 +1186,15 @@
                     <div class="section-title-label">
                         <span>4. Notas</span>
                         <span class="label-hint">(Reflexión del día)</span>
+                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">161/560</span>
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
                 <textarea id="input-notes" rows="4" maxlength="560" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
             </div>
 
-            <div class="form-group" id="format-selection-group">
-                <label for="input-format" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Formato de Plantilla en Blanco</label>
-                <select id="input-format">
-                    <option value="6x9" selected>Formato Libro 6" x 9" (152 x 229 mm) — Escala Real</option>
-                    <option value="a4">Formato DIN A4 (210 x 297 mm) — Impresora Doméstica</option>
-                </select>
-                <span style="font-size:0.72rem; color:#888; margin-top:2px; display:block;">El PDF personalizado con datos se descarga siempre a escala real en Formato Libro 6" x 9".</span>
-            </div>
+            <!-- Formato predeterminado (gestionado en el modal de descarga) -->
+            <input type="hidden" id="input-format" value="6x9">
 
             <div class="btn-group-primary">
                 <button type="button" class="btn-cta" onclick="openDownloadModal(false)">
@@ -1298,7 +1260,7 @@
                             <span>Notas</span>
                             <span class="sub" style="font-size:0.7rem; font-style:italic;">¿Qué salió bien hoy y qué puedo mejorar para mañana?</span>
                         </div>
-                        <div class="notes-view bg-dots" id="view-notes">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</div>
+                        <div class="notes-view bg-blank" id="view-notes">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</div>
                     </div>
                 </div>
 
@@ -1427,7 +1389,7 @@
 
         // CONFIGURACIÓN DE ESTILOS ACTIVOS
         let activeStyles = {
-            rayado: 'dots',
+            rayado: 'blank',
             lineas: 'dotted',
             caja: 'caja',
             check: 'square'
@@ -1454,17 +1416,11 @@
 
         // FUNCIONES DE SELECCIÓN POR CÍRCULOS
         function setRayado(val) {
-            activeStyles.rayado = val;
-            ['dots', 'lines', 'grid', 'blank'].forEach(k => {
-                const btn = document.getElementById(`btn-rayado-${k}`);
-                if (btn) btn.classList.toggle('active', k === val);
-            });
+            activeStyles.rayado = 'blank';
             const notesEl = document.getElementById('view-notes');
             if (notesEl) {
-                notesEl.className = 'notes-view';
-                notesEl.classList.add(`bg-${val}`);
+                notesEl.className = 'notes-view bg-blank';
             }
-            showStatus(`Rayado: ${val}`);
         }
 
         function setLineas(val) {
@@ -1588,8 +1544,34 @@
         }
 
         // ========================================================
-        // HÁBITOS CLAVE
+        // HÁBITOS CLAVE Y GESTIÓN DINÁMICA DE NOTAS
         // ========================================================
+        function getDynamicNotesMaxLength() {
+            const habitCount = (sectionStates.habits && habitsList) ? habitsList.length : 0;
+            if (habitCount <= 3) return 560;
+            if (habitCount === 4) return 490;
+            return 420; // 5 hábitos
+        }
+
+        function updateNotesLimit() {
+            const notesInput = document.getElementById('input-notes');
+            const notesCount = document.getElementById('count-notes');
+            const limit = getDynamicNotesMaxLength();
+            if (notesInput) {
+                notesInput.maxLength = limit;
+                if (notesInput.value.length > limit) {
+                    notesInput.value = notesInput.value.substring(0, limit);
+                }
+                if (notesCount) {
+                    notesCount.textContent = `${notesInput.value.length}/${limit}`;
+                }
+                const viewNotes = document.getElementById('view-notes');
+                if (viewNotes) {
+                    viewNotes.textContent = notesInput.value.trim() || '';
+                }
+            }
+        }
+
         function renderHabitsInputs() {
             const container = document.getElementById('habits-inputs-container');
             if (!container) return;
@@ -1599,7 +1581,7 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <input type="text" value="${habit}" maxlength="45" placeholder="Hábito ${idx + 1}" oninput="updateHabitValue(${idx}, this.value)">
+                    <input type="text" value="${habit}" maxlength="65" placeholder="Hábito ${idx + 1}" oninput="updateHabitValue(${idx}, this.value)">
                     <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
@@ -1619,6 +1601,7 @@
                 btnAddHabit.style.display = habitsList.length >= 5 ? 'none' : 'inline-flex';
             }
             renderHabitsPreview();
+            updateNotesLimit();
         }
 
         function updateHabitValue(idx, val) {
@@ -1633,6 +1616,7 @@
             document.getElementById('form-group-habits').style.display = 'block';
             document.getElementById('btn-restore-habits').style.display = 'none';
             renderHabitsInputs();
+            updateNotesLimit();
             showStatus('Hábito añadido.');
         }
 
@@ -1643,6 +1627,7 @@
             } else {
                 renderHabitsInputs();
             }
+            updateNotesLimit();
             showStatus('Hábito eliminado.');
         }
 
@@ -1657,10 +1642,11 @@
                 pill.className = 'habit-pill';
                 pill.innerHTML = `
                     <div class="habit-check ${isCircle ? 'circle' : ''}"></div>
-                    <span>${habit.trim()}</span>
+                    <span style="font-size:0.82rem; color:#333; line-height:1.2;">${habit.trim()}</span>
                 `;
                 container.appendChild(pill);
             });
+            updateNotesLimit();
         }
 
         // ========================================================
@@ -1671,6 +1657,7 @@
             document.getElementById(`form-group-${secId}`).style.display = 'none';
             document.getElementById(`btn-restore-${secId}`).style.display = 'block';
             document.getElementById(`block-${secId}`).style.display = 'none';
+            updateNotesLimit();
             showStatus(`Sección eliminada.`);
         }
 
@@ -1688,6 +1675,7 @@
                 habitsList = ['Nuevo hábito'];
                 renderHabitsInputs();
             }
+            updateNotesLimit();
             showStatus(`Sección restaurada.`);
         }
 
@@ -1719,6 +1707,7 @@
             document.getElementById('view-date').textContent = dateInput ? `Fecha: ${dateInput}` : 'Fecha: __ / __ / ______';
             document.getElementById('view-priority').textContent = priority;
             document.getElementById('view-notes').textContent = notes || '';
+            updateNotesLimit();
         }
 
         function loadExampleData() {
@@ -1982,11 +1971,12 @@
                             docInstance.rect(margin + 2, y, 3.8, 3.8);
                         }
 
-                        if (taskText) {
+                        // En plantilla en blanco, no imprime texto de tareas
+                        if (!isBlankTemplate && taskText && taskText.trim()) {
                             docInstance.setFont('helvetica', 'normal');
                             docInstance.setFontSize(8.5);
                             docInstance.setTextColor(30, 25, 22);
-                            docInstance.text(taskText, margin + 9, y + 3);
+                            docInstance.text(taskText.trim(), margin + 9, y + 3);
                         }
 
                         if (lineas !== 'none') {
@@ -1999,47 +1989,52 @@
                     y += 3;
                 }
 
-                // 3. HÁBITOS CLAVE
+                // 3. HÁBITOS CLAVE (Líneas completas apiladas una debajo de otra)
                 if (sectionStates.habits && habitsList.length > 0) {
                     docInstance.setFont('helvetica', 'bold');
                     docInstance.setFontSize(8);
                     docInstance.setTextColor(30, 25, 22);
                     docInstance.text('HÁBITOS CLAVE', margin, y);
-                    y += 3.5;
+                    y += 4;
 
-                    const habitBoxHeight = Math.ceil(habitsList.length / 2) * 6.5 + 4;
+                    const habitRowHeight = 6.8;
+                    const habitBoxHeight = (habitsList.length * habitRowHeight) + 3;
                     docInstance.setFillColor(252, 250, 247);
                     docInstance.setDrawColor(220, 215, 208);
                     docInstance.setLineWidth(0.2);
                     docInstance.roundedRect(margin, y, contentWidth, habitBoxHeight, 1.5, 1.5, 'FD');
 
-                    const colW = contentWidth / 2;
                     habitsList.forEach((hText, idx) => {
-                        const row = Math.floor(idx / 2);
-                        const col = idx % 2;
-                        const itemX = margin + (col * colW);
-                        const itemY = y + 2.5 + (row * 6.5);
+                        const itemY = y + 2.5 + (idx * habitRowHeight);
 
                         docInstance.setDrawColor(135, 85, 59);
+                        docInstance.setLineWidth(0.25);
                         if (isCircle) {
-                            docInstance.circle(itemX + 6, itemY + 2.2, 1.8, 'S');
+                            docInstance.circle(margin + 5, itemY + 1.8, 1.8, 'S');
                         } else {
-                            docInstance.rect(itemX + 4, itemY + 0.5, 3.6, 3.6);
+                            docInstance.rect(margin + 3, itemY + 0.2, 3.6, 3.6);
                         }
 
-                        docInstance.setFont('helvetica', 'normal');
-                        docInstance.setFontSize(7.8);
-                        docInstance.setTextColor(40, 35, 30);
-                        const displayH = isBlankTemplate ? '_____________________' : (hText.trim());
+                        // En plantilla en blanco, no imprime texto de hábito
+                        const displayH = (!isBlankTemplate && hText) ? hText.trim() : '';
                         if (displayH) {
-                            docInstance.text(displayH, itemX + 10, itemY + 3.2);
+                            docInstance.setFont('helvetica', 'normal');
+                            docInstance.setFontSize(8.2);
+                            docInstance.setTextColor(40, 35, 30);
+                            docInstance.text(displayH, margin + 9.5, itemY + 3.0, { maxWidth: contentWidth - 14 });
+                        }
+
+                        if (idx < habitsList.length - 1) {
+                            docInstance.setDrawColor(230, 225, 218);
+                            docInstance.setLineWidth(0.15);
+                            docInstance.line(margin + 9.5, itemY + 4.8, margin + contentWidth - 4, itemY + 4.8);
                         }
                     });
 
-                    y += habitBoxHeight + 8;
+                    y += habitBoxHeight + 7;
                 }
 
-                // 4. NOTAS
+                // 4. NOTAS (Siempre limpio y blanco, altura proporcional dinámica)
                 if (sectionStates.notes) {
                     docInstance.setFont('helvetica', 'bold');
                     docInstance.setFontSize(8);
@@ -2059,35 +2054,15 @@
                         docInstance.setLineWidth(0.2);
                         docInstance.roundedRect(margin, y, contentWidth, notesHeight, 2, 2, 'FD');
 
-                        if (rayado === 'dots') {
-                            docInstance.setFillColor(195, 188, 178);
-                            for (let px = margin + 4; px <= margin + contentWidth - 4; px += 5) {
-                                for (let py = y + 4; py <= y + notesHeight - 4; py += 5) {
-                                    docInstance.circle(px, py, 0.18, 'F');
-                                }
-                            }
-                        } else if (rayado === 'lines') {
-                            docInstance.setDrawColor(220, 215, 208);
-                            docInstance.setLineWidth(0.2);
-                            for (let py = y + 7; py <= y + notesHeight - 4; py += 6.5) {
-                                docInstance.line(margin + 4, py, margin + contentWidth - 4, py);
-                            }
-                        } else if (rayado === 'grid') {
-                            docInstance.setDrawColor(225, 220, 214);
-                            docInstance.setLineWidth(0.15);
-                            for (let px = margin + 4; px <= margin + contentWidth - 4; px += 5) {
-                                docInstance.line(px, y + 4, px, y + notesHeight - 4);
-                            }
-                            for (let py = y + 4; py <= y + notesHeight - 4; py += 5) {
-                                docInstance.line(margin + 4, py, margin + contentWidth - 4, py);
-                            }
-                        }
-
-                        if (notes) {
+                        // Siempre en blanco (rayado = 'blank')
+                        if (!isBlankTemplate && notes) {
                             docInstance.setFont('times', 'normal');
-                            docInstance.setFontSize(9);
+                            docInstance.setFontSize(8.8);
                             docInstance.setTextColor(35, 30, 25);
-                            docInstance.text(notes, margin + 4, y + 7, { maxWidth: contentWidth - 8, lineHeightFactor: 1.4 });
+                            docInstance.text(notes, margin + 4, y + 6.5, { 
+                                maxWidth: contentWidth - 8, 
+                                lineHeightFactor: 1.35 
+                            });
                         }
                     }
                 }
