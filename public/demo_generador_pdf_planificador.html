@@ -1041,7 +1041,7 @@
 
         <!-- 2. LÍNEAS DE TAREAS: PUNTOS SUSPENSIVOS, CONTINUA, SIN LÍNEAS -->
         <div class="customizer-group">
-            <span class="customizer-label">Líneas Tareas</span>
+            <span class="customizer-label">Líneas de separación</span>
             <div class="circles-row">
                 <!-- Puntos suspensivos -->
                 <button type="button" class="opt-circle active" id="btn-lineas-dotted" title="Línea de puntos suspensivos" onclick="setLineas('dotted')">
@@ -1186,11 +1186,11 @@
                     <div class="section-title-label">
                         <span>4. Notas</span>
                         <span class="label-hint">(Reflexión del día)</span>
-                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">161/560</span>
+                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">161/1150</span>
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
-                <textarea id="input-notes" rows="4" maxlength="560" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
+                <textarea id="input-notes" rows="6" maxlength="1150" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="renderPreview()">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
             </div>
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
@@ -1298,8 +1298,8 @@
                 <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px;">
                     <label for="modal-select-format-daily" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
                     <select id="modal-select-format-daily" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;" onchange="document.getElementById('input-format').value = this.value">
-                        <option value="6x9">Formato Libro 6" x 9" (152 x 229 mm) — Escala Real</option>
-                        <option value="a4">Formato DIN A4 (210 x 297 mm) — Impresora Doméstica</option>
+                        <option value="6x9">Formato Libro 6" x 9" (152 x 229 mm)</option>
+                        <option value="a4">Formato DIN A4 (210 x 297 mm)</option>
                     </select>
                 </div>
             </div>
@@ -1307,7 +1307,7 @@
             <!-- AVISO DE FORMATO PARA PERSONALIZADO -->
             <div id="modal-personalized-format-info-daily" style="display: block; text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
                 <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px;">Formato de exportación:</span>
-                <span style="font-size: 0.82rem; color: #333;">Formato Libro 6" x 9" (152 x 229 mm) — Escala Real</span>
+                <span style="font-size: 0.82rem; color: #333;">Formato Libro 6" x 9" (152 x 229 mm)</span>
             </div>
 
             <div class="modal-actions-grid">
@@ -1473,7 +1473,7 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <input type="text" value="${task}" maxlength="80" placeholder="Tarea ${idx + 1}" oninput="updateTaskValue(${idx}, this.value)">
+                    <input type="text" value="${task}" maxlength="130" placeholder="Tarea ${idx + 1}" oninput="updateTaskValue(${idx}, this.value)">
                     <button type="button" class="btn-remove-item" title="Eliminar tarea" onclick="removeTaskItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
@@ -1548,9 +1548,10 @@
         // ========================================================
         function getDynamicNotesMaxLength() {
             const habitCount = (sectionStates.habits && habitsList) ? habitsList.length : 0;
-            if (habitCount <= 3) return 560;
-            if (habitCount === 4) return 490;
-            return 420; // 5 hábitos
+            if (!sectionStates.habits || habitCount === 0) return 1400;
+            if (habitCount <= 3) return 1150;
+            if (habitCount === 4) return 1000;
+            return 850; // 5 hábitos
         }
 
         function updateNotesLimit() {
@@ -1800,7 +1801,7 @@
                 if (persInfo) persInfo.style.display = 'block';
                 badgeText.textContent = 'Planificador Personalizado';
                 titleText.textContent = 'Tu Planificador Diario en Papel';
-                descText.textContent = 'Descarga tu diseño en Formato Libro 6" x 9" a escala real con tus prioridades, tareas y notas del día.';
+                descText.textContent = 'Descarga tu diseño en Formato Libro 6" x 9" con tus prioridades, tareas y notas del día.';
                 btnLabel.textContent = 'Descargar mi PDF personalizado';
             }
 
@@ -1972,19 +1973,39 @@
                         }
 
                         // En plantilla en blanco, no imprime texto de tareas
-                        if (!isBlankTemplate && taskText && taskText.trim()) {
-                            docInstance.setFont('helvetica', 'normal');
-                            docInstance.setFontSize(8.5);
-                            docInstance.setTextColor(30, 25, 22);
-                            docInstance.text(taskText.trim(), margin + 9, y + 3);
-                        }
+                        const maxTaskWidth = contentWidth - 12;
+                        const taskLines = (!isBlankTemplate && taskText && taskText.trim()) 
+                            ? docInstance.splitTextToSize(taskText.trim(), maxTaskWidth) 
+                            : [];
 
-                        if (lineas !== 'none') {
-                            docInstance.setDrawColor(215, 210, 202);
-                            docInstance.setLineWidth(lineas === 'dotted' ? 0.15 : 0.25);
-                            docInstance.line(margin + 9, y + 4.5, pageWidth - margin, y + 4.5);
+                        if (taskLines.length > 1) {
+                            taskLines.forEach((tl, tlIdx) => {
+                                docInstance.setFont('helvetica', 'normal');
+                                docInstance.setFontSize(8.2);
+                                docInstance.setTextColor(30, 25, 22);
+                                docInstance.text(tl, margin + 9, y + 2.8 + (tlIdx * 3.8));
+                            });
+                            const taskBottomY = y + 2.8 + ((taskLines.length - 1) * 3.8);
+                            if (lineas !== 'none') {
+                                docInstance.setDrawColor(215, 210, 202);
+                                docInstance.setLineWidth(lineas === 'dotted' ? 0.15 : 0.25);
+                                docInstance.line(margin + 9, taskBottomY + 2.4, pageWidth - margin, taskBottomY + 2.4);
+                            }
+                            y += (taskLines.length * 3.8) + 4.2;
+                        } else {
+                            if (taskLines.length === 1) {
+                                docInstance.setFont('helvetica', 'normal');
+                                docInstance.setFontSize(8.4);
+                                docInstance.setTextColor(30, 25, 22);
+                                docInstance.text(taskLines[0], margin + 9, y + 3);
+                            }
+                            if (lineas !== 'none') {
+                                docInstance.setDrawColor(215, 210, 202);
+                                docInstance.setLineWidth(lineas === 'dotted' ? 0.15 : 0.25);
+                                docInstance.line(margin + 9, y + 4.5, pageWidth - margin, y + 4.5);
+                            }
+                            y += 7.5;
                         }
-                        y += 7.5;
                     });
                     y += 3;
                 }
@@ -2057,11 +2078,11 @@
                         // Siempre en blanco (rayado = 'blank')
                         if (!isBlankTemplate && notes) {
                             docInstance.setFont('times', 'normal');
-                            docInstance.setFontSize(8.8);
+                            docInstance.setFontSize(9.2);
                             docInstance.setTextColor(35, 30, 25);
                             docInstance.text(notes, margin + 4, y + 6.5, { 
                                 maxWidth: contentWidth - 8, 
-                                lineHeightFactor: 1.35 
+                                lineHeightFactor: 1.4 
                             });
                         }
                     }
