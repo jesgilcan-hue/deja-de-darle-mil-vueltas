@@ -816,6 +816,7 @@
                             <option value="3">Cada 3 horas (8 filas)</option>
                             <option value="4">Cada 4 horas (6 filas)</option>
                             <option value="6">Cada 6 horas (4 filas)</option>
+                            <option value="12">Cada 12 horas (2 filas)</option>
                         </select>
                     </div>
                 </div>
@@ -951,8 +952,8 @@
             <div style="text-align: left; margin-bottom: 16px;">
                 <label for="modal-select-format" style="font-size: 0.8rem; font-weight: 700; color: #444; margin-bottom: 4px; display: block;">Formato de papel:</label>
                 <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
-                    <option value="book" selected>Formato Libro 8.25" × 6" (210 × 152 mm) · Estándar Menos Ruido</option>
-                    <option value="a4">Folio DIN A4 Apaisado (297 × 210 mm) · Impresora estándar</option>
+                    <option value="book" selected>Formato Libro 8.25" × 6" (210 × 152 mm)</option>
+                    <option value="a4">Folio DIN A4 Apaisado (297 × 210 mm)</option>
                 </select>
             </div>
 
@@ -1065,7 +1066,9 @@
 
         function getRowCount() {
             const val = parseInt(document.getElementById('select-row-count')?.value || '24', 10);
-            return isNaN(val) ? 24 : Math.min(Math.max(val, 4), 24);
+            const step = getStepHours();
+            const minAllowed = (step === 12) ? 2 : 4;
+            return isNaN(val) ? 24 : Math.min(Math.max(val, minAllowed), 24);
         }
 
         function populateRowCountSelect(preferredRows) {
@@ -1077,9 +1080,10 @@
             if (step === 0.5) defaultCycleRows = 24;
 
             const targetVal = preferredRows || defaultCycleRows;
+            const minRows = (step === 12) ? 2 : 4;
 
             select.innerHTML = '';
-            for (let r = 4; r <= 24; r++) {
+            for (let r = minRows; r <= 24; r++) {
                 const opt = document.createElement('option');
                 opt.value = r;
                 let extra = '';
@@ -1399,20 +1403,28 @@
             const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
 
             const headerRowH = isBook ? 4.8 : 6.5;
-            const availableTableH = isBook ? 78 : 110;
+
+            // Dimensiones dinámicas para ocupar todo el alto útil sin dejar hueco vacío al fondo
+            const notesH = isBook ? 16 : 22;
+            const gapBetweenTableAndNotes = isBook ? 3.5 : 5;
+            const bottomMarginBeforeFooter = isBook ? 4.5 : 6;
+
+            const yTableStart = y;
+            const tableBottomTarget = (ph - m - bottomMarginBeforeFooter) - notesH - gapBetweenTableAndNotes;
+            const availableTableH = Math.max(tableBottomTarget - yTableStart, isBook ? 91 : 126);
             const rowH = (availableTableH - headerRowH) / rowCount;
 
             // Capa 1: Fondo de cabecera de la tabla
             doc.setFillColor(245, 240, 232);
             doc.setDrawColor(215, 210, 200);
             doc.setLineWidth(0.2);
-            doc.rect(m, y, contentW, headerRowH, 'FD');
+            doc.rect(m, yTableStart, contentW, headerRowH, 'FD');
 
             // Texto cabecera: HORA
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(isBook ? 5.8 : 7.5);
             doc.setTextColor(135, 85, 59);
-            doc.text('HORA', m + (timeColW / 2), y + (headerRowH / 2) + 1.2, { align: 'center' });
+            doc.text('HORA', m + (timeColW / 2), yTableStart + (headerRowH / 2) + 1.2, { align: 'center' });
 
             // Textos cabecera: Días de la semana
             doc.setFont('helvetica', 'bold');
@@ -1420,12 +1432,12 @@
             doc.setTextColor(50, 45, 40);
             for (let d = 0; d < 7; d++) {
                 const dayX = m + timeColW + (d * dayColW);
-                doc.text(dayNames[d], dayX + (dayColW / 2), y + (headerRowH / 2) + 1.2, { align: 'center' });
+                doc.text(dayNames[d], dayX + (dayColW / 2), yTableStart + (headerRowH / 2) + 1.2, { align: 'center' });
             }
 
             // Capa 2: Fondos alternos en las filas
             for (let i = 0; i < rowCount; i++) {
-                const rY = y + headerRowH + (i * rowH);
+                const rY = yTableStart + headerRowH + (i * rowH);
                 if (i % 2 === 1) {
                     doc.setFillColor(252, 250, 247);
                     doc.rect(m, rY, contentW, rowH, 'F');
@@ -1436,14 +1448,17 @@
             doc.setDrawColor(225, 220, 212);
             doc.setLineWidth(0.18);
             for (let i = 0; i < rowCount; i++) {
-                const rY = y + headerRowH + (i * rowH);
+                const rY = yTableStart + headerRowH + (i * rowH);
                 doc.line(m, rY + rowH, m + contentW, rY + rowH);
             }
 
             // Capa 4: Textos de las franjas horarias y contenidos de celdas
-            const timeFontSize = isBook ? (rowCount > 16 ? 4.8 : 5.8) : (rowCount > 16 ? 6.2 : 7.5);
+            let timeFontSize = isBook ? (rowCount > 16 ? 4.8 : 5.8) : (rowCount > 16 ? 6.2 : 7.5);
+            if (rowCount <= 6) {
+                timeFontSize = isBook ? 6.8 : 8.8;
+            }
             for (let i = 0; i < rowCount; i++) {
-                const rY = y + headerRowH + (i * rowH);
+                const rY = yTableStart + headerRowH + (i * rowH);
                 const slot = slots[i];
 
                 doc.setFont('helvetica', 'bold');
@@ -1474,23 +1489,22 @@
             doc.setLineWidth(0.16);
             for (let d = 1; d < 7; d++) {
                 const dayX = m + timeColW + (d * dayColW);
-                doc.line(dayX, y, dayX, y + availableTableH);
+                doc.line(dayX, yTableStart, dayX, yTableStart + availableTableH);
             }
 
             // 2. Línea divisoria principal entre HORA y LUNES
             doc.setDrawColor(195, 190, 180);
             doc.setLineWidth(0.3);
-            doc.line(m + timeColW, y, m + timeColW, y + availableTableH);
+            doc.line(m + timeColW, yTableStart, m + timeColW, yTableStart + availableTableH);
 
             // 3. Marco exterior de la tabla
             doc.setDrawColor(210, 205, 195);
             doc.setLineWidth(0.28);
-            doc.rect(m, y, contentW, availableTableH);
+            doc.rect(m, yTableStart, contentW, availableTableH);
 
-            y += availableTableH + (isBook ? 3.5 : 5);
+            y = yTableStart + availableTableH + gapBetweenTableAndNotes;
 
             // 5. BLOQUE DE NOTAS Y PRIORIDADES
-            const notesH = isBook ? 15.5 : 22;
             doc.setFillColor(251, 249, 245);
             doc.setDrawColor(220, 215, 205);
             doc.setLineWidth(0.2);
