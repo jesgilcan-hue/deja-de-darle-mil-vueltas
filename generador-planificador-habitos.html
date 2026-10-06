@@ -232,6 +232,17 @@
             flex: 1;
             font-size: 0.82rem;
             padding: 7px 10px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            resize: vertical;
+            min-height: 34px;
+            line-height: 1.35;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         .btn-remove-item {
@@ -843,7 +854,7 @@
                 </div>
                 <div class="control-group">
                     <label for="input-habit-intention">Intención o enfoque del mes <span class="char-count" id="count-intention">0/120</span></label>
-                    <input type="text" id="input-habit-intention" maxlength="120" placeholder="Ej: Calma en las mañanas y desconexión nocturna..." oninput="handleIntentionInput(this)">
+                    <textarea id="input-habit-intention" maxlength="120" rows="1" placeholder="Ej: Calma en las mañanas y desconexión nocturna..." oninput="handleIntentionInput(this)"></textarea>
                 </div>
             </div>
 
@@ -1087,10 +1098,11 @@
             }
         }
 
-        function handleIntentionInput(input) {
+        function handleIntentionInput(ta) {
             isExampleActive = false;
+            autoResizeTextarea(ta);
             const count = document.getElementById('count-intention');
-            if (count && input) count.textContent = input.value.length + '/120';
+            if (count && ta) count.textContent = ta.value.length + '/120';
             updateIntentionPreview();
         }
 
@@ -1129,10 +1141,12 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <input type="text" class="habit-input-field" maxlength="50" placeholder="Hábito ${idx + 1} (máx 50 car.)" value="${h}" oninput="isExampleActive = false; habitsList[${idx}] = this.value; updateHabitsPreview();">
+                    <textarea class="habit-input-field" rows="1" maxlength="50" placeholder="Hábito ${idx + 1} (máx 50 car.)" oninput="isExampleActive = false; autoResizeTextarea(this); habitsList[${idx}] = this.value; updateHabitsPreview();">${h}</textarea>
                     <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
+                const ta = row.querySelector('textarea');
+                if (ta) autoResizeTextarea(ta);
             });
 
             if (btnAdd) {
@@ -1228,7 +1242,7 @@
             const yInput = document.getElementById('input-habit-year');
             if (yInput) yInput.value = '';
             const iInput = document.getElementById('input-habit-intention');
-            if (iInput) iInput.value = '';
+            if (iInput) { iInput.value = ''; iInput.style.height = ''; }
             const nInput = document.getElementById('input-habit-notes');
             if (nInput) { nInput.value = ''; nInput.style.height = ''; }
 
