@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crea tu Propio Libro de Enfoque · Menos Ruido</title>
+    <title>Diseña tu Propio Libro · Menos Ruido</title>
 
     <!-- Vercel Web Analytics & Speed Insights -->
     <script>
@@ -20,8 +20,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Script de jsPDF local UMD (100% offline) -->
+    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
     <script src="./jspdf.umd.min.js"></script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
 
     <style>
         :root {
@@ -31,7 +41,7 @@
             --text-muted: #66615b;
             --accent: #87553b;
             --accent-hover: #70442e;
-            --sage: #586851;
+            --accent-light: rgba(135, 85, 59, 0.08);
             --border-line: #dcd7ce;
             --font-serif: 'Playfair Display', Georgia, serif;
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -47,13 +57,13 @@
             font-family: var(--font-sans);
             background-color: var(--bg-color);
             color: var(--text-main);
-            line-height: 1.5;
-            padding: 20px 16px 70px;
+            line-height: 1.45;
+            padding: 16px 14px 60px;
         }
 
         .header-container {
-            max-width: 1240px;
-            margin: 0 auto 20px;
+            max-width: 1380px;
+            margin: 0 auto 16px;
             text-align: center;
         }
 
@@ -67,50 +77,49 @@
             color: var(--accent);
             padding: 4px 14px;
             border-radius: 20px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         h1 {
             font-family: var(--font-serif);
-            font-size: 2.2rem;
+            font-size: 2.1rem;
+            color: #1a1614;
             font-weight: 700;
-            margin-bottom: 8px;
-            color: #1e1916;
-            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
         }
 
         .subtitle {
-            font-size: 0.98rem;
+            font-size: 0.94rem;
             color: var(--text-muted);
-            max-width: 780px;
-            margin: 0 auto 16px;
-            line-height: 1.6;
+            max-width: 820px;
+            margin: 0 auto;
         }
 
-        /* BARRA SUPERIOR DE PARÁMETROS DEL LIBRO */
+        /* BARRA SUPERIOR DE HORIZONTE Y PÁGINAS FIJAS */
         .book-config-bar {
-            max-width: 1240px;
-            margin: 0 auto 24px;
+            max-width: 1380px;
+            margin: 16px auto 20px;
             background: #ffffff;
-            border-radius: 16px;
-            padding: 18px 24px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 12px;
+            padding: 16px 22px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+            border: 1px solid var(--border-line);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 20px;
+            gap: 16px;
             flex-wrap: wrap;
         }
 
         .config-item {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .config-label {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.9px;
@@ -119,20 +128,20 @@
 
         .cycle-selector {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             background: #faf8f5;
             padding: 4px;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid #e5dfd5;
         }
 
         .btn-cycle-opt {
-            padding: 7px 16px;
-            font-size: 0.82rem;
+            padding: 6px 14px;
+            font-size: 0.8rem;
             font-weight: 600;
             border: none;
             background: transparent;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
             color: #555;
@@ -142,62 +151,64 @@
         .btn-cycle-opt.active {
             background: #332d27;
             color: #ffffff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
         }
 
-        .book-summary-pill {
-            font-size: 0.8rem;
-            color: #555;
-            background: #fbf9f5;
-            border: 1px solid #e8e3d9;
-            padding: 6px 14px;
-            border-radius: 8px;
+        .pages-counter-box {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            background: #faf9f6;
+            border: 1px solid #e8e2d8;
+            padding: 8px 14px;
+            border-radius: 8px;
         }
 
-        /* LAYOUT PRINCIPAL: 2 COLUMNAS */
-        .main-layout {
-            max-width: 1240px;
+        .pages-counter-text {
+            font-size: 0.82rem;
+            color: #444;
+        }
+
+        .pages-counter-text strong {
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .app-layout {
+            max-width: 1380px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 430px 1fr;
+            grid-template-columns: minmax(380px, 440px) minmax(520px, 1fr);
             gap: 28px;
             align-items: start;
-        }
-
-        @media (max-width: 980px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
         }
 
         /* PANEL DE CONTROLES (IZQUIERDA) */
         .controls-panel {
             background: #ffffff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            border: 1px solid rgba(0,0,0,0.06);
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 20px 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
-        .panel-title {
+        .panel-header-top {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #f0ede6;
+            justify-content: space-between;
             padding-bottom: 12px;
+            border-bottom: 1px solid #efeae1;
         }
 
-        .panel-title span {
+        .panel-heading-text {
+            font-size: 1.15rem;
             font-family: var(--font-serif);
-            font-size: 1.18rem;
             font-weight: 700;
-            color: #222;
+            color: #1e1916;
         }
 
         .panel-actions-quick {
@@ -206,839 +217,410 @@
         }
 
         .btn-quick {
-            font-size: 0.73rem;
+            background: #f3efe8;
+            border: none;
+            color: var(--accent);
+            font-size: 0.78rem;
             font-weight: 600;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
-            background: #f7f5f0;
-            border: 1px solid #dcd7ce;
             cursor: pointer;
-            color: #555;
             transition: all 0.2s;
-            font-family: inherit;
         }
 
         .btn-quick:hover {
-            background: #ece8e1;
-            color: #222;
+            background: #e7dfd2;
+            color: var(--accent-hover);
         }
 
-        .form-section-title {
-            font-size: 0.72rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--accent);
-            margin-bottom: 10px;
+        .section-box {
+            border: 1px solid #ebe6dc;
+            background: #faf9f6;
+            border-radius: 8px;
+            padding: 14px 16px;
             display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-header-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
-        .form-group label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 600;
             color: #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
+        .form-label small {
+            font-weight: normal;
+            color: #888;
+        }
+
+        .form-control {
             width: 100%;
-            padding: 9px 12px;
-            border: 1px solid #dcd7ce;
-            border-radius: 8px;
-            font-size: 0.88rem;
-            background: #fdfcf9;
-            color: #222;
+            padding: 8px 10px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
             font-family: inherit;
-            transition: border 0.2s;
+            font-size: 0.86rem;
+            background: #fff;
+            color: #222;
+            transition: border-color 0.2s;
         }
 
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
+        .form-control:focus {
             outline: none;
             border-color: var(--accent);
-            background: #ffffff;
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
         }
 
-        .form-group textarea {
-            resize: vertical;
-            min-height: 58px;
-        }
-
-        .two-cols {
+        .grid-2col {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        /* ESTRUCTURA EXPLICATIVA DEL LIBRO */
-        .book-outline-box {
-            background: #faf8f5;
-            border-radius: 10px;
-            border: 1px solid #e7e2d7;
-            padding: 14px;
-            font-size: 0.82rem;
-        }
-
-        .book-outline-box h4 {
-            font-family: var(--font-serif);
-            font-size: 0.92rem;
-            margin-bottom: 8px;
-            color: #332d27;
-        }
-
-        .book-outline-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            color: #555;
-        }
-
-        .book-outline-list li {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .book-outline-badge {
-            background: #e9e4da;
-            color: #444;
-            font-size: 0.68rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            min-width: 48px;
-            text-align: center;
-        }
-
-        /* BOTONES DE DESCARGA */
-        .download-actions {
-            display: flex;
-            flex-direction: column;
             gap: 10px;
-            margin-top: 10px;
         }
 
-        .btn-download-book {
-            background: #2b2621;
-            color: #ffffff;
-            border: none;
-            border-radius: 10px;
-            padding: 14px 18px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-            font-family: inherit;
-        }
-
-        .btn-download-book:hover {
-            background: #191613;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-        }
-
-        .btn-download-sample {
-            background: #ffffff;
-            color: var(--accent);
-            border: 1.5px solid var(--accent);
-            border-radius: 10px;
-            padding: 10px 16px;
-            font-size: 0.84rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .btn-download-sample:hover {
-            background: rgba(135, 85, 59, 0.08);
-        }
-
-        /* PANEL DE VISTA PREVIA (DERECHA) */
-        .preview-panel {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 20px 24px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            border: 1px solid rgba(0,0,0,0.06);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .preview-header {
+        /* MÓDULOS DEL CUADERNO CON CHECKBOX Y ENLACE AL GENERADOR */
+        .module-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-            border-bottom: 1px solid #f0ede6;
-            padding-bottom: 12px;
+            padding: 8px 10px;
+            background: #ffffff;
+            border: 1px solid #e5ded5;
+            border-radius: 6px;
+            gap: 10px;
         }
 
-        .preview-title {
-            font-family: var(--font-serif);
-            font-size: 1.15rem;
+        .module-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .module-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .module-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .module-name {
+            font-size: 0.82rem;
             font-weight: 700;
             color: #222;
         }
 
-        /* NAVEGADOR DE PÁGINAS DEL VISOR (PESTAÑAS) */
+        .module-subtext {
+            font-size: 0.7rem;
+            color: #777;
+        }
+
+        .module-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .module-pages-input {
+            width: 52px;
+            padding: 4px 6px;
+            text-align: center;
+            font-size: 0.82rem;
+            border: 1px solid #d5cfc5;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .btn-module-link {
+            font-size: 0.72rem;
+            color: var(--accent);
+            text-decoration: none;
+            padding: 4px 8px;
+            background: #f5f0e9;
+            border-radius: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .btn-module-link:hover {
+            background: #ebe2d6;
+            color: var(--accent-hover);
+        }
+
+        /* BOTONES DE ACCIÓN */
+        .btn-primary-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.22);
+            width: 100%;
+        }
+
+        .btn-primary-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(135, 85, 59, 0.32);
+        }
+
+        /* COLUMNA DERECHA: VISOR / HOJEAR EL INTERIOR */
+        .preview-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: sticky;
+            top: 16px;
+        }
+
+        .preview-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1ede5;
+            border: 1px solid #e1dcce;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #665f54;
+            box-sizing: border-box;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* PESTAÑAS PARA VER CADA SECCIÓN EN EL VISOR */
         .tabs-page-navigator {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             flex-wrap: wrap;
         }
 
         .tab-page-btn {
-            padding: 6px 12px;
-            font-size: 0.74rem;
+            background: #ffffff;
+            border: 1px solid #d8d2c6;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
             font-weight: 600;
-            border-radius: 20px;
-            border: 1px solid #dcd7ce;
-            background: #faf8f5;
             color: #555;
             cursor: pointer;
-            transition: all 0.18s ease;
+            transition: all 0.15s ease;
             font-family: inherit;
         }
 
         .tab-page-btn:hover {
-            border-color: #a89f91;
-            background: #f2eee8;
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         .tab-page-btn.active {
-            background: #332d27;
+            background: var(--accent);
+            border-color: var(--accent);
             color: #ffffff;
-            border-color: #332d27;
         }
 
-        /* CONTENEDOR DE LA HOJA DE PAPEL REAL (6x9 PROPORCIONAL) */
-        .sheet-stage-wrapper {
-            background: #eae6de;
-            border-radius: 12px;
-            padding: 28px 16px;
+        /* HOJA EDITORIAL APAISADA (8.25" x 6") */
+        .preview-sheet-frame {
+            background: var(--paper-color);
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 22px 24px 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
             display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow-x: auto;
-        }
-
-        .paper-sheet {
-            width: 100%;
-            max-width: 520px;
-            aspect-ratio: 152.4 / 228.6; /* Proporción exacta 6x9 pulgadas */
-            background-color: var(--paper-color);
-            box-shadow: 0 12px 36px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.08);
-            border-radius: 3px;
-            padding: 34px 28px 28px;
+            flex-direction: column;
+            aspect-ratio: 8.25 / 6;
             box-sizing: border-box;
             position: relative;
-            display: flex;
-            flex-direction: column;
-            color: #282420;
-            user-select: none;
-        }
-
-        /* ESTILOS INTERIORES DE CADA PLANTILLA EN VISTA PREVIA */
-        /* 1. PORTADA INTERIOR */
-        .sheet-cover-inner {
-            height: 100%;
-            border: 1px solid #4a453f;
-            padding: 24px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            text-align: center;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .sheet-cover-inner::before {
-            content: '';
-            position: absolute;
-            top: 4px; left: 4px; right: 4px; bottom: 4px;
-            border: 0.5px solid #d8d3c8;
-            pointer-events: none;
-        }
-
-        .cover-kicker {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--accent);
-        }
-
-        .cover-title {
-            font-family: var(--font-serif);
-            font-size: 1.7rem;
-            font-weight: 700;
-            color: #1e1916;
-            margin: 8px 0 4px;
-            line-height: 1.2;
-        }
-
-        .cover-subtitle {
-            font-size: 0.8rem;
-            color: #666;
-            font-style: italic;
-        }
-
-        .cover-owner-block {
-            width: 86%;
-            margin: 20px auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .cover-owner-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: #555;
-        }
-
-        .cover-owner-line {
-            border-bottom: 1.5px solid #2b2621;
-            padding-bottom: 4px;
-            font-family: var(--font-serif);
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #222;
-            min-height: 26px;
-        }
-
-        .cover-motto-block {
-            font-family: var(--font-serif);
-            font-style: italic;
-            font-size: 0.84rem;
-            color: #4a453f;
-            line-height: 1.5;
-            padding: 0 10px;
-        }
-
-        .cover-dedication-box {
-            font-size: 0.78rem;
-            color: #555;
-            font-style: italic;
-            background: #faf8f5;
-            border: 0.5px solid #e0dbd1;
-            border-radius: 6px;
-            padding: 8px 12px;
-            width: 90%;
-            margin: 0 auto;
-        }
-
-        .cover-footer {
-            font-size: 0.64rem;
-            color: #888;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-        }
-
-        /* 2. TEORÍA Y METODOLOGÍA */
-        .sheet-theory {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .theory-kicker {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--accent);
-            border-bottom: 0.5px solid #2b2621;
-            padding-bottom: 4px;
-            margin-bottom: 8px;
-        }
-
-        .theory-title {
-            font-family: var(--font-serif);
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #1e1916;
-            margin-bottom: 8px;
-        }
-
-        .theory-body {
-            font-size: 0.74rem;
-            color: #3b3733;
-            line-height: 1.55;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .theory-rule {
-            background: #faf8f5;
-            border-left: 2.5px solid var(--accent);
-            padding: 6px 8px;
-            font-size: 0.72rem;
-            font-style: italic;
-            color: #332d27;
-        }
-
-        .theory-columns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 4px;
-        }
-
-        .theory-item-box {
-            border: 0.5px solid #e2ddd4;
-            border-radius: 4px;
-            padding: 6px;
-            background: #fdfcf9;
-        }
-
-        .theory-item-box strong {
-            display: block;
-            font-size: 0.72rem;
-            color: var(--accent);
-            margin-bottom: 2px;
-        }
-
-        .theory-item-box p {
-            font-size: 0.68rem;
-            color: #555;
-            line-height: 1.35;
-        }
-
-        /* 3. VISTA ANUAL */
-        .sheet-annual {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .annual-grid-mini {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            flex: 1;
-        }
-
-        .annual-month-box-mini {
-            border: 0.5px solid #dcd7ce;
-            border-radius: 4px;
-            padding: 4px 6px;
-            background: #faf9f6;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .annual-month-title-mini {
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: #332d27;
-            border-bottom: 0.5px solid #e5e0d7;
-            padding-bottom: 2px;
-            margin-bottom: 2px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .annual-month-text-mini {
-            font-size: 0.6rem;
-            color: #666;
-            line-height: 1.25;
-            flex: 1;
             overflow: hidden;
         }
 
-        /* 4. VISTA MENSUAL */
-        .sheet-monthly {
-            height: 100%;
+        /* DISEÑOS ESPECÍFICOS DE LAS HOJAS DENTRO DEL VISOR */
+        .inner-sheet-container {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            height: 100%;
         }
 
-        .monthly-goals-box {
-            background: #faf8f5;
-            border: 0.5px solid #dcd7ce;
-            border-radius: 5px;
-            padding: 6px 8px;
-        }
-
-        .monthly-goals-box strong {
-            font-size: 0.65rem;
-            color: var(--accent);
+        .sheet-kicker {
+            font-size: 0.62rem;
+            letter-spacing: 1.8px;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .monthly-goal-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.72rem;
-            color: #332d27;
+            color: var(--accent);
+            font-weight: 700;
             margin-bottom: 3px;
         }
 
-        .monthly-goal-sq {
-            width: 8px;
-            height: 8px;
-            border: 1px solid #777;
-            border-radius: 1.5px;
-        }
-
-        .monthly-calendar-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.62rem;
-            flex: 1;
-        }
-
-        .monthly-calendar-table th,
-        .monthly-calendar-table td {
-            border: 0.5px solid #d8d3c8;
-            padding: 3px 2px;
-            text-align: center;
-        }
-
-        .monthly-calendar-table th {
-            background: #f4f0e9;
+        .sheet-header-title {
+            font-family: var(--font-serif);
+            font-size: 1.3rem;
             font-weight: 700;
-            color: #444;
-        }
-
-        /* 5. VISTA DE HÁBITOS */
-        .sheet-habits {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .habits-table-preview {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.62rem;
-            flex: 1;
-        }
-
-        .habits-table-preview th,
-        .habits-table-preview td {
-            border: 0.5px solid #d8d3c8;
-            padding: 2px;
-            text-align: center;
-        }
-
-        .habits-table-preview th {
-            background: #f4f0e9;
-            font-weight: 700;
-        }
-
-        .habit-name-cell {
-            text-align: left !important;
-            padding-left: 5px !important;
-            font-weight: 600;
-            color: #332d27;
-            width: 32%;
-        }
-
-        .habit-dot-cell {
-            width: 10px;
-            color: #a8a299;
-            font-size: 0.58rem;
-        }
-
-        /* 6. VISTA SEMANAL */
-        .sheet-weekly {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .weekly-focus-box {
-            background: #faf8f5;
-            border: 0.5px solid #dcd7ce;
-            border-radius: 5px;
-            padding: 6px 8px;
-            font-size: 0.72rem;
-        }
-
-        .weekly-days-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            flex: 1;
-        }
-
-        .weekly-day-card {
-            border: 0.5px solid #dcd7ce;
-            border-radius: 4px;
-            padding: 4px 6px;
-            background: #fdfcf9;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .weekly-day-title {
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: #332d27;
-            border-bottom: 0.5px solid #e7e2d7;
-            padding-bottom: 2px;
-            margin-bottom: 3px;
-        }
-
-        /* 7. VISTA DIARIA (LA JOYA DE LA CORONA MENOS RUIDO) */
-        .sheet-daily {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .daily-kicker {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--accent);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .daily-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            border-bottom: 1.5px solid #2b2621;
+            color: #211c19;
+            letter-spacing: -0.2px;
+            border-bottom: 1.5px solid #28231e;
             padding-bottom: 4px;
+            margin-bottom: 8px;
         }
 
-        .daily-header-day {
-            font-family: var(--font-serif);
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #1e1916;
-        }
-
-        .daily-header-date {
-            font-size: 0.74rem;
-            color: #666;
-        }
-
-        .daily-priority-card {
-            background: #faf8f5;
-            border: 1px solid #2b2621;
-            border-radius: 6px;
-            padding: 8px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .daily-priority-label {
-            font-size: 0.65rem;
-            font-weight: 800;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: #2b2621;
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-
-        .daily-priority-val {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            font-family: var(--font-serif);
-            font-size: 0.88rem;
-            color: #1e1916;
-            line-height: 1.35;
-        }
-
-        .daily-prio-checkbox {
-            width: 12px;
-            height: 12px;
-            border: 1.2px solid #2b2621;
-            border-radius: 2px;
-            margin-top: 2px;
-            flex-shrink: 0;
-        }
-
-        .daily-tasks-card {
-            border: 0.5px solid #dcd7ce;
-            border-radius: 6px;
-            padding: 6px 10px;
-            background: #fdfcf9;
-        }
-
-        .daily-tasks-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: #555;
-            margin-bottom: 4px;
-        }
-
-        .daily-task-line {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 0.74rem;
-            color: #332d27;
-            padding: 2px 0;
-            border-bottom: 0.5px dotted #e2ddd3;
-        }
-
-        .daily-task-box {
-            width: 9px;
-            height: 9px;
-            border: 1px solid #777;
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
-
-        .daily-habits-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 4px 6px;
-            background: #faf8f5;
-            border-radius: 6px;
-            border: 0.5px solid #e7e2d7;
-            font-size: 0.68rem;
-            color: #444;
-        }
-
-        .daily-habit-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .daily-habit-circle {
-            width: 9px;
-            height: 9px;
-            border: 1px solid #888;
-            border-radius: 50%;
-        }
-
-        .daily-notes-area {
-            flex: 1;
-            border: 0.5px solid #dcd7ce;
-            border-radius: 6px;
-            padding: 8px 10px;
-            background: #fdfcf9;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .daily-notes-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .daily-notes-lines {
+        /* PÁGINA: PORTADA DE PERTENENCIA */
+        .cover-preview-box {
             flex: 1;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding-top: 4px;
-        }
-
-        .daily-ruled-line {
-            border-bottom: 0.5px dotted #d8d3c8;
-            height: 1px;
-            width: 100%;
-        }
-
-        .daily-quote-footer {
-            font-family: var(--font-serif);
-            font-style: italic;
-            font-size: 0.68rem;
-            color: #666;
-            text-align: center;
-            border-top: 0.5px solid #e7e2d7;
-            padding-top: 4px;
-            margin-top: 4px;
-        }
-
-        /* TOAST FLOTANTE */
-        #toast-msg {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #2b2621;
-            color: #ffffff;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 1000;
-        }
-
-        /* SPINNER DE GENERACIÓN */
-        #loading-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(20, 18, 16, 0.75);
-            backdrop-filter: blur(4px);
-            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 2000;
-            color: #ffffff;
             text-align: center;
+            border: 1px solid #e5ded5;
+            border-radius: 6px;
             padding: 20px;
+            background: #fffdfa;
+        }
+
+        .cover-preview-kicker {
+            font-size: 0.68rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .cover-preview-h1 {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            color: #1e1916;
+            margin-bottom: 4px;
+        }
+
+        .cover-preview-sub {
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 18px;
+        }
+
+        .cover-preview-owner-line {
+            font-size: 1.15rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: #222;
+            border-bottom: 1px solid #333;
+            padding: 2px 24px;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .cover-preview-motto {
+            font-size: 0.8rem;
+            font-style: italic;
+            color: #555;
+            max-width: 480px;
+            margin: 0 auto 10px;
+        }
+
+        /* PÁGINA: TEORÍA DE CALLE */
+        .theory-preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            flex: 1;
+            font-size: 0.72rem;
+            color: #333;
+            line-height: 1.45;
+        }
+
+        .theory-card {
+            background: #faf8f5;
+            border: 1px solid #ebe5dc;
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+
+        .theory-card h4 {
+            font-family: var(--font-serif);
+            font-size: 0.86rem;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        /* PÁGINA: NOTAS PUNTEADAS (DOT GRID) */
+        .dot-grid-canvas {
+            flex: 1;
+            background-image: radial-gradient(#999 0.8px, transparent 0.8px);
+            background-size: 14px 14px;
+            border: 1px solid #e5ded5;
+            border-radius: 4px;
+        }
+
+        /* FOOTER DE PÁGINA */
+        .sheet-footer-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 0.54rem;
+            color: #999;
+            letter-spacing: 0.5px;
+        }
+
+        /* SPINNER DE COMPILACIÓN */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(20, 16, 14, 0.75);
+            backdrop-filter: blur(4px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: #fff;
         }
 
         .spinner {
-            width: 46px;
-            height: 46px;
-            border: 4px solid rgba(255,255,255,0.2);
-            border-top-color: #87553b;
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #ffffff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 16px;
@@ -1047,1529 +629,1393 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* TOAST */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #2b2520;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 10001;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+            .preview-column {
+                position: static;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <span class="tag-pill">SISTEMA EDITORIAL INTEGRAL</span>
-        <h1>Crea tu Propio Libro de Enfoque</h1>
-        <p class="subtitle">Ensambla tu cuaderno analógico completo de 90 o 180 días con diseño editorial de imprenta: portada de pertenencia, dedicatoria, metodología completa Menos Ruido, visión anual, meses, hábitos, semanas y registro diario con prioridad única.</p>
-    </div>
+    <!-- ENCABEZADO -->
+    <header class="header-container">
+        <a href="/apps.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al hub de aplicaciones</a>
+        <div>
+            <span class="tag-pill">Herramienta Editorial · Formato Apaisado 8.25" × 6"</span>
+            <h1>Diseña tu Propio Libro</h1>
+            <p class="subtitle">Estructura, personaliza y compone el interior de tu propio cuaderno encuadernado a medida. Elige los bloques que necesitas, define el número de páginas y descarga el interior completo listo para imprenta.</p>
+        </div>
+    </header>
 
-    <!-- BARRA SUPERIOR DE PARÁMETROS DEL VOLUMEN -->
+    <!-- BARRA SUPERIOR DE HORIZONTE Y PÁGINAS FIJAS -->
     <div class="book-config-bar">
         <div class="config-item">
-            <span class="config-label">Horizonte Temporal</span>
+            <span class="config-label">Horizonte Editorial</span>
             <div class="cycle-selector">
-                <button type="button" class="btn-cycle-opt active" id="btn-cycle-90" onclick="setBookCycle(90)">
-                    Edición 90 Días (Trimestral)
-                </button>
-                <button type="button" class="btn-cycle-opt" id="btn-cycle-180" onclick="setBookCycle(180)">
-                    Edición 180 Días (Semestral)
-                </button>
+                <button type="button" class="btn-cycle-opt active" id="btn-cycle-90" onclick="setBookCycle(90)">90 Días (120 págs)</button>
+                <button type="button" class="btn-cycle-opt" id="btn-cycle-180" onclick="setBookCycle(180)">180 Días (200 págs)</button>
+                <button type="button" class="btn-cycle-opt" id="btn-cycle-360" onclick="setBookCycle(360)">360 Días (380 págs)</button>
+                <button type="button" class="btn-cycle-opt" id="btn-cycle-free" onclick="setBookCycle('free')">Libre</button>
             </div>
         </div>
 
-        <div class="book-summary-pill" id="book-specs-summary">
-            <span>📖</span>
-            <span id="book-summary-text"><strong>90 Días:</strong> 1 Portada · 4 Págs Método · 1 Anual · 3 Meses · 3 Hábitos · 13 Semanas · 90 Días</span>
+        <div class="pages-counter-box">
+            <div class="pages-counter-text" id="counter-summary-text">
+                Páginas del libro: <strong>120 / 120 págs</strong> (102 de módulos + 18 de notas punteadas)
+            </div>
         </div>
     </div>
 
     <!-- LAYOUT PRINCIPAL -->
-    <div class="main-layout">
-        
-        <!-- COLUMNA 1: FORMULARIO DE PERSONALIZACIÓN -->
-        <div class="controls-panel">
-            <div class="panel-title">
-                <span>Personaliza tu Libro</span>
+    <main class="app-layout">
+
+        <!-- PANEL DE CONTROLES (IZQUIERDA) -->
+        <section class="controls-panel">
+            <div class="panel-header-top">
+                <span class="panel-heading-text">Configura tu planificador</span>
                 <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
-                    <button type="button" class="btn-quick" onclick="clearData()">Limpiar</button>
+                    <button type="button" class="btn-quick" onclick="loadFullBookExample()">Rellenar ejemplo</button>
+                    <button type="button" class="btn-quick" onclick="clearBookData()">Limpiar</button>
                 </div>
             </div>
 
-            <!-- SECCIÓN 1: DATOS DE PERTENENCIA -->
-            <div>
-                <div class="form-section-title">1. Portada de Pertenencia & Dedicatoria</div>
+            <!-- SECCIÓN 1: PORTADA DE PERTENENCIA -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>1. Portada Interior & Pertenencia</span>
+                    <small style="color:#888;">1 página fija</small>
+                </div>
+
                 <div class="form-group">
-                    <label for="input-owner">Nombre del Propietario</label>
-                    <input type="text" id="input-owner" placeholder="Ej. Ignacio Serrano" oninput="handleOwnerInput()">
+                    <label class="form-label" for="input-owner">Nombre del Propietario</label>
+                    <input type="text" id="input-owner" class="form-control" placeholder="Ej: Ignacio Serrano" oninput="updateBookPreview()" />
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="input-motto">Intención o Lema del Cuaderno</label>
-                <textarea id="input-motto" rows="2" placeholder="Ej. Menos urgencia artificial, más criterio sereno y ejecución profunda." oninput="handleMottoInput()"></textarea>
-            </div>
-
-            <div class="two-cols">
                 <div class="form-group">
-                    <label for="input-city">Ciudad / Lugar</label>
-                    <input type="text" id="input-city" placeholder="Ej. Madrid" oninput="handleCityInput()">
+                    <label class="form-label" for="input-motto">Lema o Intención Principal</label>
+                    <input type="text" id="input-motto" class="form-control" placeholder="Ej: Una sola prioridad al día. Todo lo demás es secundario." oninput="updateBookPreview()" />
                 </div>
+
+                <div class="grid-2col">
+                    <div class="form-group">
+                        <label class="form-label" for="input-city">Ciudad / Lugar</label>
+                        <input type="text" id="input-city" class="form-control" placeholder="Ej: Madrid" oninput="updateBookPreview()" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-year">Año de Edición</label>
+                        <input type="text" id="input-year" class="form-control" placeholder="2027" oninput="updateBookPreview()" />
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label for="input-year">Año de Edición</label>
-                    <input type="text" id="input-year" placeholder="Ej. 2027" oninput="handleYearInput()">
+                    <label class="form-label" for="input-dedication">Dedicatoria (Opcional)</label>
+                    <input type="text" id="input-dedication" class="form-control" placeholder="Ej: Para recuperar la calma en un mundo lleno de prisa." oninput="updateBookPreview()" />
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="input-dedication">Dedicatoria o Mensaje Especial (Opcional)</label>
-                <textarea id="input-dedication" rows="2" placeholder="Ej. Para quien decide recuperar el control de su tiempo en un mundo saturado de ruido." oninput="handleDedicationInput()"></textarea>
+            <!-- SECCIÓN 2: PÁGINAS DE TEORÍA DE CALLE -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>2. Método & Teoría de Calle</span>
+                </div>
+                <div class="module-row">
+                    <div class="module-left">
+                        <input type="checkbox" id="check-theory" class="module-checkbox" checked onchange="onModuleConfigChange()" />
+                        <div class="module-info">
+                            <span class="module-name">Explicación del Método Menos Ruido</span>
+                            <span class="module-subtext">Vocabulario de calle: cómo usar el foco sin culpa</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <span style="font-size:0.75rem; font-weight:700; color:#555;">2 páginas</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- SECCIÓN 2: HÁBITOS CLAVE RECURRENTES -->
-            <div>
-                <div class="form-section-title">2. Hábitos Clave (Para el Tracker & Registro Diario)</div>
-                <div class="form-group">
-                    <label for="input-habit-1">Hábito Clave 1</label>
-                    <input type="text" id="input-habit-1" placeholder="Ej. Lectura analógica 30 min" oninput="handleHabitInput(1)">
+            <!-- SECCIÓN 3: MÓDULOS DE PLANIFICACIÓN -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>3. Módulos y Cuadrículas del Libro</span>
                 </div>
-                <div class="form-group" style="margin-top:6px;">
-                    <label for="input-habit-2">Hábito Clave 2</label>
-                    <input type="text" id="input-habit-2" placeholder="Ej. Apagar pantallas a las 22:30" oninput="handleHabitInput(2)">
-                </div>
-            </div>
 
-            <!-- ARQUITECTURA DEL LIBRO -->
-            <div class="book-outline-box">
-                <h4>Arquitectura de Imprenta (Formato 6" × 9")</h4>
-                <ul class="book-outline-list">
-                    <li><span class="book-outline-badge">Pág. 1</span> Portada interior con marco editorial y pertenencia</li>
-                    <li><span class="book-outline-badge">Págs. 2-5</span> Manifiesto y Metodología: Teoría de cada herramienta</li>
-                    <li><span class="book-outline-badge">Pág. 6</span> Plano Anual con sus 12 meses estratégicos</li>
-                    <li><span class="book-outline-badge" id="badge-months-count">3 Págs</span> Planificadores Mensuales (3 metas + cuadrícula)</li>
-                    <li><span class="book-outline-badge" id="badge-habits-count">3 Págs</span> Registros de Hábitos (31 días × casillas)</li>
-                    <li><span class="book-outline-badge" id="badge-weeks-count">13 Págs</span> Planificadores Semanales con foco táctico</li>
-                    <li><span class="book-outline-badge" id="badge-days-count">90 Págs</span> Páginas Diarias completas con prioridad única</li>
-                </ul>
+                <!-- ANUAL -->
+                <div class="module-row">
+                    <div class="module-left">
+                        <input type="checkbox" id="check-annual" class="module-checkbox" checked onchange="onModuleConfigChange()" />
+                        <div class="module-info">
+                            <span class="module-name">Planificador Anual</span>
+                            <span class="module-subtext">Visión panorámica de 12 meses</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <input type="number" id="pages-annual" class="module-pages-input" value="1" min="1" max="10" onchange="onModuleConfigChange()" />
+                        <a href="/generador-planificador-anual.html" target="_blank" class="btn-module-link" title="Abrir generador anual individual">Editar ↗</a>
+                    </div>
+                </div>
+
+                <!-- MENSUAL -->
+                <div class="module-row">
+                    <div class="module-left">
+                        <input type="checkbox" id="check-monthly" class="module-checkbox" checked onchange="onModuleConfigChange()" />
+                        <div class="module-info">
+                            <span class="module-name">Planificador Mensual</span>
+                            <span class="module-subtext">Cuadrícula atemporal de 30 días</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <input type="number" id="pages-monthly" class="module-pages-input" value="3" min="1" max="24" onchange="onModuleConfigChange()" />
+                        <a href="/generador-planificador-mensual.html" target="_blank" class="btn-module-link" title="Abrir generador mensual individual">Editar ↗</a>
+                    </div>
+                </div>
+
+                <!-- HÁBITOS -->
+                <div class="module-row">
+                    <div class="module-left">
+                        <input type="checkbox" id="check-habits" class="module-checkbox" checked onchange="onModuleConfigChange()" />
+                        <div class="module-info">
+                            <span class="module-name">Planificador de Hábitos</span>
+                            <span class="module-subtext">Tracker mensual de 31 días (12 hábitos)</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <input type="number" id="pages-habits" class="module-pages-input" value="3" min="1" max="24" onchange="onModuleConfigChange()" />
+                        <a href="/generador-planificador-habitos.html" target="_blank" class="btn-module-link" title="Abrir generador de hábitos individual">Editar ↗</a>
+                    </div>
+                </div>
+
+                <!-- HORARIO -->
+                <div class="module-row">
+                    <div class="module-left">
+                        <input type="checkbox" id="check-schedule" class="module-checkbox" checked onchange="onModuleConfigChange()" />
+                        <div class="module-info">
+                            <span class="module-name">Planificador Horario</span>
+                            <span class="module-subtext">Semana completa por franjas configurables</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <input type="number" id="pages-schedule" class="module-pages-input" value="2" min="1" max="24" onchange="onModuleConfigChange()" />
+                        <a href="/generador-planificador-horario.html" target="_blank" class="btn-module-link" title="Abrir generador horario individual">Editar ↗</a>
+                    </div>
+                </div>
+
+                <!-- SEMANAL -->
+                <div class="module-row">
+                    <div class="module-left">
+                        <input type="checkbox" id="check-weekly" class="module-checkbox" onchange="onModuleConfigChange()" />
+                        <div class="module-info">
+                            <span class="module-name">Planificador Semanal</span>
+                            <span class="module-subtext">Lunes a domingo horizontal con foco</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <input type="number" id="pages-weekly" class="module-pages-input" value="0" min="0" max="60" onchange="onModuleConfigChange()" />
+                        <a href="/generador-planificador-semanal.html" target="_blank" class="btn-module-link" title="Abrir generador semanal individual">Editar ↗</a>
+                    </div>
+                </div>
+
+                <!-- DIARIO -->
+                <div class="module-row">
+                    <div class="module-left">
+                        <input type="checkbox" id="check-daily" class="module-checkbox" checked onchange="onModuleConfigChange()" />
+                        <div class="module-info">
+                            <span class="module-name">Planificador Diario</span>
+                            <span class="module-subtext">1 prioridad indispensable al día</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <input type="number" id="pages-daily" class="module-pages-input" value="90" min="1" max="365" onchange="onModuleConfigChange()" />
+                        <a href="/generador-planificador-diario.html" target="_blank" class="btn-module-link" title="Abrir generador diario individual">Editar ↗</a>
+                    </div>
+                </div>
+
+                <!-- NOTAS DE RELLENO -->
+                <div class="module-row" style="background:#faf8f5;">
+                    <div class="module-left">
+                        <span style="font-size:1.1rem;">📝</span>
+                        <div class="module-info">
+                            <span class="module-name">Páginas de Notas Punteadas (Dots)</span>
+                            <span class="module-subtext">Relleno automático para lomo exacto de imprenta</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <span id="label-dots-count" style="font-size:0.82rem; font-weight:700; color:var(--accent);">18 págs</span>
+                    </div>
+                </div>
+
+                <!-- CIERRE FIJO -->
+                <div class="module-row" style="background:#faf8f5;">
+                    <div class="module-left">
+                        <span style="font-size:1.1rem;">💌</span>
+                        <div class="module-info">
+                            <span class="module-name">Agradecimientos & Cierre</span>
+                            <span class="module-subtext">Recomendación a un amigo y web editorial</span>
+                        </div>
+                    </div>
+                    <div class="module-right">
+                        <span style="font-size:0.75rem; font-weight:700; color:#555;">1 pág fija</span>
+                    </div>
+                </div>
             </div>
 
             <!-- BOTONES DE GENERACIÓN PDF -->
-            <div class="download-actions">
-                <button type="button" class="btn-download-book" onclick="generateFullBookPDF()">
-                    <span>📚</span> Descargar Libro Completo en PDF
-                </button>
-                <button type="button" class="btn-download-sample" onclick="generateSampleCyclePDF()">
-                    <span>📄</span> Descargar Muestra Rápida (1 Ciclo Completo · 15 págs)
-                </button>
-            </div>
-        </div>
+            <button type="button" class="btn-primary-action" onclick="generateFullBookPDF()">
+                📚 Descargar Libro Completo en PDF (Interior Listo)
+            </button>
+        </section>
 
-        <!-- COLUMNA 2: VISOR INTERACTIVO DE PÁGINAS DEL LIBRO -->
-        <div class="preview-panel">
-            <div class="preview-header">
-                <span class="preview-title">Hojear el Interior del Libro</span>
-                
-                <!-- PESTAÑAS PARA VER CADA PLANTILLA -->
+        <!-- COLUMNA DERECHA: VISOR INTERACTIVO -->
+        <section class="preview-column">
+            <div class="preview-banner">
+                <span>Vista previa</span>
                 <div class="tabs-page-navigator">
                     <button type="button" class="tab-page-btn active" id="tab-cover" onclick="switchPreviewPage('cover')">📖 Portada</button>
-                    <button type="button" class="tab-page-btn" id="tab-theory" onclick="switchPreviewPage('theory')">📜 Método & Teoría</button>
+                    <button type="button" class="tab-page-btn" id="tab-theory" onclick="switchPreviewPage('theory')">📜 Teoría de Calle</button>
                     <button type="button" class="tab-page-btn" id="tab-annual" onclick="switchPreviewPage('annual')">🗓️ Anual</button>
                     <button type="button" class="tab-page-btn" id="tab-monthly" onclick="switchPreviewPage('monthly')">📅 Mensual</button>
                     <button type="button" class="tab-page-btn" id="tab-habits" onclick="switchPreviewPage('habits')">📊 Hábitos</button>
+                    <button type="button" class="tab-page-btn" id="tab-schedule" onclick="switchPreviewPage('schedule')">⏰ Horario</button>
                     <button type="button" class="tab-page-btn" id="tab-weekly" onclick="switchPreviewPage('weekly')">⏱️ Semanal</button>
                     <button type="button" class="tab-page-btn" id="tab-daily" onclick="switchPreviewPage('daily')">✍️ Diario</button>
+                    <button type="button" class="tab-page-btn" id="tab-dots" onclick="switchPreviewPage('dots')">📝 Notas Dots</button>
+                    <button type="button" class="tab-page-btn" id="tab-closing" onclick="switchPreviewPage('closing')">💌 Cierre</button>
                 </div>
             </div>
 
-            <!-- HOJA DE PAPEL REAL 6" x 9" -->
-            <div class="sheet-stage-wrapper">
-                <div class="paper-sheet" id="preview-sheet-container">
-                    <!-- Se renderiza dinámicamente según la pestaña activa -->
-                </div>
+            <!-- HOJA EDITORIAL APAISADA -->
+            <div class="preview-sheet-frame" id="preview-sheet">
+                <!-- Se inyecta dinámicamente según la pestaña activa -->
             </div>
-        </div>
+        </section>
 
+    </main>
+
+    <!-- SPINNER OVERLAY -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h3 style="font-family: var(--font-serif); font-size: 1.3rem; margin-bottom: 6px;">Maquetando tu Libro Completo...</h3>
+        <p id="loading-status-text" style="font-size: 0.85rem; color: #ddd; max-width: 440px; text-align: center;">Generando interior en PDF a 300 DPI con cálculo exacto de páginas.</p>
     </div>
 
     <!-- TOAST NOTIFICACIÓN -->
-    <div id="toast-msg"></div>
-
-    <!-- SPINNER OVERLAY PARA GENERACIÓN DE PDF -->
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <h3 style="font-family: var(--font-serif); font-size: 1.3rem; margin-bottom: 6px;">Maquetando tu Libro en PDF...</h3>
-        <p id="loading-status-text" style="font-size: 0.85rem; color: #ddd; max-width: 400px;">Generando páginas vectoriales a 300 DPI con márgenes asimétricos de lomo.</p>
-    </div>
+    <div class="toast-notify" id="toast-msg"></div>
 
     <script>
-        // ========================================================
         // ESTADO GLOBAL
-        // ========================================================
-        let selectedCycle = 90; // 90 o 180 días
+        let selectedCycle = 90; // 90 | 180 | 360 | 'free'
+        let targetTotalPages = 120; // Meta fija de páginas para el lomo
         let activeTab = 'cover';
         let isExampleActive = false;
 
         const BOOK_EXAMPLE = {
             owner: 'Ignacio Serrano',
-            motto: 'Menos urgencia artificial, mayor profundidad y blindaje analógico para el trabajo que de verdad importa.',
+            motto: 'Una sola prioridad al día. Todo lo demás es secundario.',
             city: 'Madrid',
             year: '2027',
-            dedication: 'Para quien decide detener el ruido exterior y recuperar la serenidad en su día a día.',
-            habit1: 'Lectura analógica 30 min',
-            habit2: 'Apagar pantallas a las 22:30'
+            dedication: 'Para quien decide detener el ruido exterior y recuperar la serenidad en su día a día.'
         };
 
-        // CITAS ESTOICAS ROTATIVAS PARA PIE DE PÁGINAS DIARIAS
-        const EDITORIAL_QUOTES = [
-            '«No nos falta tiempo, sino que perdemos mucho.» — Séneca',
-            '«La felicidad de tu vida depende de la calidad de tus pensamientos.» — Marco Aurelio',
-            '«Si quieres mejorar, conténtate con parecer ignorante o ingenuo en las cosas superfluas.» — Epicteto',
-            '«No necesitas más horas. Necesitas decidir qué importa hoy antes de que el ruido elija por ti.» — Menos Ruido',
-            '«La simplicidad es la máxima sofisticación.» — Leonardo da Vinci',
-            '«Haz poco, pero hazlo bien, si quieres vivir con serenidad.» — Marco Aurelio',
-            '«El tiempo que disfrutas perder no es tiempo perdido, pero el tiempo disperso nunca vuelve.» — Menos Ruido',
-            '«Pregúntate en cada momento: ¿Es esto verdaderamente necesario?» — Marco Aurelio'
-        ];
+        // GESTIÓN DEL HORIZONTE EDITORIAL
+        function setBookCycle(cycle) {
+            selectedCycle = cycle;
+            document.getElementById('btn-cycle-90').classList.toggle('active', cycle === 90);
+            document.getElementById('btn-cycle-180').classList.toggle('active', cycle === 180);
+            document.getElementById('btn-cycle-360').classList.toggle('active', cycle === 360);
+            document.getElementById('btn-cycle-free').classList.toggle('active', cycle === 'free');
 
-        // ========================================================
-        // MANEJADORES DE ENTRADA
-        // ========================================================
-        function setBookCycle(days) {
-            selectedCycle = days;
-            document.getElementById('btn-cycle-90').classList.toggle('active', days === 90);
-            document.getElementById('btn-cycle-180').classList.toggle('active', days === 180);
+            if (cycle === 90) {
+                targetTotalPages = 120;
+                setModuleConfig(true, 1, true, 3, true, 3, true, 2, false, 0, true, 90);
+            } else if (cycle === 180) {
+                targetTotalPages = 200;
+                setModuleConfig(true, 1, true, 6, true, 6, true, 2, false, 0, true, 180);
+            } else if (cycle === 360) {
+                targetTotalPages = 380;
+                setModuleConfig(true, 2, true, 12, true, 12, true, 4, true, 52, false, 0);
+            } else {
+                targetTotalPages = 0; // Libre
+            }
 
-            const months = (days === 90) ? 3 : 6;
-            const weeks = (days === 90) ? 13 : 26;
-
-            document.getElementById('book-summary-text').innerHTML = 
-                `<strong>${days} Días:</strong> 1 Portada · 4 Págs Método · 1 Anual · ${months} Meses · ${months} Hábitos · ${weeks} Semanas · ${days} Días`;
-            
-            document.getElementById('badge-months-count').textContent = `${months} Págs`;
-            document.getElementById('badge-habits-count').textContent = `${months} Págs`;
-            document.getElementById('badge-weeks-count').textContent = `${weeks} Págs`;
-            document.getElementById('badge-days-count').textContent = `${days} Págs`;
-
-            showToast(`✓ Edición ajustada a ${days} Días.`);
-            renderActivePreviewSheet();
+            recalcPages();
+            updateBookPreview();
+            showToast(`✓ Horizonte ajustado a ${cycle === 'free' ? 'modo libre' : cycle + ' Días'}.`);
         }
 
-        function handleOwnerInput() { isExampleActive = false; renderActivePreviewSheet(); }
-        function handleMottoInput() { isExampleActive = false; renderActivePreviewSheet(); }
-        function handleCityInput() { isExampleActive = false; renderActivePreviewSheet(); }
-        function handleYearInput() { isExampleActive = false; renderActivePreviewSheet(); }
-        function handleDedicationInput() { isExampleActive = false; renderActivePreviewSheet(); }
-        function handleHabitInput() { isExampleActive = false; renderActivePreviewSheet(); }
+        function setModuleConfig(annActive, annP, monActive, monP, habActive, habP, schActive, schP, weekActive, weekP, dayActive, dayP) {
+            document.getElementById('check-annual').checked = annActive;
+            document.getElementById('pages-annual').value = annP;
 
+            document.getElementById('check-monthly').checked = monActive;
+            document.getElementById('pages-monthly').value = monP;
+
+            document.getElementById('check-habits').checked = habActive;
+            document.getElementById('pages-habits').value = habP;
+
+            document.getElementById('check-schedule').checked = schActive;
+            document.getElementById('pages-schedule').value = schP;
+
+            document.getElementById('check-weekly').checked = weekActive;
+            document.getElementById('pages-weekly').value = weekP;
+
+            document.getElementById('check-daily').checked = dayActive;
+            document.getElementById('pages-daily').value = dayP;
+        }
+
+        function onModuleConfigChange() {
+            recalcPages();
+            updateBookPreview();
+        }
+
+        function recalcPages() {
+            let count = 1; // Portada siempre 1
+
+            if (document.getElementById('check-theory')?.checked) count += 2;
+
+            if (document.getElementById('check-annual')?.checked) {
+                count += Math.max(parseInt(document.getElementById('pages-annual')?.value || '0', 10), 0);
+            }
+            if (document.getElementById('check-monthly')?.checked) {
+                count += Math.max(parseInt(document.getElementById('pages-monthly')?.value || '0', 10), 0);
+            }
+            if (document.getElementById('check-habits')?.checked) {
+                count += Math.max(parseInt(document.getElementById('pages-habits')?.value || '0', 10), 0);
+            }
+            if (document.getElementById('check-schedule')?.checked) {
+                count += Math.max(parseInt(document.getElementById('pages-schedule')?.value || '0', 10), 0);
+            }
+            if (document.getElementById('check-weekly')?.checked) {
+                count += Math.max(parseInt(document.getElementById('pages-weekly')?.value || '0', 10), 0);
+            }
+            if (document.getElementById('check-daily')?.checked) {
+                count += Math.max(parseInt(document.getElementById('pages-daily')?.value || '0', 10), 0);
+            }
+
+            count += 1; // Página final de cierre
+
+            let dotsCount = 0;
+            if (targetTotalPages > 0) {
+                if (targetTotalPages > count) {
+                    dotsCount = targetTotalPages - count;
+                } else {
+                    dotsCount = 0;
+                }
+            } else {
+                dotsCount = 4; // Relleno por defecto en modo libre
+            }
+
+            const total = count + dotsCount;
+            document.getElementById('label-dots-count').textContent = `${dotsCount} págs`;
+
+            const summaryEl = document.getElementById('counter-summary-text');
+            if (targetTotalPages > 0) {
+                summaryEl.innerHTML = `Páginas del libro: <strong>${total} / ${targetTotalPages} págs</strong> (${count - 1} de contenido + ${dotsCount} notas de relleno)`;
+            } else {
+                summaryEl.innerHTML = `Páginas del libro: <strong>${total} páginas</strong> en modo libre`;
+            }
+        }
+
+        // PESTAÑAS DEL VISOR
         function switchPreviewPage(tabName) {
             activeTab = tabName;
-            document.querySelectorAll('.tab-page-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById('tab-' + tabName);
-            if (activeBtn) activeBtn.classList.add('active');
-            renderActivePreviewSheet();
+            document.querySelectorAll('.tab-page-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabName)?.classList.add('active');
+            updateBookPreview();
         }
 
-        function loadExampleData() {
-            isExampleActive = true;
-            renderActivePreviewSheet();
-            showToast('✓ Ejemplo proyectado en el visor del libro.');
-        }
-
-        function clearData() {
-            isExampleActive = false;
-            ['input-owner', 'input-motto', 'input-city', 'input-year', 'input-dedication', 'input-habit-1', 'input-habit-2'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-            renderActivePreviewSheet();
-            showToast('✓ Campos y visor limpiados.');
-        }
-
-        function showToast(msg) {
-            const t = document.getElementById('toast-msg');
-            if (!t) return;
-            t.textContent = msg;
-            t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 3000);
-        }
-
-        // ========================================================
-        // RENDERIZADO DEL VISOR INTERACTIVO EN PANTALLA
-        // ========================================================
-        function renderActivePreviewSheet() {
-            const container = document.getElementById('preview-sheet-container');
-            if (!container) return;
+        function updateBookPreview() {
+            const frame = document.getElementById('preview-sheet');
+            if (!frame) return;
 
             const owner = document.getElementById('input-owner')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.owner : '');
             const motto = document.getElementById('input-motto')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.motto : '');
             const city = document.getElementById('input-city')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.city : '');
             const year = document.getElementById('input-year')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.year : '2027');
             const dedication = document.getElementById('input-dedication')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.dedication : '');
-            const habit1 = document.getElementById('input-habit-1')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.habit1 : 'Lectura reflexiva 30 min');
-            const habit2 = document.getElementById('input-habit-2')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.habit2 : 'Blindaje de sueño sin pantallas');
 
             if (activeTab === 'cover') {
-                container.innerHTML = `
-                    <div class="sheet-cover-inner">
-                        <div class="cover-kicker">EDITORIAL MENOS RUIDO · EDICIÓN ATEMPORAL</div>
-                        <div>
-                            <div class="cover-title">Bitácora de Enfoque</div>
-                            <div class="cover-subtitle">Planificador Integral de ${selectedCycle} Días de Calma y Profundidad</div>
-                        </div>
-
-                        <div class="cover-owner-block">
-                            <span class="cover-owner-label">Este cuaderno pertenece a:</span>
-                            <div class="cover-owner-line">${owner || '<span style="color:#aaa; font-style:italic; font-weight:normal;">(Nombre del propietario)</span>'}</div>
-                        </div>
-
-                        ${motto ? `<div class="cover-motto-block">«${motto}»</div>` : '<div class="cover-motto-block" style="color:#aaa; font-style:italic;">«Una sola prioridad al día. Todo lo demás es secundario.»</div>'}
-
-                        ${dedication ? `<div class="cover-dedication-box">“${dedication}”</div>` : ''}
-
-                        <div class="cover-footer">
-                            ${city ? city + ' · ' : ''}${year} · EDITORIALMENOSRUIDO.COM
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="cover-preview-box">
+                            <div class="cover-preview-kicker">EDITORIAL MENOS RUIDO · EDICIÓN ATEMPORAL</div>
+                            <div class="cover-preview-h1">Mi Propio Cuaderno de Enfoque</div>
+                            <div class="cover-preview-sub">Planificador Interior Personalizado de ${selectedCycle === 'free' ? 'Edición Exclusiva' : selectedCycle + ' Días'}</div>
+                            
+                            <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#777; margin-top:8px;">Este libro pertenece a:</div>
+                            <div class="cover-preview-owner-line">${owner || '_______________________'}</div>
+                            
+                            <div class="cover-preview-motto">«${motto || 'Una sola prioridad al día. Todo lo demás es secundario.'}»</div>
+                            
+                            ${dedication ? `<div style="font-size:0.75rem; color:#777; font-style:italic; margin-top:6px;">“${dedication}”</div>` : ''}
+                            
+                            <div style="font-size:0.65rem; color:#999; margin-top:14px;">
+                                ${city ? city + ' · ' : ''}${year} · editorialmenosruido.com
+                            </div>
                         </div>
                     </div>
                 `;
             } else if (activeTab === 'theory') {
-                container.innerHTML = `
-                    <div class="sheet-theory">
-                        <div>
-                            <div class="theory-kicker">MÉTODO MENOS RUIDO · GUÍA METODOLÓGICA</div>
-                            <div class="theory-title">Por qué el papel ordena lo que la pantalla satura</div>
-                            <div class="theory-rule">«Avanzar no es hacer más cosas: es decidir cada mañana qué única tarea importa hoy antes de que las urgencias ajenas decidan por ti.»</div>
-                        </div>
-
-                        <div class="theory-body">
-                            <p>Vivimos en una cultura de la sobreestimulación digital donde las aplicaciones de tareas infinitas generan una ilusión constante de urgencia y una profunda fatiga por decisión.</p>
-                            
-                            <div class="theory-columns">
-                                <div class="theory-item-box">
-                                    <strong>1. La Visión Anual</strong>
-                                    <p>Mapea las 4 estaciones y los grandes hitos. No te agobies con detalles: fija la dirección antes de remar.</p>
-                                </div>
-                                <div class="theory-item-box">
-                                    <strong>2. La Brújula Mensual</strong>
-                                    <p>3 metas clave y un horizonte acotado. Lo que no cabe en 3 prioridades mensuales, se descarta.</p>
-                                </div>
-                                <div class="theory-item-box">
-                                    <strong>3. Hábitos Silenciosos</strong>
-                                    <p>Registra sin culpa. El hábito se consolida por repetición serena, no por perfección obsesiva.</p>
-                                </div>
-                                <div class="theory-item-box">
-                                    <strong>4. La Regla Diaria</strong>
-                                    <p>Una sola prioridad indispensable. Si completas esa tarea, el día ha sido un éxito rotundo.</p>
-                                </div>
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MÉTODO MENOS RUIDO · PRINCIPIOS DE CALLE</div>
+                        <div class="sheet-header-title">Cómo usar este cuaderno sin agobios ni saturación</div>
+                        <div class="theory-preview-grid">
+                            <div class="theory-card">
+                                <h4>1. No eres una máquina</h4>
+                                <p>Si te apuntas 15 tareas para hoy, no vas a hacer ninguna y te irás a dormir con culpa. Elige una sola cosa innegociable. Si la sacas, el día ya ha merecido la pena.</p>
                             </div>
-
-                            <p style="font-size:0.69rem; color:#666; font-style:italic; margin-top:2px;">
-                                Utiliza tinta y calma. Tacha con orgullo lo terminado y deja que las páginas en blanco acojan tus pensamientos sin notificaciones.
-                            </p>
+                            <div class="theory-card">
+                                <h4>2. El papel no tiene notificaciones</h4>
+                                <p>No vibra, no te pide que lo actualices ni te salta con un vídeo de 15 segundos. Lo que escribes aquí se queda aquí. El soporte físico te obliga a pensar antes de escribir.</p>
+                            </div>
+                            <div class="theory-card">
+                                <h4>3. Si un día se tuerce, se pasa página</h4>
+                                <p>La constancia no es perfección obsesiva: es volver al día siguiente sin castigarte. Si hoy no salió la prioridad, mañana es otro día limpio.</p>
+                            </div>
+                            <div class="theory-card">
+                                <h4>4. El descanso también se planifica</h4>
+                                <p>Cierra el cuaderno al terminar la jornada. Si no decides cuándo acaba tu día, el ruido digital se comerá tus noches y tus descansos.</p>
+                            </div>
                         </div>
-
-                        <div class="daily-quote-footer">
-                            «No nos falta tiempo, sino que perdemos mucho.» — Séneca
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · GUÍA METODOLÓGICA</span>
+                            <span>editorialmenosruido.com</span>
                         </div>
                     </div>
                 `;
             } else if (activeTab === 'annual') {
-                const monthsNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                let cardsHtml = '';
-                for (let i = 0; i < 12; i++) {
-                    const q = Math.ceil((i + 1) / 3);
-                    cardsHtml += `
-                        <div class="annual-month-box-mini">
-                            <div class="annual-month-title-mini">
-                                <span>${monthsNames[i]}</span>
-                                <span style="color:var(--accent); font-size:0.58rem;">Q${q}</span>
-                            </div>
-                            <div class="annual-month-text-mini">
-                                • Hito estratégico 1<br>• Periodo de enfoque
-                            </div>
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MENOS RUIDO · VISIÓN ANUAL</div>
+                        <div class="sheet-header-title">Planificador Anual · Panorama de 12 Meses</div>
+                        <div style="flex:1; display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; background:#fff; border:1px solid #e2ddd3; padding:8px; border-radius:4px;">
+                            ${['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map(m => `
+                                <div style="border:1px solid #eee8df; padding:4px 6px; border-radius:4px; font-size:0.62rem;">
+                                    <strong style="color:var(--accent);">${m}</strong>
+                                    <div style="font-size:0.56rem; color:#888; margin-top:2px;">• Hito clave...</div>
+                                </div>
+                            `).join('')}
                         </div>
-                    `;
-                }
-
-                container.innerHTML = `
-                    <div class="sheet-annual">
-                        <div class="daily-kicker">
-                            <span>SISTEMA DE PLANIFICACIÓN ANUAL</span>
-                            <span>AÑO: ${year}</span>
-                        </div>
-                        <div style="font-family:var(--font-serif); font-size:1.15rem; font-weight:700; color:#1e1916; border-bottom:1px solid #2b2621; padding-bottom:3px; margin-bottom:4px;">
-                            Visión Panorámica de los 12 Meses
-                        </div>
-                        <div class="monthly-goals-box" style="margin-bottom:4px;">
-                            <strong>🎯 PRIORIDAD ESTRATÉGICA DEL AÑO:</strong>
-                            <div style="font-size:0.72rem; color:#332d27;">${motto || 'Consolidar la calma mental y avanzar en el proyecto troncal sin dispersión.'}</div>
-                        </div>
-                        <div class="annual-grid-mini">
-                            ${cardsHtml}
-                        </div>
-                        <div class="daily-quote-footer">
-                            «Un año bien ordenado empieza eligiendo lo que vas a ignorar.»
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                            <span>editorialmenosruido.com</span>
                         </div>
                     </div>
                 `;
             } else if (activeTab === 'monthly') {
-                container.innerHTML = `
-                    <div class="sheet-monthly">
-                        <div class="daily-kicker">
-                            <span>PLANIFICADOR MENSUAL ATEMPORAL</span>
-                            <span>MES: ________ · AÑO: ${year}</span>
-                        </div>
-                        <div style="font-family:var(--font-serif); font-size:1.15rem; font-weight:700; color:#1e1916; border-bottom:1px solid #2b2621; padding-bottom:3px;">
-                            Metas y Horizonte del Mes
-                        </div>
-
-                        <div class="monthly-goals-box">
-                            <strong>🎯 LAS 3 METAS INNEGOCIABLES DEL MES</strong>
-                            <div class="monthly-goal-row"><div class="monthly-goal-sq"></div> <span>Meta principal: Entrega de la primera fase del proyecto</span></div>
-                            <div class="monthly-goal-row"><div class="monthly-goal-sq"></div> <span>Meta secundaria: Establecer rutina analógica matinal</span></div>
-                            <div class="monthly-goal-row"><div class="monthly-goal-sq"></div> <span>Meta de bienestar: Fin de semana completo sin pantallas</span></div>
-                        </div>
-
-                        <table class="monthly-calendar-table">
-                            <thead>
-                                <tr><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
-                                <tr><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td></tr>
-                                <tr><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td></tr>
-                                <tr><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td></tr>
-                                <tr><td>29</td><td>30</td><td>31</td><td style="color:#ccc;">1</td><td style="color:#ccc;">2</td><td style="color:#ccc;">3</td><td style="color:#ccc;">4</td></tr>
-                            </tbody>
-                        </table>
-
-                        <div class="monthly-goals-box" style="margin-top:auto;">
-                            <strong>📝 HITOS CLAVE & REFLEXIÓN DEL MES</strong>
-                            <div style="font-size:0.7rem; color:#555; line-height:1.4;">
-                                • Semana 1: Planificación y arranque limpio.<br>
-                                • Semana 3: Revisión de fricciones y poda de tareas no esenciales.
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MENOS RUIDO · ENFOQUE MENSUAL</div>
+                        <div class="sheet-header-title">Planificador Mensual · Cuadrícula Atemporal</div>
+                        <div style="flex:1; border:1px solid #dcd7ce; background:#ffffff; border-radius:4px; display:flex; flex-direction:column; overflow:hidden;">
+                            <div style="display:grid; grid-template-columns:repeat(7, 1fr); background:#f4efea; border-bottom:1px solid #dcd7ce; font-size:0.58rem; font-weight:700; text-align:center; padding:3px 0;">
+                                <div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div><div>DOM</div>
+                            </div>
+                            <div style="flex:1; display:grid; grid-template-columns:repeat(7, 1fr); grid-template-rows:repeat(5, 1fr); gap:1px; background:#eee8df;">
+                                ${Array(35).fill(0).map((_, i) => `<div style="background:#fff; padding:2px; font-size:0.52rem; color:#aaa;">${i+1 <= 31 ? i+1 : ''}</div>`).join('')}
                             </div>
                         </div>
-
-                        <div class="daily-quote-footer">
-                            «Quien tiene un porqué, puede soportar cualquier cómo.»
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                            <span>editorialmenosruido.com</span>
                         </div>
                     </div>
                 `;
             } else if (activeTab === 'habits') {
-                const sampleHabits = [habit1, habit2, 'Caminata 45 min al aire libre', 'Escribir en la bitácora', 'Desconexión digital nocturna'];
-                let habitRows = '';
-                sampleHabits.forEach((h, idx) => {
-                    let dots = '';
-                    for (let d = 1; d <= 22; d++) {
-                        dots += `<td class="habit-dot-cell">○</td>`;
-                    }
-                    habitRows += `
-                        <tr>
-                            <td class="habit-name-cell">${h}</td>
-                            ${dots}
-                        </tr>
-                    `;
-                });
-
-                container.innerHTML = `
-                    <div class="sheet-habits">
-                        <div class="daily-kicker">
-                            <span>SEGUIMIENTO DE HÁBITOS</span>
-                            <span>REGISTRO MENSUAL DE CONSISTENCIA</span>
-                        </div>
-                        <div style="font-family:var(--font-serif); font-size:1.15rem; font-weight:700; color:#1e1916; border-bottom:1px solid #2b2621; padding-bottom:3px;">
-                            Matriz de Hábitos Analógicos
-                        </div>
-
-                        <table class="habits-table-preview">
-                            <thead>
-                                <tr>
-                                    <th class="habit-name-cell">Hábito / Rutina</th>
-                                    <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${habitRows}
-                            </tbody>
-                        </table>
-
-                        <div class="monthly-goals-box" style="margin-top:auto;">
-                            <strong>REFLEXIÓN SOBRE LOS HÁBITOS DEL PERIODO</strong>
-                            <div style="font-size:0.7rem; color:#555; line-height:1.4;">
-                                El valor de la consistencia no está en no fallar jamás, sino en no abandonar después de un día difícil.
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MENOS RUIDO · RASTREADOR DE HÁBITOS</div>
+                        <div class="sheet-header-title">Planificador de Hábitos · 31 Días</div>
+                        <div style="flex:1; border:1px solid #dcd7ce; background:#ffffff; border-radius:4px; display:flex; flex-direction:column; overflow:hidden;">
+                            <div style="display:flex; background:#f4efea; border-bottom:1px solid #dcd7ce; font-size:0.56rem; font-weight:700; padding:3px 6px;">
+                                <div style="width:120px;">HÁBITO</div>
+                                <div style="flex:1; text-align:center;">DÍAS 1 AL 31</div>
+                            </div>
+                            <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around; padding:4px 6px;">
+                                ${['Lectura en papel','Caminata matinal','Trabajo profundo','Sin pantallas noche'].map(h => `
+                                    <div style="display:flex; align-items:center; font-size:0.58rem; border-bottom:1px solid #f2ede4; padding-bottom:2px;">
+                                        <div style="width:120px; font-weight:600;">${h}</div>
+                                        <div style="flex:1; display:flex; justify-content:space-between; color:#ccc;">○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○</div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-
-                        <div class="daily-quote-footer">
-                            «Somos lo que hacemos repetidamente. La excelencia es un hábito.» — Aristóteles
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                            <span>editorialmenosruido.com</span>
+                        </div>
+                    </div>
+                `;
+            } else if (activeTab === 'schedule') {
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL</div>
+                        <div class="sheet-header-title">Planificador Horario · Lunes a Domingo</div>
+                        <div style="flex:1; border:1px solid #dcd7ce; background:#ffffff; border-radius:4px; display:flex; flex-direction:column; overflow:hidden;">
+                            <div style="display:grid; grid-template-columns:70px repeat(7, 1fr); background:#f4efea; border-bottom:1px solid #dcd7ce; font-size:0.56rem; font-weight:700; text-align:center; padding:3px 0;">
+                                <div>HORA</div><div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div><div>DOM</div>
+                            </div>
+                            <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                ${['08:00 - 10:00','10:00 - 12:00','12:00 - 14:00','16:00 - 18:00','18:00 - 20:00'].map(t => `
+                                    <div style="display:grid; grid-template-columns:70px repeat(7, 1fr); border-bottom:1px solid #f2ede4; font-size:0.52rem; text-align:center; padding:3px 0;">
+                                        <div style="font-weight:700; color:var(--accent);">${t}</div>
+                                        <div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                            <span>editorialmenosruido.com</span>
                         </div>
                     </div>
                 `;
             } else if (activeTab === 'weekly') {
-                container.innerHTML = `
-                    <div class="sheet-weekly">
-                        <div class="daily-kicker">
-                            <span>SISTEMA DE PLANIFICACIÓN SEMANAL</span>
-                            <span>SEMANA: 04 · BLOQUE DE ENFOQUE</span>
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MENOS RUIDO · PLANIFICADOR SEMANAL</div>
+                        <div class="sheet-header-title">Vista Semanal Horizontal con Foco Clave</div>
+                        <div style="flex:1; display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; background:#fff; border:1px solid #dcd7ce; padding:6px; border-radius:4px;">
+                            {['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map(d => `
+                                <div style="border:1px solid #eee8df; border-radius:4px; padding:4px; display:flex; flex-direction:column; font-size:0.6rem;">
+                                    <strong style="color:var(--accent); border-bottom:1px solid #eee; padding-bottom:2px;">${d}</strong>
+                                    <div style="flex:1; margin-top:4px; color:#bbb;">• Tarea...</div>
+                                </div>
+                            `).join('')}
                         </div>
-                        <div style="font-family:var(--font-serif); font-size:1.15rem; font-weight:700; color:#1e1916; border-bottom:1px solid #2b2621; padding-bottom:3px;">
-                            Panorama Semanal
-                        </div>
-
-                        <div class="weekly-focus-box">
-                            <strong style="color:var(--accent); font-size:0.65rem; text-transform:uppercase; letter-spacing:0.8px;">🎯 FOCO PRINCIPAL DE LA SEMANA:</strong>
-                            <div style="font-size:0.75rem; color:#222; margin-top:2px;">Cerrar el manuscrito y proteger las tardes de reuniones imprevistas.</div>
-                        </div>
-
-                        <div class="weekly-days-grid">
-                            <div class="weekly-day-card">
-                                <div class="weekly-day-title">LUNES</div>
-                                <div style="font-size:0.68rem; color:#555;">• Redacción del capítulo central</div>
-                            </div>
-                            <div class="weekly-day-card">
-                                <div class="weekly-day-title">MARTES</div>
-                                <div style="font-size:0.68rem; color:#555;">• Revisión de bocetos y maquetación</div>
-                            </div>
-                            <div class="weekly-day-card">
-                                <div class="weekly-day-title">MIÉRCOLES</div>
-                                <div style="font-size:0.68rem; color:#555;">• Bloque de trabajo profundo 3 horas</div>
-                            </div>
-                            <div class="weekly-day-card">
-                                <div class="weekly-day-title">JUEVES</div>
-                                <div style="font-size:0.68rem; color:#555;">• Ajustes técnicos y tipografía</div>
-                            </div>
-                            <div class="weekly-day-card">
-                                <div class="weekly-day-title">VIERNES</div>
-                                <div style="font-size:0.68rem; color:#555;">• Cierre de semana y vaciado mental</div>
-                            </div>
-                            <div class="weekly-day-card">
-                                <div class="weekly-day-title">SÁBADO & DOMINGO</div>
-                                <div style="font-size:0.68rem; color:#555;">• Desconexión, lectura y paseo</div>
-                            </div>
-                        </div>
-
-                        <div class="daily-quote-footer">
-                            «Distribuye la carga para llegar al viernes con serenidad.»
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                            <span>editorialmenosruido.com</span>
                         </div>
                     </div>
                 `;
             } else if (activeTab === 'daily') {
-                container.innerHTML = `
-                    <div class="sheet-daily">
-                        <div class="daily-kicker">
-                            <span>PLANIFICADOR MENOS RUIDO · REGISTRO DIARIO</span>
-                            <span>PÁG. 42</span>
-                        </div>
-
-                        <div class="daily-header-row">
-                            <div class="daily-header-day">Miércoles</div>
-                            <div class="daily-header-date">Fecha: __ / __ / 2027</div>
-                        </div>
-
-                        <!-- 1. PRIORIDAD DEL DÍA -->
-                        <div class="daily-priority-card">
-                            <div class="daily-priority-label">
-                                <span>🎯 1. LA PRIORIDAD DEL DÍA</span>
-                                <span style="font-size:0.6rem; color:#777; font-weight:normal;">(Innegociable)</span>
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MENOS RUIDO · PLANIFICADOR DIARIO</div>
+                        <div class="sheet-header-title">Registro Diario · La Prioridad Innegociable</div>
+                        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <div style="background:#faf8f5; border:1px solid #e2ddd3; border-left:3px solid var(--accent); padding:8px; border-radius:4px;">
+                                    <strong style="font-size:0.65rem; color:var(--accent); text-transform:uppercase;">1. Prioridad Única del Día</strong>
+                                    <div style="font-size:0.75rem; color:#333; margin-top:3px; font-family:var(--font-serif);">La tarea troncal que justifica la jornada.</div>
+                                </div>
+                                <div style="flex:1; border:1px solid #e2ddd3; border-radius:4px; padding:8px; font-size:0.68rem; color:#777;">
+                                    <strong>Tareas Secundarias (Máx. 3)</strong>
+                                    <div style="margin-top:6px; line-height:1.8;">□ ______________________<br>□ ______________________<br>□ ______________________</div>
+                                </div>
                             </div>
-                            <div class="daily-priority-val">
-                                <div class="daily-prio-checkbox"></div>
-                                <span>Finalizar la revisión completa del texto editorial y enviar a pruebas.</span>
-                            </div>
-                        </div>
-
-                        <!-- 2. TAREAS SECUNDARIAS -->
-                        <div class="daily-tasks-card">
-                            <div class="daily-tasks-label">2. TAREAS SECUNDARIAS (MÁXIMO 3)</div>
-                            <div class="daily-task-line"><div class="daily-task-box"></div><span>Responder correos urgentes en bloque de 25 min</span></div>
-                            <div class="daily-task-line"><div class="daily-task-box"></div><span>Comprar recambio de pluma y libreta de notas</span></div>
-                            <div class="daily-task-line"><div class="daily-task-box"></div><span>Organizar archivos de respaldo analógico</span></div>
-                        </div>
-
-                        <!-- 3. HÁBITOS CLAVE -->
-                        <div class="daily-habits-row">
-                            <span style="font-weight:700; color:var(--accent);">HÁBITOS:</span>
-                            <div class="daily-habit-item"><div class="daily-habit-circle"></div><span>${habit1}</span></div>
-                            <div class="daily-habit-item"><div class="daily-habit-circle"></div><span>${habit2}</span></div>
-                        </div>
-
-                        <!-- 4. NOTAS Y REFLEXIÓN -->
-                        <div class="daily-notes-area">
-                            <div class="daily-notes-label">4. ESPACIO DE ENFOQUE Y NOTAS</div>
-                            <div class="daily-notes-lines">
-                                <div class="daily-ruled-line"></div>
-                                <div class="daily-ruled-line"></div>
-                                <div class="daily-ruled-line"></div>
-                                <div class="daily-ruled-line"></div>
-                                <div class="daily-ruled-line"></div>
-                                <div class="daily-ruled-line"></div>
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <div style="border:1px solid #e2ddd3; border-radius:4px; padding:8px; font-size:0.68rem;">
+                                    <strong>Registro de Hábitos Diarios</strong>
+                                    <div style="margin-top:4px; color:#555;">○ Hábito 1 &nbsp; ○ Hábito 2 &nbsp; ○ Hábito 3</div>
+                                </div>
+                                <div style="flex:1; background:#faf8f5; border:1px solid #e2ddd3; border-radius:4px; padding:8px; font-size:0.68rem; color:#777;">
+                                    <strong>Reflexión & Descarga Mental Nocturna</strong>
+                                    <div style="margin-top:4px; font-style:italic;">¿Qué ha funcionado hoy? ¿Qué soltamos?</div>
+                                </div>
                             </div>
                         </div>
-
-                        <div class="daily-quote-footer">
-                            «La felicidad de tu vida depende de la calidad de tus pensamientos.» — Marco Aurelio
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                            <span>editorialmenosruido.com</span>
+                        </div>
+                    </div>
+                `;
+            } else if (activeTab === 'dots') {
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="sheet-kicker">MENOS RUIDO · ESPACIO LIBRE</div>
+                        <div class="sheet-header-title">Notas, Pensamientos & Reflexiones</div>
+                        <div class="dot-grid-canvas"></div>
+                        <div class="sheet-footer-line">
+                            <span>MENOS RUIDO · PÁGINA PUNTEADA</span>
+                            <span>editorialmenosruido.com</span>
+                        </div>
+                    </div>
+                `;
+            } else if (activeTab === 'closing') {
+                frame.innerHTML = `
+                    <div class="inner-sheet-container">
+                        <div class="cover-preview-box" style="background:#fffcf7;">
+                            <div class="cover-preview-kicker">GRACIAS POR ELEGIR PENSAR CON CALMA</div>
+                            <div class="cover-preview-h1" style="font-size:1.6rem;">Este cuaderno se ha hecho para ti.</div>
+                            <p style="font-size:0.85rem; color:#555; max-width:500px; margin:12px auto; line-height:1.5;">
+                                En un mundo dominado por la urgencia inmediata, detenerse a escribir a mano es un acto de resistencia y lucidez. Deseamos que estas páginas te hayan devuelto el tiempo que de verdad importa.
+                            </p>
+                            <div style="margin-top:10px; padding:10px 16px; background:rgba(135,85,59,0.08); border-radius:6px; display:inline-block;">
+                                <strong style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; letter-spacing:0.8px;">¿Te ha servido este método?</strong>
+                                <div style="font-size:0.75rem; color:#444; margin-top:2px;">Recomiéndalo a un amigo o visítanos en <strong>editorialmenosruido.com</strong></div>
+                            </div>
+                            <div style="font-size:0.65rem; color:#999; margin-top:16px;">
+                                MENOS RUIDO · REGISTRO CONSTANTE
+                            </div>
                         </div>
                     </div>
                 `;
             }
         }
 
-        // ========================================================
-        // MOTOR EDITORIAL DE EXPORTACIÓN PDF (jsPDF)
-        // FORMATO LIBRO 6" x 9" (152.4 x 228.6 mm)
-        // MÁRGENES ASIMÉTRICOS DE LOMO (GUTTER 18mm / 13mm)
-        // ========================================================
-        async function buildBookDocument(isSampleMode = false) {
-            const { jsPDF } = window.jspdf || {};
-            if (!jsPDF) {
-                alert('No se pudo inicializar la librería jsPDF.');
-                return null;
-            }
+        // ACCIONES RÁPIDAS
+        function loadFullBookExample() {
+            isExampleActive = true;
+            document.getElementById('input-owner').value = BOOK_EXAMPLE.owner;
+            document.getElementById('input-motto').value = BOOK_EXAMPLE.motto;
+            document.getElementById('input-city').value = BOOK_EXAMPLE.city;
+            document.getElementById('input-year').value = BOOK_EXAMPLE.year;
+            document.getElementById('input-dedication').value = BOOK_EXAMPLE.dedication;
 
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: [152.4, 228.6] // 6" x 9"
+            setBookCycle(90);
+            showToast('✓ Distribución y ejemplo de libro cargados.');
+        }
+
+        function clearBookData() {
+            isExampleActive = false;
+            ['input-owner','input-motto','input-city','input-year','input-dedication'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
             });
+            updateBookPreview();
+            showToast('✓ Campos limpiados.');
+        }
 
-            const pw = 152.4;
-            const ph = 228.6;
+        function showToast(msg) {
+            const el = document.getElementById('toast-msg');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
 
-            const owner = document.getElementById('input-owner')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.owner : '');
-            const motto = document.getElementById('input-motto')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.motto : '');
-            const city = document.getElementById('input-city')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.city : '');
-            const year = document.getElementById('input-year')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.year : '2027');
-            const dedication = document.getElementById('input-dedication')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.dedication : '');
-            const habit1 = document.getElementById('input-habit-1')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.habit1 : 'Lectura reflexiva 30 min');
-            const habit2 = document.getElementById('input-habit-2')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.habit2 : 'Blindaje de sueño sin pantallas');
-
-            let pageNum = 1;
-
-            // Función auxiliar para márgenes alternados (Gutter en lomo)
-            // Impares: lomo a la izquierda (mLeft = 18, mRight = 13)
-            // Pares: lomo a la derecha (mLeft = 13, mRight = 18)
-            function getPageMargins(pIndex) {
-                const isOdd = (pIndex % 2 !== 0);
-                const mLeft = isOdd ? 18 : 13;
-                const mRight = isOdd ? 13 : 18;
-                const mTop = 16;
-                const mBottom = 16;
-                const cWidth = pw - (mLeft + mRight);
-                return { mLeft, mRight, mTop, mBottom, cWidth, isOdd };
+        // ========================================================
+        // MOTOR DE GENERACIÓN PDF DEL LIBRO COMPLETO (jsPDF)
+        // ========================================================
+        async function generateFullBookPDF() {
+            let jsPDFClass = null;
+            if (window.jspdf && window.jspdf.jsPDF) {
+                jsPDFClass = window.jspdf.jsPDF;
+            } else if (window.jsPDF) {
+                jsPDFClass = window.jsPDF;
             }
 
-            function paintPaperBackground() {
-                doc.setFillColor(255, 254, 251);
-                doc.rect(0, 0, pw, ph, 'F');
+            if (!jsPDFClass) {
+                alert('No se pudo inicializar la librería jsPDF. Por favor, recarga la página.');
+                return;
             }
 
-            function addPageFooter(pIndex) {
-                const { mLeft, mRight, isOdd } = getPageMargins(pIndex);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(6.5);
-                doc.setTextColor(140, 135, 130);
-                const pageNumX = isOdd ? (pw - mRight) : mLeft;
-                const pageNumAlign = isOdd ? 'right' : 'left';
-                doc.text(String(pIndex), pageNumX, ph - 10, { align: pageNumAlign });
+            const overlay = document.getElementById('loading-overlay');
+            const statusText = document.getElementById('loading-status-text');
+            if (overlay) overlay.style.display = 'flex';
 
-                const brandX = isOdd ? mLeft : (pw - mRight);
-                const brandAlign = isOdd ? 'left' : 'right';
-                doc.text('MENOS RUIDO · EDITORIALMENOSRUIDO.COM', brandX, ph - 10, { align: brandAlign });
-            }
+            // Damos un tick para que se pinte el spinner
+            await new Promise(r => setTimeout(r, 60));
 
-            // ----------------------------------------------------
-            // 1. PÁGINA 1: PORTADA INTERIOR DE PERTENENCIA
-            // ----------------------------------------------------
-            paintPaperBackground();
-            const cov = getPageMargins(pageNum);
-            
-            // Marco fino editorial
-            doc.setDrawColor(50, 45, 40);
-            doc.setLineWidth(0.4);
-            doc.rect(cov.mLeft + 4, cov.mTop + 4, cov.cWidth - 8, ph - (cov.mTop + cov.mBottom + 8));
-
-            doc.setDrawColor(210, 205, 195);
-            doc.setLineWidth(0.2);
-            doc.rect(cov.mLeft + 6, cov.mTop + 6, cov.cWidth - 12, ph - (cov.mTop + cov.mBottom + 12));
-
-            let y = cov.mTop + 24;
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
-            doc.setTextColor(135, 85, 59);
-            doc.text('EDITORIAL MENOS RUIDO · EDICIÓN ATEMPORAL', pw / 2, y, { align: 'center' });
-            y += 12;
-
-            doc.setFont('times', 'bold');
-            doc.setFontSize(22);
-            doc.setTextColor(30, 25, 22);
-            doc.text('Bitácora de Enfoque', pw / 2, y, { align: 'center' });
-            y += 6;
-
-            doc.setFont('times', 'italic');
-            doc.setFontSize(10);
-            doc.setTextColor(100, 95, 90);
-            doc.text(`Cuaderno de Calma y Planificación Analógica de ${selectedCycle} Días`, pw / 2, y, { align: 'center' });
-            y += 24;
-
-            // Bloque de pertenencia
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.5);
-            doc.setTextColor(70, 65, 60);
-            doc.text('ESTE CUADERNO PERTENECE A:', pw / 2, y, { align: 'center' });
-            y += 8;
-
-            doc.setFont('times', 'bold');
-            doc.setFontSize(14);
-            doc.setTextColor(25, 20, 15);
-            const printOwner = owner || '_____________________________________';
-            doc.text(printOwner, pw / 2, y, { align: 'center' });
-            y += 4;
-            doc.setDrawColor(40, 35, 30);
-            doc.setLineWidth(0.4);
-            doc.line(cov.mLeft + 16, y, pw - cov.mRight - 16, y);
-            y += 18;
-
-            // Lema o intención
-            if (motto) {
-                doc.setFont('times', 'italic');
-                doc.setFontSize(9.5);
-                doc.setTextColor(60, 55, 50);
-                const mottoLines = doc.splitTextToSize(`«${motto}»`, cov.cWidth - 24);
-                mottoLines.forEach(line => {
-                    doc.text(line, pw / 2, y, { align: 'center' });
-                    y += 5;
+            try {
+                // Formato Libro Apaisado 8.25" x 6" [209.55, 152.4] mm
+                const pageDims = [209.55, 152.4];
+                const doc = new jsPDFClass({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: pageDims
                 });
-                y += 10;
-            }
 
-            // Dedicatoria si existe
-            if (dedication) {
-                doc.setFillColor(250, 248, 244);
-                doc.setDrawColor(215, 210, 200);
-                doc.setLineWidth(0.25);
-                const dedLines = doc.splitTextToSize(`“${dedication}”`, cov.cWidth - 30);
-                const dedH = (dedLines.length * 4.5) + 8;
-                doc.roundedRect(cov.mLeft + 10, y, cov.cWidth - 20, dedH, 1.5, 1.5, 'FD');
+                const pw = doc.internal.pageSize.getWidth();
+                const ph = doc.internal.pageSize.getHeight();
+                const mBase = 12;
 
-                doc.setFont('times', 'italic');
-                doc.setFontSize(8.5);
-                doc.setTextColor(80, 75, 70);
-                let dy = y + 5.5;
-                dedLines.forEach(l => {
-                    doc.text(l, pw / 2, dy, { align: 'center' });
-                    dy += 4.5;
-                });
-                y += dedH + 12;
-            }
+                const owner = document.getElementById('input-owner')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.owner : '');
+                const motto = document.getElementById('input-motto')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.motto : '');
+                const city = document.getElementById('input-city')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.city : '');
+                const year = document.getElementById('input-year')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.year : '2027');
+                const dedication = document.getElementById('input-dedication')?.value.trim() || (isExampleActive ? BOOK_EXAMPLE.dedication : '');
 
-            // Pie de portada
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(120, 115, 110);
-            const cityStr = city ? `${city} · ` : '';
-            doc.text(`${cityStr}${year} · editorialmenosruido.com`, pw / 2, ph - cov.mBottom - 12, { align: 'center' });
+                let totalPagesCount = 1; // Portada
+                const hasTheory = document.getElementById('check-theory')?.checked;
+                if (hasTheory) totalPagesCount += 2;
 
-            // ----------------------------------------------------
-            // 2. PÁGINAS 2 Y 3: MANIFIESTO & TEORÍA EDITORIAL
-            // ----------------------------------------------------
-            doc.addPage();
-            pageNum++;
-            paintPaperBackground();
-            let m2 = getPageMargins(pageNum);
+                const hasAnnual = document.getElementById('check-annual')?.checked;
+                const pAnnual = hasAnnual ? Math.max(parseInt(document.getElementById('pages-annual')?.value || '1', 10), 1) : 0;
+                totalPagesCount += pAnnual;
 
-            y = m2.mTop + 4;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.5);
-            doc.setTextColor(135, 85, 59);
-            doc.text('MANIFIESTO MENOS RUIDO · PRINCIPIOS ANALÓGICOS', m2.mLeft, y);
-            y += 6;
+                const hasMonthly = document.getElementById('check-monthly')?.checked;
+                const pMonthly = hasMonthly ? Math.max(parseInt(document.getElementById('pages-monthly')?.value || '3', 10), 1) : 0;
+                totalPagesCount += pMonthly;
 
-            doc.setFont('times', 'bold');
-            doc.setFontSize(16);
-            doc.setTextColor(30, 25, 22);
-            doc.text('Por qué el papel ordena lo que la pantalla satura', m2.mLeft, y);
-            y += 4;
-            doc.setDrawColor(40, 35, 30);
-            doc.setLineWidth(0.35);
-            doc.line(m2.mLeft, y, pw - m2.mRight, y);
-            y += 8;
+                const hasHabits = document.getElementById('check-habits')?.checked;
+                const pHabits = hasHabits ? Math.max(parseInt(document.getElementById('pages-habits')?.value || '3', 10), 1) : 0;
+                totalPagesCount += pHabits;
 
-            doc.setFont('times', 'italic');
-            doc.setFontSize(10);
-            doc.setTextColor(70, 65, 60);
-            const quoteLines = doc.splitTextToSize('«No necesitas más horas ni otra aplicación de productividad. Necesitas decidir qué importa hoy antes de que las notificaciones elijan por ti.»', m2.cWidth - 6);
-            quoteLines.forEach(ql => { doc.text(ql, m2.mLeft, y); y += 5; });
-            y += 4;
+                const hasSchedule = document.getElementById('check-schedule')?.checked;
+                const pSchedule = hasSchedule ? Math.max(parseInt(document.getElementById('pages-schedule')?.value || '2', 10), 1) : 0;
+                totalPagesCount += pSchedule;
 
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor(45, 40, 35);
-            const p1 = 'El soporte digital está diseñado para la fragmentación constante: notificaciones, pestañas abiertas y una sensación perpetua de urgencia artificial. El papel, por el contrario, impone una limitación física saludable: lo que cabe en esta página es lo que puedes abarcar hoy.';
-            const p1Lines = doc.splitTextToSize(p1, m2.cWidth);
-            p1Lines.forEach(l => { doc.text(l, m2.mLeft, y); y += 4.5; });
-            y += 4;
+                const hasWeekly = document.getElementById('check-weekly')?.checked;
+                const pWeekly = hasWeekly ? Math.max(parseInt(document.getElementById('pages-weekly')?.value || '0', 10), 0) : 0;
+                totalPagesCount += pWeekly;
 
-            const p2 = 'Cuando escribes a mano, tu cerebro filtra de manera natural lo superfluo. Te ves obligado a sintetizar y elegir. La Bitácora de Enfoque no es un contenedor de tareas pendientes infinitas: es una herramienta de renuncia consciente.';
-            const p2Lines = doc.splitTextToSize(p2, m2.cWidth);
-            p2Lines.forEach(l => { doc.text(l, m2.mLeft, y); y += 4.5; });
-            y += 8;
+                const hasDaily = document.getElementById('check-daily')?.checked;
+                const pDaily = hasDaily ? Math.max(parseInt(document.getElementById('pages-daily')?.value || '90', 10), 1) : 0;
+                totalPagesCount += pDaily;
 
-            // Caja de los 3 principios
-            doc.setFillColor(250, 248, 244);
-            doc.setDrawColor(215, 210, 200);
-            doc.setLineWidth(0.2);
-            doc.roundedRect(m2.mLeft, y, m2.cWidth, 42, 2, 2, 'FD');
+                totalPagesCount += 1; // Cierre
 
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.5);
-            doc.setTextColor(135, 85, 59);
-            doc.text('LOS 3 PRINCIPIOS INNEGOCIABLES DEL MÉTODO:', m2.mLeft + 4, y + 6);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7.5);
-            doc.setTextColor(30, 25, 20);
-            doc.text('1. Una sola prioridad al día: La tarea troncal que justifica la jornada.', m2.mLeft + 4, y + 14);
-            doc.text('2. Máximo 3 tareas secundarias: Acotar los satélites para no diluir el foco.', m2.mLeft + 4, y + 22);
-            doc.text('3. Registro sin flagelo mental: Si un día se tuerce, se pasa página con serenidad.', m2.mLeft + 4, y + 30);
-            doc.text('4. Desconexión real: Al cerrar este cuaderno, el trabajo del día ha terminado.', m2.mLeft + 4, y + 38);
-
-            addPageFooter(pageNum);
-
-            // ----------------------------------------------------
-            // PÁGINA 3: GUÍA PRÁCTICA DE USO (TEORÍA HERRAMIENTA POR HERRAMIENTA)
-            // ----------------------------------------------------
-            doc.addPage();
-            pageNum++;
-            paintPaperBackground();
-            let m3 = getPageMargins(pageNum);
-
-            y = m3.mTop + 4;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.5);
-            doc.setTextColor(135, 85, 59);
-            doc.text('MÉTODO MENOS RUIDO · GUÍA DE CADA SECCIÓN', m3.mLeft, y);
-            y += 6;
-
-            doc.setFont('times', 'bold');
-            doc.setFontSize(16);
-            doc.setTextColor(30, 25, 22);
-            doc.text('Cómo utilizar cada herramienta', m3.mLeft, y);
-            y += 4;
-            doc.setDrawColor(40, 35, 30);
-            doc.setLineWidth(0.35);
-            doc.line(m3.mLeft, y, pw - m3.mRight, y);
-            y += 7;
-
-            const toolGuide = [
-                {
-                    title: '1. El Plano Anual (Visión Panorámica)',
-                    desc: 'No planifiques tareas diarias aquí. Utiliza las casillas de los meses únicamente para grandes hitos: lanzamientos, fechas de exámenes, viajes o semanas de descanso. Mantiene tu brújula visible sin agobiar.'
-                },
-                {
-                    title: '2. El Planificador Mensual (Horizonte Acotado)',
-                    desc: 'Cada mes abre con espacio para fijar un máximo de 3 metas. Si intentas avanzar en diez frentes a la vez, no terminarás ninguno. Distribuye los hitos en las semanas del mes.'
-                },
-                {
-                    title: '3. La Matriz de Hábitos (Consistencia Silenciosa)',
-                    desc: 'Registra tus rituales diarios marcando el círculo correspondiente con tinta o lápiz. No busques la racha perfecta de 30 días: busca no romper el ritmo más de dos días seguidos.'
-                },
-                {
-                    title: '4. El Planificador Semanal (Distribución Táctica)',
-                    desc: 'El domingo o el lunes por la mañana, define el foco semanal y distribuye la carga entre los días. Llegar al lunes sabiendo de antemano qué harás elimina la ansiedad de improvisar.'
-                },
-                {
-                    title: '5. La Página Diaria (Una Sola Prioridad Innegociable)',
-                    desc: 'Al comenzar el día, escribe una sola cosa. Si hoy fuera un día caótico y solo pudieras completar una tarea, ¿cuál salvaría la jornada? Esa es tu prioridad. El resto son secundarias.'
+                let pDots = 0;
+                if (targetTotalPages > 0 && targetTotalPages > totalPagesCount) {
+                    pDots = targetTotalPages - totalPagesCount;
+                } else if (targetTotalPages === 0) {
+                    pDots = 4;
                 }
-            ];
+                const finalTotal = totalPagesCount + pDots;
 
-            toolGuide.forEach(tg => {
+                let currentPage = 1;
+
+                function paintBackground() {
+                    doc.setFillColor(255, 254, 251);
+                    doc.rect(0, 0, pw, ph, 'F');
+                }
+
+                function addFooter(pNum) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(5.8);
+                    doc.setTextColor(140, 135, 130);
+                    doc.text('MENOS RUIDO · REGISTRO CONSTANTE', mBase, ph - mBase + 2);
+                    doc.text(`Pág. ${pNum} de ${finalTotal} · editorialmenosruido.com`, pw - mBase, ph - mBase + 2, { align: 'right' });
+                }
+
+                // --------------------------------------------------------
+                // PÁGINA 1: PORTADA DE PERTENENCIA
+                // --------------------------------------------------------
+                paintBackground();
+                doc.setDrawColor(210, 205, 195);
+                doc.setLineWidth(0.3);
+                doc.rect(mBase, mBase, pw - (mBase * 2), ph - (mBase * 2));
+
+                let y = mBase + 26;
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8);
+                doc.setFontSize(7.5);
                 doc.setTextColor(135, 85, 59);
-                doc.text(tg.title, m3.mLeft, y);
+                doc.text('EDITORIAL MENOS RUIDO · EDICIÓN ATEMPORAL', pw / 2, y, { align: 'center' });
+                y += 9;
+
+                doc.setFont('times', 'bold');
+                doc.setFontSize(22);
+                doc.setTextColor(30, 25, 22);
+                doc.text('Bitácora de Enfoque', pw / 2, y, { align: 'center' });
+                y += 6;
+
+                doc.setFont('times', 'italic');
+                doc.setFontSize(10);
+                doc.setTextColor(100, 95, 90);
+                doc.text(`Cuaderno de Calma y Planificación Analógica de ${selectedCycle === 'free' ? 'Edición Exclusiva' : selectedCycle + ' Días'}`, pw / 2, y, { align: 'center' });
+                y += 18;
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(70, 65, 60);
+                doc.text('ESTE CUADERNO PERTENECE A:', pw / 2, y, { align: 'center' });
+                y += 7;
+
+                doc.setFont('times', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor(25, 20, 15);
+                doc.text(owner || '_____________________________________', pw / 2, y, { align: 'center' });
                 y += 4;
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.35);
+                doc.line((pw / 2) - 45, y, (pw / 2) + 45, y);
+                y += 12;
+
+                if (motto) {
+                    doc.setFont('times', 'italic');
+                    doc.setFontSize(9);
+                    doc.setTextColor(60, 55, 50);
+                    const mottoLines = doc.splitTextToSize(`«${motto}»`, pw - (mBase * 4));
+                    mottoLines.forEach(l => { doc.text(l, pw / 2, y, { align: 'center' }); y += 4.5; });
+                    y += 4;
+                }
+
+                if (dedication) {
+                    doc.setFillColor(250, 248, 244);
+                    doc.setDrawColor(220, 215, 205);
+                    doc.roundedRect((pw / 2) - 60, y, 120, 12, 1.5, 1.5, 'FD');
+                    doc.setFont('times', 'italic');
+                    doc.setFontSize(8);
+                    doc.setTextColor(80, 75, 70);
+                    doc.text(`“${dedication}”`, pw / 2, y + 7.5, { align: 'center' });
+                }
 
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(7.3);
-                doc.setTextColor(45, 40, 35);
-                const descL = doc.splitTextToSize(tg.desc, m3.cWidth);
-                descL.forEach(dl => { doc.text(dl, m3.mLeft, y); y += 3.8; });
-                y += 3.5;
-            });
+                doc.setFontSize(6.8);
+                doc.setTextColor(120, 115, 110);
+                const cityStr = city ? `${city} · ` : '';
+                doc.text(`${cityStr}${year} · editorialmenosruido.com`, pw / 2, ph - mBase - 8, { align: 'center' });
 
-            addPageFooter(pageNum);
-
-            // ----------------------------------------------------
-            // 3. PÁGINA 4: PLANO ANUAL (12 MESES)
-            // ----------------------------------------------------
-            doc.addPage();
-            pageNum++;
-            paintPaperBackground();
-            let mAnual = getPageMargins(pageNum);
-
-            y = mAnual.mTop + 4;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
-            doc.setTextColor(135, 85, 59);
-            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN ANUAL', mAnual.mLeft, y);
-            y += 5.5;
-
-            doc.setFont('times', 'bold');
-            doc.setFontSize(15);
-            doc.setTextColor(30, 25, 22);
-            doc.text('Planificación Anual', mAnual.mLeft, y);
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(8);
-            doc.setTextColor(80, 75, 70);
-            doc.text(`AÑO: ${year}`, pw - mAnual.mRight, y, { align: 'right' });
-            y += 3;
-            doc.setDrawColor(40, 35, 30);
-            doc.setLineWidth(0.35);
-            doc.line(mAnual.mLeft, y, pw - mAnual.mRight, y);
-            y += 5;
-
-            // Caja de prioridad anual
-            doc.setFillColor(250, 248, 244);
-            doc.setDrawColor(215, 210, 200);
-            doc.setLineWidth(0.2);
-            doc.roundedRect(mAnual.mLeft, y, mAnual.cWidth, 12, 1.5, 1.5, 'FD');
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.2);
-            doc.setTextColor(135, 85, 59);
-            doc.text('🎯 PRIORIDAD ESTRATÉGICA DEL AÑO', mAnual.mLeft + 3, y + 3.5);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(35, 30, 25);
-            const prioStr = motto || 'Consolidar la calma mental y avanzar en el proyecto troncal sin dispersión.';
-            const prioL = doc.splitTextToSize(prioStr, mAnual.cWidth - 8);
-            doc.text(prioL[0] || '', mAnual.mLeft + 3, y + 8);
-            y += 15;
-
-            // Cuadrícula de 12 meses (4 filas de 3 columnas)
-            const mCols = 3;
-            const mRows = 4;
-            const cardW = (mAnual.cWidth - 6) / mCols;
-            const cardH = (ph - y - mAnual.mBottom - 10) / mRows;
-            const monthNames = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-
-            for (let r = 0; r < mRows; r++) {
-                for (let c = 0; c < mCols; c++) {
-                    const mIdx = (r * mCols) + c;
-                    const cX = mAnual.mLeft + (c * (cardW + 3));
-                    const cY = y + (r * (cardH + 2));
-
-                    doc.setFillColor(252, 250, 247);
-                    doc.setDrawColor(220, 215, 205);
-                    doc.setLineWidth(0.2);
-                    doc.rect(cX, cY, cardW, cardH, 'FD');
-
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.2);
-                    doc.setTextColor(30, 25, 20);
-                    doc.text(monthNames[mIdx], cX + 2.5, cY + 4.2);
-
-                    const qNum = Math.ceil((mIdx + 1) / 3);
-                    doc.setFontSize(5.5);
-                    doc.setTextColor(135, 85, 59);
-                    doc.text(`Q${qNum}`, cX + cardW - 2.5, cY + 4.2, { align: 'right' });
-
-                    doc.setDrawColor(230, 225, 218);
-                    doc.setLineWidth(0.18);
-                    doc.line(cX + 2, cY + 5.5, cX + cardW - 2, cY + 5.5);
-
-                    // Líneas tenues para escribir
-                    for (let l = 1; l <= 4; l++) {
-                        const lineY = cY + 5.5 + (l * 4.2);
-                        if (lineY < cY + cardH - 2) {
-                            doc.line(cX + 2.5, lineY, cX + cardW - 2.5, lineY);
-                        }
-                    }
-                }
-            }
-
-            addPageFooter(pageNum);
-
-            // ====================================================
-            // 4. CICLOS MENSUALES, SEMANALES Y DIARIOS
-            // Para Edición 90 Días: 3 meses, 3 hábitos, 13 semanas, 90 días
-            // Para Muestra (Sample): 1 mes, 1 hábito, 1 semana, 7 días
-            // ====================================================
-            const totalMonths = isSampleMode ? 1 : ((selectedCycle === 90) ? 3 : 6);
-            const totalWeeks = isSampleMode ? 1 : ((selectedCycle === 90) ? 13 : 26);
-            const totalDays = isSampleMode ? 7 : selectedCycle;
-
-            let currentDayCount = 0;
-            let currentWeekCount = 0;
-
-            for (let m = 1; m <= totalMonths; m++) {
-                // ------------------------------------------------
-                // A) PÁGINA MENSUAL (1 POR MES)
-                // ------------------------------------------------
-                doc.addPage();
-                pageNum++;
-                paintPaperBackground();
-                let mM = getPageMargins(pageNum);
-
-                let my = mM.mTop + 4;
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7);
-                doc.setTextColor(135, 85, 59);
-                doc.text(`MENOS RUIDO · CICLO MENSUAL ${m} DE ${totalMonths}`, mM.mLeft, my);
-                my += 5.5;
-
-                doc.setFont('times', 'bold');
-                doc.setFontSize(15);
-                doc.setTextColor(30, 25, 22);
-                doc.text(`Planificador Mensual ${m}`, mM.mLeft, my);
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8);
-                doc.setTextColor(80, 75, 70);
-                doc.text(`MES: ________ · ${year}`, pw - mM.mRight, my, { align: 'right' });
-                my += 3;
-                doc.setDrawColor(40, 35, 30);
-                doc.setLineWidth(0.35);
-                doc.line(mM.mLeft, my, pw - mM.mRight, my);
-                my += 5;
-
-                // 3 Metas del mes
-                doc.setFillColor(250, 248, 244);
-                doc.setDrawColor(215, 210, 200);
-                doc.setLineWidth(0.2);
-                doc.roundedRect(mM.mLeft, my, mM.cWidth, 24, 1.5, 1.5, 'FD');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.4);
-                doc.setTextColor(135, 85, 59);
-                doc.text('🎯 LAS 3 METAS INNEGOCIABLES DEL MES', mM.mLeft + 3.5, my + 4);
-
-                for (let g = 1; g <= 3; g++) {
-                    const gy = my + 5 + (g * 5.2);
-                    doc.setDrawColor(80, 75, 70);
-                    doc.setLineWidth(0.25);
-                    doc.rect(mM.mLeft + 4, gy - 2.5, 2.8, 2.8);
-
-                    doc.setDrawColor(225, 220, 212);
-                    doc.setLineWidth(0.18);
-                    doc.line(mM.mLeft + 9, gy, mM.mLeft + mM.cWidth - 4, gy);
-                }
-                my += 28;
-
-                // Cuadrícula mensual (5 filas de 7 días L a D)
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.5);
-                doc.setTextColor(40, 35, 30);
-                doc.text('HORIZONTE MENSUAL (31 DÍAS)', mM.mLeft, my);
-                my += 3;
-
-                const dayW = mM.cWidth / 7;
-                const headH = 5;
-                const cellH = 13;
-                const dLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
-                // Cabecera días
-                for (let c = 0; c < 7; c++) {
-                    doc.setFillColor(242, 238, 230);
-                    doc.setDrawColor(215, 210, 200);
-                    doc.setLineWidth(0.2);
-                    doc.rect(mM.mLeft + (c * dayW), my, dayW, headH, 'FD');
-
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.2);
-                    doc.setTextColor(50, 45, 40);
-                    doc.text(dLabels[c], mM.mLeft + (c * dayW) + (dayW / 2), my + 3.5, { align: 'center' });
-                }
-                my += headH;
-
-                // 5 filas de casillas
-                for (let r = 0; r < 5; r++) {
-                    for (let c = 0; c < 7; c++) {
-                        doc.setFillColor(254, 252, 249);
-                        doc.setDrawColor(220, 215, 205);
-                        doc.setLineWidth(0.2);
-                        doc.rect(mM.mLeft + (c * dayW), my + (r * cellH), dayW, cellH, 'FD');
-                    }
-                }
-                my += (5 * cellH) + 5;
-
-                // Bloque de notas e hitos del mes
-                doc.setFillColor(250, 248, 244);
-                doc.setDrawColor(215, 210, 200);
-                doc.setLineWidth(0.2);
-                const notesH = ph - my - mM.mBottom - 10;
-                doc.roundedRect(mM.mLeft, my, mM.cWidth, notesH, 1.5, 1.5, 'FD');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.2);
-                doc.setTextColor(135, 85, 59);
-                doc.text('NOTAS E HITOS DEL MES', mM.mLeft + 3.5, my + 4);
-
-                for (let l = 1; l <= 5; l++) {
-                    const ly = my + 5 + (l * 5);
-                    if (ly < my + notesH - 2) {
-                        doc.setDrawColor(230, 225, 218);
-                        doc.setLineWidth(0.18);
-                        doc.line(mM.mLeft + 3.5, ly, mM.mLeft + mM.cWidth - 3.5, ly);
-                    }
-                }
-
-                addPageFooter(pageNum);
-
-                // ------------------------------------------------
-                // B) PÁGINA DE HÁBITOS (1 POR MES)
-                // ------------------------------------------------
-                doc.addPage();
-                pageNum++;
-                paintPaperBackground();
-                let mH = getPageMargins(pageNum);
-
-                let hy = mH.mTop + 4;
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7);
-                doc.setTextColor(135, 85, 59);
-                doc.text(`MENOS RUIDO · REGISTRO DE HÁBITOS (MES ${m})`, mH.mLeft, hy);
-                hy += 5.5;
-
-                doc.setFont('times', 'bold');
-                doc.setFontSize(15);
-                doc.setTextColor(30, 25, 22);
-                doc.text('Matriz de Consistencia', mH.mLeft, hy);
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8);
-                doc.setTextColor(80, 75, 70);
-                doc.text('31 DÍAS DE REGISTRO', pw - mH.mRight, hy, { align: 'right' });
-                hy += 3;
-                doc.setDrawColor(40, 35, 30);
-                doc.setLineWidth(0.35);
-                doc.line(mH.mLeft, hy, pw - mH.mRight, hy);
-                hy += 6;
-
-                // Tabla de hasta 10 hábitos × 31 días
-                const habitsTableH = 110;
-                const habitColW = 38;
-                const daysColsW = mH.cWidth - habitColW;
-                const singleDayW = daysColsW / 31;
-                const habitRowH = habitsTableH / 11; // 1 header + 10 habits
-
-                // Header tabla hábitos
-                doc.setFillColor(242, 238, 230);
-                doc.setDrawColor(215, 210, 200);
-                doc.setLineWidth(0.2);
-                doc.rect(mH.mLeft, hy, mH.cWidth, habitRowH, 'FD');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6);
-                doc.setTextColor(50, 45, 40);
-                doc.text('HÁBITO / RUTINA', mH.mLeft + 2.5, hy + (habitRowH / 2) + 1.2);
-
-                for (let d = 1; d <= 31; d++) {
-                    const dX = mH.mLeft + habitColW + ((d - 1) * singleDayW);
-                    doc.text(String(d), dX + (singleDayW / 2), hy + (habitRowH / 2) + 1.2, { align: 'center' });
-                }
-
-                // 10 filas de hábitos
-                const defaultHabits = [habit1, habit2, '', '', '', '', '', '', '', ''];
-                for (let hi = 0; hi < 10; hi++) {
-                    const rY = hy + habitRowH + (hi * habitRowH);
-                    doc.setFillColor(hi % 2 === 0 ? 255 : 252, 250, 247);
-                    doc.setDrawColor(225, 220, 212);
-                    doc.setLineWidth(0.18);
-                    doc.rect(mH.mLeft, rY, mH.cWidth, habitRowH, 'FD');
-
-                    const hName = defaultHabits[hi] || '';
-                    if (hName) {
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(6.2);
-                        doc.setTextColor(40, 35, 30);
-                        doc.text(hName, mH.mLeft + 2.5, rY + (habitRowH / 2) + 1.2);
-                    }
-
-                    // Círculos para marcar
-                    for (let d = 1; d <= 31; d++) {
-                        const cX = mH.mLeft + habitColW + ((d - 1) * singleDayW) + (singleDayW / 2);
-                        const cY = rY + (habitRowH / 2);
-                        doc.setDrawColor(160, 155, 148);
-                        doc.setLineWidth(0.18);
-                        doc.circle(cX, cY, 1.1, 'S');
-                    }
-                }
-                hy += habitsTableH + 6;
-
-                // Reflexión de hábitos
-                doc.setFillColor(250, 248, 244);
-                doc.setDrawColor(215, 210, 200);
-                doc.setLineWidth(0.2);
-                const hNotesH = ph - hy - mH.mBottom - 10;
-                doc.roundedRect(mH.mLeft, hy, mH.cWidth, hNotesH, 1.5, 1.5, 'FD');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.2);
-                doc.setTextColor(135, 85, 59);
-                doc.text('OBSERVACIONES Y APRENDIZAJES DEL MES', mH.mLeft + 3.5, hy + 4);
-
-                for (let l = 1; l <= 4; l++) {
-                    const ly = hy + 5 + (l * 4.8);
-                    if (ly < hy + hNotesH - 2) {
-                        doc.setDrawColor(230, 225, 218);
-                        doc.setLineWidth(0.18);
-                        doc.line(mH.mLeft + 3.5, ly, mH.mLeft + mH.cWidth - 3.5, ly);
-                    }
-                }
-
-                addPageFooter(pageNum);
-
-                // ------------------------------------------------
-                // C) SEMANAS Y DÍAS DENTRO DEL MES
-                // ------------------------------------------------
-                const weeksInThisMonth = isSampleMode ? 1 : Math.min(5, Math.ceil(totalWeeks / totalMonths));
-
-                for (let w = 1; w <= weeksInThisMonth; w++) {
-                    if (currentWeekCount >= totalWeeks) break;
-                    currentWeekCount++;
-
-                    // 1 PÁGINA SEMANAL
+                // --------------------------------------------------------
+                // PÁGINAS 2 Y 3: TEORÍA DE CALLE (SI ESTÁ ACTIVA)
+                // --------------------------------------------------------
+                if (hasTheory) {
+                    // Teoría Pág 1
                     doc.addPage();
-                    pageNum++;
-                    paintPaperBackground();
-                    let mW = getPageMargins(pageNum);
-
-                    let wy = mW.mTop + 4;
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7);
+                    doc.setFontSize(6.8);
                     doc.setTextColor(135, 85, 59);
-                    doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', mW.mLeft, wy);
-                    wy += 5.5;
-
+                    doc.text('MÉTODO MENOS RUIDO · PRINCIPIOS DE CALLE (I)', mBase, y);
+                    y += 5;
                     doc.setFont('times', 'bold');
                     doc.setFontSize(15);
                     doc.setTextColor(30, 25, 22);
-                    doc.text(`Semana ${currentWeekCount}`, mW.mLeft, wy);
-
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(8);
-                    doc.setTextColor(80, 75, 70);
-                    doc.text('FOCO TÁCTICO DE 7 DÍAS', pw - mW.mRight, wy, { align: 'right' });
-                    wy += 3;
+                    doc.text('Por qué una sola prioridad al día cambia tu cabeza', mBase, y);
+                    y += 3;
                     doc.setDrawColor(40, 35, 30);
-                    doc.setLineWidth(0.35);
-                    doc.line(mW.mLeft, wy, pw - mW.mRight, wy);
-                    wy += 5;
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 7;
 
-                    // Foco de la semana
+                    doc.setFont('times', 'italic');
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(70, 65, 60);
+                    doc.text('«No eres una máquina. Si te apuntas 15 tareas, no vas a hacer ninguna y te irás a dormir con culpa.»', mBase, y);
+                    y += 8;
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.8);
+                    doc.setTextColor(45, 40, 35);
+                    const t1 = 'Vivimos en un bombardeo permanente de urgencias ajenas y notificaciones. Las aplicaciones digitales te dan la ilusión de que puedes abarcarlo todo, pero solo consiguen fragmentar tu atención.';
+                    doc.text(doc.splitTextToSize(t1, pw - (mBase * 2)), mBase, y);
+                    y += 12;
+
                     doc.setFillColor(250, 248, 244);
                     doc.setDrawColor(215, 210, 200);
-                    doc.setLineWidth(0.2);
-                    doc.roundedRect(mW.mLeft, wy, mW.cWidth, 14, 1.5, 1.5, 'FD');
-
+                    doc.roundedRect(mBase, y, pw - (mBase * 2), 48, 2, 2, 'FD');
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.4);
+                    doc.setFontSize(7.5);
                     doc.setTextColor(135, 85, 59);
-                    doc.text('🎯 FOCO PRINCIPAL DE LA SEMANA', mW.mLeft + 3.5, wy + 4);
+                    doc.text('LAS 3 REGLAS INNEGOCIABLES DEL MÉTODO:', mBase + 5, y + 7);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(30, 25, 20);
+                    doc.text('1. La Prioridad Indispensable: Decide qué única cosa justifica hoy tu esfuerzo antes de abrir pantallas.', mBase + 5, y + 16);
+                    doc.text('2. Máximo 3 secundarias: Todo lo demás son tareas satélite que solo harás si la principal está cerrada.', mBase + 5, y + 26);
+                    doc.text('3. Pasar página sin flagelarte: Si un día se tuerce, no te castigues. Mañana este cuaderno te espera limpio.', mBase + 5, y + 36);
 
-                    doc.setDrawColor(225, 220, 212);
-                    doc.setLineWidth(0.18);
-                    doc.line(mW.mLeft + 3.5, wy + 9.5, mW.mLeft + mW.cWidth - 3.5, wy + 9.5);
-                    wy += 18;
+                    addFooter(currentPage);
 
-                    // Cuadrícula de 6 días (Lunes a Viernes + Sáb/Dom)
-                    const wColW = (mW.cWidth - 4) / 2;
-                    const wRowH = (ph - wy - mW.mBottom - 10) / 3;
-                    const wDayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO & DOMINGO'];
+                    // Teoría Pág 2
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MÉTODO MENOS RUIDO · PRINCIPIOS DE CALLE (II)', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('El papel impone una limitación física saludable', mBase, y);
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 7;
 
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.8);
+                    doc.setTextColor(45, 40, 35);
+                    const t2 = 'En una pantalla puedes añadir cien tareas más haciendo scroll. En este papel no. Lo que cabe en esta página es exactamente lo que una mente humana puede digerir en un día sin quemarse.';
+                    doc.text(doc.splitTextToSize(t2, pw - (mBase * 2)), mBase, y);
+                    y += 14;
+
+                    const t3 = 'Usa lápiz o pluma. Disfruta tachando lo terminado. Y cuando cierres este cuaderno al final de la tarde, confía en que el trabajo del día ha terminado de verdad. El descanso no es un premio: es parte del método.';
+                    doc.text(doc.splitTextToSize(t3, pw - (mBase * 2)), mBase, y);
+
+                    addFooter(currentPage);
+                }
+
+                // --------------------------------------------------------
+                // PÁGINAS ANUALES
+                // --------------------------------------------------------
+                for (let a = 0; a < pAnnual; a++) {
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MENOS RUIDO · PLANIFICADOR ANUAL', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('Visión Panorámica de los 12 Meses', mBase, y);
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 5;
+
+                    // Cuadrícula 12 meses
+                    const colW = (pw - (mBase * 2) - 15) / 4;
+                    const rowH = 26;
+                    const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
                     for (let r = 0; r < 3; r++) {
-                        for (let c = 0; c < 2; c++) {
-                            const dIdx = (r * 2) + c;
-                            const dX = mW.mLeft + (c * (wColW + 4));
-                            const dY = wy + (r * (wRowH + 2));
-
+                        for (let c = 0; c < 4; c++) {
+                            const idx = (r * 4) + c;
+                            const bx = mBase + (c * (colW + 5));
+                            const by = y + (r * (rowH + 4));
                             doc.setFillColor(252, 250, 247);
                             doc.setDrawColor(220, 215, 205);
-                            doc.setLineWidth(0.2);
-                            doc.rect(dX, dY, wColW, wRowH, 'FD');
-
+                            doc.roundedRect(bx, by, colW, rowH, 1, 1, 'FD');
                             doc.setFont('helvetica', 'bold');
                             doc.setFontSize(6.5);
-                            doc.setTextColor(30, 25, 20);
-                            doc.text(wDayNames[dIdx], dX + 3, dY + 4.5);
-
+                            doc.setTextColor(135, 85, 59);
+                            doc.text(months[idx], bx + 3, by + 4.5);
                             doc.setDrawColor(230, 225, 218);
-                            doc.setLineWidth(0.18);
-                            doc.line(dX + 2.5, dY + 6, dX + wColW - 2.5, dY + 6);
-
-                            for (let l = 1; l <= 5; l++) {
-                                const ly = dY + 6 + (l * 5);
-                                if (ly < dY + wRowH - 2) {
-                                    doc.line(dX + 2.5, ly, dX + wColW - 2.5, ly);
-                                }
-                            }
+                            doc.line(bx, by + 6, bx + colW, by + 6);
                         }
                     }
-
-                    addPageFooter(pageNum);
-
-                    // 7 PÁGINAS DIARIAS POR SEMANA (UNA POR CADA DÍA)
-                    const daysThisWeek = Math.min(7, totalDays - currentDayCount);
-                    for (let day = 1; day <= daysThisWeek; day++) {
-                        currentDayCount++;
-                        doc.addPage();
-                        pageNum++;
-                        paintPaperBackground();
-                        let mD = getPageMargins(pageNum);
-
-                        let dy = mD.mTop + 4;
-
-                        // Kicker
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(7);
-                        doc.setTextColor(135, 85, 59);
-                        doc.text(`PLANIFICADOR MENOS RUIDO · REGISTRO DIARIO (DÍA ${currentDayCount})`, mD.mLeft, dy);
-                        dy += 5.5;
-
-                        // Cabecera: Día y Fecha
-                        doc.setFont('times', 'bold');
-                        doc.setFontSize(16);
-                        doc.setTextColor(30, 25, 22);
-                        doc.text('Día: ____________________', mD.mLeft, dy);
-
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(8.5);
-                        doc.setTextColor(100, 95, 90);
-                        doc.text('Fecha: __ / __ / ______', pw - mD.mRight, dy, { align: 'right' });
-                        dy += 3.5;
-
-                        doc.setDrawColor(40, 35, 30);
-                        doc.setLineWidth(0.35);
-                        doc.line(mD.mLeft, dy, pw - mD.mRight, dy);
-                        dy += 7;
-
-                        // 1. LA PRIORIDAD DEL DÍA (Caja sobria con checkbox)
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(7.5);
-                        doc.setTextColor(30, 25, 22);
-                        doc.text('1. LA PRIORIDAD DEL DÍA', mD.mLeft, dy);
-
-                        doc.setFont('times', 'italic');
-                        doc.setFontSize(7);
-                        doc.setTextColor(120, 115, 110);
-                        doc.text('(Una sola cosa importante y factible)', mD.mLeft + 40, dy);
-                        dy += 3;
-
-                        doc.setFillColor(250, 248, 245);
-                        doc.setDrawColor(35, 30, 25);
-                        doc.setLineWidth(0.35);
-                        doc.roundedRect(mD.mLeft, dy, mD.cWidth, 18, 2, 2, 'FD');
-
-                        // Checkbox
-                        doc.rect(mD.mLeft + 4, dy + 6.5, 4.5, 4.5);
-
-                        // Línea sutil para escribir la prioridad
-                        doc.setDrawColor(210, 205, 195);
-                        doc.setLineWidth(0.2);
-                        doc.line(mD.mLeft + 12, dy + 10, mD.mLeft + mD.cWidth - 4, dy + 10);
-                        dy += 24;
-
-                        // 2. TAREAS SECUNDARIAS (MÁXIMO 3)
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(7.5);
-                        doc.setTextColor(30, 25, 22);
-                        doc.text('2. TAREAS SECUNDARIAS', mD.mLeft, dy);
-
-                        doc.setFont('times', 'italic');
-                        doc.setFontSize(7);
-                        doc.setTextColor(120, 115, 110);
-                        doc.text('(Máximo 3 tareas satélite)', mD.mLeft + 38, dy);
-                        dy += 4;
-
-                        for (let t = 1; t <= 3; t++) {
-                            doc.setDrawColor(60, 55, 50);
-                            doc.setLineWidth(0.25);
-                            doc.rect(mD.mLeft + 4, dy + 1, 3.2, 3.2);
-
-                            doc.setDrawColor(215, 210, 200);
-                            doc.setLineWidth(0.2);
-                            doc.line(mD.mLeft + 10, dy + 3.5, mD.mLeft + mD.cWidth - 4, dy + 3.5);
-                            dy += 7;
-                        }
-                        dy += 3;
-
-                        // 3. HÁBITOS CLAVE
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(7.5);
-                        doc.setTextColor(30, 25, 22);
-                        doc.text('3. HÁBITOS CLAVE', mD.mLeft, dy);
-                        dy += 4;
-
-                        // Hábito 1
-                        doc.setDrawColor(60, 55, 50);
-                        doc.setLineWidth(0.25);
-                        doc.circle(mD.mLeft + 5.5, dy + 2.5, 2, 'S');
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(7.5);
-                        doc.setTextColor(40, 35, 30);
-                        doc.text(habit1, mD.mLeft + 10, dy + 3.2);
-                        dy += 6.5;
-
-                        // Hábito 2
-                        doc.circle(mD.mLeft + 5.5, dy + 2.5, 2, 'S');
-                        doc.text(habit2, mD.mLeft + 10, dy + 3.2);
-                        dy += 9;
-
-                        // 4. NOTAS Y REFLEXIÓN (Rayado editorial)
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(7.5);
-                        doc.setTextColor(30, 25, 22);
-                        doc.text('4. ESPACIO DE ENFOQUE Y NOTAS', mD.mLeft, dy);
-
-                        doc.setFont('times', 'italic');
-                        doc.setFontSize(7);
-                        doc.setTextColor(120, 115, 110);
-                        doc.text('(Vaciado mental y reflexiones del día)', mD.mLeft + 48, dy);
-                        dy += 4;
-
-                        const bottomLimit = ph - mD.mBottom - 18;
-                        const lineStep = 6.2;
-                        doc.setDrawColor(220, 215, 205);
-                        doc.setLineWidth(0.2);
-
-                        while (dy < bottomLimit) {
-                            doc.line(mD.mLeft, dy, pw - mD.mRight, dy);
-                            dy += lineStep;
-                        }
-                        dy += 4;
-
-                        // Cita estoica rotativa
-                        const quoteIdx = (currentDayCount - 1) % EDITORIAL_QUOTES.length;
-                        doc.setFont('times', 'italic');
-                        doc.setFontSize(7.2);
-                        doc.setTextColor(110, 105, 100);
-                        doc.text(EDITORIAL_QUOTES[quoteIdx], pw / 2, dy, { align: 'center' });
-
-                        addPageFooter(pageNum);
-                    }
+                    addFooter(currentPage);
                 }
-            }
 
-            // ----------------------------------------------------
-            // PÁGINA FINAL: BALANCE DEL CICLO & COLOFÓN EDITORIAL
-            // ----------------------------------------------------
-            doc.addPage();
-            pageNum++;
-            paintPaperBackground();
-            let mFinal = getPageMargins(pageNum);
+                // --------------------------------------------------------
+                // PÁGINAS MENSUALES
+                // --------------------------------------------------------
+                for (let mIdx = 0; mIdx < pMonthly; mIdx++) {
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MENOS RUIDO · PLANIFICADOR MENSUAL ATEMPORAL', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('Vista Mensual · 35 Casillas', mBase, y);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(70, 65, 60);
+                    doc.text(`MES: ________  ·  AÑO: ______`, pw - mBase, y, { align: 'right' });
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 5;
 
-            y = mFinal.mTop + 10;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
-            doc.setTextColor(135, 85, 59);
-            doc.text('CIERRE DE CICLO · BALANCE RETROSPECTIVO', mFinal.mLeft, y);
-            y += 6;
+                    // Cuadrícula 7 cols x 5 filas
+                    const gridW = pw - (mBase * 2);
+                    const cW = gridW / 7;
+                    const rH = 17;
+                    const daysH = ['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'];
 
-            doc.setFont('times', 'bold');
-            doc.setFontSize(16);
-            doc.setTextColor(30, 25, 22);
-            doc.text(`Balance de los ${selectedCycle} Días`, mFinal.mLeft, y);
-            y += 4;
-            doc.setDrawColor(40, 35, 30);
-            doc.setLineWidth(0.35);
-            doc.line(mFinal.mLeft, y, pw - mFinal.mRight, y);
-            y += 8;
+                    doc.setFillColor(245, 240, 232);
+                    doc.rect(mBase, y, gridW, 5, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(5.5);
+                    doc.setTextColor(60, 55, 50);
+                    for (let d = 0; d < 7; d++) {
+                        doc.text(daysH[d], mBase + (d * cW) + (cW / 2), y + 3.5, { align: 'center' });
+                    }
+                    y += 5;
 
-            const finalQuestions = [
-                '1. ¿Qué hito principal has logrado completar durante este ciclo?',
-                '2. ¿Qué tareas o compromisos superfluos aprendiste a soltar o decir que no?',
-                '3. ¿Qué hábito se ha consolidado con mayor solidez en tu día a día?',
-                '4. ¿Cuál es la intención prioritaria para tu siguiente cuaderno analógico?'
-            ];
+                    doc.setDrawColor(220, 215, 205);
+                    for (let row = 0; row < 5; row++) {
+                        for (let col = 0; col < 7; col++) {
+                            doc.rect(mBase + (col * cW), y + (row * rH), cW, rH, 'S');
+                        }
+                    }
+                    addFooter(currentPage);
+                }
 
-            finalQuestions.forEach(fq => {
+                // --------------------------------------------------------
+                // PÁGINAS DE HÁBITOS
+                // --------------------------------------------------------
+                for (let hIdx = 0; hIdx < pHabits; hIdx++) {
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MENOS RUIDO · RASTREADOR DE HÁBITOS', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('Planificador de Hábitos · 31 Días', mBase, y);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(70, 65, 60);
+                    doc.text(`MES: ________  ·  AÑO: ______`, pw - mBase, y, { align: 'right' });
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 4;
+
+                    // Tabla 12 hábitos x 31 días
+                    const contentW = pw - (mBase * 2);
+                    const colTitleW = 50;
+                    const daysGridW = contentW - colTitleW;
+                    const dayColW = daysGridW / 31;
+                    const numH = 12;
+                    const tableH = 88;
+                    const headH = 5;
+                    const rowH = (tableH - headH) / numH;
+
+                    doc.setFillColor(245, 240, 232);
+                    doc.rect(mBase, y, contentW, headH, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6);
+                    doc.setTextColor(50, 45, 40);
+                    doc.text('HÁBITO FUNDAMENTAL', mBase + 3, y + 3.4);
+                    for (let d = 1; d <= 31; d++) {
+                        doc.text(d.toString(), mBase + colTitleW + ((d - 1) * dayColW) + (dayColW / 2), y + 3.4, { align: 'center' });
+                    }
+
+                    doc.setDrawColor(225, 220, 212);
+                    for (let i = 0; i < numH; i++) {
+                        const rY = y + headH + (i * rowH);
+                        doc.line(mBase, rY + rowH, mBase + contentW, rY + rowH);
+                        for (let d = 1; d <= 31; d++) {
+                            const cX = mBase + colTitleW + ((d - 1) * dayColW) + (dayColW / 2);
+                            doc.circle(cX, rY + (rowH / 2), 1.25, 'S');
+                        }
+                    }
+                    doc.line(mBase + colTitleW, y, mBase + colTitleW, y + tableH);
+                    doc.rect(mBase, y, contentW, tableH);
+                    addFooter(currentPage);
+                }
+
+                // --------------------------------------------------------
+                // PÁGINAS HORARIAS
+                // --------------------------------------------------------
+                for (let sIdx = 0; sIdx < pSchedule; sIdx++) {
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('Planificador Horario Semanal', mBase, y);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8);
+                    doc.setTextColor(70, 65, 60);
+                    doc.text('SEMANA: _______________________', pw - mBase, y, { align: 'right' });
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 4;
+
+                    const contentW = pw - (mBase * 2);
+                    const timeColW = 24;
+                    const daysGridW = contentW - timeColW;
+                    const dayColW = daysGridW / 7;
+                    const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+                    const rowCount = 12; // 12 franjas de 2h
+                    const tableH = 92;
+                    const headH = 5;
+                    const rowH = (tableH - headH) / rowCount;
+
+                    doc.setFillColor(245, 240, 232);
+                    doc.rect(mBase, y, contentW, headH, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(5.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('HORA', mBase + (timeColW / 2), y + 3.4, { align: 'center' });
+                    doc.setTextColor(50, 45, 40);
+                    for (let d = 0; d < 7; d++) {
+                        doc.text(dayNames[d], mBase + timeColW + (d * dayColW) + (dayColW / 2), y + 3.4, { align: 'center' });
+                    }
+
+                    doc.setDrawColor(225, 220, 212);
+                    for (let i = 0; i < rowCount; i++) {
+                        const rY = y + headH + (i * rowH);
+                        doc.line(mBase, rY + rowH, mBase + contentW, rY + rowH);
+                        const hStart = String((8 + (i * 1)) % 24).padStart(2, '0') + ':00';
+                        const hEnd = String((9 + (i * 1)) % 24).padStart(2, '0') + ':00';
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(5.2);
+                        doc.setTextColor(60, 55, 50);
+                        doc.text(`${hStart}-${hEnd}`, mBase + (timeColW / 2), rY + (rowH / 2) + 1, { align: 'center' });
+                    }
+                    for (let d = 1; d < 7; d++) {
+                        doc.line(mBase + timeColW + (d * dayColW), y, mBase + timeColW + (d * dayColW), y + tableH);
+                    }
+                    doc.line(mBase + timeColW, y, mBase + timeColW, y + tableH);
+                    doc.rect(mBase, y, contentW, tableH);
+                    addFooter(currentPage);
+                }
+
+                // --------------------------------------------------------
+                // PÁGINAS SEMANALES
+                // --------------------------------------------------------
+                for (let wIdx = 0; wIdx < pWeekly; wIdx++) {
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MENOS RUIDO · VISTA SEMANAL HORIZONTAL', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text(`Semana ${wIdx + 1} · Enfoque Táctico`, mBase, y);
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 5;
+
+                    const contentW = pw - (mBase * 2);
+                    const colW = contentW / 7;
+                    const daysH = ['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'];
+                    for (let d = 0; d < 7; d++) {
+                        doc.setFillColor(252, 250, 247);
+                        doc.setDrawColor(220, 215, 205);
+                        doc.rect(mBase + (d * colW), y, colW, 96, 'FD');
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(daysH[d], mBase + (d * colW) + (colW / 2), y + 4.5, { align: 'center' });
+                        doc.setDrawColor(230, 225, 218);
+                        doc.line(mBase + (d * colW), y + 6.5, mBase + ((d + 1) * colW), y + 6.5);
+                    }
+                    addFooter(currentPage);
+                }
+
+                // --------------------------------------------------------
+                // PÁGINAS DIARIAS (90, 180, etc.)
+                // --------------------------------------------------------
+                for (let dIdx = 0; dIdx < pDaily; dIdx++) {
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MENOS RUIDO · PLANIFICADOR DIARIO', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text(`Día ${dIdx + 1} de ${pDaily}`, mBase, y);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8);
+                    doc.setTextColor(70, 65, 60);
+                    doc.text('FECHA: ____ / ____ / ________', pw - mBase, y, { align: 'right' });
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 5;
+
+                    const contentW = pw - (mBase * 2);
+                    const halfW = (contentW - 8) / 2;
+
+                    // Columna Izquierda: Prioridad & Secundarias
+                    doc.setFillColor(252, 249, 245);
+                    doc.setDrawColor(215, 210, 200);
+                    doc.roundedRect(mBase, y, halfW, 26, 1.5, 1.5, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('1. LA PRIORIDAD ÚNICA DEL DÍA (INNEGOCIABLE)', mBase + 4, y + 4.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6.2);
+                    doc.setTextColor(120, 115, 110);
+                    doc.text('¿Qué única tarea haría que hoy fuera un día productivo?', mBase + 4, y + 8.5);
+
+                    // Secundarias
+                    const secY = y + 30;
+                    doc.roundedRect(mBase, secY, halfW, 64, 1.5, 1.5, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('2. TAREAS SECUNDARIAS (MÁXIMO 3)', mBase + 4, secY + 4.5);
+                    for (let s = 0; s < 3; s++) {
+                        const sy = secY + 12 + (s * 15);
+                        doc.setDrawColor(180, 175, 168);
+                        doc.circle(mBase + 6, sy, 1.6, 'S');
+                        doc.setDrawColor(225, 220, 212);
+                        doc.line(mBase + 12, sy + 1, mBase + halfW - 4, sy + 1);
+                    }
+
+                    // Columna Derecha: Hábitos & Reflexión nocturna
+                    const rightX = mBase + halfW + 8;
+                    doc.setFillColor(252, 249, 245);
+                    doc.setDrawColor(215, 210, 200);
+                    doc.roundedRect(rightX, y, halfW, 26, 1.5, 1.5, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('HÁBITOS FUNDAMENTALES DE HOY', rightX + 4, y + 4.5);
+                    for (let h = 0; h < 3; h++) {
+                        const hy = y + 11 + (h * 4.5);
+                        doc.circle(rightX + 6, hy, 1.4, 'S');
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(6);
+                        doc.setTextColor(60, 55, 50);
+                        doc.text(`Hábito ${h + 1} __________________________________`, rightX + 10, hy + 0.8);
+                    }
+
+                    // Reflexión
+                    doc.roundedRect(rightX, secY, halfW, 64, 1.5, 1.5, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('REFLEXIÓN NOCTURNA & CIERRE DEL DÍA', rightX + 4, secY + 4.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6);
+                    doc.setTextColor(120, 115, 110);
+                    doc.text('¿Qué ha funcionado hoy? ¿Qué soltamos antes de dormir?', rightX + 4, secY + 8.5);
+
+                    addFooter(currentPage);
+                }
+
+                // --------------------------------------------------------
+                // PÁGINAS DE NOTAS DE PUNTOS (DOT GRID)
+                // --------------------------------------------------------
+                for (let dotIdx = 0; dotIdx < pDots; dotIdx++) {
+                    doc.addPage();
+                    currentPage++;
+                    paintBackground();
+                    y = mBase + 4;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('MENOS RUIDO · NOTAS & PENSAMIENTOS', mBase, y);
+                    y += 5;
+                    doc.setFont('times', 'bold');
+                    doc.setFontSize(15);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('Espacio Libre de Reflexión', mBase, y);
+                    y += 3;
+                    doc.setDrawColor(40, 35, 30);
+                    doc.line(mBase, y, pw - mBase, y);
+                    y += 5;
+
+                    // Cuadrícula de puntos
+                    const contentW = pw - (mBase * 2);
+                    const dotH = 96;
+                    const step = 4;
+                    doc.setFillColor(180, 175, 170);
+                    for (let py = y + 2; py <= y + dotH; py += step) {
+                        for (let px = mBase + 2; px <= mBase + contentW - 2; px += step) {
+                            doc.circle(px, py, 0.18, 'F');
+                        }
+                    }
+                    doc.setDrawColor(215, 210, 200);
+                    doc.rect(mBase, y, contentW, dotH);
+                    addFooter(currentPage);
+                }
+
+                // --------------------------------------------------------
+                // PÁGINA FINAL: AGRADECIMIENTOS & CIERRE
+                // --------------------------------------------------------
+                doc.addPage();
+                currentPage++;
+                paintBackground();
+                doc.setDrawColor(210, 205, 195);
+                doc.setLineWidth(0.3);
+                doc.rect(mBase, mBase, pw - (mBase * 2), ph - (mBase * 2));
+
+                y = ph / 2 - 24;
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7.5);
-                doc.setTextColor(30, 25, 20);
-                doc.text(fq, mFinal.mLeft, y);
-                y += 4.5;
+                doc.setTextColor(135, 85, 59);
+                doc.text('GRACIAS POR ELEGIR PENSAR CON CALMA', pw / 2, y, { align: 'center' });
+                y += 9;
 
-                for (let l = 1; l <= 3; l++) {
-                    doc.setDrawColor(225, 220, 215);
-                    doc.setLineWidth(0.2);
-                    doc.line(mFinal.mLeft, y, pw - mFinal.mRight, y);
-                    y += 5.5;
-                }
-                y += 4;
-            });
+                doc.setFont('times', 'bold');
+                doc.setFontSize(18);
+                doc.setTextColor(30, 25, 22);
+                doc.text('Este cuaderno se ha impreso para ti.', pw / 2, y, { align: 'center' });
+                y += 9;
 
-            // Colofón
-            y = ph - mFinal.mBottom - 25;
-            doc.setFont('times', 'italic');
-            doc.setFontSize(8);
-            doc.setTextColor(90, 85, 80);
-            doc.text(`«Este cuaderno fue completado por ${owner || 'su propietario'} en ${city || 'calma'} · Edición Menos Ruido»`, pw / 2, y, { align: 'center' });
-            y += 5;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8.2);
+                doc.setTextColor(60, 55, 50);
+                const closeP1 = 'En un mundo dominado por la sobreestimulación digital y la falsa urgencia, detenerse a escribir a mano es un acto consciente de serenidad.';
+                doc.text(doc.splitTextToSize(closeP1, pw - (mBase * 6)), pw / 2, y, { align: 'center' });
+                y += 14;
 
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6.5);
-            doc.setTextColor(130, 125, 120);
-            doc.text('EDITORIAL MENOS RUIDO · MENOS RUIDO MENTAL, MÁS CRITERIO ANALÓGICO', pw / 2, y, { align: 'center' });
+                const closeP2 = 'Si este método te ha ayudado a recuperar el foco, compártelo con alguien que lo necesite o visítanos en:';
+                doc.text(doc.splitTextToSize(closeP2, pw - (mBase * 6)), pw / 2, y, { align: 'center' });
+                y += 10;
 
-            addPageFooter(pageNum);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(135, 85, 59);
+                doc.text('editorialmenosruido.com', pw / 2, y, { align: 'center' });
 
-            return doc;
+                addFooter(currentPage);
+
+                // GUARDAR PDF
+                const fileName = `MENOS_RUIDO_Libro_Personalizado_${selectedCycle === 'free' ? 'Edicion_Libre' : selectedCycle + '_Dias'}.pdf`;
+                doc.save(fileName);
+                showToast(`✓ Libro descargado (${finalTotal} páginas).`);
+
+                trackVercelEvent('descarga_libro_completo', {
+                    ciclo: selectedCycle,
+                    paginas: finalTotal
+                });
+
+            } catch (err) {
+                console.error(err);
+                alert('Ocurrió un error al compilar el libro: ' + err.message);
+            } finally {
+                if (overlay) overlay.style.display = 'none';
+            }
         }
 
-        // ========================================================
-        // DISPARADORES DE DESCARGA
-        // ========================================================
-        async function generateFullBookPDF() {
-            const overlay = document.getElementById('loading-overlay');
-            const statusTxt = document.getElementById('loading-status-text');
-            if (overlay) overlay.style.display = 'flex';
-            if (statusTxt) statusTxt.textContent = `Maquetando ${selectedCycle} páginas diarias, teoría y vistas de meses y hábitos...`;
-
-            setTimeout(async () => {
-                try {
-                    const doc = await buildBookDocument(false);
-                    if (doc) {
-                        const owner = document.getElementById('input-owner')?.value.trim();
-                        const fileName = owner 
-                            ? `MENOS RUIDO Bitacora de Enfoque - ${owner} (${selectedCycle} Dias).pdf`
-                            : `MENOS RUIDO Bitacora de Enfoque (${selectedCycle} Dias).pdf`;
-                        doc.save(fileName);
-                        showToast(`✓ Libro completo descargado: "${fileName}"`);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('Hubo un error al generar el PDF completo. Por favor inténtalo de nuevo.');
-                } finally {
-                    if (overlay) overlay.style.display = 'none';
+        function trackVercelEvent(nombreEvento, datos) {
+            try {
+                if (window.va) {
+                    window.va('event', { name: nombreEvento, data: datos });
                 }
-            }, 100);
-        }
-
-        async function generateSampleCyclePDF() {
-            const overlay = document.getElementById('loading-overlay');
-            const statusTxt = document.getElementById('loading-status-text');
-            if (overlay) overlay.style.display = 'flex';
-            if (statusTxt) statusTxt.textContent = 'Generando muestra de 1 Ciclo Completo (15 páginas)...';
-
-            setTimeout(async () => {
-                try {
-                    const doc = await buildBookDocument(true);
-                    if (doc) {
-                        const fileName = `MENOS RUIDO Muestra de Enfoque (1 Ciclo Completo).pdf`;
-                        doc.save(fileName);
-                        showToast(`✓ Muestra de 1 Ciclo descargada: "${fileName}"`);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('Hubo un error al generar la muestra del libro.');
-                } finally {
-                    if (overlay) overlay.style.display = 'none';
-                }
-            }, 80);
+            } catch (err) {}
         }
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
-            renderActivePreviewSheet();
+            setBookCycle(90);
         });
     </script>
 </body>
