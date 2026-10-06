@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pre-Lecturas (Validación Editorial) | Menos Ruido</title>
+  <meta name="description" content="Espacio privado de validación y previsualización de nuevas lecturas y ensayos para Menos Ruido." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Favicon & PWA -->
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#87553b" />
+
+  <!-- Protección de acceso por PIN 1111 -->
+  <script>
+    if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+      window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+    }
+  </script>
+
+  <!-- Tipografías -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="./style.css" />
+
+  <style>
+    :root {
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --bg: #f3eee5;
+      --bg-card: #ffffff;
+      --text: #212121;
+      --text-muted: #666059;
+      --accent: #87553b;
+      --accent-hover: #70442e;
+      --accent-light: rgba(135, 85, 59, 0.12);
+      --border: rgba(33, 33, 33, 0.1);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
+      --shadow-hover: 0 16px 40px -8px rgba(0, 0, 0, 0.09);
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    .hub-header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .hub-header-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hub-header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .hub-logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .hub-logo-img {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .hub-logo-text {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* TABS DE NAVEGACIÓN EN CABECERA */
+    .hub-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.04);
+      padding: 4px;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+    }
+
+    .hub-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .hub-tab:hover {
+      color: var(--text);
+    }
+
+    .hub-tab.active {
+      background: var(--bg-card);
+      color: var(--accent);
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .tab-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: #c2593f;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+
+    .hub-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-text-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-text-link:hover {
+      color: var(--text);
+    }
+
+    .btn-lock {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-lock:hover {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+
+    /* HERO */
+    .pre-hero {
+      text-align: center;
+      padding: 50px 24px 30px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .hero-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 5px 12px;
+      border-radius: 50px;
+      font-weight: 600;
+    }
+
+    .hero-badge-count {
+      display: inline-block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #b76e00;
+      background: #fff4e5;
+      border: 1px solid rgba(183,110,0,0.25);
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-weight: 600;
+    }
+
+    .pre-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.1rem, 4.2vw, 2.9rem);
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .pre-hero p {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* BANNER DE INSTRUCCIONES EDITORIALES */
+    .validation-info-box {
+      max-width: 1040px;
+      margin: 0 auto 30px;
+      padding: 18px 24px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .validation-info-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .info-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .info-text h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .info-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .validation-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-public-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(135, 85, 59, 0.08);
+      color: var(--accent);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-public-link:hover {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    /* GRID DE TARJETAS (Idéntico a lecturas.html) */
+    .pre-readings-section {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+      width: 100%;
+    }
+
+    /* SOBRESCRIBIR / REFORZAR ESTILOS DE READING-CARD */
+    .reading-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 2.2rem;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      position: relative;
+    }
+
+    .reading-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(135, 85, 59, 0.3);
+    }
+
+    .card-top-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .badge-draft {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #b76e00;
+      background: #fff4e5;
+      border: 1px solid rgba(183, 110, 0, 0.25);
+      padding: 3px 9px;
+      border-radius: 50px;
+    }
+
+    .badge-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 3px 9px;
+      border-radius: 50px;
+    }
+
+    .badge-id {
+      font-size: 0.72rem;
+      font-family: monospace;
+      color: #888;
+      background: #f5f2eb;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    .reading-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      line-height: 1.35;
+      color: var(--text);
+      margin-top: 4px;
+      margin-bottom: 10px;
+    }
+
+    .reading-card h3 a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .reading-card h3 a:hover {
+      color: var(--accent);
+    }
+
+    .reading-card p {
+      font-size: 0.94rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .reading-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .reading-footer .read-more {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      transition: gap 0.2s ease, color 0.2s ease;
+    }
+
+    .reading-footer .read-more:hover {
+      color: var(--accent-hover);
+      gap: 9px;
+    }
+
+    /* FOOTER */
+    .pre-footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 32px 24px 44px;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: var(--bg-card);
+    }
+
+    @media (max-width: 768px) {
+      .hub-header-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .hub-header-left {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .hub-nav-actions {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 6px;
+      }
+      .validation-info-box {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CABECERA PRIVADA CON PESTAÑAS -->
+  <header class="hub-header">
+    <div class="hub-header-container">
+      <div class="hub-header-left">
+        <a href="/" class="hub-logo-wrap">
+          <img src="/icons/icon-192.png" alt="Menos Ruido Logo" class="hub-logo-img" />
+          <span class="hub-logo-text">Menos Ruido</span>
+        </a>
+        <nav class="hub-tabs" aria-label="Secciones privadas">
+          <a href="/apps.html" class="hub-tab">Aplicaciones</a>
+          <a href="/pre-lecturas.html" class="hub-tab active">pre-Lecturas <span class="tab-badge">5</span></a>
+        </nav>
+      </div>
+      <div class="hub-nav-actions">
+        <a href="/lecturas.html" class="btn-text-link" target="_blank" rel="noopener">Ver Lecturas públicas ↗</a>
+        <a href="/" class="btn-text-link">← Volver a la web</a>
+        <button type="button" class="btn-lock" id="btn-lock-page" title="Bloquear con PIN">🔒 Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="pre-hero">
+    <div class="hero-badge-row">
+      <span class="hero-badge">Portal Editorial Privado</span>
+      <span class="hero-badge-count">5 Lecturas para Validar</span>
+    </div>
+    <h1>pre-Lecturas para revisión</h1>
+    <p>
+      Espacio exclusivo de borrador y validación. Revisa aquí el tono, las imágenes, los mapas conceptuales y la maquetación de cada ensayo antes de publicarlos en el catálogo abierto de Lecturas & Vídeos.
+    </p>
+  </section>
+
+  <!-- BANNER EXPLICATIVO DE FLUJO EDITORIAL -->
+  <div class="pre-readings-section">
+    <div class="validation-info-box">
+      <div class="validation-info-left">
+        <div class="info-icon">💡</div>
+        <div class="info-text">
+          <h4>Flujo de publicación inmediata</h4>
+          <p>
+            Haz clic en <strong>«Leer ensayo (Borrador) →»</strong> para revisar cada artículo completo con sus imágenes. Cuando des tu visto bueno, se añadirán a la sección pública con un solo clic.
+          </p>
+        </div>
+      </div>
+      <div class="validation-actions">
+        <a href="/lecturas.html" class="btn-public-link">
+          <span>Comparar con Lecturas públicas</span>
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- GRID DE TARJETAS (MISMO DISEÑO Y ESTRUCTURA QUE LECTURAS.HTML) -->
+    <div class="readings-grid">
+
+      <!-- TARJETA 1 -->
+      <article class="reading-card">
+        <div>
+          <div class="card-top-badges">
+            <span class="badge-draft">🟡 Pendiente de validar</span>
+            <span class="badge-tag">Desconexión Digital &amp; Papel</span>
+            <span class="badge-id">post-01</span>
+          </div>
+          <h3>
+            <a href="/lecturas/post-01-fatiga-pantallas-sobrepensamiento-otono/articulo.html">
+              La niebla de octubre: por qué las pantallas saturan tu cabeza al caer la tarde y cómo vaciarla en papel
+            </a>
+          </h3>
+          <p>
+            Cuando los días se acortan y las obligaciones se amontonan, no necesitas pensar más ni con mayor rapidez. Ensayo sobre la fatiga mental por pantallas en otoño, el bucle del sobrepensamiento nocturno y la necesidad biológica de vaciar la mente en un cuaderno físico.
+          </p>
+        </div>
+        <div class="reading-footer">
+          <span>⏱️ 9 min de lectura (1.850 palabras)</span>
+          <a href="/lecturas/post-01-fatiga-pantallas-sobrepensamiento-otono/articulo.html" class="read-more">
+            Leer ensayo (Borrador) &rarr;
+          </a>
+        </div>
+      </article>
+
+      <!-- TARJETA 2 -->
+      <article class="reading-card">
+        <div>
+          <div class="card-top-badges">
+            <span class="badge-draft">🟡 Pendiente de validar</span>
+            <span class="badge-tag">Productividad Analógica &amp; Foco</span>
+            <span class="badge-id">post-02</span>
+          </div>
+          <h3>
+            <a href="/lecturas/post-02-productividad-analogica-foco-listas-infinitas/articulo.html">
+              La tiranía de las veinte tareas: por qué las listas digitales te dispersan en otoño y cómo recuperar el foco en papel
+            </a>
+          </h3>
+          <p>
+            Una investigación sobre la saturación del último trimestre del año, el fracaso cognitivo de las aplicaciones de productividad y la serenidad de limitar el trabajo diario a una sola prioridad analógica bien definida.
+          </p>
+        </div>
+        <div class="reading-footer">
+          <span>⏱️ 8 min de lectura (1.820 palabras)</span>
+          <a href="/lecturas/post-02-productividad-analogica-foco-listas-infinitas/articulo.html" class="read-more">
+            Leer ensayo (Borrador) &rarr;
+          </a>
+        </div>
+      </article>
+
+      <!-- TARJETA 3 -->
+      <article class="reading-card">
+        <div>
+          <div class="card-top-badges">
+            <span class="badge-draft">🟡 Pendiente de validar</span>
+            <span class="badge-tag">Límites Cotidianos &amp; Relaciones</span>
+            <span class="badge-id">post-03</span>
+          </div>
+          <h3>
+            <a href="/lecturas/post-03-whatsapp-domingo-poner-limites/articulo.html">
+              El agobio de los grupos de WhatsApp en domingo: cómo poner límites sin pedir perdón
+            </a>
+          </h3>
+          <p>
+            Esa vibración constante del móvil un domingo por la tarde no es una urgencia real, es ruido acumulado. Guía práctica para decir «hasta aquí» sin sentirte culpable y contestar con serenidad sin dar explicaciones innecesarias.
+          </p>
+        </div>
+        <div class="reading-footer">
+          <span>⏱️ 7 min de lectura (1.100 palabras)</span>
+          <a href="/lecturas/post-03-whatsapp-domingo-poner-limites/articulo.html" class="read-more">
+            Leer ensayo (Borrador) &rarr;
+          </a>
+        </div>
+      </article>
+
+      <!-- TARJETA 4 -->
+      <article class="reading-card">
+        <div>
+          <div class="card-top-badges">
+            <span class="badge-draft">🟡 Pendiente de validar</span>
+            <span class="badge-tag">Consumo Consciente &amp; Pantallas</span>
+            <span class="badge-id">post-04</span>
+          </div>
+          <h3>
+            <a href="/lecturas/post-04-compras-online-estres-nocturno/articulo.html">
+              Comprar cosas a las once de la noche: la trampa de calmar el cansancio con paquetes
+            </a>
+          </h3>
+          <p>
+            Ese impulso de meter objetos en la cesta de la compra cuando estás quemado tras una jornada interminable no es capricho, es fatiga mental acumulada. Cómo frenar la inercia antes de darle a pagar y apagar las pantallas a tiempo.
+          </p>
+        </div>
+        <div class="reading-footer">
+          <span>⏱️ 6 min de lectura (1.050 palabras)</span>
+          <a href="/lecturas/post-04-compras-online-estres-nocturno/articulo.html" class="read-more">
+            Leer ensayo (Borrador) &rarr;
+          </a>
+        </div>
+      </article>
+
+      <!-- TARJETA 5 -->
+      <article class="reading-card">
+        <div>
+          <div class="card-top-badges">
+            <span class="badge-draft">🟡 Pendiente de validar</span>
+            <span class="badge-tag">Descanso Real &amp; Pensamiento</span>
+            <span class="badge-id">post-05</span>
+          </div>
+          <h3>
+            <a href="/lecturas/post-05-no-hacer-nada-sin-culpa/articulo.html">
+              Aprender a no hacer nada sin sentirte culpable
+            </a>
+          </h3>
+          <p>
+            Nos han convencido de que cada hora libre debe ser útil, productiva o aprovechable. Cómo recuperar el placer de parar sin que la cabeza te pase factura y conquistar un descanso honesto, silencioso y reparador.
+          </p>
+        </div>
+        <div class="reading-footer">
+          <span>⏱️ 6 min de lectura (1.150 palabras)</span>
+          <a href="/lecturas/post-05-no-hacer-nada-sin-culpa/articulo.html" class="read-more">
+            Leer ensayo (Borrador) &rarr;
+          </a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+
+  <!-- PIE DE PÁGINA PRIVADO -->
+  <footer class="pre-footer">
+    <p>Menos Ruido • Espacio Editorial Privado &copy; 2026. Todas las lecturas en borrador son confidenciales hasta su publicación.</p>
+  </footer>
+
+  <script>
+    // Gestión del botón de bloqueo PIN
+    document.getElementById('btn-lock-page')?.addEventListener('click', () => {
+      localStorage.removeItem('mr_apps_unlocked');
+      sessionStorage.removeItem('mr_apps_unlocked');
+      window.location.href = '/apps.html';
+    });
+  </script>
+</body>
+</html>

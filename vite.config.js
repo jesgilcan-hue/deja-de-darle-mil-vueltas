@@ -40,6 +40,7 @@ export default defineConfig({
         visor90: resolve(__dirname, 'visor-planificador-90-dias.html'),
         visor180: resolve(__dirname, 'visor-planificador-180-dias.html'),
         apps: resolve(__dirname, 'apps.html'),
+        preLecturas: resolve(__dirname, 'pre-lecturas.html'),
         generador: resolve(__dirname, 'generador.html'),
         generadorPlanificadorDiario: resolve(__dirname, 'generador-planificador-diario.html'),
         generadorPlanificadorSemanal: resolve(__dirname, 'generador-planificador-semanal.html'),
