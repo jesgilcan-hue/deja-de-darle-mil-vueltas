@@ -433,10 +433,47 @@
             border-right: none;
         }
 
+        .shape-selector-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
+
+        .btn-shape-opt {
+            background: #ffffff;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-shape-opt:hover {
+            border-color: #a89f91;
+            color: #222;
+        }
+
+        .btn-shape-opt.active {
+            background: #4a453f;
+            border-color: #322e2a;
+            color: #ffffff;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
         .habit-row {
             display: flex;
             border-bottom: 1px solid #eee8df;
             flex: 1;
+            min-height: 15px;
         }
         .habit-row:last-child {
             border-bottom: none;
@@ -444,9 +481,9 @@
 
         .habit-row-title {
             width: 140px;
-            padding: 4px 8px;
+            padding: 2px 8px;
             border-right: 1px solid #eee8df;
-            font-size: 0.64rem;
+            font-size: 0.6rem;
             font-family: var(--font-serif);
             color: #222;
             display: flex;
@@ -457,27 +494,18 @@
             background: #fcfbf9;
         }
 
-        .habit-row-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(31, 1fr);
-        }
-
-        .habit-row-cell {
-            border-right: 1px solid #f0eae1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .habit-row-cell:last-child {
-            border-right: none;
-        }
-
         .habit-circle {
-            width: 8px;
-            height: 8px;
+            width: 7.5px;
+            height: 7.5px;
             border: 1px solid #b5afa6;
             border-radius: 50%;
+        }
+
+        .habit-square {
+            width: 7.5px;
+            height: 7.5px;
+            border: 1px solid #b5afa6;
+            border-radius: 1px;
         }
 
         /* BLOQUE INFERIOR: REFLEXIÓN / APUNTES */
@@ -792,18 +820,32 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <label for="input-habit-intention">Intención o enfoque del mes <span class="char-count" id="count-intention">0/100</span></label>
-                    <input type="text" id="input-habit-intention" maxlength="100" placeholder="Ej: Calma en las mañanas y desconexión nocturna..." oninput="handleIntentionInput(this)">
+                    <label for="input-habit-intention">Intención o enfoque del mes <span class="char-count" id="count-intention">0/150</span></label>
+                    <input type="text" id="input-habit-intention" maxlength="150" placeholder="Ej: Calma en las mañanas y desconexión nocturna..." oninput="handleIntentionInput(this)">
                 </div>
             </div>
 
-            <!-- 2. HÁBITOS FUNDAMENTALES (HASTA 6) -->
+            <!-- 2. HÁBITOS FUNDAMENTALES (HASTA 12) -->
             <div class="section-box">
                 <div class="section-header-title">
                     <span>2. Hábitos Fundamentales</span>
                     <button type="button" class="btn-add-item" id="btn-add-habit" onclick="addNewHabit()">+ Añadir hábito</button>
                 </div>
-                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 6 hábitos innegociables para evitar saturación.</p>
+                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 12 hábitos para evitar saturación.</p>
+                
+                <!-- SELECTOR DE FORMA DE CASILLAS -->
+                <div class="control-group" style="margin-top: 4px;">
+                    <label style="font-size: 0.74rem;">Formato de casillas diarias:</label>
+                    <div class="shape-selector-group">
+                        <button type="button" class="btn-shape-opt active" id="btn-shape-circle" onclick="setCheckShape('circle')">
+                            <span style="display:inline-block; width:10px; height:10px; border:1.5px solid currentColor; border-radius:50%;"></span> Círculos
+                        </button>
+                        <button type="button" class="btn-shape-opt" id="btn-shape-square" onclick="setCheckShape('square')">
+                            <span style="display:inline-block; width:10px; height:10px; border:1.5px solid currentColor; border-radius:2px;"></span> Cuadraditos
+                        </button>
+                    </div>
+                </div>
+
                 <div id="habits-container">
                     <!-- Inyectado dinámicamente -->
                 </div>
@@ -816,8 +858,8 @@
                     <span>✍️</span>
                 </div>
                 <div class="control-group">
-                    <label for="input-habit-notes">Notas, observaciones o balance <span class="char-count" id="count-notes">0/140</span></label>
-                    <textarea id="input-habit-notes" maxlength="140" rows="2" placeholder="Ej: Observaciones sobre qué momentos del día facilitan mantener el hábito..." oninput="handleNotesInput(this)"></textarea>
+                    <label for="input-habit-notes">Notas, observaciones o balance <span class="char-count" id="count-notes">0/150</span></label>
+                    <textarea id="input-habit-notes" maxlength="150" rows="2" placeholder="Ej: Observaciones sobre qué momentos del día facilitan mantener el hábito..." oninput="handleNotesInput(this)"></textarea>
                 </div>
             </div>
 
@@ -873,7 +915,7 @@
 
                 <!-- FOOTER EDITORIAL -->
                 <div class="preview-sheet-footer">
-                    <span>MENOS RUIDO · REGISTRO ANALÓGICO CONSTANTE</span>
+                    <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
                     <span>editorialmenosruido.com</span>
                 </div>
 
@@ -944,6 +986,7 @@
         // ========================================================
         let isExampleActive = false;
         let isBlankModal = false;
+        let activeCheckShape = 'circle'; // 'circle' | 'square'
 
         let habitsList = [
             'Lectura pausada (20 min sin pantalla)',
@@ -955,16 +998,30 @@
         const HABIT_EXAMPLE = {
             month: 'Octubre',
             year: '2026',
-            intention: 'Constancia serena en el estudio y descanso sin estímulos digitales.',
+            intention: 'Constancia serena en el estudio, lecturas en papel y descanso profundo sin pantallas ni estímulos.',
             habits: [
                 'Lectura pausada en papel (25 min)',
-                'Caminata o respiración consciente',
+                'Caminata o respiración matinal',
                 'Escribir a mano en el cuaderno',
                 'Cero pantallas tras las 22:00',
-                'Hidratación y desayuno pausado'
+                'Hidratación y desayuno pausado',
+                'Revisión serena de prioridades',
+                'Bloque de trabajo profundo 45 min',
+                'Estiramientos y cuidado postural'
             ],
-            notes: 'La constancia tranquila genera más progreso que los picos de intensidad desordenada.'
+            notes: 'La constancia tranquila genera más progreso que los picos de intensidad desordenada y agotamiento.'
         };
+
+        // SELECTOR DE FORMA DE CASILLAS
+        function setCheckShape(shape) {
+            activeCheckShape = shape;
+            const btnCircle = document.getElementById('btn-shape-circle');
+            const btnSquare = document.getElementById('btn-shape-square');
+            if (btnCircle) btnCircle.classList.toggle('active', shape === 'circle');
+            if (btnSquare) btnSquare.classList.toggle('active', shape === 'square');
+            updateHabitsPreview();
+            showToast(shape === 'circle' ? '✓ Casillas circulares activadas.' : '✓ Casillas cuadradas activadas.');
+        }
 
         // AUTO-EXPAND TEXTAREAS
         function autoResizeTextarea(el) {
@@ -1011,7 +1068,7 @@
         function handleIntentionInput(input) {
             isExampleActive = false;
             const count = document.getElementById('count-intention');
-            if (count && input) count.textContent = input.value.length + '/100';
+            if (count && input) count.textContent = input.value.length + '/150';
             updateIntentionPreview();
         }
 
@@ -1027,7 +1084,7 @@
             isExampleActive = false;
             autoResizeTextarea(ta);
             const count = document.getElementById('count-notes');
-            if (count && ta) count.textContent = ta.value.length + '/140';
+            if (count && ta) count.textContent = ta.value.length + '/150';
             updateNotesPreview();
         }
 
@@ -1039,7 +1096,7 @@
             prev.textContent = val || (isExampleActive ? HABIT_EXAMPLE.notes : '');
         }
 
-        // HÁBITOS DINÁMICOS (HASTA 6)
+        // HÁBITOS DINÁMICOS (HASTA 12)
         function renderHabitsInputs() {
             const container = document.getElementById('habits-container');
             const btnAdd = document.getElementById('btn-add-habit');
@@ -1050,20 +1107,20 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <input type="text" class="habit-input-field" maxlength="45" placeholder="Hábito ${idx + 1} (máx 45 car.)" value="${h}" oninput="isExampleActive = false; habitsList[${idx}] = this.value; updateHabitsPreview();">
+                    <input type="text" class="habit-input-field" maxlength="50" placeholder="Hábito ${idx + 1} (máx 50 car.)" value="${h}" oninput="isExampleActive = false; habitsList[${idx}] = this.value; updateHabitsPreview();">
                     <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
             });
 
             if (btnAdd) {
-                btnAdd.style.display = habitsList.length >= 6 ? 'none' : 'inline-block';
+                btnAdd.style.display = habitsList.length >= 12 ? 'none' : 'inline-block';
             }
             updateHabitsPreview();
         }
 
         function addNewHabit() {
-            if (habitsList.length >= 6) return;
+            if (habitsList.length >= 12) return;
             isExampleActive = false;
             habitsList.push('');
             renderHabitsInputs();
@@ -1093,8 +1150,9 @@
                 habitsToRender = habitsList.map(() => '');
             }
 
-            // Si está vacío, rellenamos hasta 5 filas elegantes
-            const totalRows = Math.max(5, habitsToRender.length);
+            // Mostramos siempre las 12 filas completas en la vista previa
+            const totalRows = 12;
+            const shapeClass = (activeCheckShape === 'square') ? 'habit-square' : 'habit-circle';
 
             for (let i = 0; i < totalRows; i++) {
                 const hTitle = habitsToRender[i] || '';
@@ -1103,7 +1161,7 @@
 
                 let cellsHtml = '';
                 for (let d = 1; d <= 31; d++) {
-                    cellsHtml += `<div class="habit-row-cell"><div class="habit-circle"></div></div>`;
+                    cellsHtml += `<div class="habit-row-cell"><div class="${shapeClass}"></div></div>`;
                 }
 
                 row.innerHTML = `
@@ -1153,9 +1211,9 @@
             if (nInput) { nInput.value = ''; nInput.style.height = ''; }
 
             const cInt = document.getElementById('count-intention');
-            if (cInt) cInt.textContent = '0/100';
+            if (cInt) cInt.textContent = '0/150';
             const cNot = document.getElementById('count-notes');
-            if (cNot) cNot.textContent = '0/140';
+            if (cNot) cNot.textContent = '0/150';
 
             habitsList = ['', '', '', ''];
             renderHabitsInputs();
@@ -1185,12 +1243,12 @@
             if (isBlank) {
                 if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
                 if (title) title.textContent = 'Tus Hábitos en Papel (Para Rellenar a Mano)';
-                if (desc) desc.textContent = 'Descarga la cuadrícula limpia de 31 días lista para lápiz o pluma en Formato Libro 8.25" × 6" (210 × 152 mm).';
+                if (desc) desc.textContent = 'Descarga la cuadrícula limpia de 12 hábitos y 31 días lista para lápiz o pluma en Formato Libro 8.25" × 6" (210 × 152 mm).';
                 if (btnText) btnText.innerHTML = '📥 Descargar plantilla de hábitos limpia en PDF';
             } else {
                 if (badge) badge.textContent = 'PDF Personalizado con Tus Hábitos';
                 if (title) title.textContent = 'Tu Planificador de Hábitos Listo';
-                if (desc) desc.textContent = 'Descarga tu registro mensual de hábitos maquetado en Formato Libro 8.25" × 6" (210 × 152 mm).';
+                if (desc) desc.textContent = 'Descarga tu registro mensual de 12 hábitos maquetado en Formato Libro 8.25" × 6" (210 × 152 mm).';
                 if (btnText) btnText.innerHTML = '📥 Descargar mi PDF personalizado';
             }
 
@@ -1232,14 +1290,14 @@
 
             const pw = doc.internal.pageSize.getWidth();
             const ph = doc.internal.pageSize.getHeight();
-            const m = 14; // margen en mm
+            const m = 13; // margen en mm
             const contentW = pw - (m * 2);
 
             // Fondo crema editorial
             doc.setFillColor(255, 254, 251);
             doc.rect(0, 0, pw, ph, 'F');
 
-            let y = m + 2;
+            let y = m + 1;
 
             // Datos activos
             const mInput = document.getElementById('input-habit-month')?.value.trim() || '';
@@ -1281,7 +1339,7 @@
             doc.text(headerDateText, pw - m, y, { align: 'right' });
             y += 2.5;
 
-            // Intención del mes
+            // Intención del mes si existe
             if (activeIntention) {
                 doc.setFont('helvetica', 'italic');
                 doc.setFontSize(7.2);
@@ -1295,18 +1353,18 @@
             doc.setDrawColor(40, 35, 30);
             doc.setLineWidth(0.35);
             doc.line(m, y, pw - m, y);
-            y += 4;
+            y += 3.5;
 
-            // 1. TABLA DE 31 DÍAS
-            const colTitleW = 48; // ancho columna hábitos
+            // 1. TABLA DE 31 DÍAS (12 HÁBITOS)
+            const colTitleW = 50; // ancho columna nombres de hábitos
             const daysGridW = contentW - colTitleW;
             const dayColW = daysGridW / 31;
-            const numHabitsToDraw = Math.max(5, Math.min(6, isBlankModal ? 6 : (activeHabits.length || 5)));
-            const availableTableH = 72;
-            const headerRowH = 5.5;
-            const rowH = (availableTableH - headerRowH) / numHabitsToDraw;
+            const numHabitsToDraw = 12; // Siempre 12 filas completas
+            const availableTableH = 78;
+            const headerRowH = 5;
+            const rowH = (availableTableH - headerRowH) / numHabitsToDraw; // ~6.08 mm por fila
 
-            // Cabecera tabla
+            // Fondo cabecera tabla
             doc.setFillColor(245, 240, 232);
             doc.setDrawColor(215, 210, 200);
             doc.setLineWidth(0.2);
@@ -1315,68 +1373,94 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.2);
             doc.setTextColor(50, 45, 40);
-            doc.text('HÁBITO FUNDAMENTAL', m + 3, y + 3.8);
+            doc.text('HÁBITO FUNDAMENTAL', m + 3, y + 3.4);
 
-            // Días 1 a 31
-            doc.setFontSize(5);
-            doc.setTextColor(90, 85, 80);
+            // Números días 1 a 31 en NEGRITA
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(5.2);
+            doc.setTextColor(45, 40, 35);
             for (let d = 1; d <= 31; d++) {
                 const dayX = m + colTitleW + ((d - 1) * dayColW);
-                doc.line(dayX, y, dayX, y + availableTableH);
-                doc.text(d.toString(), dayX + (dayColW / 2), y + 3.8, { align: 'center' });
+                doc.text(d.toString(), dayX + (dayColW / 2), y + 3.4, { align: 'center' });
             }
 
-            // Línea vertical que divide nombres y cuadrícula
-            doc.line(m + colTitleW, y, m + colTitleW, y + availableTableH);
-
-            // Filas de hábitos
+            // Filas de hábitos: Fondos alternos, textos y casillas
             for (let i = 0; i < numHabitsToDraw; i++) {
                 const rY = y + headerRowH + (i * rowH);
 
-                // Alternancia sutil de fondo
+                // Alternancia sutil de fondo en fila par
                 if (i % 2 === 1) {
                     doc.setFillColor(252, 250, 247);
                     doc.rect(m, rY, colTitleW, rowH, 'F');
                 }
 
-                // Línea inferior de fila
+                // Línea horizontal inferior de fila
                 doc.setDrawColor(225, 220, 212);
                 doc.setLineWidth(0.18);
                 doc.line(m, rY + rowH, m + contentW, rY + rowH);
 
-                // Título del hábito
+                // Texto del hábito: centrado verticalmente en la cuadrícula
                 const hName = activeHabits[i] || '';
-                doc.setFont('helvetica', hName ? 'normal' : 'normal');
-                doc.setFontSize(6.8);
-                doc.setTextColor(40, 35, 30);
                 if (hName) {
-                    const cleanH = hName.replace(/[•\u2022]/g, '-');
-                    const hLines = doc.splitTextToSize(cleanH, colTitleW - 5);
-                    doc.text(hLines.slice(0, 2), m + 3, rY + (rowH / 2) + 1.2);
-                } else {
-                    doc.setDrawColor(230, 225, 218);
-                    doc.line(m + 3, rY + (rowH / 2) + 1, m + colTitleW - 3, rY + (rowH / 2) + 1);
-                }
+                    const cleanH = hName.replace(/[•\u2022]/g, '-').trim();
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6.4);
+                    doc.setTextColor(35, 30, 25);
 
-                // Círculos de marcado en cada día
+                    const hLines = doc.splitTextToSize(cleanH, colTitleW - 5);
+                    if (hLines.length === 1) {
+                        // Centrado exacto vertical
+                        doc.text(hLines[0], m + 3, rY + (rowH / 2) + 0.9);
+                    } else {
+                        // Dos líneas centradas
+                        doc.setFontSize(5.6);
+                        doc.text(hLines[0], m + 3, rY + (rowH / 2) - 0.5);
+                        doc.text(hLines[1], m + 3, rY + (rowH / 2) + 1.8);
+                    }
+                }
+                // Si no hay texto: HUECO EN BLANCO LIMPIO (sin ninguna línea horizontal que estorbe)
+
+                // Círculos o Cuadraditos de marcado en cada día
                 for (let d = 1; d <= 31; d++) {
                     const cX = m + colTitleW + ((d - 1) * dayColW) + (dayColW / 2);
                     const cY = rY + (rowH / 2);
-                    doc.setDrawColor(160, 155, 148);
+
+                    doc.setDrawColor(150, 145, 138);
                     doc.setLineWidth(0.2);
-                    doc.circle(cX, cY, 1.4);
+
+                    if (activeCheckShape === 'square') {
+                        const sqSize = 2.4;
+                        doc.rect(cX - (sqSize / 2), cY - (sqSize / 2), sqSize, sqSize, 'S');
+                    } else {
+                        doc.circle(cX, cY, 1.25, 'S');
+                    }
                 }
             }
 
-            // Marco exterior tabla
+            // LÍNEAS VERTICALES DE LA TABLA (DIBUJADAS DESPUÉS DE LOS FONDOS PARA EVITAR QUE SEAN TAPADAS)
+            // 1. Líneas de separación de los días 1 a 31
+            doc.setDrawColor(225, 220, 212);
+            doc.setLineWidth(0.15);
+            for (let d = 1; d <= 31; d++) {
+                const dayX = m + colTitleW + ((d - 1) * dayColW);
+                doc.line(dayX, y, dayX, y + availableTableH);
+            }
+
+            // 2. Línea vertical que divide nombres y cuadrícula (DÍA 1)
+            // Garantiza que las filas pares tengan su línea divisoria impecable
+            doc.setDrawColor(200, 195, 185);
+            doc.setLineWidth(0.28);
+            doc.line(m + colTitleW, y, m + colTitleW, y + availableTableH);
+
+            // 3. Marco exterior de la tabla completa
             doc.setDrawColor(210, 205, 195);
             doc.setLineWidth(0.25);
             doc.rect(m, y, contentW, availableTableH);
 
             y += availableTableH + 3.5;
 
-            // 2. BLOQUE DE REFLEXIÓN / OBSERVACIONES
-            const notesH = 14;
+            // 2. BLOQUE DE REFLEXIÓN / OBSERVACIONES DEL MES
+            const notesH = 17;
             doc.setFillColor(251, 249, 245);
             doc.setDrawColor(220, 215, 205);
             doc.setLineWidth(0.2);
@@ -1387,30 +1471,28 @@
             doc.setTextColor(135, 85, 59);
             doc.text('REFLEXIÓN Y OBSERVACIONES DEL MES', m + 3.5, y + 3.8);
 
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6.8);
-            doc.setTextColor(45, 40, 35);
+            // Si hay notas escritas, se imprimen; si no, queda en BLANCO LIMPIO (sin líneas horizontales)
             if (activeNotes) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.8);
+                doc.setTextColor(45, 40, 35);
                 const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
                 const nLines = doc.splitTextToSize(cleanNotes, contentW - 8);
-                doc.text(nLines.slice(0, 2), m + 3.5, y + 7.5);
-            } else {
-                doc.setDrawColor(230, 225, 218);
-                doc.line(m + 3.5, y + 7.5, m + contentW - 3.5, y + 7.5);
-                doc.line(m + 3.5, y + 11.2, m + contentW - 3.5, y + 11.2);
+                doc.text(nLines.slice(0, 3), m + 3.5, y + 7.5);
             }
 
             // 3. FOOTER EDITORIAL
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(6);
             doc.setTextColor(140, 135, 130);
-            doc.text('MENOS RUIDO · REGISTRO ANALÓGICO CONSTANTE', m, ph - m + 2);
+            doc.text('MENOS RUIDO · REGISTRO CONSTANTE', m, ph - m + 2);
             doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
 
-            // NOMENCLATURA EXACTA: MENOS RUIDO Planificador de Habitos ${mes} ${anio}.pdf
+            // NOMENCLATURA EXACTA:
+            // En blanco: menos-ruido-plantilla-de-habitos.pdf
             let fileName = '';
             if (isBlankModal) {
-                fileName = 'MENOS RUIDO Plantilla de Habitos en Blanco.pdf';
+                fileName = 'menos-ruido-plantilla-de-habitos.pdf';
             } else {
                 const cleanMonth = (activeMonth || '').trim();
                 const cleanYear = (activeYear || '').toString().trim().replace(/[^0-9]/g, '');
