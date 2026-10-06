@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitácora de Enfoque Atemporal · Generador Editorial Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.08);
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto 16px;
+            text-align: center;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            color: #1a1614;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .app-layout {
+            max-width: 1420px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(360px, 430px) minmax(560px, 1fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        /* PANEL DE CONTROLES (IZQUIERDA) */
+        .controls-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 22px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #efeae1;
+        }
+
+        .panel-heading-text {
+            font-size: 1.15rem;
+            font-family: var(--font-serif);
+            font-weight: 700;
+            color: #1e1916;
+        }
+
+        .panel-actions-quick {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-quick {
+            background: #f3efe8;
+            border: none;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-quick:hover {
+            background: #e7dfd2;
+            color: var(--accent-hover);
+        }
+
+        .section-box {
+            border: 1px solid #ebe6dc;
+            background: #faf9f6;
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-header-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4a453e;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .char-count {
+            font-size: 0.72rem;
+            color: #999;
+            font-weight: normal;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px 11px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px 11px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.84rem;
+            background: #ffffff;
+            color: #222;
+            outline: none;
+            resize: vertical;
+            overflow-y: auto;
+            line-height: 1.4;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+
+        /* SELECTORES DE TIPO PILL */
+        .pill-select-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .pill-choice-card {
+            border: 1.5px solid #dfd9ce;
+            border-radius: 6px;
+            background: #ffffff;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .pill-choice-card:hover {
+            border-color: #baa;
+            background: #fbf9f5;
+        }
+
+        .pill-choice-card.active {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .pill-choice-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .pill-choice-desc {
+            font-size: 0.68rem;
+            color: #777;
+        }
+
+        /* BOTONES DE ACCIÓN PRINCIPALES */
+        .btn-primary-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.25);
+            margin-bottom: 8px;
+        }
+
+        .btn-primary-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(135, 85, 59, 0.32);
+        }
+
+        .btn-secondary-action {
+            background: #ffffff;
+            color: #555;
+            border: 1px solid #d5cfc5;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .btn-secondary-action:hover {
+            background: #f7f5f0;
+            border-color: #baa;
+            color: var(--accent);
+        }
+
+        /* COLUMNA DERECHA: VISTA PREVIA DOBLE PÁGINA */
+        .preview-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: sticky;
+            top: 16px;
+        }
+
+        .preview-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1ede5;
+            border: 1px solid #e1dcce;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #665f54;
+            box-sizing: border-box;
+        }
+
+        .preview-view-toggle {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-view-tab {
+            background: #ffffff;
+            border: 1px solid #d0c9bd;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-view-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        /* CONTENEDOR DEL LIBRO ABIERTO (DOBLE PÁGINA) */
+        .book-spread-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            background: #e5e0d5;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+            position: relative;
+        }
+
+        /* Lomo central */
+        .book-spread-container::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            bottom: 10px;
+            left: 50%;
+            width: 4px;
+            margin-left: -2px;
+            background: linear-gradient(90deg, rgba(0,0,0,0.12), rgba(0,0,0,0.03), rgba(0,0,0,0.12));
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* PÁGINA INDIVIDUAL */
+        .book-page {
+            background: var(--paper-color);
+            border: 1px solid #dcd7ce;
+            border-radius: 4px;
+            padding: 20px 18px 16px;
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 6 / 9;
+            box-sizing: border-box;
+            position: relative;
+            min-height: 480px;
+        }
+
+        .page-left {
+            box-shadow: -4px 0 10px rgba(0,0,0,0.03) inset;
+        }
+
+        .page-right {
+            box-shadow: 4px 0 10px rgba(0,0,0,0.03) inset;
+        }
+
+        /* ESTILOS INTERIORES DE PÁGINAS */
+        .page-header-mini {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid #28231e;
+            padding-bottom: 3px;
+            margin-bottom: 8px;
+        }
+
+        .page-header-mini-title {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #211c19;
+        }
+
+        .page-header-mini-date {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #666;
+            letter-spacing: 0.5px;
+        }
+
+        /* BLOQUES DE LA PÁGINA IZQUIERDA (ENFOQUE DIARIO) */
+        .page-block-box {
+            border: 1px solid #dfd9ce;
+            border-radius: 4px;
+            padding: 6px 8px;
+            background: #faf8f4;
+            margin-bottom: 6px;
+        }
+
+        .page-block-title {
+            font-size: 0.56rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .page-priority-content {
+            font-family: var(--font-serif);
+            font-size: 0.72rem;
+            color: #222;
+            line-height: 1.25;
+            min-height: 28px;
+        }
+
+        .page-tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .page-task-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.65rem;
+            color: #333;
+        }
+
+        .page-task-box {
+            width: 8px;
+            height: 8px;
+            border: 1px solid #888;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .page-habits-mini {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .page-habit-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.62rem;
+            color: #444;
+        }
+
+        .page-habit-circle {
+            width: 8px;
+            height: 8px;
+            border: 1px solid #999;
+            border-radius: 50%;
+        }
+
+        /* PÁGINA DERECHA: NOTAS / PAUTA */
+        .notes-canvas {
+            flex: 1;
+            border: 1px solid #e7e2d8;
+            border-radius: 4px;
+            background: #ffffff;
+            margin-top: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pauta-dots {
+            background-image: radial-gradient(#aaa 1px, transparent 1px);
+            background-size: 14px 14px;
+            background-position: 7px 7px;
+        }
+
+        .pauta-lines {
+            background-image: linear-gradient(#e5dfd5 1px, transparent 1px);
+            background-size: 100% 20px;
+            background-position: 0 10px;
+        }
+
+        .pauta-grid {
+            background-image: linear-gradient(#ebe5dc 1px, transparent 1px), linear-gradient(90deg, #ebe5dc 1px, transparent 1px);
+            background-size: 14px 14px;
+        }
+
+        .pauta-blank {
+            background: #ffffff;
+        }
+
+        /* PÁGINA DE APERTURA / PERTENENCIA */
+        .title-page-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px 10px;
+        }
+
+        .title-page-kicker {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .title-page-main {
+            font-family: var(--font-serif);
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #1a1614;
+            margin-bottom: 20px;
+            line-height: 1.25;
+        }
+
+        .title-page-owner-box {
+            border-top: 1px solid #222;
+            border-bottom: 1px solid #222;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            width: 85%;
+        }
+
+        .title-page-owner-label {
+            font-size: 0.62rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #777;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .title-page-owner-name {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #111;
+        }
+
+        .title-page-dedication {
+            font-style: italic;
+            font-size: 0.76rem;
+            color: #555;
+            line-height: 1.45;
+            max-width: 85%;
+            margin-bottom: 24px;
+        }
+
+        .page-num {
+            font-size: 0.58rem;
+            color: #999;
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        /* TOAST DE NOTIFICACIÓN */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #2b2724;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        /* MODAL POP-UP */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 18, 16, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 520px;
+            width: 100%;
+            padding: 24px 22px;
+            box-shadow: 0 24px 50px rgba(0,0,0,0.22);
+            position: relative;
+            text-align: center;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #f1ede5;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #e3ded5;
+            color: #111;
+        }
+
+        .modal-badge {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            background: var(--accent-light);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1a1614;
+            margin-bottom: 4px;
+        }
+
+        .modal-desc {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .btn-modal-download {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-modal-download:hover {
+            background: var(--accent-hover);
+        }
+
+        /* RESPONSIVE MÓVIL */
+        @media (max-width: 900px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+            .preview-column {
+                position: static !important;
+                margin-bottom: 50px !important;
+                width: 100% !important;
+            }
+            .book-spread-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .book-spread-container::before {
+                display: none;
+            }
+        }
+    </style>
+
+    <!-- Protección de acceso por código PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
+    <script src="./jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="header-container">
+        <a href="/apps.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al espacio de aplicaciones</a>
+        <div>
+            <span class="tag-pill">Edición Personalizada · Menos Ruido</span>
+            <h1>Bitácora de Enfoque Atemporal</h1>
+            <p class="subtitle">Estructura, personaliza y genera el interior encuadernable de tu propio libro físico. Calibrado con márgenes de lomo para imprenta o encuadernación artesanal.</p>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- COLUMNA IZQUIERDA: CONTROLES -->
+        <aside class="controls-panel">
+            
+            <div class="panel-header-top">
+                <span class="panel-heading-text">Tu Edición Personal</span>
+                <div class="panel-actions-quick">
+                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
+                    <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
+                </div>
+            </div>
+
+            <!-- 1. IDENTIDAD Y DEDICATORIA -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>1. Pertenencia y Dedicatoria</span>
+                    <span>📖</span>
+                </div>
+                <div class="control-group">
+                    <label for="input-owner-name">Nombre de pertenencia <span class="char-count" id="count-owner">0/40</span></label>
+                    <input type="text" id="input-owner-name" maxlength="40" placeholder="Ej: Mateo S. Aranda" oninput="handleOwnerInput(this)">
+                </div>
+                <div class="control-group">
+                    <label for="input-subtitle">Lema o propósito del cuaderno <span class="char-count" id="count-motto">0/70</span></label>
+                    <input type="text" id="input-subtitle" maxlength="70" placeholder="Ej: Pensar en papel antes de actuar en pantalla" oninput="handleMottoInput(this)">
+                </div>
+                <div class="control-group">
+                    <label for="input-dedication">Mensaje personal o dedicatoria <span class="char-count" id="count-dedication">0/150</span></label>
+                    <textarea id="input-dedication" maxlength="150" rows="2" placeholder="Ej: Para mantener el foco limpio cuando las urgencias externas intenten mandar..." oninput="handleDedicationInput(this)"></textarea>
+                </div>
+                <div class="control-group">
+                    <label for="input-city-year">Ubicación o momento de inicio</label>
+                    <input type="text" id="input-city-year" maxlength="35" placeholder="Ej: Madrid, 2027" oninput="handleCityInput(this)">
+                </div>
+            </div>
+
+            <!-- 2. VOLUMEN Y DURACIÓN DEL LIBRO -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>2. Volumen de la Bitácora</span>
+                    <span>⏳</span>
+                </div>
+                <div class="pill-select-grid">
+                    <div class="pill-choice-card active" id="pill-vol-30" onclick="selectVolume(30)">
+                        <div class="pill-choice-title">30 Días (Sprint)</div>
+                        <div class="pill-choice-desc">68 páginas interiores</div>
+                    </div>
+                    <div class="pill-choice-card" id="pill-vol-90" onclick="selectVolume(90)">
+                        <div class="pill-choice-title">90 Días (Trimestral)</div>
+                        <div class="pill-choice-desc">188 páginas interiores</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PAUTA DE NOTAS (PÁGINA DERECHA) -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>3. Pauta de la Página Libre</span>
+                    <span>✏️</span>
+                </div>
+                <div class="pill-select-grid">
+                    <div class="pill-choice-card active" id="pill-pauta-dots" onclick="selectPauta('dots')">
+                        <div class="pill-choice-title">Puntos (Dot Grid)</div>
+                        <div class="pill-choice-desc">Puntos sobrios 5 mm</div>
+                    </div>
+                    <div class="pill-choice-card" id="pill-pauta-lines" onclick="selectPauta('lines')">
+                        <div class="pill-choice-title">Líneas (Rayado)</div>
+                        <div class="pill-choice-desc">Pauta suave 7 mm</div>
+                    </div>
+                    <div class="pill-choice-card" id="pill-pauta-grid" onclick="selectPauta('grid')">
+                        <div class="pill-choice-title">Cuadrícula</div>
+                        <div class="pill-choice-desc">Cuadrícula 5 mm</div>
+                    </div>
+                    <div class="pill-choice-card" id="pill-pauta-blank" onclick="selectPauta('blank')">
+                        <div class="pill-choice-title">Liso en Blanco</div>
+                        <div class="pill-choice-desc">Espacio limpio puro</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. CONTENIDO DE MUESTRA PARA PÁGINAS DIARIAS -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>4. Muestra de Rutina Diaria</span>
+                    <span>🎯</span>
+                </div>
+                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">Puedes pre-imprimir una meta guía o dejarlo en blanco para escribirlo cada mañana.</p>
+                <div class="control-group">
+                    <label for="input-daily-priority">Prioridad innegociable fija (opcional)</label>
+                    <input type="text" id="input-daily-priority" maxlength="80" placeholder="Ej: Dejar en blanco para definir cada día..." oninput="handlePriorityInput(this)">
+                </div>
+                <div class="control-group">
+                    <label for="input-habit-1">Hábito 1 a consolidar</label>
+                    <input type="text" id="input-habit-1" maxlength="35" placeholder="Ej: 25 min lectura sin teléfono" oninput="handleHabit1Input(this)">
+                </div>
+                <div class="control-group">
+                    <label for="input-habit-2">Hábito 2 a consolidar</label>
+                    <input type="text" id="input-habit-2" maxlength="35" placeholder="Ej: Escribir 1 página en papel" oninput="handleHabit2Input(this)">
+                </div>
+            </div>
+
+            <div style="margin-top: 6px;">
+                <button type="button" class="btn-primary-action" onclick="openDownloadModal()">
+                    <span>📚</span>
+                    <span>Generar PDF Completo de Mi Bitácora</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- COLUMNA DERECHA: VISOR DE PÁGINAS ENFRENTADAS -->
+        <main class="preview-column">
+            <div class="preview-banner">
+                <span>👁️ <strong>Visor de páginas enfrentadas (Interior de libro)</strong></span>
+                <div class="preview-view-toggle">
+                    <button type="button" class="btn-view-tab" id="tab-spread-opening" onclick="switchSpreadView('opening')">Apertura</button>
+                    <button type="button" class="btn-view-tab active" id="tab-spread-daily" onclick="switchSpreadView('daily')">Doble página diaria</button>
+                </div>
+            </div>
+
+            <!-- LIBRO ABIERTO (DOBLE PÁGINA) -->
+            <div class="book-spread-container" id="spread-container">
+                
+                <!-- PÁGINA IZQUIERDA (PAR) -->
+                <div class="book-page page-left" id="left-page-container">
+                    <!-- Contenido dinámico (Apertura o Día) -->
+                </div>
+
+                <!-- PÁGINA DERECHA (IMPAR) -->
+                <div class="book-page page-right" id="right-page-container">
+                    <!-- Contenido dinámico (Pauta o Dedicatoria) -->
+                </div>
+
+            </div>
+            
+            <div style="font-size: 0.72rem; color: #888; text-align: center; margin-top: 4px;">
+                * Calibrado en Formato Libro 6" × 9" (152 × 229 mm) con márgenes alternos de lomo interior (*gutter*) listos para imprenta.
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST DE NOTIFICACIÓN -->
+    <div class="toast-notify" id="toast-msg"></div>
+
+    <!-- MODAL DE DESCARGA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <span class="modal-badge">Interior Listo</span>
+            <h3 class="modal-title">Tu Bitácora en Papel</h3>
+            <p class="modal-desc" id="modal-desc-summary">Genera el archivo PDF completo paginado y listo para encuadernar o imprimir.</p>
+
+            <button type="button" class="btn-modal-download" onclick="executeBookDownload()">
+                📥 Descargar interior completo en PDF
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ========================================================
+        // ESTADO GLOBAL Y PARÁMETROS
+        // ========================================================
+        let isExampleActive = false;
+        let selectedVolume = 30; // 30 o 90
+        let selectedPauta = 'dots'; // dots, lines, grid, blank
+        let currentSpread = 'daily'; // daily u opening
+
+        const BOOK_EXAMPLE = {
+            owner: 'Mateo S. Aranda',
+            motto: 'Pensar en papel antes de actuar en pantalla',
+            dedication: 'Para sostener la calma en el trabajo creativo y no dejar que la prisa ajena decida el rumbo de mis días.',
+            cityYear: 'Madrid, 2027',
+            priority: 'Protección del bloque de escritura matinal sin interrupciones',
+            habit1: '25 min lectura sin pantallas',
+            habit2: 'Escribir a mano al anochecer'
+        };
+
+        // AUTO-EXPAND TEXTAREAS
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        }
+
+        // HANDLERS
+        function handleOwnerInput(input) {
+            isExampleActive = false;
+            const count = document.getElementById('count-owner');
+            if (count && input) count.textContent = input.value.length + '/40';
+            renderCurrentSpread();
+        }
+
+        function handleMottoInput(input) {
+            isExampleActive = false;
+            const count = document.getElementById('count-motto');
+            if (count && input) count.textContent = input.value.length + '/70';
+            renderCurrentSpread();
+        }
+
+        function handleDedicationInput(ta) {
+            isExampleActive = false;
+            autoResizeTextarea(ta);
+            const count = document.getElementById('count-dedication');
+            if (count && ta) count.textContent = ta.value.length + '/150';
+            renderCurrentSpread();
+        }
+
+        function handleCityInput(input) {
+            isExampleActive = false;
+            renderCurrentSpread();
+        }
+
+        function handlePriorityInput(input) {
+            isExampleActive = false;
+            renderCurrentSpread();
+        }
+
+        function handleHabit1Input(input) {
+            isExampleActive = false;
+            renderCurrentSpread();
+        }
+
+        function handleHabit2Input(input) {
+            isExampleActive = false;
+            renderCurrentSpread();
+        }
+
+        function selectVolume(days) {
+            selectedVolume = days;
+            document.getElementById('pill-vol-30').classList.toggle('active', days === 30);
+            document.getElementById('pill-vol-90').classList.toggle('active', days === 90);
+            showToast(`Volumen fijado en ${days} días.`);
+        }
+
+        function selectPauta(type) {
+            selectedPauta = type;
+            ['dots', 'lines', 'grid', 'blank'].forEach(p => {
+                const el = document.getElementById('pill-pauta-' + p);
+                if (el) el.classList.toggle('active', p === type);
+            });
+            renderCurrentSpread();
+            showToast('Pauta de notas actualizada.');
+        }
+
+        function switchSpreadView(view) {
+            currentSpread = view;
+            document.getElementById('tab-spread-opening').classList.toggle('active', view === 'opening');
+            document.getElementById('tab-spread-daily').classList.toggle('active', view === 'daily');
+            renderCurrentSpread();
+        }
+
+        // RENDERIZADO VISUAL DEL VISOR
+        function renderCurrentSpread() {
+            const leftEl = document.getElementById('left-page-container');
+            const rightEl = document.getElementById('right-page-container');
+            if (!leftEl || !rightEl) return;
+
+            const ownerVal = document.getElementById('input-owner-name')?.value.trim() || '';
+            const mottoVal = document.getElementById('input-subtitle')?.value.trim() || '';
+            const dedVal = document.getElementById('input-dedication')?.value.trim() || '';
+            const cityVal = document.getElementById('input-city-year')?.value.trim() || '';
+            const prioVal = document.getElementById('input-daily-priority')?.value.trim() || '';
+            const h1Val = document.getElementById('input-habit-1')?.value.trim() || '';
+            const h2Val = document.getElementById('input-habit-2')?.value.trim() || '';
+
+            const activeOwner = ownerVal || (isExampleActive ? BOOK_EXAMPLE.owner : 'Tu Nombre');
+            const activeMotto = mottoVal || (isExampleActive ? BOOK_EXAMPLE.motto : 'Bitácora de enfoque y trabajo en calma');
+            const activeDed = dedVal || (isExampleActive ? BOOK_EXAMPLE.dedication : 'Espacio analógico reservado para clarificar decisiones y sostener el foco diario.');
+            const activeCity = cityVal || (isExampleActive ? BOOK_EXAMPLE.cityYear : '');
+            const activePrio = prioVal || (isExampleActive ? BOOK_EXAMPLE.priority : '');
+            const activeH1 = h1Val || (isExampleActive ? BOOK_EXAMPLE.habit1 : 'Lectura o reflexión sin teléfono');
+            const activeH2 = h2Val || (isExampleActive ? BOOK_EXAMPLE.habit2 : 'Escribir a mano en este cuaderno');
+
+            if (currentSpread === 'opening') {
+                // APERTURA: IZQ BLANCA / DCHA PORTADA INTERIOR
+                leftEl.innerHTML = `
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #aaa; font-style: italic; font-size: 0.75rem;">
+                        (Página en blanco de cortesía)
+                    </div>
+                    <div class="page-num">2</div>
+                `;
+
+                rightEl.innerHTML = `
+                    <div class="title-page-content">
+                        <span class="title-page-kicker">MENOS RUIDO · EDICIÓN IMPRESA</span>
+                        <h2 class="title-page-main">Bitácora de Enfoque Atemporal</h2>
+                        <div class="title-page-owner-box">
+                            <span class="title-page-owner-label">Esta bitácora pertenece a:</span>
+                            <div class="title-page-owner-name">${activeOwner}</div>
+                        </div>
+                        <div style="font-size: 0.72rem; color: #666; margin-bottom: 12px; font-weight: 500;">
+                            «${activeMotto}»
+                        </div>
+                        <div class="title-page-dedication">
+                            ${activeDed}
+                        </div>
+                        ${activeCity ? `<div style="font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 1px;">${activeCity}</div>` : ''}
+                    </div>
+                    <div class="page-num">3</div>
+                `;
+            } else {
+                // DOBLE PÁGINA DIARIA: IZQ ESTRUCTURA / DCHA PAUTA
+                leftEl.innerHTML = `
+                    <div class="page-header-mini">
+                        <span class="page-header-mini-title">Enfoque Diario</span>
+                        <span class="page-header-mini-date">DÍA: ____  ·  FECHA: ________</span>
+                    </div>
+
+                    <!-- PRIORIDAD PRINCIPAL -->
+                    <div class="page-block-box">
+                        <span class="page-block-title">Prioridad Única Innegociable</span>
+                        <div class="page-priority-content">
+                            ${activePrio || '<span style="color:#bbb; font-style:italic;">(Definir la única acción física innegociable de hoy...)</span>'}
+                        </div>
+                    </div>
+
+                    <!-- 3 TAREAS SECUNDARIAS -->
+                    <div class="page-block-box">
+                        <span class="page-block-title">Tareas Secundarias (Máximo 3)</span>
+                        <div class="page-tasks-list">
+                            <div class="page-task-item"><div class="page-task-box"></div><span>Avanzar en el borrador principal</span></div>
+                            <div class="page-task-item"><div class="page-task-box"></div><span>Responder mensajes en bloque</span></div>
+                            <div class="page-task-item"><div class="page-task-box"></div><span>Revisión de cuentas en calma</span></div>
+                        </div>
+                    </div>
+
+                    <!-- HÁBITOS SOBRIOS -->
+                    <div class="page-block-box">
+                        <span class="page-block-title">Hábitos Fundamentales</span>
+                        <div class="page-habits-mini">
+                            <div class="page-habit-row"><span>${activeH1}</span><div class="page-habit-circle"></div></div>
+                            <div class="page-habit-row"><span>${activeH2}</span><div class="page-habit-circle"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- BALANCE NOCTURNO -->
+                    <div class="page-block-box" style="flex: 1; margin-bottom: 0;">
+                        <span class="page-block-title">Cierre y Reflexión Nocturna</span>
+                        <div style="font-size: 0.62rem; color: #999; font-style: italic; margin-top: 4px;">
+                            ¿Qué decisión o momento de hoy aportó verdadera calma?
+                        </div>
+                    </div>
+
+                    <div class="page-num">14</div>
+                `;
+
+                rightEl.innerHTML = `
+                    <div class="page-header-mini">
+                        <span class="page-header-mini-title">Notas & Vaciado Mental</span>
+                        <span class="page-header-mini-date">ESPACIO LIBRE</span>
+                    </div>
+
+                    <div class="notes-canvas pauta-${selectedPauta}"></div>
+
+                    <div class="page-num">15</div>
+                `;
+            }
+        }
+
+        // RELLENAR EJEMPLO
+        function loadExampleData() {
+            isExampleActive = true;
+            renderCurrentSpread();
+            showToast('✓ Muestra editorial cargada.');
+        }
+
+        // LIMPIAR
+        function clearAllData() {
+            isExampleActive = false;
+            ['input-owner-name', 'input-subtitle', 'input-dedication', 'input-city-year', 'input-daily-priority', 'input-habit-1', 'input-habit-2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            ['count-owner', 'count-motto', 'count-dedication'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '0';
+            });
+            renderCurrentSpread();
+            showToast('✓ Formulario restaurado.');
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-msg');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 2800);
+        }
+
+        // MODAL HANDLERS
+        function openDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            const summary = document.getElementById('modal-desc-summary');
+            if (summary) {
+                const totalPages = selectedVolume === 30 ? 68 : 188;
+                summary.textContent = `Generando edición de ${selectedVolume} días (${totalPages} páginas interiores en Formato Libro 6" × 9" con pauta ${selectedPauta}).`;
+            }
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'download-modal') {
+                closeDownloadModal();
+            }
+        }
+
+        // ========================================================
+        // COMPILADOR DE LIBRO EN PDF VECTORIAL (jsPDF)
+        // ========================================================
+        function executeBookDownload() {
+            closeDownloadModal();
+
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar la librería jsPDF.');
+                return;
+            }
+
+            showToast('Generando libro... esto puede tomar un momento.');
+
+            // Formato Libro 6" x 9" = [152.4, 228.6] mm vertical
+            const pageDims = [152.4, 228.6];
+            const orientation = 'portrait';
+
+            let doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: pageDims
+            });
+
+            const pw = doc.internal.pageSize.getWidth();
+            const ph = doc.internal.pageSize.getHeight();
+
+            // Márgenes con lomo interior (gutter)
+            const mOuter = 13;
+            const mInner = 18; // Margen más ancho en el lomo
+            const mTop = 15;
+            const mBottom = 15;
+
+            // Datos
+            const ownerVal = document.getElementById('input-owner-name')?.value.trim() || '';
+            const mottoVal = document.getElementById('input-subtitle')?.value.trim() || '';
+            const dedVal = document.getElementById('input-dedication')?.value.trim() || '';
+            const cityVal = document.getElementById('input-city-year')?.value.trim() || '';
+            const prioVal = document.getElementById('input-daily-priority')?.value.trim() || '';
+            const h1Val = document.getElementById('input-habit-1')?.value.trim() || '';
+            const h2Val = document.getElementById('input-habit-2')?.value.trim() || '';
+
+            const activeOwner = ownerVal || (isExampleActive ? BOOK_EXAMPLE.owner : 'Tu Nombre');
+            const activeMotto = mottoVal || (isExampleActive ? BOOK_EXAMPLE.motto : 'Bitácora de enfoque y trabajo en calma');
+            const activeDed = dedVal || (isExampleActive ? BOOK_EXAMPLE.dedication : 'Espacio analógico reservado para clarificar decisiones y sostener el foco diario.');
+            const activeCity = cityVal || (isExampleActive ? BOOK_EXAMPLE.cityYear : '');
+            const activePrio = prioVal || (isExampleActive ? BOOK_EXAMPLE.priority : '');
+            const activeH1 = h1Val || (isExampleActive ? BOOK_EXAMPLE.habit1 : 'Lectura o reflexión sin teléfono');
+            const activeH2 = h2Val || (isExampleActive ? BOOK_EXAMPLE.habit2 : 'Escribir a mano en este cuaderno');
+
+            let pageCount = 0;
+
+            function addPageBackground(isRightPage) {
+                if (pageCount > 0) doc.addPage(pageDims, orientation);
+                pageCount++;
+
+                // Fondo crema editorial tenue
+                doc.setFillColor(255, 254, 251);
+                doc.rect(0, 0, pw, ph, 'F');
+
+                // Margen dinámico según lomo
+                const leftMargin = isRightPage ? mInner : mOuter;
+                const rightMargin = isRightPage ? mOuter : mInner;
+                const contentW = pw - leftMargin - rightMargin;
+
+                // Número de página inferior
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.5);
+                doc.setTextColor(140, 135, 130);
+                doc.text(pageCount.toString(), isRightPage ? (pw - rightMargin) : leftMargin, ph - 9);
+
+                return { leftMargin, rightMargin, contentW };
+            }
+
+            // PÁGINA 1: Portadilla sobria (Impar / Derecha)
+            const p1 = addPageBackground(true);
+            doc.setFont('times', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(30, 25, 22);
+            doc.text('Bitácora de Enfoque Atemporal', pw / 2, 85, { align: 'center' });
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(8);
+            doc.setTextColor(120, 115, 110);
+            doc.text('MENOS RUIDO', pw / 2, 92, { align: 'center' });
+
+            // PÁGINA 2: En blanco de cortesía (Par / Izquierda)
+            addPageBackground(false);
+
+            // PÁGINA 3: Pertenencia y Dedicatoria (Impar / Derecha)
+            const p3 = addPageBackground(true);
+            let y3 = 50;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(135, 85, 59);
+            doc.text('MENOS RUIDO · EDICIÓN IMPRESA', pw / 2, y3, { align: 'center' });
+            y3 += 8;
+
+            doc.setFont('times', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(25, 20, 18);
+            doc.text('Bitácora de Enfoque Atemporal', pw / 2, y3, { align: 'center' });
+            y3 += 20;
+
+            // Caja de pertenencia
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.35);
+            doc.line(p3.leftMargin + 10, y3, pw - p3.rightMargin - 10, y3);
+            y3 += 6;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.8);
+            doc.setTextColor(100, 95, 90);
+            doc.text('ESTA BITÁCORA PERTENECE A:', pw / 2, y3, { align: 'center' });
+            y3 += 7;
+
+            doc.setFont('times', 'bold');
+            doc.setFontSize(13);
+            doc.setTextColor(20, 18, 16);
+            doc.text(activeOwner, pw / 2, y3, { align: 'center' });
+            y3 += 6;
+
+            doc.line(p3.leftMargin + 10, y3, pw - p3.rightMargin - 10, y3);
+            y3 += 14;
+
+            if (activeMotto) {
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(8.5);
+                doc.setTextColor(70, 65, 60);
+                doc.text(`«${activeMotto}»`, pw / 2, y3, { align: 'center' });
+                y3 += 12;
+            }
+
+            if (activeDed) {
+                doc.setFont('times', 'italic');
+                doc.setFontSize(8.2);
+                doc.setTextColor(80, 75, 70);
+                const dedLines = doc.splitTextToSize(activeDed, p3.contentW - 15);
+                doc.text(dedLines, pw / 2, y3, { align: 'center', lineHeightFactor: 1.4 });
+                y3 += (dedLines.length * 4.5) + 10;
+            }
+
+            if (activeCity) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.8);
+                doc.setTextColor(130, 125, 120);
+                doc.text(activeCity.toUpperCase(), pw / 2, y3, { align: 'center' });
+            }
+
+            // PÁGINA 4: Página de principios (Par / Izquierda)
+            const p4 = addPageBackground(false);
+            let y4 = 45;
+            doc.setFont('times', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(30, 25, 22);
+            doc.text('El Principio Menos Ruido', p4.leftMargin, y4);
+            y4 += 8;
+
+            const principles = [
+                '1. Una sola prioridad principal por jornada. Lo que no cabe en la jornada, no se fuerza.',
+                '2. Pensar en papel antes de actuar en pantalla. El lápiz ordena lo que la notificación satura.',
+                '3. Menos proyectos abiertos a la vez garantiza mayor profundidad y maestría.',
+                '4. El descanso y la pausa analógica no son premios: son herramientas de calibración.'
+            ];
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(50, 45, 40);
+            principles.forEach(pr => {
+                const lines = doc.splitTextToSize(pr, p4.contentW);
+                doc.text(lines, p4.leftMargin, y4);
+                y4 += (lines.length * 4.2) + 4;
+            });
+
+            // CICLO DIARIO (Doble página por día: Izquierda Estructura / Derecha Notas)
+            const totalDaysToGenerate = selectedVolume; // 30 o 90 días
+
+            for (let day = 1; day <= totalDaysToGenerate; day++) {
+                // Página izquierda: Estructura diaria (Par)
+                const pL = addPageBackground(false);
+                let yL = mTop;
+
+                doc.setFont('times', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(25, 20, 18);
+                doc.text('Enfoque Diario', pL.leftMargin, yL);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(90, 85, 80);
+                doc.text(`DÍA ${day}`, pw - pL.rightMargin, yL, { align: 'right' });
+                yL += 2.5;
+
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.3);
+                doc.line(pL.leftMargin, yL, pw - pL.rightMargin, yL);
+                yL += 5;
+
+                // Bloque 1: Prioridad
+                doc.setFillColor(252, 250, 246);
+                doc.setDrawColor(220, 215, 205);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(pL.leftMargin, yL, pL.contentW, 22, 1, 1, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(135, 85, 59);
+                doc.text('PRIORIDAD ÚNICA INNEGOCIABLE', pL.leftMargin + 3, yL + 4);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.5);
+                doc.setTextColor(40, 35, 30);
+                if (activePrio) {
+                    const pLines = doc.splitTextToSize(activePrio, pL.contentW - 6);
+                    doc.text(pLines.slice(0, 2), pL.leftMargin + 3, yL + 9);
+                } else {
+                    doc.setDrawColor(225, 220, 212);
+                    doc.line(pL.leftMargin + 3, yL + 10, pw - pL.rightMargin - 3, yL + 10);
+                    doc.line(pL.leftMargin + 3, yL + 16, pw - pL.rightMargin - 3, yL + 16);
+                }
+                yL += 26;
+
+                // Bloque 2: Tareas Secundarias
+                doc.roundedRect(pL.leftMargin, yL, pL.contentW, 36, 1, 1, 'FD');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(135, 85, 59);
+                doc.text('TAREAS SECUNDARIAS (MÁXIMO 3)', pL.leftMargin + 3, yL + 4);
+
+                let taskY = yL + 10;
+                for (let t = 0; t < 3; t++) {
+                    doc.setDrawColor(120, 115, 110);
+                    doc.rect(pL.leftMargin + 3.5, taskY - 2.5, 3, 3);
+                    doc.setDrawColor(225, 220, 212);
+                    doc.line(pL.leftMargin + 9, taskY, pw - pL.rightMargin - 3, taskY);
+                    taskY += 8.5;
+                }
+                yL += 40;
+
+                // Bloque 3: Hábitos
+                doc.roundedRect(pL.leftMargin, yL, pL.contentW, 28, 1, 1, 'FD');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(135, 85, 59);
+                doc.text('HÁBITOS FUNDAMENTALES', pL.leftMargin + 3, yL + 4);
+
+                let habY = yL + 10;
+                const habitsToPrint = [activeH1, activeH2];
+                habitsToPrint.forEach(hText => {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(40, 35, 30);
+                    doc.text(hText || 'Hábito diario...', pL.leftMargin + 3.5, habY);
+
+                    doc.setDrawColor(140, 135, 130);
+                    doc.setLineWidth(0.25);
+                    doc.circle(pw - pL.rightMargin - 5, habY - 1, 1.8);
+                    habY += 9;
+                });
+                yL += 32;
+
+                // Bloque 4: Reflexión nocturna
+                const remH = ph - mBottom - yL - 8;
+                if (remH > 18) {
+                    doc.roundedRect(pL.leftMargin, yL, pL.contentW, remH, 1, 1, 'FD');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.2);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('REFLEXIÓN Y CIERRE DEL DÍA', pL.leftMargin + 3, yL + 4);
+
+                    for (let l = 0; l < 4; l++) {
+                        const lineY = yL + 10 + (l * 6);
+                        if (lineY < yL + remH - 2) {
+                            doc.setDrawColor(225, 220, 212);
+                            doc.line(pL.leftMargin + 3, lineY, pw - pL.rightMargin - 3, lineY);
+                        }
+                    }
+                }
+
+                // Página derecha: Notas / Pauta elegida (Impar)
+                const pR = addPageBackground(true);
+                let yR = mTop;
+
+                doc.setFont('times', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(25, 20, 18);
+                doc.text('Notas & Vaciado Mental', pR.leftMargin, yR);
+
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(7.5);
+                doc.setTextColor(110, 105, 100);
+                doc.text('ESPACIO LIBRE', pw - pR.rightMargin, yR, { align: 'right' });
+                yR += 2.5;
+
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.3);
+                doc.line(pR.leftMargin, yR, pw - pR.rightMargin, yR);
+                yR += 6;
+
+                // Dibujar pauta vectorial en la página derecha
+                const pautaH = ph - mBottom - yR - 6;
+
+                if (selectedPauta === 'dots') {
+                    doc.setFillColor(180, 175, 168);
+                    const spacing = 5; // 5 mm
+                    for (let px = pR.leftMargin + 2; px <= pw - pR.rightMargin - 2; px += spacing) {
+                        for (let py = yR + 2; py <= yR + pautaH - 2; py += spacing) {
+                            doc.circle(px, py, 0.18, 'F');
+                        }
+                    }
+                } else if (selectedPauta === 'lines') {
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.18);
+                    const lineSpacing = 7; // 7 mm
+                    for (let py = yR + 4; py <= yR + pautaH - 2; py += lineSpacing) {
+                        doc.line(pR.leftMargin, py, pw - pR.rightMargin, py);
+                    }
+                } else if (selectedPauta === 'grid') {
+                    doc.setDrawColor(230, 225, 218);
+                    doc.setLineWidth(0.15);
+                    const gridSpacing = 5; // 5 mm
+                    // Horizontales
+                    for (let py = yR + 2; py <= yR + pautaH; py += gridSpacing) {
+                        doc.line(pR.leftMargin, py, pw - pR.rightMargin, py);
+                    }
+                    // Verticales
+                    for (let px = pR.leftMargin; px <= pw - pR.rightMargin; px += gridSpacing) {
+                        doc.line(px, yR + 2, px, yR + pautaH);
+                    }
+                }
+                // Si es 'blank', queda limpio
+            }
+
+            const cleanOwner = (activeOwner || '').replace(/[^a-zA-Z0-9]/g, '_');
+            const fileName = `Bitacora_de_Enfoque_Atemporal_${selectedVolume}Dias_${cleanOwner}.pdf`;
+            doc.save(fileName);
+
+            showToast('✓ Bitácora completa descargada con éxito.');
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCurrentSpread();
+        });
+    </script>
+</body>
+</html>
