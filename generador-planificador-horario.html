@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador Planificador Horario · Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Librería jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.08);
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
+        }
+
+        .header-container {
+            max-width: 1380px;
+            margin: 0 auto 16px;
+            text-align: center;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 1.95rem;
+            color: #1a1614;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .app-layout {
+            max-width: 1380px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(360px, 420px) minmax(520px, 1fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        /* PANEL DE CONTROLES (IZQUIERDA) */
+        .controls-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 20px 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #efeae1;
+        }
+
+        .panel-heading-text {
+            font-size: 1.15rem;
+            font-family: var(--font-serif);
+            font-weight: 700;
+            color: #1e1916;
+        }
+
+        .panel-actions-quick {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-quick {
+            background: #f3efe8;
+            border: none;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-quick:hover {
+            background: #e7dfd2;
+            color: var(--accent-hover);
+        }
+
+        .section-box {
+            border: 1px solid #ebe6dc;
+            background: #faf9f6;
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-header-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #444;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .form-label small {
+            font-weight: normal;
+            color: #888;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.86rem;
+            background: #fff;
+            color: #222;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .auto-expand-textarea {
+            resize: none;
+            overflow-y: hidden;
+            min-height: 48px;
+            line-height: 1.4;
+        }
+
+        .char-counter {
+            font-size: 0.7rem;
+            color: #888;
+            text-align: right;
+            margin-top: 2px;
+        }
+
+        /* SELECTORES DE CONFIGURACIÓN HORARIA */
+        .select-pill-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .btn-pill-option {
+            background: #fff;
+            border: 1px solid #d5cfc5;
+            padding: 7px 4px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #444;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .btn-pill-option:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-pill-option.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(135, 85, 59, 0.25);
+        }
+
+        .helper-text {
+            font-size: 0.72rem;
+            color: #777;
+            line-height: 1.35;
+        }
+
+        /* BOTONES DE DESCARGA */
+        .btn-primary-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.22);
+            width: 100%;
+        }
+
+        .btn-primary-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(135, 85, 59, 0.32);
+        }
+
+        .btn-secondary-action {
+            background: #ffffff;
+            color: #555;
+            border: 1px solid #d5cfc5;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .btn-secondary-action:hover {
+            background: #f7f5f0;
+            border-color: #baa;
+            color: var(--accent);
+        }
+
+        /* COLUMNA DERECHA: VISTA PREVIA */
+        .preview-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: sticky;
+            top: 16px;
+        }
+
+        .preview-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1ede5;
+            border: 1px solid #e1dcce;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #665f54;
+            box-sizing: border-box;
+        }
+
+        /* HOJA EDITORIAL HORARIO (APROX. 8.25" x 6") */
+        .preview-sheet-frame {
+            background: var(--paper-color);
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 18px 20px 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 8.25 / 6;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-kicker {
+            font-size: 0.62rem;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .preview-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #28231e;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            gap: 12px;
+        }
+
+        .preview-main-title {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #211c19;
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-date-text {
+            font-size: 0.74rem;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            color: #444;
+            text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .preview-focus-quote {
+            font-size: 0.68rem;
+            font-style: italic;
+            color: #666;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 14px;
+        }
+
+        /* TABLA DEL HORARIO */
+        .schedule-table-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #d8d2c6;
+            border-radius: 4px;
+            background: #ffffff;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .schedule-header-row {
+            display: grid;
+            grid-template-columns: 82px repeat(7, 1fr);
+            background: #f4efea;
+            border-bottom: 1px solid #d5cfc4;
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #3e3834;
+            text-align: center;
+        }
+
+        .schedule-header-cell {
+            padding: 4px 2px;
+            border-right: 1px solid #e0dad0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .schedule-header-cell:last-child {
+            border-right: none;
+        }
+        .schedule-header-time-title {
+            background: #ede6dc;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .schedule-body-rows {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .schedule-data-row {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 82px repeat(7, 1fr);
+            border-bottom: 1px solid #ebe5db;
+        }
+        .schedule-data-row:last-child {
+            border-bottom: none;
+        }
+        .schedule-data-row:nth-child(even) {
+            background: #faf8f5;
+        }
+
+        .schedule-time-cell {
+            border-right: 1.5px solid #d5cfc4;
+            background: #f9f7f3;
+            font-size: 0.56rem;
+            font-weight: 700;
+            color: #4a443e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            white-space: nowrap;
+            letter-spacing: -0.2px;
+        }
+
+        .schedule-day-cell {
+            border-right: 1px solid #ece7de;
+            padding: 2px 3px;
+            font-size: 0.52rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+        .schedule-day-cell:last-child {
+            border-right: none;
+        }
+
+        .example-block-tag {
+            background: rgba(135, 85, 59, 0.09);
+            border-left: 2px solid var(--accent);
+            padding: 1px 3px;
+            border-radius: 2px;
+            font-size: 0.48rem;
+            color: #3d2b20;
+            width: 100%;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* BLOQUE INFERIOR DE NOTAS */
+        .preview-bottom-box {
+            background: #faf9f6;
+            border: 1px solid #e2ddd3;
+            border-radius: 4px;
+            padding: 5px 8px;
+            min-height: 38px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .preview-bottom-title {
+            font-size: 0.56rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .preview-bottom-content {
+            font-size: 0.58rem;
+            color: #444;
+            line-height: 1.3;
+        }
+
+        /* PIE DE PÁGINA */
+        .preview-footer-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+            font-size: 0.54rem;
+            color: #999;
+            letter-spacing: 0.5px;
+        }
+
+        /* MODAL DE DESCARGA */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(20, 16, 14, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 16px;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .modal-window {
+            background: #ffffff;
+            border-radius: 12px;
+            max-width: 480px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: #777;
+            cursor: pointer;
+        }
+        .modal-close-btn:hover {
+            color: #111;
+        }
+
+        .modal-header h3 {
+            font-family: var(--font-serif);
+            font-size: 1.3rem;
+            color: #211c19;
+            margin-top: 4px;
+        }
+
+        .modal-format-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .btn-format-card {
+            border: 1.5px solid #d5cfc5;
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .btn-format-card.active {
+            border-color: var(--accent);
+            background: rgba(135, 85, 59, 0.05);
+        }
+        .btn-format-card strong {
+            display: block;
+            font-size: 0.82rem;
+            color: #222;
+        }
+        .btn-format-card span {
+            font-size: 0.7rem;
+            color: #777;
+        }
+
+        /* TOAST */
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #2b2520;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 10000;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+            .preview-column {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ENCABEZADO -->
+    <header class="header-container">
+        <span class="tag-pill">Herramienta Gratuita · Menos Ruido</span>
+        <h1>Planificador Horario</h1>
+        <p class="subtitle">Estructura semanal por franjas horarias con hasta 24 filas configurables. Diseña tus bloques de tiempo con calma y claridad antes de imprimir en papel.</p>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <main class="app-layout">
+
+        <!-- PANEL DE CONTROLES (IZQUIERDA) -->
+        <section class="controls-panel">
+            <div class="panel-header-top">
+                <span class="panel-heading-text">Configura tu Cuadrícula</span>
+                <div class="panel-actions-quick">
+                    <button type="button" class="btn-quick" onclick="loadExampleData()">✨ Ejemplo</button>
+                    <button type="button" class="btn-quick" onclick="clearAllData()">🧹 Limpiar</button>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 1: CONFIGURACIÓN DE HORAS E INTERVALOS -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>1. Franjas Horarias (Divisibles entre 24)</span>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="form-group">
+                        <label class="form-label" for="select-start-hour">Hora de inicio</label>
+                        <select id="select-start-hour" class="form-control" onchange="onTimeConfigChange()">
+                            <option value="0">00:00</option>
+                            <option value="1">01:00</option>
+                            <option value="2">02:00</option>
+                            <option value="3">03:00</option>
+                            <option value="4">04:00</option>
+                            <option value="5">05:00</option>
+                            <option value="6">06:00</option>
+                            <option value="7">07:00</option>
+                            <option value="8" selected>08:00 (Recomendado)</option>
+                            <option value="9">09:00</option>
+                            <option value="10">10:00</option>
+                            <option value="11">11:00</option>
+                            <option value="12">12:00</option>
+                            <option value="13">13:00</option>
+                            <option value="14">14:00</option>
+                            <option value="15">15:00</option>
+                            <option value="16">16:00</option>
+                            <option value="17">17:00</option>
+                            <option value="18">18:00</option>
+                            <option value="19">19:00</option>
+                            <option value="20">20:00</option>
+                            <option value="21">21:00</option>
+                            <option value="22">22:00</option>
+                            <option value="23">23:00</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="select-interval">Intervalo de fila</label>
+                        <select id="select-interval" class="form-control" onchange="onIntervalSelectChange()">
+                            <option value="0.5">30 min (0.5 h)</option>
+                            <option value="1" selected>Cada 1 hora (24h)</option>
+                            <option value="2">Cada 2 horas (12 filas)</option>
+                            <option value="3">Cada 3 horas (8 filas)</option>
+                            <option value="4">Cada 4 horas (6 filas)</option>
+                            <option value="6">Cada 6 horas (4 filas)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="select-row-count">
+                        <span>Número de filas en la hoja</span>
+                        <small id="rows-coverage-info">Cubre 24 horas</small>
+                    </label>
+                    <select id="select-row-count" class="form-control" onchange="onRowsCountChange()">
+                        <!-- Se llena dinámicamente hasta 24 filas máximo -->
+                    </select>
+                    <span class="helper-text" id="helper-time-summary">Desde 08:00 hasta 08:00 del día siguiente (24 franjas completas).</span>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: DATOS DE LA SEMANA -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>2. Datos de la Semana</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="input-week-label">Semana o Fechas</label>
+                    <input type="text" id="input-week-label" class="form-control" placeholder="Ej: 14 - 20 Octubre · Semana 42" oninput="updateHeaderPreview()" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="input-week-focus">
+                        <span>Enfoque o Lema de la Semana</span>
+                        <small>Máx. 120 caracteres</small>
+                    </label>
+                    <textarea id="input-week-focus" class="form-control auto-expand-textarea" maxlength="120" placeholder="Ej: Menos prisa, una sola prioridad clara al día y desconexión a las 20:00." oninput="handleFocusInput(this)"></textarea>
+                    <div class="char-counter" id="count-week-focus">0/120</div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 3: NOTAS Y OBSERVACIONES -->
+            <div class="section-box">
+                <div class="section-header-title">
+                    <span>3. Notas y Prioridades del Horario</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="input-week-notes">
+                        <span>Notas, balance o reglas del horario</span>
+                        <small>Máx. 150 caracteres</small>
+                    </label>
+                    <textarea id="input-week-notes" class="form-control auto-expand-textarea" maxlength="150" placeholder="Ej: Bloques de trabajo profundo por la mañana sin revisar notificaciones. Tiempo de calidad y lectura por la noche." oninput="handleNotesInput(this)"></textarea>
+                    <div class="char-counter" id="count-week-notes">0/150</div>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN -->
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                <button type="button" class="btn-primary-action" onclick="openDownloadModal(false)">
+                    📥 Descargar mi Horario en PDF
+                </button>
+                <button type="button" class="btn-secondary-action" onclick="openDownloadModal(true)">
+                    📄 Descargar Plantilla Limpia en Blanco (PDF)
+                </button>
+            </div>
+        </section>
+
+        <!-- COLUMNA DERECHA: VISTA PREVIA INTERACTIVA -->
+        <section class="preview-column">
+            <div class="preview-banner">
+                <span>👁️ <strong>Vista previa en tiempo real</strong> · Formato Libro Apaisado (8.25" × 6")</span>
+                <span style="font-size: 0.72rem; color: #888;">Escala adaptativa</span>
+            </div>
+
+            <!-- HOJA EDITORIAL -->
+            <div class="preview-sheet-frame" id="preview-sheet">
+                <!-- KICKER -->
+                <div class="preview-kicker">MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL</div>
+
+                <!-- CABECERA -->
+                <div class="preview-header-line">
+                    <div class="preview-main-title">Planificador Horario</div>
+                    <div class="preview-date-text" id="prev-week-label">SEMANA: ___________________</div>
+                </div>
+
+                <!-- LEMA O ENFOQUE -->
+                <div class="preview-focus-quote" id="prev-focus-quote"></div>
+
+                <!-- TABLA SEMANAL -->
+                <div class="schedule-table-wrapper">
+                    <!-- CABECERA DE DÍAS -->
+                    <div class="schedule-header-row">
+                        <div class="schedule-header-cell schedule-header-time-title">HORA</div>
+                        <div class="schedule-header-cell">LUNES</div>
+                        <div class="schedule-header-cell">MARTES</div>
+                        <div class="schedule-header-cell">MIÉRCOLES</div>
+                        <div class="schedule-header-cell">JUEVES</div>
+                        <div class="schedule-header-cell">VIERNES</div>
+                        <div class="schedule-header-cell">SÁBADO</div>
+                        <div class="schedule-header-cell">DOMINGO</div>
+                    </div>
+
+                    <!-- FILAS DE FRANJAS HORARIAS -->
+                    <div class="schedule-body-rows" id="prev-schedule-rows-container">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+
+                <!-- BLOQUE INFERIOR DE NOTAS -->
+                <div class="preview-bottom-box">
+                    <div class="preview-bottom-title">NOTAS Y PRIORIDADES DE LA SEMANA</div>
+                    <div class="preview-bottom-content" id="prev-notes-content"></div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="preview-footer-line">
+                    <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                    <span>editorialmenosruido.com</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DE DESCARGA -->
+    <div class="modal-backdrop" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-window">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+
+            <div class="modal-header">
+                <span class="tag-pill" id="modal-badge-label">PDF Vectorial de Alta Resolución</span>
+                <h3 id="modal-title-label">Descargar Planificador Horario</h3>
+                <p id="modal-desc-label" style="font-size: 0.82rem; color: #666; margin-top: 4px;">
+                    Exportación optimizada a 300 DPI lista para imprimir en papel crema o blanco con líneas nítidas.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Elige el formato de papel:</label>
+                <div class="modal-format-selector">
+                    <div class="btn-format-card active" id="btn-format-book" onclick="selectDownloadFormat('book')">
+                        <strong>📖 Formato Libro Apaisado</strong>
+                        <span>8.25" × 6" (210 × 152 mm) · Estándar Menos Ruido</span>
+                    </div>
+                    <div class="btn-format-card" id="btn-format-a4" onclick="selectDownloadFormat('a4')">
+                        <strong>📄 Folio DIN A4 Apaisado</strong>
+                        <span>297 × 210 mm · Impresora estándar</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 6px;">
+                <button type="button" class="btn-primary-action" id="btn-execute-download" onclick="executeScheduleDownload()">
+                    <span id="modal-download-btn-text">📥 Descargar PDF ahora</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICACIÓN -->
+    <div class="toast-notification" id="toast-msg"></div>
+
+    <script>
+        // ESTADO GLOBAL
+        let isExampleActive = false;
+        let isBlankModal = false;
+        let selectedFormat = 'book'; // 'book' o 'a4'
+
+        const SCHEDULE_EXAMPLE = {
+            week: 'Semana 42 · 14 al 20 de Octubre',
+            focus: 'Proteger las primeras horas para el trabajo que requiere concentración profunda.',
+            notes: 'Sin pantallas a partir de las 20:30. Paseo diario de 30 minutos sin auriculares para despejar la mente.',
+            blocks: [
+                { row: 0, day: 0, text: 'Enfoque Profundo' },
+                { row: 0, day: 1, text: 'Enfoque Profundo' },
+                { row: 0, day: 2, text: 'Enfoque Profundo' },
+                { row: 0, day: 3, text: 'Enfoque Profundo' },
+                { row: 0, day: 4, text: 'Planificación' },
+                { row: 1, day: 0, text: 'Gestión / Email' },
+                { row: 1, day: 2, text: 'Reunión de equipo' },
+                { row: 2, day: 4, text: 'Balance semanal' },
+                { row: 3, day: 5, text: 'Caminata y calma' },
+                { row: 3, day: 6, text: 'Lectura reposada' }
+            ]
+        };
+
+        // AUTO-EXPAND TEXTAREAS
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight) + 'px';
+        }
+
+        function handleFocusInput(el) {
+            isExampleActive = false;
+            autoResizeTextarea(el);
+            const count = document.getElementById('count-week-focus');
+            if (count) count.textContent = `${el.value.length}/120`;
+            updateHeaderPreview();
+        }
+
+        function handleNotesInput(el) {
+            isExampleActive = false;
+            autoResizeTextarea(el);
+            const count = document.getElementById('count-week-notes');
+            if (count) count.textContent = `${el.value.length}/150`;
+            updateNotesPreview();
+        }
+
+        // CONTROL DE HORARIOS Y DIVISORES DE 24
+        function getStepHours() {
+            const val = parseFloat(document.getElementById('select-interval')?.value || '1');
+            return isNaN(val) ? 1 : val;
+        }
+
+        function getStartHour() {
+            const val = parseInt(document.getElementById('select-start-hour')?.value || '8', 10);
+            return isNaN(val) ? 8 : val;
+        }
+
+        function getRowCount() {
+            const val = parseInt(document.getElementById('select-row-count')?.value || '24', 10);
+            return isNaN(val) ? 24 : Math.min(Math.max(val, 4), 24);
+        }
+
+        function populateRowCountSelect(preferredRows) {
+            const select = document.getElementById('select-row-count');
+            if (!select) return;
+
+            const step = getStepHours();
+            // Ciclo completo de 24 horas: 24 / step (ej. 3h -> 8 filas, 2h -> 12 filas, 1h -> 24 filas, 0.5h -> 48h pero tope 24 filas)
+            let defaultCycleRows = Math.min(Math.round(24 / step), 24);
+            if (step === 0.5) defaultCycleRows = 24; // 24 filas = 12 horas
+
+            const targetVal = preferredRows || defaultCycleRows;
+
+            select.innerHTML = '';
+            for (let r = 4; r <= 24; r++) {
+                const opt = document.createElement('option');
+                opt.value = r;
+                let extra = '';
+                if (r === defaultCycleRows) {
+                    extra = (step === 0.5) ? ' (12 horas)' : ' (Ciclo 24 horas completo)';
+                }
+                opt.textContent = `${r} filas${extra}`;
+                if (r === targetVal) opt.selected = true;
+                select.appendChild(opt);
+            }
+
+            updateCoverageInfo();
+        }
+
+        function updateCoverageInfo() {
+            const step = getStepHours();
+            const startH = getStartHour();
+            const rows = getRowCount();
+            const totalHours = rows * step;
+
+            const covEl = document.getElementById('rows-coverage-info');
+            const summaryEl = document.getElementById('helper-time-summary');
+
+            const endH = (startH + totalHours) % 24;
+            const formatH = (h) => {
+                const intH = Math.floor(h);
+                const min = Math.round((h - intH) * 60);
+                return `${String(intH).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+            };
+
+            const startStr = formatH(startH);
+            const endStr = formatH((startH + totalHours) % 24);
+
+            if (covEl) {
+                covEl.textContent = `Cubre ${totalHours} horas`;
+            }
+            if (summaryEl) {
+                summaryEl.textContent = `Franjas desde ${startStr} hasta ${endStr} (${rows} filas en total).`;
+            }
+        }
+
+        function onIntervalSelectChange() {
+            isExampleActive = false;
+            populateRowCountSelect(); // sincroniza con el ciclo óptimo
+            renderPreview();
+        }
+
+        function onTimeConfigChange() {
+            isExampleActive = false;
+            updateCoverageInfo();
+            renderPreview();
+        }
+
+        function onRowsCountChange() {
+            isExampleActive = false;
+            updateCoverageInfo();
+            renderPreview();
+        }
+
+        // GENERACIÓN DE FRAGMENTOS HORARIOS
+        function generateTimeSlots(startH, stepH, count) {
+            const slots = [];
+            for (let i = 0; i < count; i++) {
+                const currentStart = (startH + (i * stepH)) % 24;
+                const currentEnd = (startH + ((i + 1) * stepH)) % 24;
+
+                const formatTime = (t) => {
+                    const h = Math.floor(t);
+                    const m = Math.round((t - h) * 60);
+                    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                };
+
+                slots.push({
+                    index: i,
+                    label: `${formatTime(currentStart)} - ${formatTime(currentEnd)}`,
+                    startStr: formatTime(currentStart),
+                    endStr: formatTime(currentEnd)
+                });
+            }
+            return slots;
+        }
+
+        // ACTUALIZACIÓN DE VISTA PREVIA
+        function updateHeaderPreview() {
+            const weekInput = document.getElementById('input-week-label')?.value.trim() || '';
+            const focusInput = document.getElementById('input-week-focus')?.value.trim() || '';
+
+            const weekEl = document.getElementById('prev-week-label');
+            const focusEl = document.getElementById('prev-focus-quote');
+
+            const activeWeek = weekInput || (isExampleActive ? SCHEDULE_EXAMPLE.week : '');
+            const activeFocus = focusInput || (isExampleActive ? SCHEDULE_EXAMPLE.focus : '');
+
+            if (weekEl) {
+                weekEl.textContent = activeWeek ? `SEMANA: ${activeWeek}` : 'SEMANA: ___________________';
+            }
+            if (focusEl) {
+                focusEl.textContent = activeFocus ? `«${activeFocus}»` : '';
+            }
+        }
+
+        function updateNotesPreview() {
+            const notesInput = document.getElementById('input-week-notes')?.value.trim() || '';
+            const notesEl = document.getElementById('prev-notes-content');
+            const activeNotes = notesInput || (isExampleActive ? SCHEDULE_EXAMPLE.notes : '');
+
+            if (notesEl) {
+                notesEl.textContent = activeNotes || '';
+            }
+        }
+
+        function updateScheduleRowsPreview() {
+            const container = document.getElementById('prev-schedule-rows-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const startH = getStartHour();
+            const stepH = getStepHours();
+            const rowCount = getRowCount();
+            const slots = generateTimeSlots(startH, stepH, rowCount);
+
+            slots.forEach((slot, rowIdx) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'schedule-data-row';
+
+                let cellsHtml = `<div class="schedule-time-cell">${slot.label}</div>`;
+
+                for (let d = 0; d < 7; d++) {
+                    let cellContent = '';
+                    if (isExampleActive) {
+                        const block = SCHEDULE_EXAMPLE.blocks.find(b => b.row === rowIdx && b.day === d);
+                        if (block) {
+                            cellContent = `<div class="example-block-tag">${block.text}</div>`;
+                        }
+                    }
+                    cellsHtml += `<div class="schedule-day-cell">${cellContent}</div>`;
+                }
+
+                rowDiv.innerHTML = cellsHtml;
+                container.appendChild(rowDiv);
+            });
+        }
+
+        function renderPreview() {
+            updateHeaderPreview();
+            updateNotesPreview();
+            updateScheduleRowsPreview();
+        }
+
+        // ACCIONES RÁPIDAS
+        function loadExampleData() {
+            isExampleActive = true;
+            renderPreview();
+            showToast('✓ Ejemplo proyectado en la vista previa.');
+        }
+
+        function clearAllData() {
+            isExampleActive = false;
+            const wInput = document.getElementById('input-week-label');
+            if (wInput) wInput.value = '';
+            const fInput = document.getElementById('input-week-focus');
+            if (fInput) { fInput.value = ''; fInput.style.height = ''; }
+            const nInput = document.getElementById('input-week-notes');
+            if (nInput) { nInput.value = ''; nInput.style.height = ''; }
+
+            const cFoc = document.getElementById('count-week-focus');
+            if (cFoc) cFoc.textContent = '0/120';
+            const cNot = document.getElementById('count-week-notes');
+            if (cNot) cNot.textContent = '0/150';
+
+            renderPreview();
+            showToast('✓ Formulario y vista previa limpiados.');
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-msg');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
+
+        // CONTROL DEL MODAL
+        function openDownloadModal(isBlank) {
+            isBlankModal = !!isBlank;
+            const modal = document.getElementById('download-modal');
+            if (!modal) return;
+
+            const badge = document.getElementById('modal-badge-label');
+            const title = document.getElementById('modal-title-label');
+            const desc = document.getElementById('modal-desc-label');
+            const btnText = document.getElementById('modal-download-btn-text');
+
+            if (isBlank) {
+                if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
+                if (title) title.textContent = 'Tu Horario en Papel (Para Rellenar a Mano)';
+                if (desc) desc.textContent = 'Descarga la cuadrícula semanal limpia de 7 días y hasta 24 franjas horarias lista para lápiz o pluma.';
+                if (btnText) btnText.innerHTML = '📥 Descargar plantilla horaria limpia en PDF';
+            } else {
+                if (badge) badge.textContent = 'PDF Personalizado con Tus Franjas';
+                if (title) title.textContent = 'Tu Planificador Horario Listo';
+                if (desc) desc.textContent = 'Descarga tu horario semanal con tus metas, horas y notas maquetado en alta resolución.';
+                if (btnText) btnText.innerHTML = '📥 Descargar mi horario en PDF';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'download-modal') {
+                closeDownloadModal();
+            }
+        }
+
+        function selectDownloadFormat(fmt) {
+            selectedFormat = fmt;
+            document.getElementById('btn-format-book')?.classList.toggle('active', fmt === 'book');
+            document.getElementById('btn-format-a4')?.classList.toggle('active', fmt === 'a4');
+        }
+
+        // ========================================================
+        // MOTOR DE EXPORTACIÓN PDF VECTORIAL (jsPDF)
+        // ========================================================
+        function executeScheduleDownload() {
+            closeDownloadModal();
+
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar la librería jsPDF.');
+                return;
+            }
+
+            // Dimensiones según formato
+            // 'book': 8.25" x 6" [209.55, 152.4] mm
+            // 'a4': DIN A4 Apaisado [297, 210] mm
+            const isBook = (selectedFormat === 'book');
+            const pageDims = isBook ? [209.55, 152.4] : [297, 210];
+            const orientation = 'landscape';
+
+            let doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: pageDims
+            });
+
+            const pw = doc.internal.pageSize.getWidth();
+            const ph = doc.internal.pageSize.getHeight();
+            const m = isBook ? 12 : 16; // Margen en mm
+            const contentW = pw - (m * 2);
+
+            // Fondo crema editorial
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pw, ph, 'F');
+
+            let y = m + 1;
+
+            // Datos activos
+            const weekInput = document.getElementById('input-week-label')?.value.trim() || '';
+            const activeWeek = isBlankModal ? '' : (weekInput || (isExampleActive ? SCHEDULE_EXAMPLE.week : ''));
+
+            const focusInput = document.getElementById('input-week-focus')?.value.trim() || '';
+            const activeFocus = isBlankModal ? '' : (focusInput || (isExampleActive ? SCHEDULE_EXAMPLE.focus : ''));
+
+            const notesInput = document.getElementById('input-week-notes')?.value.trim() || '';
+            const activeNotes = isBlankModal ? '' : (notesInput || (isExampleActive ? SCHEDULE_EXAMPLE.notes : ''));
+
+            const startH = getStartHour();
+            const stepH = getStepHours();
+            const rowCount = getRowCount();
+            const slots = generateTimeSlots(startH, stepH, rowCount);
+
+            // 1. KICKER SUPERIOR
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(isBook ? 6.5 : 8);
+            doc.setTextColor(135, 85, 59);
+            doc.text('MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL', m, y);
+            y += (isBook ? 4.2 : 5.5);
+
+            // 2. TÍTULO Y SEMANA
+            doc.setFont('times', 'bold');
+            doc.setFontSize(isBook ? 15 : 19);
+            doc.setTextColor(30, 25, 22);
+            doc.text('Planificador Horario', m, y);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(isBook ? 8 : 10);
+            doc.setTextColor(70, 65, 60);
+            const headerWeekText = activeWeek ? `SEMANA: ${activeWeek.toUpperCase()}` : 'SEMANA: _______________________';
+            doc.text(headerWeekText, pw - m, y, { align: 'right' });
+            y += (isBook ? 2.5 : 3.2);
+
+            // 3. ENFOQUE / LEMA SI EXISTE
+            if (activeFocus) {
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(isBook ? 7 : 8.5);
+                doc.setTextColor(90, 85, 80);
+                const fLines = doc.splitTextToSize(`«${activeFocus}»`, contentW - 20);
+                doc.text(fLines[0] || '', m, y + 1.2);
+                y += (isBook ? 3.8 : 4.8);
+            }
+
+            // Línea divisoria de cabecera
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.35);
+            doc.line(m, y, pw - m, y);
+            y += (isBook ? 3.2 : 4);
+
+            // 4. TABLA HORARIA
+            const timeColW = isBook ? 24 : 32; // Columna de franja horaria
+            const daysGridW = contentW - timeColW;
+            const dayColW = daysGridW / 7;
+            const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+
+            const headerRowH = isBook ? 4.8 : 6.5;
+            const availableTableH = isBook ? 78 : 110;
+            const rowH = (availableTableH - headerRowH) / rowCount;
+
+            // Capa 1: Fondo de cabecera de la tabla
+            doc.setFillColor(245, 240, 232);
+            doc.setDrawColor(215, 210, 200);
+            doc.setLineWidth(0.2);
+            doc.rect(m, y, contentW, headerRowH, 'FD');
+
+            // Texto cabecera: HORA
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(isBook ? 5.8 : 7.5);
+            doc.setTextColor(135, 85, 59);
+            doc.text('HORA', m + (timeColW / 2), y + (headerRowH / 2) + 1.2, { align: 'center' });
+
+            // Textos cabecera: Días de la semana
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(isBook ? 5.8 : 7.5);
+            doc.setTextColor(50, 45, 40);
+            for (let d = 0; d < 7; d++) {
+                const dayX = m + timeColW + (d * dayColW);
+                doc.text(dayNames[d], dayX + (dayColW / 2), y + (headerRowH / 2) + 1.2, { align: 'center' });
+            }
+
+            // Capa 2: Fondos alternos en las filas
+            for (let i = 0; i < rowCount; i++) {
+                const rY = y + headerRowH + (i * rowH);
+                if (i % 2 === 1) {
+                    doc.setFillColor(252, 250, 247);
+                    doc.rect(m, rY, contentW, rowH, 'F');
+                }
+            }
+
+            // Capa 3: Líneas horizontales entre todas las filas
+            doc.setDrawColor(225, 220, 212);
+            doc.setLineWidth(0.18);
+            for (let i = 0; i < rowCount; i++) {
+                const rY = y + headerRowH + (i * rowH);
+                doc.line(m, rY + rowH, m + contentW, rY + rowH);
+            }
+
+            // Capa 4: Textos de las franjas horarias y contenidos de celdas
+            const timeFontSize = isBook ? (rowCount > 16 ? 4.8 : 5.8) : (rowCount > 16 ? 6.2 : 7.5);
+            for (let i = 0; i < rowCount; i++) {
+                const rY = y + headerRowH + (i * rowH);
+                const slot = slots[i];
+
+                // Franja horaria a la izquierda
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(timeFontSize);
+                doc.setTextColor(55, 50, 45);
+                doc.text(slot.label, m + (timeColW / 2), rY + (rowH / 2) + 1, { align: 'center' });
+
+                // Bloques de ejemplo si aplica
+                if (!isBlankModal && isExampleActive) {
+                    for (let d = 0; d < 7; d++) {
+                        const block = SCHEDULE_EXAMPLE.blocks.find(b => b.row === i && b.day === d);
+                        if (block) {
+                            const cX = m + timeColW + (d * dayColW);
+                            doc.setFillColor(242, 236, 228);
+                            doc.rect(cX + 0.8, rY + 0.8, dayColW - 1.6, rowH - 1.6, 'F');
+
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(isBook ? 4.6 : 6);
+                            doc.setTextColor(50, 40, 35);
+                            doc.text(block.text, cX + 2, rY + (rowH / 2) + 0.8);
+                        }
+                    }
+                }
+            }
+
+            // Capa 5: Líneas verticales
+            // 1. Líneas divisorias entre días
+            doc.setDrawColor(225, 220, 212);
+            doc.setLineWidth(0.16);
+            for (let d = 1; d < 7; d++) {
+                const dayX = m + timeColW + (d * dayColW);
+                doc.line(dayX, y, dayX, y + availableTableH);
+            }
+
+            // 2. Línea divisoria principal entre HORA y LUNES
+            doc.setDrawColor(195, 190, 180);
+            doc.setLineWidth(0.3);
+            doc.line(m + timeColW, y, m + timeColW, y + availableTableH);
+
+            // 3. Marco exterior de la tabla
+            doc.setDrawColor(210, 205, 195);
+            doc.setLineWidth(0.28);
+            doc.rect(m, y, contentW, availableTableH);
+
+            y += availableTableH + (isBook ? 3.5 : 5);
+
+            // 5. BLOQUE DE NOTAS Y PRIORIDADES
+            const notesH = isBook ? 15.5 : 22;
+            doc.setFillColor(251, 249, 245);
+            doc.setDrawColor(220, 215, 205);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(m, y, contentW, notesH, 1.5, 1.5, 'FD');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(isBook ? 6 : 7.5);
+            doc.setTextColor(135, 85, 59);
+            doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', m + 3.5, y + (isBook ? 3.5 : 4.5));
+
+            if (activeNotes) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(isBook ? 6.5 : 8);
+                doc.setTextColor(45, 40, 35);
+                const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
+                const nLines = doc.splitTextToSize(cleanNotes, contentW - 8);
+                doc.text(nLines.slice(0, 3), m + 3.5, y + (isBook ? 7.2 : 9.2));
+            }
+
+            // 6. FOOTER EDITORIAL
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(isBook ? 5.8 : 7.2);
+            doc.setTextColor(140, 135, 130);
+            doc.text('MENOS RUIDO · REGISTRO CONSTANTE', m, ph - m + 2);
+            doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
+
+            // NOMENCLATURA EXACTA:
+            // En blanco: menos-ruido-plantilla-planificador-horario.pdf
+            // Personalizado: MENOS RUIDO Planificador Horario.pdf
+            let fileName = '';
+            if (isBlankModal) {
+                fileName = 'menos-ruido-plantilla-planificador-horario.pdf';
+            } else {
+                const cleanWeek = (activeWeek || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+                if (cleanWeek) {
+                    fileName = `MENOS RUIDO Planificador Horario ${cleanWeek}.pdf`;
+                } else {
+                    fileName = 'MENOS RUIDO Planificador Horario.pdf';
+                }
+            }
+
+            doc.save(fileName);
+            showToast('✓ Archivo "' + fileName + '" descargado.');
+
+            registrarMetricaGratis('/metricas/descarga-pdf-generador-horario.html');
+            trackVercelEvent('descarga_pdf', {
+                herramienta: 'generador_horario',
+                tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado',
+                formato: selectedFormat
+            });
+        }
+
+        function registrarMetricaGratis(paginaVirtual) {
+            try {
+                if (window.va) {
+                    window.va('pageview', { url: paginaVirtual });
+                }
+            } catch (err) {}
+        }
+
+        function trackVercelEvent(nombreEvento, datos) {
+            try {
+                if (window.va) {
+                    window.va('event', { name: nombreEvento, data: datos });
+                }
+            } catch (err) {}
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            populateRowCountSelect(24);
+            renderPreview();
+        });
+    </script>
+</body>
+</html>
