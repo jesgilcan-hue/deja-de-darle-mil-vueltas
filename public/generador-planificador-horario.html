@@ -20,8 +20,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Librería jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
 
     <style>
         :root {
@@ -178,6 +188,7 @@
             color: #444;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
 
         .form-label small {
@@ -212,7 +223,7 @@
         .auto-expand-textarea {
             resize: none;
             overflow-y: hidden;
-            min-height: 48px;
+            min-height: 42px;
             line-height: 1.4;
         }
 
@@ -223,45 +234,13 @@
             margin-top: 2px;
         }
 
-        /* SELECTORES DE CONFIGURACIÓN HORARIA */
-        .select-pill-group {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-
-        .btn-pill-option {
-            background: #fff;
-            border: 1px solid #d5cfc5;
-            padding: 7px 4px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #444;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .btn-pill-option:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .btn-pill-option.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-            box-shadow: 0 2px 6px rgba(135, 85, 59, 0.25);
-        }
-
         .helper-text {
             font-size: 0.72rem;
             color: #777;
             line-height: 1.35;
         }
 
-        /* BOTONES DE DESCARGA */
+        /* BOTONES DE ACCIÓN */
         .btn-primary-action {
             background: var(--accent);
             color: #ffffff;
@@ -322,12 +301,12 @@
         .preview-banner {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             background: #f1ede5;
             border: 1px solid #e1dcce;
             padding: 8px 14px;
             border-radius: 8px;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
+            font-weight: 700;
             color: #665f54;
             box-sizing: border-box;
         }
@@ -539,14 +518,15 @@
             letter-spacing: 0.5px;
         }
 
-        /* MODAL DE DESCARGA */
-        .modal-backdrop {
+        /* MODAL POP-UP DE DESCARGA (ESTILO ESTÁNDAR MENOS RUIDO) */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(20, 16, 14, 0.6);
+            background: rgba(20, 16, 14, 0.65);
+            backdrop-filter: blur(4px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -554,76 +534,184 @@
             padding: 16px;
         }
 
-        .modal-backdrop.active {
+        .modal-overlay.active {
             display: flex;
         }
 
-        .modal-window {
+        .modal-card {
             background: #ffffff;
-            border-radius: 12px;
-            max-width: 480px;
+            border-radius: 14px;
+            max-width: 540px;
             width: 100%;
-            padding: 24px;
-            box-shadow: 0 16px 40px rgba(0,0,0,0.25);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            padding: 24px 22px;
+            box-shadow: 0 24px 50px rgba(0,0,0,0.22);
             position: relative;
+            animation: modalIn 0.25s ease-out;
+            max-height: 92vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        @keyframes modalIn {
+            from { transform: translateY(14px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .modal-close-btn {
             position: absolute;
             top: 14px;
             right: 14px;
-            background: none;
+            background: #f1ede5;
             border: none;
-            font-size: 1.3rem;
-            color: #777;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.9rem;
             cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
+
         .modal-close-btn:hover {
+            background: #e3ded5;
             color: #111;
         }
 
-        .modal-header h3 {
-            font-family: var(--font-serif);
-            font-size: 1.3rem;
-            color: #211c19;
-            margin-top: 4px;
+        .modal-badge {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            background: var(--accent-light);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 6px;
         }
 
-        .modal-format-selector {
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1a1614;
+            margin-bottom: 4px;
+        }
+
+        .modal-desc {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .btn-modal-download {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+
+        .btn-modal-download:hover {
+            background: var(--accent-hover);
+        }
+
+        .modal-books-section {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 10px;
+            padding: 14px 12px;
+            text-align: left;
+        }
+
+        .modal-books-header {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .modal-books-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 6px;
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        .btn-format-card {
-            border: 1.5px solid #d5cfc5;
-            background: #fff;
-            padding: 10px;
+        .modal-book-card {
+            background: #ffffff;
+            border: 1px solid #dfd9ce;
             border-radius: 6px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .btn-format-card.active {
-            border-color: var(--accent);
-            background: rgba(135, 85, 59, 0.05);
+
+        .modal-book-thumb {
+            width: 40px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 3px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
         }
-        .btn-format-card strong {
-            display: block;
-            font-size: 0.82rem;
-            color: #222;
+
+        .modal-book-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
         }
-        .btn-format-card span {
+
+        .modal-book-badge {
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-book-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #1a1614;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .btn-book-amazon {
             font-size: 0.7rem;
-            color: #777;
+            font-weight: 700;
+            color: #ffffff;
+            background: var(--accent);
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            margin-top: 2px;
         }
 
         /* TOAST */
-        .toast-notification {
+        .toast-notify {
             position: fixed;
             bottom: 24px;
             right: 24px;
@@ -651,6 +739,9 @@
             .preview-column {
                 position: static;
             }
+            .modal-books-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -658,9 +749,12 @@
 
     <!-- ENCABEZADO -->
     <header class="header-container">
-        <span class="tag-pill">Herramienta Gratuita · Menos Ruido</span>
-        <h1>Planificador Horario</h1>
-        <p class="subtitle">Estructura semanal por franjas horarias con hasta 24 filas configurables. Diseña tus bloques de tiempo con calma y claridad antes de imprimir en papel.</p>
+        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
+        <div>
+            <span class="tag-pill">Herramienta Gratuita · Menos Ruido</span>
+            <h1>Planificador Horario</h1>
+            <p class="subtitle">Estructura semanal por franjas horarias con hasta 24 filas configurables. Diseña tus bloques de tiempo con calma y claridad antes de imprimir en papel.</p>
+        </div>
     </header>
 
     <!-- LAYOUT PRINCIPAL -->
@@ -669,10 +763,10 @@
         <!-- PANEL DE CONTROLES (IZQUIERDA) -->
         <section class="controls-panel">
             <div class="panel-header-top">
-                <span class="panel-heading-text">Configura tu Cuadrícula</span>
+                <span class="panel-heading-text">Configura tu planificador</span>
                 <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" onclick="loadExampleData()">✨ Ejemplo</button>
-                    <button type="button" class="btn-quick" onclick="clearAllData()">🧹 Limpiar</button>
+                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
+                    <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
                 </div>
             </div>
 
@@ -745,17 +839,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="input-week-label">Semana o Fechas</label>
-                    <input type="text" id="input-week-label" class="form-control" placeholder="Ej: 14 - 20 Octubre · Semana 42" oninput="updateHeaderPreview()" />
+                    <label class="form-label" for="input-week-label">
+                        <span>Semana o Fechas</span>
+                        <small>Máx. 20 caracteres</small>
+                    </label>
+                    <textarea id="input-week-label" class="form-control auto-expand-textarea" rows="1" maxlength="20" placeholder="Ej: 14 - 20 Octubre" oninput="handleWeekInput(this)"></textarea>
+                    <div class="char-counter" id="count-week-label">0/20</div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="input-week-focus">
                         <span>Enfoque o Lema de la Semana</span>
-                        <small>Máx. 120 caracteres</small>
+                        <small>Máx. 150 caracteres</small>
                     </label>
-                    <textarea id="input-week-focus" class="form-control auto-expand-textarea" maxlength="120" placeholder="Ej: Menos prisa, una sola prioridad clara al día y desconexión a las 20:00." oninput="handleFocusInput(this)"></textarea>
-                    <div class="char-counter" id="count-week-focus">0/120</div>
+                    <textarea id="input-week-focus" class="form-control auto-expand-textarea" maxlength="150" placeholder="Ej: Menos prisa, una sola prioridad clara al día y desconexión a las 20:00." oninput="handleFocusInput(this)"></textarea>
+                    <div class="char-counter" id="count-week-focus">0/150</div>
                 </div>
             </div>
 
@@ -789,8 +887,7 @@
         <!-- COLUMNA DERECHA: VISTA PREVIA INTERACTIVA -->
         <section class="preview-column">
             <div class="preview-banner">
-                <span>👁️ <strong>Vista previa en tiempo real</strong> · Formato Libro Apaisado (8.25" × 6")</span>
-                <span style="font-size: 0.72rem; color: #888;">Escala adaptativa</span>
+                <span>Vista previa</span>
             </div>
 
             <!-- HOJA EDITORIAL -->
@@ -843,52 +940,71 @@
 
     </main>
 
-    <!-- MODAL DE DESCARGA -->
-    <div class="modal-backdrop" id="download-modal" onclick="closeModalOnBackdrop(event)">
-        <div class="modal-window">
+    <!-- MODAL POP-UP DE DESCARGA (ESTILO ESTÁNDAR MENOS RUIDO) -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
             <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <span class="modal-badge" id="modal-badge-label">Descarga Lista</span>
+            <h3 class="modal-title" id="modal-title-label">Tu Horario en Papel</h3>
+            <p class="modal-desc" id="modal-desc-label">Genera tu PDF vectorial calibrado para lápiz o pluma estilográfica.</p>
 
-            <div class="modal-header">
-                <span class="tag-pill" id="modal-badge-label">PDF Vectorial de Alta Resolución</span>
-                <h3 id="modal-title-label">Descargar Planificador Horario</h3>
-                <p id="modal-desc-label" style="font-size: 0.82rem; color: #666; margin-top: 4px;">
-                    Exportación optimizada a 300 DPI lista para imprimir en papel crema o blanco con líneas nítidas.
-                </p>
+            <div style="text-align: left; margin-bottom: 16px;">
+                <label for="modal-select-format" style="font-size: 0.8rem; font-weight: 700; color: #444; margin-bottom: 4px; display: block;">Formato de papel:</label>
+                <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
+                    <option value="book" selected>Formato Libro 8.25" × 6" (210 × 152 mm) · Estándar Menos Ruido</option>
+                    <option value="a4">Folio DIN A4 Apaisado (297 × 210 mm) · Impresora estándar</option>
+                </select>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Elige el formato de papel:</label>
-                <div class="modal-format-selector">
-                    <div class="btn-format-card active" id="btn-format-book" onclick="selectDownloadFormat('book')">
-                        <strong>📖 Formato Libro Apaisado</strong>
-                        <span>8.25" × 6" (210 × 152 mm) · Estándar Menos Ruido</span>
+            <button type="button" class="btn-modal-download" onclick="executeScheduleDownload()" id="modal-download-btn-text">
+                📥 Descargar PDF ahora
+            </button>
+
+            <!-- CUADERNOS FÍSICOS EN AMAZON -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 4px 0 12px 0;">
+                    Esta plantilla te permite estructurar tus bloques de tiempo semana a semana, pero la metodología integral para evitar la saturación y sostener tus avances está en nuestras ediciones encuadernadas.
+                </p>
+                <div class="modal-books-grid">
+                    <!-- Planificador 90 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Enfoque trimestral</span>
+                            <h4 class="modal-book-title">Planificador 90 Días</h4>
+                            <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_horario' })">
+                                Amazon ↗
+                            </a>
+                        </div>
                     </div>
-                    <div class="btn-format-card" id="btn-format-a4" onclick="selectDownloadFormat('a4')">
-                        <strong>📄 Folio DIN A4 Apaisado</strong>
-                        <span>297 × 210 mm · Impresora estándar</span>
+
+                    <!-- Planificador Semanal -->
+                    <div class="modal-book-card">
+                        <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Atemporal" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Formato Apaisado</span>
+                            <h4 class="modal-book-title">Semanal Atemporal</h4>
+                            <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_semanal', origen: 'modal_horario' })">
+                                Amazon ↗
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div style="margin-top: 6px;">
-                <button type="button" class="btn-primary-action" id="btn-execute-download" onclick="executeScheduleDownload()">
-                    <span id="modal-download-btn-text">📥 Descargar PDF ahora</span>
-                </button>
             </div>
         </div>
     </div>
 
     <!-- TOAST NOTIFICACIÓN -->
-    <div class="toast-notification" id="toast-msg"></div>
+    <div class="toast-notify" id="toast-msg"></div>
 
     <script>
         // ESTADO GLOBAL
         let isExampleActive = false;
         let isBlankModal = false;
-        let selectedFormat = 'book'; // 'book' o 'a4'
 
         const SCHEDULE_EXAMPLE = {
-            week: 'Semana 42 · 14 al 20 de Octubre',
+            week: 'Semana 42',
             focus: 'Proteger las primeras horas para el trabajo que requiere concentración profunda.',
             notes: 'Sin pantallas a partir de las 20:30. Paseo diario de 30 minutos sin auriculares para despejar la mente.',
             blocks: [
@@ -909,14 +1025,22 @@
         function autoResizeTextarea(el) {
             if (!el) return;
             el.style.height = 'auto';
-            el.style.height = (el.scrollHeight) + 'px';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        }
+
+        function handleWeekInput(el) {
+            isExampleActive = false;
+            autoResizeTextarea(el);
+            const count = document.getElementById('count-week-label');
+            if (count) count.textContent = `${el.value.length}/20`;
+            updateHeaderPreview();
         }
 
         function handleFocusInput(el) {
             isExampleActive = false;
             autoResizeTextarea(el);
             const count = document.getElementById('count-week-focus');
-            if (count) count.textContent = `${el.value.length}/120`;
+            if (count) count.textContent = `${el.value.length}/150`;
             updateHeaderPreview();
         }
 
@@ -949,9 +1073,8 @@
             if (!select) return;
 
             const step = getStepHours();
-            // Ciclo completo de 24 horas: 24 / step (ej. 3h -> 8 filas, 2h -> 12 filas, 1h -> 24 filas, 0.5h -> 48h pero tope 24 filas)
             let defaultCycleRows = Math.min(Math.round(24 / step), 24);
-            if (step === 0.5) defaultCycleRows = 24; // 24 filas = 12 horas
+            if (step === 0.5) defaultCycleRows = 24;
 
             const targetVal = preferredRows || defaultCycleRows;
 
@@ -980,7 +1103,6 @@
             const covEl = document.getElementById('rows-coverage-info');
             const summaryEl = document.getElementById('helper-time-summary');
 
-            const endH = (startH + totalHours) % 24;
             const formatH = (h) => {
                 const intH = Math.floor(h);
                 const min = Math.round((h - intH) * 60);
@@ -1000,7 +1122,7 @@
 
         function onIntervalSelectChange() {
             isExampleActive = false;
-            populateRowCountSelect(); // sincroniza con el ciclo óptimo
+            populateRowCountSelect();
             renderPreview();
         }
 
@@ -1116,14 +1238,16 @@
         function clearAllData() {
             isExampleActive = false;
             const wInput = document.getElementById('input-week-label');
-            if (wInput) wInput.value = '';
+            if (wInput) { wInput.value = ''; wInput.style.height = ''; }
             const fInput = document.getElementById('input-week-focus');
             if (fInput) { fInput.value = ''; fInput.style.height = ''; }
             const nInput = document.getElementById('input-week-notes');
             if (nInput) { nInput.value = ''; nInput.style.height = ''; }
 
+            const cWk = document.getElementById('count-week-label');
+            if (cWk) cWk.textContent = '0/20';
             const cFoc = document.getElementById('count-week-focus');
-            if (cFoc) cFoc.textContent = '0/120';
+            if (cFoc) cFoc.textContent = '0/150';
             const cNot = document.getElementById('count-week-notes');
             if (cNot) cNot.textContent = '0/150';
 
@@ -1176,32 +1300,31 @@
             }
         }
 
-        function selectDownloadFormat(fmt) {
-            selectedFormat = fmt;
-            document.getElementById('btn-format-book')?.classList.toggle('active', fmt === 'book');
-            document.getElementById('btn-format-a4')?.classList.toggle('active', fmt === 'a4');
-        }
-
         // ========================================================
         // MOTOR DE EXPORTACIÓN PDF VECTORIAL (jsPDF)
         // ========================================================
         function executeScheduleDownload() {
             closeDownloadModal();
 
-            const { jsPDF } = window.jspdf || {};
-            if (!jsPDF) {
-                alert('No se pudo inicializar la librería jsPDF.');
+            // Detección robusta de jsPDF en entornos UMD / CDN / Global
+            let jsPDFClass = null;
+            if (window.jspdf && window.jspdf.jsPDF) {
+                jsPDFClass = window.jspdf.jsPDF;
+            } else if (window.jsPDF) {
+                jsPDFClass = window.jsPDF;
+            }
+
+            if (!jsPDFClass) {
+                alert('No se pudo inicializar la librería jsPDF. Por favor, recarga la página.');
                 return;
             }
 
-            // Dimensiones según formato
-            // 'book': 8.25" x 6" [209.55, 152.4] mm
-            // 'a4': DIN A4 Apaisado [297, 210] mm
-            const isBook = (selectedFormat === 'book');
+            const formatVal = document.getElementById('modal-select-format')?.value || 'book';
+            const isBook = (formatVal === 'book');
             const pageDims = isBook ? [209.55, 152.4] : [297, 210];
             const orientation = 'landscape';
 
-            let doc = new jsPDF({
+            let doc = new jsPDFClass({
                 orientation: orientation,
                 unit: 'mm',
                 format: pageDims
@@ -1209,7 +1332,7 @@
 
             const pw = doc.internal.pageSize.getWidth();
             const ph = doc.internal.pageSize.getHeight();
-            const m = isBook ? 12 : 16; // Margen en mm
+            const m = isBook ? 12 : 16;
             const contentW = pw - (m * 2);
 
             // Fondo crema editorial
@@ -1270,7 +1393,7 @@
             y += (isBook ? 3.2 : 4);
 
             // 4. TABLA HORARIA
-            const timeColW = isBook ? 24 : 32; // Columna de franja horaria
+            const timeColW = isBook ? 24 : 32;
             const daysGridW = contentW - timeColW;
             const dayColW = daysGridW / 7;
             const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
@@ -1323,13 +1446,11 @@
                 const rY = y + headerRowH + (i * rowH);
                 const slot = slots[i];
 
-                // Franja horaria a la izquierda
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(timeFontSize);
                 doc.setTextColor(55, 50, 45);
                 doc.text(slot.label, m + (timeColW / 2), rY + (rowH / 2) + 1, { align: 'center' });
 
-                // Bloques de ejemplo si aplica
                 if (!isBlankModal && isExampleActive) {
                     for (let d = 0; d < 7; d++) {
                         const block = SCHEDULE_EXAMPLE.blocks.find(b => b.row === i && b.day === d);
@@ -1396,9 +1517,7 @@
             doc.text('MENOS RUIDO · REGISTRO CONSTANTE', m, ph - m + 2);
             doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
 
-            // NOMENCLATURA EXACTA:
-            // En blanco: menos-ruido-plantilla-planificador-horario.pdf
-            // Personalizado: MENOS RUIDO Planificador Horario.pdf
+            // NOMENCLATURA
             let fileName = '';
             if (isBlankModal) {
                 fileName = 'menos-ruido-plantilla-planificador-horario.pdf';
@@ -1418,7 +1537,7 @@
             trackVercelEvent('descarga_pdf', {
                 herramienta: 'generador_horario',
                 tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado',
-                formato: selectedFormat
+                formato: formatVal
             });
         }
 
