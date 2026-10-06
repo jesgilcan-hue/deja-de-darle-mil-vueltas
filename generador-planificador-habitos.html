@@ -369,22 +369,28 @@
             border-bottom: 1.5px solid #28231e;
             padding-bottom: 4px;
             margin-bottom: 10px;
+            gap: 12px;
         }
 
         .preview-main-title {
             font-family: var(--font-serif);
-            font-size: 1.35rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: #211c19;
             letter-spacing: -0.2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .preview-date-text {
-            font-size: 0.82rem;
-            letter-spacing: 1px;
+            font-size: 0.74rem;
+            letter-spacing: 0.8px;
             font-weight: 700;
             color: #444;
             text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         /* TABLA DE HÁBITOS EN VISTA PREVIA */
@@ -492,6 +498,22 @@
             white-space: nowrap;
             text-overflow: ellipsis;
             background: #fcfbf9;
+        }
+
+        .habit-row-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(31, 1fr);
+        }
+
+        .habit-row-cell {
+            border-right: 1px solid #f0eae1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .habit-row-cell:last-child {
+            border-right: none;
         }
 
         .habit-circle {
@@ -820,8 +842,8 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <label for="input-habit-intention">Intención o enfoque del mes <span class="char-count" id="count-intention">0/150</span></label>
-                    <input type="text" id="input-habit-intention" maxlength="150" placeholder="Ej: Calma en las mañanas y desconexión nocturna..." oninput="handleIntentionInput(this)">
+                    <label for="input-habit-intention">Intención o enfoque del mes <span class="char-count" id="count-intention">0/120</span></label>
+                    <input type="text" id="input-habit-intention" maxlength="120" placeholder="Ej: Calma en las mañanas y desconexión nocturna..." oninput="handleIntentionInput(this)">
                 </div>
             </div>
 
@@ -1068,7 +1090,7 @@
         function handleIntentionInput(input) {
             isExampleActive = false;
             const count = document.getElementById('count-intention');
-            if (count && input) count.textContent = input.value.length + '/150';
+            if (count && input) count.textContent = input.value.length + '/120';
             updateIntentionPreview();
         }
 
@@ -1211,7 +1233,7 @@
             if (nInput) { nInput.value = ''; nInput.style.height = ''; }
 
             const cInt = document.getElementById('count-intention');
-            if (cInt) cInt.textContent = '0/150';
+            if (cInt) cInt.textContent = '0/120';
             const cNot = document.getElementById('count-notes');
             if (cNot) cNot.textContent = '0/150';
 
@@ -1384,20 +1406,26 @@
                 doc.text(d.toString(), dayX + (dayColW / 2), y + 3.4, { align: 'center' });
             }
 
-            // Filas de hábitos: Fondos alternos, textos y casillas
+            // Capa 1: Fondos alternos en las celdas de hábitos (se dibujan primero para que nunca pisen las líneas)
             for (let i = 0; i < numHabitsToDraw; i++) {
                 const rY = y + headerRowH + (i * rowH);
-
-                // Alternancia sutil de fondo en fila par
                 if (i % 2 === 1) {
                     doc.setFillColor(252, 250, 247);
                     doc.rect(m, rY, colTitleW, rowH, 'F');
                 }
+            }
 
-                // Línea horizontal inferior de fila
-                doc.setDrawColor(225, 220, 212);
-                doc.setLineWidth(0.18);
+            // Capa 2: Líneas horizontales entre todas las filas (garantiza que estén 100% presentes sin excepción)
+            doc.setDrawColor(225, 220, 212);
+            doc.setLineWidth(0.18);
+            for (let i = 0; i < numHabitsToDraw; i++) {
+                const rY = y + headerRowH + (i * rowH);
                 doc.line(m, rY + rowH, m + contentW, rY + rowH);
+            }
+
+            // Capa 3: Textos de los hábitos (centrados) y casillas de los 31 días (círculos o cuadraditos)
+            for (let i = 0; i < numHabitsToDraw; i++) {
+                const rY = y + headerRowH + (i * rowH);
 
                 // Texto del hábito: centrado verticalmente en la cuadrícula
                 const hName = activeHabits[i] || '';
@@ -1437,7 +1465,7 @@
                 }
             }
 
-            // LÍNEAS VERTICALES DE LA TABLA (DIBUJADAS DESPUÉS DE LOS FONDOS PARA EVITAR QUE SEAN TAPADAS)
+            // Capa 4: Líneas verticales de la tabla (después de los fondos para que nunca sean tapadas)
             // 1. Líneas de separación de los días 1 a 31
             doc.setDrawColor(225, 220, 212);
             doc.setLineWidth(0.15);
