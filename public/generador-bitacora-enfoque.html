@@ -20,18 +20,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
+    <!-- Script de jsPDF local UMD y CDN de respaldo asegurado -->
     <script src="./jspdf.umd.min.js"></script>
-    <script>
-        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-            document.write('<script src="/jspdf.umd.min.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
-        }
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
@@ -1736,7 +1727,7 @@
             </div>
 
             <!-- BOTÓN PRINCIPAL DE GENERACIÓN -->
-            <button type="button" class="btn-primary-action" onclick="openDownloadModal()">
+            <button type="button" class="btn-primary-action" id="btn-main-download" onclick="openDownloadModal()">
                 <span>📥</span>
                 <span>Descargar mi libro completo en PDF</span>
             </button>
@@ -1894,6 +1885,14 @@
             renderActivePreviewSheet();
             calculateBookSpecs();
             highlightControlSection('cover');
+
+            const dlBtn = document.getElementById('btn-main-download');
+            if (dlBtn) {
+                dlBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openDownloadModal();
+                });
+            }
         });
 
         // CAMBIO DE FORMATO DE PAPEL (LIBRO 8.25x6 vs A4)
@@ -2124,9 +2123,14 @@
             const spineMm = Math.max(2.5, (sheets * 0.125)).toFixed(1);
             const weightG = Math.round(sheets * 3.4);
 
-            document.getElementById('spec-total-pages').textContent = total;
-            document.getElementById('spec-spine-width').textContent = spineMm + ' mm';
-            document.getElementById('spec-weight-val').textContent = weightG + ' g';
+            const totalEl = document.getElementById('spec-total-pages');
+            if (totalEl) totalEl.textContent = total;
+
+            const spineEl = document.getElementById('spec-spine-width');
+            if (spineEl) spineEl.textContent = spineMm + ' mm';
+
+            const weightEl = document.getElementById('spec-weight-val');
+            if (weightEl) weightEl.textContent = weightG + ' g';
 
             return total;
         }
@@ -2583,13 +2587,32 @@
         // GESTIÓN DEL MODAL & CÁLCULO DEL ÍNDICE DESGLOSADO
         // ========================================================
         function openDownloadModal() {
-            calculateBookSpecs();
-            renderModalIndex();
+            try {
+                calculateBookSpecs();
+            } catch (err) {
+                console.error("Error al calcular especificaciones:", err);
+            }
 
-            document.getElementById('download-progress-box').style.display = 'none';
-            document.getElementById('btn-modal-generate').style.display = 'block';
-            document.getElementById('download-modal').classList.add('active');
+            try {
+                renderModalIndex();
+            } catch (err) {
+                console.error("Error al renderizar el índice del modal:", err);
+            }
+
+            const pBox = document.getElementById('download-progress-box');
+            if (pBox) pBox.style.display = 'none';
+
+            const bGen = document.getElementById('btn-modal-generate');
+            if (bGen) bGen.style.display = 'block';
+
+            const modal = document.getElementById('download-modal');
+            if (modal) {
+                modal.classList.add('active');
+            } else {
+                console.error("Elemento #download-modal no encontrado.");
+            }
         }
+        window.openDownloadModal = openDownloadModal;
 
         function renderModalIndex() {
             const listEl = document.getElementById('modal-index-list');
