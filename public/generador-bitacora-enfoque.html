@@ -1380,33 +1380,40 @@
                 <span class="panel-heading-text">Configura tu planificador</span>
             </div>
 
-            <!-- SECCIÓN 1: PORTADA & DEDICATORIA -->
+            <!-- SECCIÓN 1: FORMATO, PORTADA & DEDICATORIA -->
             <div class="section-box" id="sec-ctrl-1">
                 <div class="section-header-title">
-                    <span>1. Portada & Dedicatoria</span>
+                    <span>1. Formato, Portada & Dedicatoria</span>
                     <span class="tag-status">Personalizable</span>
                 </div>
                 <div class="control-group">
+                    <label for="select-paper-format">Formato de Impresión / Tamaño:</label>
+                    <select id="select-paper-format" onchange="updatePaperFormat()">
+                        <option value="book" selected>Formato Libro Apaisado (8.25" × 6" · 210 × 152 mm)</option>
+                        <option value="a4">Formato DIN A4 Apaisado (297 × 210 mm)</option>
+                    </select>
+                </div>
+                <div class="control-group">
                     <label for="input-book-title">Título del Cuaderno</label>
-                    <input type="text" id="input-book-title" value="MI CUADERNO DE ENFOQUE" oninput="updateBookCoverData()">
+                    <input type="text" id="input-book-title" value="MI CUADERNO DE ENFOQUE" placeholder="Ej: MI CUADERNO DE ENFOQUE" onfocus="this.select()" oninput="updateBookCoverData()">
                 </div>
                 <div class="control-group">
                     <label for="input-book-owner">Propietario / Pertenencia</label>
-                    <input type="text" id="input-book-owner" placeholder="Ej: Juan Pérez" oninput="updateBookCoverData()">
+                    <input type="text" id="input-book-owner" value="" placeholder="Ej: Juan Pérez" onfocus="this.select()" oninput="updateBookCoverData()">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <div class="control-group">
                         <label for="input-book-year">Año impreso</label>
-                        <input type="number" id="input-book-year" placeholder="Ej: 2027" value="2027" oninput="updateBookCoverData()">
+                        <input type="number" id="input-book-year" placeholder="Ej: 2027" value="2027" onfocus="this.select()" oninput="updateBookCoverData()">
                     </div>
                     <div class="control-group">
                         <label for="input-book-city">Ciudad / Pie</label>
-                        <input type="text" id="input-book-city" placeholder="Ej: Madrid" oninput="updateBookCoverData()">
+                        <input type="text" id="input-book-city" placeholder="Ej: Madrid" onfocus="this.select()" oninput="updateBookCoverData()">
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="input-book-dedication">Dedicatoria para regalo (Opcional)</label>
-                    <textarea id="input-book-dedication" rows="2" placeholder="Ej: Para el mejor padre del mundo: un espacio para pausar y pensar con calma." oninput="updateBookCoverData()"></textarea>
+                    <textarea id="input-book-dedication" rows="2" placeholder="Ej: Para el mejor padre del mundo: un espacio para pausar y pensar con calma." onfocus="this.select()" oninput="updateBookCoverData()"></textarea>
                 </div>
             </div>
 
@@ -1525,22 +1532,6 @@
                     </div>
                 </div>
 
-                <!-- RESUMEN DE PÁGINAS Y LOMO -->
-                <div class="book-specs-summary">
-                    <div class="spec-badge">
-                        <span class="spec-badge-val" id="spec-total-pages">124</span>
-                        <span class="spec-badge-lbl">Páginas Totales</span>
-                    </div>
-                    <div class="spec-badge">
-                        <span class="spec-badge-val" id="spec-spine-width">7.8 mm</span>
-                        <span class="spec-badge-lbl">Lomo Estimado</span>
-                    </div>
-                    <div class="spec-badge">
-                        <span class="spec-badge-val" id="spec-weight-val">220 g</span>
-                        <span class="spec-badge-lbl">Peso Cuaderno</span>
-                    </div>
-                </div>
-
                 <!-- CONTADORES DE PÁGINAS POR TIPO -->
                 <div style="display: flex; flex-direction: column; gap: 7px; margin-top: 4px;">
                     <!-- Portada -->
@@ -1613,11 +1604,11 @@
                     <div class="page-block-row" id="row-qty-schedule">
                         <div class="page-block-info">
                             <span class="page-block-title">⏱️ Planificadores Horarios</span>
-                            <span class="page-block-desc">Estructura semanal por franjas</span>
+                            <span class="page-block-desc">1 por semana (4 o 5 por mes)</span>
                         </div>
                         <div class="page-qty-stepper">
                             <button type="button" class="btn-step" onclick="stepQty('schedule', -1)">-</button>
-                            <input type="number" id="qty-schedule" class="input-step-num" value="3" min="0" max="52" onchange="updatePageStructure()">
+                            <input type="number" id="qty-schedule" class="input-step-num" value="12" min="0" max="54" onchange="updatePageStructure()">
                             <button type="button" class="btn-step" onclick="stepQty('schedule', 1)">+</button>
                         </div>
                     </div>
@@ -1630,7 +1621,7 @@
                         </div>
                         <div class="page-qty-stepper">
                             <button type="button" class="btn-step" onclick="stepQty('weekly', -1)">-</button>
-                            <input type="number" id="qty-weekly" class="input-step-num" value="14" min="0" max="54" onchange="updatePageStructure()">
+                            <input type="number" id="qty-weekly" class="input-step-num" value="12" min="0" max="54" onchange="updatePageStructure()">
                             <button type="button" class="btn-step" onclick="stepQty('weekly', 1)">+</button>
                         </div>
                     </div>
@@ -1669,6 +1660,12 @@
                         </div>
                         <span style="font-weight: 700; font-size: 0.8rem; color: #555;">1 pág</span>
                     </div>
+
+                    <!-- PÁGINAS TOTALES AL FINAL DE LA SECCIÓN 5 -->
+                    <div style="background: #ffffff; border: 1.5px solid #dcd7ce; border-radius: 8px; padding: 10px 14px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.78rem; font-weight: 800; color: #2b2520; text-transform: uppercase; letter-spacing: 0.6px;">Páginas Totales del Cuaderno:</span>
+                        <span id="spec-total-pages" style="font-size: 1.25rem; font-weight: 800; color: var(--accent);">132</span>
+                    </div>
                 </div>
             </div>
 
@@ -1682,21 +1679,35 @@
                 <div class="control-group">
                     <label>Distribución interior de las páginas:</label>
                     <div class="flow-selector-box">
-                        <div class="flow-card-option active" id="flow-card-modular" onclick="setFlowMode('modular')">
+                        <!-- OPCIÓN 1: MODULAR SEMANA A SEMANA (1 MES + 1 HÁBITOS + [1 HORARIO + 1 SEMANAL + 7 DÍAS] x 4) -->
+                        <div class="flow-card-option active" id="flow-card-weekly_cycle" onclick="setFlowMode('weekly_cycle')">
                             <div class="flow-card-header">
-                                <span class="flow-card-title">1. Modular Cíclico (Recomendado)</span>
-                                <span class="flow-card-badge">Mes a Mes</span>
+                                <span class="flow-card-title">1. Modular Integrado Semana a Semana (Recomendado)</span>
+                                <span class="flow-card-badge">Totalmente Cíclico</span>
                             </div>
                             <p class="flow-card-desc">
-                                Cada mes tiene su propio bloque completo:<br>
-                                <strong>1 Mensual → 1 Hábitos → 1 Horario → 4 Semanas → 30 Días</strong>.<br>
-                                Esta secuencia se repite ordenadamente mes a mes.
+                                Cada mes arranca con <strong>1 Mensual + 1 Hábitos</strong> y luego se estructura semana por semana en 4 ciclos:<br>
+                                <strong>1 Horario semanal → 1 Planificador semanal → 7 Días</strong> (repetido × 4 semanas).<br>
+                                Máxima comodidad: todo lo de cada semana junto en el cuaderno.
                             </p>
                         </div>
 
+                        <!-- OPCIÓN 2: MODULAR POR BLOQUES DE MES -->
+                        <div class="flow-card-option" id="flow-card-modular" onclick="setFlowMode('modular')">
+                            <div class="flow-card-header">
+                                <span class="flow-card-title">2. Modular por Bloques de Mes</span>
+                                <span class="flow-card-badge">Mes Agrupado</span>
+                            </div>
+                            <p class="flow-card-desc">
+                                Cada mes contiene:<br>
+                                <strong>1 Mensual → 1 Hábitos → 4 Horarios → 4 Semanales → 28-30 Días</strong>.
+                            </p>
+                        </div>
+
+                        <!-- OPCIÓN 3: POR SECCIONES CONTINUAS -->
                         <div class="flow-card-option" id="flow-card-sections" onclick="setFlowMode('sections')">
                             <div class="flow-card-header">
-                                <span class="flow-card-title">2. Por Secciones Continuas</span>
+                                <span class="flow-card-title">3. Por Secciones Continuas</span>
                                 <span class="flow-card-badge">Agrupado</span>
                             </div>
                             <p class="flow-card-desc">
@@ -1835,8 +1846,9 @@
         // Estado del libro y su arquitectura
         const bookState = {
             currentTab: 'cover',
+            paperFormat: 'book', // 'book' (8.25"x6") o 'a4' (297x210 mm)
             presetCycle: 90,
-            flowMode: 'modular', // 'modular' o 'sections'
+            flowMode: 'weekly_cycle', // 'weekly_cycle', 'modular', 'sections'
             annualPosition: 'start', // 'start' o 'end'
 
             // Configuración portada
@@ -1863,8 +1875,8 @@
             qtyAnnual: 1,
             qtyMonthly: 3,
             qtyHabits: 3,
-            qtySchedule: 3,
-            qtyWeekly: 14,
+            qtySchedule: 12, // 4 horarios por mes
+            qtyWeekly: 12,   // 4 semanas por mes
             qtyDaily: 90,
             qtyDots: 8
         };
@@ -1875,6 +1887,20 @@
             calculateBookSpecs();
             highlightControlSection('cover');
         });
+
+        // CAMBIO DE FORMATO DE PAPEL (LIBRO 8.25x6 vs A4)
+        function updatePaperFormat() {
+            bookState.paperFormat = document.getElementById('select-paper-format').value;
+            const frame = document.getElementById('preview-sheet-frame');
+            if (frame) {
+                if (bookState.paperFormat === 'a4') {
+                    frame.style.aspectRatio = '297 / 210';
+                } else {
+                    frame.style.aspectRatio = '8.25 / 6';
+                }
+            }
+            showToast(bookState.paperFormat === 'a4' ? '✓ Formato DIN A4 Apaisado seleccionado.' : '✓ Formato Libro Apaisado (8.25" × 6") seleccionado.');
+        }
 
         // CAMBIO DE PESTAÑA EN VISTA PREVIA CON RESALTE DE SECCIÓN EN EL PANEL IZQUIERDO
         function switchPreviewPage(tabName) {
@@ -1950,24 +1976,24 @@
                 bookState.qtyAnnual = 1;
                 bookState.qtyMonthly = 3;
                 bookState.qtyHabits = 3;
-                bookState.qtySchedule = 3;
-                bookState.qtyWeekly = 14;
+                bookState.qtySchedule = 12; // 4 por mes
+                bookState.qtyWeekly = 12;   // 4 por mes
                 bookState.qtyDaily = 90;
                 bookState.qtyDots = 8;
             } else if (days === 180) {
                 bookState.qtyAnnual = 1;
                 bookState.qtyMonthly = 6;
                 bookState.qtyHabits = 6;
-                bookState.qtySchedule = 6;
-                bookState.qtyWeekly = 26;
+                bookState.qtySchedule = 24; // 4 por mes
+                bookState.qtyWeekly = 24;   // 4 por mes
                 bookState.qtyDaily = 180;
                 bookState.qtyDots = 12;
             } else if (days === 360) {
                 bookState.qtyAnnual = 1;
                 bookState.qtyMonthly = 12;
                 bookState.qtyHabits = 12;
-                bookState.qtySchedule = 12;
-                bookState.qtyWeekly = 52;
+                bookState.qtySchedule = 48; // 4 por mes
+                bookState.qtyWeekly = 48;   // 4 por mes
                 bookState.qtyDaily = 360;
                 bookState.qtyDots = 16;
             }
@@ -1989,7 +2015,10 @@
             document.querySelectorAll('.flow-card-option').forEach(card => card.classList.remove('active'));
             document.getElementById('flow-card-' + mode)?.classList.add('active');
             calculateBookSpecs();
-            showToast(mode === 'modular' ? '✓ Estructura: Modular Cíclica (Mes por mes).' : '✓ Estructura: Por Secciones continuas.');
+            let msg = '✓ Estructura: Modular Semana a Semana.';
+            if (mode === 'modular') msg = '✓ Estructura: Modular por Bloques de Mes.';
+            if (mode === 'sections') msg = '✓ Estructura: Por Secciones Continuas.';
+            showToast(msg);
         }
 
         function stepQty(type, delta) {
@@ -2581,7 +2610,63 @@
                 p += bookState.qtyAnnual;
             }
 
-            if (bookState.flowMode === 'modular') {
+            if (bookState.flowMode === 'weekly_cycle') {
+                // DESGLOSE TOTALMENTE CÍCLICO: 1 MES + 1 HÁBITOS + [1 HORARIO + 1 SEMANAL + 7 DÍAS] x 4
+                const cyclesCount = Math.max(1, bookState.qtyMonthly || Math.ceil(bookState.qtyDaily / 30) || 1);
+                let leftMon = bookState.qtyMonthly;
+                let leftHab = bookState.qtyHabits;
+                let leftSch = bookState.qtySchedule;
+                let leftWk = bookState.qtyWeekly;
+                let leftDy = bookState.qtyDaily;
+
+                for (let c = 0; c < cyclesCount; c++) {
+                    const cycleNum = c + 1;
+                    rowsHtml += `<div class="index-cycle-title">Ciclo Mensual ${cycleNum}</div>`;
+
+                    if (leftMon > 0) {
+                        rowsHtml += `<div class="index-row"><span>Pág. ${p}</span><strong>Planificador Mensual (Mes ${cycleNum})</strong></div>`;
+                        leftMon--; p++;
+                    }
+                    if (leftHab > 0) {
+                        rowsHtml += `<div class="index-row"><span>Pág. ${p}</span><strong>Rastreador de Hábitos (Mes ${cycleNum})</strong></div>`;
+                        leftHab--; p++;
+                    }
+
+                    // 4 semanas integradas dentro del mes
+                    for (let w = 1; w <= 4; w++) {
+                        if (leftSch <= 0 && leftWk <= 0 && leftDy <= 0) break;
+                        rowsHtml += `<div style="font-size:0.68rem; font-weight:700; color:#666; margin: 3px 0 1px 8px;">Semana ${w} del Mes ${cycleNum}:</div>`;
+
+                        if (leftSch > 0) {
+                            rowsHtml += `<div class="index-row" style="padding-left: 12px;"><span>Pág. ${p}</span><strong>Horario Semanal ${w}</strong></div>`;
+                            leftSch--; p++;
+                        }
+                        if (leftWk > 0) {
+                            rowsHtml += `<div class="index-row" style="padding-left: 12px;"><span>Pág. ${p}</span><strong>Planificador Semanal ${w}</strong></div>`;
+                            leftWk--; p++;
+                        }
+                        const daysThisWeek = Math.min(leftDy, (w === 4 && leftDy >= 8) ? leftDy : 7);
+                        if (daysThisWeek > 0) {
+                            const startD = p;
+                            const endD = p + daysThisWeek - 1;
+                            rowsHtml += `<div class="index-row" style="padding-left: 12px;"><span>Pág${daysThisWeek > 1 ? 's. ' + startD + '–' + endD : '. ' + startD}</span><strong>Días (${daysThisWeek} págs)</strong></div>`;
+                            leftDy -= daysThisWeek;
+                            p += daysThisWeek;
+                        }
+                    }
+                }
+
+                // Páginas restantes si las hubiera
+                if (leftMon > 0 || leftHab > 0 || leftSch > 0 || leftWk > 0 || leftDy > 0) {
+                    rowsHtml += `<div class="index-cycle-title">Páginas de Ampliación</div>`;
+                    if (leftMon > 0) { rowsHtml += `<div class="index-row"><span>Págs. ${p}–${p + leftMon - 1}</span><strong>Planificadores Mensuales adicionales</strong></div>`; p += leftMon; }
+                    if (leftHab > 0) { rowsHtml += `<div class="index-row"><span>Págs. ${p}–${p + leftHab - 1}</span><strong>Rastreadores de Hábitos adicionales</strong></div>`; p += leftHab; }
+                    if (leftSch > 0) { rowsHtml += `<div class="index-row"><span>Págs. ${p}–${p + leftSch - 1}</span><strong>Planificadores Horarios adicionales</strong></div>`; p += leftSch; }
+                    if (leftWk > 0) { rowsHtml += `<div class="index-row"><span>Págs. ${p}–${p + leftWk - 1}</span><strong>Planificadores Semanales adicionales</strong></div>`; p += leftWk; }
+                    if (leftDy > 0) { rowsHtml += `<div class="index-row"><span>Págs. ${p}–${p + leftDy - 1}</span><strong>Planificadores Diarios adicionales</strong></div>`; p += leftDy; }
+                }
+
+            } else if (bookState.flowMode === 'modular') {
                 // DESGLOSE MODULAR MES A MES
                 const cyclesCount = Math.max(1, bookState.qtyMonthly || Math.ceil(bookState.qtyDaily / 30) || 1);
                 const semPerCycle = Math.ceil(bookState.qtyWeekly / cyclesCount) || 4;
@@ -2749,15 +2834,16 @@
 
             await new Promise(r => setTimeout(r, 60));
 
-            const pw = 209.55;
-            const ph = 152.4;
-            const m = 14; // margen en mm
+            const isA4 = (bookState.paperFormat === 'a4');
+            const pw = isA4 ? 297.0 : 209.55;
+            const ph = isA4 ? 210.0 : 152.4;
+            const m = isA4 ? 16 : 14; // margen en mm
             const cw = pw - (m * 2);
 
             const doc = new jsPDF({
                 orientation: 'landscape',
                 unit: 'mm',
-                format: [pw, ph],
+                format: isA4 ? 'a4' : [pw, ph],
                 compress: true
             });
 
@@ -3535,37 +3621,41 @@
                 }
 
                 // COLUMNA DERECHA: REFLEXIÓN NOCTURNA & DESCARGA MENTAL LIMPIA EDITORIAL
-                const rightX = m + halfW + 8;
+                const rightX = m + halfW + 6;
+                const rightW = cw - halfW - 6; // Ajuste exacto para no salirse nunca del ancho de contenido
                 doc.setFillColor(255, 253, 250);
                 doc.setDrawColor(215, 210, 202);
                 doc.setLineWidth(0.25);
-                doc.roundedRect(rightX, dy, halfW, colH, 2, 2, 'FD');
+                doc.roundedRect(rightX, dy, rightW, colH, 2, 2, 'FD');
 
                 // Cabecera reflexiva
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.2);
+                doc.setFontSize(7.0);
                 doc.setTextColor(135, 85, 59);
-                doc.text('REFLEXIÓN NOCTURNA & DESCARGA MENTAL', rightX + 6, dy + 6);
+                doc.text('REFLEXIÓN NOCTURNA & DESCARGA MENTAL', rightX + 5, dy + 5.5);
 
                 doc.setFont('times', 'bold');
-                doc.setFontSize(10.5);
+                doc.setFontSize(9.5);
                 doc.setTextColor(25, 20, 15);
-                doc.text('«¿Qué ha funcionado hoy? ¿Qué soltamos antes de dormir?»', rightX + 6, dy + 13.5);
+                const reflQuote = '«¿Qué ha funcionado hoy? ¿Qué soltamos antes de dormir?»';
+                doc.text(doc.splitTextToSize(reflQuote, rightW - 10), rightX + 5, dy + 12);
 
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(6.8);
+                doc.setFontSize(6.4);
                 doc.setTextColor(110, 105, 100);
-                doc.text('Cierra el día en paz. Escribe libremente aquí para vaciar la cabeza del ruido acumulado.', rightX + 6, dy + 18.5);
+                const reflSub = 'Cierra el día en paz. Escribe libremente para vaciar la cabeza del ruido acumulado.';
+                doc.text(doc.splitTextToSize(reflSub, rightW - 10), rightX + 5, dy + 17.5);
 
                 doc.setDrawColor(225, 220, 212);
                 doc.setLineWidth(0.2);
-                doc.line(rightX + 6, dy + 21, rightX + halfW - 6, dy + 21);
+                doc.line(rightX + 5, dy + 20.5, rightX + rightW - 5, dy + 20.5);
 
                 // Marco interior limpio para escribir
                 doc.setFillColor(252, 250, 247);
                 doc.setDrawColor(225, 220, 212);
                 doc.setLineWidth(0.15);
-                doc.roundedRect(rightX + 5, dy + 24, halfW - 10, colH - 29, 1.5, 1.5, 'FD');
+                const canvasH = Math.max(10, colH - 26);
+                doc.roundedRect(rightX + 4, dy + 23, rightW - 8, canvasH, 1.5, 1.5, 'FD');
 
                 drawFooter(currentPage, 'MENOS RUIDO · REGISTRO DIARIO (1 PÁGINA INDIVIDUAL)');
             }
@@ -3644,6 +3734,7 @@
                 pStatus.textContent = `Compilando página ${pagesDone} de ${totalToGenerate} (${pct}%)...`;
             };
 
+            const isWeeklyCycle = (bookState.flowMode === 'weekly_cycle');
             const isModular = (bookState.flowMode === 'modular');
             const annualAtStart = (bookState.annualPosition === 'start');
 
@@ -3656,7 +3747,42 @@
                 }
             }
 
-            if (isModular) {
+            if (isWeeklyCycle) {
+                // MODULAR SEMANA A SEMANA: 1 MES + 1 HÁBITOS + [1 HORARIO + 1 SEMANAL + 7 DÍAS] x 4
+                const cyclesCount = Math.max(1, bookState.qtyMonthly || Math.ceil(bookState.qtyDaily / 30) || 1);
+                let leftMon = bookState.qtyMonthly;
+                let leftHab = bookState.qtyHabits;
+                let leftSch = bookState.qtySchedule;
+                let leftWk = bookState.qtyWeekly;
+                let leftDy = bookState.qtyDaily;
+
+                for (let c = 0; c < cyclesCount; c++) {
+                    if (leftMon > 0) { drawMonthlyPage(); leftMon--; updateProgress(); }
+                    if (leftHab > 0) { drawHabitsPage(); leftHab--; updateProgress(); }
+
+                    for (let w = 1; w <= 4; w++) {
+                        if (leftSch <= 0 && leftWk <= 0 && leftDy <= 0) break;
+
+                        if (leftSch > 0) { drawSchedulePage(); leftSch--; updateProgress(); }
+                        if (leftWk > 0) { drawWeeklyPage(); leftWk--; updateProgress(); }
+
+                        const daysThisWeek = Math.min(leftDy, (w === 4 && leftDy >= 8) ? leftDy : 7);
+                        for (let d = 0; d < daysThisWeek; d++) {
+                            drawDailyPage();
+                            leftDy--;
+                            updateProgress();
+                            if (d % 4 === 0) await new Promise(r => setTimeout(r, 0));
+                        }
+                    }
+                }
+
+                while (leftMon > 0) { drawMonthlyPage(); leftMon--; updateProgress(); }
+                while (leftHab > 0) { drawHabitsPage(); leftHab--; updateProgress(); }
+                while (leftSch > 0) { drawSchedulePage(); leftSch--; updateProgress(); }
+                while (leftWk > 0) { drawWeeklyPage(); leftWk--; updateProgress(); }
+                while (leftDy > 0) { drawDailyPage(); leftDy--; updateProgress(); }
+
+            } else if (isModular) {
                 // MODULAR CÍCLICO
                 const cyclesCount = Math.max(1, bookState.qtyMonthly || Math.ceil(bookState.qtyDaily / 30) || 1);
                 const semPerCycle = Math.ceil(bookState.qtyWeekly / cyclesCount) || 4;
@@ -3791,8 +3917,14 @@
             pStatus.textContent = '¡Documento listo! Descargando archivo...';
             await new Promise(r => setTimeout(r, 200));
 
-            const cleanTitle = (bookState.title || 'cuaderno').toLowerCase().replace(/\s+/g, '_');
-            const fileName = `${cleanTitle}_menos_ruido_${bookState.presetCycle}_dias.pdf`;
+            // NOMBRE DEL ARCHIVO: Menos ruido - Título del cuaderno - Propietario.pdf
+            const titlePart = (bookState.title || 'Mi Cuaderno de Enfoque').trim();
+            const ownerPart = (bookState.owner || '').trim();
+            let fileName = 'Menos ruido - ' + titlePart;
+            if (ownerPart) {
+                fileName += ' - ' + ownerPart;
+            }
+            fileName = fileName.replace(/[\\/:*?"<>|]/g, '') + '.pdf';
 
             doc.save(fileName);
 
