@@ -1380,18 +1380,11 @@
                 <span class="panel-heading-text">Configura tu planificador</span>
             </div>
 
-            <!-- SECCIÓN 1: FORMATO, PORTADA & DEDICATORIA -->
+            <!-- SECCIÓN 1: PORTADA & DEDICATORIA -->
             <div class="section-box" id="sec-ctrl-1">
                 <div class="section-header-title">
-                    <span>1. Formato, Portada & Dedicatoria</span>
+                    <span>1. Portada & Dedicatoria</span>
                     <span class="tag-status">Personalizable</span>
-                </div>
-                <div class="control-group">
-                    <label for="select-paper-format">Formato de Impresión / Tamaño:</label>
-                    <select id="select-paper-format" onchange="updatePaperFormat()">
-                        <option value="book" selected>Formato Libro Apaisado (8.25" × 6" · 210 × 152 mm)</option>
-                        <option value="a4">Formato DIN A4 Apaisado (297 × 210 mm)</option>
-                    </select>
                 </div>
                 <div class="control-group">
                     <label for="input-book-title">Título del Cuaderno</label>
@@ -1723,6 +1716,21 @@
                     <select id="select-annual-position" onchange="updatePageStructure()">
                         <option value="start" selected>Al inicio del libro (Tras la teoría)</option>
                         <option value="end">En la última página (Al final del cuaderno)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 7: FORMATO DE IMPRESIÓN / TAMAÑO -->
+            <div class="section-box" id="sec-ctrl-7">
+                <div class="section-header-title">
+                    <span>7. Formato de Impresión / Tamaño:</span>
+                    <span class="tag-status">Escala</span>
+                </div>
+                <div class="control-group">
+                    <label for="select-paper-format">Selecciona el tamaño de página para el libro:</label>
+                    <select id="select-paper-format" onchange="updatePaperFormat()">
+                        <option value="book" selected>Formato Libro Apaisado (8.25" × 6" · 210 × 152 mm)</option>
+                        <option value="a4">Formato DIN A4 Apaisado (297 × 210 mm)</option>
                     </select>
                 </div>
             </div>
@@ -2808,9 +2816,9 @@
         // FORMATO APAISADO 8.25" x 6" [209.55, 152.4] MM
         // ========================================================
         async function executeFullBookDownload() {
-            const { jsPDF } = window.jspdf || {};
-            if (!jsPDF) {
-                alert('Error: La librería jsPDF no está disponible en este momento. Por favor recarga la página.');
+            const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+            if (!jsPDFClass) {
+                alert('No se pudo inicializar la librería jsPDF. Por favor recarga la página o comprueba tu conexión.');
                 return;
             }
 
@@ -2834,18 +2842,19 @@
 
             await new Promise(r => setTimeout(r, 60));
 
-            const isA4 = (bookState.paperFormat === 'a4');
-            const pw = isA4 ? 297.0 : 209.55;
-            const ph = isA4 ? 210.0 : 152.4;
-            const m = isA4 ? 16 : 14; // margen en mm
-            const cw = pw - (m * 2);
+            try {
+                const isA4 = (bookState.paperFormat === 'a4');
+                const pw = isA4 ? 297.0 : 209.55;
+                const ph = isA4 ? 210.0 : 152.4;
+                const m = isA4 ? 16 : 14; // margen en mm
+                const cw = pw - (m * 2);
 
-            const doc = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: isA4 ? 'a4' : [pw, ph],
-                compress: true
-            });
+                const doc = new jsPDFClass({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: isA4 ? 'a4' : [pw, ph],
+                    compress: true
+                });
 
             function drawPaperBg() {
                 doc.setFillColor(255, 254, 251);
@@ -3930,7 +3939,13 @@
 
             closeDownloadModal();
             showToast('✓ Tu libro personalizado se ha descargado correctamente.');
+        } catch (err) {
+            console.error('Error generando libro:', err);
+            alert('Ocurrió un error al compilar el documento: ' + (err.message || err));
+            pBar.style.display = 'none';
+            btnGen.style.display = 'block';
         }
+    }
     </script>
 </body>
 </html>
