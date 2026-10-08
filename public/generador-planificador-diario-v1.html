@@ -115,7 +115,7 @@
         /* BARRA DE HERRAMIENTAS PRINCIPAL */
         .canvas-toolbar {
             width: 100%;
-            max-width: 680px;
+            max-width: 760px;
             background: #ffffff;
             border: 1px solid #e2ddd3;
             border-radius: 12px;
@@ -177,7 +177,7 @@
         /* PANEL VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR) */
         .sections-toggle-bar {
             width: 100%;
-            max-width: 680px;
+            max-width: 760px;
             background: #f0ebe2;
             border: 1px solid #e0d8cc;
             border-radius: 8px;
@@ -234,7 +234,7 @@
            ======================================================== */
         .paper-canvas-container {
             width: 100%;
-            max-width: 680px;
+            max-width: 760px;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -243,15 +243,15 @@
 
         .interactive-paper {
             width: 100%;
-            max-width: 680px;
-            height: 1020px;
-            max-height: 1020px;
+            max-width: 760px;
+            height: 1140px;
+            max-height: 1140px;
             aspect-ratio: 6 / 9;
             background-color: var(--paper-color);
             box-shadow: 0 16px 45px rgba(0,0,0,0.14);
             border-radius: 4px;
             border: 1px solid #e7e2d8;
-            padding: 28px 40px 22px;
+            padding: 32px 46px 24px;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -590,10 +590,10 @@
             flex: 1;
             min-height: 0;
             border-radius: 6px;
-            padding: 12px 14px;
-            font-size: 0.88rem;
+            padding: 14px 18px;
+            font-size: 0.92rem;
             color: #333;
-            line-height: 1.55;
+            line-height: 1.6;
             background-color: #faf9f6;
             border: 1px solid #ede8de;
             box-sizing: border-box;
@@ -624,18 +624,18 @@
         /* PAUTAS DE NOTAS */
         .notes-canvas-area.bg-dots {
             background-image: radial-gradient(#c5bdaf 1.2px, transparent 1.2px);
-            background-size: 19px 19px;
+            background-size: 21px 21px;
         }
         .notes-canvas-area.bg-lines {
             background-image: linear-gradient(#ded9d0 1px, transparent 1px);
-            background-size: 100% 22px;
-            line-height: 22px;
+            background-size: 100% 24px;
+            line-height: 24px;
         }
         .notes-canvas-area.bg-grid {
             background-image: 
                 linear-gradient(to right, #ded8cd 1px, transparent 1px),
                 linear-gradient(to bottom, #ded8cd 1px, transparent 1px);
-            background-size: 19px 19px;
+            background-size: 21px 21px;
         }
         .notes-canvas-area.bg-blank { background-image: none; }
 
@@ -668,7 +668,7 @@
             z-index: 100;
         }
 
-        @media (max-width: 620px) {
+        @media (max-width: 800px) {
             .paper-canvas-container,
             .canvas-toolbar,
             .sections-toggle-bar {
@@ -676,8 +676,8 @@
             }
             .interactive-paper {
                 height: auto;
-                min-height: 820px;
-                padding: 18px 20px 14px;
+                min-height: 880px;
+                padding: 20px 22px 16px;
             }
         }
     </style>
@@ -740,8 +740,8 @@
         <div class="interactive-paper" id="paper-sheet">
             <!-- CABECERA DE DÍA Y FECHA -->
             <div class="paper-header">
-                <input type="text" class="editable-day-input" id="field-day" value="Martes" maxlength="20" placeholder="Día...">
-                <input type="text" class="editable-date-input" id="field-date" value="06 / 10 / 2026" maxlength="16" placeholder="DD / MM / AAAA">
+                <input type="text" class="editable-day-input" id="field-day" value="Martes" maxlength="15" placeholder="Día...">
+                <input type="text" class="editable-date-input" id="field-date" value="06 / 10 / 2026" maxlength="14" placeholder="DD / MM / AAAA" oninput="handleDateInput(this)" onkeydown="handleDateKeydown(event, this)">
             </div>
 
             <!-- CONTENEDOR DE BLOQUES REORDENABLES -->
@@ -816,8 +816,8 @@
                             <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('notes')" title="Quitar sección">✕</button>
                         </div>
                     </div>
-                    <div class="notes-canvas-area bg-dots" id="notes-canvas-area">
-                        <textarea class="textarea-inline-notes" id="field-notes" maxlength="1800" 
+                    <div class="notes-canvas-area bg-blank" id="notes-canvas-area">
+                        <textarea class="textarea-inline-notes" id="field-notes" maxlength="2200" 
                                   placeholder="Escribe aquí tus notas y reflexiones del día..."
                                   onkeydown="handleNotesKeydown(event)"
                                   oninput="handleNotesInput(this)">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
@@ -841,7 +841,7 @@
         // ESTADO GLOBAL DE DATOS Y CONFIGURACIÓN
         const state = {
             checkboxStyle: 'square',
-            notesPattern: 'dots',
+            notesPattern: 'blank',
             blocksOrder: ['priority', 'tasks', 'habits', 'notes'],
             sectionsVisible: {
                 priority: true,
@@ -864,7 +864,7 @@
             ]
         };
 
-        const PATTERNS = ['dots', 'lines', 'grid', 'blank'];
+        const PATTERNS = ['blank', 'dots', 'lines', 'grid'];
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
@@ -874,6 +874,39 @@
             updatePillStates();
             updateNotesCapacity();
         });
+
+        // FORMATEO INTELIGENTE DE FECHA (SOLO NÚMEROS Y BARRAS AUTOMÁTICAS)
+        function handleDateKeydown(e, el) {
+            if (e.key === 'Backspace') {
+                if (el.value.endsWith(' / ')) {
+                    e.preventDefault();
+                    el.value = el.value.slice(0, -3);
+                }
+                return;
+            }
+            if (!/^\d$/.test(e.key) && !['ArrowLeft', 'ArrowRight', 'Tab', 'Delete', 'Enter', 'Home', 'End'].includes(e.key) && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+            }
+        }
+
+        function handleDateInput(el) {
+            let digits = el.value.replace(/\D/g, '').slice(0, 8);
+            if (!digits) {
+                el.value = '';
+                return;
+            }
+            let formatted = '';
+            if (digits.length <= 2) {
+                formatted = digits;
+                if (digits.length === 2) formatted += ' / ';
+            } else if (digits.length <= 4) {
+                formatted = digits.slice(0, 2) + ' / ' + digits.slice(2);
+                if (digits.length === 4) formatted += ' / ';
+            } else {
+                formatted = digits.slice(0, 2) + ' / ' + digits.slice(2, 4) + ' / ' + digits.slice(4);
+            }
+            el.value = formatted;
+        }
 
         // ========================================================
         // 1. PRIORIDAD DEL DÍA (ÚNICA)
@@ -1475,38 +1508,40 @@
                     doc.setLineWidth(0.2);
                     doc.roundedRect(margin, y, cw, notesHeight, 2, 2, 'FD');
 
-                    // DIBUJAR PAUTA DE FONDO IDÉNTICA A LA WEB (PUNTOS, LÍNEAS, CUADRÍCULA)
-                    if (state.notesPattern === 'dots') {
-                        doc.setFillColor(205, 198, 188); // puntos sutiles
-                        const dotStep = 5.0; // retícula editorial de 5 mm
-                        for (let dy = y + 4.5; dy < y + notesHeight - 2.5; dy += dotStep) {
-                            for (let dx = margin + 4.5; dx < margin + cw - 2.5; dx += dotStep) {
-                                doc.circle(dx, dy, 0.22, 'F');
+                    const notesText = isBlank ? '' : document.getElementById('field-notes').value.trim();
+
+                    // SI HAY TEXTO ESCRITO: SE IMPRIME EN LIMPIO (SIN NINGUNA PAUTA PARA QUE NO CHOQUE CON LAS LETRAS)
+                    // SI ESTÁ EN BLANCO / PLANTILLA LIMPIA: SE DIBUJA LA PAUTA SELECCIONADA (PUNTOS, LÍNEAS, CUADRÍCULA)
+                    if (!notesText || isBlank) {
+                        if (state.notesPattern === 'dots') {
+                            doc.setFillColor(205, 198, 188); // puntos sutiles
+                            const dotStep = 5.0; // retícula editorial de 5 mm
+                            for (let dy = y + 4.5; dy < y + notesHeight - 2.5; dy += dotStep) {
+                                for (let dx = margin + 4.5; dx < margin + cw - 2.5; dx += dotStep) {
+                                    doc.circle(dx, dy, 0.22, 'F');
+                                }
+                            }
+                        } else if (state.notesPattern === 'lines') {
+                            doc.setDrawColor(225, 220, 212);
+                            doc.setLineWidth(0.15);
+                            const lineStep = 6.0; // pauta horizontal de 6 mm
+                            for (let ly = y + 6.0; ly < y + notesHeight - 2.5; ly += lineStep) {
+                                doc.line(margin + 3, ly, margin + cw - 3, ly);
+                            }
+                        } else if (state.notesPattern === 'grid') {
+                            doc.setDrawColor(230, 225, 218);
+                            doc.setLineWidth(0.12);
+                            const gridStep = 5.0;
+                            for (let ly = y + 4.0; ly < y + notesHeight - 2.5; ly += gridStep) {
+                                doc.line(margin + 2.5, ly, margin + cw - 2.5, ly);
+                            }
+                            for (let lx = margin + 4.5; lx < margin + cw - 2.5; lx += gridStep) {
+                                doc.line(lx, y + 2.5, lx, y + notesHeight - 2.5);
                             }
                         }
-                    } else if (state.notesPattern === 'lines') {
-                        doc.setDrawColor(225, 220, 212);
-                        doc.setLineWidth(0.15);
-                        const lineStep = 6.0; // pauta horizontal de 6 mm
-                        for (let ly = y + 6.0; ly < y + notesHeight - 2.5; ly += lineStep) {
-                            doc.line(margin + 3, ly, margin + cw - 3, ly);
-                        }
-                    } else if (state.notesPattern === 'grid') {
-                        doc.setDrawColor(230, 225, 218);
-                        doc.setLineWidth(0.12);
-                        const gridStep = 5.0;
-                        for (let ly = y + 4.0; ly < y + notesHeight - 2.5; ly += gridStep) {
-                            doc.line(margin + 2.5, ly, margin + cw - 2.5, ly);
-                        }
-                        for (let lx = margin + 4.5; lx < margin + cw - 2.5; lx += gridStep) {
-                            doc.line(lx, y + 2.5, lx, y + notesHeight - 2.5);
-                        }
-                    }
-
-                    const notesText = isBlank ? '' : document.getElementById('field-notes').value.trim();
-                    if (notesText) {
+                    } else {
                         const maxNotesH = notesHeight - 6;
-                        let fSize = 9.2;
+                        let fSize = 9.5;
                         doc.setFont('times', 'normal');
                         doc.setFontSize(fSize);
                         doc.setTextColor(30, 25, 20);
@@ -1521,7 +1556,7 @@
                         const maxFit = Math.floor(maxNotesH / lineH);
                         noteLines.slice(0, maxFit).forEach((nl, idx) => {
                             if (!nl) return;
-                            doc.text(nl, margin + 4, y + 4.8 + (idx * lineH), { maxWidth: cw - 8 });
+                            doc.text(nl, margin + 4, y + 5.0 + (idx * lineH), { maxWidth: cw - 8 });
                         });
                     }
                     y += notesHeight + 4;
