@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador Semanal Interactivo (V1) · Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Control de acceso PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* CABECERA & NAVEGACIÓN */
+        .top-nav {
+            width: 100%;
+            max-width: 980px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: #777;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .badge-version {
+            background: #ede6dc;
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 760px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1816;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.45;
+        }
+
+        /* BARRA DE HERRAMIENTAS PRINCIPAL */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 980px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 6px 11px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #443e39;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .toolbar-btn:hover {
+            background: #ede7dc;
+            border-color: #c9bfb0;
+            color: #111;
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 15px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 3px 10px rgba(135,85,59,0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* ========================================================
+           EL LIENZO FÍSICO INTERACTIVO APAISADO (LIBRO 8.25" × 6")
+           ======================================================== */
+        .paper-canvas-container {
+            width: 100%;
+            max-width: 980px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .interactive-paper-weekly {
+            width: 100%;
+            max-width: 980px;
+            height: 712px;
+            max-height: 712px;
+            aspect-ratio: 8.25 / 6;
+            background-color: var(--paper-color);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.14);
+            border-radius: 4px;
+            border: 1px solid #e7e2d8;
+            padding: 22px 32px 18px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden; /* LA PÁGINA NUNCA CRECE */
+            transition: background 0.2s;
+        }
+
+        /* CABECERA EDITABLE DE LA SEMANA */
+        .paper-weekly-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #222;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .weekly-header-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .weekly-kicker {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .weekly-title-main {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.1;
+        }
+
+        .weekly-meta-inputs {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .editable-week-num {
+            font-family: var(--font-sans);
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #333;
+            background: transparent;
+            border: 1px dashed transparent;
+            outline: none;
+            padding: 2px 5px;
+            border-radius: 4px;
+            text-align: right;
+            transition: border-color 0.2s;
+        }
+        .editable-week-num:hover, .editable-week-num:focus {
+            border-color: #d0c8bd;
+            background: rgba(0,0,0,0.02);
+        }
+
+        /* CUERPO CENTRAL: 2 COLUMNAS DE DÍAS */
+        .weekly-body-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+            margin-bottom: 8px;
+        }
+
+        .weekly-column-box {
+            background: #ffffff;
+            border: 1px solid #ddd7cc;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* FILA DE DÍA */
+        .day-interactive-row {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            border-bottom: 1px dashed #e8e2d8;
+            padding: 4px 10px;
+            box-sizing: border-box;
+            min-height: 0;
+            position: relative;
+        }
+        .day-interactive-row:last-child {
+            border-bottom: none;
+        }
+
+        .day-interactive-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .day-interactive-name {
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #2b2622;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .day-check-indicator {
+            width: 11px;
+            height: 11px;
+            border: 1.5px solid #666;
+            border-radius: 2px;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+        .day-check-indicator.circle { border-radius: 50%; }
+
+        .textarea-day-inline {
+            font-family: var(--font-serif);
+            font-size: 0.80rem;
+            color: #222;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* FOCO DE LA SEMANA (DESTACADO EN LA SEGUNDA COLUMNA) */
+        .weekly-focus-card {
+            background: #faf8f5;
+            border: none;
+            border-bottom: 1.5px solid #e0d8cc;
+            padding: 5px 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .weekly-focus-label {
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .textarea-focus-inline {
+            font-family: var(--font-serif);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #1e1916;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* ========================================================
+           SECCIÓN INFERIOR DIVIDIDA: HÁBITOS SEMANALES + NOTAS
+           ======================================================== */
+        .weekly-bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            height: 148px;
+            max-height: 148px;
+            flex-shrink: 0;
+            margin-bottom: 6px;
+        }
+
+        /* BLOQUE HÁBITOS DE LA SEMANA */
+        .weekly-habits-panel {
+            background: #faf8f5;
+            border: 1px solid #ddd7cc;
+            border-radius: 6px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .habits-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e6dfd3;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
+        }
+
+        .habits-panel-title {
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: #333;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .habits-days-legend {
+            display: flex;
+            gap: 7px;
+            font-size: 0.62rem;
+            font-weight: 800;
+            color: #777;
+            padding-right: 2px;
+        }
+        .habits-days-legend span {
+            width: 13px;
+            text-align: center;
+        }
+
+        .habit-track-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 2px 0;
+            border-bottom: 1px dashed #eee8de;
+        }
+        .habit-track-row:last-child {
+            border-bottom: none;
+        }
+
+        .textarea-habit-track-inline {
+            font-family: var(--font-sans);
+            font-size: 0.74rem;
+            color: #333;
+            background: transparent;
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 0;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 0;
+            margin: 0;
+        }
+
+        .habit-days-checks {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .habit-day-dot {
+            width: 13px;
+            height: 13px;
+            border: 1.2px solid #999;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .habit-day-dot.checked {
+            background: #333;
+            border-color: #333;
+        }
+        .habit-day-dot.square {
+            border-radius: 2px;
+        }
+
+        /* BLOQUE TAREAS SECUNDARIAS / NOTAS */
+        .weekly-notes-panel {
+            background: #ffffff;
+            border: 1px solid #ddd7cc;
+            border-radius: 6px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .notes-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee8df;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
+        }
+
+        .notes-panel-title {
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: #333;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .textarea-weekly-notes {
+            font-family: var(--font-serif);
+            font-size: 0.78rem;
+            color: #222;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            line-height: 1.4;
+            resize: none;
+            box-sizing: border-box;
+            padding: 2px;
+            margin: 0;
+        }
+
+        /* PAUTAS DE FONDO PARA NOTAS */
+        .weekly-notes-panel.bg-dots {
+            background-image: radial-gradient(#beb7ad 1px, transparent 1px);
+            background-size: 14px 14px;
+        }
+        .weekly-notes-panel.bg-lines {
+            background-image: repeating-linear-gradient(transparent, transparent 16px, #ece7de 16px, #ece7de 17px);
+        }
+        .weekly-notes-panel.bg-grid {
+            background-image: linear-gradient(to right, #efebe4 1px, transparent 1px),
+                              linear-gradient(to bottom, #efebe4 1px, transparent 1px);
+            background-size: 14px 14px;
+        }
+        .weekly-notes-panel.bg-blank {
+            background-image: none;
+            background-color: #ffffff;
+        }
+
+        /* PIE EDITORIAL DE LA HOJA */
+        .paper-weekly-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.60rem;
+            color: #888;
+            border-top: 1px solid #e0dacd;
+            padding-top: 4px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        /* TOAST NOTIFICACIONES */
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            background: #2b2520;
+            color: #f7f5f0;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 9px 18px;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            z-index: 10000;
+            display: none;
+            animation: fadeInToast 0.2s ease;
+        }
+        @keyframes fadeInToast {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* MODAL DE DESCARGA */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 480px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 18px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+
+        .btn-modal-secondary {
+            background: #f7f5f0;
+            color: #443e39;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-modal-secondary:hover { background: #ede7dc; }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px; right: 14px;
+            background: none; border: none;
+            font-size: 1.2rem; color: #888;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .interactive-paper-weekly {
+                height: auto;
+                max-height: none;
+                aspect-ratio: auto;
+                padding: 16px 14px;
+            }
+            .weekly-body-grid, .weekly-bottom-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <a href="/generador.html" class="back-link">← Catálogo de generadores</a>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge-version">Prototipo V1 · Edición Directa</span>
+            <a href="/generador-planificador-semanal.html" style="font-size:0.75rem; color:var(--accent); text-decoration:none;">Ver versión clásica →</a>
+        </div>
+    </div>
+
+    <div class="header-title-box">
+        <h1>Planificador Semanal Interactivo</h1>
+        <p>Escribe directamente sobre el folio horizontal. Incluye tu foco semanal, prioridades por día, seguimiento de hábitos y notas de reflexión.</p>
+    </div>
+
+    <!-- BARRA DE HERRAMIENTAS PRINCIPAL -->
+    <div class="canvas-toolbar">
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Borrar textos para escribir de cero">
+                <span>🧹</span> Limpiar texto
+            </button>
+            <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar ejemplo editorial">
+                <span>✨</span> Cargar ejemplo
+            </button>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-toggle-check" onclick="toggleCheckboxStyle()" title="Alternar entre casillas cuadradas y circulares">
+                <span>◻️/⚪</span> Casillas
+            </button>
+            <button type="button" class="toolbar-btn" id="btn-toggle-pattern" onclick="cycleNotesPattern()" title="Cambiar pauta de notas (Blanco, Puntos, Líneas, Cuadrícula)">
+                <span>📝</span> Pauta
+            </button>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
+                <span>📥</span> Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- LIENZO FÍSICO INTERACTIVO HORIZONTAL (8.25" × 6") -->
+    <div class="paper-canvas-container">
+        <div class="interactive-paper-weekly" id="weekly-sheet">
+            
+            <!-- CABECERA DE LA SEMANA -->
+            <div class="paper-weekly-header">
+                <div class="weekly-header-title-wrap">
+                    <span class="weekly-kicker">MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL</span>
+                    <h2 class="weekly-title-main">Planificación Semanal</h2>
+                </div>
+                <div class="weekly-meta-inputs">
+                    <input type="text" class="editable-week-num" id="field-week-num" maxlength="30" 
+                           value="SEMANA: 42 · OCTUBRE" placeholder="SEMANA: __"
+                           oninput="handleSingleLineInput(this)">
+                </div>
+            </div>
+
+            <!-- CUERPO PRINCIPAL: DÍAS Y FOCO -->
+            <div class="weekly-body-grid">
+                
+                <!-- COLUMNA IZQUIERDA: LUNES A JUEVES -->
+                <div class="weekly-column-box">
+                    <div class="day-interactive-row">
+                        <div class="day-interactive-head">
+                            <span class="day-interactive-name">LUNES</span>
+                            <div class="day-check-indicator" id="chk-lunes"></div>
+                        </div>
+                        <textarea class="textarea-day-inline" id="field-lunes" rows="1" maxlength="140"
+                                  placeholder="Prioridad clave del lunes..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Cerrar revisión del presupuesto de imprenta</textarea>
+                    </div>
+
+                    <div class="day-interactive-row">
+                        <div class="day-interactive-head">
+                            <span class="day-interactive-name">MARTES</span>
+                            <div class="day-check-indicator" id="chk-martes"></div>
+                        </div>
+                        <textarea class="textarea-day-inline" id="field-martes" rows="1" maxlength="140"
+                                  placeholder="Prioridad clave del martes..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Reunión de balance trimestral con el equipo editorial</textarea>
+                    </div>
+
+                    <div class="day-interactive-row">
+                        <div class="day-interactive-head">
+                            <span class="day-interactive-name">MIÉRCOLES</span>
+                            <div class="day-check-indicator" id="chk-miercoles"></div>
+                        </div>
+                        <textarea class="textarea-day-inline" id="field-miercoles" rows="1" maxlength="140"
+                                  placeholder="Prioridad clave del miércoles..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Redacción de los dos ensayos para el lanzamiento</textarea>
+                    </div>
+
+                    <div class="day-interactive-row">
+                        <div class="day-interactive-head">
+                            <span class="day-interactive-name">JUEVES</span>
+                            <div class="day-check-indicator" id="chk-jueves"></div>
+                        </div>
+                        <textarea class="textarea-day-inline" id="field-jueves" rows="1" maxlength="140"
+                                  placeholder="Prioridad clave del jueves..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Pruebas de impresión de cubiertas y calibración de color</textarea>
+                    </div>
+                </div>
+
+                <!-- COLUMNA DERECHA: FOCO + VIERNES A DOMINGO -->
+                <div class="weekly-column-box">
+                    <div class="weekly-focus-card">
+                        <span class="weekly-focus-label">🎯 FOCO DE LA SEMANA (META CLAVE)</span>
+                        <textarea class="textarea-focus-inline" id="field-focus" rows="1" maxlength="140"
+                                  placeholder="¿Qué único resultado justificaría toda esta semana?"
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Entregar los originales completos para enviar a encuadernación</textarea>
+                    </div>
+
+                    <div class="day-interactive-row">
+                        <div class="day-interactive-head">
+                            <span class="day-interactive-name">VIERNES</span>
+                            <div class="day-check-indicator" id="chk-viernes"></div>
+                        </div>
+                        <textarea class="textarea-day-inline" id="field-viernes" rows="1" maxlength="140"
+                                  placeholder="Prioridad clave del viernes..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Cierre de tareas pendientes y balance de la semana</textarea>
+                    </div>
+
+                    <div class="day-interactive-row">
+                        <div class="day-interactive-head">
+                            <span class="day-interactive-name">SÁBADO</span>
+                            <div class="day-check-indicator" id="chk-sabado"></div>
+                        </div>
+                        <textarea class="textarea-day-inline" id="field-sabado" rows="1" maxlength="140"
+                                  placeholder="Descanso, lectura o proyectos personales..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Caminar por la sierra y lectura profunda sin pantallas</textarea>
+                    </div>
+
+                    <div class="day-interactive-row">
+                        <div class="day-interactive-head">
+                            <span class="day-interactive-name">DOMINGO</span>
+                            <div class="day-check-indicator" id="chk-domingo"></div>
+                        </div>
+                        <textarea class="textarea-day-inline" id="field-domingo" rows="1" maxlength="140"
+                                  placeholder="Revisión tranquila y preparación de la semana siguiente..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Planificar la semana entrante con calma antes de cenar</textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SECCIÓN INFERIOR: HÁBITOS DE LA SEMANA + NOTAS / SECUNDARIAS -->
+            <div class="weekly-bottom-grid">
+                
+                <!-- PANEL HÁBITOS DE LA SEMANA (TRACKER L M X J V S D) -->
+                <div class="weekly-habits-panel">
+                    <div class="habits-panel-header">
+                        <span class="habits-panel-title">🌱 HÁBITOS DE LA SEMANA</span>
+                        <div class="habits-days-legend">
+                            <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                        </div>
+                    </div>
+
+                    <!-- Fila Hábito 1 -->
+                    <div class="habit-track-row">
+                        <textarea class="textarea-habit-track-inline" id="field-habit-1" rows="1" maxlength="100"
+                                  placeholder="Hábito 1..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Lectura analógica (30 min)</textarea>
+                        <div class="habit-days-checks">
+                            <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                        </div>
+                    </div>
+
+                    <!-- Fila Hábito 2 -->
+                    <div class="habit-track-row">
+                        <textarea class="textarea-habit-track-inline" id="field-habit-2" rows="1" maxlength="100"
+                                  placeholder="Hábito 2..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Caminar al aire libre sin móvil</textarea>
+                        <div class="habit-days-checks">
+                            <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                        </div>
+                    </div>
+
+                    <!-- Fila Hábito 3 -->
+                    <div class="habit-track-row">
+                        <textarea class="textarea-habit-track-inline" id="field-habit-3" rows="1" maxlength="100"
+                                  placeholder="Hábito 3..."
+                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                  oninput="handleSingleLineInput(this)">Cero pantallas después de las 22:00</textarea>
+                        <div class="habit-days-checks">
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL TAREAS SECUNDARIAS / NOTAS -->
+                <div class="weekly-notes-panel bg-blank" id="weekly-notes-panel">
+                    <div class="notes-panel-header">
+                        <span class="notes-panel-title">📝 TAREAS SECUNDARIAS / NOTAS</span>
+                    </div>
+                    <textarea class="textarea-weekly-notes" id="field-weekly-notes" maxlength="600"
+                              placeholder="Anota recados secundarios, llamadas o reflexiones de la semana..."
+                              oninput="handleNotesInput(this)">• Revisar renovación de dominio web&#10;• Comprar recambios de tinta&#10;• Enviar mensaje de balance a Javier</textarea>
+                </div>
+
+            </div>
+
+            <!-- PIE EDITORIAL -->
+            <div class="paper-weekly-footer">
+                <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL</span>
+                <span>editorialmenosruido.com</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Planificador Semanal</h3>
+            <p class="modal-desc">Elige si quieres tu PDF con los textos que has escrito o una plantilla en blanco para rellenar a lápiz.</p>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" onclick="executeDownload(false)">
+                    📥 Descargar con mi planificación escrita
+                </button>
+                <button type="button" class="btn-modal-secondary" onclick="executeDownload(true)">
+                    📄 Descargar plantilla limpia en blanco
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST INFORMATIVO -->
+    <div class="toast-msg" id="toast-notify"></div>
+
+    <script>
+        // ESTADO GLOBAL
+        const state = {
+            checkboxStyle: 'circle', // 'square' o 'circle'
+            notesPattern: 'blank'    // 'blank', 'dots', 'lines', 'grid'
+        };
+
+        const PATTERNS = ['blank', 'dots', 'lines', 'grid'];
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNotesPatternUI();
+            updateCheckboxUI();
+        });
+
+        // MANEJO DE UNA SOLA LÍNEA ESTRICTA (SIN ENTER Y HASTA EL BORDE DERECHO)
+        function handleSingleLineInput(el) {
+            el.value = el.value.replace(/[\r\n]+/g, ' ');
+            while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+        }
+
+        // ALTERNAR CASILLAS (CUADRADA / CÍRCULO)
+        function toggleCheckboxStyle() {
+            state.checkboxStyle = state.checkboxStyle === 'circle' ? 'square' : 'circle';
+            updateCheckboxUI();
+            showToast(`Casillas: ${state.checkboxStyle === 'circle' ? 'Círculos' : 'Cuadradas'}`);
+        }
+
+        function updateCheckboxUI() {
+            const isCircle = state.checkboxStyle === 'circle';
+            document.querySelectorAll('.day-check-indicator').forEach(el => {
+                el.className = `day-check-indicator ${isCircle ? 'circle' : ''}`;
+            });
+            document.querySelectorAll('.habit-day-dot').forEach(el => {
+                if (isCircle) {
+                    el.classList.remove('square');
+                } else {
+                    el.classList.add('square');
+                }
+            });
+        }
+
+        // ALTERNAR SELECCIÓN DE DÍAS EN HÁBITOS
+        function toggleDot(el) {
+            el.classList.toggle('checked');
+        }
+
+        // PAUTA DE NOTAS INTELIGENTE
+        function handleNotesInput(el) {
+            updateNotesPatternUI();
+        }
+
+        function updateNotesPatternUI() {
+            const notesEl = document.getElementById('field-weekly-notes');
+            const panel = document.getElementById('weekly-notes-panel');
+            const btnPattern = document.getElementById('btn-toggle-pattern');
+            if (!notesEl || !panel) return;
+
+            const hasText = notesEl.value.trim().length > 0;
+            if (hasText) {
+                panel.className = 'weekly-notes-panel bg-blank';
+                if (btnPattern) btnPattern.title = 'Con texto escrito se imprime en blanco (borra el texto para activar pautas)';
+            } else {
+                panel.className = `weekly-notes-panel bg-${state.notesPattern}`;
+                if (btnPattern) btnPattern.title = 'Cambiar pauta de notas (Blanco, Puntos, Líneas, Cuadrícula)';
+            }
+        }
+
+        function cycleNotesPattern() {
+            const notesEl = document.getElementById('field-weekly-notes');
+            if (notesEl && notesEl.value.trim().length > 0) {
+                showToast('Limpia el texto de notas para elegir pauta analógica');
+                return;
+            }
+
+            const idx = PATTERNS.indexOf(state.notesPattern);
+            state.notesPattern = PATTERNS[(idx + 1) % PATTERNS.length];
+
+            const panel = document.getElementById('weekly-notes-panel');
+            if (panel) panel.className = `weekly-notes-panel bg-${state.notesPattern}`;
+
+            const names = { blank: 'Blanco limpio', dots: 'Puntos sutiles', lines: 'Rayado', grid: 'Cuadrícula' };
+            showToast(`Pauta de notas: ${names[state.notesPattern]}`);
+        }
+
+        // LIMPIAR Y CARGAR EJEMPLO
+        function clearAllContent() {
+            document.getElementById('field-focus').value = '';
+            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(d => {
+                const el = document.getElementById('field-' + d);
+                if (el) el.value = '';
+            });
+            ['1','2','3'].forEach(n => {
+                const el = document.getElementById('field-habit-' + n);
+                if (el) el.value = '';
+            });
+            document.querySelectorAll('.habit-day-dot').forEach(d => d.classList.remove('checked'));
+            document.getElementById('field-weekly-notes').value = '';
+            updateNotesPatternUI();
+            showToast('Lienzo limpio para empezar de cero');
+        }
+
+        function loadExampleContent() {
+            document.getElementById('field-focus').value = 'Entregar los originales completos para enviar a encuadernación';
+            document.getElementById('field-lunes').value = 'Cerrar revisión del presupuesto de imprenta';
+            document.getElementById('field-martes').value = 'Reunión de balance trimestral con el equipo editorial';
+            document.getElementById('field-miercoles').value = 'Redacción de los dos ensayos para el lanzamiento';
+            document.getElementById('field-jueves').value = 'Pruebas de impresión de cubiertas y calibración de color';
+            document.getElementById('field-viernes').value = 'Cierre de tareas pendientes y balance de la semana';
+            document.getElementById('field-sabado').value = 'Caminar por la sierra y lectura profunda sin pantallas';
+            document.getElementById('field-domingo').value = 'Planificar la semana entrante con calma antes de cenar';
+            document.getElementById('field-habit-1').value = 'Lectura analógica (30 min)';
+            document.getElementById('field-habit-2').value = 'Caminar al aire libre sin móvil';
+            document.getElementById('field-habit-3').value = 'Cero pantallas después de las 22:00';
+            document.getElementById('field-weekly-notes').value = '• Revisar renovación de dominio web\n• Comprar recambios de tinta\n• Enviar mensaje de balance a Javier';
+            updateNotesPatternUI();
+            showToast('Ejemplo editorial cargado');
+        }
+
+        // MODAL HANDLERS
+        function openDownloadModal() {
+            document.getElementById('download-modal').classList.add('active');
+        }
+        function closeDownloadModal() {
+            document.getElementById('download-modal').classList.remove('active');
+        }
+        function closeModalOnBackdrop(e) {
+            if (e.target && e.target.id === 'download-modal') closeDownloadModal();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast-notify');
+            t.textContent = msg;
+            t.style.display = 'block';
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2400);
+        }
+
+        // ENVOLTORIO SEGURO DE TEXTO PARA PDF
+        function strictSafeWrapText(docInstance, text, maxWidth) {
+            if (!text) return [];
+            const safeMaxW = Math.max(10, maxWidth - 1.5);
+            const paragraphs = String(text).split('\n');
+            const result = [];
+            paragraphs.forEach(p => {
+                const trimmed = p.trim();
+                if (!trimmed) {
+                    result.push('');
+                    return;
+                }
+                const wrapped = docInstance.splitTextToSize(trimmed, safeMaxW);
+                result.push(...wrapped);
+            });
+            return result;
+        }
+
+        // ========================================================
+        // MOTOR DE GENERACIÓN PDF 1:1 CON jsPDF (LIBRO 8.25" × 6")
+        // Dimensiones en mm: 209.5 × 152.4 mm (Landscape)
+        // ========================================================
+        function executeDownload(isBlank = false) {
+            closeDownloadModal();
+
+            const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+            if (!jsPDFClass) {
+                alert('La librería jsPDF aún se está cargando. Por favor espera un segundo.');
+                return;
+            }
+
+            const doc = new jsPDFClass({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [209.5, 152.4] // 8.25" × 6" libro apaisado
+            });
+
+            const pw = doc.internal.pageSize.getWidth();  // 209.5 mm
+            const ph = doc.internal.pageSize.getHeight(); // 152.4 mm
+            const margin = 12; // 12 mm margen
+            const cw = pw - (margin * 2); // 185.5 mm útiles
+
+            // Fondo crema editorial
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pw, ph, 'F');
+
+            // 1. CABECERA
+            let y = margin + 2;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.0);
+            doc.setTextColor(135, 85, 59);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', margin, y);
+
+            const weekText = isBlank ? 'SEMANA: ____' : (document.getElementById('field-week-num').value.trim() || 'SEMANA: ____');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.0);
+            doc.setTextColor(70, 65, 60);
+            doc.text(weekText, pw - margin, y + 2.5, { align: 'right' });
+
+            y += 4.5;
+            doc.setFont('times', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(20, 18, 16);
+            doc.text('Planificación Semanal', margin, y);
+
+            y += 2.5;
+            doc.setDrawColor(30, 25, 20);
+            doc.setLineWidth(0.35);
+            doc.line(margin, y, pw - margin, y);
+            y += 4;
+
+            // 2. CUERPO: 2 COLUMNAS DE DÍAS
+            const colGap = 6;
+            const colW = (cw - colGap) / 2; // ~89.75 mm
+            const bodyH = 75; // Altura de los días
+            const col1X = margin;
+            const col2X = margin + colW + colGap;
+
+            // Marco Columna 1 (Lunes a Jueves)
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(210, 205, 198);
+            doc.setLineWidth(0.25);
+            doc.roundedRect(col1X, y, colW, bodyH, 1.5, 1.5, 'FD');
+
+            // Marco Columna 2 (Foco + Viernes a Domingo)
+            doc.roundedRect(col2X, y, colW, bodyH, 1.5, 1.5, 'FD');
+
+            const isCircle = state.checkboxStyle === 'circle';
+
+            // DIBUJAR COLUMNA 1: LUNES A JUEVES (4 FILAS)
+            const rowH1 = bodyH / 4; // ~18.75 mm
+            const daysCol1 = [
+                { name: 'LUNES', text: isBlank ? '' : document.getElementById('field-lunes').value.trim() },
+                { name: 'MARTES', text: isBlank ? '' : document.getElementById('field-martes').value.trim() },
+                { name: 'MIÉRCOLES', text: isBlank ? '' : document.getElementById('field-miercoles').value.trim() },
+                { name: 'JUEVES', text: isBlank ? '' : document.getElementById('field-jueves').value.trim() }
+            ];
+
+            daysCol1.forEach((day, idx) => {
+                const rowY = y + (idx * rowH1);
+                
+                // Cabecera del día
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(30, 25, 20);
+                doc.text(day.name, col1X + 4, rowY + 4.2);
+
+                // Checkbox
+                doc.setDrawColor(80, 75, 70);
+                doc.setLineWidth(0.22);
+                if (isCircle) {
+                    doc.circle(col1X + colW - 5.5, rowY + 3.5, 1.6, 'S');
+                } else {
+                    doc.rect(col1X + colW - 7, rowY + 2.0, 3.2, 3.2);
+                }
+
+                // Texto del día
+                if (day.text) {
+                    doc.setFont('times', 'normal');
+                    doc.setFontSize(8.2);
+                    doc.setTextColor(40, 35, 30);
+                    const lines = strictSafeWrapText(doc, day.text, colW - 8);
+                    doc.text(lines.slice(0, 2).join(' '), col1X + 4, rowY + 8.5, { maxWidth: colW - 8 });
+                }
+
+                // Línea separadora
+                if (idx < 3) {
+                    doc.setDrawColor(230, 225, 218);
+                    doc.setLineWidth(0.15);
+                    doc.line(col1X + 3, rowY + rowH1, col1X + colW - 3, rowY + rowH1);
+                }
+            });
+
+            // DIBUJAR COLUMNA 2: FOCO + VIERNES A DOMINGO
+            // Foco: 18.75 mm
+            const focusText = isBlank ? '' : document.getElementById('field-focus').value.trim();
+            doc.setFillColor(250, 248, 245);
+            doc.roundedRect(col2X, y, colW, rowH1, 1.5, 1.5, 'F');
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.8);
+            doc.setTextColor(135, 85, 59);
+            doc.text('🎯 FOCO DE LA SEMANA (META CLAVE)', col2X + 4, y + 4.2);
+
+            if (focusText) {
+                doc.setFont('times', 'bold');
+                doc.setFontSize(8.2);
+                doc.setTextColor(25, 20, 15);
+                const fLines = strictSafeWrapText(doc, focusText, colW - 8);
+                doc.text(fLines.slice(0, 2).join(' '), col2X + 4, y + 8.5, { maxWidth: colW - 8 });
+            }
+
+            doc.setDrawColor(220, 215, 208);
+            doc.setLineWidth(0.2);
+            doc.line(col2X, y + rowH1, col2X + colW, y + rowH1);
+
+            const daysCol2 = [
+                { name: 'VIERNES', text: isBlank ? '' : document.getElementById('field-viernes').value.trim() },
+                { name: 'SÁBADO', text: isBlank ? '' : document.getElementById('field-sabado').value.trim() },
+                { name: 'DOMINGO', text: isBlank ? '' : document.getElementById('field-domingo').value.trim() }
+            ];
+
+            daysCol2.forEach((day, idx) => {
+                const rowY = y + rowH1 + (idx * rowH1);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(30, 25, 20);
+                doc.text(day.name, col2X + 4, rowY + 4.2);
+
+                doc.setDrawColor(80, 75, 70);
+                doc.setLineWidth(0.22);
+                if (isCircle) {
+                    doc.circle(col2X + colW - 5.5, rowY + 3.5, 1.6, 'S');
+                } else {
+                    doc.rect(col2X + colW - 7, rowY + 2.0, 3.2, 3.2);
+                }
+
+                if (day.text) {
+                    doc.setFont('times', 'normal');
+                    doc.setFontSize(8.2);
+                    doc.setTextColor(40, 35, 30);
+                    const lines = strictSafeWrapText(doc, day.text, colW - 8);
+                    doc.text(lines.slice(0, 2).join(' '), col2X + 4, rowY + 8.5, { maxWidth: colW - 8 });
+                }
+
+                if (idx < 2) {
+                    doc.setDrawColor(230, 225, 218);
+                    doc.setLineWidth(0.15);
+                    doc.line(col2X + 3, rowY + rowH1, col2X + colW - 3, rowY + rowH1);
+                }
+            });
+
+            // 3. SECCIÓN INFERIOR: HÁBITOS DE LA SEMANA + NOTAS
+            y += bodyH + 4.5;
+            const bottomH = 34; // Altura de los paneles inferiores
+
+            // Marco Hábitos (Izquierda)
+            doc.setFillColor(252, 250, 247);
+            doc.setDrawColor(215, 210, 202);
+            doc.setLineWidth(0.25);
+            doc.roundedRect(col1X, y, colW, bottomH, 1.5, 1.5, 'FD');
+
+            // Encabezado de Hábitos
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.6);
+            doc.setTextColor(30, 25, 20);
+            doc.text('🌱 HÁBITOS DE LA SEMANA', col1X + 4, y + 4.0);
+
+            // Leyenda de Días L M X J V S D
+            const dotStartX = col1X + colW - 32;
+            const dotSpacing = 4.2;
+            const letters = ['L','M','X','J','V','S','D'];
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(5.8);
+            doc.setTextColor(110, 105, 100);
+            letters.forEach((l, li) => {
+                doc.text(l, dotStartX + (li * dotSpacing), y + 4.0, { align: 'center' });
+            });
+
+            doc.setDrawColor(228, 222, 214);
+            doc.setLineWidth(0.15);
+            doc.line(col1X + 3, y + 5.5, col1X + colW - 3, y + 5.5);
+
+            // 3 Filas de Hábitos
+            const habitRowH = (bottomH - 6.5) / 3;
+            const habits = [
+                { id: '1', text: isBlank ? '' : document.getElementById('field-habit-1').value.trim() },
+                { id: '2', text: isBlank ? '' : document.getElementById('field-habit-2').value.trim() },
+                { id: '3', text: isBlank ? '' : document.getElementById('field-habit-3').value.trim() }
+            ];
+
+            habits.forEach((hab, hi) => {
+                const hy = y + 6.0 + (hi * habitRowH);
+                
+                // Texto del hábito
+                if (hab.text) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.0);
+                    doc.setTextColor(40, 35, 30);
+                    const hLines = strictSafeWrapText(doc, hab.text, dotStartX - col1X - 6);
+                    doc.text(hLines[0] || '', col1X + 4, hy + 4.5);
+                } else {
+                    doc.setDrawColor(235, 230, 222);
+                    doc.setLineWidth(0.15);
+                    doc.line(col1X + 4, hy + 5.2, dotStartX - 4, hy + 5.2);
+                }
+
+                // 7 Casillas para marcar
+                doc.setDrawColor(120, 115, 110);
+                doc.setLineWidth(0.2);
+                letters.forEach((l, li) => {
+                    const cx = dotStartX + (li * dotSpacing);
+                    const cy = hy + 4.0;
+                    if (isCircle) {
+                        doc.circle(cx, cy, 1.4, 'S');
+                    } else {
+                        doc.rect(cx - 1.4, cy - 1.4, 2.8, 2.8);
+                    }
+                });
+
+                if (hi < 2) {
+                    doc.setDrawColor(235, 230, 222);
+                    doc.setLineWidth(0.12);
+                    doc.line(col1X + 3, hy + habitRowH, col1X + colW - 3, hy + habitRowH);
+                }
+            });
+
+            // Marco Notas / Secundarias (Derecha)
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(215, 210, 202);
+            doc.setLineWidth(0.25);
+            doc.roundedRect(col2X, y, colW, bottomH, 1.5, 1.5, 'FD');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.6);
+            doc.setTextColor(30, 25, 20);
+            doc.text('📝 TAREAS SECUNDARIAS / NOTAS', col2X + 4, y + 4.0);
+
+            doc.setDrawColor(228, 222, 214);
+            doc.setLineWidth(0.15);
+            doc.line(col2X + 3, y + 5.5, col2X + colW - 3, y + 5.5);
+
+            const notesText = isBlank ? '' : document.getElementById('field-weekly-notes').value.trim();
+
+            if (!notesText || isBlank) {
+                // Dibujar pauta seleccionada
+                const areaTop = y + 6.0;
+                const areaH = bottomH - 7.0;
+
+                if (state.notesPattern === 'dots') {
+                    doc.setFillColor(195, 188, 178);
+                    for (let px = col2X + 4; px < col2X + colW - 3; px += 4.5) {
+                        for (let py = areaTop + 3; py < areaTop + areaH - 1; py += 4.5) {
+                            doc.circle(px, py, 0.22, 'F');
+                        }
+                    }
+                } else if (state.notesPattern === 'lines') {
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.15);
+                    for (let py = areaTop + 4.5; py < areaTop + areaH; py += 4.5) {
+                        doc.line(col2X + 4, py, col2X + colW - 4, py);
+                    }
+                } else if (state.notesPattern === 'grid') {
+                    doc.setDrawColor(232, 228, 220);
+                    doc.setLineWidth(0.12);
+                    for (let px = col2X + 4; px < col2X + colW - 3; px += 4.5) {
+                        doc.line(px, areaTop + 1, px, areaTop + areaH);
+                    }
+                    for (let py = areaTop + 3; py < areaTop + areaH; py += 4.5) {
+                        doc.line(col2X + 4, py, col2X + colW - 4, py);
+                    }
+                }
+            } else {
+                // Escribir texto maquetado
+                doc.setFont('times', 'normal');
+                doc.setFontSize(7.5);
+                doc.setTextColor(30, 25, 20);
+                const nLines = strictSafeWrapText(doc, notesText, colW - 8);
+                let ny = y + 9.0;
+                nLines.slice(0, 6).forEach(line => {
+                    doc.text(line, col2X + 4, ny);
+                    ny += 3.8;
+                });
+            }
+
+            // 4. PIE DE IMPRENTA
+            y += bottomH + 4.0;
+            doc.setDrawColor(210, 205, 198);
+            doc.setLineWidth(0.18);
+            doc.line(margin, y, pw - margin, y);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(5.8);
+            doc.setTextColor(130, 125, 120);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', margin, y + 3.0);
+            doc.text('editorialmenosruido.com', pw - margin, y + 3.0, { align: 'right' });
+
+            // Descarga
+            const filename = isBlank ? 'planificador_semanal_plantilla_limpia.pdf' : 'mi_planificador_semanal.pdf';
+            doc.save(filename);
+            showToast(`✓ PDF descargado: ${filename}`);
+        }
+    </script>
+</body>
+</html>
