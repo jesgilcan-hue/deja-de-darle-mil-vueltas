@@ -115,7 +115,7 @@
         /* BARRA DE HERRAMIENTAS PRINCIPAL */
         .canvas-toolbar {
             width: 100%;
-            max-width: 550px;
+            max-width: 580px;
             background: #ffffff;
             border: 1px solid #e2ddd3;
             border-radius: 12px;
@@ -177,7 +177,7 @@
         /* PANEL VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR) */
         .sections-toggle-bar {
             width: 100%;
-            max-width: 550px;
+            max-width: 580px;
             background: #f0ebe2;
             border: 1px solid #e0d8cc;
             border-radius: 8px;
@@ -230,10 +230,11 @@
 
         /* ========================================================
            EL LIENZO FÍSICO INTERACTIVO (LA HOJA EN BLANCO)
+           Proporción matemática 1:1 con el folio editorial 6" × 9"
            ======================================================== */
         .paper-canvas-container {
             width: 100%;
-            max-width: 530px;
+            max-width: 580px;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -242,14 +243,15 @@
 
         .interactive-paper {
             width: 100%;
-            height: 750px;
-            max-height: 750px;
+            max-width: 580px;
+            height: 870px;
+            max-height: 870px;
             aspect-ratio: 6 / 9;
             background-color: var(--paper-color);
             box-shadow: 0 16px 45px rgba(0,0,0,0.14);
             border-radius: 4px;
             border: 1px solid #e7e2d8;
-            padding: 22px 26px 16px;
+            padding: 24px 34px 18px;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -588,10 +590,10 @@
             flex: 1;
             min-height: 0;
             border-radius: 6px;
-            padding: 10px 12px;
-            font-size: 0.82rem;
-            color: #444;
-            line-height: 1.45;
+            padding: 12px 14px;
+            font-size: 0.88rem;
+            color: #333;
+            line-height: 1.55;
             background-color: #faf9f6;
             border: 1px solid #ede8de;
             box-sizing: border-box;
@@ -615,14 +617,14 @@
             line-height: inherit;
             white-space: pre-wrap;
             overflow: hidden;
-            word-break: break-all;
+            word-break: break-word;
             overflow-wrap: anywhere;
         }
 
         /* PAUTAS DE NOTAS */
         .notes-canvas-area.bg-dots {
-            background-image: radial-gradient(#d0c8be 1px, transparent 1px);
-            background-size: 14px 14px;
+            background-image: radial-gradient(#c5bdaf 1.2px, transparent 1.2px);
+            background-size: 19px 19px;
         }
         .notes-canvas-area.bg-lines {
             background-image: linear-gradient(#ded9d0 1px, transparent 1px);
@@ -631,9 +633,9 @@
         }
         .notes-canvas-area.bg-grid {
             background-image: 
-                linear-gradient(to right, #e2ddd4 1px, transparent 1px),
-                linear-gradient(to bottom, #e2ddd4 1px, transparent 1px);
-            background-size: 15px 15px;
+                linear-gradient(to right, #ded8cd 1px, transparent 1px),
+                linear-gradient(to bottom, #ded8cd 1px, transparent 1px);
+            background-size: 19px 19px;
         }
         .notes-canvas-area.bg-blank { background-image: none; }
 
@@ -664,6 +666,19 @@
             display: none;
             box-shadow: 0 4px 14px rgba(0,0,0,0.18);
             z-index: 100;
+        }
+
+        @media (max-width: 620px) {
+            .paper-canvas-container,
+            .canvas-toolbar,
+            .sections-toggle-bar {
+                max-width: 100%;
+            }
+            .interactive-paper {
+                height: auto;
+                min-height: 820px;
+                padding: 18px 20px 14px;
+            }
         }
     </style>
 </head>
@@ -802,8 +817,8 @@
                             <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('notes')" title="Quitar sección">✕</button>
                         </div>
                     </div>
-                    <div class="notes-canvas-area bg-blank" id="notes-canvas-area">
-                        <textarea class="textarea-inline-notes" id="field-notes" maxlength="1400" 
+                    <div class="notes-canvas-area bg-dots" id="notes-canvas-area">
+                        <textarea class="textarea-inline-notes" id="field-notes" maxlength="1800" 
                                   placeholder="Escribe aquí tus notas y reflexiones del día..."
                                   onkeydown="handleNotesKeydown(event)"
                                   oninput="handleNotesInput(this)">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
@@ -827,7 +842,7 @@
         // ESTADO GLOBAL DE DATOS Y CONFIGURACIÓN
         const state = {
             checkboxStyle: 'square',
-            notesPattern: 'blank',
+            notesPattern: 'dots',
             blocksOrder: ['priority', 'tasks', 'habits', 'notes'],
             sectionsVisible: {
                 priority: true,
@@ -850,7 +865,7 @@
             ]
         };
 
-        const PATTERNS = ['blank', 'dots', 'lines', 'grid'];
+        const PATTERNS = ['dots', 'lines', 'grid', 'blank'];
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
@@ -1070,28 +1085,28 @@
         // CAPACIDAD DINÁMICA DE NOTAS & PROPORCIÓN 1:1 CON IMPRENTA
         // ========================================================
         function getMaxAllowedNoteLines() {
-            let lines = 22; // Capacidad real de una página 6x9
-            if (state.sectionsVisible.priority) lines -= (state.priorities.length * 2.5);
-            if (state.sectionsVisible.tasks) lines -= (state.tasks.length * 1.5);
-            if (state.sectionsVisible.habits) lines -= (state.habits.length * 1.4);
-            return Math.max(8, Math.floor(lines));
+            let lines = 30; // Capacidad real de una página 6x9 (870px / ~106mm útiles)
+            if (state.sectionsVisible.priority) lines -= (state.priorities.length * 3.5);
+            if (state.sectionsVisible.tasks) lines -= (state.tasks.length * 2.0);
+            if (state.sectionsVisible.habits) lines -= (state.habits.length * 1.8);
+            return Math.max(12, Math.floor(lines));
         }
 
         function updateNotesCapacity() {
             const notesEl = document.getElementById('field-notes');
             if (!notesEl) return;
             const maxLines = getMaxAllowedNoteLines();
-            let limitChars = Math.min(1500, 350 + (maxLines * 55));
+            let limitChars = Math.min(1800, 300 + (maxLines * 70));
             notesEl.maxLength = limitChars;
 
             const area = document.getElementById('notes-canvas-area');
             if (area) {
                 if (area.scrollHeight > area.clientHeight + 4) {
-                    area.style.fontSize = '0.74rem';
-                    area.style.lineHeight = '1.35';
+                    area.style.fontSize = '0.80rem';
+                    area.style.lineHeight = '1.4';
                 } else {
-                    area.style.fontSize = '0.82rem';
-                    area.style.lineHeight = '1.45';
+                    area.style.fontSize = '0.88rem';
+                    area.style.lineHeight = '1.55';
                 }
             }
             updatePillStates();
@@ -1227,29 +1242,42 @@
         function strictSafeWrapText(docInstance, text, maxWidth) {
             if (!text) return [];
             const safeMaxW = Math.max(10, maxWidth - 1.5); // Margen de seguridad estricto
-            const words = String(text).split(/\s+/);
-            const processedWords = [];
+            const paragraphs = String(text).split('\n');
+            const result = [];
 
-            words.forEach(w => {
-                if (!w) return;
-                const wWidth = docInstance.getTextWidth(w);
-                if (wWidth <= safeMaxW) {
-                    processedWords.push(w);
-                } else {
-                    let chunk = '';
-                    for (let char of w) {
-                        if (docInstance.getTextWidth(chunk + char) > safeMaxW) {
-                            if (chunk) processedWords.push(chunk);
-                            chunk = char;
-                        } else {
-                            chunk += char;
-                        }
-                    }
-                    if (chunk) processedWords.push(chunk);
+            paragraphs.forEach(p => {
+                const trimmed = p.trim();
+                if (!trimmed) {
+                    result.push('');
+                    return;
                 }
+                const words = trimmed.split(/\s+/);
+                const processedWords = [];
+
+                words.forEach(w => {
+                    if (!w) return;
+                    const wWidth = docInstance.getTextWidth(w);
+                    if (wWidth <= safeMaxW) {
+                        processedWords.push(w);
+                    } else {
+                        let chunk = '';
+                        for (let char of w) {
+                            if (docInstance.getTextWidth(chunk + char) > safeMaxW) {
+                                if (chunk) processedWords.push(chunk);
+                                chunk = char;
+                            } else {
+                                chunk += char;
+                            }
+                        }
+                        if (chunk) processedWords.push(chunk);
+                    }
+                });
+
+                const wrapped = docInstance.splitTextToSize(processedWords.join(' '), safeMaxW);
+                result.push(...wrapped);
             });
 
-            return docInstance.splitTextToSize(processedWords.join(' '), safeMaxW);
+            return result;
         }
 
         function generatePdf(isBlank = false) {
@@ -1468,24 +1496,53 @@
                     doc.setLineWidth(0.2);
                     doc.roundedRect(margin, y, cw, notesHeight, 2, 2, 'FD');
 
+                    // DIBUJAR PAUTA DE FONDO IDÉNTICA A LA WEB (PUNTOS, LÍNEAS, CUADRÍCULA)
+                    if (state.notesPattern === 'dots') {
+                        doc.setFillColor(205, 198, 188); // puntos sutiles
+                        const dotStep = 5.0; // retícula editorial de 5 mm
+                        for (let dy = y + 4.5; dy < y + notesHeight - 2.5; dy += dotStep) {
+                            for (let dx = margin + 4.5; dx < margin + cw - 2.5; dx += dotStep) {
+                                doc.circle(dx, dy, 0.22, 'F');
+                            }
+                        }
+                    } else if (state.notesPattern === 'lines') {
+                        doc.setDrawColor(225, 220, 212);
+                        doc.setLineWidth(0.15);
+                        const lineStep = 6.0; // pauta horizontal de 6 mm
+                        for (let ly = y + 6.0; ly < y + notesHeight - 2.5; ly += lineStep) {
+                            doc.line(margin + 3, ly, margin + cw - 3, ly);
+                        }
+                    } else if (state.notesPattern === 'grid') {
+                        doc.setDrawColor(230, 225, 218);
+                        doc.setLineWidth(0.12);
+                        const gridStep = 5.0;
+                        for (let ly = y + 4.0; ly < y + notesHeight - 2.5; ly += gridStep) {
+                            doc.line(margin + 2.5, ly, margin + cw - 2.5, ly);
+                        }
+                        for (let lx = margin + 4.5; lx < margin + cw - 2.5; lx += gridStep) {
+                            doc.line(lx, y + 2.5, lx, y + notesHeight - 2.5);
+                        }
+                    }
+
                     const notesText = isBlank ? '' : document.getElementById('field-notes').value.trim();
                     if (notesText) {
                         const maxNotesH = notesHeight - 6;
-                        let fSize = 8.5;
+                        let fSize = 9.2;
                         doc.setFont('times', 'normal');
                         doc.setFontSize(fSize);
-                        doc.setTextColor(35, 30, 25);
+                        doc.setTextColor(30, 25, 20);
 
                         let noteLines = strictSafeWrapText(doc, notesText, cw - 8);
-                        while (noteLines.length * (fSize * 0.352778 * 1.35) > maxNotesH && fSize > 6.4) {
+                        while (noteLines.length * (fSize * 0.352778 * 1.45) > maxNotesH && fSize > 6.8) {
                             fSize -= 0.25;
                             doc.setFontSize(fSize);
                             noteLines = strictSafeWrapText(doc, notesText, cw - 8);
                         }
-                        const lineH = fSize * 0.352778 * 1.35;
+                        const lineH = fSize * 0.352778 * 1.45;
                         const maxFit = Math.floor(maxNotesH / lineH);
                         noteLines.slice(0, maxFit).forEach((nl, idx) => {
-                            doc.text(nl, margin + 4, y + 4.5 + (idx * lineH), { maxWidth: cw - 8 });
+                            if (!nl) return;
+                            doc.text(nl, margin + 4, y + 4.8 + (idx * lineH), { maxWidth: cw - 8 });
                         });
                     }
                     y += notesHeight + 4;
