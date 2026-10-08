@@ -115,7 +115,7 @@
         /* BARRA DE HERRAMIENTAS PRINCIPAL */
         .canvas-toolbar {
             width: 100%;
-            max-width: 580px;
+            max-width: 680px;
             background: #ffffff;
             border: 1px solid #e2ddd3;
             border-radius: 12px;
@@ -177,7 +177,7 @@
         /* PANEL VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR) */
         .sections-toggle-bar {
             width: 100%;
-            max-width: 580px;
+            max-width: 680px;
             background: #f0ebe2;
             border: 1px solid #e0d8cc;
             border-radius: 8px;
@@ -234,7 +234,7 @@
            ======================================================== */
         .paper-canvas-container {
             width: 100%;
-            max-width: 580px;
+            max-width: 680px;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -243,15 +243,15 @@
 
         .interactive-paper {
             width: 100%;
-            max-width: 580px;
-            height: 870px;
-            max-height: 870px;
+            max-width: 680px;
+            height: 1020px;
+            max-height: 1020px;
             aspect-ratio: 6 / 9;
             background-color: var(--paper-color);
             box-shadow: 0 16px 45px rgba(0,0,0,0.14);
             border-radius: 4px;
             border: 1px solid #e7e2d8;
-            padding: 24px 34px 18px;
+            padding: 28px 40px 22px;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -755,7 +755,6 @@
                             <span class="sub">(Innegociable)</span>
                         </div>
                         <div class="block-actions-box">
-                            <button type="button" class="btn-block-action" id="btn-add-prio-header" onclick="addPriorityItem()" title="Añadir segunda prioridad">+ Añadir</button>
                             <button type="button" class="btn-block-action" onclick="moveBlock('priority', -1)" title="Subir sección">▲</button>
                             <button type="button" class="btn-block-action" onclick="moveBlock('priority', 1)" title="Bajar sección">▼</button>
                             <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('priority')" title="Quitar sección">✕</button>
@@ -877,52 +876,32 @@
         });
 
         // ========================================================
-        // 1. PRIORIDAD DEL DÍA (1 O 2 PRIORIDADES)
+        // 1. PRIORIDAD DEL DÍA (ÚNICA)
         // ========================================================
         function renderPriorities() {
             const container = document.getElementById('priorities-list-container');
             if (!container) return;
             container.innerHTML = '';
             const isCircle = state.checkboxStyle === 'circle';
+            const pText = state.priorities[0] || '';
 
-            state.priorities.forEach((pText, idx) => {
-                const box = document.createElement('div');
-                box.className = 'box-priority';
-                box.innerHTML = `
-                    <div class="check-square ${isCircle ? 'circle' : ''}"></div>
-                    <textarea class="textarea-inline-priority" rows="1" maxlength="95" 
-                              placeholder="¿Qué única tarea haría que hoy fuera un día productivo?"
-                              onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                              oninput="this.value=this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updatePriorityValue(${idx}, this.value)">${escapeHTML(pText)}</textarea>
-                    ${state.priorities.length > 1 ? `<button type="button" class="btn-remove-line" onclick="removePriorityItem(${idx})" title="Quitar prioridad">✕</button>` : ''}
-                `;
-                container.appendChild(box);
-                const ta = box.querySelector('textarea');
-                if (ta) autoResizeTextarea(ta);
-            });
-
-            const btnAdd = document.getElementById('btn-add-prio-header');
-            if (btnAdd) {
-                btnAdd.style.display = state.priorities.length >= 2 ? 'none' : 'inline-block';
-            }
+            const box = document.createElement('div');
+            box.className = 'box-priority';
+            box.innerHTML = `
+                <div class="check-square ${isCircle ? 'circle' : ''}"></div>
+                <textarea class="textarea-inline-priority" rows="1" maxlength="150" 
+                          placeholder="¿Qué única tarea haría que hoy fuera un día productivo?"
+                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                          oninput="this.value=this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updatePriorityValue(0, this.value)">${escapeHTML(pText)}</textarea>
+            `;
+            container.appendChild(box);
+            const ta = box.querySelector('textarea');
+            if (ta) autoResizeTextarea(ta);
             updateNotesCapacity();
         }
 
         function updatePriorityValue(idx, val) {
-            state.priorities[idx] = val.replace(/[\r\n]+/g, ' ');
-        }
-
-        function addPriorityItem() {
-            if (state.priorities.length >= 2) return;
-            state.priorities.push('');
-            renderPriorities();
-            showToast('Segunda prioridad añadida');
-        }
-
-        function removePriorityItem(idx) {
-            state.priorities.splice(idx, 1);
-            renderPriorities();
-            showToast('Prioridad eliminada');
+            state.priorities[0] = val.replace(/[\r\n]+/g, ' ');
         }
 
         // ========================================================
@@ -939,7 +918,7 @@
                 row.className = 'task-row-interactive';
                 row.innerHTML = `
                     <div class="task-box-check ${isCircle ? 'circle' : ''}"></div>
-                    <textarea class="textarea-inline-task" rows="1" maxlength="75" placeholder="Tarea secundaria ${idx + 1}..."
+                    <textarea class="textarea-inline-task" rows="1" maxlength="130" placeholder="Tarea secundaria ${idx + 1}..."
                               onkeydown="if(event.key==='Enter'){event.preventDefault();}"
                               oninput="this.value=this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updateTaskValue(${idx}, this.value)">${escapeHTML(tText)}</textarea>
                     <button type="button" class="btn-remove-line" onclick="removeTaskItem(${idx})" title="Eliminar tarea">✕</button>
@@ -987,7 +966,7 @@
                 row.className = 'habit-row-interactive';
                 row.innerHTML = `
                     <div class="habit-box-check ${isCircle ? 'circle' : ''}"></div>
-                    <textarea class="textarea-inline-habit" rows="1" maxlength="45" placeholder="Hábito ${idx + 1}..."
+                    <textarea class="textarea-inline-habit" rows="1" maxlength="90" placeholder="Hábito ${idx + 1}..."
                               onkeydown="if(event.key==='Enter'){event.preventDefault();}"
                               oninput="this.value=this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updateHabitValue(${idx}, this.value)">${escapeHTML(hText)}</textarea>
                     <button type="button" class="btn-remove-line" onclick="removeHabitItem(${idx})" title="Eliminar hábito">✕</button>
@@ -1085,27 +1064,27 @@
         // CAPACIDAD DINÁMICA DE NOTAS & PROPORCIÓN 1:1 CON IMPRENTA
         // ========================================================
         function getMaxAllowedNoteLines() {
-            let lines = 30; // Capacidad real de una página 6x9 (870px / ~106mm útiles)
-            if (state.sectionsVisible.priority) lines -= (state.priorities.length * 3.5);
+            let lines = 34; // Capacidad real de una página 6x9 (1020px / ~106mm útiles)
+            if (state.sectionsVisible.priority) lines -= 3.5;
             if (state.sectionsVisible.tasks) lines -= (state.tasks.length * 2.0);
             if (state.sectionsVisible.habits) lines -= (state.habits.length * 1.8);
-            return Math.max(12, Math.floor(lines));
+            return Math.max(14, Math.floor(lines));
         }
 
         function updateNotesCapacity() {
             const notesEl = document.getElementById('field-notes');
             if (!notesEl) return;
             const maxLines = getMaxAllowedNoteLines();
-            let limitChars = Math.min(1800, 300 + (maxLines * 70));
+            let limitChars = Math.min(2200, 400 + (maxLines * 80));
             notesEl.maxLength = limitChars;
 
             const area = document.getElementById('notes-canvas-area');
             if (area) {
-                if (area.scrollHeight > area.clientHeight + 4) {
-                    area.style.fontSize = '0.80rem';
-                    area.style.lineHeight = '1.4';
+                if (area.scrollHeight > area.clientHeight + 6) {
+                    area.style.fontSize = '0.84rem';
+                    area.style.lineHeight = '1.45';
                 } else {
-                    area.style.fontSize = '0.88rem';
+                    area.style.fontSize = '0.90rem';
                     area.style.lineHeight = '1.55';
                 }
             }
