@@ -542,6 +542,7 @@
             min-height: 0;
             line-height: 1.4;
             resize: none;
+            overflow: hidden; /* CERO DESPLEGABLES / SCROLL */
             box-sizing: border-box;
             padding: 2px;
             margin: 0;
@@ -916,7 +917,7 @@
                     <div class="notes-panel-header">
                         <span class="notes-panel-title">📝 TAREAS SECUNDARIAS / NOTAS</span>
                     </div>
-                    <textarea class="textarea-weekly-notes" id="field-weekly-notes" maxlength="600"
+                    <textarea class="textarea-weekly-notes" id="field-weekly-notes" maxlength="350"
                               placeholder="Anota recados secundarios, llamadas o reflexiones de la semana..."
                               oninput="handleNotesInput(this)">• Revisar renovación de dominio web&#10;• Comprar recambios de tinta&#10;• Enviar mensaje de balance a Javier</textarea>
                 </div>
@@ -1002,8 +1003,12 @@
             el.classList.toggle('checked');
         }
 
-        // PAUTA DE NOTAS INTELIGENTE
+        // PAUTA DE NOTAS INTELIGENTE Y CONTROL ESTRICTO DE ALTURA
         function handleNotesInput(el) {
+            // Impedir que sobrepase la altura física visible de la caja (cero scrollbar/desplegable)
+            while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
             updateNotesPatternUI();
         }
 
@@ -1210,13 +1215,15 @@
                     doc.rect(col1X + colW - 7, rowY + 2.0, 3.2, 3.2);
                 }
 
-                // Texto del día
+                // Texto del día (1 SOLA LÍNEA ESTRICTA 1:1)
                 if (day.text) {
                     doc.setFont('times', 'normal');
                     doc.setFontSize(8.2);
                     doc.setTextColor(40, 35, 30);
-                    const lines = strictSafeWrapText(doc, day.text, colW - 8);
-                    doc.text(lines.slice(0, 2).join(' '), col1X + 4, rowY + 8.5, { maxWidth: colW - 8 });
+                    const lines = strictSafeWrapText(doc, day.text, colW - 14);
+                    if (lines.length > 0 && lines[0]) {
+                        doc.text(lines[0], col1X + 4, rowY + 9.0, { maxWidth: colW - 14 });
+                    }
                 }
 
                 // Línea separadora
@@ -1243,7 +1250,9 @@
                 doc.setFontSize(8.2);
                 doc.setTextColor(25, 20, 15);
                 const fLines = strictSafeWrapText(doc, focusText, colW - 8);
-                doc.text(fLines.slice(0, 2).join(' '), col2X + 4, y + 8.5, { maxWidth: colW - 8 });
+                if (fLines.length > 0 && fLines[0]) {
+                    doc.text(fLines[0], col2X + 4, y + 9.0, { maxWidth: colW - 8 });
+                }
             }
 
             doc.setDrawColor(220, 215, 208);
@@ -1276,8 +1285,10 @@
                     doc.setFont('times', 'normal');
                     doc.setFontSize(8.2);
                     doc.setTextColor(40, 35, 30);
-                    const lines = strictSafeWrapText(doc, day.text, colW - 8);
-                    doc.text(lines.slice(0, 2).join(' '), col2X + 4, rowY + 8.5, { maxWidth: colW - 8 });
+                    const lines = strictSafeWrapText(doc, day.text, colW - 14);
+                    if (lines.length > 0 && lines[0]) {
+                        doc.text(lines[0], col2X + 4, rowY + 9.0, { maxWidth: colW - 14 });
+                    }
                 }
 
                 if (idx < 2) {
