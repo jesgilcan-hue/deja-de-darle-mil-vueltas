@@ -48,7 +48,8 @@ export default defineConfig({
         generadorPlanificadorSemanal: resolve(__dirname, 'generador-planificador-semanal.html'),
         generadorPlanificadorMensual: resolve(__dirname, 'generador-planificador-mensual.html'),
         generadorDiario: resolve(__dirname, 'demo_generador_pdf_planificador.html'),
-        generadorSemanal: resolve(__dirname, 'demo_generador_pdf_planificador_semanal.html')
+        generadorSemanal: resolve(__dirname, 'demo_generador_pdf_planificador_semanal.html'),
+        notFound: resolve(__dirname, '404.html')
       }
     }
   }
