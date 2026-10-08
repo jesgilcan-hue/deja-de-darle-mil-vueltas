@@ -514,18 +514,20 @@
 
         .paper-sheet {
             width: 100%;
-            max-width: 520px;
-            min-height: 800px;
-            height: auto;
+            max-width: 500px;
+            height: 750px;
+            max-height: 750px;
+            aspect-ratio: 6 / 9;
             background-color: var(--paper-color);
             box-shadow: 0 16px 40px rgba(0,0,0,0.12);
             border-radius: 4px;
             border: 1px solid #e7e2d8;
-            padding: 32px 30px 26px;
+            padding: 26px 26px 20px;
             display: flex;
             flex-direction: column;
             position: relative;
             box-sizing: border-box;
+            overflow: hidden; /* LA PÁGINA NUNCA CRECE EN ALTURA */
             transition: background 0.2s;
         }
 
@@ -535,12 +537,13 @@
             align-items: baseline;
             border-bottom: 1.5px solid #222;
             padding-bottom: 6px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
+            flex-shrink: 0;
         }
 
         .sheet-day {
             font-family: var(--font-serif);
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #111;
         }
@@ -552,20 +555,21 @@
         }
 
         .sheet-block {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .sheet-block-label {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #111;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
 
         .sheet-block-label .sub {
@@ -583,13 +587,15 @@
             background: #faf8f5;
             border: 1.5px solid #222;
             border-radius: 6px;
-            padding: 10px 14px;
-            min-height: 48px;
+            padding: 8px 12px;
+            min-height: 44px;
+            max-height: 58px;
             display: flex;
             align-items: center;
             gap: 12px;
             box-sizing: border-box;
             width: 100%;
+            overflow: hidden;
         }
 
         .priority-box.style-linea-lateral {
@@ -614,27 +620,35 @@
 
         .priority-text {
             font-family: var(--font-serif);
-            font-size: 1.05rem;
+            font-size: 0.98rem;
             color: #111;
-            line-height: 1.35;
+            line-height: 1.3;
             word-break: break-word;
-            overflow-wrap: break-word;
+            overflow-wrap: anywhere;
             flex: 1;
+            min-width: 0;
+            max-width: 100%;
         }
 
         /* TAREAS SECUNDARIAS */
         .task-list-view {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .task-item-view {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 10px;
             padding-bottom: 4px;
-            min-height: 24px;
+            min-height: 22px;
+            max-height: 44px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .task-item-view.line-suave {
@@ -658,6 +672,7 @@
             border: 1.5px solid #444;
             border-radius: 2px;
             flex-shrink: 0;
+            margin-top: 2px;
         }
 
         .task-box-square.circle {
@@ -665,20 +680,29 @@
         }
 
         .task-content-view {
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             color: #222;
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            white-space: normal;
+            line-height: 1.35;
         }
 
         /* HÁBITOS DINÁMICOS EN LÍNEAS COMPLETAS */
         .habits-row-view {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            padding: 8px 12px;
+            gap: 5px;
+            padding: 7px 12px;
             background: #faf8f5;
             border-radius: 6px;
             border: 1px solid #eee7dd;
             font-size: 0.8rem;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .habit-pill {
@@ -686,8 +710,9 @@
             align-items: center;
             gap: 8px;
             width: 100%;
+            box-sizing: border-box;
             border-bottom: 1px dashed #e8e2d8;
-            padding-bottom: 4px;
+            padding-bottom: 3px;
         }
 
         .habit-pill:last-child {
@@ -707,12 +732,24 @@
             border-radius: 50%;
         }
 
+        .habit-pill-text {
+            font-size: 0.82rem;
+            color: #333;
+            line-height: 1.25;
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+
         /* ESPACIO DE NOTAS */
         .notes-view {
             flex: 1;
-            min-height: 110px;
+            min-height: 0;
             border-radius: 6px;
-            padding: 10px 12px;
+            padding: 8px 12px;
             font-size: 0.81rem;
             color: #444;
             line-height: 1.45;
@@ -720,9 +757,10 @@
             border: 1px solid #ede8de;
             white-space: pre-wrap;
             word-break: break-word;
-            overflow-wrap: break-word;
+            overflow-wrap: anywhere;
             box-sizing: border-box;
             width: 100%;
+            overflow: hidden; /* Nada puede desbordar la hoja */
             transition: all 0.2s;
         }
 
@@ -1177,7 +1215,7 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección" onclick="removeSection('priority')">✕</button>
                 </div>
-                <textarea id="input-priority" rows="2" maxlength="120" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" oninput="isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
+                <textarea id="input-priority" rows="2" maxlength="95" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" onkeydown="if(event.key === 'Enter') { event.preventDefault(); return false; }" oninput="this.value = this.value.replace(/[\r\n]+/g, ' '); isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
             </div>
 
             <!-- 2. TAREAS SECUNDARIAS (MÁXIMO 3) -->
@@ -1227,7 +1265,7 @@
                     </div>
                     <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
                 </div>
-                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." oninput="isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
+                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." onkeydown="handleNotesKeydown(event)" oninput="handleNotesInput(this)"></textarea>
             </div>
 
             <!-- Formato predeterminado (gestionado en el modal de descarga) -->
@@ -1257,7 +1295,7 @@
                 </div>
 
                 <!-- CONTENEDOR DE BLOQUES REORDENABLES -->
-                <div id="dynamic-blocks-wrapper" style="display: flex; flex-direction: column; flex: 1;">
+                <div id="dynamic-blocks-wrapper" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
                     <!-- PRIORIDAD ÚNICA -->
                     <div class="sheet-block" id="block-priority">
                         <div class="sheet-block-label">
@@ -1291,7 +1329,7 @@
                     </div>
 
                     <!-- ESPACIO DE NOTAS -->
-                    <div class="sheet-block" id="block-notes" style="flex: 1; display: flex; flex-direction: column; margin-bottom: 16px;">
+                    <div class="sheet-block" id="block-notes" style="flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 12px; overflow: hidden;">
                         <div class="sheet-block-label">
                             <span>Notas</span>
                             <span class="sub" style="font-size:0.7rem; font-style:italic;">¿Qué salió bien hoy y qué puedo mejorar para mañana?</span>
@@ -1506,6 +1544,18 @@
             showStatus(`Casillas: ${val}`);
         }
 
+        // FUNCIÓN AUXILIAR DE SEGURIDAD HTML
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag));
+        }
+
         // ========================================================
         // TAREAS SECUNDARIAS
         // ========================================================
@@ -1518,7 +1568,9 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <textarea class="task-input-field" rows="2" maxlength="130" placeholder="Tarea ${idx + 1}" oninput="autoResizeTextarea(this); updateTaskValue(${idx}, this.value)">${task}</textarea>
+                    <textarea class="task-input-field" rows="1" maxlength="90" placeholder="Tarea ${idx + 1}"
+                        onkeydown="if(event.key === 'Enter'){ event.preventDefault(); return false; }"
+                        oninput="this.value = this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updateTaskValue(${idx}, this.value)">${escapeHTML(task)}</textarea>
                     <button type="button" class="btn-remove-item" title="Eliminar tarea" onclick="removeTaskItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
@@ -1540,12 +1592,14 @@
                 btnAddTask.style.display = tasksList.length >= 3 ? 'none' : 'inline-flex';
             }
             renderTasksPreview();
+            updateNotesLimit();
         }
 
         function updateTaskValue(idx, val) {
             isExampleActive = false;
-            tasksList[idx] = val;
+            tasksList[idx] = (val || '').replace(/[\r\n]+/g, ' ');
             renderTasksPreview();
+            updateNotesLimit();
         }
 
         function addNewTask() {
@@ -1581,7 +1635,7 @@
             let tasksToRender = [];
 
             if (userHasTasks) {
-                tasksToRender = tasksList.map(t => t.trim());
+                tasksToRender = tasksList.map(t => t.replace(/[\r\n]+/g, ' ').trim());
             } else if (isExampleActive) {
                 tasksToRender = DAILY_EXAMPLE.tasks;
             } else {
@@ -1598,7 +1652,7 @@
 
                 row.innerHTML = `
                     <div class="task-box-square ${isCircle ? 'circle' : ''}"></div>
-                    <div class="task-content-view">${task}</div>
+                    <div class="task-content-view">${escapeHTML(task)}</div>
                 `;
                 container.appendChild(row);
             });
@@ -1609,27 +1663,76 @@
         // ========================================================
         function getDynamicNotesMaxLength() {
             const habitCount = (sectionStates.habits && habitsList) ? habitsList.length : 0;
-            if (!sectionStates.habits || habitCount === 0) return 1000;
-            if (habitCount <= 3) return 850;
-            if (habitCount === 4) return 720;
-            return 600; // 5 hábitos
+            if (!sectionStates.habits || habitCount === 0) return 900;
+            if (habitCount <= 3) return 750;
+            if (habitCount === 4) return 620;
+            return 520; // 5 hábitos
+        }
+
+        function getMaxAllowedNoteLines() {
+            const habitCount = (sectionStates.habits && habitsList) ? habitsList.length : 0;
+            const taskCount = (sectionStates.tasks && tasksList) ? tasksList.length : 0;
+            let lines = 16;
+            if (sectionStates.priority) lines -= 2;
+            lines -= (taskCount * 1);
+            lines -= (habitCount * 1.4);
+            return Math.max(6, Math.floor(lines));
+        }
+
+        function handleNotesKeydown(e) {
+            if (e.key === 'Enter') {
+                const val = e.target.value;
+                const currentBreaks = (val.match(/\n/g) || []).length;
+                const maxLines = getMaxAllowedNoteLines();
+                if (currentBreaks >= maxLines) {
+                    e.preventDefault();
+                    showStatus('Límite de altura del papel: no caben más saltos de línea en esta página.');
+                    return false;
+                }
+            }
+        }
+
+        function handleNotesInput(el) {
+            isExampleActive = false;
+            const maxLines = getMaxAllowedNoteLines();
+            const parts = el.value.split('\n');
+            if (parts.length > maxLines + 1) {
+                const allowed = parts.slice(0, maxLines + 1);
+                const overflow = parts.slice(maxLines + 1).join(' ');
+                allowed[allowed.length - 1] += (allowed[allowed.length - 1] ? ' ' : '') + overflow;
+                el.value = allowed.join('\n');
+                showStatus('Texto ajustado a los límites físicos de la página.');
+            }
+
+            autoResizeTextarea(el);
+            renderPreview();
+            updateNotesLimit();
         }
 
         function updateNotesLimit() {
             const notesInput = document.getElementById('input-notes');
             const notesCount = document.getElementById('count-notes');
             const limit = getDynamicNotesMaxLength();
+            const maxLines = getMaxAllowedNoteLines();
             if (notesInput) {
                 notesInput.maxLength = limit;
                 if (notesInput.value.length > limit) {
                     notesInput.value = notesInput.value.substring(0, limit);
                 }
+                const currentBreaks = (notesInput.value.match(/\n/g) || []).length;
                 if (notesCount) {
-                    notesCount.textContent = `${notesInput.value.length}/${limit}`;
+                    notesCount.textContent = `${notesInput.value.length}/${limit} c. · ${currentBreaks}/${maxLines} líneas`;
                 }
                 const viewNotes = document.getElementById('view-notes');
                 if (viewNotes) {
                     viewNotes.textContent = notesInput.value.trim() || '';
+                    if (viewNotes.scrollHeight > viewNotes.clientHeight + 4) {
+                        viewNotes.style.fontSize = '0.74rem';
+                        viewNotes.style.lineHeight = '1.35';
+                    } else {
+                        viewNotes.style.fontSize = '0.81rem';
+                        viewNotes.style.lineHeight = '1.45';
+                    }
                 }
             }
         }
@@ -1643,7 +1746,9 @@
                 const row = document.createElement('div');
                 row.className = 'item-input-row';
                 row.innerHTML = `
-                    <textarea class="habit-input-field" rows="1" maxlength="65" placeholder="Hábito ${idx + 1}" oninput="autoResizeTextarea(this); updateHabitValue(${idx}, this.value)">${habit}</textarea>
+                    <textarea class="habit-input-field" rows="1" maxlength="50" placeholder="Hábito ${idx + 1}"
+                        onkeydown="if(event.key === 'Enter'){ event.preventDefault(); return false; }"
+                        oninput="this.value = this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updateHabitValue(${idx}, this.value)">${escapeHTML(habit)}</textarea>
                     <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
                 `;
                 container.appendChild(row);
@@ -1670,8 +1775,9 @@
 
         function updateHabitValue(idx, val) {
             isExampleActive = false;
-            habitsList[idx] = val;
+            habitsList[idx] = (val || '').replace(/[\r\n]+/g, ' ');
             renderHabitsPreview();
+            updateNotesLimit();
         }
 
         function addNewHabit() {
@@ -1708,7 +1814,7 @@
             let habitsToRender = [];
 
             if (userHasHabits) {
-                habitsToRender = habitsList.map(h => h.trim());
+                habitsToRender = habitsList.map(h => h.replace(/[\r\n]+/g, ' ').trim());
             } else if (isExampleActive) {
                 habitsToRender = DAILY_EXAMPLE.habits;
             } else {
@@ -1720,7 +1826,7 @@
                 pill.className = 'habit-pill';
                 pill.innerHTML = `
                     <div class="habit-check ${isCircle ? 'circle' : ''}"></div>
-                    <span style="font-size:0.82rem; color:#333; line-height:1.2;">${habit}</span>
+                    <span class="habit-pill-text">${escapeHTML(habit)}</span>
                 `;
                 container.appendChild(pill);
             });
@@ -2019,7 +2125,8 @@
                     const maxPWidth = contentWidth - 16;
                     docInstance.setFont('times', 'normal');
                     docInstance.setFontSize(10.2);
-                    const pLines = (priority && priority.trim()) ? docInstance.splitTextToSize(priority.trim(), maxPWidth) : [];
+                    const cleanPriority = (!isBlankTemplate && priority) ? priority.replace(/[\r\n]+/g, ' ').trim() : '';
+                    const pLines = cleanPriority ? docInstance.splitTextToSize(cleanPriority, maxPWidth).slice(0, 2) : [];
                     const numPLines = Math.max(1, pLines.length);
                     const pLineHeight = 4.8;
                     const totalPTextH = numPLines * pLineHeight;
@@ -2083,9 +2190,10 @@
                         }
 
                         // En plantilla en blanco, no imprime texto de tareas
+                        const cleanTask = (!isBlankTemplate && taskText) ? taskText.replace(/[\r\n]+/g, ' ').trim() : '';
                         const maxTaskWidth = contentWidth - 12;
-                        const taskLines = (!isBlankTemplate && taskText && taskText.trim()) 
-                            ? docInstance.splitTextToSize(taskText.trim(), maxTaskWidth) 
+                        const taskLines = cleanTask 
+                            ? docInstance.splitTextToSize(cleanTask, maxTaskWidth).slice(0, 2) 
                             : [];
 
                         if (taskLines.length > 1) {
@@ -2093,15 +2201,15 @@
                                 docInstance.setFont('helvetica', 'normal');
                                 docInstance.setFontSize(8.2);
                                 docInstance.setTextColor(30, 25, 22);
-                                docInstance.text(tl, margin + 9, y + 2.8 + (tlIdx * 3.8));
+                                docInstance.text(tl, margin + 9, y + 2.8 + (tlIdx * 3.6));
                             });
-                            const taskBottomY = y + 2.8 + ((taskLines.length - 1) * 3.8);
+                            const taskBottomY = y + 2.8 + ((taskLines.length - 1) * 3.6);
                             if (lineas !== 'none') {
                                 docInstance.setDrawColor(215, 210, 202);
                                 docInstance.setLineWidth(lineas === 'dotted' ? 0.15 : 0.25);
                                 docInstance.line(margin + 9, taskBottomY + 2.4, pageWidth - margin, taskBottomY + 2.4);
                             }
-                            y += (taskLines.length * 3.8) + 4.2;
+                            y += (taskLines.length * 3.6) + 4.0;
                         } else {
                             if (taskLines.length === 1) {
                                 docInstance.setFont('helvetica', 'normal');
@@ -2147,7 +2255,7 @@
                         }
 
                         // En plantilla en blanco, no imprime texto de hábito
-                        const displayH = (!isBlankTemplate && hText) ? hText.trim() : '';
+                        const displayH = (!isBlankTemplate && hText) ? hText.replace(/[\r\n]+/g, ' ').trim() : '';
                         if (displayH) {
                             docInstance.setFont('helvetica', 'normal');
                             docInstance.setFontSize(8.2);
