@@ -15,6 +15,22 @@
     </script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Control de acceso PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
     <style>
         :root {
             --bg-color: #f7f5f0;
@@ -23,10 +39,9 @@
             --text-muted: #66615b;
             --accent: #87553b;
             --accent-hover: #70442e;
-            --sage: #586851;
             --border-line: #dcd7ce;
             --font-serif: 'Playfair Display', Georgia, serif;
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         * {
@@ -39,540 +54,315 @@
             font-family: var(--font-sans);
             background-color: var(--bg-color);
             color: var(--text-main);
-            line-height: 1.5;
-            padding: 20px 16px 60px;
-        }
-
-        .header-container {
-            max-width: 1220px;
-            margin: 0 auto 16px;
-            text-align: center;
-        }
-
-        .tag-pill {
-            display: inline-block;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            background: rgba(135, 85, 59, 0.12);
-            color: var(--accent);
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 8px;
-        }
-
-        h1 {
-            font-family: var(--font-serif);
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-            color: #1e1916;
-        }
-
-        .subtitle {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            max-width: 720px;
-            margin: 0 auto 18px;
-        }
-
-        /* ========================================================
-           BARRA SUPERIOR CON CÍRCULOS CLICABLES (SIN DESPLEGABLES)
-           ======================================================== */
-        .customizer-bar {
-            max-width: 1220px;
-            margin: 0 auto 24px;
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 16px 20px;
-            box-shadow: 0 4px 22px rgba(0,0,0,0.06);
-            border: 1px solid rgba(0,0,0,0.06);
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .customizer-group {
+            line-height: 1.45;
+            padding: 16px 14px 60px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            align-items: center;
         }
 
-        .customizer-label {
-            font-size: 0.68rem;
-            font-weight: 800;
+        /* CABECERA & NAVEGACIÓN */
+        .top-nav {
+            width: 100%;
+            max-width: 860px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-link {
+            font-size: 0.8rem;
+            color: #777;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .badge-version {
+            background: #ede6dc;
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
             text-transform: uppercase;
             letter-spacing: 0.8px;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 680px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: #1a1816;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.83rem;
             color: #666;
         }
 
-        .circles-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Botón circular seleccionable */
-        .opt-circle {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #faf8f5;
-            border: 1.5px solid #dcd7ce;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.18s ease;
-            position: relative;
-            user-select: none;
-            padding: 0;
-        }
-
-        .opt-circle:hover {
-            border-color: #a89f91;
-            transform: translateY(-1px);
-        }
-
-        /* Estado ACTIVO: fondo gris más oscuro, hundido con sombra interior */
-        .opt-circle.active {
-            background: #4a453f !important;
-            border-color: #322e2a !important;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
-            transform: translateY(1px);
-        }
-
-        .opt-circle.active svg * {
-            stroke: #ffffff !important;
-            fill: #ffffff !important;
-        }
-
-        .opt-circle.active svg line,
-        .opt-circle.active svg rect[fill="none"],
-        .opt-circle.active svg circle[fill="none"] {
-            fill: none !important;
-        }
-
-        /* ========================================================
-           SECCIÓN DE ORDEN: PILL CARDS ARRASTRABLES (1, 2, 3, 4)
-           ======================================================== */
-        .order-chips-container {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .drag-chip {
-            background: #faf8f5;
-            border: 1.5px solid #dcd7ce;
-            border-radius: 8px;
-            padding: 4px 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: grab;
-            transition: all 0.2s;
-            user-select: none;
-            min-width: 58px;
-        }
-
-        .drag-chip:active {
-            cursor: grabbing;
-        }
-
-        .drag-chip.dragging {
-            opacity: 0.4;
-            border-color: var(--accent);
-            background: #f1ebd8;
-        }
-
-        .drag-chip.drag-over {
-            border-color: var(--accent);
-            transform: scale(1.05);
-            background: #ede6da;
-        }
-
-        .chip-num {
-            font-size: 0.65rem;
-            font-weight: 800;
-            background: var(--accent);
-            color: #fff;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 2px;
-        }
-
-        .chip-name {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: #333;
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        /* ========================================================
-           LAYOUT PRINCIPAL (PANEL FORMULARIO + HOJA PREVIEW)
-           ======================================================== */
-        .main-layout {
-            max-width: 1220px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 460px 1fr;
-            gap: 28px;
-            align-items: start;
-        }
-
-        @media (max-width: 980px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-            .preview-wrapper {
-                margin-bottom: 50px !important;
-                width: 100% !important;
-            }
-            .paper-sheet {
-                min-height: 720px;
-                padding: 26px 20px 22px;
-                margin-bottom: 40px !important;
-            }
-        }
-
-        /* PANEL DE ENTRADA */
-        .controls-panel {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            border: 1px solid rgba(0,0,0,0.06);
-        }
-
-        .panel-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .panel-actions-quick {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-quick {
-            background: #f3efe8;
-            border: none;
-            color: var(--accent);
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-quick:hover {
-            background: #e6dfd3;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .section-header-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-
-        .section-title-label {
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #444;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-remove-section {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 1.05rem;
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 4px;
-            line-height: 1;
-            transition: all 0.15s;
-        }
-
-        .btn-remove-section:hover {
-            color: #d33;
-            background: rgba(220, 50, 50, 0.08);
-        }
-
-        .btn-restore-section {
-            background: #f4efe8;
-            border: 1px dashed #c0b7a8;
-            color: var(--accent);
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
+        /* BARRA DE HERRAMIENTAS PRINCIPAL */
+        .canvas-toolbar {
             width: 100%;
-            text-align: center;
-            margin-bottom: 14px;
-            transition: all 0.2s;
-            display: none;
+            max-width: 720px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
         }
 
-        .btn-restore-section:hover {
-            background: #e9e2d5;
-            border-color: var(--accent);
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .btn-add-item {
-            background: #f4efe8;
-            border: 1px solid #dcd7ce;
-            color: var(--accent);
+        .toolbar-btn {
+            background: #f7f4ed;
+            border: 1px solid #ded9ce;
+            border-radius: 6px;
+            padding: 6px 10px;
             font-size: 0.75rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 4px;
+            font-weight: 600;
+            color: #4a453e;
             cursor: pointer;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-        }
-
-        .btn-add-item:hover {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-
-        .item-input-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .btn-remove-item {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 4px;
-            line-height: 1;
-            transition: color 0.2s;
-            margin-top: 6px;
-        }
-
-        .btn-remove-item:hover {
-            color: #c44;
-        }
-
-        .label-hint {
-            font-weight: 400;
-            text-transform: none;
-            color: #888;
-            font-size: 0.75rem;
-        }
-
-        input[type="text"], textarea, select {
-            width: 100%;
-            padding: 9px 12px;
-            font-size: 0.9rem;
-            border: 1.5px solid #e0dbd1;
-            border-radius: 6px;
-            background: #faf9f6;
-            color: #222;
+            gap: 5px;
             font-family: inherit;
-            transition: border-color 0.2s;
-            box-sizing: border-box;
+        }
+        .toolbar-btn:hover {
+            background: #efe9df;
+            color: #111;
+            border-color: #cbbeae;
         }
 
-        input[type="text"]:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: #fff;
+        .toolbar-btn.disabled-btn {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: #f0ece5;
+            border-color: #ded9ce;
+            color: #8c857b;
+        }
+        .toolbar-btn.disabled-btn:hover {
+            background: #f0ece5;
+            color: #8c857b;
+            border-color: #ded9ce;
         }
 
-        textarea {
-            resize: vertical;
-            overflow-y: auto;
-            min-height: 48px;
-            line-height: 1.4;
-        }
-
-        .task-input-field {
-            min-height: 46px;
-            font-size: 0.88rem;
-        }
-
-        .habit-input-field {
-            min-height: 40px;
-            font-size: 0.85rem;
-        }
-
-        .two-cols {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn-group-primary {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 22px;
-            padding-top: 18px;
-            border-top: 1px solid #efeae1;
-        }
-
-        .btn-cta {
+        .btn-download-primary {
             background: var(--accent);
-            color: #fff;
+            color: #ffffff;
             border: none;
-            padding: 12px 18px;
-            font-size: 0.95rem;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
             font-weight: 700;
-            border-radius: 7px;
             cursor: pointer;
-            display: flex;
+            transition: background 0.2s;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.25);
-            transition: all 0.2s ease;
+            gap: 6px;
         }
-
-        .btn-cta:hover {
+        .btn-download-primary:hover {
             background: var(--accent-hover);
-            transform: translateY(-1px);
         }
 
-        .btn-cta-blank {
-            background: #ffffff;
-            color: var(--accent);
-            border: 1.5px solid var(--accent);
-            padding: 11px 18px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 7px;
-            cursor: pointer;
+        /* PANEL VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR) */
+        .sections-toggle-bar {
+            width: 100%;
+            max-width: 720px;
+            background: #f0ebe2;
+            border: 1px solid #e0d8cc;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 14px;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 0.74rem;
         }
 
-        .btn-cta-blank:hover {
-            background: rgba(135, 85, 59, 0.06);
+        .sections-toggle-label {
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            letter-spacing: 0.5px;
+        }
+
+        .sections-toggle-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .btn-sec-pill {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 14px;
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+        .btn-sec-pill.active {
+            background: #443e39;
+            color: #fff;
+            border-color: #443e39;
+        }
+        .btn-sec-pill:hover {
+            border-color: var(--accent);
         }
 
         /* ========================================================
-           VISTA PREVIA EN PAPEL (6x9 PROPORCIÓN EDITORIAL)
+           EL LIENZO FÍSICO INTERACTIVO (LA HOJA EN BLANCO)
+           Proporción equilibrada y cómoda para la vista web
            ======================================================== */
-        .preview-wrapper {
+        .paper-canvas-container {
+            width: 100%;
+            max-width: 720px;
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .preview-header-bar {
+        .interactive-paper {
             width: 100%;
-            max-width: 520px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #f1ede5;
-            border: 1px solid #e1dcce;
-            padding: 8px 14px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 0.8rem;
-            color: #665f54;
-            box-sizing: border-box;
-        }
-
-        .paper-sheet {
-            width: 100%;
-            max-width: 500px;
-            height: 750px;
-            max-height: 750px;
+            max-width: 720px;
+            height: 1000px;
+            max-height: 1000px;
             aspect-ratio: 6 / 9;
             background-color: var(--paper-color);
-            box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.14);
             border-radius: 4px;
             border: 1px solid #e7e2d8;
-            padding: 26px 26px 20px;
+            padding: 28px 42px 22px;
             display: flex;
             flex-direction: column;
             position: relative;
             box-sizing: border-box;
-            overflow: hidden; /* LA PÁGINA NUNCA CRECE EN ALTURA */
+            overflow: hidden; /* LA PÁGINA NUNCA CRECE */
             transition: background 0.2s;
         }
 
-        .sheet-top {
+        /* CABECERA EDITABLE (DÍA Y FECHA) */
+        .paper-header {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
             border-bottom: 1.5px solid #222;
-            padding-bottom: 6px;
-            margin-bottom: 14px;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
             flex-shrink: 0;
+            width: 100%;
         }
 
-        .sheet-day {
+        .editable-day-input {
             font-family: var(--font-serif);
-            font-size: 1.5rem;
+            font-size: 1.55rem;
             font-weight: 700;
             color: #111;
+            background: transparent;
+            border: 1px dashed transparent;
+            outline: none;
+            padding: 2px 4px;
+            border-radius: 4px;
+            width: 190px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .editable-day-input:hover, .editable-day-input:focus {
+            border-color: #d0c8bd;
+            background: rgba(0,0,0,0.02);
         }
 
-        .sheet-date {
+        .editable-date-input {
             font-size: 0.82rem;
-            color: #666;
             font-weight: 600;
+            color: #666;
+            background: transparent;
+            border: 1px dashed transparent;
+            outline: none;
+            text-align: right;
+            padding: 2px 4px;
+            border-radius: 4px;
+            width: 150px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .editable-date-input:hover, .editable-date-input:focus {
+            border-color: #d0c8bd;
+            background: rgba(0,0,0,0.02);
         }
 
-        .sheet-block {
-            margin-bottom: 12px;
-            transition: all 0.2s;
+        /* CONTENEDOR DE BLOQUES REORDENABLES */
+        .blocks-flow-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            gap: 8px;
+            width: 100%;
+        }
+
+        /* BLOQUE MODULAR INDIVIDUAL */
+        .modular-block {
+            position: relative;
+            border-radius: 6px;
+            padding: 2px 2px 4px;
+            transition: background 0.2s;
             flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .sheet-block-label {
+        /* CABECERA DEL BLOQUE CON CONTROLES */
+        .block-header-bar {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: center;
+            margin-bottom: 4px;
+            width: 100%;
+        }
+
+        .block-title-box {
             font-size: 0.68rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             color: #111;
-            margin-bottom: 5px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
         }
-
-        .sheet-block-label .sub {
+        .block-title-box .sub {
             font-family: var(--font-serif);
             font-style: italic;
             font-weight: normal;
@@ -582,969 +372,965 @@
             color: #777;
         }
 
-        /* CAJA DE PRIORIDAD */
-        .priority-box {
+        .block-actions-box {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .btn-block-action {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #555;
+            padding: 1px 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.2;
+            font-family: inherit;
+        }
+        .btn-block-action:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: #faf7f2;
+        }
+        .btn-block-action.btn-del-section:hover {
+            color: #b03030;
+            border-color: #d88;
+            background: #fff5f5;
+        }
+
+        /* ========================================================
+           BLOQUE 1: PRIORIDAD ÚNICA (CENTRADO VERTICAL PERFECTO)
+           ======================================================== */
+        .priorities-flow-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .box-priority {
             background: #faf8f5;
             border: 1.5px solid #222;
             border-radius: 6px;
-            padding: 8px 12px;
-            min-height: 44px;
-            max-height: 58px;
+            padding: 6px 6px 6px 12px; /* Reducido padding derecho para llegar hasta el borde */
+            min-height: 42px;
             display: flex;
-            align-items: center;
-            gap: 12px;
+            align-items: center; /* CENTRADO VERTICAL EXACTO */
+            gap: 10px;
             box-sizing: border-box;
             width: 100%;
             overflow: hidden;
         }
 
-        .priority-box.style-linea-lateral {
-            border: none;
-            border-left: 4px solid var(--accent);
-            border-radius: 0;
-            background: #fbf9f6;
-        }
-
-        .priority-square {
+        .check-square {
             width: 14px;
             height: 14px;
             border: 2px solid #222;
             border-radius: 3px;
             flex-shrink: 0;
-            margin-top: 0;
+            pointer-events: none; /* No se puede clicar para pintar de negro */
         }
+        .check-square.circle { border-radius: 50%; }
 
-        .priority-square.circle {
-            border-radius: 50%;
-        }
-
-        .priority-text {
+        .textarea-inline-priority {
             font-family: var(--font-serif);
             font-size: 0.98rem;
             color: #111;
-            line-height: 1.3;
-            word-break: break-word;
-            overflow-wrap: anywhere;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
             flex: 1;
             min-width: 0;
-            max-width: 100%;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
         }
 
-        /* TAREAS SECUNDARIAS */
-        .task-list-view {
+        /* ========================================================
+            BLOQUE 2: TAREAS SECUNDARIAS (HASTA 3)
+            ======================================================== */
+        .tasks-flow-list {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
             width: 100%;
             box-sizing: border-box;
         }
 
-        .task-item-view {
+        .task-row-interactive {
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding-bottom: 4px;
+            align-items: center;
+            gap: 6px;
+            padding-bottom: 3px;
+            border-bottom: 1px dotted #ccc;
             min-height: 22px;
-            max-height: 44px;
             width: 100%;
             box-sizing: border-box;
             overflow: hidden;
         }
 
-        .task-item-view.line-suave {
-            border-bottom: 1px dotted #ccc;
-        }
-
-        .task-item-view.line-solida {
-            border-bottom: 1px solid #c2bbae;
-        }
-
-        .task-item-view.line-sin {
-            border-bottom: none;
-            background: #faf8f5;
-            padding: 3px 6px;
-            border-radius: 4px;
-        }
-
-        .task-box-square {
+        .task-box-check {
             width: 12px;
             height: 12px;
             border: 1.5px solid #444;
             border-radius: 2px;
             flex-shrink: 0;
-            margin-top: 2px;
+            pointer-events: none; /* No se puede clicar para pintar de negro */
         }
+        .task-box-check.circle { border-radius: 50%; }
 
-        .task-box-square.circle {
-            border-radius: 50%;
-        }
-
-        .task-content-view {
+        .textarea-inline-task {
+            font-family: inherit;
             font-size: 0.84rem;
             color: #222;
+            background: transparent;
+            border: none;
+            outline: none;
             flex: 1;
             min-width: 0;
-            max-width: 100%;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            white-space: normal;
-            line-height: 1.35;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
         }
 
-        /* HÁBITOS DINÁMICOS EN LÍNEAS COMPLETAS */
-        .habits-row-view {
+        .btn-remove-line {
+            background: none;
+            border: none;
+            color: #bbb;
+            font-size: 0.72rem;
+            cursor: pointer;
+            padding: 2px 3px;
+            border-radius: 3px;
+            transition: color 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-remove-line:hover {
+            color: #c0392b;
+            background: rgba(0,0,0,0.05);
+        }
+
+        /* ========================================================
+           BLOQUE 3: HÁBITOS CLAVE (HASTA 5)
+           ======================================================== */
+        .habits-flow-box {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            padding: 7px 12px;
+            gap: 4px;
+            padding: 6px 4px 6px 10px; /* Reducido padding derecho para llegar hasta el borde */
             background: #faf8f5;
             border-radius: 6px;
             border: 1px solid #eee7dd;
-            font-size: 0.8rem;
             width: 100%;
             box-sizing: border-box;
         }
 
-        .habit-pill {
+        .habit-row-interactive {
             display: flex;
             align-items: center;
-            gap: 8px;
-            width: 100%;
-            box-sizing: border-box;
+            gap: 6px;
             border-bottom: 1px dashed #e8e2d8;
             padding-bottom: 3px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
-
-        .habit-pill:last-child {
+        .habit-row-interactive:last-child {
             border-bottom: none;
             padding-bottom: 0;
         }
 
-        .habit-check {
+        .habit-box-check {
             width: 12px;
             height: 12px;
             border: 1.5px solid var(--accent);
             border-radius: 2px;
             flex-shrink: 0;
+            pointer-events: none; /* No se puede clicar */
         }
+        .habit-box-check.circle { border-radius: 50%; }
 
-        .habit-check.circle {
-            border-radius: 50%;
-        }
-
-        .habit-pill-text {
-            font-size: 0.82rem;
-            color: #333;
-            line-height: 1.25;
-            flex: 1;
-            min-width: 0;
-            max-width: 100%;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            white-space: normal;
-        }
-
-        /* ESPACIO DE NOTAS */
-        .notes-view {
-            flex: 1;
-            min-height: 0;
-            border-radius: 6px;
-            padding: 8px 12px;
+        .textarea-inline-habit {
+            font-family: inherit;
             font-size: 0.81rem;
-            color: #444;
-            line-height: 1.45;
-            background-color: #faf9f6;
-            border: 1px solid #ede8de;
-            white-space: pre-wrap;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            box-sizing: border-box;
-            width: 100%;
-            overflow: hidden; /* Nada puede desbordar la hoja */
-            transition: all 0.2s;
-        }
-
-        .notes-view.bg-dots {
-            background-image: radial-gradient(#d0c8be 1px, transparent 1px);
-            background-size: 14px 14px;
-        }
-
-        .notes-view.bg-lines {
-            background-image: linear-gradient(#ded9d0 1px, transparent 1px);
-            background-size: 100% 22px;
-            line-height: 22px;
-        }
-
-        .notes-view.bg-grid {
-            background-image: 
-                linear-gradient(to right, #e2ddd4 1px, transparent 1px),
-                linear-gradient(to bottom, #e2ddd4 1px, transparent 1px);
-            background-size: 15px 15px;
-        }
-
-        .notes-view.bg-blank {
-            background-image: none;
-        }
-
-        /* FOOTER EDITORIAL */
-        .sheet-footer {
-            margin-top: auto;
-            padding-top: 12px;
-            border-top: 1px solid #e0dad0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.68rem;
-            color: #888;
-            letter-spacing: 0.5px;
-        }
-
-        .sheet-footer-link {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .status-msg {
-            text-align: center;
-            font-size: 0.82rem;
-            color: var(--sage);
-            font-weight: 600;
-            margin-top: 8px;
-            min-height: 18px;
-        }
-
-        /* MODAL POP-UP DE DESCARGA Y COMPRA AMAZON */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(20, 18, 16, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-card {
-            background: #ffffff;
-            border-radius: 16px;
-            max-width: 620px;
-            width: 100%;
-            padding: 28px 26px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-            border: 1px solid #e7e2d8;
-            position: relative;
-            animation: modalFadeIn 0.25s ease;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(12px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .modal-close-btn {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            color: #999;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
-            line-height: 1;
-        }
-
-        .modal-close-btn:hover {
             color: #333;
-            background: #f4efe8;
-        }
-
-        .modal-badge {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--accent);
-            background: rgba(135, 85, 59, 0.1);
-            padding: 3px 10px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
-        .modal-title {
-            font-family: var(--font-serif);
-            font-size: 1.45rem;
-            color: #1e1916;
-            margin-bottom: 8px;
-            line-height: 1.25;
-        }
-
-        .modal-desc {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-
-        .modal-pages-selector {
-            background: #faf8f5;
-            border: 1px solid #e7e2d8;
-            border-radius: 10px;
-            padding: 14px 16px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .modal-pages-label {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .modal-pages-hint {
-            font-size: 0.75rem;
-            color: #777;
-            display: block;
-            font-weight: 400;
-            margin-top: 2px;
-        }
-
-        .pages-stepper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-step {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 1.5px solid #d5cebf;
-            background: #fff;
-            color: #333;
-            font-size: 1.1rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .btn-step:hover {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-
-        .pages-count-display {
-            font-family: var(--font-serif);
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: #1e1916;
-            min-width: 24px;
-            text-align: center;
-        }
-
-        .modal-actions-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .btn-modal-download {
-            background: var(--accent);
-            color: #fff;
+            background: transparent;
             border: none;
-            padding: 12px 18px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
-            width: 100%;
-        }
-
-        .btn-modal-download:hover {
-            background: var(--accent-hover);
-        }
-
-        /* CUADERNOS FÍSICOS EN MODAL (ESTILO WEB MENOS RUIDO) */
-        .modal-books-section {
-            margin-top: 14px;
-            padding-top: 16px;
-            border-top: 1px solid #eee8df;
-        }
-
-        .modal-books-header {
-            font-size: 0.72rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #777;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        .modal-books-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        @media (max-width: 480px) {
-            .modal-books-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .modal-book-card {
-            background: #faf8f5;
-            border: 1px solid #e7e2d8;
-            border-radius: 10px;
-            padding: 10px 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.2s ease;
-        }
-
-        .modal-book-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            background: #ffffff;
-        }
-
-        .modal-book-thumb {
-            width: 44px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-            flex-shrink: 0;
-            background: #e5ded5;
-        }
-
-        .modal-book-details {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
+            outline: none;
             flex: 1;
             min-width: 0;
-        }
-
-        .modal-book-badge {
-            font-size: 0.64rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--accent);
-        }
-
-        .modal-book-title {
-            font-family: var(--font-serif);
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: #1a1715;
-            line-height: 1.2;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0;
             margin: 0;
         }
 
-        .btn-book-amazon {
-            display: inline-block;
-            margin-top: 5px;
-            padding: 5px 10px;
-            background: var(--accent);
-            color: #ffffff;
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-decoration: none;
-            border-radius: 4px;
-            text-align: center;
-            transition: all 0.2s;
-            width: fit-content;
+        /* ========================================================
+           BLOQUE 4: NOTAS Y REFLEXIÓN (ELÁSTICO Y PROPORCIONAL)
+           ======================================================== */
+        .modular-block-notes {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 2px;
         }
 
-        .btn-book-amazon:hover {
-            background: var(--accent-hover);
+        .notes-canvas-area {
+            flex: 1;
+            min-height: 0;
+            border-radius: 6px;
+            padding: 14px 18px;
+            font-size: 0.92rem;
+            color: #333;
+            line-height: 1.6;
+            background-color: #faf9f6;
+            border: 1px solid #ede8de;
+            box-sizing: border-box;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .textarea-inline-notes {
+            width: 100%;
+            height: 100%;
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            line-height: inherit;
+            white-space: pre-wrap;
+            overflow: hidden;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            box-sizing: border-box;
+            transition: color 0.2s;
+        }
+
+        .textarea-inline-notes.notes-overflow-warning {
+            color: #b03030;
+        }
+
+        /* PAUTAS DE NOTAS */
+        .notes-canvas-area.bg-dots {
+            background-image: radial-gradient(#c5bdaf 1.2px, transparent 1.2px);
+            background-size: 21px 21px;
+        }
+        .notes-canvas-area.bg-lines {
+            background-image: linear-gradient(#ded9d0 1px, transparent 1px);
+            background-size: 100% 24px;
+            line-height: 24px;
+        }
+        .notes-canvas-area.bg-grid {
+            background-image: 
+                linear-gradient(to right, #ded8cd 1px, transparent 1px),
+                linear-gradient(to bottom, #ded8cd 1px, transparent 1px);
+            background-size: 21px 21px;
+        }
+        .notes-canvas-area.bg-blank { background-image: none; }
+
+        /* FOOTER EDITORIAL */
+        .paper-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e5dfd3;
+            padding-top: 4px;
+            font-size: 0.65rem;
+            color: #8c857b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        /* TOAST DE AVISO */
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            background: #2a2522;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            display: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            z-index: 100;
+        }
+
+        @media (max-width: 800px) {
+            .paper-canvas-container,
+            .canvas-toolbar,
+            .sections-toggle-bar {
+                max-width: 100%;
+            }
+            .interactive-paper {
+                height: auto;
+                min-height: 880px;
+                padding: 20px 22px 16px;
+            }
         }
     </style>
-    <!-- Protección de acceso por código PIN 1111 -->
-    <script>
-        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
-            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
-        }
-    </script>
-    <!-- Script de jsPDF local UMD (100% offline) -->
-    <script src="./jspdf.umd.min.js"></script>
 </head>
 <body>
 
-    <div class="header-container">
-        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
-        <div>
-            <span class="tag-pill">Herramienta Interactiva · 100% Offline</span>
-            <h1>Generador de Planificador Diario</h1>
-            <p class="subtitle">Estructura tu día con una sola prioridad innegociable, organiza tus tareas secundarias, tus hábitos clave y tus notas de reflexión. Imprime tu PDF relleno o en blanco para rellenarlo posteriormente a mano sin saturación digital.</p>
+    <div class="top-nav">
+        <a href="/generador.html" class="back-link">← Catálogo de generadores</a>
+        <div></div>
+    </div>
+
+    <div class="header-title-box">
+        <h1>Planificador Diario</h1>
+        <p>Estructura tu día con una sola prioridad innegociable, organiza tus tareas secundarias, tus hábitos clave y tus notas de reflexión. Imprime tu PDF relleno o en blanco para rellenarlo posteriormente a mano sin saturación digital.</p>
+    </div>
+
+    <!-- BARRA DE HERRAMIENTAS PRINCIPAL -->
+    <div class="canvas-toolbar">
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Borrar textos para escribir de cero">
+                <span>🧹</span> Limpiar texto
+            </button>
+            <button type="button" class="toolbar-btn" onclick="resetDefaultOrder()" title="Volver al orden original">
+                <span>🔄</span> Restablecer orden
+            </button>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-toggle-check" onclick="toggleCheckboxStyle()" title="Alternar entre casillas cuadradas y circulares">
+                <span>◻️/⚪</span> Casillas
+            </button>
+            <button type="button" class="toolbar-btn" id="btn-toggle-pattern" onclick="cycleNotesPattern()" title="Cambiar pauta de notas (Blanco, Puntos, Líneas, Cuadrícula)">
+                <span>📝</span> Pauta
+            </button>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="btn-download-primary" onclick="generatePdf(false)">
+                <span>📥</span> Descargar PDF
+            </button>
         </div>
     </div>
 
-    <!-- ========================================================
-         BARRA SUPERIOR CON CÍRCULOS CLICABLES Y REORDENACIÓN ARRASTRABLE
-         ======================================================== -->
-    <div class="customizer-bar">
-
-
-        <!-- 2. LÍNEAS DE TAREAS: PUNTOS SUSPENSIVOS, CONTINUA, SIN LÍNEAS -->
-        <div class="customizer-group">
-            <span class="customizer-label">Líneas de separación</span>
-            <div class="circles-row">
-                <!-- Puntos suspensivos -->
-                <button type="button" class="opt-circle active" id="btn-lineas-dotted" title="Línea de puntos suspensivos" onclick="setLineas('dotted')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <line x1="3" y1="8" x2="21" y2="8" stroke="#87553b" stroke-width="2" stroke-dasharray="2 3"/>
-                        <line x1="3" y1="16" x2="21" y2="16" stroke="#87553b" stroke-width="2" stroke-dasharray="2 3"/>
-                    </svg>
-                </button>
-                <!-- Línea continua -->
-                <button type="button" class="opt-circle" id="btn-lineas-solid" title="Línea continua" onclick="setLineas('solid')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <line x1="3" y1="8" x2="21" y2="8" stroke="#87553b" stroke-width="2.2"/>
-                        <line x1="3" y1="16" x2="21" y2="16" stroke="#87553b" stroke-width="2.2"/>
-                    </svg>
-                </button>
-                <!-- Sin líneas -->
-                <button type="button" class="opt-circle" id="btn-lineas-none" title="Sin líneas" onclick="setLineas('none')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <rect x="4" y="6" width="16" height="4" rx="1" fill="#87553b" opacity="0.35"/>
-                        <rect x="4" y="14" width="16" height="4" rx="1" fill="#87553b" opacity="0.35"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- 3. CAJA PRIORIDAD: CERRADA, LÍNEA LATERAL -->
-        <div class="customizer-group">
-            <span class="customizer-label">Caja Prioridad</span>
-            <div class="circles-row">
-                <!-- Caja cerrada -->
-                <button type="button" class="opt-circle active" id="btn-caja-caja" title="Caja cerrada" onclick="setCaja('caja')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="#87553b" stroke-width="2"/>
-                    </svg>
-                </button>
-                <!-- Línea lateral -->
-                <button type="button" class="opt-circle" id="btn-caja-lateral" title="Línea lateral" onclick="setCaja('lateral')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <line x1="5" y1="4" x2="5" y2="20" stroke="#87553b" stroke-width="4"/>
-                        <line x1="8" y1="8" x2="19" y2="8" stroke="#87553b" stroke-width="1.5" opacity="0.5"/>
-                        <line x1="8" y1="14" x2="16" y2="14" stroke="#87553b" stroke-width="1.5" opacity="0.5"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- 4. CASILLAS: CUADRADO, CÍRCULO -->
-        <div class="customizer-group">
-            <span class="customizer-label">Casillas</span>
-            <div class="circles-row">
-                <!-- Cuadrado -->
-                <button type="button" class="opt-circle active" id="btn-check-square" title="Cuadrado" onclick="setCheck('square')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="#87553b" stroke-width="2.2"/>
-                    </svg>
-                </button>
-                <!-- Círculo -->
-                <button type="button" class="opt-circle" id="btn-check-circle" title="Círculo" onclick="setCheck('circle')">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <circle cx="12" cy="12" r="7" fill="none" stroke="#87553b" stroke-width="2.2"/>
-                    </svg>
-                </button>
-            </div>
+    <!-- PANEL VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR) -->
+    <div class="sections-toggle-bar">
+        <span class="sections-toggle-label">Secciones visibles:</span>
+        <div class="sections-toggle-pills">
+            <button type="button" class="btn-sec-pill active" id="pill-priority" onclick="toggleSectionFromPill('priority')">1. Prioridad ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-tasks" onclick="toggleSectionFromPill('tasks')">2. Tareas (3) ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-habits" onclick="toggleSectionFromPill('habits')">3. Hábitos (3) ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-notes" onclick="toggleSectionFromPill('notes')">4. Notas ✓</button>
         </div>
     </div>
 
-    <div class="main-layout">
-        <!-- PANEL DE CONTROL / TEXTOS DIRECTOS -->
-        <div class="controls-panel">
-            <div class="panel-title">
-                <span>Configura tu planificador</span>
-                <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
-                    <button type="button" class="btn-quick" onclick="clearData()">Limpiar</button>
-                </div>
+    <!-- LIENZO FÍSICO INTERACTIVO -->
+    <div class="paper-canvas-container">
+        <div class="interactive-paper" id="paper-sheet">
+            <!-- CABECERA DE DÍA Y FECHA -->
+            <div class="paper-header">
+                <input type="text" class="editable-day-input" id="field-day" value="Martes" maxlength="15" placeholder="Día...">
+                <input type="text" class="editable-date-input" id="field-date" value="06 / 10 / 2026" maxlength="14" placeholder="DD / MM / AAAA" oninput="handleDateInput(this)" onkeydown="handleDateKeydown(event, this)">
             </div>
 
-            <div class="two-cols form-group">
-                <div>
-                    <label for="input-day" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Día</label>
-                    <input type="text" id="input-day" value="" maxlength="20" placeholder="Ej. Martes" oninput="isExampleActive = false; renderPreview();">
-                </div>
-                <div>
-                    <label for="input-date" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#444;">Fecha</label>
-                    <input type="text" id="input-date" value="" placeholder="DD / MM / AAAA" oninput="handleDateInput(this)">
-                </div>
-            </div>
+            <!-- CONTENEDOR DE BLOQUES REORDENABLES -->
+            <div class="blocks-flow-container" id="blocks-container">
 
-            <!-- 1. PRIORIDAD DEL DÍA -->
-            <button type="button" class="btn-restore-section" id="btn-restore-priority" onclick="restoreSection('priority')">+ Volver a añadir Prioridad del Día</button>
-            <div class="form-group" id="form-group-priority">
-                <div class="section-header-row">
-                    <div class="section-title-label">
-                        <span>1. La Prioridad Única del Día</span>
-                        <span class="label-hint">(Innegociable)</span>
-                    </div>
-                    <button type="button" class="btn-remove-section" title="Quitar sección" onclick="removeSection('priority')">✕</button>
-                </div>
-                <textarea id="input-priority" rows="2" maxlength="95" placeholder="¿Qué única tarea haría que hoy fuera un día productivo?" onkeydown="if(event.key === 'Enter') { event.preventDefault(); return false; }" oninput="this.value = this.value.replace(/[\r\n]+/g, ' '); isExampleActive = false; autoResizeTextarea(this); renderPreview();"></textarea>
-            </div>
-
-            <!-- 2. TAREAS SECUNDARIAS (MÁXIMO 3) -->
-            <button type="button" class="btn-restore-section" id="btn-restore-tasks" onclick="restoreSection('tasks')">+ Volver a añadir Tareas Secundarias</button>
-            <div class="form-group" id="form-group-tasks">
-                <div class="section-header-row">
-                    <div class="section-title-label">
-                        <span>2. Tareas Secundarias</span>
-                        <span class="label-hint">(Máximo 3)</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <button type="button" class="btn-add-item" id="btn-add-task" onclick="addNewTask()">+ Añadir</button>
-                        <button type="button" class="btn-remove-section" title="Quitar todas las tareas" onclick="removeSection('tasks')">✕</button>
-                    </div>
-                </div>
-                <div id="tasks-inputs-container">
-                    <!-- Dinámico -->
-                </div>
-            </div>
-
-            <!-- 3. HÁBITOS CLAVE -->
-            <button type="button" class="btn-restore-section" id="btn-restore-habits" onclick="restoreSection('habits')">+ Volver a añadir Hábitos Clave</button>
-            <div class="form-group" id="form-group-habits">
-                <div class="section-header-row">
-                    <div class="section-title-label">
-                        <span>3. Hábitos Clave</span>
-                        <span class="label-hint">(Rutinas)</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <button type="button" class="btn-add-item" id="btn-add-habit" onclick="addNewHabit()">+ Añadir</button>
-                        <button type="button" class="btn-remove-section" title="Quitar todos los hábitos" onclick="removeSection('habits')">✕</button>
-                    </div>
-                </div>
-                <div id="habits-inputs-container">
-                    <!-- Dinámico -->
-                </div>
-            </div>
-
-            <!-- 4. NOTAS (CON PREGUNTA EN EL ENCABEZADO Y ÁREA EN BLANCO PARA RELLENAR) -->
-            <button type="button" class="btn-restore-section" id="btn-restore-notes" onclick="restoreSection('notes')">+ Volver a añadir Notas</button>
-            <div class="form-group" id="form-group-notes">
-                <div class="section-header-row">
-                    <div class="section-title-label">
-                        <span>4. Notas</span>
-                        <span class="label-hint">(Reflexión del día)</span>
-                        <span class="char-count" id="count-notes" style="font-size:0.75rem; color:#888; margin-left:6px; font-weight:normal;">0/850</span>
-                    </div>
-                    <button type="button" class="btn-remove-section" title="Quitar sección de notas" onclick="removeSection('notes')">✕</button>
-                </div>
-                <textarea id="input-notes" rows="6" maxlength="850" placeholder="Escribe aquí tus notas y reflexiones del día..." onkeydown="handleNotesKeydown(event)" oninput="handleNotesInput(this)"></textarea>
-            </div>
-
-            <!-- Formato predeterminado (gestionado en el modal de descarga) -->
-            <input type="hidden" id="input-format" value="6x9">
-
-            <div class="btn-group-primary">
-                <button type="button" class="btn-cta" onclick="openDownloadModal(false)">
-                    <span>📥</span> Descargar PDF Personalizado (Con Datos)
-                </button>
-                <button type="button" class="btn-cta-blank" onclick="openDownloadModal(true)">
-                    <span>📄</span> Descargar Plantilla Limpia en Blanco (Para Lápiz)
-                </button>
-            </div>
-            <div class="status-msg" id="status-msg"></div>
-        </div>
-
-        <!-- VISTA PREVIA -->
-        <div class="preview-wrapper">
-            <div class="preview-header-bar">
-                <span>👁️ <strong>Vista previa</strong></span>
-            </div>
-
-            <div class="paper-sheet" id="paper-sheet">
-                <div class="sheet-top">
-                    <div class="sheet-day" id="view-day">Martes</div>
-                    <div class="sheet-date" id="view-date">06 / 10 / 2026</div>
-                </div>
-
-                <!-- CONTENEDOR DE BLOQUES REORDENABLES -->
-                <div id="dynamic-blocks-wrapper" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
-                    <!-- PRIORIDAD ÚNICA -->
-                    <div class="sheet-block" id="block-priority">
-                        <div class="sheet-block-label">
-                            <span>La Prioridad del Día</span>
-                            <span class="sub">Una sola cosa importante y factible</span>
+                <!-- 1. BLOQUE PRIORIDAD (CENTRADO VERTICAL) -->
+                <div class="modular-block" id="block-priority" data-id="priority">
+                    <div class="block-header-bar">
+                        <div class="block-title-box">
+                            <span>1. La Prioridad del Día</span>
+                            <span class="sub">(Innegociable)</span>
                         </div>
-                        <div class="priority-box" id="view-priority-box">
-                            <div class="priority-square" id="view-priority-check"></div>
-                            <div class="priority-text" id="view-priority">Revisar y definir la estrategia de lanzamiento Q4</div>
+                        <div class="block-actions-box">
+                            <button type="button" class="btn-block-action" onclick="moveBlock('priority', -1)" title="Subir sección">▲</button>
+                            <button type="button" class="btn-block-action" onclick="moveBlock('priority', 1)" title="Bajar sección">▼</button>
+                            <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('priority')" title="Quitar sección">✕</button>
                         </div>
                     </div>
-
-                    <!-- TAREAS SECUNDARIAS -->
-                    <div class="sheet-block" id="block-tasks">
-                        <div class="sheet-block-label">
-                            <span>Tareas Secundarias</span>
-                        </div>
-                        <div class="task-list-view" id="view-tasks-container">
-                            <!-- Inyectado dinámicamente -->
-                        </div>
-                    </div>
-
-                    <!-- HÁBITOS DINÁMICOS -->
-                    <div class="sheet-block" id="block-habits">
-                        <div class="sheet-block-label">
-                            <span>Hábitos Clave</span>
-                        </div>
-                        <div class="habits-row-view" id="view-habits-container">
-                            <!-- Inyectado dinámicamente -->
-                        </div>
-                    </div>
-
-                    <!-- ESPACIO DE NOTAS -->
-                    <div class="sheet-block" id="block-notes" style="flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 12px; overflow: hidden;">
-                        <div class="sheet-block-label">
-                            <span>Notas</span>
-                            <span class="sub" style="font-size:0.7rem; font-style:italic;">¿Qué salió bien hoy y qué puedo mejorar para mañana?</span>
-                        </div>
-                        <div class="notes-view bg-blank" id="view-notes">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</div>
+                    <div class="priorities-flow-list" id="priorities-list-container">
+                        <!-- Inyectado dinámicamente -->
                     </div>
                 </div>
 
-                <!-- FOOTER EDITORIAL -->
-                <div class="sheet-footer">
-                    <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
-                    <a href="https://editorialmenosruido.com" target="_blank" class="sheet-footer-link">editorialmenosruido.com</a>
+                <!-- 2. BLOQUE TAREAS SECUNDARIAS (HASTA 3) -->
+                <div class="modular-block" id="block-tasks" data-id="tasks">
+                    <div class="block-header-bar">
+                        <div class="block-title-box">
+                            <span>2. Tareas Secundarias</span>
+                            <span class="sub">(Máximo 3)</span>
+                        </div>
+                        <div class="block-actions-box">
+                            <button type="button" class="btn-block-action" id="btn-add-task-header" onclick="addTaskItem()" title="Añadir tarea">+ Añadir</button>
+                            <button type="button" class="btn-block-action" onclick="moveBlock('tasks', -1)" title="Subir sección">▲</button>
+                            <button type="button" class="btn-block-action" onclick="moveBlock('tasks', 1)" title="Bajar sección">▼</button>
+                            <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('tasks')" title="Quitar sección">✕</button>
+                        </div>
+                    </div>
+                    <div class="tasks-flow-list" id="tasks-list-container">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
                 </div>
+
+                <!-- 3. BLOQUE HÁBITOS CLAVE (HASTA 5) -->
+                <div class="modular-block" id="block-habits" data-id="habits">
+                    <div class="block-header-bar">
+                        <div class="block-title-box">
+                            <span>3. Hábitos Clave</span>
+                            <span class="sub">(Rutinas · Máx. 5)</span>
+                        </div>
+                        <div class="block-actions-box">
+                            <button type="button" class="btn-block-action" id="btn-add-habit-header" onclick="addHabitItem()" title="Añadir hábito">+ Añadir</button>
+                            <button type="button" class="btn-block-action" onclick="moveBlock('habits', -1)" title="Subir sección">▲</button>
+                            <button type="button" class="btn-block-action" onclick="moveBlock('habits', 1)" title="Bajar sección">▼</button>
+                            <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('habits')" title="Quitar sección">✕</button>
+                        </div>
+                    </div>
+                    <div class="habits-flow-box" id="habits-list-container">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- 4. BLOQUE NOTAS Y REFLEXIÓN (ELÁSTICO Y PROPORCIONAL) -->
+                <div class="modular-block modular-block-notes" id="block-notes" data-id="notes">
+                    <div class="block-header-bar">
+                        <div class="block-title-box">
+                            <span>4. Notas</span>
+                            <span class="sub">¿Qué salió bien hoy y qué puedo mejorar para mañana?</span>
+                        </div>
+                        <div class="block-actions-box">
+                            <button type="button" class="btn-block-action" onclick="moveBlock('notes', -1)" title="Subir sección">▲</button>
+                            <button type="button" class="btn-block-action" onclick="moveBlock('notes', 1)" title="Bajar sección">▼</button>
+                            <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('notes')" title="Quitar sección">✕</button>
+                        </div>
+                    </div>
+                    <div class="notes-canvas-area bg-blank" id="notes-canvas-area">
+                        <textarea class="textarea-inline-notes" id="field-notes" maxlength="2200" 
+                                  placeholder="Escribe aquí tus notas y reflexiones del día..."
+                                  onkeydown="handleNotesKeydown(event)"
+                                  oninput="handleNotesInput(this)">Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.</textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- PIE EDITORIAL -->
+            <div class="paper-footer">
+                <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
+                <span>editorialmenosruido.com</span>
             </div>
         </div>
     </div>
 
-    <!-- MODAL POP-UP DE DESCARGA Y COMPRA AMAZON -->
-    <div class="modal-overlay" id="download-modal" onclick="closeDownloadModalOnBackdrop(event)">
-        <div class="modal-card">
-            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
-            <span class="modal-badge" id="modal-badge-text">Descarga Lista</span>
-            <h3 class="modal-title" id="modal-title-text">Tu Planificador en Papel</h3>
-            <p class="modal-desc" id="modal-desc-text">Descarga tu PDF vectorial de alta resolución listo para imprimir o usar.</p>
-
-            <!-- SELECTOR DE NÚMERO DE PÁGINAS Y FORMATO (SOLO PARA PLANTILLA EN BLANCO: 1 A 7) -->
-            <div id="modal-blank-options-daily" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 14px;">
-                <div class="modal-pages-selector" id="modal-pages-selector" style="display: flex; margin-bottom: 0;">
-                    <div>
-                        <span class="modal-pages-label">¿Cuántos días quieres imprimir?</span>
-                        <span class="modal-pages-hint">Elige del 1 al 7 para tener un PDF con varios días (ej. 2 para fin de semana o 7 para la semana completa).</span>
-                    </div>
-                    <div class="pages-stepper">
-                        <button type="button" class="btn-step" onclick="changePagesCount(-1)">−</button>
-                        <span class="pages-count-display" id="modal-pages-count">1</span>
-                        <button type="button" class="btn-step" onclick="changePagesCount(1)">+</button>
-                    </div>
-                </div>
-
-                <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px;">
-                    <label for="modal-select-format-daily" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
-                    <select id="modal-select-format-daily" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;" onchange="document.getElementById('input-format').value = this.value">
-                        <option value="6x9">Formato Libro 6" × 9" (152 × 229 mm)</option>
-                        <option value="a4">Formato DIN A4 (210 × 297 mm)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- AVISO DE FORMATO PARA PERSONALIZADO -->
-            <div id="modal-personalized-format-info-daily" style="display: block; text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
-                <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px;">Formato de exportación:</span>
-                <span style="font-size: 0.82rem; color: #333;">Formato Libro 6" × 9" (152 × 229 mm)</span>
-            </div>
-
-            <div class="modal-actions-grid">
-                <button type="button" class="btn-modal-download" onclick="executeModalDownload()">
-                    <span>📥</span> <span id="modal-download-btn-label">Descargar PDF ahora</span>
-                </button>
-
-                <!-- CUADERNOS FÍSICOS EN AMAZON (ESTILO WEB MENOS RUIDO) -->
-                <div class="modal-books-section">
-                    <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
-                    <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 0 0 12px 0;">
-                        El método completo está en nuestros libros de Editorial Menos Ruido. Toda la metodología y estructura estratégica está explicada en ellos, ideales para tener 3 o 6 meses reunidos en un solo lugar y evitar el desorden de hojas sueltas. Si te gusta la sensación de planificar en papel con claridad y sin ruido, el cuaderno físico te dará la experiencia completa y duradera.
-                    </p>
-                    <div class="modal-books-grid">
-                        <!-- Planificador 90 Días -->
-                        <div class="modal-book-card">
-                            <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb">
-                            <div class="modal-book-details">
-                                <span class="modal-book-badge">Enfoque trimestral</span>
-                                <h4 class="modal-book-title">Planificador 90 Días</h4>
-                                <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_generador' })">
-                                    Comprar en Amazon ↗
-                                </a>
-                                <a href="/planificador-90-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
-                                    Ver en la web →
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Planificador 180 Días -->
-                        <div class="modal-book-card">
-                            <img src="/cover_180.jpg" alt="Planificador 180 Días" class="modal-book-thumb">
-                            <div class="modal-book-details">
-                                <span class="modal-book-badge">Hábito semestral</span>
-                                <h4 class="modal-book-title">Planificador 180 Días</h4>
-                                <a href="/ir/amazon-180-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_180_dias', origen: 'modal_generador' })">
-                                    Comprar en Amazon ↗
-                                </a>
-                                <a href="/planificador-180-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
-                                    Ver en la web →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ENLACE A RESEÑA EN AMAZON -->
-                <div style="text-align: center; margin-top: 14px;">
-                    <a href="/ir/amazon-resena-90-dias.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline; transition: color 0.2s;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_90_dias', origen: 'modal_generador' })">
-                        ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- TOAST INFORMATIVO -->
+    <div class="toast-msg" id="toast-notify"></div>
 
     <script>
-        // ANALÍTICA VERCEL: TRACKING DE EVENTOS
-        function trackVercelEvent(name, data = {}) {
-            try {
-                if (typeof window.va === 'function') {
-                    window.va('event', { name: name, data: data });
-                }
-            } catch(e) {
-                console.warn('[Vercel Analytics]', e);
-            }
-        }
-
-        // MÉTRICA VERCEL GRATIS (APARECE EN LA TABLA "PAGES" DE VERCEL SIN PAGAR)
-        function registrarMetricaGratis(url) {
-            try {
-                const ifr = document.createElement('iframe');
-                ifr.style.display = 'none';
-                ifr.src = url;
-                document.body.appendChild(ifr);
-                setTimeout(() => ifr.remove(), 4000);
-            } catch(e) {}
-        }
-
-        // CONTROL DE VISIBILIDAD DE VISTA PREVIA
-        let isPreviewVisible = false;
-        let isExampleActive = false;
-
-        const DAILY_EXAMPLE = {
-            day: 'Miércoles',
-            date: '14 / 10 / 2026',
-            priority: 'Escribir el primer borrador del nuevo proyecto',
-            tasks: [
-                'Responder correos urgentes (11:00 a 11:30)',
-                'Revisar cuentas del trimestre',
-                'Comprar cuaderno de repuesto'
+        // ESTADO GLOBAL DE DATOS Y CONFIGURACIÓN
+        const state = {
+            checkboxStyle: 'square',
+            notesPattern: 'blank',
+            blocksOrder: ['priority', 'tasks', 'habits', 'notes'],
+            sectionsVisible: {
+                priority: true,
+                tasks: true,
+                habits: true,
+                notes: true
+            },
+            priorities: [
+                'Revisar y definir la estrategia de lanzamiento Q4'
             ],
-            habits: ['Cero redes antes de las 10:00', 'Paseo vespertino de 20 min', 'Lectura antes de dormir'],
-            notes: 'Logré avanzar 2 horas seguidas sin interrupciones en la prioridad principal. Para mañana necesito definir la reunión con el equipo a primera hora.'
+            tasks: [
+                'Enviar presupuesto corregido a imprenta',
+                'Llamar a Javier para coordinar reunión de balance',
+                'Revisar facturas pendientes del trimestre'
+            ],
+            habits: [
+                '30 min de lectura profunda',
+                'Caminar al aire libre sin pantallas',
+                'Planificar el día siguiente antes de cenar'
+            ]
         };
 
-        // CONFIGURACIÓN DE ESTILOS ACTIVOS
-        let activeStyles = {
-            rayado: 'blank',
-            lineas: 'dotted',
-            caja: 'caja',
-            check: 'square'
-        };
+        const PATTERNS = ['blank', 'dots', 'lines', 'grid'];
 
-        // LISTA Y ORDEN DE SECCIONES
-        let sectionStates = {
-            priority: true,
-            tasks: true,
-            habits: true,
-            notes: true
-        };
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPriorities();
+            renderTasks();
+            renderHabits();
+            updatePillStates();
+            updateNotesCapacity();
+            updateNotesPatternUI();
+        });
 
-        let tasksList = ['', '', ''];
-        let habitsList = ['', ''];
-
-        // FUNCIONES DE SELECCIÓN POR CÍRCULOS
-        function setRayado(val) {
-            activeStyles.rayado = 'blank';
-            const notesEl = document.getElementById('view-notes');
-            if (notesEl) {
-                notesEl.className = 'notes-view bg-blank';
+        // FORMATEO INTELIGENTE DE FECHA (SOLO NÚMEROS Y BARRAS AUTOMÁTICAS)
+        function handleDateKeydown(e, el) {
+            if (e.key === 'Backspace') {
+                if (el.value.endsWith(' / ')) {
+                    e.preventDefault();
+                    el.value = el.value.slice(0, -3);
+                }
+                return;
+            }
+            if (!/^\d$/.test(e.key) && !['ArrowLeft', 'ArrowRight', 'Tab', 'Delete', 'Enter', 'Home', 'End'].includes(e.key) && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
             }
         }
 
-        function setLineas(val) {
-            activeStyles.lineas = val;
-            ['dotted', 'solid', 'none'].forEach(k => {
-                const btn = document.getElementById(`btn-lineas-${k}`);
-                if (btn) btn.classList.toggle('active', k === val);
-            });
-            renderTasksPreview();
-            showStatus(`Líneas de tareas actualizadas`);
-        }
-
-        function setCaja(val) {
-            activeStyles.caja = val;
-            ['caja', 'lateral'].forEach(k => {
-                const btn = document.getElementById(`btn-caja-${k}`);
-                if (btn) btn.classList.toggle('active', k === val);
-            });
-            const pBox = document.getElementById('view-priority-box');
-            if (pBox) {
-                pBox.className = 'priority-box';
-                if (val === 'lateral') pBox.classList.add('style-linea-lateral');
+        function handleDateInput(el) {
+            let digits = el.value.replace(/\D/g, '').slice(0, 8);
+            if (!digits) {
+                el.value = '';
+                return;
             }
-            showStatus(`Caja de prioridad actualizada`);
+            let formatted = '';
+            if (digits.length <= 2) {
+                formatted = digits;
+                if (digits.length === 2) formatted += ' / ';
+            } else if (digits.length <= 4) {
+                formatted = digits.slice(0, 2) + ' / ' + digits.slice(2);
+                if (digits.length === 4) formatted += ' / ';
+            } else {
+                formatted = digits.slice(0, 2) + ' / ' + digits.slice(2, 4) + ' / ' + digits.slice(4);
+            }
+            el.value = formatted;
         }
 
-        function setCheck(val) {
-            activeStyles.check = val;
-            ['square', 'circle'].forEach(k => {
-                const btn = document.getElementById(`btn-check-${k}`);
-                if (btn) btn.classList.toggle('active', k === val);
+        // ========================================================
+        // 1. PRIORIDAD DEL DÍA (ÚNICA - 1 SOLA LÍNEA ESTRICTA)
+        // ========================================================
+        function renderPriorities() {
+            const container = document.getElementById('priorities-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const isCircle = state.checkboxStyle === 'circle';
+            const pText = state.priorities[0] || '';
+
+            const box = document.createElement('div');
+            box.className = 'box-priority';
+            box.innerHTML = `
+                <div class="check-square ${isCircle ? 'circle' : ''}"></div>
+                <textarea class="textarea-inline-priority" rows="1" maxlength="140" 
+                          placeholder="¿Qué única tarea haría que hoy fuera un día productivo?"
+                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                          oninput="handleSingleLineInput(this); updatePriorityValue(0, this.value)">${escapeHTML(pText)}</textarea>
+            `;
+            container.appendChild(box);
+            updateNotesCapacity();
+        }
+
+        function updatePriorityValue(idx, val) {
+            state.priorities[0] = val.replace(/[\r\n]+/g, ' ');
+        }
+
+        // Manejo común para inputs de una sola línea estricta (Prioridad, Tareas, Hábitos)
+        function handleSingleLineInput(el) {
+            el.value = el.value.replace(/[\r\n]+/g, ' ');
+            // Si el texto causa scroll horizontal o desborda la línea
+            while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+        }
+
+        // ========================================================
+        // 2. TAREAS SECUNDARIAS (HASTA 3 - 1 SOLA LÍNEA ESTRICTA)
+        // ========================================================
+        function renderTasks() {
+            const container = document.getElementById('tasks-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const isCircle = state.checkboxStyle === 'circle';
+
+            state.tasks.forEach((tText, idx) => {
+                const row = document.createElement('div');
+                row.className = 'task-row-interactive';
+                row.innerHTML = `
+                    <div class="task-box-check ${isCircle ? 'circle' : ''}"></div>
+                    <textarea class="textarea-inline-task" rows="1" maxlength="140" placeholder="Tarea secundaria ${idx + 1}..."
+                              onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                              oninput="handleSingleLineInput(this); updateTaskValue(${idx}, this.value)">${escapeHTML(tText)}</textarea>
+                    <button type="button" class="btn-remove-line" onclick="removeTaskItem(${idx})" title="Eliminar tarea">✕</button>
+                `;
+                container.appendChild(row);
             });
-            const isCircle = val === 'circle';
-            const pCheck = document.getElementById('view-priority-check');
-            if (pCheck) pCheck.classList.toggle('circle', isCircle);
-            renderTasksPreview();
-            renderHabitsPreview();
-            showStatus(`Casillas: ${val}`);
+
+            const btnAdd = document.getElementById('btn-add-task-header');
+            if (btnAdd) {
+                btnAdd.style.display = state.tasks.length >= 3 ? 'none' : 'inline-block';
+            }
+            updateNotesCapacity();
         }
 
-        // FUNCIÓN AUXILIAR DE SEGURIDAD HTML
+        function updateTaskValue(idx, val) {
+            state.tasks[idx] = val.replace(/[\r\n]+/g, ' ');
+        }
+
+        function getNotesTextHeight(text) {
+            if (!text || !text.trim()) return 0;
+            const notesEl = document.getElementById('field-notes');
+            if (!notesEl) return 0;
+
+            let mirror = document.getElementById('notes-measurement-mirror');
+            if (!mirror) {
+                mirror = document.createElement('div');
+                mirror.id = 'notes-measurement-mirror';
+                mirror.style.position = 'absolute';
+                mirror.style.visibility = 'hidden';
+                mirror.style.pointerEvents = 'none';
+                mirror.style.whiteSpace = 'pre-wrap';
+                mirror.style.wordBreak = 'break-word';
+                mirror.style.overflowWrap = 'anywhere';
+                mirror.style.boxSizing = 'border-box';
+                document.body.appendChild(mirror);
+            }
+
+            const comp = window.getComputedStyle(notesEl);
+            mirror.style.width = notesEl.clientWidth + 'px';
+            mirror.style.fontFamily = comp.fontFamily;
+            mirror.style.fontSize = comp.fontSize;
+            mirror.style.lineHeight = comp.lineHeight;
+            mirror.style.padding = comp.padding;
+            mirror.textContent = text;
+
+            return mirror.offsetHeight;
+        }
+
+        function canShrinkNotesFor(pixelsNeeded) {
+            const notesEl = document.getElementById('field-notes');
+            if (!notesEl || !state.sectionsVisible.notes) return true;
+            const text = notesEl.value.trim();
+            if (!text) return true;
+
+            const textH = getNotesTextHeight(notesEl.value);
+            const currentH = notesEl.clientHeight;
+            // El texto actual debe caber en la altura restante (currentH - pixelsNeeded)
+            // Damos 6px de margen de seguridad
+            return (currentH - pixelsNeeded) >= (textH - 6);
+        }
+
+        function addTaskItem() {
+            if (state.tasks.length >= 3) return;
+            // Una tarea secundaria consume aprox. 26px
+            if (!canShrinkNotesFor(26)) {
+                showToast('⚠️ No hay espacio en la hoja: borra texto en Notas para hacer hueco');
+                return;
+            }
+            state.tasks.push('');
+            renderTasks();
+            showToast('Tarea añadida');
+        }
+
+        function removeTaskItem(idx) {
+            state.tasks.splice(idx, 1);
+            renderTasks();
+            showToast('Tarea eliminada (más espacio libre)');
+        }
+
+        // ========================================================
+        // 3. HÁBITOS CLAVE (HASTA 5)
+        // ========================================================
+        function renderHabits() {
+            const container = document.getElementById('habits-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const isCircle = state.checkboxStyle === 'circle';
+
+            state.habits.forEach((hText, idx) => {
+                const row = document.createElement('div');
+                row.className = 'habit-row-interactive';
+                row.innerHTML = `
+                    <div class="habit-box-check ${isCircle ? 'circle' : ''}"></div>
+                    <textarea class="textarea-inline-habit" rows="1" maxlength="140" placeholder="Hábito ${idx + 1}..."
+                              onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                              oninput="handleSingleLineInput(this); updateHabitValue(${idx}, this.value)">${escapeHTML(hText)}</textarea>
+                    <button type="button" class="btn-remove-line" onclick="removeHabitItem(${idx})" title="Eliminar hábito">✕</button>
+                `;
+                container.appendChild(row);
+            });
+
+            const btnAdd = document.getElementById('btn-add-habit-header');
+            if (btnAdd) {
+                btnAdd.style.display = state.habits.length >= 5 ? 'none' : 'inline-block';
+            }
+            updateNotesCapacity();
+        }
+
+        function updateHabitValue(idx, val) {
+            state.habits[idx] = val.replace(/[\r\n]+/g, ' ');
+        }
+
+        function addHabitItem() {
+            if (state.habits.length >= 5) return;
+            // Un hábito consume aprox. 22px
+            if (!canShrinkNotesFor(22)) {
+                showToast('⚠️ No hay espacio en la hoja: borra texto en Notas para hacer hueco a otro hábito');
+                return;
+            }
+            state.habits.push('');
+            renderHabits();
+            showToast('Hábito añadido');
+        }
+
+        function removeHabitItem(idx) {
+            state.habits.splice(idx, 1);
+            renderHabits();
+            showToast('Hábito eliminado (más espacio libre en Notas)');
+        }
+
+        // ========================================================
+        // ELIMINAR Y RESTAURAR SECCIONES (PÍLDORAS Y BOTONES)
+        // ========================================================
+        function removeSection(secId) {
+            state.sectionsVisible[secId] = false;
+            const blockEl = document.getElementById('block-' + secId);
+            if (blockEl) blockEl.style.display = 'none';
+
+            updatePillStates();
+            updateNotesCapacity();
+            showToast(`Sección eliminada (Notas tiene más espacio)`);
+        }
+
+        function restoreSection(secId) {
+            // Verificar si añadir de nuevo esta sección cabe sin aplastar el texto escrito en notas
+            const spaceCosts = { priority: 55, tasks: 65, habits: 75, notes: 0 };
+            const cost = spaceCosts[secId] || 40;
+            if (secId !== 'notes' && !canShrinkNotesFor(cost)) {
+                showToast(`⚠️ No hay espacio en la hoja para restaurar esta sección: reduce el texto de Notas`);
+                return;
+            }
+
+            state.sectionsVisible[secId] = true;
+            const blockEl = document.getElementById('block-' + secId);
+            if (blockEl) blockEl.style.display = (secId === 'notes') ? 'flex' : 'block';
+
+            if (secId === 'priority' && state.priorities.length === 0) {
+                state.priorities = [''];
+                renderPriorities();
+            }
+            if (secId === 'tasks' && state.tasks.length === 0) {
+                state.tasks = [''];
+                renderTasks();
+            }
+            if (secId === 'habits' && state.habits.length === 0) {
+                state.habits = [''];
+                renderHabits();
+            }
+
+            updatePillStates();
+            updateNotesCapacity();
+            showToast(`Sección restaurada`);
+        }
+
+        function toggleSectionFromPill(secId) {
+            if (state.sectionsVisible[secId]) {
+                removeSection(secId);
+            } else {
+                restoreSection(secId);
+            }
+        }
+
+        function updatePillStates() {
+            ['priority', 'tasks', 'habits', 'notes'].forEach(secId => {
+                const pill = document.getElementById('pill-' + secId);
+                if (!pill) return;
+                const isVis = state.sectionsVisible[secId];
+                pill.classList.toggle('active', isVis);
+
+                let label = '';
+                if (secId === 'priority') label = isVis ? '1. Prioridad ✓' : '+ Prioridad';
+                if (secId === 'tasks') label = isVis ? `2. Tareas (${state.tasks.length}) ✓` : '+ Tareas';
+                if (secId === 'habits') label = isVis ? `3. Hábitos (${state.habits.length}) ✓` : '+ Hábitos';
+                if (secId === 'notes') label = isVis ? '4. Notas ✓' : '+ Notas';
+                pill.textContent = label;
+            });
+        }
+
+        // ========================================================
+        // CAPACIDAD DINÁMICA DE NOTAS & PROPORCIÓN 1:1 CON IMPRENTA
+        // ========================================================
+        function updateNotesCapacity() {
+            const notesEl = document.getElementById('field-notes');
+            if (!notesEl) return;
+
+            const textH = getNotesTextHeight(notesEl.value);
+            if (textH > notesEl.clientHeight + 4) {
+                notesEl.classList.add('notes-overflow-warning');
+            } else {
+                notesEl.classList.remove('notes-overflow-warning');
+            }
+            updatePillStates();
+        }
+
+        function handleNotesKeydown(e) {
+            const notesEl = e.target;
+            // Teclas de borrado, navegación y selección siempre permitidas
+            const allowedControlKeys = [
+                'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+                'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Escape'
+            ];
+            if (allowedControlKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+
+            // Comprobar con el espejo si la altura del texto ya llena el recuadro
+            const textH = getNotesTextHeight(notesEl.value);
+            if (textH >= notesEl.clientHeight - 4) {
+                e.preventDefault();
+                showToast('⚠️ Límite del recuadro alcanzado: quita hábitos/tareas para ganar espacio o borra texto');
+                return false;
+            }
+        }
+
+        function handleNotesInput(el) {
+            let textH = getNotesTextHeight(el.value);
+            if (textH > el.clientHeight) {
+                let text = el.value;
+                while (text.length > 0 && getNotesTextHeight(text) > el.clientHeight) {
+                    text = text.slice(0, -1);
+                }
+                el.value = text;
+                showToast('⚠️ El texto ha llegado al límite exacto del recuadro de Notas');
+            }
+            updateNotesPatternUI();
+        }
+
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 40) + 'px';
+        }
+
+        // ========================================================
+        // REORDENAR BLOQUES
+        // ========================================================
+        function moveBlock(blockId, direction) {
+            const container = document.getElementById('blocks-container');
+            const blocks = Array.from(container.children);
+            const currentIdx = blocks.findIndex(b => b.dataset.id === blockId);
+
+            if (currentIdx === -1) return;
+            const newIdx = currentIdx + direction;
+
+            if (newIdx >= 0 && newIdx < blocks.length) {
+                const targetBlock = blocks[currentIdx];
+                if (direction === -1) {
+                    container.insertBefore(targetBlock, blocks[newIdx]);
+                } else {
+                    container.insertBefore(targetBlock, blocks[newIdx].nextSibling);
+                }
+                state.blocksOrder = Array.from(container.children).map(b => b.dataset.id);
+                showToast(`Bloque movido ${direction === -1 ? 'arriba' : 'abajo'}`);
+            }
+        }
+
+        function resetDefaultOrder() {
+            const container = document.getElementById('blocks-container');
+            const defaultOrder = ['priority', 'tasks', 'habits', 'notes'];
+
+            defaultOrder.forEach(id => {
+                const el = document.getElementById('block-' + id);
+                if (el) container.appendChild(el);
+            });
+            state.blocksOrder = [...defaultOrder];
+            showToast('Orden original restablecido');
+        }
+
+        // LIMPIAR CONTENIDOS
+        function clearAllContent() {
+            document.getElementById('field-day').value = '';
+            document.getElementById('field-date').value = '';
+            state.priorities = state.priorities.map(() => '');
+            state.tasks = state.tasks.map(() => '');
+            state.habits = state.habits.map(() => '');
+            document.getElementById('field-notes').value = '';
+            renderPriorities();
+            renderTasks();
+            renderHabits();
+            updateNotesPatternUI();
+            showToast('Lienzo limpio para escribir');
+        }
+
+        // CASILLAS & PAUTAS
+        function toggleCheckboxStyle() {
+            state.checkboxStyle = (state.checkboxStyle === 'square') ? 'circle' : 'square';
+            const isCircle = state.checkboxStyle === 'circle';
+
+            document.querySelectorAll('.check-square, .task-box-check, .habit-box-check').forEach(el => {
+                el.classList.toggle('circle', isCircle);
+            });
+            showToast(isCircle ? 'Casillas redondeadas' : 'Casillas cuadradas');
+        }
+
+        function updateNotesPatternUI() {
+            const notesEl = document.getElementById('field-notes');
+            const area = document.getElementById('notes-canvas-area');
+            const btnPattern = document.getElementById('btn-toggle-pattern');
+            if (!notesEl || !area || !btnPattern) return;
+
+            const hasText = notesEl.value.trim().length > 0;
+            if (hasText) {
+                // Con texto escrito: fondo blanco limpio editorial y botón pauta inactivo
+                area.className = 'notes-canvas-area bg-blank';
+                btnPattern.classList.add('disabled-btn');
+                btnPattern.title = 'Con texto escrito se imprime en limpio (borra el texto para activar pautas de escritura manual)';
+            } else {
+                // Sin texto (limpio): se aplica la pauta seleccionada y botón interactivo normal
+                area.className = `notes-canvas-area bg-${state.notesPattern}`;
+                btnPattern.classList.remove('disabled-btn');
+                btnPattern.title = 'Cambiar pauta de notas (Blanco, Puntos, Líneas, Cuadrícula)';
+            }
+        }
+
+        function cycleNotesPattern() {
+            const notesEl = document.getElementById('field-notes');
+            const hasText = notesEl && notesEl.value.trim().length > 0;
+            if (hasText) {
+                showToast('Limpia el texto de notas para elegir pauta de escritura manual');
+                return;
+            }
+
+            const idx = PATTERNS.indexOf(state.notesPattern);
+            state.notesPattern = PATTERNS[(idx + 1) % PATTERNS.length];
+
+            const notesElArea = document.getElementById('notes-canvas-area');
+            if (notesElArea) {
+                notesElArea.className = `notes-canvas-area bg-${state.notesPattern}`;
+            }
+
+            const names = { blank: 'Blanco limpio', dots: 'Puntos sutiles', lines: 'Rayado', grid: 'Cuadrícula' };
+            showToast(`Pauta de notas: ${names[state.notesPattern]}`);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast-notify');
+            t.textContent = msg;
+            t.style.display = 'block';
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2400);
+        }
+
         function escapeHTML(str) {
             if (!str) return '';
             return String(str).replace(/[&<>'"]/g, tag => ({
@@ -1557,853 +1343,322 @@
         }
 
         // ========================================================
-        // TAREAS SECUNDARIAS
+        // GENERADOR DE PDF BLINDADO 1:1 CONTRA DESBORDAMIENTO
         // ========================================================
-        function renderTasksInputs() {
-            const container = document.getElementById('tasks-inputs-container');
-            if (!container) return;
-            container.innerHTML = '';
+        function strictSafeWrapText(docInstance, text, maxWidth) {
+            if (!text) return [];
+            const safeMaxW = Math.max(10, maxWidth - 1.5); // Margen de seguridad estricto
+            const paragraphs = String(text).split('\n');
+            const result = [];
 
-            tasksList.forEach((task, idx) => {
-                const row = document.createElement('div');
-                row.className = 'item-input-row';
-                row.innerHTML = `
-                    <textarea class="task-input-field" rows="1" maxlength="90" placeholder="Tarea ${idx + 1}"
-                        onkeydown="if(event.key === 'Enter'){ event.preventDefault(); return false; }"
-                        oninput="this.value = this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updateTaskValue(${idx}, this.value)">${escapeHTML(task)}</textarea>
-                    <button type="button" class="btn-remove-item" title="Eliminar tarea" onclick="removeTaskItem(${idx})">✕</button>
-                `;
-                container.appendChild(row);
-                const ta = row.querySelector('textarea');
-                if (ta) autoResizeTextarea(ta);
-            });
-
-            const blockTasks = document.getElementById('block-tasks');
-            if (blockTasks) {
-                if (tasksList.length === 0) {
-                    blockTasks.style.display = 'none';
-                } else if (sectionStates.tasks) {
-                    blockTasks.style.display = 'block';
+            paragraphs.forEach(p => {
+                const trimmed = p.trim();
+                if (!trimmed) {
+                    result.push('');
+                    return;
                 }
-            }
+                const words = trimmed.split(/\s+/);
+                const processedWords = [];
 
-            const btnAddTask = document.getElementById('btn-add-task');
-            if (btnAddTask) {
-                btnAddTask.style.display = tasksList.length >= 3 ? 'none' : 'inline-flex';
-            }
-            renderTasksPreview();
-            updateNotesLimit();
-        }
-
-        function updateTaskValue(idx, val) {
-            isExampleActive = false;
-            tasksList[idx] = (val || '').replace(/[\r\n]+/g, ' ');
-            renderTasksPreview();
-            updateNotesLimit();
-        }
-
-        function addNewTask() {
-            if (tasksList.length >= 3) return;
-            isExampleActive = false;
-            tasksList.push('');
-            sectionStates.tasks = true;
-            document.getElementById('form-group-tasks').style.display = 'block';
-            document.getElementById('btn-restore-tasks').style.display = 'none';
-            renderTasksInputs();
-            showStatus('Tarea añadida.');
-        }
-
-        function removeTaskItem(idx) {
-            isExampleActive = false;
-            tasksList.splice(idx, 1);
-            if (tasksList.length === 0) {
-                removeSection('tasks');
-            } else {
-                renderTasksInputs();
-            }
-            showStatus('Tarea eliminada.');
-        }
-
-        function renderTasksPreview() {
-            const container = document.getElementById('view-tasks-container');
-            if (!container) return;
-            container.innerHTML = '';
-            const isCircle = activeStyles.check === 'circle';
-            const lineas = activeStyles.lineas;
-
-            const userHasTasks = tasksList.some(t => t.trim().length > 0);
-            let tasksToRender = [];
-
-            if (userHasTasks) {
-                tasksToRender = tasksList.map(t => t.replace(/[\r\n]+/g, ' ').trim());
-            } else if (isExampleActive) {
-                tasksToRender = DAILY_EXAMPLE.tasks;
-            } else {
-                tasksToRender = tasksList.map(() => '');
-            }
-
-            tasksToRender.forEach((task) => {
-                const row = document.createElement('div');
-                let lineClass = 'task-item-view';
-                if (lineas === 'dotted') lineClass += ' line-suave';
-                if (lineas === 'solid') lineClass += ' line-solida';
-                if (lineas === 'none') lineClass += ' line-sin';
-                row.className = lineClass;
-
-                row.innerHTML = `
-                    <div class="task-box-square ${isCircle ? 'circle' : ''}"></div>
-                    <div class="task-content-view">${escapeHTML(task)}</div>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        // ========================================================
-        // HÁBITOS CLAVE Y GESTIÓN DINÁMICA DE NOTAS
-        // ========================================================
-        function getDynamicNotesMaxLength() {
-            const habitCount = (sectionStates.habits && habitsList) ? habitsList.length : 0;
-            if (!sectionStates.habits || habitCount === 0) return 900;
-            if (habitCount <= 3) return 750;
-            if (habitCount === 4) return 620;
-            return 520; // 5 hábitos
-        }
-
-        function getMaxAllowedNoteLines() {
-            const habitCount = (sectionStates.habits && habitsList) ? habitsList.length : 0;
-            const taskCount = (sectionStates.tasks && tasksList) ? tasksList.length : 0;
-            let lines = 16;
-            if (sectionStates.priority) lines -= 2;
-            lines -= (taskCount * 1);
-            lines -= (habitCount * 1.4);
-            return Math.max(6, Math.floor(lines));
-        }
-
-        function handleNotesKeydown(e) {
-            if (e.key === 'Enter') {
-                const val = e.target.value;
-                const currentBreaks = (val.match(/\n/g) || []).length;
-                const maxLines = getMaxAllowedNoteLines();
-                if (currentBreaks >= maxLines) {
-                    e.preventDefault();
-                    showStatus('Límite de altura del papel: no caben más saltos de línea en esta página.');
-                    return false;
-                }
-            }
-        }
-
-        function handleNotesInput(el) {
-            isExampleActive = false;
-            const maxLines = getMaxAllowedNoteLines();
-            const parts = el.value.split('\n');
-            if (parts.length > maxLines + 1) {
-                const allowed = parts.slice(0, maxLines + 1);
-                const overflow = parts.slice(maxLines + 1).join(' ');
-                allowed[allowed.length - 1] += (allowed[allowed.length - 1] ? ' ' : '') + overflow;
-                el.value = allowed.join('\n');
-                showStatus('Texto ajustado a los límites físicos de la página.');
-            }
-
-            autoResizeTextarea(el);
-            renderPreview();
-            updateNotesLimit();
-        }
-
-        function updateNotesLimit() {
-            const notesInput = document.getElementById('input-notes');
-            const notesCount = document.getElementById('count-notes');
-            const limit = getDynamicNotesMaxLength();
-            const maxLines = getMaxAllowedNoteLines();
-            if (notesInput) {
-                notesInput.maxLength = limit;
-                if (notesInput.value.length > limit) {
-                    notesInput.value = notesInput.value.substring(0, limit);
-                }
-                const currentBreaks = (notesInput.value.match(/\n/g) || []).length;
-                if (notesCount) {
-                    notesCount.textContent = `${notesInput.value.length}/${limit} c. · ${currentBreaks}/${maxLines} líneas`;
-                }
-                const viewNotes = document.getElementById('view-notes');
-                if (viewNotes) {
-                    viewNotes.textContent = notesInput.value.trim() || '';
-                    if (viewNotes.scrollHeight > viewNotes.clientHeight + 4) {
-                        viewNotes.style.fontSize = '0.74rem';
-                        viewNotes.style.lineHeight = '1.35';
+                words.forEach(w => {
+                    if (!w) return;
+                    const wWidth = docInstance.getTextWidth(w);
+                    if (wWidth <= safeMaxW) {
+                        processedWords.push(w);
                     } else {
-                        viewNotes.style.fontSize = '0.81rem';
-                        viewNotes.style.lineHeight = '1.45';
+                        let chunk = '';
+                        for (let char of w) {
+                            if (docInstance.getTextWidth(chunk + char) > safeMaxW) {
+                                if (chunk) processedWords.push(chunk);
+                                chunk = char;
+                            } else {
+                                chunk += char;
+                            }
+                        }
+                        if (chunk) processedWords.push(chunk);
                     }
-                }
-            }
-        }
+                });
 
-        function renderHabitsInputs() {
-            const container = document.getElementById('habits-inputs-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            habitsList.forEach((habit, idx) => {
-                const row = document.createElement('div');
-                row.className = 'item-input-row';
-                row.innerHTML = `
-                    <textarea class="habit-input-field" rows="1" maxlength="50" placeholder="Hábito ${idx + 1}"
-                        onkeydown="if(event.key === 'Enter'){ event.preventDefault(); return false; }"
-                        oninput="this.value = this.value.replace(/[\\r\\n]+/g, ' '); autoResizeTextarea(this); updateHabitValue(${idx}, this.value)">${escapeHTML(habit)}</textarea>
-                    <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
-                `;
-                container.appendChild(row);
-                const ta = row.querySelector('textarea');
-                if (ta) autoResizeTextarea(ta);
+                const wrapped = docInstance.splitTextToSize(processedWords.join(' '), safeMaxW);
+                result.push(...wrapped);
             });
 
-            const blockHabits = document.getElementById('block-habits');
-            if (blockHabits) {
-                if (habitsList.length === 0) {
-                    blockHabits.style.display = 'none';
-                } else if (sectionStates.habits) {
-                    blockHabits.style.display = 'block';
-                }
-            }
-
-            const btnAddHabit = document.getElementById('btn-add-habit');
-            if (btnAddHabit) {
-                btnAddHabit.style.display = habitsList.length >= 5 ? 'none' : 'inline-flex';
-            }
-            renderHabitsPreview();
-            updateNotesLimit();
+            return result;
         }
 
-        function updateHabitValue(idx, val) {
-            isExampleActive = false;
-            habitsList[idx] = (val || '').replace(/[\r\n]+/g, ' ');
-            renderHabitsPreview();
-            updateNotesLimit();
-        }
-
-        function addNewHabit() {
-            if (habitsList.length >= 5) return;
-            isExampleActive = false;
-            habitsList.push('');
-            sectionStates.habits = true;
-            document.getElementById('form-group-habits').style.display = 'block';
-            document.getElementById('btn-restore-habits').style.display = 'none';
-            renderHabitsInputs();
-            updateNotesLimit();
-            showStatus('Hábito añadido.');
-        }
-
-        function removeHabitItem(idx) {
-            isExampleActive = false;
-            habitsList.splice(idx, 1);
-            if (habitsList.length === 0) {
-                removeSection('habits');
-            } else {
-                renderHabitsInputs();
-            }
-            updateNotesLimit();
-            showStatus('Hábito eliminado.');
-        }
-
-        function renderHabitsPreview() {
-            const container = document.getElementById('view-habits-container');
-            if (!container) return;
-            container.innerHTML = '';
-            const isCircle = activeStyles.check === 'circle';
-
-            const userHasHabits = habitsList.some(h => h.trim().length > 0);
-            let habitsToRender = [];
-
-            if (userHasHabits) {
-                habitsToRender = habitsList.map(h => h.replace(/[\r\n]+/g, ' ').trim());
-            } else if (isExampleActive) {
-                habitsToRender = DAILY_EXAMPLE.habits;
-            } else {
-                habitsToRender = habitsList.map(() => '');
-            }
-
-            habitsToRender.forEach((habit) => {
-                const pill = document.createElement('div');
-                pill.className = 'habit-pill';
-                pill.innerHTML = `
-                    <div class="habit-check ${isCircle ? 'circle' : ''}"></div>
-                    <span class="habit-pill-text">${escapeHTML(habit)}</span>
-                `;
-                container.appendChild(pill);
-            });
-            updateNotesLimit();
-        }
-
-        // ========================================================
-        // QUITAR Y RESTAURAR SECCIONES COMPLETAS
-        // ========================================================
-        function removeSection(secId) {
-            isExampleActive = false;
-            sectionStates[secId] = false;
-            document.getElementById(`form-group-${secId}`).style.display = 'none';
-            document.getElementById(`btn-restore-${secId}`).style.display = 'block';
-            document.getElementById(`block-${secId}`).style.display = 'none';
-            updateNotesLimit();
-            showStatus(`Sección eliminada.`);
-        }
-
-        function restoreSection(secId) {
-            isExampleActive = false;
-            sectionStates[secId] = true;
-            document.getElementById(`form-group-${secId}`).style.display = 'block';
-            document.getElementById(`btn-restore-${secId}`).style.display = 'none';
-            document.getElementById(`block-${secId}`).style.display = (secId === 'notes') ? 'flex' : 'block';
-
-            if (secId === 'tasks' && tasksList.length === 0) {
-                tasksList = [''];
-                renderTasksInputs();
-            }
-            if (secId === 'habits' && habitsList.length === 0) {
-                habitsList = [''];
-                renderHabitsInputs();
-            }
-            updateNotesLimit();
-            showStatus(`Sección restaurada.`);
-        }
-
-        // AUTO-FORMATO INTELIGENTE DE FECHA (ej. si escribe 03102026 -> 03 / 10 / 2026)
-        function handleDateInput(input) {
-            isExampleActive = false;
-            let val = input.value.replace(/\D/g, ''); // Solo números
-            if (val.length > 8) val = val.substring(0, 8);
-
-            if (val.length >= 5) {
-                input.value = `${val.substring(0, 2)} / ${val.substring(2, 4)} / ${val.substring(4)}`;
-            } else if (val.length >= 3) {
-                input.value = `${val.substring(0, 2)} / ${val.substring(2)}`;
-            } else {
-                input.value = val;
-            }
-            renderPreview();
-        }
-
-        // ========================================================
-        // VISTA PREVIA Y ACCIONES (LIMPIAR, EJEMPLO)
-        // ========================================================
-        function renderPreview() {
-            const dayInput = document.getElementById('input-day').value.trim();
-            const dateInput = document.getElementById('input-date').value.trim();
-            const priorityInput = document.getElementById('input-priority').value.trim();
-            const notesInput = document.getElementById('input-notes').value.trim();
-
-            const finalDay = dayInput || (isExampleActive ? DAILY_EXAMPLE.day : 'Día');
-            const finalDate = dateInput ? `Fecha: ${dateInput}` : (isExampleActive ? `Fecha: ${DAILY_EXAMPLE.date}` : 'Fecha: __ / __ / ______');
-            const finalPriority = priorityInput || (isExampleActive ? DAILY_EXAMPLE.priority : '');
-            const finalNotes = notesInput || (isExampleActive ? DAILY_EXAMPLE.notes : '');
-
-            document.getElementById('view-day').textContent = finalDay;
-            document.getElementById('view-date').textContent = finalDate;
-            document.getElementById('view-priority').textContent = finalPriority;
-            document.getElementById('view-notes').textContent = finalNotes;
-
-            renderTasksPreview();
-            renderHabitsPreview();
-            updateNotesLimit();
-        }
-
-        // RELLENAR EJEMPLO (Solo se proyecta en la vista previa, sin rellenar los inputs del formulario)
-        function loadExampleData() {
-            isExampleActive = true;
-            renderPreview();
-            showStatus('✓ Ejemplo proyectado en la vista previa.');
-        }
-
-        function autoResizeTextarea(el) {
-            if (!el) return;
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight + 2) + 'px';
-        }
-
-        // LIMPIAR: DEJA EL FORMULARIO Y LA VISTA PREVIA COMPLETAMENTE VACÍOS
-        function clearData() {
-            isExampleActive = false;
-            document.getElementById('input-day').value = '';
-            document.getElementById('input-date').value = '';
-            const pInput = document.getElementById('input-priority');
-            if (pInput) { pInput.value = ''; pInput.style.height = ''; }
-            const nInput = document.getElementById('input-notes');
-            if (nInput) { nInput.value = ''; nInput.style.height = ''; }
-
-            tasksList = ['', '', ''];
-            habitsList = ['', ''];
-
-            ['priority', 'tasks', 'habits', 'notes'].forEach(sec => {
-                sectionStates[sec] = true;
-                const fg = document.getElementById(`form-group-${sec}`);
-                if (fg) fg.style.display = 'block';
-                const br = document.getElementById(`btn-restore-${sec}`);
-                if (br) br.style.display = 'none';
-                const bl = document.getElementById(`block-${sec}`);
-                if (bl) bl.style.display = (sec === 'notes') ? 'flex' : 'block';
-            });
-
-            renderTasksInputs();
-            renderHabitsInputs();
-            renderPreview();
-            showStatus('Formulario y vista previa limpiados.');
-        }
-
-        function showStatus(text) {
-            const el = document.getElementById('status-msg');
-            if (!el) return;
-            el.textContent = text;
-            setTimeout(() => {
-                if (el.textContent === text) el.textContent = '';
-            }, 3000);
-        }
-
-        // ========================================================
-        // MODAL POP-UP DE DESCARGA Y COMPRA AMAZON
-        // ========================================================
-        let modalIsBlank = false;
-        let modalPagesCount = 1;
-
-        function openDownloadModal(isBlank) {
-            modalIsBlank = !!isBlank;
-            const modal = document.getElementById('download-modal');
-            const blankOpts = document.getElementById('modal-blank-options-daily');
-            const persInfo = document.getElementById('modal-personalized-format-info-daily');
-            const badgeText = document.getElementById('modal-badge-text');
-            const titleText = document.getElementById('modal-title-text');
-            const descText = document.getElementById('modal-desc-text');
-            const btnLabel = document.getElementById('modal-download-btn-label');
-
-            if (modalIsBlank) {
-                modalPagesCount = 1;
-                document.getElementById('modal-pages-count').textContent = '1';
-                if (blankOpts) blankOpts.style.display = 'flex';
-                if (persInfo) persInfo.style.display = 'none';
-                badgeText.textContent = 'Plantilla Limpia en Blanco';
-                titleText.textContent = 'Tu Plantilla Lista para Imprimir';
-                descText.textContent = 'Descarga tu diseño limpio sin rellenar en alta resolución para usar con lápiz o pluma en Formato Libro (152 × 229 mm) o DIN A4.';
-                btnLabel.textContent = 'Descargar 1 página limpia en PDF';
-                const modalFormat = document.getElementById('modal-select-format-daily');
-                if (modalFormat) modalFormat.value = document.getElementById('input-format').value;
-            } else {
-                modalPagesCount = 1;
-                if (blankOpts) blankOpts.style.display = 'none';
-                if (persInfo) persInfo.style.display = 'block';
-                badgeText.textContent = 'Planificador Personalizado';
-                titleText.textContent = 'Tu Planificador Diario en Papel';
-                descText.textContent = 'Descarga tu diseño en Formato Libro (152 × 229 mm) con tus prioridades, tareas y notas del día.';
-                btnLabel.textContent = 'Descargar mi PDF personalizado';
-            }
-
-            modal.classList.add('active');
-        }
-
-        function closeDownloadModal() {
-            const modal = document.getElementById('download-modal');
-            if (modal) modal.classList.remove('active');
-        }
-
-        function closeDownloadModalOnBackdrop(e) {
-            if (e.target.id === 'download-modal') {
-                closeDownloadModal();
-            }
-        }
-
-        function changePagesCount(delta) {
-            modalPagesCount = Math.max(1, Math.min(7, modalPagesCount + delta));
-            document.getElementById('modal-pages-count').textContent = modalPagesCount;
-            const btnLabel = document.getElementById('modal-download-btn-label');
-            if (btnLabel && modalIsBlank) {
-                btnLabel.textContent = `Descargar ${modalPagesCount} ${modalPagesCount === 1 ? 'página limpia' : 'páginas limpias'} en PDF`;
-            }
-        }
-
-        function executeModalDownload() {
-            closeDownloadModal();
-            generateInteractivePDF(modalIsBlank, modalPagesCount);
-        }
-
-        // ========================================================
-        // GENERADOR VECTORIAL REAL EN PDF CON jsPDF (100% OFFLINE)
-        // Soporta de 1 a 7 páginas consecutivas
-        // ========================================================
-        function generateInteractivePDF(isBlankTemplate, pageCount = 1) {
-            const { jsPDF } = window.jspdf || {};
-            if (!jsPDF) {
-                alert('No se pudo inicializar la librería jsPDF.');
+        function generatePdf(isBlank = false) {
+            const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+            if (!jsPDFClass) {
+                alert('La librería jsPDF aún se está cargando. Por favor espera un segundo.');
                 return;
             }
 
-            const formatChoice = document.getElementById('input-format').value;
-            // REGLA: Personalizado se descarga siempre en Formato Libro 6" x 9"; en blanco se puede elegir entre 6"x9" o DIN A4
-            const is6x9 = isBlankTemplate ? (formatChoice === '6x9') : true;
-            const pageDimensions = is6x9 ? [152.4, 228.6] : 'a4';
-
-            let doc = new jsPDF({
+            const doc = new jsPDFClass({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: pageDimensions
+                format: [152.4, 228.6] // 6" × 9" estándar editorial
             });
 
-            const rayado = activeStyles.rayado;
-            const lineas = activeStyles.lineas;
-            const caja = activeStyles.caja;
-            const isCircle = activeStyles.check === 'circle';
+            const pw = doc.internal.pageSize.getWidth();
+            const ph = doc.internal.pageSize.getHeight();
+            const margin = 16;
+            const cw = pw - (margin * 2); // 120.4 mm útiles
 
-            const dayInputVal = document.getElementById('input-day').value.trim();
-            const dateInputVal = document.getElementById('input-date').value.trim();
-            const priorityInputVal = document.getElementById('input-priority').value.trim();
-            const notesInputVal = document.getElementById('input-notes').value.trim();
+            // Fondo crema editorial
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pw, ph, 'F');
 
-            const userDay = isBlankTemplate ? '' : (dayInputVal || (isExampleActive ? DAILY_EXAMPLE.day : ''));
-            const userDate = isBlankTemplate ? '__ / __ / ______' : (dateInputVal || (isExampleActive ? DAILY_EXAMPLE.date : '__ / __ / ______'));
-            const priority = isBlankTemplate ? '' : (priorityInputVal || (isExampleActive ? DAILY_EXAMPLE.priority : ''));
-            const notes = isBlankTemplate ? '' : (notesInputVal || (isExampleActive ? DAILY_EXAMPLE.notes : ''));
+            let y = margin + 3;
 
-            const userHasTasks = tasksList.some(t => t.trim().length > 0);
-            const activeTasksList = isBlankTemplate 
-                ? ['', '', ''] 
-                : (userHasTasks ? tasksList : (isExampleActive ? DAILY_EXAMPLE.tasks : ['', '', '']));
+            const dayText = isBlank ? '' : document.getElementById('field-day').value.trim();
+            const dateText = isBlank ? '__ / __ / ______' : (document.getElementById('field-date').value.trim() || '__ / __ / ______');
 
-            const userHasHabits = habitsList.some(h => h.trim().length > 0);
-            const activeHabitsList = isBlankTemplate 
-                ? ['', ''] 
-                : (userHasHabits ? habitsList : (isExampleActive ? DAILY_EXAMPLE.habits : ['', '']));
+            // Encabezado
+            doc.setFont('times', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(20, 18, 16);
+            doc.text(dayText || 'Día', margin, y);
 
-            const pagesToRender = isBlankTemplate ? Math.max(1, Math.min(7, pageCount)) : 1;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.5);
+            doc.setTextColor(90, 85, 80);
+            doc.text(`Fecha: ${dateText}`, pw - margin, y - 1, { align: 'right' });
+            y += 3;
 
-            // Función de dibujo de página individual
-            function renderSinglePage(docInstance, pageIndex) {
-                const pageWidth = docInstance.internal.pageSize.getWidth();
-                const pageHeight = docInstance.internal.pageSize.getHeight();
-                const margin = 16;
-                const contentWidth = pageWidth - (margin * 2);
+            doc.setDrawColor(30, 25, 20);
+            doc.setLineWidth(0.35);
+            doc.line(margin, y, pw - margin, y);
+            y += 7;
 
-                // Fondo crema editorial
-                docInstance.setFillColor(255, 254, 251);
-                docInstance.rect(0, 0, pageWidth, pageHeight, 'F');
+            // DIBUJAR SECCIONES EN EL ORDEN SELECCIONADO
+            state.blocksOrder.forEach(blockId => {
+                if (!state.sectionsVisible[blockId]) return;
 
-                let y = margin + 4;
+                if (blockId === 'priority' && state.priorities.length > 0) {
+                    // 1. PRIORIDAD (1 LÍNEA ESTRICTA Y CENTRADA)
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('LA PRIORIDAD DEL DÍA', margin, y);
 
-                // Kicker superior
-                docInstance.setFont('helvetica', 'bold');
-                docInstance.setFontSize(7.5);
-                docInstance.setTextColor(135, 85, 59);
-                docInstance.text('PLANIFICADOR MENOS RUIDO · REGISTRO DIARIO', margin, y);
-                y += 6;
-
-                // Encabezado: Día y Fecha
-                docInstance.setFont('times', 'bold');
-                docInstance.setFontSize(18);
-                docInstance.setTextColor(30, 25, 22);
-                if (userDay) {
-                    docInstance.text(userDay, margin, y);
-                }
-
-                docInstance.setFont('helvetica', 'normal');
-                docInstance.setFontSize(9);
-                docInstance.setTextColor(100, 95, 90);
-                docInstance.text(`Fecha: ${userDate}`, pageWidth - margin, y, { align: 'right' });
-                y += 4;
-
-                docInstance.setDrawColor(40, 35, 30);
-                docInstance.setLineWidth(0.4);
-                docInstance.line(margin, y, pageWidth - margin, y);
-                y += 8;
-
-                // 1. PRIORIDAD
-                if (sectionStates.priority) {
-                    docInstance.setFont('helvetica', 'bold');
-                    docInstance.setFontSize(8);
-                    docInstance.setTextColor(30, 25, 22);
-                    docInstance.text('LA PRIORIDAD DEL DÍA', margin, y);
-
-                    docInstance.setFont('times', 'italic');
-                    docInstance.setFontSize(7.5);
-                    docInstance.setTextColor(120, 115, 110);
-                    docInstance.text('(Una sola cosa importante y factible)', margin + 42, y);
+                    doc.setFont('times', 'italic');
+                    doc.setFontSize(7);
+                    doc.setTextColor(110, 105, 100);
+                    doc.text('(Innegociable)', margin + 38, y);
                     y += 3;
 
-                    const maxPWidth = contentWidth - 16;
-                    docInstance.setFont('times', 'normal');
-                    docInstance.setFontSize(10.2);
-                    const cleanPriority = (!isBlankTemplate && priority) ? priority.replace(/[\r\n]+/g, ' ').trim() : '';
-                    const pLines = cleanPriority ? docInstance.splitTextToSize(cleanPriority, maxPWidth).slice(0, 2) : [];
-                    const numPLines = Math.max(1, pLines.length);
-                    const pLineHeight = 4.8;
-                    const totalPTextH = numPLines * pLineHeight;
-                    const priorityBoxHeight = Math.max(15, totalPTextH + 7.5);
+                    state.priorities.forEach(pText => {
+                        const cleanP = isBlank ? '' : pText.replace(/[\r\n]+/g, ' ').trim();
+                        doc.setFont('times', 'normal');
+                        doc.setFontSize(9.5);
 
-                    if (caja === 'lateral') {
-                        docInstance.setFillColor(251, 249, 246);
-                        docInstance.rect(margin, y, contentWidth, priorityBoxHeight, 'F');
-                        docInstance.setDrawColor(135, 85, 59);
-                        docInstance.setLineWidth(1.2);
-                        docInstance.line(margin, y, margin, y + priorityBoxHeight);
-                    } else {
-                        docInstance.setFillColor(250, 248, 245);
-                        docInstance.setDrawColor(35, 30, 25);
-                        docInstance.setLineWidth(0.35);
-                        docInstance.roundedRect(margin, y, contentWidth, priorityBoxHeight, 2, 2, 'FD');
-                    }
+                        const maxPTextW = cw - 14; // Aprovechar hasta el borde derecho con margen de seguridad
+                        const pLines = strictSafeWrapText(doc, cleanP, maxPTextW);
+                        const boxH = 12.5; // Altura fija estilizada para 1 sola línea
 
-                    // Checkbox exactamente centrado en el medio vertical de la caja
-                    docInstance.setDrawColor(40, 35, 30);
-                    docInstance.setLineWidth(0.3);
-                    const checkSize = 4.2;
-                    const checkY = y + ((priorityBoxHeight - checkSize) / 2);
-                    if (isCircle) {
-                        docInstance.circle(margin + 6, y + (priorityBoxHeight / 2), 2.1, 'S');
-                    } else {
-                        docInstance.rect(margin + 4, checkY, checkSize, checkSize);
-                    }
+                        doc.setFillColor(250, 248, 245);
+                        doc.setDrawColor(35, 30, 25);
+                        doc.setLineWidth(0.35);
+                        doc.roundedRect(margin, y, cw, boxH, 1.8, 1.8, 'FD');
 
-                    // Texto exactamente centrado en el medio vertical de la caja
-                    if (pLines.length > 0) {
-                        docInstance.setTextColor(25, 20, 15);
-                        const startBaselineY = y + ((priorityBoxHeight - totalPTextH) / 2) + 3.6;
-                        pLines.forEach((lineText, lIdx) => {
-                            docInstance.text(lineText, margin + 12, startBaselineY + (lIdx * pLineHeight));
-                        });
-                    }
-                    y += priorityBoxHeight + 8;
-                }
-
-                // 2. TAREAS SECUNDARIAS
-                if (sectionStates.tasks && activeTasksList.length > 0) {
-                    docInstance.setFont('helvetica', 'bold');
-                    docInstance.setFontSize(8);
-                    docInstance.setTextColor(30, 25, 22);
-                    docInstance.text('TAREAS SECUNDARIAS', margin, y);
-
-                    docInstance.setFont('times', 'italic');
-                    docInstance.setFontSize(7.5);
-                    docInstance.setTextColor(120, 115, 110);
-                    docInstance.text('(Máximo 3)', margin + 38, y);
-                    y += 4;
-
-                    activeTasksList.forEach((taskText) => {
-                        docInstance.setDrawColor(60, 55, 50);
-                        docInstance.setLineWidth(0.25);
-                        if (isCircle) {
-                            docInstance.circle(margin + 4, y + 2, 2, 'S');
+                        // Checkbox centrado verticalmente
+                        doc.setDrawColor(40, 35, 30);
+                        doc.setLineWidth(0.3);
+                        const checkSize = 4.2;
+                        const checkCenterY = y + (boxH / 2);
+                        if (state.checkboxStyle === 'circle') {
+                            doc.circle(margin + 6, checkCenterY, 2.1, 'S');
                         } else {
-                            docInstance.rect(margin + 2, y, 3.8, 3.8);
+                            doc.rect(margin + 4, checkCenterY - (checkSize / 2), checkSize, checkSize);
                         }
 
-                        // En plantilla en blanco, no imprime texto de tareas
-                        const cleanTask = (!isBlankTemplate && taskText) ? taskText.replace(/[\r\n]+/g, ' ').trim() : '';
-                        const maxTaskWidth = contentWidth - 12;
-                        const taskLines = cleanTask 
-                            ? docInstance.splitTextToSize(cleanTask, maxTaskWidth).slice(0, 2) 
-                            : [];
-
-                        if (taskLines.length > 1) {
-                            taskLines.forEach((tl, tlIdx) => {
-                                docInstance.setFont('helvetica', 'normal');
-                                docInstance.setFontSize(8.2);
-                                docInstance.setTextColor(30, 25, 22);
-                                docInstance.text(tl, margin + 9, y + 2.8 + (tlIdx * 3.6));
-                            });
-                            const taskBottomY = y + 2.8 + ((taskLines.length - 1) * 3.6);
-                            if (lineas !== 'none') {
-                                docInstance.setDrawColor(215, 210, 202);
-                                docInstance.setLineWidth(lineas === 'dotted' ? 0.15 : 0.25);
-                                docInstance.line(margin + 9, taskBottomY + 2.4, pageWidth - margin, taskBottomY + 2.4);
-                            }
-                            y += (taskLines.length * 3.6) + 4.0;
-                        } else {
-                            if (taskLines.length === 1) {
-                                docInstance.setFont('helvetica', 'normal');
-                                docInstance.setFontSize(8.4);
-                                docInstance.setTextColor(30, 25, 22);
-                                docInstance.text(taskLines[0], margin + 9, y + 3);
-                            }
-                            if (lineas !== 'none') {
-                                docInstance.setDrawColor(215, 210, 202);
-                                docInstance.setLineWidth(lineas === 'dotted' ? 0.15 : 0.25);
-                                docInstance.line(margin + 9, y + 4.5, pageWidth - margin, y + 4.5);
-                            }
-                            y += 7.5;
+                        // Texto centrado verticalmente con respecto al checkbox (1 sola línea)
+                        if (pLines.length > 0 && pLines[0]) {
+                            doc.setTextColor(25, 20, 15);
+                            doc.text(pLines[0], margin + 12, checkCenterY + 1.2, { maxWidth: maxPTextW });
                         }
+                        y += boxH + 3.5;
                     });
-                    y += 3;
-                }
-
-                // 3. HÁBITOS CLAVE (Líneas completas apiladas una debajo de otra)
-                if (sectionStates.habits && activeHabitsList.length > 0) {
-                    docInstance.setFont('helvetica', 'bold');
-                    docInstance.setFontSize(8);
-                    docInstance.setTextColor(30, 25, 22);
-                    docInstance.text('HÁBITOS CLAVE', margin, y);
-                    y += 4;
-
-                    const habitRowHeight = 6.8;
-                    const habitBoxHeight = (activeHabitsList.length * habitRowHeight) + 3;
-                    docInstance.setFillColor(252, 250, 247);
-                    docInstance.setDrawColor(220, 215, 208);
-                    docInstance.setLineWidth(0.2);
-                    docInstance.roundedRect(margin, y, contentWidth, habitBoxHeight, 1.5, 1.5, 'FD');
-
-                    activeHabitsList.forEach((hText, idx) => {
-                        const itemY = y + 2.5 + (idx * habitRowHeight);
-
-                        docInstance.setDrawColor(135, 85, 59);
-                        docInstance.setLineWidth(0.25);
-                        if (isCircle) {
-                            docInstance.circle(margin + 5, itemY + 1.8, 1.8, 'S');
-                        } else {
-                            docInstance.rect(margin + 3, itemY + 0.2, 3.6, 3.6);
-                        }
-
-                        // En plantilla en blanco, no imprime texto de hábito
-                        const displayH = (!isBlankTemplate && hText) ? hText.replace(/[\r\n]+/g, ' ').trim() : '';
-                        if (displayH) {
-                            docInstance.setFont('helvetica', 'normal');
-                            docInstance.setFontSize(8.2);
-                            docInstance.setTextColor(40, 35, 30);
-                            docInstance.text(displayH, margin + 9.5, itemY + 3.0, { maxWidth: contentWidth - 14 });
-                        }
-
-                        if (idx < activeHabitsList.length - 1) {
-                            docInstance.setDrawColor(230, 225, 218);
-                            docInstance.setLineWidth(0.15);
-                            docInstance.line(margin + 9.5, itemY + 4.8, margin + contentWidth - 4, itemY + 4.8);
-                        }
-                    });
-
-                    y += habitBoxHeight + 7;
-                }
-
-                // 4. NOTAS (Siempre limpio y blanco, altura proporcional dinámica)
-                if (sectionStates.notes) {
-                    docInstance.setFont('helvetica', 'bold');
-                    docInstance.setFontSize(8);
-                    docInstance.setTextColor(30, 25, 22);
-                    docInstance.text('NOTAS', margin, y);
-
-                    docInstance.setFont('times', 'italic');
-                    docInstance.setFontSize(7.2);
-                    docInstance.setTextColor(120, 115, 110);
-                    docInstance.text('(¿Qué salió bien hoy y qué puedo mejorar para mañana?)', margin + 16, y);
                     y += 3.5;
 
-                    const notesHeight = pageHeight - y - margin - 12;
-                    if (notesHeight > 20) {
-                        docInstance.setFillColor(252, 250, 247);
-                        docInstance.setDrawColor(225, 220, 212);
-                        docInstance.setLineWidth(0.2);
-                        docInstance.roundedRect(margin, y, contentWidth, notesHeight, 2, 2, 'FD');
+                } else if (blockId === 'tasks' && state.tasks.length > 0) {
+                    // 2. TAREAS SECUNDARIAS (1 LÍNEA ESTRICTA POR TAREA)
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('TAREAS SECUNDARIAS', margin, y);
 
-                        // Siempre en blanco (rayado = 'blank')
-                        if (!isBlankTemplate && notes && notes.trim()) {
-                            const maxNotesHeight = notesHeight - 9;
-                            let notesFontSize = 8.6;
-                            const notesLineHeight = 1.35;
-                            docInstance.setFont('times', 'normal');
-                            docInstance.setFontSize(notesFontSize);
-                            docInstance.setTextColor(35, 30, 25);
+                    doc.setFont('times', 'italic');
+                    doc.setFontSize(7);
+                    doc.setTextColor(110, 105, 100);
+                    doc.text('(Máximo 3)', margin + 36, y);
+                    y += 3.5;
 
-                            let noteLines = docInstance.splitTextToSize(notes.trim(), contentWidth - 8);
-                            let totalTextHeight = noteLines.length * (notesFontSize * 0.352778 * notesLineHeight);
+                    const taskStartTextX = margin + 8.5;
+                    const maxTaskTextWidth = (pw - margin) - taskStartTextX - 1; // NUNCA pasa del margen derecho
 
-                            while (totalTextHeight > maxNotesHeight && notesFontSize > 6.6) {
-                                notesFontSize -= 0.25;
-                                docInstance.setFontSize(notesFontSize);
-                                noteLines = docInstance.splitTextToSize(notes.trim(), contentWidth - 8);
-                                totalTextHeight = noteLines.length * (notesFontSize * 0.352778 * notesLineHeight);
-                            }
+                    state.tasks.forEach(tText => {
+                        const cleanT = isBlank ? '' : tText.replace(/[\r\n]+/g, ' ').trim();
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(8.2);
+                        const tLines = strictSafeWrapText(doc, cleanT, maxTaskTextWidth);
 
-                            const maxLinesAllowed = Math.floor(maxNotesHeight / (notesFontSize * 0.352778 * notesLineHeight));
-                            if (noteLines.length > maxLinesAllowed) {
-                                noteLines = noteLines.slice(0, maxLinesAllowed);
-                            }
-
-                            const lineSpacing = notesFontSize * 0.352778 * notesLineHeight;
-                            noteLines.forEach((tLine, lineIdx) => {
-                                docInstance.text(tLine, margin + 4, y + 5.5 + (lineIdx * lineSpacing));
-                            });
+                        doc.setDrawColor(60, 55, 50);
+                        doc.setLineWidth(0.25);
+                        if (state.checkboxStyle === 'circle') {
+                            doc.circle(margin + 4, y + 2, 2, 'S');
+                        } else {
+                            doc.rect(margin + 2, y, 3.8, 3.8);
                         }
+
+                        if (tLines.length > 0 && tLines[0]) {
+                            doc.setTextColor(30, 25, 22);
+                            doc.text(tLines[0], taskStartTextX, y + 3, { maxWidth: maxTaskTextWidth });
+                        }
+                        doc.setDrawColor(215, 210, 202);
+                        doc.setLineWidth(0.15);
+                        doc.line(taskStartTextX, y + 4.5, pw - margin, y + 4.5);
+                        y += 7.2;
+                    });
+                    y += 3.5;
+
+                } else if (blockId === 'habits' && state.habits.length > 0) {
+                    // 3. HÁBITOS CLAVE
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('HÁBITOS CLAVE', margin, y);
+                    y += 3.5;
+
+                    const habitRowH = 6.4;
+                    const habitBoxH = (state.habits.length * habitRowH) + 2.5;
+
+                    doc.setFillColor(252, 250, 247);
+                    doc.setDrawColor(220, 215, 208);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(margin, y, cw, habitBoxH, 1.5, 1.5, 'FD');
+
+                    const habitTextStartX = margin + 9.5;
+                    const maxHabitTextW = (margin + cw - 2) - habitTextStartX;
+
+                    state.habits.forEach((hText, hIdx) => {
+                        const itemY = y + 2.0 + (hIdx * habitRowH);
+                        doc.setDrawColor(135, 85, 59);
+                        doc.setLineWidth(0.25);
+                        if (state.checkboxStyle === 'circle') {
+                            doc.circle(margin + 5, itemY + 1.8, 1.8, 'S');
+                        } else {
+                            doc.rect(margin + 3, itemY + 0.2, 3.6, 3.6);
+                        }
+
+                        const cleanH = isBlank ? '' : hText.replace(/[\r\n]+/g, ' ').trim();
+                        if (cleanH) {
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(8.0);
+                            doc.setTextColor(40, 35, 30);
+                            const hLines = strictSafeWrapText(doc, cleanH, maxHabitTextW);
+                            doc.text(hLines[0] || '', habitTextStartX, itemY + 3.0, { maxWidth: maxHabitTextW });
+                        }
+
+                        if (hIdx < state.habits.length - 1) {
+                            doc.setDrawColor(230, 225, 218);
+                            doc.setLineWidth(0.15);
+                            doc.line(habitTextStartX, itemY + 4.6, margin + cw - 4, itemY + 4.6);
+                        }
+                    });
+                    y += habitBoxH + 6.0;
+
+                } else if (blockId === 'notes') {
+                    // 4. NOTAS Y REFLEXIÓN (ALTURA REAL DE IMPRENTA Y RELLENO TOTAL)
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(30, 25, 22);
+                    doc.text('NOTAS', margin, y);
+
+                    doc.setFont('times', 'italic');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(110, 105, 100);
+                    doc.text('(¿Qué salió bien hoy y qué puedo mejorar para mañana?)', margin + 15, y);
+                    y += 3.2;
+
+                    // Altura completa real de la caja hasta el pie de imprenta
+                    const notesHeight = Math.max(22, ph - y - margin - 8);
+                    doc.setFillColor(252, 250, 247);
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(margin, y, cw, notesHeight, 2, 2, 'FD');
+
+                    const notesText = isBlank ? '' : document.getElementById('field-notes').value.trim();
+
+                    // SI HAY TEXTO ESCRITO: SE IMPRIME EN LIMPIO (SIN NINGUNA PAUTA PARA QUE NO CHOQUE CON LAS LETRAS)
+                    // SI ESTÁ EN BLANCO / PLANTILLA LIMPIA: SE DIBUJA LA PAUTA SELECCIONADA (PUNTOS, LÍNEAS, CUADRÍCULA)
+                    if (!notesText || isBlank) {
+                        if (state.notesPattern === 'dots') {
+                            doc.setFillColor(205, 198, 188); // puntos sutiles
+                            const dotStep = 5.0; // retícula editorial de 5 mm
+                            for (let dy = y + 4.5; dy < y + notesHeight - 2.5; dy += dotStep) {
+                                for (let dx = margin + 4.5; dx < margin + cw - 2.5; dx += dotStep) {
+                                    doc.circle(dx, dy, 0.22, 'F');
+                                }
+                            }
+                        } else if (state.notesPattern === 'lines') {
+                            doc.setDrawColor(225, 220, 212);
+                            doc.setLineWidth(0.15);
+                            const lineStep = 6.0; // pauta horizontal de 6 mm
+                            for (let ly = y + 6.0; ly < y + notesHeight - 2.5; ly += lineStep) {
+                                doc.line(margin + 3, ly, margin + cw - 3, ly);
+                            }
+                        } else if (state.notesPattern === 'grid') {
+                            doc.setDrawColor(230, 225, 218);
+                            doc.setLineWidth(0.12);
+                            const gridStep = 5.0;
+                            for (let ly = y + 4.0; ly < y + notesHeight - 2.5; ly += gridStep) {
+                                doc.line(margin + 2.5, ly, margin + cw - 2.5, ly);
+                            }
+                            for (let lx = margin + 4.5; lx < margin + cw - 2.5; lx += gridStep) {
+                                doc.line(lx, y + 2.5, lx, y + notesHeight - 2.5);
+                            }
+                        }
+                    } else {
+                        const maxNotesH = notesHeight - 6;
+                        let fSize = 9.5;
+                        doc.setFont('times', 'normal');
+                        doc.setFontSize(fSize);
+                        doc.setTextColor(30, 25, 20);
+
+                        let noteLines = strictSafeWrapText(doc, notesText, cw - 8);
+                        while (noteLines.length * (fSize * 0.352778 * 1.45) > maxNotesH && fSize > 6.8) {
+                            fSize -= 0.25;
+                            doc.setFontSize(fSize);
+                            noteLines = strictSafeWrapText(doc, notesText, cw - 8);
+                        }
+                        const lineH = fSize * 0.352778 * 1.45;
+                        const maxFit = Math.floor(maxNotesH / lineH);
+                        noteLines.slice(0, maxFit).forEach((nl, idx) => {
+                            if (!nl) return;
+                            doc.text(nl, margin + 4, y + 5.0 + (idx * lineH), { maxWidth: cw - 8 });
+                        });
                     }
+                    y += notesHeight + 4;
                 }
+            });
 
-                // Footer editorial
-                const footY = pageHeight - margin + 2;
-                docInstance.setDrawColor(215, 210, 202);
-                docInstance.setLineWidth(0.2);
-                docInstance.line(margin, footY - 3, pageWidth - margin, footY - 3);
+            // Pie editorial
+            const footY = ph - margin + 2;
+            doc.setDrawColor(215, 210, 202);
+            doc.setLineWidth(0.2);
+            doc.line(margin, footY - 3, pw - margin, footY - 3);
 
-                docInstance.setFont('helvetica', 'normal');
-                docInstance.setFontSize(6.5);
-                docInstance.setTextColor(140, 135, 130);
-                
-                const footerKicker = pagesToRender > 1 
-                    ? `MENOS RUIDO · SISTEMA DE PLANIFICACIÓN (DÍA ${pageIndex + 1} DE ${pagesToRender})`
-                    : 'MENOS RUIDO · SISTEMA DE PLANIFICACIÓN';
-                docInstance.text(footerKicker, margin, footY);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.5);
+            doc.setTextColor(130, 125, 120);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN', margin, footY);
+            doc.text('editorialmenosruido.com', pw - margin, footY, { align: 'right' });
 
-                docInstance.setTextColor(135, 85, 59);
-                docInstance.textWithLink('editorialmenosruido.com', pageWidth - margin, footY, { url: 'https://editorialmenosruido.com', align: 'right' });
-            }
-
-            // Compilar de 1 a N páginas
-            for (let i = 0; i < pagesToRender; i++) {
-                if (i > 0) {
-                    doc.addPage(pageDimensions, 'portrait');
-                }
-                renderSinglePage(doc, i);
-            }
-
-            let filename = '';
-            if (isBlankTemplate) {
-                filename = pagesToRender > 1 
-                    ? `Menos_Ruido_Plantilla_Diaria_${pagesToRender}_dias.pdf` 
-                    : 'Menos_Ruido_Plantilla_Diaria.pdf';
-            } else {
-                const rawDay = (dayInputVal || (isExampleActive ? DAILY_EXAMPLE.day : '')).trim();
-                const rawDate = (dateInputVal || (isExampleActive ? DAILY_EXAMPLE.date : '')).trim();
-                const cleanDay = rawDay.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '_');
-                const cleanDate = rawDate.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-                if (cleanDay && cleanDate) {
-                    filename = `Menos_Ruido_Planificador_Diario_${cleanDay}_${cleanDate}.pdf`;
-                } else if (cleanDay) {
-                    filename = `Menos_Ruido_Planificador_Diario_${cleanDay}.pdf`;
-                } else if (cleanDate) {
-                    filename = `Menos_Ruido_Planificador_Diario_${cleanDate}.pdf`;
-                } else {
-                    filename = 'Menos_Ruido_Planificador_Diario.pdf';
-                }
-            }
-
+            const filename = dayText ? `Menos_Ruido_Diario_${dayText.replace(/\s+/g, '_')}.pdf` : 'Menos_Ruido_Planificador_Diario.pdf';
             doc.save(filename);
-            showStatus(`✓ Archivo "${filename}" descargado.`);
-
-            // Registrar métrica gratuita en tabla Pages de Vercel
-            registrarMetricaGratis('/metricas/descarga-pdf-generador.html');
-
-            // Enviar también evento personalizado por si en el futuro se activa Vercel Pro
-            trackVercelEvent('descarga_pdf', {
-                herramienta: 'generador_diario',
-                tipo: isBlankTemplate ? 'plantilla_blanco' : 'personalizado',
-                dias: pagesToRender,
-                formato: formatChoice,
-                rayado: rayado
-            });
+            showToast(`✓ Descargado: ${filename}`);
         }
-
-        // INICIALIZACIÓN
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                localStorage.removeItem('menos_ruido_planificador_pref_v1');
-            } catch (e) {}
-            renderTasksInputs();
-            renderHabitsInputs();
-            renderPreview();
-            document.querySelectorAll('textarea').forEach(ta => {
-                ta.addEventListener('input', function() {
-                    autoResizeTextarea(this);
-                });
-                autoResizeTextarea(ta);
-            });
-        });
     </script>
 </body>
 </html>

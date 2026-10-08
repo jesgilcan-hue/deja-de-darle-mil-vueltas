@@ -45,7 +45,6 @@ export default defineConfig({
         preLecturas: resolve(__dirname, 'pre-lecturas.html'),
         generador: resolve(__dirname, 'generador.html'),
         generadorPlanificadorDiario: resolve(__dirname, 'generador-planificador-diario.html'),
-        generadorPlanificadorDiarioV1: resolve(__dirname, 'generador-planificador-diario-v1.html'),
         generadorPlanificadorSemanal: resolve(__dirname, 'generador-planificador-semanal.html'),
         generadorPlanificadorMensual: resolve(__dirname, 'generador-planificador-mensual.html'),
         generadorDiario: resolve(__dirname, 'demo_generador_pdf_planificador.html'),
