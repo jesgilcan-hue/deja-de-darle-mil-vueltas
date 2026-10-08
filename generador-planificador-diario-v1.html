@@ -632,6 +632,12 @@
             overflow: hidden;
             word-break: break-word;
             overflow-wrap: anywhere;
+            box-sizing: border-box;
+            transition: color 0.2s;
+        }
+
+        .textarea-inline-notes.notes-overflow-warning {
+            color: #b03030;
         }
 
         /* PAUTAS DE NOTAS */
@@ -986,8 +992,25 @@
             state.tasks[idx] = val.replace(/[\r\n]+/g, ' ');
         }
 
+        function canShrinkNotesFor(pixelsNeeded) {
+            const notesEl = document.getElementById('field-notes');
+            if (!notesEl || !state.sectionsVisible.notes) return true;
+            if (!notesEl.value.trim()) return true;
+
+            // scrollHeight es la altura que necesita el texto actual
+            // clientHeight es la altura visible actual
+            // Si el espacio libre actual (clientHeight - scrollHeight) es menor que lo que necesita el nuevo elemento, no cabe
+            const availableSlack = notesEl.clientHeight - notesEl.scrollHeight;
+            return availableSlack >= (pixelsNeeded - 4);
+        }
+
         function addTaskItem() {
             if (state.tasks.length >= 3) return;
+            // Una tarea secundaria consume aprox. 32px de altura
+            if (!canShrinkNotesFor(32)) {
+                showToast('⚠️ No hay espacio en la hoja: borra texto en Notas para hacer hueco');
+                return;
+            }
             state.tasks.push('');
             renderTasks();
             showToast('Tarea añadida');
@@ -996,7 +1019,7 @@
         function removeTaskItem(idx) {
             state.tasks.splice(idx, 1);
             renderTasks();
-            showToast('Tarea eliminada');
+            showToast('Tarea eliminada (más espacio libre)');
         }
 
         // ========================================================
@@ -1036,6 +1059,11 @@
 
         function addHabitItem() {
             if (state.habits.length >= 5) return;
+            // Un hábito consume aprox. 26px de altura
+            if (!canShrinkNotesFor(26)) {
+                showToast('⚠️ No hay espacio en la hoja: borra texto en Notas para hacer hueco a otro hábito');
+                return;
+            }
             state.habits.push('');
             renderHabits();
             showToast('Hábito añadido');
@@ -1044,7 +1072,7 @@
         function removeHabitItem(idx) {
             state.habits.splice(idx, 1);
             renderHabits();
-            showToast('Hábito eliminado');
+            showToast('Hábito eliminado (más espacio libre en Notas)');
         }
 
         // ========================================================
@@ -1057,10 +1085,18 @@
 
             updatePillStates();
             updateNotesCapacity();
-            showToast(`Sección eliminada del lienzo`);
+            showToast(`Sección eliminada (Notas tiene más espacio)`);
         }
 
         function restoreSection(secId) {
+            // Verificar si añadir de nuevo esta sección cabe sin aplastar el texto escrito en notas
+            const spaceCosts = { priority: 72, tasks: 90, habits: 110, notes: 0 };
+            const cost = spaceCosts[secId] || 50;
+            if (secId !== 'notes' && !canShrinkNotesFor(cost)) {
+                showToast(`⚠️ No hay espacio en la hoja para restaurar ${secId}: reduce el texto de Notas`);
+                return;
+            }
+
             state.sectionsVisible[secId] = true;
             const blockEl = document.getElementById('block-' + secId);
             if (blockEl) blockEl.style.display = (secId === 'notes') ? 'flex' : 'block';
@@ -1110,58 +1146,53 @@
         // ========================================================
         // CAPACIDAD DINÁMICA DE NOTAS & PROPORCIÓN 1:1 CON IMPRENTA
         // ========================================================
-        function getMaxAllowedNoteLines() {
-            let lines = 34; // Capacidad real de una página 6x9 (1020px / ~106mm útiles)
-            if (state.sectionsVisible.priority) lines -= 3.5;
-            if (state.sectionsVisible.tasks) lines -= (state.tasks.length * 2.0);
-            if (state.sectionsVisible.habits) lines -= (state.habits.length * 1.8);
-            return Math.max(14, Math.floor(lines));
-        }
+        let lastValidNotesText = '';
 
         function updateNotesCapacity() {
             const notesEl = document.getElementById('field-notes');
             if (!notesEl) return;
-            const maxLines = getMaxAllowedNoteLines();
-            let limitChars = Math.min(2200, 400 + (maxLines * 80));
-            notesEl.maxLength = limitChars;
 
-            const area = document.getElementById('notes-canvas-area');
-            if (area) {
-                if (area.scrollHeight > area.clientHeight + 6) {
-                    area.style.fontSize = '0.84rem';
-                    area.style.lineHeight = '1.45';
-                } else {
-                    area.style.fontSize = '0.90rem';
-                    area.style.lineHeight = '1.55';
-                }
+            // Si al cambiar secciones o hábitos el texto se desborda ligeramente, no truncar bruscamente pero alertar
+            if (notesEl.scrollHeight > notesEl.clientHeight + 2) {
+                notesEl.classList.add('notes-overflow-warning');
+            } else {
+                notesEl.classList.remove('notes-overflow-warning');
+                lastValidNotesText = notesEl.value;
             }
             updatePillStates();
         }
 
         function handleNotesKeydown(e) {
-            if (e.key === 'Enter') {
-                const val = e.target.value;
-                const breaks = (val.match(/\n/g) || []).length;
-                const maxLines = getMaxAllowedNoteLines();
-                if (breaks >= maxLines) {
-                    e.preventDefault();
-                    showToast('Límite del papel físico: no caben más saltos de línea');
-                    return false;
-                }
+            const notesEl = e.target;
+            // Teclas de borrado, navegación y selección siempre permitidas
+            const allowedControlKeys = [
+                'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+                'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Escape'
+            ];
+            if (allowedControlKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+
+            // Comprobar si ya está lleno el recuadro físico
+            if (notesEl.scrollHeight > notesEl.clientHeight) {
+                e.preventDefault();
+                showToast('⚠️ Límite del recuadro alcanzado: quita hábitos/tareas para ganar espacio o borra texto');
+                return false;
             }
         }
 
         function handleNotesInput(el) {
-            const maxLines = getMaxAllowedNoteLines();
-            const parts = el.value.split('\n');
-            if (parts.length > maxLines + 1) {
-                const allowed = parts.slice(0, maxLines + 1);
-                const overflow = parts.slice(maxLines + 1).join(' ');
-                allowed[allowed.length - 1] += (allowed[allowed.length - 1] ? ' ' : '') + overflow;
-                el.value = allowed.join('\n');
-                showToast('Texto adaptado al alto físico del papel');
+            // Si el texto agregado (por teclear o pegar) desborda el alto del recuadro físico
+            if (el.scrollHeight > el.clientHeight + 1) {
+                // Si el usuario pegó un bloque grande que desborda
+                let text = el.value;
+                while (el.scrollHeight > el.clientHeight + 1 && text.length > 0) {
+                    text = text.slice(0, -1);
+                    el.value = text;
+                }
+                showToast('⚠️ El texto ha llegado al límite exacto del recuadro de Notas');
             }
-            updateNotesCapacity();
+            lastValidNotesText = el.value;
             updateNotesPatternUI();
         }
 
