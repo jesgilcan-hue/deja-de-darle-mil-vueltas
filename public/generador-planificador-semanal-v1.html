@@ -409,7 +409,7 @@
             background: #faf8f5;
             border: none;
             border-bottom: 1.5px solid #e0d8cc;
-            padding: 5px 10px;
+            padding: 4px 10px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -428,8 +428,8 @@
 
         .textarea-focus-inline {
             font-family: var(--font-serif);
-            font-size: 0.76rem;
-            font-weight: 600;
+            font-size: 0.74rem;
+            font-weight: 500;
             color: #1e1916;
             background: transparent;
             border: none;
@@ -1065,7 +1065,7 @@
                         <div class="weekly-habits-panel" id="block-habits" data-id="habits">
                             <div class="habits-panel-header">
                                 <div style="display:flex; align-items:center; gap:6px;">
-                                    <span class="habits-panel-title">🌱 HÁBITOS DE LA SEMANA</span>
+                                    <span class="habits-panel-title">HÁBITOS DE LA SEMANA</span>
                                     <button type="button" class="btn-block-action" onclick="swapBottomSections()" title="Intercambiar con la otra columna">⇄</button>
                                     <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('habits')" title="Eliminar sección de hábitos y ampliar días">✕</button>
                                 </div>
@@ -1132,7 +1132,7 @@
                 <div class="weekly-main-column" id="main-col-right">
                     <div class="weekly-column-box" id="col-days-right">
                         <div class="weekly-focus-card">
-                            <span class="weekly-focus-label">🎯 FOCO DE LA SEMANA (META CLAVE)</span>
+                            <span class="weekly-focus-label">FOCO DE LA SEMANA (META CLAVE)</span>
                             <textarea class="textarea-focus-inline" id="field-focus" maxlength="500"
                                       placeholder="¿Qué único resultado justificaría toda esta semana?"
                                       onkeydown="handleDayKeydown(event)"
@@ -1185,7 +1185,7 @@
                         <div class="weekly-notes-panel bg-blank" id="block-notes" data-id="notes">
                             <div class="notes-panel-header">
                                 <div style="display:flex; align-items:center; gap:6px;">
-                                    <span class="notes-panel-title">📝 TAREAS SECUNDARIAS / NOTAS</span>
+                                    <span class="notes-panel-title">TAREAS SECUNDARIAS / NOTAS</span>
                                     <button type="button" class="btn-block-action" onclick="swapBottomSections()" title="Intercambiar con la otra columna">⇄</button>
                                     <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('notes')" title="Eliminar sección de notas y ampliar días">✕</button>
                                 </div>
@@ -1328,7 +1328,7 @@
             const lines = el.value.split('\n');
             if (lines.length > maxLines) {
                 el.value = lines.slice(0, maxLines).join('\n');
-                showToast(`⚠️ Máximo ${maxLines} líneas para este día${isExpanded ? '' : ' (elimina la sección inferior para permitir hasta 7 líneas)'}`);
+                showToast(`⚠️ Máximo ${maxLines} líneas para este bloque${isExpanded ? '' : ' (elimina la sección inferior para permitir hasta 7 líneas)'}`);
             }
             while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
                 el.value = el.value.slice(0, -1);
@@ -1349,7 +1349,7 @@
             const lines = el.value.split('\n');
             if (e.key === 'Enter' && lines.length >= maxLines) {
                 e.preventDefault();
-                showToast(`⚠️ Máximo ${maxLines} líneas para este día${isExpanded ? '' : ' (elimina la sección inferior para escribir hasta 7 líneas)'}`);
+                showToast(`⚠️ Máximo ${maxLines} líneas para este bloque${isExpanded ? '' : ' (elimina la sección inferior para escribir hasta 7 líneas)'}`);
                 return false;
             }
         }
@@ -1801,15 +1801,15 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.8);
             doc.setTextColor(135, 85, 59);
-            doc.text('🎯 FOCO DE LA SEMANA (META CLAVE)', col2X + 4, bodyStartY + 4.5);
+            doc.text('FOCO DE LA SEMANA (META CLAVE)', col2X + 4, bodyStartY + 4.5);
 
             if (focusText) {
-                doc.setFont('times', 'bold');
+                doc.setFont('times', 'normal');
                 const maxFLines = rightVisible ? 4 : 7;
-                const fFontSize = rightVisible ? 7.8 : 7.4;
+                const fFontSize = rightVisible ? 7.6 : 7.4;
                 const fSpacing = rightVisible ? 3.0 : 2.8;
                 doc.setFontSize(fFontSize);
-                doc.setTextColor(25, 20, 15);
+                doc.setTextColor(30, 25, 20);
                 const fLines = strictSafeWrapText(doc, focusText, colW - 8);
                 fLines.slice(0, maxFLines).forEach((fLine, lIdx) => {
                     doc.text(fLine, col2X + 4, bodyStartY + 7.6 + (lIdx * fSpacing), { maxWidth: colW - 8 });
@@ -1887,7 +1887,7 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.6);
                 doc.setTextColor(30, 25, 20);
-                doc.text('🌱 HÁBITOS DE LA SEMANA', startX + 4, startY + 4.0);
+                doc.text('HÁBITOS DE LA SEMANA', startX + 4, startY + 4.0);
 
                 const dotStartX = startX + w - 32;
                 const dotSpacing = 4.2;
@@ -1921,10 +1921,6 @@
                         doc.setTextColor(40, 35, 30);
                         const hLines = strictSafeWrapText(doc, hab.text, dotStartX - startX - 6);
                         doc.text(hLines[0] || '', startX + 4, hy + 4.5);
-                    } else {
-                        doc.setDrawColor(235, 230, 222);
-                        doc.setLineWidth(0.15);
-                        doc.line(startX + 4, hy + 5.2, dotStartX - 4, hy + 5.2);
                     }
 
                     // 7 Casillas para marcar con relleno si están seleccionadas en pantalla
@@ -1969,7 +1965,7 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.6);
                 doc.setTextColor(30, 25, 20);
-                doc.text('📝 TAREAS SECUNDARIAS / NOTAS', startX + 4, startY + 4.0);
+                doc.text('TAREAS SECUNDARIAS / NOTAS', startX + 4, startY + 4.0);
 
                 doc.setDrawColor(228, 222, 214);
                 doc.setLineWidth(0.15);
@@ -2028,8 +2024,19 @@
             doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', margin, footerY + 3.0);
             doc.text('editorialmenosruido.com', pw - margin, footerY + 3.0, { align: 'right' });
 
-            // Descarga
-            const filename = isBlank ? 'planificador_semanal_plantilla_limpia.pdf' : 'mi_planificador_semanal.pdf';
+            // Descarga: Menos_Ruido_Planificador_Semanal_(semana).pdf
+            let weekSuffix = '';
+            const rawWeek = (document.getElementById('field-week-num') ? document.getElementById('field-week-num').value : '').trim();
+            if (rawWeek) {
+                weekSuffix = rawWeek
+                    .replace(/[^\w\d\sáéíóúÁÉÍÓÚñÑ-]/gi, ' ')
+                    .trim()
+                    .replace(/\s+/g, '_');
+            }
+            if (!weekSuffix) {
+                weekSuffix = isBlank ? 'Plantilla_En_Blanco' : 'Semana';
+            }
+            const filename = `Menos_Ruido_Planificador_Semanal_${weekSuffix}.pdf`;
             doc.save(filename);
             showToast(`✓ PDF descargado: ${filename}`);
         }
