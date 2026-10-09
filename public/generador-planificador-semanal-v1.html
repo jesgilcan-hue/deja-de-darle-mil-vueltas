@@ -266,16 +266,34 @@
             background: rgba(0,0,0,0.02);
         }
 
-        /* CUERPO CENTRAL: 2 COLUMNAS DE DÍAS */
-        .weekly-body-grid {
+        /* CUERPO PRINCIPAL: 2 COLUMNAS EDITORIALES (IZQUIERDA Y DERECHA) */
+        .weekly-columns-wrapper {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
             flex: 1;
             min-height: 0;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
+        .weekly-main-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .weekly-bottom-slot {
+            height: 146px;
+            max-height: 146px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s ease;
+        }
+
+        /* COLUMNAS DE DÍAS */
         .weekly-column-box {
             background: #ffffff;
             border: 1px solid #ddd7cc;
@@ -284,6 +302,21 @@
             flex-direction: column;
             min-height: 0;
             overflow: hidden;
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+
+        /* Cuando la columna se expande porque el panel inferior correspondiente se ha eliminado */
+        .weekly-column-box.expanded-col {
+            flex: 1;
+        }
+
+        .weekly-column-box.expanded-col .day-interactive-row {
+            padding: 7px 10px;
+        }
+
+        .weekly-column-box.expanded-col .weekly-focus-card {
+            padding: 7px 10px;
         }
 
         /* FILA DE DÍA */
@@ -317,15 +350,39 @@
             text-transform: uppercase;
         }
 
+        /* CASILLA / CIRCULITO PARA ESCRIBIR EL NÚMERO DEL DÍA */
         .day-check-indicator {
-            width: 11px;
-            height: 11px;
-            border: 1.5px solid #666;
-            border-radius: 2px;
+            width: 24px;
+            height: 24px;
+            border: 1.5px solid #555;
+            border-radius: 4px;
             flex-shrink: 0;
-            pointer-events: none;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            transition: border-radius 0.2s, border-color 0.2s;
+            cursor: text;
         }
-        .day-check-indicator.circle { border-radius: 50%; }
+        .day-check-indicator.circle {
+            border-radius: 50%;
+        }
+
+        .day-number-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-family: var(--font-sans);
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #111;
+            outline: none;
+            padding: 0;
+            margin: 0;
+        }
 
         .textarea-day-inline {
             font-family: var(--font-serif);
@@ -390,6 +447,85 @@
             margin: 0;
         }
 
+        /* BARRA DE SECCIONES VISIBLES (PILLS) */
+        .sections-toggle-bar {
+            width: 100%;
+            max-width: 980px;
+            background: #f0ebe2;
+            border: 1px solid #e0d8cc;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 0.74rem;
+        }
+
+        .sections-toggle-label {
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            letter-spacing: 0.5px;
+        }
+
+        .sections-toggle-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .btn-sec-pill {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 14px;
+            padding: 3px 9px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+        .btn-sec-pill.active {
+            background: #443e39;
+            color: #fff;
+            border-color: #443e39;
+        }
+        .btn-sec-pill:hover {
+            border-color: var(--accent);
+        }
+
+        /* BOTONES DE ACCIÓN DENTRO DE LOS BLOQUES */
+        .btn-block-action {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #555;
+            padding: 1px 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.2;
+            font-family: inherit;
+        }
+        .btn-block-action:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: #faf7f2;
+        }
+        .btn-block-action.btn-del-section:hover {
+            color: #b03030;
+            border-color: #d88;
+            background: #fff5f5;
+        }
+
         /* ========================================================
            SECCIÓN INFERIOR DIVIDIDA: HÁBITOS SEMANALES + NOTAS
            ======================================================== */
@@ -401,6 +537,7 @@
             max-height: 148px;
             flex-shrink: 0;
             margin-bottom: 6px;
+            transition: all 0.2s ease;
         }
 
         /* BLOQUE HÁBITOS DE LA SEMANA */
@@ -414,6 +551,8 @@
             justify-content: space-between;
             box-sizing: border-box;
             overflow: hidden;
+            height: 100%;
+            flex: 1;
         }
 
         .habits-panel-header {
@@ -513,6 +652,8 @@
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
+            height: 100%;
+            flex: 1;
         }
 
         .notes-panel-header {
@@ -851,6 +992,16 @@
         </div>
     </div>
 
+    <!-- BARRA VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR / INTERCAMBIAR) -->
+    <div class="sections-toggle-bar">
+        <span class="sections-toggle-label">Secciones visibles:</span>
+        <div class="sections-toggle-pills">
+            <button type="button" class="btn-sec-pill active" id="pill-habits" onclick="toggleSection('habits')">🌱 Hábitos de la semana ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-notes" onclick="toggleSection('notes')">📝 Secundarias / Notas ✓</button>
+            <button type="button" class="btn-sec-pill" onclick="swapBottomSections()" title="Intercambiar la posición de Hábitos y Notas">🔄 Intercambiar posición</button>
+        </div>
+    </div>
+
     <!-- LIENZO FÍSICO INTERACTIVO HORIZONTAL (8.25" × 6") -->
     <div class="paper-canvas-container">
         <div class="interactive-paper-weekly" id="weekly-sheet">
@@ -868,166 +1019,193 @@
                 </div>
             </div>
 
-            <!-- CUERPO PRINCIPAL: DÍAS Y FOCO -->
-            <div class="weekly-body-grid">
+            <!-- CUERPO PRINCIPAL: 2 COLUMNAS EDITORIALES (IZQUIERDA Y DERECHA) -->
+            <div class="weekly-columns-wrapper">
                 
-                <!-- COLUMNA IZQUIERDA: LUNES A JUEVES -->
-                <div class="weekly-column-box">
-                    <div class="day-interactive-row">
-                        <div class="day-interactive-head">
-                            <span class="day-interactive-name">LUNES</span>
-                            <div class="day-check-indicator" id="chk-lunes"></div>
+                <!-- COLUMNA PRINCIPAL IZQUIERDA -->
+                <div class="weekly-main-column" id="main-col-left">
+                    <div class="weekly-column-box" id="col-days-left">
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">LUNES</span>
+                                <div class="day-check-indicator circle" id="chk-lunes">
+                                    <input type="text" class="day-number-input" id="num-lunes" maxlength="2" value="7" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-lunes" rows="3" maxlength="280"
+                                      placeholder="Prioridad clave del lunes..."
+                                      oninput="handleDayInput(this)">Cerrar revisión del presupuesto de imprenta</textarea>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-lunes" rows="3" maxlength="280"
-                                  placeholder="Prioridad clave del lunes..."
-                                  oninput="handleDayInput(this)">Cerrar revisión del presupuesto de imprenta</textarea>
-                    </div>
 
-                    <div class="day-interactive-row">
-                        <div class="day-interactive-head">
-                            <span class="day-interactive-name">MARTES</span>
-                            <div class="day-check-indicator" id="chk-martes"></div>
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">MARTES</span>
+                                <div class="day-check-indicator circle" id="chk-martes">
+                                    <input type="text" class="day-number-input" id="num-martes" maxlength="2" value="8" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-martes" rows="3" maxlength="280"
+                                      placeholder="Prioridad clave del martes..."
+                                      oninput="handleDayInput(this)">Reunión de balance trimestral con el equipo editorial</textarea>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-martes" rows="3" maxlength="280"
-                                  placeholder="Prioridad clave del martes..."
-                                  oninput="handleDayInput(this)">Reunión de balance trimestral con el equipo editorial</textarea>
-                    </div>
 
-                    <div class="day-interactive-row">
-                        <div class="day-interactive-head">
-                            <span class="day-interactive-name">MIÉRCOLES</span>
-                            <div class="day-check-indicator" id="chk-miercoles"></div>
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">MIÉRCOLES</span>
+                                <div class="day-check-indicator circle" id="chk-miercoles">
+                                    <input type="text" class="day-number-input" id="num-miercoles" maxlength="2" value="9" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-miercoles" rows="3" maxlength="280"
+                                      placeholder="Prioridad clave del miércoles..."
+                                      oninput="handleDayInput(this)">Redacción de los dos ensayos para el lanzamiento</textarea>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-miercoles" rows="3" maxlength="280"
-                                  placeholder="Prioridad clave del miércoles..."
-                                  oninput="handleDayInput(this)">Redacción de los dos ensayos para el lanzamiento</textarea>
-                    </div>
 
-                    <div class="day-interactive-row">
-                        <div class="day-interactive-head">
-                            <span class="day-interactive-name">JUEVES</span>
-                            <div class="day-check-indicator" id="chk-jueves"></div>
-                        </div>
-                        <textarea class="textarea-day-inline" id="field-jueves" rows="3" maxlength="280"
-                                  placeholder="Prioridad clave del jueves..."
-                                  oninput="handleDayInput(this)">Pruebas de impresión de cubiertas y calibración de color</textarea>
-                    </div>
-                </div>
-
-                <!-- COLUMNA DERECHA: FOCO + VIERNES A DOMINGO -->
-                <div class="weekly-column-box">
-                    <div class="weekly-focus-card">
-                        <span class="weekly-focus-label">🎯 FOCO DE LA SEMANA (META CLAVE)</span>
-                        <textarea class="textarea-focus-inline" id="field-focus" rows="3" maxlength="280"
-                                  placeholder="¿Qué único resultado justificaría toda esta semana?"
-                                  oninput="handleDayInput(this)">Entregar los originales completos para enviar a encuadernación</textarea>
-                    </div>
-
-                    <div class="day-interactive-row">
-                        <div class="day-interactive-head">
-                            <span class="day-interactive-name">VIERNES</span>
-                            <div class="day-check-indicator" id="chk-viernes"></div>
-                        </div>
-                        <textarea class="textarea-day-inline" id="field-viernes" rows="3" maxlength="280"
-                                  placeholder="Prioridad clave del viernes..."
-                                  oninput="handleDayInput(this)">Cierre de tareas pendientes y balance de la semana</textarea>
-                    </div>
-
-                    <div class="day-interactive-row">
-                        <div class="day-interactive-head">
-                            <span class="day-interactive-name">SÁBADO</span>
-                            <div class="day-check-indicator" id="chk-sabado"></div>
-                        </div>
-                        <textarea class="textarea-day-inline" id="field-sabado" rows="3" maxlength="280"
-                                  placeholder="Descanso, lectura o proyectos personales..."
-                                  oninput="handleDayInput(this)">Caminar por la sierra y lectura profunda sin pantallas</textarea>
-                    </div>
-
-                    <div class="day-interactive-row">
-                        <div class="day-interactive-head">
-                            <span class="day-interactive-name">DOMINGO</span>
-                            <div class="day-check-indicator" id="chk-domingo"></div>
-                        </div>
-                        <textarea class="textarea-day-inline" id="field-domingo" rows="3" maxlength="280"
-                                  placeholder="Revisión tranquila y preparación de la semana siguiente..."
-                                  oninput="handleDayInput(this)">Planificar la semana entrante con calma antes de cenar</textarea>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- SECCIÓN INFERIOR: HÁBITOS DE LA SEMANA + NOTAS / SECUNDARIAS -->
-            <div class="weekly-bottom-grid">
-                
-                <!-- PANEL HÁBITOS DE LA SEMANA (TRACKER L M X J V S D) -->
-                <div class="weekly-habits-panel">
-                    <div class="habits-panel-header">
-                        <span class="habits-panel-title">🌱 HÁBITOS DE LA SEMANA</span>
-                        <div class="habits-days-legend">
-                            <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">JUEVES</span>
+                                <div class="day-check-indicator circle" id="chk-jueves">
+                                    <input type="text" class="day-number-input" id="num-jueves" maxlength="2" value="10" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-jueves" rows="3" maxlength="280"
+                                      placeholder="Prioridad clave del jueves..."
+                                      oninput="handleDayInput(this)">Pruebas de impresión de cubiertas y calibración de color</textarea>
                         </div>
                     </div>
 
-                    <!-- Fila Hábito 1 -->
-                    <div class="habit-track-row">
-                        <textarea class="textarea-habit-track-inline" id="field-habit-1" rows="1" maxlength="100"
-                                  placeholder="Hábito 1..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Lectura analógica (30 min)</textarea>
-                        <div class="habit-days-checks">
-                            <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                        </div>
-                    </div>
+                    <!-- SLOT INFERIOR IZQUIERDO -->
+                    <div class="weekly-bottom-slot" id="slot-bottom-left">
+                        <!-- PANEL HÁBITOS DE LA SEMANA (TRACKER L M X J V S D) -->
+                        <div class="weekly-habits-panel" id="block-habits" data-id="habits">
+                            <div class="habits-panel-header">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span class="habits-panel-title">🌱 HÁBITOS DE LA SEMANA</span>
+                                    <button type="button" class="btn-block-action" onclick="swapBottomSections()" title="Intercambiar con la otra columna">⇄</button>
+                                    <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('habits')" title="Eliminar sección de hábitos y ampliar días">✕</button>
+                                </div>
+                                <div class="habits-days-legend">
+                                    <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                                </div>
+                            </div>
 
-                    <!-- Fila Hábito 2 -->
-                    <div class="habit-track-row">
-                        <textarea class="textarea-habit-track-inline" id="field-habit-2" rows="1" maxlength="100"
-                                  placeholder="Hábito 2..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Caminar al aire libre sin móvil</textarea>
-                        <div class="habit-days-checks">
-                            <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                        </div>
-                    </div>
+                            <!-- Fila Hábito 1 -->
+                            <div class="habit-track-row">
+                                <textarea class="textarea-habit-track-inline" id="field-habit-1" rows="1" maxlength="100"
+                                          placeholder="Hábito 1..."
+                                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                          oninput="handleSingleLineInput(this)">Lectura analógica (30 min)</textarea>
+                                <div class="habit-days-checks">
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                </div>
+                            </div>
 
-                    <!-- Fila Hábito 3 -->
-                    <div class="habit-track-row">
-                        <textarea class="textarea-habit-track-inline" id="field-habit-3" rows="1" maxlength="100"
-                                  placeholder="Hábito 3..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Cero pantallas después de las 22:00</textarea>
-                        <div class="habit-days-checks">
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
-                            <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                            <!-- Fila Hábito 2 -->
+                            <div class="habit-track-row">
+                                <textarea class="textarea-habit-track-inline" id="field-habit-2" rows="1" maxlength="100"
+                                          placeholder="Hábito 2..."
+                                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                          oninput="handleSingleLineInput(this)">Caminar al aire libre sin móvil</textarea>
+                                <div class="habit-days-checks">
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                </div>
+                            </div>
+
+                            <!-- Fila Hábito 3 -->
+                            <div class="habit-track-row">
+                                <textarea class="textarea-habit-track-inline" id="field-habit-3" rows="1" maxlength="100"
+                                          placeholder="Hábito 3..."
+                                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                          oninput="handleSingleLineInput(this)">Cero pantallas después de las 22:00</textarea>
+                                <div class="habit-days-checks">
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- PANEL TAREAS SECUNDARIAS / NOTAS -->
-                <div class="weekly-notes-panel bg-blank" id="weekly-notes-panel">
-                    <div class="notes-panel-header">
-                        <span class="notes-panel-title">📝 TAREAS SECUNDARIAS / NOTAS</span>
+                <!-- COLUMNA PRINCIPAL DERECHA -->
+                <div class="weekly-main-column" id="main-col-right">
+                    <div class="weekly-column-box" id="col-days-right">
+                        <div class="weekly-focus-card">
+                            <span class="weekly-focus-label">🎯 FOCO DE LA SEMANA (META CLAVE)</span>
+                            <textarea class="textarea-focus-inline" id="field-focus" rows="3" maxlength="280"
+                                      placeholder="¿Qué único resultado justificaría toda esta semana?"
+                                      oninput="handleDayInput(this)">Entregar los originales completos para enviar a encuadernación</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">VIERNES</span>
+                                <div class="day-check-indicator circle" id="chk-viernes">
+                                    <input type="text" class="day-number-input" id="num-viernes" maxlength="2" value="11" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-viernes" rows="3" maxlength="280"
+                                      placeholder="Prioridad clave del viernes..."
+                                      oninput="handleDayInput(this)">Cierre de tareas pendientes y balance de la semana</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">SÁBADO</span>
+                                <div class="day-check-indicator circle" id="chk-sabado">
+                                    <input type="text" class="day-number-input" id="num-sabado" maxlength="2" value="12" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-sabado" rows="3" maxlength="280"
+                                      placeholder="Descanso, lectura o proyectos personales..."
+                                      oninput="handleDayInput(this)">Caminar por la sierra y lectura profunda sin pantallas</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">DOMINGO</span>
+                                <div class="day-check-indicator circle" id="chk-domingo">
+                                    <input type="text" class="day-number-input" id="num-domingo" maxlength="2" value="13" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-domingo" rows="3" maxlength="280"
+                                      placeholder="Revisión tranquila y preparación de la semana siguiente..."
+                                      oninput="handleDayInput(this)">Planificar la semana entrante con calma antes de cenar</textarea>
+                        </div>
                     </div>
-                    <textarea class="textarea-weekly-notes" id="field-weekly-notes" maxlength="350"
-                              placeholder="Anota recados secundarios, llamadas o reflexiones de la semana..."
-                              oninput="handleNotesInput(this)">• Revisar renovación de dominio web&#10;• Comprar recambios de tinta&#10;• Enviar mensaje de balance a Javier</textarea>
+
+                    <!-- SLOT INFERIOR DERECHO -->
+                    <div class="weekly-bottom-slot" id="slot-bottom-right">
+                        <!-- PANEL TAREAS SECUNDARIAS / NOTAS -->
+                        <div class="weekly-notes-panel bg-blank" id="block-notes" data-id="notes">
+                            <div class="notes-panel-header">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span class="notes-panel-title">📝 TAREAS SECUNDARIAS / NOTAS</span>
+                                    <button type="button" class="btn-block-action" onclick="swapBottomSections()" title="Intercambiar con la otra columna">⇄</button>
+                                    <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('notes')" title="Eliminar sección de notas y ampliar días">✕</button>
+                                </div>
+                            </div>
+                            <textarea class="textarea-weekly-notes" id="field-weekly-notes" maxlength="350"
+                                      placeholder="Anota recados secundarios, llamadas o reflexiones de la semana..."
+                                      oninput="handleNotesInput(this)">• Revisar renovación de dominio web&#10;• Comprar recambios de tinta&#10;• Enviar mensaje de balance a Javier</textarea>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -1117,25 +1295,32 @@
         // ESTADO GLOBAL
         const state = {
             checkboxStyle: 'circle', // 'square' o 'circle'
-            notesPattern: 'blank'    // 'blank', 'dots', 'lines', 'grid'
+            notesPattern: 'blank',    // 'blank', 'dots', 'lines', 'grid'
+            sections: {
+                habits: true,
+                notes: true
+            },
+            slotLeft: 'habits',  // 'habits' o 'notes'
+            slotRight: 'notes'   // 'notes' o 'habits'
         };
 
         const PATTERNS = ['blank', 'dots', 'lines', 'grid'];
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
+            updateLayoutUI();
             updateNotesPatternUI();
             updateCheckboxUI();
         });
 
-        // MANEJO DE HASTA 4 LÍNEAS FÍSICAS EN DÍAS Y FOCO (SIN PASARSE DEL ALTO)
-        function handleDayInput(el, maxLines = 4) {
-            // Impedir más de 4 saltos de línea explícitos
+        // MANEJO DE LÍNEAS FÍSICAS EN DÍAS Y FOCO (HASTA 4 LÍNEAS NORMAL / 7 EXPANDIDO)
+        function handleDayInput(el) {
+            const isExpanded = el.closest('.weekly-column-box') && el.closest('.weekly-column-box').classList.contains('expanded-col');
+            const maxLines = isExpanded ? 7 : 4;
             const lines = el.value.split('\n');
             if (lines.length > maxLines) {
                 el.value = lines.slice(0, maxLines).join('\n');
             }
-            // Controlar que no desborde la altura física del contenedor
             while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
                 el.value = el.value.slice(0, -1);
             }
@@ -1179,6 +1364,92 @@
             });
         }
 
+        // CONTROL DINÁMICO DE SECCIONES (ELIMINAR / MOSTRAR / INTERCAMBIAR)
+        function updateLayoutUI() {
+            const slotLeft = document.getElementById('slot-bottom-left');
+            const slotRight = document.getElementById('slot-bottom-right');
+            const blockHabits = document.getElementById('block-habits');
+            const blockNotes = document.getElementById('block-notes');
+            const colLeft = document.getElementById('col-days-left');
+            const colRight = document.getElementById('col-days-right');
+            const pillHabits = document.getElementById('pill-habits');
+            const pillNotes = document.getElementById('pill-notes');
+
+            if (!slotLeft || !slotRight || !blockHabits || !blockNotes) return;
+
+            // Reubicar bloques en sus slots correspondientes
+            if (state.slotLeft === 'habits') {
+                if (blockHabits.parentElement !== slotLeft) slotLeft.appendChild(blockHabits);
+                if (blockNotes.parentElement !== slotRight) slotRight.appendChild(blockNotes);
+            } else {
+                if (blockNotes.parentElement !== slotLeft) slotLeft.appendChild(blockNotes);
+                if (blockHabits.parentElement !== slotRight) slotRight.appendChild(blockHabits);
+            }
+
+            // Visibilidad y expansión de columna izquierda
+            const isLeftVisible = state.sections[state.slotLeft];
+            if (isLeftVisible) {
+                slotLeft.style.display = 'flex';
+                colLeft.classList.remove('expanded-col');
+            } else {
+                slotLeft.style.display = 'none';
+                colLeft.classList.add('expanded-col');
+            }
+
+            // Visibilidad y expansión de columna derecha
+            const isRightVisible = state.sections[state.slotRight];
+            if (isRightVisible) {
+                slotRight.style.display = 'flex';
+                colRight.classList.remove('expanded-col');
+            } else {
+                slotRight.style.display = 'none';
+                colRight.classList.add('expanded-col');
+            }
+
+            // Actualizar botones pills superiores
+            if (pillHabits) {
+                if (state.sections.habits) {
+                    pillHabits.classList.add('active');
+                    pillHabits.innerHTML = '🌱 Hábitos de la semana ✓';
+                } else {
+                    pillHabits.classList.remove('active');
+                    pillHabits.innerHTML = '🌱 Hábitos (+ Añadir)';
+                }
+            }
+
+            if (pillNotes) {
+                if (state.sections.notes) {
+                    pillNotes.classList.add('active');
+                    pillNotes.innerHTML = '📝 Secundarias / Notas ✓';
+                } else {
+                    pillNotes.classList.remove('active');
+                    pillNotes.innerHTML = '📝 Secundarias / Notas (+ Añadir)';
+                }
+            }
+        }
+
+        function toggleSection(secKey) {
+            state.sections[secKey] = !state.sections[secKey];
+            updateLayoutUI();
+            const name = secKey === 'habits' ? 'Hábitos de la semana' : 'Secundarias / Notas';
+            showToast(state.sections[secKey] ? `Añadido: ${name}` : `Eliminado: ${name} (columna ampliada)`);
+        }
+
+        function removeSection(secKey) {
+            state.sections[secKey] = false;
+            updateLayoutUI();
+            const name = secKey === 'habits' ? 'Hábitos' : 'Secundarias / Notas';
+            showToast(`Eliminado: ${name} (días ampliados)`);
+        }
+
+        function swapBottomSections() {
+            const temp = state.slotLeft;
+            state.slotLeft = state.slotRight;
+            state.slotRight = temp;
+            updateLayoutUI();
+            showToast(`Posición intercambiada: ${state.slotLeft === 'habits' ? 'Hábitos izq. / Notas der.' : 'Notas izq. / Hábitos der.'}`);
+        }
+
         // ALTERNAR SELECCIÓN DE DÍAS EN HÁBITOS
         function toggleDot(el) {
             el.classList.toggle('checked');
@@ -1186,7 +1457,6 @@
 
         // PAUTA DE NOTAS INTELIGENTE Y CONTROL ESTRICTO DE ALTURA
         function handleNotesInput(el) {
-            // Impedir que sobrepase la altura física visible de la caja (cero scrollbar/desplegable)
             while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
                 el.value = el.value.slice(0, -1);
             }
@@ -1195,7 +1465,7 @@
 
         function updateNotesPatternUI() {
             const notesEl = document.getElementById('field-weekly-notes');
-            const panel = document.getElementById('weekly-notes-panel');
+            const panel = document.getElementById('block-notes');
             const btnPattern = document.getElementById('btn-toggle-pattern');
             if (!notesEl || !panel) return;
 
@@ -1219,7 +1489,7 @@
             const idx = PATTERNS.indexOf(state.notesPattern);
             state.notesPattern = PATTERNS[(idx + 1) % PATTERNS.length];
 
-            const panel = document.getElementById('weekly-notes-panel');
+            const panel = document.getElementById('block-notes');
             if (panel) panel.className = `weekly-notes-panel bg-${state.notesPattern}`;
 
             const names = { blank: 'Blanco limpio', dots: 'Puntos sutiles', lines: 'Rayado', grid: 'Cuadrícula' };
@@ -1232,6 +1502,8 @@
             ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(d => {
                 const el = document.getElementById('field-' + d);
                 if (el) el.value = '';
+                const numEl = document.getElementById('num-' + d);
+                if (numEl) numEl.value = '';
             });
             ['1','2','3'].forEach(n => {
                 const el = document.getElementById('field-habit-' + n);
@@ -1244,20 +1516,47 @@
         }
 
         function loadExampleContent() {
+            document.getElementById('field-week-num').value = 'SEMANA: 42 · OCTUBRE';
             document.getElementById('field-focus').value = 'Entregar los originales completos para enviar a encuadernación';
-            document.getElementById('field-lunes').value = 'Cerrar revisión del presupuesto de imprenta';
-            document.getElementById('field-martes').value = 'Reunión de balance trimestral con el equipo editorial';
-            document.getElementById('field-miercoles').value = 'Redacción de los dos ensayos para el lanzamiento';
-            document.getElementById('field-jueves').value = 'Pruebas de impresión de cubiertas y calibración de color';
-            document.getElementById('field-viernes').value = 'Cierre de tareas pendientes y balance de la semana';
-            document.getElementById('field-sabado').value = 'Caminar por la sierra y lectura profunda sin pantallas';
-            document.getElementById('field-domingo').value = 'Planificar la semana entrante con calma antes de cenar';
+            
+            const daysData = [
+                { id: 'lunes', num: '7', text: 'Cerrar revisión del presupuesto de imprenta' },
+                { id: 'martes', num: '8', text: 'Reunión de balance trimestral con el equipo editorial' },
+                { id: 'miercoles', num: '9', text: 'Redacción de los dos ensayos para el lanzamiento' },
+                { id: 'jueves', num: '10', text: 'Pruebas de impresión de cubiertas y calibración de color' },
+                { id: 'viernes', num: '11', text: 'Cierre de tareas pendientes y balance de la semana' },
+                { id: 'sabado', num: '12', text: 'Caminar por la sierra y lectura profunda sin pantallas' },
+                { id: 'domingo', num: '13', text: 'Planificar la semana entrante con calma antes de cenar' }
+            ];
+
+            daysData.forEach(d => {
+                const txtEl = document.getElementById('field-' + d.id);
+                if (txtEl) txtEl.value = d.text;
+                const numEl = document.getElementById('num-' + d.id);
+                if (numEl) numEl.value = d.num;
+            });
+
             document.getElementById('field-habit-1').value = 'Lectura analógica (30 min)';
             document.getElementById('field-habit-2').value = 'Caminar al aire libre sin móvil';
             document.getElementById('field-habit-3').value = 'Cero pantallas después de las 22:00';
+
+            const rows = document.querySelectorAll('.habit-track-row');
+            if (rows.length >= 3) {
+                const dots1 = rows[0].querySelectorAll('.habit-day-dot');
+                dots1.forEach((dot, i) => { if (i < 5) dot.classList.add('checked'); else dot.classList.remove('checked'); });
+                const dots2 = rows[1].querySelectorAll('.habit-day-dot');
+                dots2.forEach((dot, i) => { if (i < 4) dot.classList.add('checked'); else dot.classList.remove('checked'); });
+                const dots3 = rows[2].querySelectorAll('.habit-day-dot');
+                dots3.forEach((dot, i) => { if (i < 3) dot.classList.add('checked'); else dot.classList.remove('checked'); });
+            }
+
             document.getElementById('field-weekly-notes').value = '• Revisar renovación de dominio web\n• Comprar recambios de tinta\n• Enviar mensaje de balance a Javier';
+
+            state.sections.habits = true;
+            state.sections.notes = true;
+            updateLayoutUI();
             updateNotesPatternUI();
-            showToast('Ejemplo editorial cargado');
+            showToast('Ejemplo editorial cargado (Semana 42)');
         }
 
         // MODAL HANDLERS
@@ -1351,59 +1650,91 @@
             doc.line(margin, y, pw - margin, y);
             y += 4;
 
-            // 2. CUERPO: 2 COLUMNAS DE DÍAS
+            // 2. CUERPO: 2 COLUMNAS EDITORIALES
             const colGap = 6;
             const colW = (cw - colGap) / 2; // ~89.75 mm
-            const bodyH = 75; // Altura de los días
+            const bodyStartY = y;
             const col1X = margin;
             const col2X = margin + colW + colGap;
+
+            const isCircle = state.checkboxStyle === 'circle';
+
+            // Alturas dinámicas según visibilidad de la sección inferior
+            const normalBodyH = 73.0; // Altura estándar con bloque inferior
+            const bottomGap = 3.5;
+            const bottomH = 32.4;
+            const expandedBodyH = normalBodyH + bottomGap + bottomH; // ~108.9 mm
+            const bottomY = bodyStartY + normalBodyH + bottomGap; // 101.0 mm
+
+            const leftVisible = state.sections[state.slotLeft];
+            const rightVisible = state.sections[state.slotRight];
+
+            const bodyH1 = leftVisible ? normalBodyH : expandedBodyH;
+            const bodyH2 = rightVisible ? normalBodyH : expandedBodyH;
 
             // Marco Columna 1 (Lunes a Jueves)
             doc.setFillColor(255, 255, 255);
             doc.setDrawColor(210, 205, 198);
             doc.setLineWidth(0.25);
-            doc.roundedRect(col1X, y, colW, bodyH, 1.5, 1.5, 'FD');
+            doc.roundedRect(col1X, bodyStartY, colW, bodyH1, 1.5, 1.5, 'FD');
 
             // Marco Columna 2 (Foco + Viernes a Domingo)
-            doc.roundedRect(col2X, y, colW, bodyH, 1.5, 1.5, 'FD');
+            doc.roundedRect(col2X, bodyStartY, colW, bodyH2, 1.5, 1.5, 'FD');
 
-            const isCircle = state.checkboxStyle === 'circle';
-
-            // DIBUJAR COLUMNA 1: LUNES A JUEVES (4 FILAS)
-            const rowH1 = bodyH / 4; // ~18.75 mm
+            // --- DIBUJAR COLUMNA 1: LUNES A JUEVES (4 FILAS) ---
+            const rowH1 = bodyH1 / 4;
             const daysCol1 = [
-                { name: 'LUNES', text: isBlank ? '' : document.getElementById('field-lunes').value.trim() },
-                { name: 'MARTES', text: isBlank ? '' : document.getElementById('field-martes').value.trim() },
-                { name: 'MIÉRCOLES', text: isBlank ? '' : document.getElementById('field-miercoles').value.trim() },
-                { name: 'JUEVES', text: isBlank ? '' : document.getElementById('field-jueves').value.trim() }
+                { id: 'lunes', name: 'LUNES', text: isBlank ? '' : document.getElementById('field-lunes').value.trim() },
+                { id: 'martes', name: 'MARTES', text: isBlank ? '' : document.getElementById('field-martes').value.trim() },
+                { id: 'miercoles', name: 'MIÉRCOLES', text: isBlank ? '' : document.getElementById('field-miercoles').value.trim() },
+                { id: 'jueves', name: 'JUEVES', text: isBlank ? '' : document.getElementById('field-jueves').value.trim() }
             ];
 
             daysCol1.forEach((day, idx) => {
-                const rowY = y + (idx * rowH1);
+                const rowY = bodyStartY + (idx * rowH1);
                 
-                // Cabecera del día
+                // Nombre del día
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(30, 25, 20);
-                doc.text(day.name, col1X + 4, rowY + 4.2);
+                doc.text(day.name, col1X + 4, rowY + 4.5);
 
-                // Checkbox
-                doc.setDrawColor(80, 75, 70);
+                // Casilla / Círculo grande para el número de día
+                const boxCenterX = col1X + colW - 6.0;
+                const boxCenterY = rowY + 4.2;
+                const boxRadius = 2.6;
+                const boxSize = 5.2;
+
+                doc.setDrawColor(70, 65, 60);
                 doc.setLineWidth(0.22);
                 if (isCircle) {
-                    doc.circle(col1X + colW - 5.5, rowY + 3.5, 1.6, 'S');
+                    doc.circle(boxCenterX, boxCenterY, boxRadius, 'S');
                 } else {
-                    doc.rect(col1X + colW - 7, rowY + 2.0, 3.2, 3.2);
+                    doc.roundedRect(boxCenterX - boxRadius, boxCenterY - boxRadius, boxSize, boxSize, 0.7, 0.7, 'S');
                 }
 
-                // Texto del día (HASTA 4 LÍNEAS 1:1 CON EL LIENZO)
+                // Número escrito dentro de la casilla
+                if (!isBlank) {
+                    const numVal = (document.getElementById('num-' + day.id).value || '').trim();
+                    if (numVal) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.2);
+                        doc.setTextColor(25, 20, 15);
+                        doc.text(numVal, boxCenterX, boxCenterY + 0.9, { align: 'center' });
+                    }
+                }
+
+                // Texto del día
                 if (day.text) {
                     doc.setFont('times', 'normal');
-                    doc.setFontSize(7.6);
+                    const maxLines = leftVisible ? 4 : 6;
+                    const fSize = leftVisible ? 7.6 : 7.8;
+                    const lSpacing = leftVisible ? 3.2 : 3.4;
+                    doc.setFontSize(fSize);
                     doc.setTextColor(40, 35, 30);
                     const lines = strictSafeWrapText(doc, day.text, colW - 14);
-                    lines.slice(0, 4).forEach((line, lIdx) => {
-                        doc.text(line, col1X + 4, rowY + 7.5 + (lIdx * 3.2), { maxWidth: colW - 14 });
+                    lines.slice(0, maxLines).forEach((line, lIdx) => {
+                        doc.text(line, col1X + 4, rowY + 7.6 + (lIdx * lSpacing), { maxWidth: colW - 14 });
                     });
                 }
 
@@ -1415,214 +1746,262 @@
                 }
             });
 
-            // DIBUJAR COLUMNA 2: FOCO + VIERNES A DOMINGO
-            // Foco: 18.75 mm
+            // --- DIBUJAR COLUMNA 2: FOCO + VIERNES A DOMINGO ---
+            const rowH2 = bodyH2 / 4;
+
+            // Foco de la semana
             const focusText = isBlank ? '' : document.getElementById('field-focus').value.trim();
             doc.setFillColor(250, 248, 245);
-            doc.roundedRect(col2X, y, colW, rowH1, 1.5, 1.5, 'F');
+            doc.roundedRect(col2X, bodyStartY, colW, rowH2, 1.5, 1.5, 'F');
             
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.8);
             doc.setTextColor(135, 85, 59);
-            doc.text('🎯 FOCO DE LA SEMANA (META CLAVE)', col2X + 4, y + 4.2);
+            doc.text('🎯 FOCO DE LA SEMANA (META CLAVE)', col2X + 4, bodyStartY + 4.5);
 
             if (focusText) {
                 doc.setFont('times', 'bold');
-                doc.setFontSize(7.8);
+                const maxFLines = rightVisible ? 4 : 6;
+                const fFontSize = rightVisible ? 7.8 : 8.0;
+                const fSpacing = rightVisible ? 3.2 : 3.4;
+                doc.setFontSize(fFontSize);
                 doc.setTextColor(25, 20, 15);
                 const fLines = strictSafeWrapText(doc, focusText, colW - 8);
-                fLines.slice(0, 4).forEach((fLine, lIdx) => {
-                    doc.text(fLine, col2X + 4, y + 7.5 + (lIdx * 3.2), { maxWidth: colW - 8 });
+                fLines.slice(0, maxFLines).forEach((fLine, lIdx) => {
+                    doc.text(fLine, col2X + 4, bodyStartY + 7.6 + (lIdx * fSpacing), { maxWidth: colW - 8 });
                 });
             }
 
             doc.setDrawColor(220, 215, 208);
             doc.setLineWidth(0.2);
-            doc.line(col2X, y + rowH1, col2X + colW, y + rowH1);
+            doc.line(col2X, bodyStartY + rowH2, col2X + colW, bodyStartY + rowH2);
 
             const daysCol2 = [
-                { name: 'VIERNES', text: isBlank ? '' : document.getElementById('field-viernes').value.trim() },
-                { name: 'SÁBADO', text: isBlank ? '' : document.getElementById('field-sabado').value.trim() },
-                { name: 'DOMINGO', text: isBlank ? '' : document.getElementById('field-domingo').value.trim() }
+                { id: 'viernes', name: 'VIERNES', text: isBlank ? '' : document.getElementById('field-viernes').value.trim() },
+                { id: 'sabado', name: 'SÁBADO', text: isBlank ? '' : document.getElementById('field-sabado').value.trim() },
+                { id: 'domingo', name: 'DOMINGO', text: isBlank ? '' : document.getElementById('field-domingo').value.trim() }
             ];
 
             daysCol2.forEach((day, idx) => {
-                const rowY = y + rowH1 + (idx * rowH1);
+                const rowY = bodyStartY + rowH2 + (idx * rowH2);
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(30, 25, 20);
-                doc.text(day.name, col2X + 4, rowY + 4.2);
+                doc.text(day.name, col2X + 4, rowY + 4.5);
 
-                doc.setDrawColor(80, 75, 70);
+                const boxCenterX = col2X + colW - 6.0;
+                const boxCenterY = rowY + 4.2;
+                const boxRadius = 2.6;
+                const boxSize = 5.2;
+
+                doc.setDrawColor(70, 65, 60);
                 doc.setLineWidth(0.22);
                 if (isCircle) {
-                    doc.circle(col2X + colW - 5.5, rowY + 3.5, 1.6, 'S');
+                    doc.circle(boxCenterX, boxCenterY, boxRadius, 'S');
                 } else {
-                    doc.rect(col2X + colW - 7, rowY + 2.0, 3.2, 3.2);
+                    doc.roundedRect(boxCenterX - boxRadius, boxCenterY - boxRadius, boxSize, boxSize, 0.7, 0.7, 'S');
+                }
+
+                if (!isBlank) {
+                    const numVal = (document.getElementById('num-' + day.id).value || '').trim();
+                    if (numVal) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.2);
+                        doc.setTextColor(25, 20, 15);
+                        doc.text(numVal, boxCenterX, boxCenterY + 0.9, { align: 'center' });
+                    }
                 }
 
                 if (day.text) {
                     doc.setFont('times', 'normal');
-                    doc.setFontSize(7.6);
+                    const maxLines = rightVisible ? 4 : 6;
+                    const fSize = rightVisible ? 7.6 : 7.8;
+                    const lSpacing = rightVisible ? 3.2 : 3.4;
+                    doc.setFontSize(fSize);
                     doc.setTextColor(40, 35, 30);
                     const lines = strictSafeWrapText(doc, day.text, colW - 14);
-                    lines.slice(0, 4).forEach((line, lIdx) => {
-                        doc.text(line, col2X + 4, rowY + 7.5 + (lIdx * 3.2), { maxWidth: colW - 14 });
+                    lines.slice(0, maxLines).forEach((line, lIdx) => {
+                        doc.text(line, col2X + 4, rowY + 7.6 + (lIdx * lSpacing), { maxWidth: colW - 14 });
                     });
                 }
 
                 if (idx < 2) {
                     doc.setDrawColor(230, 225, 218);
                     doc.setLineWidth(0.15);
-                    doc.line(col2X + 3, rowY + rowH1, col2X + colW - 3, rowY + rowH1);
+                    doc.line(col2X + 3, rowY + rowH2, col2X + colW - 3, rowY + rowH2);
                 }
             });
 
-            // 3. SECCIÓN INFERIOR: HÁBITOS DE LA SEMANA + NOTAS
-            y += bodyH + 4.5;
-            const bottomH = 34; // Altura de los paneles inferiores
+            // --- 3. SECCIÓN INFERIOR: RENDERIZADO MODULAR SEGÚN POSICIÓN Y VISIBILIDAD ---
+            function drawHabits(startX, startY, w, h) {
+                doc.setFillColor(252, 250, 247);
+                doc.setDrawColor(215, 210, 202);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(startX, startY, w, h, 1.5, 1.5, 'FD');
 
-            // Marco Hábitos (Izquierda)
-            doc.setFillColor(252, 250, 247);
-            doc.setDrawColor(215, 210, 202);
-            doc.setLineWidth(0.25);
-            doc.roundedRect(col1X, y, colW, bottomH, 1.5, 1.5, 'FD');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.6);
+                doc.setTextColor(30, 25, 20);
+                doc.text('🌱 HÁBITOS DE LA SEMANA', startX + 4, startY + 4.0);
 
-            // Encabezado de Hábitos
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.6);
-            doc.setTextColor(30, 25, 20);
-            doc.text('🌱 HÁBITOS DE LA SEMANA', col1X + 4, y + 4.0);
-
-            // Leyenda de Días L M X J V S D
-            const dotStartX = col1X + colW - 32;
-            const dotSpacing = 4.2;
-            const letters = ['L','M','X','J','V','S','D'];
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(5.8);
-            doc.setTextColor(110, 105, 100);
-            letters.forEach((l, li) => {
-                doc.text(l, dotStartX + (li * dotSpacing), y + 4.0, { align: 'center' });
-            });
-
-            doc.setDrawColor(228, 222, 214);
-            doc.setLineWidth(0.15);
-            doc.line(col1X + 3, y + 5.5, col1X + colW - 3, y + 5.5);
-
-            // 3 Filas de Hábitos
-            const habitRowH = (bottomH - 6.5) / 3;
-            const habits = [
-                { id: '1', text: isBlank ? '' : document.getElementById('field-habit-1').value.trim() },
-                { id: '2', text: isBlank ? '' : document.getElementById('field-habit-2').value.trim() },
-                { id: '3', text: isBlank ? '' : document.getElementById('field-habit-3').value.trim() }
-            ];
-
-            habits.forEach((hab, hi) => {
-                const hy = y + 6.0 + (hi * habitRowH);
-                
-                // Texto del hábito
-                if (hab.text) {
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(7.0);
-                    doc.setTextColor(40, 35, 30);
-                    const hLines = strictSafeWrapText(doc, hab.text, dotStartX - col1X - 6);
-                    doc.text(hLines[0] || '', col1X + 4, hy + 4.5);
-                } else {
-                    doc.setDrawColor(235, 230, 222);
-                    doc.setLineWidth(0.15);
-                    doc.line(col1X + 4, hy + 5.2, dotStartX - 4, hy + 5.2);
-                }
-
-                // 7 Casillas para marcar
-                doc.setDrawColor(120, 115, 110);
-                doc.setLineWidth(0.2);
+                const dotStartX = startX + w - 32;
+                const dotSpacing = 4.2;
+                const letters = ['L','M','X','J','V','S','D'];
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.8);
+                doc.setTextColor(110, 105, 100);
                 letters.forEach((l, li) => {
-                    const cx = dotStartX + (li * dotSpacing);
-                    const cy = hy + 4.0;
-                    if (isCircle) {
-                        doc.circle(cx, cy, 1.4, 'S');
-                    } else {
-                        doc.rect(cx - 1.4, cy - 1.4, 2.8, 2.8);
-                    }
+                    doc.text(l, dotStartX + (li * dotSpacing), startY + 4.0, { align: 'center' });
                 });
 
-                if (hi < 2) {
-                    doc.setDrawColor(235, 230, 222);
-                    doc.setLineWidth(0.12);
-                    doc.line(col1X + 3, hy + habitRowH, col1X + colW - 3, hy + habitRowH);
-                }
-            });
+                doc.setDrawColor(228, 222, 214);
+                doc.setLineWidth(0.15);
+                doc.line(startX + 3, startY + 5.5, startX + w - 3, startY + 5.5);
 
-            // Marco Notas / Secundarias (Derecha)
-            doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(215, 210, 202);
-            doc.setLineWidth(0.25);
-            doc.roundedRect(col2X, y, colW, bottomH, 1.5, 1.5, 'FD');
+                const habitRowH = (h - 6.5) / 3;
+                const habits = [
+                    { id: '1', text: isBlank ? '' : document.getElementById('field-habit-1').value.trim() },
+                    { id: '2', text: isBlank ? '' : document.getElementById('field-habit-2').value.trim() },
+                    { id: '3', text: isBlank ? '' : document.getElementById('field-habit-3').value.trim() }
+                ];
 
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.6);
-            doc.setTextColor(30, 25, 20);
-            doc.text('📝 TAREAS SECUNDARIAS / NOTAS', col2X + 4, y + 4.0);
+                const trackRows = document.querySelectorAll('.habit-track-row');
 
-            doc.setDrawColor(228, 222, 214);
-            doc.setLineWidth(0.15);
-            doc.line(col2X + 3, y + 5.5, col2X + colW - 3, y + 5.5);
+                habits.forEach((hab, hi) => {
+                    const hy = startY + 6.0 + (hi * habitRowH);
+                    
+                    if (hab.text) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7.0);
+                        doc.setTextColor(40, 35, 30);
+                        const hLines = strictSafeWrapText(doc, hab.text, dotStartX - startX - 6);
+                        doc.text(hLines[0] || '', startX + 4, hy + 4.5);
+                    } else {
+                        doc.setDrawColor(235, 230, 222);
+                        doc.setLineWidth(0.15);
+                        doc.line(startX + 4, hy + 5.2, dotStartX - 4, hy + 5.2);
+                    }
 
-            const notesText = isBlank ? '' : document.getElementById('field-weekly-notes').value.trim();
-
-            if (!notesText || isBlank) {
-                // Dibujar pauta seleccionada
-                const areaTop = y + 6.0;
-                const areaH = bottomH - 7.0;
-
-                if (state.notesPattern === 'dots') {
-                    doc.setFillColor(195, 188, 178);
-                    for (let px = col2X + 4; px < col2X + colW - 3; px += 4.5) {
-                        for (let py = areaTop + 3; py < areaTop + areaH - 1; py += 4.5) {
-                            doc.circle(px, py, 0.22, 'F');
+                    // 7 Casillas para marcar con relleno si están seleccionadas en pantalla
+                    const dotEls = (trackRows[hi]) ? trackRows[hi].querySelectorAll('.habit-day-dot') : [];
+                    letters.forEach((l, li) => {
+                        const cx = dotStartX + (li * dotSpacing);
+                        const cy = hy + 4.0;
+                        const isChecked = !isBlank && dotEls[li] && dotEls[li].classList.contains('checked');
+                        
+                        if (isChecked) {
+                            doc.setFillColor(50, 45, 40);
+                            if (isCircle) {
+                                doc.circle(cx, cy, 1.4, 'F');
+                            } else {
+                                doc.rect(cx - 1.4, cy - 1.4, 2.8, 2.8, 'F');
+                            }
+                        } else {
+                            doc.setDrawColor(120, 115, 110);
+                            doc.setLineWidth(0.2);
+                            if (isCircle) {
+                                doc.circle(cx, cy, 1.4, 'S');
+                            } else {
+                                doc.rect(cx - 1.4, cy - 1.4, 2.8, 2.8);
+                            }
                         }
+                    });
+
+                    if (hi < 2) {
+                        doc.setDrawColor(235, 230, 222);
+                        doc.setLineWidth(0.12);
+                        doc.line(startX + 3, hy + habitRowH, startX + w - 3, hy + habitRowH);
                     }
-                } else if (state.notesPattern === 'lines') {
-                    doc.setDrawColor(225, 220, 212);
-                    doc.setLineWidth(0.15);
-                    for (let py = areaTop + 4.5; py < areaTop + areaH; py += 4.5) {
-                        doc.line(col2X + 4, py, col2X + colW - 4, py);
-                    }
-                } else if (state.notesPattern === 'grid') {
-                    doc.setDrawColor(232, 228, 220);
-                    doc.setLineWidth(0.12);
-                    for (let px = col2X + 4; px < col2X + colW - 3; px += 4.5) {
-                        doc.line(px, areaTop + 1, px, areaTop + areaH);
-                    }
-                    for (let py = areaTop + 3; py < areaTop + areaH; py += 4.5) {
-                        doc.line(col2X + 4, py, col2X + colW - 4, py);
-                    }
-                }
-            } else {
-                // Escribir texto maquetado
-                doc.setFont('times', 'normal');
-                doc.setFontSize(7.5);
-                doc.setTextColor(30, 25, 20);
-                const nLines = strictSafeWrapText(doc, notesText, colW - 8);
-                let ny = y + 9.0;
-                nLines.slice(0, 6).forEach(line => {
-                    doc.text(line, col2X + 4, ny);
-                    ny += 3.8;
                 });
             }
 
+            function drawNotes(startX, startY, w, h) {
+                doc.setFillColor(255, 255, 255);
+                doc.setDrawColor(215, 210, 202);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(startX, startY, w, h, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.6);
+                doc.setTextColor(30, 25, 20);
+                doc.text('📝 TAREAS SECUNDARIAS / NOTAS', startX + 4, startY + 4.0);
+
+                doc.setDrawColor(228, 222, 214);
+                doc.setLineWidth(0.15);
+                doc.line(startX + 3, startY + 5.5, startX + w - 3, startY + 5.5);
+
+                const notesText = isBlank ? '' : document.getElementById('field-weekly-notes').value.trim();
+
+                if (!notesText || isBlank) {
+                    const areaTop = startY + 6.0;
+                    const areaH = h - 7.0;
+
+                    if (state.notesPattern === 'dots') {
+                        doc.setFillColor(195, 188, 178);
+                        for (let px = startX + 4; px < startX + w - 3; px += 4.5) {
+                            for (let py = areaTop + 3; py < areaTop + areaH - 1; py += 4.5) {
+                                doc.circle(px, py, 0.22, 'F');
+                            }
+                        }
+                    } else if (state.notesPattern === 'lines') {
+                        doc.setDrawColor(225, 220, 212);
+                        doc.setLineWidth(0.15);
+                        for (let py = areaTop + 4.5; py < areaTop + areaH; py += 4.5) {
+                            doc.line(startX + 4, py, startX + w - 4, py);
+                        }
+                    } else if (state.notesPattern === 'grid') {
+                        doc.setDrawColor(232, 228, 220);
+                        doc.setLineWidth(0.12);
+                        for (let px = startX + 4; px < startX + w - 3; px += 4.5) {
+                            doc.line(px, areaTop + 1, px, areaTop + areaH);
+                        }
+                        for (let py = areaTop + 3; py < areaTop + areaH; py += 4.5) {
+                            doc.line(startX + 4, py, startX + w - 4, py);
+                        }
+                    }
+                } else {
+                    doc.setFont('times', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(30, 25, 20);
+                    const nLines = strictSafeWrapText(doc, notesText, w - 8);
+                    let ny = startY + 9.0;
+                    nLines.slice(0, 6).forEach(line => {
+                        doc.text(line, startX + 4, ny);
+                        ny += 3.8;
+                    });
+                }
+            }
+
+            // Renderizar el bloque de la izquierda si está activo
+            if (leftVisible) {
+                if (state.slotLeft === 'habits') {
+                    drawHabits(col1X, bottomY, colW, bottomH);
+                } else {
+                    drawNotes(col1X, bottomY, colW, bottomH);
+                }
+            }
+
+            // Renderizar el bloque de la derecha si está activo
+            if (rightVisible) {
+                if (state.slotRight === 'habits') {
+                    drawHabits(col2X, bottomY, colW, bottomH);
+                } else {
+                    drawNotes(col2X, bottomY, colW, bottomH);
+                }
+            }
+
             // 4. PIE DE IMPRENTA
-            y += bottomH + 4.0;
+            const footerY = 137.0;
             doc.setDrawColor(210, 205, 198);
             doc.setLineWidth(0.18);
-            doc.line(margin, y, pw - margin, y);
+            doc.line(margin, footerY, pw - margin, footerY);
 
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(5.8);
             doc.setTextColor(130, 125, 120);
-            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', margin, y + 3.0);
-            doc.text('editorialmenosruido.com', pw - margin, y + 3.0, { align: 'right' });
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', margin, footerY + 3.0);
+            doc.text('editorialmenosruido.com', pw - margin, footerY + 3.0, { align: 'right' });
 
             // Descarga
             const filename = isBlank ? 'planificador_semanal_plantilla_limpia.pdf' : 'mi_planificador_semanal.pdf';
