@@ -329,7 +329,7 @@
 
         .textarea-day-inline {
             font-family: var(--font-serif);
-            font-size: 0.80rem;
+            font-size: 0.74rem;
             color: #222;
             background: transparent;
             border: none;
@@ -340,7 +340,8 @@
             line-height: 1.25;
             resize: none;
             overflow: hidden;
-            white-space: nowrap;
+            white-space: pre-wrap;
+            word-break: break-word;
             box-sizing: border-box;
             padding: 0;
             margin: 0;
@@ -370,7 +371,7 @@
 
         .textarea-focus-inline {
             font-family: var(--font-serif);
-            font-size: 0.82rem;
+            font-size: 0.76rem;
             font-weight: 600;
             color: #1e1916;
             background: transparent;
@@ -382,7 +383,8 @@
             line-height: 1.25;
             resize: none;
             overflow: hidden;
-            white-space: nowrap;
+            white-space: pre-wrap;
+            word-break: break-word;
             box-sizing: border-box;
             padding: 0;
             margin: 0;
@@ -616,12 +618,14 @@
         .modal-card {
             background: #ffffff;
             border-radius: 14px;
-            max-width: 480px;
+            max-width: 520px;
             width: 100%;
             padding: 24px;
             box-shadow: 0 20px 45px rgba(0,0,0,0.25);
             text-align: center;
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-title {
@@ -634,13 +638,29 @@
             font-size: 0.82rem;
             color: #666;
             line-height: 1.45;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
+        }
+
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
         }
 
         .modal-actions {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            margin-bottom: 20px;
         }
 
         .btn-modal-primary {
@@ -653,6 +673,10 @@
             font-weight: 700;
             cursor: pointer;
             transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .btn-modal-primary:hover { background: var(--accent-hover); }
 
@@ -666,8 +690,100 @@
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .btn-modal-secondary:hover { background: #ede7dc; }
+
+        .modal-books-section {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-top: 6px;
+        }
+
+        .modal-books-header {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .modal-books-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .modal-books-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-book-card {
+            background: #ffffff;
+            border: 1px solid #e0d9cc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-book-thumb {
+            width: 38px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+            flex-shrink: 0;
+        }
+
+        .modal-book-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .modal-book-badge {
+            font-size: 0.58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: block;
+        }
+
+        .modal-book-title {
+            font-family: var(--font-serif);
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #1a1715;
+            margin: 1px 0 4px 0;
+            line-height: 1.2;
+        }
+
+        .btn-book-amazon {
+            display: inline-block;
+            background: var(--accent);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-book-amazon:hover {
+            background: #6e442e;
+        }
 
         .modal-close-btn {
             position: absolute;
@@ -762,10 +878,9 @@
                             <span class="day-interactive-name">LUNES</span>
                             <div class="day-check-indicator" id="chk-lunes"></div>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-lunes" rows="1" maxlength="140"
+                        <textarea class="textarea-day-inline" id="field-lunes" rows="3" maxlength="280"
                                   placeholder="Prioridad clave del lunes..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Cerrar revisión del presupuesto de imprenta</textarea>
+                                  oninput="handleDayInput(this)">Cerrar revisión del presupuesto de imprenta</textarea>
                     </div>
 
                     <div class="day-interactive-row">
@@ -773,10 +888,9 @@
                             <span class="day-interactive-name">MARTES</span>
                             <div class="day-check-indicator" id="chk-martes"></div>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-martes" rows="1" maxlength="140"
+                        <textarea class="textarea-day-inline" id="field-martes" rows="3" maxlength="280"
                                   placeholder="Prioridad clave del martes..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Reunión de balance trimestral con el equipo editorial</textarea>
+                                  oninput="handleDayInput(this)">Reunión de balance trimestral con el equipo editorial</textarea>
                     </div>
 
                     <div class="day-interactive-row">
@@ -784,10 +898,9 @@
                             <span class="day-interactive-name">MIÉRCOLES</span>
                             <div class="day-check-indicator" id="chk-miercoles"></div>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-miercoles" rows="1" maxlength="140"
+                        <textarea class="textarea-day-inline" id="field-miercoles" rows="3" maxlength="280"
                                   placeholder="Prioridad clave del miércoles..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Redacción de los dos ensayos para el lanzamiento</textarea>
+                                  oninput="handleDayInput(this)">Redacción de los dos ensayos para el lanzamiento</textarea>
                     </div>
 
                     <div class="day-interactive-row">
@@ -795,10 +908,9 @@
                             <span class="day-interactive-name">JUEVES</span>
                             <div class="day-check-indicator" id="chk-jueves"></div>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-jueves" rows="1" maxlength="140"
+                        <textarea class="textarea-day-inline" id="field-jueves" rows="3" maxlength="280"
                                   placeholder="Prioridad clave del jueves..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Pruebas de impresión de cubiertas y calibración de color</textarea>
+                                  oninput="handleDayInput(this)">Pruebas de impresión de cubiertas y calibración de color</textarea>
                     </div>
                 </div>
 
@@ -806,10 +918,9 @@
                 <div class="weekly-column-box">
                     <div class="weekly-focus-card">
                         <span class="weekly-focus-label">🎯 FOCO DE LA SEMANA (META CLAVE)</span>
-                        <textarea class="textarea-focus-inline" id="field-focus" rows="1" maxlength="140"
+                        <textarea class="textarea-focus-inline" id="field-focus" rows="3" maxlength="280"
                                   placeholder="¿Qué único resultado justificaría toda esta semana?"
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Entregar los originales completos para enviar a encuadernación</textarea>
+                                  oninput="handleDayInput(this)">Entregar los originales completos para enviar a encuadernación</textarea>
                     </div>
 
                     <div class="day-interactive-row">
@@ -817,10 +928,9 @@
                             <span class="day-interactive-name">VIERNES</span>
                             <div class="day-check-indicator" id="chk-viernes"></div>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-viernes" rows="1" maxlength="140"
+                        <textarea class="textarea-day-inline" id="field-viernes" rows="3" maxlength="280"
                                   placeholder="Prioridad clave del viernes..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Cierre de tareas pendientes y balance de la semana</textarea>
+                                  oninput="handleDayInput(this)">Cierre de tareas pendientes y balance de la semana</textarea>
                     </div>
 
                     <div class="day-interactive-row">
@@ -828,10 +938,9 @@
                             <span class="day-interactive-name">SÁBADO</span>
                             <div class="day-check-indicator" id="chk-sabado"></div>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-sabado" rows="1" maxlength="140"
+                        <textarea class="textarea-day-inline" id="field-sabado" rows="3" maxlength="280"
                                   placeholder="Descanso, lectura o proyectos personales..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Caminar por la sierra y lectura profunda sin pantallas</textarea>
+                                  oninput="handleDayInput(this)">Caminar por la sierra y lectura profunda sin pantallas</textarea>
                     </div>
 
                     <div class="day-interactive-row">
@@ -839,10 +948,9 @@
                             <span class="day-interactive-name">DOMINGO</span>
                             <div class="day-check-indicator" id="chk-domingo"></div>
                         </div>
-                        <textarea class="textarea-day-inline" id="field-domingo" rows="1" maxlength="140"
+                        <textarea class="textarea-day-inline" id="field-domingo" rows="3" maxlength="280"
                                   placeholder="Revisión tranquila y preparación de la semana siguiente..."
-                                  onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                                  oninput="handleSingleLineInput(this)">Planificar la semana entrante con calma antes de cenar</textarea>
+                                  oninput="handleDayInput(this)">Planificar la semana entrante con calma antes de cenar</textarea>
                     </div>
                 </div>
 
@@ -940,13 +1048,64 @@
             <h3 class="modal-title">Descargar Planificador Semanal</h3>
             <p class="modal-desc">Elige si quieres tu PDF con los textos que has escrito o una plantilla en blanco para rellenar a lápiz.</p>
             
+            <div class="modal-format-badge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · Calidad Imprenta
+            </div>
+
             <div class="modal-actions">
                 <button type="button" class="btn-modal-primary" onclick="executeDownload(false)">
-                    📥 Descargar con mi planificación escrita
+                    <span>📥</span> Descargar con mi planificación escrita
                 </button>
                 <button type="button" class="btn-modal-secondary" onclick="executeDownload(true)">
-                    📄 Descargar plantilla limpia en blanco
+                    <span>📄</span> Descargar plantilla limpia en blanco
                 </button>
+            </div>
+
+            <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN SEMANAL EN AMAZON -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 0 0 12px 0;">
+                    El método completo está en nuestros libros de Editorial Menos Ruido. Toda la metodología y estructura estratégica está explicada en ellos, ideales para tener 53 semanas reunidas en un solo lugar y evitar el desorden de hojas sueltas. Si te gusta la sensación de planificar en papel con claridad y sin ruido, el cuaderno físico te dará la experiencia completa y duradera.
+                </p>
+
+                <div class="modal-books-grid">
+                    <!-- 1. Semanal Atemporal -->
+                    <div class="modal-book-card">
+                        <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Atemporal" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Formato Apaisado</span>
+                            <h4 class="modal-book-title">Planificador Semanal</h4>
+                            <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal_v1' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-semanal-simple.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 2. Semanal Reversible -->
+                    <div class="modal-book-card">
+                        <img src="/cover_semanal_reversible.jpg" alt="Semanal Reversible" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Doble Portada</span>
+                            <h4 class="modal-book-title">Semanal Reversible</h4>
+                            <a href="/ir/amazon-semanal-reversible.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'semanal_reversible', origen: 'modal_generador_semanal_v1' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-semanal-reversible.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENLACE RESEÑA -->
+            <div style="text-align: center; margin-top: 14px;">
+                <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal_v1' })">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
             </div>
         </div>
     </div>
@@ -969,12 +1128,34 @@
             updateCheckboxUI();
         });
 
+        // MANEJO DE HASTA 4 LÍNEAS FÍSICAS EN DÍAS Y FOCO (SIN PASARSE DEL ALTO)
+        function handleDayInput(el, maxLines = 4) {
+            // Impedir más de 4 saltos de línea explícitos
+            const lines = el.value.split('\n');
+            if (lines.length > maxLines) {
+                el.value = lines.slice(0, maxLines).join('\n');
+            }
+            // Controlar que no desborde la altura física del contenedor
+            while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+        }
+
         // MANEJO DE UNA SOLA LÍNEA ESTRICTA (SIN ENTER Y HASTA EL BORDE DERECHO)
         function handleSingleLineInput(el) {
             el.value = el.value.replace(/[\r\n]+/g, ' ');
             while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
                 el.value = el.value.slice(0, -1);
             }
+        }
+
+        // ANALÍTICA VERCEL: TRACKING DE EVENTOS
+        function trackVercelEvent(name, data) {
+            try {
+                if (typeof window.va === 'function') {
+                    window.va('event', { name: name, data: data || {} });
+                }
+            } catch(e) {}
         }
 
         // ALTERNAR CASILLAS (CUADRADA / CÍRCULO)
@@ -1215,15 +1396,15 @@
                     doc.rect(col1X + colW - 7, rowY + 2.0, 3.2, 3.2);
                 }
 
-                // Texto del día (1 SOLA LÍNEA ESTRICTA 1:1)
+                // Texto del día (HASTA 4 LÍNEAS 1:1 CON EL LIENZO)
                 if (day.text) {
                     doc.setFont('times', 'normal');
-                    doc.setFontSize(8.2);
+                    doc.setFontSize(7.6);
                     doc.setTextColor(40, 35, 30);
                     const lines = strictSafeWrapText(doc, day.text, colW - 14);
-                    if (lines.length > 0 && lines[0]) {
-                        doc.text(lines[0], col1X + 4, rowY + 9.0, { maxWidth: colW - 14 });
-                    }
+                    lines.slice(0, 4).forEach((line, lIdx) => {
+                        doc.text(line, col1X + 4, rowY + 7.5 + (lIdx * 3.2), { maxWidth: colW - 14 });
+                    });
                 }
 
                 // Línea separadora
@@ -1247,12 +1428,12 @@
 
             if (focusText) {
                 doc.setFont('times', 'bold');
-                doc.setFontSize(8.2);
+                doc.setFontSize(7.8);
                 doc.setTextColor(25, 20, 15);
                 const fLines = strictSafeWrapText(doc, focusText, colW - 8);
-                if (fLines.length > 0 && fLines[0]) {
-                    doc.text(fLines[0], col2X + 4, y + 9.0, { maxWidth: colW - 8 });
-                }
+                fLines.slice(0, 4).forEach((fLine, lIdx) => {
+                    doc.text(fLine, col2X + 4, y + 7.5 + (lIdx * 3.2), { maxWidth: colW - 8 });
+                });
             }
 
             doc.setDrawColor(220, 215, 208);
@@ -1283,12 +1464,12 @@
 
                 if (day.text) {
                     doc.setFont('times', 'normal');
-                    doc.setFontSize(8.2);
+                    doc.setFontSize(7.6);
                     doc.setTextColor(40, 35, 30);
                     const lines = strictSafeWrapText(doc, day.text, colW - 14);
-                    if (lines.length > 0 && lines[0]) {
-                        doc.text(lines[0], col2X + 4, rowY + 9.0, { maxWidth: colW - 14 });
-                    }
+                    lines.slice(0, 4).forEach((line, lIdx) => {
+                        doc.text(line, col2X + 4, rowY + 7.5 + (lIdx * 3.2), { maxWidth: colW - 14 });
+                    });
                 }
 
                 if (idx < 2) {

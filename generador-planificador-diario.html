@@ -666,18 +666,196 @@
             width: 100%;
         }
 
-        /* TOAST DE AVISO */
-        .toast-msg {
+        /* MODAL DE DESCARGA */
+        .modal-overlay {
             position: fixed;
-            bottom: 24px;
-            background: #2a2522;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.8rem;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(4px);
             display: none;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.18);
-            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 520px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+
+        .btn-modal-secondary {
+            background: #f7f5f0;
+            color: #443e39;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-secondary:hover { background: #ede7dc; }
+
+        .modal-books-section {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-top: 6px;
+        }
+
+        .modal-books-header {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .modal-books-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .modal-books-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-book-card {
+            background: #ffffff;
+            border: 1px solid #e0d9cc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-book-thumb {
+            width: 38px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+            flex-shrink: 0;
+        }
+
+        .modal-book-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .modal-book-badge {
+            font-size: 0.58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: block;
+        }
+
+        .modal-book-title {
+            font-family: var(--font-serif);
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #1a1715;
+            margin: 1px 0 4px 0;
+            line-height: 1.2;
+        }
+
+        .btn-book-amazon {
+            display: inline-block;
+            background: var(--accent);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-book-amazon:hover {
+            background: #6e442e;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px; right: 14px;
+            background: none; border: none;
+            font-size: 1.2rem; color: #888;
+            cursor: pointer;
         }
 
         @media (max-width: 800px) {
@@ -727,7 +905,7 @@
         </div>
 
         <div class="toolbar-group">
-            <button type="button" class="btn-download-primary" onclick="generatePdf(false)">
+            <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
                 <span>📥</span> Descargar PDF
             </button>
         </div>
@@ -839,6 +1017,74 @@
             <div class="paper-footer">
                 <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
                 <span>editorialmenosruido.com</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Planificador Diario</h3>
+            <p class="modal-desc">Elige si quieres tu PDF con los textos que has escrito o una plantilla en blanco para rellenar a lápiz.</p>
+            
+            <div class="modal-format-badge">
+                <span>📐</span> Formato Libro 6" × 9" (152 × 229 mm) · Calidad Imprenta
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" onclick="generatePdf(false)">
+                    <span>📥</span> Descargar con mi planificación escrita
+                </button>
+                <button type="button" class="btn-modal-secondary" onclick="generatePdf(true)">
+                    <span>📄</span> Descargar plantilla limpia en blanco
+                </button>
+            </div>
+
+            <!-- CUADERNOS FÍSICOS EN AMAZON (ESTILO WEB MENOS RUIDO) -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 0 0 12px 0;">
+                    El método completo está en nuestros libros de Editorial Menos Ruido. Toda la metodología y estructura estratégica está explicada en ellos, ideales para tener 3 o 6 meses reunidos en un solo lugar y evitar el desorden de hojas sueltas. Si te gusta la sensación de planificar en papel con claridad y sin ruido, el cuaderno físico te dará la experiencia completa y duradera.
+                </p>
+                <div class="modal-books-grid">
+                    <!-- Planificador 90 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Enfoque trimestral</span>
+                            <h4 class="modal-book-title">Planificador 90 Días</h4>
+                            <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_generador_diario' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-90-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Planificador 180 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_180.jpg" alt="Planificador 180 Días" class="modal-book-thumb">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Hábito semestral</span>
+                            <h4 class="modal-book-title">Planificador 180 Días</h4>
+                            <a href="/ir/amazon-180-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_180_dias', origen: 'modal_generador_diario' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-180-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENLACE A RESEÑA EN AMAZON -->
+            <div style="text-align: center; margin-top: 14px;">
+                <a href="/ir/amazon-resena-90-dias.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline; transition: color 0.2s;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_90_dias', origen: 'modal_generador_diario' })">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
             </div>
         </div>
     </div>
@@ -1386,7 +1632,31 @@
             return result;
         }
 
+        // CONTROLADORES DEL MODAL DE DESCARGA
+        function openDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.add('active');
+        }
+        function closeDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.remove('active');
+        }
+        function closeModalOnBackdrop(e) {
+            if (e.target && e.target.id === 'download-modal') closeDownloadModal();
+        }
+
+        // ANALÍTICA VERCEL: TRACKING DE EVENTOS
+        function trackVercelEvent(name, data) {
+            try {
+                if (typeof window.va === 'function') {
+                    window.va('event', { name: name, data: data || {} });
+                }
+            } catch(e) {}
+        }
+
         function generatePdf(isBlank = false) {
+            closeDownloadModal();
+
             const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
             if (!jsPDFClass) {
                 alert('La librería jsPDF aún se está cargando. Por favor espera un segundo.');
