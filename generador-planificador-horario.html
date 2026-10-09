@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador Planificador Horario · Menos Ruido</title>
 
+    <!-- GUARDIA DE SEGURIDAD / ACCESO POR PIN -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
     <!-- Vercel Web Analytics & Speed Insights -->
     <script>
       window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -20,7 +27,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
+    <!-- jsPDF UMD local y CDN de respaldo -->
     <script src="./jspdf.umd.min.js"></script>
     <script>
         if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
@@ -37,12 +44,12 @@
         :root {
             --bg-color: #f7f5f0;
             --paper-color: #fffefb;
-            --text-main: #212121;
+            --text-main: #211c18;
             --text-muted: #66615b;
             --accent: #87553b;
             --accent-hover: #70442e;
-            --accent-light: rgba(135, 85, 59, 0.08);
             --border-line: #dcd7ce;
+            --border-strong: #28231e;
             --font-serif: 'Playfair Display', Georgia, serif;
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
@@ -61,26 +68,47 @@
             padding: 16px 14px 60px;
         }
 
-        .header-container {
-            max-width: 1380px;
+        /* BARRA SUPERIOR DE NAVEGACIÓN */
+        .top-nav {
+            max-width: 1040px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-link {
+            font-size: 0.80rem;
+            color: #777;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: var(--accent);
+        }
+
+        .badge-version {
+            font-size: 0.70rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--accent);
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        /* CABECERA EDITORIAL DE PÁGINA */
+        .header-title-box {
+            max-width: 1040px;
             margin: 0 auto 16px;
             text-align: center;
         }
 
-        .tag-pill {
-            display: inline-block;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            background: rgba(135, 85, 59, 0.12);
-            color: var(--accent);
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 8px;
-        }
-
-        h1 {
+        .header-title-box h1 {
             font-family: var(--font-serif);
             font-size: 1.95rem;
             color: #1a1614;
@@ -89,335 +117,355 @@
             letter-spacing: -0.3px;
         }
 
-        .subtitle {
-            font-size: 0.92rem;
+        .header-title-box p {
+            font-size: 0.88rem;
             color: var(--text-muted);
-            max-width: 760px;
+            max-width: 780px;
             margin: 0 auto;
         }
 
-        /* LAYOUT PRINCIPAL */
-        .app-layout {
-            max-width: 1380px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: minmax(360px, 420px) minmax(520px, 1fr);
-            gap: 28px;
-            align-items: start;
-        }
-
-        /* PANEL DE CONTROLES (IZQUIERDA) */
-        .controls-panel {
+        /* BARRA DE HERRAMIENTAS PRINCIPAL (STICKY) */
+        .canvas-toolbar {
+            max-width: 1040px;
+            margin: 0 auto 6px;
             background: #ffffff;
             border: 1px solid var(--border-line);
-            border-radius: 12px;
-            padding: 20px 22px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border-radius: 10px;
+            padding: 8px 14px;
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .panel-header-top {
-            display: flex;
+            flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #efeae1;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
         }
 
-        .panel-heading-text {
-            font-size: 1.15rem;
-            font-family: var(--font-serif);
-            font-weight: 700;
-            color: #1e1916;
-        }
-
-        .panel-actions-quick {
+        .toolbar-group {
             display: flex;
+            align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .btn-quick {
-            background: #f3efe8;
-            border: none;
-            color: var(--accent);
-            font-size: 0.78rem;
-            font-weight: 600;
+        .toolbar-btn {
+            background: #fbf8f2;
+            border: 1px solid #dfd6c7;
+            color: #4a3c31;
             padding: 6px 12px;
             border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-quick:hover {
-            background: #e7dfd2;
-            color: var(--accent-hover);
-        }
-
-        .section-box {
-            border: 1px solid #ebe6dc;
-            background: #faf9f6;
-            border-radius: 8px;
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .section-header-title {
-            font-size: 0.76rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--accent);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .form-label {
             font-size: 0.78rem;
             font-weight: 600;
-            color: #444;
-            display: flex;
-            justify-content: space-between;
+            cursor: pointer;
+            display: inline-flex;
             align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+        .toolbar-btn:hover {
+            background: #f1ebd8;
+            border-color: #cbbeae;
+            color: #2e241c;
         }
 
-        .form-label small {
-            font-weight: normal;
-            color: #888;
+        /* SELECTOR DE MODO: UNA TABLA vs MULTITABLA */
+        .table-mode-toggle {
+            display: inline-flex;
+            background: #ede8df;
+            border-radius: 20px;
+            padding: 2px;
+            gap: 2px;
+            border: 1px solid #d5cfc5;
+        }
+        .btn-mode-pill {
+            background: transparent;
+            border: none;
+            border-radius: 16px;
+            padding: 4px 11px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #554d45;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-mode-pill.active {
+            background: #ffffff;
+            color: #1a1614;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+        .btn-mode-pill:hover:not(.active) {
+            color: var(--accent);
         }
 
-        .form-control {
-            width: 100%;
-            padding: 8px 10px;
+        .toolbar-select-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .toolbar-select {
+            padding: 5px 9px;
             border: 1px solid #d5cfc5;
             border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.86rem;
+            font-size: 0.78rem;
+            font-weight: 600;
             background: #fff;
-            color: #222;
+            color: #333;
+            cursor: pointer;
+            outline: none;
             transition: border-color 0.2s;
         }
-
-        .form-control:focus {
-            outline: none;
+        .toolbar-select:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
         }
 
-        .grid-2col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .auto-expand-textarea {
-            resize: none;
-            overflow-y: hidden;
-            min-height: 42px;
-            line-height: 1.4;
-        }
-
-        .char-counter {
-            font-size: 0.7rem;
-            color: #888;
-            text-align: right;
-            margin-top: 2px;
-        }
-
-        .helper-text {
-            font-size: 0.72rem;
-            color: #777;
-            line-height: 1.35;
-        }
-
-        /* BOTONES DE ACCIÓN */
-        .btn-primary-action {
+        .btn-download-main {
             background: var(--accent);
             color: #ffffff;
             border: none;
-            padding: 12px 18px;
-            border-radius: 8px;
-            font-size: 0.92rem;
-            font-weight: 600;
+            padding: 7px 16px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 700;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.22);
-            width: 100%;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.2);
         }
-
-        .btn-primary-action:hover {
+        .btn-download-main:hover {
             background: var(--accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(135, 85, 59, 0.32);
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.28);
         }
 
-        .btn-secondary-action {
-            background: #ffffff;
-            color: #555;
-            border: 1px solid #d5cfc5;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 0.86rem;
-            font-weight: 500;
-            cursor: pointer;
+        /* AVISO CONTEXTUAL INTEGRADO (ESPACIO CONSTANTE SIN SALTO VERTICAL / ZERO CLS) */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            min-height: 34px;
+            margin: 4px auto 10px auto;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            text-align: center;
+            box-sizing: border-box;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
+            border: 1px solid transparent;
+            background: transparent;
+            color: transparent;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .sheet-inline-notice.active {
+            opacity: 1;
+            visibility: visible;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border-color: #dfd6c7;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            pointer-events: auto;
+        }
+
+        /* CONTENEDOR DEL LIENZO INTERACTIVO */
+        .paper-canvas-container {
             width: 100%;
-            margin-top: 4px;
-        }
-
-        .btn-secondary-action:hover {
-            background: #f7f5f0;
-            border-color: #baa;
-            color: var(--accent);
-        }
-
-        /* COLUMNA DERECHA: VISTA PREVIA */
-        .preview-column {
+            max-width: 980px;
+            margin: 0 auto;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: sticky;
-            top: 16px;
+            justify-content: center;
         }
 
-        .preview-banner {
-            display: flex;
-            align-items: center;
-            background: #f1ede5;
-            border: 1px solid #e1dcce;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #665f54;
-            box-sizing: border-box;
-        }
-
-        /* HOJA EDITORIAL HORARIO (APROX. 8.25" x 6") */
-        .preview-sheet-frame {
+        /* HOJA EDITORIAL HORARIO (8.25" × 6" APAISADO - IDÉNTICA A MENSUAL) */
+        .interactive-paper-schedule {
+            width: 100%;
+            max-width: 980px;
+            height: 712px;
+            max-height: 712px;
+            aspect-ratio: 8.25 / 6;
             background: var(--paper-color);
             border: 1px solid #dcd7ce;
-            border-radius: 8px;
-            padding: 18px 20px 14px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+            border-radius: 4px;
+            box-shadow: 0 16px 45px rgba(0,0,0,0.14);
+            padding: 16px 24px 14px;
             display: flex;
             flex-direction: column;
-            aspect-ratio: 8.25 / 6;
             box-sizing: border-box;
             position: relative;
             overflow: hidden;
         }
 
-        .preview-kicker {
-            font-size: 0.62rem;
+        /* CABECERA DEL PAPEL */
+        .paper-schedule-header {
+            margin-bottom: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .paper-kicker {
+            font-size: 0.60rem;
             letter-spacing: 1.8px;
             text-transform: uppercase;
             color: var(--accent);
             font-weight: 700;
-            margin-bottom: 3px;
         }
 
-        .preview-header-line {
+        .paper-header-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
             border-bottom: 1.5px solid #28231e;
             padding-bottom: 4px;
-            margin-bottom: 6px;
-            gap: 12px;
+            gap: 14px;
         }
 
-        .preview-main-title {
+        .paper-title {
             font-family: var(--font-serif);
             font-size: 1.25rem;
             font-weight: 700;
             color: #211c19;
             letter-spacing: -0.2px;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
-        .preview-date-text {
-            font-size: 0.74rem;
-            letter-spacing: 0.8px;
+        .editable-week-input {
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
             font-weight: 700;
-            color: #444;
+            color: #3e3834;
             text-transform: uppercase;
-            white-space: nowrap;
-            flex-shrink: 0;
+            letter-spacing: 0.8px;
+            text-align: right;
+            outline: none;
+            width: 260px;
+            border-bottom: 1px dashed transparent;
+            transition: border-color 0.2s;
+        }
+        .editable-week-input:hover, .editable-week-input:focus {
+            border-bottom-color: var(--accent);
+            background: rgba(135, 85, 59, 0.03);
         }
 
-        .preview-focus-quote {
+        .editable-focus-input {
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
             font-size: 0.68rem;
             font-style: italic;
             color: #666;
-            margin-bottom: 6px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            min-height: 14px;
+            outline: none;
+            width: 100%;
+            margin-top: 2px;
+            border-bottom: 1px dashed transparent;
+            transition: border-color 0.2s;
+        }
+        .editable-focus-input:hover, .editable-focus-input:focus {
+            border-bottom-color: var(--accent);
+            background: rgba(135, 85, 59, 0.03);
         }
 
-        /* TABLA DEL HORARIO */
+        /* CUERPO MODULAR (ORDEN REVERSIBLE: NOTAS ARRIBA O ABAJO) */
+        .modular-body-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 0;
+        }
+
+        /* TABLA DE HORARIO */
         .schedule-table-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
-            border: 1px solid #d8d2c6;
+            border: 1px solid #d5cfc4;
             border-radius: 4px;
             background: #ffffff;
             overflow: hidden;
-            margin-bottom: 6px;
+            min-height: 0;
         }
 
+        /* CABECERA DE DÍAS (CON LÍNEA GRUESA HORIZONTAL SEPARADORA DE DÍAS) */
         .schedule-header-row {
             display: grid;
-            grid-template-columns: 82px repeat(7, 1fr);
+            grid-template-columns: 86px repeat(7, 1fr);
             background: #f4efea;
-            border-bottom: 1px solid #d5cfc4;
+            border-bottom: 2.2px solid var(--border-strong);
             font-size: 0.58rem;
-            font-weight: 700;
-            color: #3e3834;
+            font-weight: 800;
+            color: #2b2520;
             text-align: center;
         }
 
         .schedule-header-cell {
             padding: 4px 2px;
-            border-right: 1px solid #e0dad0;
+            border-right: 1px solid #ded8cc;
             display: flex;
             align-items: center;
             justify-content: center;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
         }
         .schedule-header-cell:last-child {
             border-right: none;
         }
+
         .schedule-header-time-title {
             background: #ede6dc;
             font-weight: 800;
             color: var(--accent);
+            border-right: 1.5px solid #cbbeae;
+            padding: 2px 4px;
         }
 
+        /* INPUT EDITABLE EN ESQUINA MULTITABLA (SEM 1 / MÁX 10 CARACTERES) */
+        .schedule-corner-input {
+            width: 100%;
+            max-width: 80px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed rgba(135, 85, 59, 0.45);
+            font-family: var(--font-sans);
+            font-size: 0.58rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            outline: none;
+            padding: 1px 2px;
+            box-sizing: border-box;
+            transition: all 0.15s ease;
+        }
+        .schedule-corner-input:focus {
+            border-bottom: 1.5px solid var(--accent);
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 2px;
+        }
+
+        /* LÍNEA SEPARADORA GRUESA HORIZONTAL ENTRE SEMANAS (SEPARA EL LUNES DEL LUNES) */
+        .week-separator-divider {
+            height: 4px;
+            background: var(--border-strong);
+            border-top: 1px solid #111;
+            border-bottom: 1px solid #111;
+            width: 100%;
+        }
+
+        /* CUERPO DE FILAS */
         .schedule-body-rows {
             flex: 1;
             display: flex;
@@ -428,8 +476,9 @@
         .schedule-data-row {
             flex: 1;
             display: grid;
-            grid-template-columns: 82px repeat(7, 1fr);
+            grid-template-columns: 86px repeat(7, 1fr);
             border-bottom: 1px solid #ebe5db;
+            min-height: 0;
         }
         .schedule-data-row:last-child {
             border-bottom: none;
@@ -439,8 +488,8 @@
         }
 
         .schedule-time-cell {
-            border-right: 1.5px solid #d5cfc4;
-            background: #f9f7f3;
+            border-right: 1.5px solid #cbbeae;
+            background: #f8f5ee;
             font-size: 0.56rem;
             font-weight: 700;
             color: #4a443e;
@@ -450,81 +499,119 @@
             padding: 0 4px;
             white-space: nowrap;
             letter-spacing: -0.2px;
+            user-select: none;
         }
 
         .schedule-day-cell {
-            border-right: 1px solid #ece7de;
-            padding: 2px 3px;
-            font-size: 0.52rem;
-            color: #333;
+            border-right: 1px solid #ebe5db;
+            padding: 0;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
+            align-items: stretch;
+            justify-content: stretch;
+            position: relative;
             overflow: hidden;
         }
         .schedule-day-cell:last-child {
             border-right: none;
         }
 
-        .example-block-tag {
-            background: rgba(135, 85, 59, 0.09);
-            border-left: 2px solid var(--accent);
-            padding: 1px 3px;
-            border-radius: 2px;
-            font-size: 0.48rem;
-            color: #3d2b20;
+        /* TEXTAREA MULTILÍNEA: NUNCA CAMBIA DE COLOR DE FONDO AL ESCRIBIR */
+        .schedule-cell-textarea {
             width: 100%;
-            text-align: left;
-            white-space: nowrap;
+            height: 100%;
+            border: none;
+            background: transparent !important;
+            font-family: var(--font-sans);
+            font-size: 0.54rem;
+            line-height: 1.25;
+            color: #2b2520;
+            text-align: center;
+            outline: none;
+            padding: 2px 2px;
+            resize: none;
+            box-sizing: border-box;
+            display: block;
             overflow: hidden;
-            text-overflow: ellipsis;
+            word-break: break-word;
         }
 
-        /* BLOQUE INFERIOR DE NOTAS */
-        .preview-bottom-box {
-            background: #faf9f6;
-            border: 1px solid #e2ddd3;
-            border-radius: 4px;
-            padding: 5px 8px;
-            min-height: 38px;
+        /* BLOQUE MODULAR DE NOTAS Y PRIORIDADES (SIN DESPLAZADOR / OVERFLOW HIDDEN) */
+        .modular-notes-box {
+            background: #faf8f4;
+            border: 1px solid #dfd7cc;
+            border-radius: 5px;
+            padding: 5px 10px 4px 10px;
             display: flex;
             flex-direction: column;
             gap: 2px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            overflow: hidden;
         }
 
-        .preview-bottom-title {
-            font-size: 0.56rem;
-            font-weight: 700;
+        .notes-box-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notes-box-title {
+            font-size: 0.60rem;
+            font-weight: 800;
             letter-spacing: 0.8px;
             text-transform: uppercase;
             color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .preview-bottom-content {
-            font-size: 0.58rem;
-            color: #444;
-            line-height: 1.3;
+        .notes-char-counter {
+            font-size: 0.60rem;
+            color: #8c8278;
         }
 
-        /* PIE DE PÁGINA */
-        .preview-footer-line {
+        .editable-notes-textarea {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 0.61rem;
+            color: #3e3834;
+            line-height: 1.32;
+            resize: none;
+            outline: none;
+            height: 62px;
+            overflow: hidden !important; /* CERO DESPLAZADOR */
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            box-sizing: border-box;
+        }
+        .editable-notes-textarea::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        .editable-notes-textarea:focus {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 3px;
+        }
+
+        /* PIE DE PÁGINA EDITORIAL */
+        .paper-schedule-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 5px;
-            font-size: 0.54rem;
+            font-size: 0.52rem;
             color: #999;
             letter-spacing: 0.5px;
         }
 
-        /* MODAL POP-UP DE DESCARGA (ESTILO ESTÁNDAR MENOS RUIDO) */
+        /* MODAL POP-UP DE DESCARGA */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(20, 16, 14, 0.65);
             backdrop-filter: blur(4px);
             display: none;
@@ -533,7 +620,6 @@
             z-index: 9999;
             padding: 16px;
         }
-
         .modal-overlay.active {
             display: flex;
         }
@@ -541,7 +627,7 @@
         .modal-card {
             background: #ffffff;
             border-radius: 14px;
-            max-width: 540px;
+            max-width: 520px;
             width: 100%;
             padding: 24px 22px;
             box-shadow: 0 24px 50px rgba(0,0,0,0.22);
@@ -551,7 +637,6 @@
             overflow-y: auto;
             text-align: center;
         }
-
         @keyframes modalIn {
             from { transform: translateY(14px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -559,12 +644,10 @@
 
         .modal-close-btn {
             position: absolute;
-            top: 14px;
-            right: 14px;
+            top: 14px; right: 14px;
             background: #f1ede5;
             border: none;
-            width: 28px;
-            height: 28px;
+            width: 28px; height: 28px;
             border-radius: 50%;
             font-size: 0.9rem;
             cursor: pointer;
@@ -574,7 +657,6 @@
             justify-content: center;
             transition: all 0.2s;
         }
-
         .modal-close-btn:hover {
             background: #e3ded5;
             color: #111;
@@ -598,48 +680,80 @@
             font-size: 1.35rem;
             font-weight: 700;
             color: #1a1614;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .modal-desc {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             color: #666;
             margin-bottom: 16px;
             line-height: 1.4;
         }
 
-        .btn-modal-download {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.95rem;
+        .modal-format-badge {
+            background: #fbf8f2;
+            border: 1px solid #e5dec9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.76rem;
             font-weight: 600;
+            color: #5d4a3b;
+            margin-bottom: 14px;
+            display: inline-block;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.90rem;
+            font-weight: 700;
             cursor: pointer;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-bottom: 20px;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.22);
         }
-
-        .btn-modal-download:hover {
+        .btn-modal-primary:hover {
             background: var(--accent-hover);
+            transform: translateY(-1px);
         }
 
+        .btn-modal-secondary {
+            background: #ffffff;
+            color: #4a3c31;
+            border: 1px solid #d5cfc5;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-modal-secondary:hover {
+            background: #f8f5ee;
+            border-color: #cbbeae;
+            color: var(--accent);
+        }
+
+        /* MOCKUPS CUADERNOS AMAZON */
         .modal-books-section {
-            background: #faf8f5;
-            border: 1px solid #e7e2d8;
-            border-radius: 10px;
-            padding: 14px 12px;
+            border-top: 1px solid #ebe6dc;
+            padding-top: 14px;
             text-align: left;
         }
-
         .modal-books-header {
-            font-size: 0.72rem;
+            font-size: 0.76rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
@@ -647,344 +761,264 @@
             margin-bottom: 4px;
             text-align: center;
         }
-
         .modal-books-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
             margin-top: 10px;
         }
-
         .modal-book-card {
-            background: #ffffff;
-            border: 1px solid #dfd9ce;
-            border-radius: 6px;
+            background: #faf9f6;
+            border: 1px solid #eae5db;
+            border-radius: 8px;
             padding: 8px;
             display: flex;
-            align-items: center;
             gap: 8px;
+            align-items: center;
         }
-
         .modal-book-thumb {
-            width: 40px;
-            height: 54px;
+            width: 44px;
+            height: 60px;
             object-fit: cover;
-            border-radius: 3px;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
-
         .modal-book-details {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 2px;
-            flex: 1;
-            min-width: 0;
         }
-
         .modal-book-badge {
-            font-size: 0.58rem;
+            font-size: 0.60rem;
             font-weight: 700;
             color: var(--accent);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
-
         .modal-book-title {
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 700;
-            color: #1a1614;
+            color: #222;
             line-height: 1.2;
-            margin: 0;
         }
-
         .btn-book-amazon {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 700;
             color: #ffffff;
             background: var(--accent);
             text-decoration: none;
-            padding: 4px 8px;
+            padding: 3px 7px;
             border-radius: 4px;
             width: fit-content;
             margin-top: 2px;
         }
 
-        /* TOAST */
-        .toast-notify {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #2b2520;
-            color: #ffffff;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 0.84rem;
-            font-weight: 500;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 10000;
-            animation: fadeIn 0.25s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 1024px) {
-            .app-layout {
-                grid-template-columns: 1fr;
+        /* RESPONSIVE */
+        @media (max-width: 860px) {
+            .interactive-paper-schedule {
+                aspect-ratio: auto;
+                height: auto;
+                padding: 14px 10px;
             }
-            .preview-column {
-                position: static;
+            .schedule-header-row, .schedule-data-row {
+                grid-template-columns: 66px repeat(7, 1fr);
             }
-            .modal-books-grid {
-                grid-template-columns: 1fr;
+            .schedule-time-cell {
+                font-size: 0.50rem;
+            }
+            .canvas-toolbar {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- ENCABEZADO -->
-    <header class="header-container">
-        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
-        <div>
-            <span class="tag-pill">Herramienta Gratuita · Menos Ruido</span>
-            <h1>Planificador Horario</h1>
-            <p class="subtitle">Estructura semanal por franjas horarias con hasta 24 filas configurables. Diseña tus bloques de tiempo con calma y claridad antes de imprimir en papel.</p>
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
+    <div class="top-nav">
+        <a href="/generador.html" class="back-link">← Volver al catálogo de generadores</a>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge-version">Edición Directa 1:1</span>
         </div>
-    </header>
+    </div>
 
-    <!-- LAYOUT PRINCIPAL -->
-    <main class="app-layout">
+    <!-- CABECERA EDITORIAL DE PÁGINA -->
+    <div class="header-title-box">
+        <h1>Planificador Horario Interactivo</h1>
+        <p>Escribe directamente sobre el folio apaisado 8.25" × 6". Estructura tu semana por franjas horarias con separación horizontal destacada y posición adaptable de notas.</p>
+    </div>
 
-        <!-- PANEL DE CONTROLES (IZQUIERDA) -->
-        <section class="controls-panel">
-            <div class="panel-header-top">
-                <span class="panel-heading-text">Configura tu planificador</span>
-                <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
-                    <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
-                </div>
-            </div>
+    <!-- BARRA DE HERRAMIENTAS PRINCIPAL (STICKY) -->
+    <div class="canvas-toolbar">
+        <!-- GRUPO 1: LIMPIAR, EJEMPLO Y CAMBIO DE POSICIÓN DE NOTAS -->
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Limpiar todos los textos para empezar en blanco">
+                <span>🧹</span> Limpiar
+            </button>
+            <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar ejemplo editorial">
+                <span>✨</span> Cargar ejemplo
+            </button>
+            <button type="button" class="toolbar-btn" id="btn-toggle-notes-pos" onclick="toggleNotesPosition()" title="Cambiar ubicación de las notas entre arriba y abajo">
+                🔄 Notas: Abajo (Cambiar a Arriba)
+            </button>
+        </div>
 
-            <!-- SECCIÓN 1: CONFIGURACIÓN DE HORAS E INTERVALOS -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>1. Franjas Horarias (Divisibles entre 24)</span>
-                </div>
-
-                <div class="grid-2col">
-                    <div class="form-group">
-                        <label class="form-label" for="select-start-hour">Hora de inicio</label>
-                        <select id="select-start-hour" class="form-control" onchange="onTimeConfigChange()">
-                            <option value="0">00:00</option>
-                            <option value="1">01:00</option>
-                            <option value="2">02:00</option>
-                            <option value="3">03:00</option>
-                            <option value="4">04:00</option>
-                            <option value="5">05:00</option>
-                            <option value="6">06:00</option>
-                            <option value="7">07:00</option>
-                            <option value="8" selected>08:00 (Recomendado)</option>
-                            <option value="9">09:00</option>
-                            <option value="10">10:00</option>
-                            <option value="11">11:00</option>
-                            <option value="12">12:00</option>
-                            <option value="13">13:00</option>
-                            <option value="14">14:00</option>
-                            <option value="15">15:00</option>
-                            <option value="16">16:00</option>
-                            <option value="17">17:00</option>
-                            <option value="18">18:00</option>
-                            <option value="19">19:00</option>
-                            <option value="20">20:00</option>
-                            <option value="21">21:00</option>
-                            <option value="22">22:00</option>
-                            <option value="23">23:00</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="select-interval">Intervalo de fila</label>
-                        <select id="select-interval" class="form-control" onchange="onIntervalSelectChange()">
-                            <option value="0.5">30 min (0.5 h)</option>
-                            <option value="1" selected>Cada 1 hora (24h)</option>
-                            <option value="2">Cada 2 horas (12 filas)</option>
-                            <option value="3">Cada 3 horas (8 filas)</option>
-                            <option value="4">Cada 4 horas (6 filas)</option>
-                            <option value="6">Cada 6 horas (4 filas)</option>
-                            <option value="12">Cada 12 horas (2 filas)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="select-row-count">
-                        <span>Número de filas en la hoja</span>
-                        <small id="rows-coverage-info">Cubre 24 horas</small>
-                    </label>
-                    <select id="select-row-count" class="form-control" onchange="onRowsCountChange()">
-                        <!-- Se llena dinámicamente hasta 24 filas máximo -->
-                    </select>
-                    <span class="helper-text" id="helper-time-summary">Desde 08:00 hasta 08:00 del día siguiente (24 franjas completas).</span>
-                </div>
-            </div>
-
-            <!-- SECCIÓN 2: DATOS DE LA SEMANA -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>2. Datos de la Semana</span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="input-week-label">
-                        <span>Semana o Fechas</span>
-                        <small>Máx. 20 caracteres</small>
-                    </label>
-                    <textarea id="input-week-label" class="form-control auto-expand-textarea" rows="1" maxlength="20" placeholder="Ej: 14 - 20 Octubre" oninput="handleWeekInput(this)"></textarea>
-                    <div class="char-counter" id="count-week-label">0/20</div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="input-week-focus">
-                        <span>Enfoque o Lema de la Semana</span>
-                        <small>Máx. 150 caracteres</small>
-                    </label>
-                    <textarea id="input-week-focus" class="form-control auto-expand-textarea" maxlength="150" placeholder="Ej: Menos prisa, una sola prioridad clara al día y desconexión a las 20:00." oninput="handleFocusInput(this)"></textarea>
-                    <div class="char-counter" id="count-week-focus">0/150</div>
-                </div>
-            </div>
-
-            <!-- SECCIÓN 3: NOTAS Y OBSERVACIONES -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>3. Notas y Prioridades del Horario</span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="input-week-notes">
-                        <span>Notas, balance o reglas del horario</span>
-                        <small>Máx. 150 caracteres</small>
-                    </label>
-                    <textarea id="input-week-notes" class="form-control auto-expand-textarea" maxlength="150" placeholder="Ej: Bloques de trabajo profundo por la mañana sin revisar notificaciones. Tiempo de calidad y lectura por la noche." oninput="handleNotesInput(this)"></textarea>
-                    <div class="char-counter" id="count-week-notes">0/150</div>
-                </div>
-            </div>
-
-            <!-- BOTONES DE ACCIÓN -->
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
-                <button type="button" class="btn-primary-action" onclick="openDownloadModal(false)">
-                    📥 Descargar mi Horario en PDF
+        <!-- GRUPO 2: CONFIGURACIÓN DE TABLA, HORARIO Y CICLO -->
+        <div class="toolbar-group">
+            <div class="table-mode-toggle">
+                <button type="button" class="btn-mode-pill active" id="btn-mode-single" onclick="setTableMode('single')" title="Vista de una única tabla semanal">
+                    Una tabla
                 </button>
-                <button type="button" class="btn-secondary-action" onclick="openDownloadModal(true)">
-                    📄 Descargar Plantilla Limpia en Blanco (PDF)
+                <button type="button" class="btn-mode-pill" id="btn-mode-multi" onclick="setTableMode('multi')" title="Vista multitabla con 2 o 3 semanas apiladas">
+                    Multitabla
                 </button>
             </div>
-        </section>
 
-        <!-- COLUMNA DERECHA: VISTA PREVIA INTERACTIVA -->
-        <section class="preview-column">
-            <div class="preview-banner">
-                <span>Vista previa</span>
+            <label class="toolbar-select-label" for="select-start-hour">Inicio:</label>
+            <select id="select-start-hour" class="toolbar-select" onchange="onTimeConfigChange()">
+                <option value="0">00:00</option>
+                <option value="1">01:00</option>
+                <option value="2">02:00</option>
+                <option value="3">03:00</option>
+                <option value="4">04:00</option>
+                <option value="5">05:00</option>
+                <option value="6">06:00</option>
+                <option value="7">07:00</option>
+                <option value="8" selected>08:00</option>
+                <option value="9">09:00</option>
+                <option value="10">10:00</option>
+                <option value="11">11:00</option>
+                <option value="12">12:00</option>
+                <option value="13">13:00</option>
+                <option value="14">14:00</option>
+                <option value="15">15:00</option>
+                <option value="16">16:00</option>
+                <option value="17">17:00</option>
+                <option value="18">18:00</option>
+                <option value="19">19:00</option>
+                <option value="20">20:00</option>
+                <option value="21">21:00</option>
+                <option value="22">22:00</option>
+                <option value="23">23:00</option>
+            </select>
+
+            <label class="toolbar-select-label" for="select-interval">Intervalo:</label>
+            <select id="select-interval" class="toolbar-select" onchange="onIntervalSelectChange()">
+                <option value="0.5">30 min</option>
+                <option value="1" selected>1 hora</option>
+                <option value="2">2 horas</option>
+                <option value="3">3 horas</option>
+                <option value="4">4 horas</option>
+                <option value="6">6 horas</option>
+                <option value="12">12 horas</option>
+            </select>
+
+            <label class="toolbar-select-label" for="select-row-count" id="label-row-count">Filas:</label>
+            <select id="select-row-count" class="toolbar-select" onchange="onRowsCountChange()">
+                <!-- Se llena dinámicamente con Ciclo 24 horas, Ciclo 48 horas, etc. -->
+            </select>
+        </div>
+
+        <!-- GRUPO 3: BOTÓN DE DESCARGA PDF -->
+        <div class="toolbar-group">
+            <button type="button" class="btn-download-main" onclick="openDownloadModal()">
+                📥 Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- AVISO CONTEXTUAL INTEGRADO (ESPACIO CONSTANTE SIN SALTO VERTICAL / ZERO CLS) -->
+    <div class="sheet-inline-notice" id="toast-notify"></div>
+
+    <!-- LIENZO FÍSICO INTERACTIVO HORIZONTAL (8.25" × 6") -->
+    <div class="paper-canvas-container">
+        <div class="interactive-paper-schedule" id="paper-sheet">
+
+            <!-- CABECERA DEL PAPEL -->
+            <div class="paper-schedule-header">
+                <span class="paper-kicker">MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL</span>
+                <div class="paper-header-row">
+                    <span class="paper-title">Planificador Horario</span>
+                    <input type="text" class="editable-week-input" id="field-week-title" maxlength="30" placeholder="Semana 42 / 14 - 20 Octubre" value="Semana 42">
+                </div>
+                <input type="text" class="editable-focus-input" id="field-week-focus" maxlength="160" placeholder="«Enfoque semanal: Proteger las primeras horas para concentración profunda...»" value="«Proteger las primeras horas del día para el trabajo que requiere concentración profunda.»">
             </div>
 
-            <!-- HOJA EDITORIAL -->
-            <div class="preview-sheet-frame" id="preview-sheet">
-                <!-- KICKER -->
-                <div class="preview-kicker">MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL</div>
+            <!-- CUERPO MODULAR INTERCAMBIABLE (ORDEN REVERSIBLE SEGÚN POSICIÓN) -->
+            <div class="modular-body-wrap" id="modular-body-wrap">
 
-                <!-- CABECERA -->
-                <div class="preview-header-line">
-                    <div class="preview-main-title">Planificador Horario</div>
-                    <div class="preview-date-text" id="prev-week-label">SEMANA: ___________________</div>
-                </div>
-
-                <!-- LEMA O ENFOQUE -->
-                <div class="preview-focus-quote" id="prev-focus-quote"></div>
-
-                <!-- TABLA SEMANAL -->
-                <div class="schedule-table-wrapper">
-                    <!-- CABECERA DE DÍAS -->
-                    <div class="schedule-header-row">
-                        <div class="schedule-header-cell schedule-header-time-title">HORA</div>
-                        <div class="schedule-header-cell">LUNES</div>
-                        <div class="schedule-header-cell">MARTES</div>
-                        <div class="schedule-header-cell">MIÉRCOLES</div>
-                        <div class="schedule-header-cell">JUEVES</div>
-                        <div class="schedule-header-cell">VIERNES</div>
-                        <div class="schedule-header-cell">SÁBADO</div>
-                        <div class="schedule-header-cell">DOMINGO</div>
+                <!-- 1. BLOQUE DE NOTAS Y PRIORIDADES DE LA SEMANA -->
+                <div class="modular-notes-box" id="block-notes">
+                    <div class="notes-box-header">
+                        <span class="notes-box-title">
+                            📝 NOTAS Y PRIORIDADES DE LA SEMANA
+                        </span>
+                        <span class="notes-char-counter" id="count-notes">0/720</span>
                     </div>
-
-                    <!-- FILAS DE FRANJAS HORARIAS -->
-                    <div class="schedule-body-rows" id="prev-schedule-rows-container">
-                        <!-- Generado por JS -->
-                    </div>
+                    <textarea class="editable-notes-textarea" id="field-week-notes" maxlength="720" placeholder="• Bloques de trabajo profundo por la mañana sin notificaciones.&#10;• Paseo diario de 30 minutos sin auriculares para despejar la mente." oninput="handleNotesInput(this)">• Bloques de trabajo profundo por la mañana sin notificaciones.
+• Paseo diario de 30 minutos sin auriculares para despejar la mente.</textarea>
                 </div>
 
-                <!-- BLOQUE INFERIOR DE NOTAS -->
-                <div class="preview-bottom-box">
-                    <div class="preview-bottom-title">NOTAS Y PRIORIDADES DE LA SEMANA</div>
-                    <div class="preview-bottom-content" id="prev-notes-content"></div>
+                <!-- 2. TABLA DEL HORARIO (CON LÍNEA GRUESA HORIZONTAL SEPARADORA) -->
+                <div class="schedule-table-wrapper" id="block-schedule-table">
+                    <!-- Generada dinámicamente: para 1 o 2 semanas con su separador horizontal grueso -->
                 </div>
 
-                <!-- FOOTER -->
-                <div class="preview-footer-line">
-                    <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
-                    <span>editorialmenosruido.com</span>
-                </div>
             </div>
-        </section>
 
-    </main>
+            <!-- PIE DE PÁGINA EDITORIAL EXACTO -->
+            <div class="paper-schedule-footer">
+                <span>MENOS RUIDO · SISTEMA PLANIFICADOR HORARIO</span>
+                <span>editorialmenosruido.com</span>
+            </div>
 
-    <!-- MODAL POP-UP DE DESCARGA (ESTILO ESTÁNDAR MENOS RUIDO) -->
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA -->
     <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
         <div class="modal-card">
             <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
-            <span class="modal-badge" id="modal-badge-label">Descarga Lista</span>
-            <h3 class="modal-title" id="modal-title-label">Tu Horario en Papel</h3>
-            <p class="modal-desc" id="modal-desc-label">Genera tu PDF vectorial calibrado para lápiz o pluma estilográfica.</p>
+            <span class="modal-badge">Descarga Lista</span>
+            <h3 class="modal-title">Descargar Planificador Horario</h3>
+            <p class="modal-desc">Elige si deseas tu PDF maquetado con tus bloques y notas escritas o una plantilla en blanco para rellenar a lápiz o pluma.</p>
 
-            <div style="text-align: left; margin-bottom: 16px;">
-                <label for="modal-select-format" style="font-size: 0.8rem; font-weight: 700; color: #444; margin-bottom: 4px; display: block;">Formato de papel:</label>
-                <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
-                    <option value="book" selected>Formato Libro 8.25" × 6" (210 × 152 mm)</option>
-                    <option value="a4">Folio DIN A4 Apaisado (297 × 210 mm)</option>
-                </select>
+            <div class="modal-format-badge">
+                📐 Formato Libro 8.25" × 6" (210 × 152 mm) · Calidad Imprenta 300 DPI
             </div>
 
-            <button type="button" class="btn-modal-download" onclick="executeScheduleDownload()" id="modal-download-btn-text">
-                📥 Descargar PDF ahora
-            </button>
+            <!-- ACCIONES DEL MODAL: CON DATOS O EN BLANCO -->
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                <button type="button" class="btn-modal-primary" onclick="executeScheduleDownload(false)">
+                    <span>📥</span> Descargar con mi planificación escrita
+                </button>
+                <button type="button" class="btn-modal-secondary" onclick="executeScheduleDownload(true)">
+                    <span>📄</span> Descargar plantilla limpia en blanco
+                </button>
+            </div>
 
             <!-- CUADERNOS FÍSICOS EN AMAZON -->
             <div class="modal-books-section">
                 <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
-                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 4px 0 12px 0;">
-                    Esta plantilla te permite estructurar tus bloques de tiempo semana a semana, pero la metodología integral para evitar la saturación y sostener tus avances está en nuestras ediciones encuadernadas.
+                <p style="font-size: 0.74rem; color: #777; line-height: 1.4; text-align: center; margin: 4px 0 10px 0;">
+                    Esta herramienta te permite estructurar tus bloques semana a semana, pero el método completo encuadernado está disponible en Amazon.
                 </p>
                 <div class="modal-books-grid">
-                    <!-- Planificador 90 Días -->
                     <div class="modal-book-card">
                         <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb">
                         <div class="modal-book-details">
-                            <span class="modal-book-badge">Enfoque trimestral</span>
+                            <span class="modal-book-badge">Trimestral</span>
                             <h4 class="modal-book-title">Planificador 90 Días</h4>
                             <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_horario' })">
                                 Amazon ↗
                             </a>
                         </div>
                     </div>
-
-                    <!-- Planificador Semanal -->
                     <div class="modal-book-card">
                         <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Atemporal" class="modal-book-thumb">
                         <div class="modal-book-details">
-                            <span class="modal-book-badge">Formato Apaisado</span>
+                            <span class="modal-book-badge">Apaisado</span>
                             <h4 class="modal-book-title">Semanal Atemporal</h4>
                             <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_semanal', origen: 'modal_horario' })">
                                 Amazon ↗
@@ -996,64 +1030,231 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICACIÓN -->
-    <div class="toast-notify" id="toast-msg"></div>
-
     <script>
         // ESTADO GLOBAL
-        let isExampleActive = false;
-        let isBlankModal = false;
-
-        const SCHEDULE_EXAMPLE = {
-            week: 'Semana 42',
-            focus: 'Proteger las primeras horas para el trabajo que requiere concentración profunda.',
-            notes: 'Sin pantallas a partir de las 20:30. Paseo diario de 30 minutos sin auriculares para despejar la mente.',
-            blocks: [
-                { row: 0, day: 0, text: 'Enfoque Profundo' },
-                { row: 0, day: 1, text: 'Enfoque Profundo' },
-                { row: 0, day: 2, text: 'Enfoque Profundo' },
-                { row: 0, day: 3, text: 'Enfoque Profundo' },
-                { row: 0, day: 4, text: 'Planificación' },
-                { row: 1, day: 0, text: 'Gestión / Email' },
-                { row: 1, day: 2, text: 'Reunión de equipo' },
-                { row: 2, day: 4, text: 'Balance semanal' },
-                { row: 3, day: 5, text: 'Caminata y calma' },
-                { row: 3, day: 6, text: 'Lectura reposada' }
-            ]
+        const state = {
+            mode: 'single', // 'single' | 'multi'
+            weeksCount: 1, // 1 | 2 | 3 | 4
+            startHour: 8,
+            interval: 1, // horas por fila
+            rowsPerWeek: 16, // filas horarias por cada semana
+            notesPosition: 'bottom', // 'top' | 'bottom'
+            weekLabels: { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3', 3: 'SEM 4' },
+            cellData: {} // key: `w_${weekIdx}_r_${rowIdx}_d_${dayIdx}` => string
         };
 
-        // AUTO-EXPAND TEXTAREAS
-        function autoResizeTextarea(el) {
-            if (!el) return;
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight + 2) + 'px';
+        // EJEMPLO EDITORIAL
+        const EXAMPLE_DATA = {
+            week: 'Semana 42',
+            focus: 'Proteger las primeras horas del día para el trabajo que requiere concentración profunda.',
+            notes: '• Bloques de trabajo profundo por la mañana sin revisar notificaciones.\n• Paseo diario de 30 minutos sin auriculares para despejar la mente.\n• Desconexión digital estricta a partir de las 20:30.',
+            cells: {
+                'w_0_r_0_d_0': 'Enfoque Profundo',
+                'w_0_r_0_d_1': 'Enfoque Profundo',
+                'w_0_r_0_d_2': 'Enfoque Profundo',
+                'w_0_r_0_d_3': 'Enfoque Profundo',
+                'w_0_r_0_d_4': 'Planificación',
+                'w_0_r_1_d_0': 'Gestión / Email',
+                'w_0_r_1_d_2': 'Reunión de equipo',
+                'w_0_r_2_d_4': 'Balance semanal',
+                'w_0_r_3_d_5': 'Caminata y calma',
+                'w_0_r_3_d_6': 'Lectura reposada'
+            }
+        };
+
+        // ========================================================
+        // AVISOS CONTEXTUALES (SIN SALTO VERTICAL / ZERO CLS)
+        // ========================================================
+        let toastTimer = null;
+        function showToast(msg) {
+            const t = document.getElementById('toast-notify');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('active');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                t.classList.remove('active');
+            }, 3000);
         }
 
-        function handleWeekInput(el) {
-            isExampleActive = false;
-            autoResizeTextarea(el);
-            const count = document.getElementById('count-week-label');
-            if (count) count.textContent = `${el.value.length}/20`;
-            updateHeaderPreview();
+        // ========================================================
+        // CONTROL DE MODOS: UNA TABLA vs MULTITABLA
+        // ========================================================
+        function setTableMode(newMode) {
+            if (newMode === state.mode) return;
+
+            const step = getStepHours();
+            let targetWeeks = 1;
+            let targetRows = state.rowsPerWeek;
+
+            if (newMode === 'single') {
+                targetWeeks = 1;
+                const maxSingle = Math.min(24, Math.floor(24 / step));
+                targetRows = Math.min(state.rowsPerWeek, maxSingle);
+            } else {
+                targetWeeks = 2;
+                targetRows = Math.min(state.rowsPerWeek, (step === 2 ? 8 : 12));
+            }
+
+            const check = checkScheduleCapacity(targetWeeks, targetRows);
+            if (!check.ok) {
+                showToast(check.reason);
+                return;
+            }
+
+            state.mode = newMode;
+            state.weeksCount = targetWeeks;
+            state.rowsPerWeek = targetRows;
+
+            updateModeUI();
+            populateRowCountSelect();
+            renderScheduleTable();
+            showToast(state.mode === 'single' ? 'Modo: Una tabla activado' : `Modo: Multitabla activado (${state.weeksCount} semanas)`);
         }
 
-        function handleFocusInput(el) {
-            isExampleActive = false;
-            autoResizeTextarea(el);
-            const count = document.getElementById('count-week-focus');
-            if (count) count.textContent = `${el.value.length}/150`;
-            updateHeaderPreview();
+        function updateModeUI() {
+            const btnSingle = document.getElementById('btn-mode-single');
+            const btnMulti = document.getElementById('btn-mode-multi');
+            const labelRows = document.getElementById('label-row-count');
+            if (btnSingle) btnSingle.classList.toggle('active', state.mode === 'single');
+            if (btnMulti) btnMulti.classList.toggle('active', state.mode === 'multi');
+            if (labelRows) labelRows.textContent = (state.mode === 'single') ? 'Filas:' : 'Ciclo / Semanas:';
         }
 
-        function handleNotesInput(el) {
-            isExampleActive = false;
-            autoResizeTextarea(el);
-            const count = document.getElementById('count-week-notes');
-            if (count) count.textContent = `${el.value.length}/150`;
-            updateNotesPreview();
+        // ========================================================
+        // INTERCAMBIO DE POSICIÓN DE NOTAS (ARRIBA ⇄ ABAJO)
+        // ========================================================
+        function toggleNotesPosition() {
+            state.notesPosition = (state.notesPosition === 'bottom') ? 'top' : 'bottom';
+            applyNotesPositionUI();
+            showToast(`Notas y Prioridades ubicadas ${state.notesPosition === 'top' ? 'ARRIBA' : 'ABAJO'}`);
         }
 
-        // CONTROL DE HORARIOS Y DIVISORES DE 24
+        function applyNotesPositionUI() {
+            const bodyWrap = document.getElementById('modular-body-wrap');
+            const blockNotes = document.getElementById('block-notes');
+            const blockTable = document.getElementById('block-schedule-table');
+            const btn = document.getElementById('btn-toggle-notes-pos');
+
+            if (!bodyWrap || !blockNotes || !blockTable) return;
+
+            if (state.notesPosition === 'top') {
+                bodyWrap.insertBefore(blockNotes, blockTable);
+                if (btn) btn.textContent = '🔄 Notas: Arriba (Cambiar a Abajo)';
+            } else {
+                bodyWrap.appendChild(blockNotes);
+                if (btn) btn.textContent = '🔄 Notas: Abajo (Cambiar a Arriba)';
+            }
+        }
+
+        // ========================================================
+        // VALIDACIÓN DE CAPACIDAD FÍSICA Y PROTECCIÓN DE DATOS
+        // ========================================================
+        function hasTextInWeek(wIdx) {
+            return Object.keys(state.cellData).some(k => k.startsWith(`w_${wIdx}_` ) && state.cellData[k]?.trim());
+        }
+
+        function hasTextBeyondRow(maxRowsAllowed) {
+            return Object.keys(state.cellData).some(k => {
+                const parts = k.split('_');
+                const r = parseInt(parts[3], 10);
+                return r >= maxRowsAllowed && state.cellData[k]?.trim();
+            });
+        }
+
+        // Determina el número máximo de líneas de texto según la altura física real de la celda
+        function getMaxLinesAllowedForRow(weeksCount, rowsCount) {
+            if (weeksCount === 1) {
+                if (rowsCount <= 4) return 7;
+                if (rowsCount <= 6) return 5;
+                if (rowsCount <= 8) return 4;
+                if (rowsCount <= 12) return 3;
+                if (rowsCount <= 16) return 2;
+                return 1;
+            } else if (weeksCount === 2) {
+                if (rowsCount <= 4) return 3;
+                if (rowsCount <= 6) return 2;
+                return 1;
+            } else if (weeksCount === 3) {
+                if (rowsCount <= 4) return 2;
+                return 1;
+            } else { // 4 semanas
+                if (rowsCount <= 2) return 2;
+                return 1;
+            }
+        }
+
+        // Determina el número máximo de caracteres permitidos según la altura física
+        function getMaxCharsAllowedForRow(weeksCount, rowsCount) {
+            const lines = getMaxLinesAllowedForRow(weeksCount, rowsCount);
+            if (lines >= 7) return 160;
+            if (lines === 5) return 120;
+            if (lines === 4) return 90;
+            if (lines === 3) return 65;
+            if (lines === 2) return 42;
+            return 22; // 1 sola línea compacta
+        }
+
+        // Comprueba si alguna celda existente excede la capacidad del nuevo formato antes de cambiar
+        function checkScheduleCapacity(targetWeeks, targetRows) {
+            const targetMaxLines = getMaxLinesAllowedForRow(targetWeeks, targetRows);
+            const targetMaxChars = getMaxCharsAllowedForRow(targetWeeks, targetRows);
+
+            // 1. Semanas que quedarían eliminadas
+            if (targetWeeks < state.weeksCount) {
+                for (let w = targetWeeks; w < state.weeksCount; w++) {
+                    if (hasTextInWeek(w)) {
+                        return {
+                            ok: false,
+                            reason: `⚠️ No se puede reducir a ${targetWeeks} semana${targetWeeks > 1 ? 's' : ''}: la Semana ${w + 1} contiene texto. Bórralo para hacer hueco.`
+                        };
+                    }
+                }
+            }
+
+            // 2. Filas que quedarían eliminadas
+            if (targetRows < state.rowsPerWeek) {
+                for (let w = 0; w < targetWeeks; w++) {
+                    for (let r = targetRows; r < state.rowsPerWeek; r++) {
+                        for (let d = 0; d < 7; d++) {
+                            const key = `w_${w}_r_${r}_d_${d}`;
+                            if (state.cellData[key] && state.cellData[key].trim()) {
+                                return {
+                                    ok: false,
+                                    reason: `⚠️ No se puede reducir a ${targetRows} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Celdas con más líneas o caracteres de los que caben físicamente en el nuevo alto
+            for (let w = 0; w < targetWeeks; w++) {
+                for (let r = 0; r < Math.min(state.rowsPerWeek, targetRows); r++) {
+                    for (let d = 0; d < 7; d++) {
+                        const key = `w_${w}_r_${r}_d_${d}`;
+                        const val = state.cellData[key];
+                        if (val && val.trim()) {
+                            const lines = val.trim().split('\n').length;
+                            const len = val.trim().length;
+                            if (lines > targetMaxLines || len > targetMaxChars) {
+                                return {
+                                    ok: false,
+                                    reason: `⚠️ No hay espacio: en este formato más compacto las celdas admiten máx. ${targetMaxLines} línea${targetMaxLines > 1 ? 's' : ''} (${targetMaxChars} caracteres). Recorta texto en el horario para hacer hueco.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { ok: true };
+        }
+
+        // ========================================================
+        // CÁLCULO DE FRANJAS HORARIAS Y SELECTOR DE FILAS (CICLOS 24H, 48H, 72H...)
+        // ========================================================
         function getStepHours() {
             const val = parseFloat(document.getElementById('select-interval')?.value || '1');
             return isNaN(val) ? 1 : val;
@@ -1065,84 +1266,232 @@
         }
 
         function getRowCount() {
-            const val = parseInt(document.getElementById('select-row-count')?.value || '24', 10);
-            const step = getStepHours();
-            const minAllowed = (step === 12) ? 2 : 4;
-            return isNaN(val) ? 24 : Math.min(Math.max(val, minAllowed), 24);
+            return state.rowsPerWeek || 16;
         }
 
-        function populateRowCountSelect(preferredRows) {
+        function formatCycleLabel(rows, step) {
+            const totalHours = rows * step;
+            if (totalHours === 24) {
+                return ' (Ciclo 24 horas / Día completo)';
+            } else if (totalHours === 16) {
+                return ' (16 horas / Vigilia)';
+            } else if (totalHours === 12) {
+                return ' (12 horas / Medio ciclo)';
+            } else if (totalHours === 8) {
+                return ' (8 horas / Jornada laboral)';
+            }
+            return ` (${totalHours} horas)`;
+        }
+
+        function populateRowCountSelect(preferredVal) {
             const select = document.getElementById('select-row-count');
             if (!select) return;
 
             const step = getStepHours();
-            let defaultCycleRows = Math.min(Math.round(24 / step), 24);
-            if (step === 0.5) defaultCycleRows = 24;
 
-            const targetVal = preferredRows || defaultCycleRows;
-            const minRows = (step === 12) ? 2 : 4;
-
-            select.innerHTML = '';
-            for (let r = minRows; r <= 24; r++) {
-                const opt = document.createElement('option');
-                opt.value = r;
-                let extra = '';
-                if (r === defaultCycleRows) {
-                    extra = (step === 0.5) ? ' (12 horas)' : ' (Ciclo 24 horas completo)';
+            if (state.mode === 'single') {
+                // "Una tabla": estrictamente limitado a lo necesario para 1 día (máx 24 horas de ciclo)
+                let singleRowOptions = [];
+                if (step === 0.5) {
+                    singleRowOptions = [8, 12, 16, 20, 24]; // 4h, 6h, 8h, 10h, 12h
+                } else if (step === 1) {
+                    singleRowOptions = [6, 8, 10, 12, 14, 16, 18, 20, 24]; // hasta 24h
+                } else if (step === 2) {
+                    singleRowOptions = [4, 6, 8, 10, 12]; // hasta 24h
+                } else if (step === 3) {
+                    singleRowOptions = [3, 4, 6, 8]; // hasta 24h
+                } else if (step === 4) {
+                    singleRowOptions = [2, 3, 4, 6]; // hasta 24h
+                } else if (step === 6) {
+                    singleRowOptions = [2, 3, 4]; // hasta 24h
+                } else if (step === 12) {
+                    singleRowOptions = [2]; // 24h
+                } else {
+                    const maxR = Math.min(24, Math.floor(24 / step));
+                    for (let r = 2; r <= maxR; r += 2) singleRowOptions.push(r);
                 }
-                opt.textContent = `${r} filas${extra}`;
-                if (r === targetVal) opt.selected = true;
-                select.appendChild(opt);
-            }
 
-            updateCoverageInfo();
-        }
+                const maxAllowedRows = Math.min(24, Math.floor(24 / step));
+                let defaultRows = singleRowOptions.includes(state.rowsPerWeek)
+                    ? state.rowsPerWeek
+                    : (singleRowOptions.includes(16) ? 16 : singleRowOptions[singleRowOptions.length - 1]);
 
-        function updateCoverageInfo() {
-            const step = getStepHours();
-            const startH = getStartHour();
-            const rows = getRowCount();
-            const totalHours = rows * step;
+                const targetVal = preferredVal ? parseInt(preferredVal, 10) : defaultRows;
 
-            const covEl = document.getElementById('rows-coverage-info');
-            const summaryEl = document.getElementById('helper-time-summary');
+                select.innerHTML = '';
+                singleRowOptions.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = String(r);
+                    const cycleText = formatCycleLabel(r, step);
+                    opt.textContent = `${r} filas${cycleText}`;
+                    if (r === targetVal) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
 
-            const formatH = (h) => {
-                const intH = Math.floor(h);
-                const min = Math.round((h - intH) * 60);
-                return `${String(intH).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-            };
+                if (!select.value && select.options.length > 0) {
+                    select.selectedIndex = 0;
+                }
+                state.rowsPerWeek = parseInt(select.value || String(defaultRows), 10);
+            } else {
+                // Modo Multitabla:
+                // 2 Semanas: máx 16 filas
+                // 3 Semanas: máx 8 filas
+                // 4 Semanas: máx 4 filas
+                let multiConfigs = [];
+                if (step === 1) {
+                    multiConfigs = [
+                        // 2 Semanas (máx 16 filas)
+                        { weeks: 2, rows: 8, label: 'Ciclo 16 horas (2 Semanas · 8 filas / Vigilia)' },
+                        { weeks: 2, rows: 12, label: 'Ciclo 24 horas (2 Semanas · 12 filas / 12h por sem)' },
+                        { weeks: 2, rows: 16, label: 'Ciclo 32 horas (2 Semanas · 16 filas / 16h por sem)' },
+                        // 3 Semanas (máx 8 filas)
+                        { weeks: 3, rows: 4, label: 'Ciclo 12 horas (3 Semanas · 4 filas / 4h por sem)' },
+                        { weeks: 3, rows: 6, label: 'Ciclo 18 horas (3 Semanas · 6 filas / 6h por sem)' },
+                        { weeks: 3, rows: 8, label: 'Ciclo 24 horas (3 Semanas · 8 filas / 8h por sem)' },
+                        // 4 Semanas (máx 4 filas)
+                        { weeks: 4, rows: 2, label: 'Ciclo 8 horas (4 Semanas · 2 filas / 2h por sem)' },
+                        { weeks: 4, rows: 3, label: 'Ciclo 12 horas (4 Semanas · 3 filas / 3h por sem)' },
+                        { weeks: 4, rows: 4, label: 'Ciclo 16 horas (4 Semanas · 4 filas / 4h por sem)' }
+                    ];
+                } else if (step === 2) {
+                    multiConfigs = [
+                        // 2 Semanas (máx 16 filas)
+                        { weeks: 2, rows: 4, label: 'Ciclo 16 horas (2 Semanas · 4 filas / Vigilia)' },
+                        { weeks: 2, rows: 6, label: 'Ciclo 24 horas (2 Semanas · 6 filas / 12h por sem)' },
+                        { weeks: 2, rows: 8, label: 'Ciclo 32 horas (2 Semanas · 8 filas / 16h por sem)' },
+                        { weeks: 2, rows: 12, label: 'Ciclo 48 horas (2 Semanas · 12 filas / 24h por sem)' },
+                        { weeks: 2, rows: 16, label: 'Ciclo 64 horas (2 Semanas · 16 filas / 32h por sem)' },
+                        // 3 Semanas (máx 8 filas)
+                        { weeks: 3, rows: 4, label: 'Ciclo 24 horas (3 Semanas · 4 filas / 8h por sem)' },
+                        { weeks: 3, rows: 6, label: 'Ciclo 36 horas (3 Semanas · 6 filas / 12h por sem)' },
+                        { weeks: 3, rows: 8, label: 'Ciclo 48 horas (3 Semanas · 8 filas / 16h por sem)' },
+                        // 4 Semanas (máx 4 filas)
+                        { weeks: 4, rows: 2, label: 'Ciclo 16 horas (4 Semanas · 2 filas / 4h por sem)' },
+                        { weeks: 4, rows: 4, label: 'Ciclo 32 horas (4 Semanas · 4 filas / 8h por sem)' }
+                    ];
+                } else if (step === 0.5) {
+                    multiConfigs = [
+                        // 2 Semanas (máx 16 filas)
+                        { weeks: 2, rows: 8, label: 'Ciclo 8 horas (2 Semanas · 8 filas / 4h por sem)' },
+                        { weeks: 2, rows: 12, label: 'Ciclo 12 horas (2 Semanas · 12 filas / 6h por sem)' },
+                        { weeks: 2, rows: 16, label: 'Ciclo 16 horas (2 Semanas · 16 filas / 8h por sem)' },
+                        // 3 Semanas (máx 8 filas)
+                        { weeks: 3, rows: 4, label: 'Ciclo 6 horas (3 Semanas · 4 filas / 2h por sem)' },
+                        { weeks: 3, rows: 6, label: 'Ciclo 9 horas (3 Semanas · 6 filas / 3h por sem)' },
+                        { weeks: 3, rows: 8, label: 'Ciclo 12 horas (3 Semanas · 8 filas / 4h por sem)' },
+                        // 4 Semanas (máx 4 filas)
+                        { weeks: 4, rows: 2, label: 'Ciclo 4 horas (4 Semanas · 2 filas / 1h por sem)' },
+                        { weeks: 4, rows: 4, label: 'Ciclo 8 horas (4 Semanas · 4 filas / 2h por sem)' }
+                    ];
+                } else {
+                    multiConfigs = [
+                        { weeks: 2, rows: 4, label: `Ciclo ${4 * step * 2} horas (2 Semanas · 4 filas)` },
+                        { weeks: 2, rows: 6, label: `Ciclo ${6 * step * 2} horas (2 Semanas · 6 filas)` },
+                        { weeks: 3, rows: 4, label: `Ciclo ${4 * step * 3} horas (3 Semanas · 4 filas)` },
+                        { weeks: 3, rows: 6, label: `Ciclo ${6 * step * 3} horas (3 Semanas · 6 filas)` },
+                        { weeks: 4, rows: 2, label: `Ciclo ${2 * step * 4} horas (4 Semanas · 2 filas)` },
+                        { weeks: 4, rows: 4, label: `Ciclo ${4 * step * 4} horas (4 Semanas · 4 filas)` }
+                    ];
+                }
 
-            const startStr = formatH(startH);
-            const endStr = formatH((startH + totalHours) % 24);
+                // Filtrar estrictamente: 2 sem máx 16, 3 sem máx 8, 4 sem máx 4
+                multiConfigs = multiConfigs.filter(cfg => {
+                    if (cfg.weeks === 2) return cfg.rows <= 16;
+                    if (cfg.weeks === 3) return cfg.rows <= 8;
+                    if (cfg.weeks === 4) return cfg.rows <= 4;
+                    return false;
+                });
 
-            if (covEl) {
-                covEl.textContent = `Cubre ${totalHours} horas`;
-            }
-            if (summaryEl) {
-                summaryEl.textContent = `Franjas desde ${startStr} hasta ${endStr} (${rows} filas en total).`;
+                select.innerHTML = '';
+                const currentValStr = `${state.weeksCount}_${state.rowsPerWeek}`;
+                let hasMatch = false;
+
+                multiConfigs.forEach(cfg => {
+                    const opt = document.createElement('option');
+                    opt.value = `${cfg.weeks}_${cfg.rows}`;
+                    opt.textContent = cfg.label;
+                    if (opt.value === currentValStr || opt.value === preferredVal) {
+                        opt.selected = true;
+                        hasMatch = true;
+                    }
+                    select.appendChild(opt);
+                });
+
+                if (!hasMatch && multiConfigs.length > 0) {
+                    select.selectedIndex = 0;
+                    const [wStr, rStr] = select.value.split('_');
+                    state.weeksCount = parseInt(wStr, 10);
+                    state.rowsPerWeek = parseInt(rStr, 10);
+                }
             }
         }
 
         function onIntervalSelectChange() {
-            isExampleActive = false;
+            const step = getStepHours();
+            let targetWeeks = state.weeksCount;
+            let targetRows = state.rowsPerWeek;
+
+            if (state.mode === 'single') {
+                const maxSingle = Math.min(24, Math.floor(24 / step));
+                if (targetRows > maxSingle) {
+                    targetRows = maxSingle;
+                }
+            }
+
+            const check = checkScheduleCapacity(targetWeeks, targetRows);
+            if (!check.ok) {
+                document.getElementById('select-interval').value = String(state.interval || 1);
+                showToast(check.reason);
+                return;
+            }
+
+            state.interval = step;
+            state.rowsPerWeek = targetRows;
             populateRowCountSelect();
-            renderPreview();
+            renderScheduleTable();
+            showToast('Intervalo actualizado');
         }
 
         function onTimeConfigChange() {
-            isExampleActive = false;
-            updateCoverageInfo();
-            renderPreview();
+            renderScheduleTable();
+            showToast('Hora de inicio actualizada');
         }
 
         function onRowsCountChange() {
-            isExampleActive = false;
-            updateCoverageInfo();
-            renderPreview();
+            if (state.mode === 'single') {
+                const newCount = parseInt(document.getElementById('select-row-count').value, 10);
+                const check = checkScheduleCapacity(1, newCount);
+                if (!check.ok) {
+                    document.getElementById('select-row-count').value = String(state.rowsPerWeek);
+                    showToast(check.reason);
+                    return;
+                }
+                state.rowsPerWeek = newCount;
+                renderScheduleTable();
+                showToast('Número de filas actualizado');
+            } else {
+                const val = document.getElementById('select-row-count').value;
+                const [wStr, rStr] = val.split('_');
+                const targetWeeks = parseInt(wStr, 10);
+                const targetRows = parseInt(rStr, 10);
+
+                const check = checkScheduleCapacity(targetWeeks, targetRows);
+                if (!check.ok) {
+                    document.getElementById('select-row-count').value = `${state.weeksCount}_${state.rowsPerWeek}`;
+                    showToast(check.reason);
+                    return;
+                }
+
+                state.weeksCount = targetWeeks;
+                state.rowsPerWeek = targetRows;
+                renderScheduleTable();
+                showToast(`Multitabla configurada: ${targetWeeks} semanas (${targetRows} filas por semana)`);
+            }
         }
 
-        // GENERACIÓN DE FRAGMENTOS HORARIOS
+        // GENERACIÓN DE LABELS DE TIEMPO
         function generateTimeSlots(startH, stepH, count) {
             const slots = [];
             for (let i = 0; i < count; i++) {
@@ -1165,132 +1514,225 @@
             return slots;
         }
 
-        // ACTUALIZACIÓN DE VISTA PREVIA
-        function updateHeaderPreview() {
-            const weekInput = document.getElementById('input-week-label')?.value.trim() || '';
-            const focusInput = document.getElementById('input-week-focus')?.value.trim() || '';
-
-            const weekEl = document.getElementById('prev-week-label');
-            const focusEl = document.getElementById('prev-focus-quote');
-
-            const activeWeek = weekInput || (isExampleActive ? SCHEDULE_EXAMPLE.week : '');
-            const activeFocus = focusInput || (isExampleActive ? SCHEDULE_EXAMPLE.focus : '');
-
-            if (weekEl) {
-                weekEl.textContent = activeWeek ? `SEMANA: ${activeWeek}` : 'SEMANA: ___________________';
-            }
-            if (focusEl) {
-                focusEl.textContent = activeFocus ? `«${activeFocus}»` : '';
-            }
-        }
-
-        function updateNotesPreview() {
-            const notesInput = document.getElementById('input-week-notes')?.value.trim() || '';
-            const notesEl = document.getElementById('prev-notes-content');
-            const activeNotes = notesInput || (isExampleActive ? SCHEDULE_EXAMPLE.notes : '');
-
-            if (notesEl) {
-                notesEl.textContent = activeNotes || '';
-            }
-        }
-
-        function updateScheduleRowsPreview() {
-            const container = document.getElementById('prev-schedule-rows-container');
-            if (!container) return;
-            container.innerHTML = '';
+        // ========================================================
+        // RENDERIZADO DE LA TABLA DIRECTA EN EL LIENZO 1:1
+        // ========================================================
+        function renderScheduleTable() {
+            const tableWrap = document.getElementById('block-schedule-table');
+            if (!tableWrap) return;
 
             const startH = getStartHour();
             const stepH = getStepHours();
-            const rowCount = getRowCount();
-            const slots = generateTimeSlots(startH, stepH, rowCount);
+            const rowsCount = getRowCount();
+            const slots = generateTimeSlots(startH, stepH, rowsCount);
 
-            slots.forEach((slot, rowIdx) => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'schedule-data-row';
+            tableWrap.innerHTML = '';
 
-                let cellsHtml = `<div class="schedule-time-cell">${slot.label}</div>`;
+            const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+            const maxLinesAllowed = getMaxLinesAllowedForRow(state.weeksCount, rowsCount);
+            const maxCharsAllowed = getMaxCharsAllowedForRow(state.weeksCount, rowsCount);
 
-                for (let d = 0; d < 7; d++) {
-                    let cellContent = '';
-                    if (isExampleActive) {
-                        const block = SCHEDULE_EXAMPLE.blocks.find(b => b.row === rowIdx && b.day === d);
-                        if (block) {
-                            cellContent = `<div class="example-block-tag">${block.text}</div>`;
-                        }
-                    }
-                    cellsHtml += `<div class="schedule-day-cell">${cellContent}</div>`;
+            for (let w = 0; w < state.weeksCount; w++) {
+                // Si es semana 2 o 3, insertar la LÍNEA SEPARADORA GRUESA HORIZONTAL (que separa el lunes del lunes)
+                if (w > 0) {
+                    const separator = document.createElement('div');
+                    separator.className = 'week-separator-divider';
+                    tableWrap.appendChild(separator);
                 }
 
-                rowDiv.innerHTML = cellsHtml;
-                container.appendChild(rowDiv);
-            });
+                // CABECERA DE DÍAS (CON LÍNEA GRUESA HORIZONTAL DE DÍAS)
+                const headerRow = document.createElement('div');
+                headerRow.className = 'schedule-header-row';
+
+                // Celda de esquina (HORA o input editable SEM 1 / máx 10 caracteres)
+                const timeHeader = document.createElement('div');
+                timeHeader.className = 'schedule-header-cell schedule-header-time-title';
+
+                if (state.mode === 'multi') {
+                    const cornerInput = document.createElement('input');
+                    cornerInput.type = 'text';
+                    cornerInput.className = 'schedule-corner-input';
+                    cornerInput.maxLength = 10;
+                    cornerInput.value = state.weekLabels[w] !== undefined ? state.weekLabels[w] : `SEM ${w + 1}`;
+                    cornerInput.placeholder = `SEM ${w + 1}`;
+                    cornerInput.title = 'Editar encabezado (máx. 10 caracteres)';
+                    cornerInput.addEventListener('input', (e) => {
+                        state.weekLabels[w] = e.target.value.substring(0, 10);
+                    });
+                    timeHeader.appendChild(cornerInput);
+                } else {
+                    timeHeader.textContent = 'HORA';
+                }
+                headerRow.appendChild(timeHeader);
+
+                dayNames.forEach(dName => {
+                    const dCell = document.createElement('div');
+                    dCell.className = 'schedule-header-cell';
+                    dCell.textContent = dName;
+                    headerRow.appendChild(dCell);
+                });
+
+                tableWrap.appendChild(headerRow);
+
+                // CUERPO DE FILAS
+                const bodyRows = document.createElement('div');
+                bodyRows.className = 'schedule-body-rows';
+
+                slots.forEach((slot, rIdx) => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'schedule-data-row';
+
+                    // Celda de hora
+                    const timeCell = document.createElement('div');
+                    timeCell.className = 'schedule-time-cell';
+                    timeCell.textContent = slot.label;
+                    rowDiv.appendChild(timeCell);
+
+                    // 7 Celdas de días con control estricto de líneas físicas
+                    for (let d = 0; d < 7; d++) {
+                        const dayCell = document.createElement('div');
+                        dayCell.className = 'schedule-day-cell';
+
+                        const key = `w_${w}_r_${rIdx}_d_${d}`;
+                        const val = state.cellData[key] || '';
+
+                        const textarea = document.createElement('textarea');
+                        textarea.className = 'schedule-cell-textarea';
+                        textarea.value = val;
+                        textarea.maxLength = maxCharsAllowed;
+                        textarea.placeholder = '';
+                        textarea.dataset.key = key;
+
+                        if (rowsCount <= 4 && state.weeksCount === 1) {
+                            textarea.style.fontSize = '0.62rem';
+                        } else if (rowsCount <= 6 && state.weeksCount === 1) {
+                            textarea.style.fontSize = '0.58rem';
+                        } else if (rowsCount <= 8 && state.weeksCount === 1) {
+                            textarea.style.fontSize = '0.56rem';
+                        } else if (rowsCount >= 18) {
+                            textarea.style.fontSize = '0.50rem';
+                        }
+
+                        // Interceptar teclas y bloquear Enter en formato compacto de 1 línea
+                        textarea.addEventListener('keydown', (e) => {
+                            const allowedKeys = ['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'];
+                            if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+
+                            if (e.key === 'Enter') {
+                                if (maxLinesAllowed <= 1) {
+                                    e.preventDefault();
+                                    showToast('⚠️ Solo 1 línea permitida en este formato compacto de horario');
+                                    return;
+                                }
+                                const currentLines = e.target.value.split('\n').length;
+                                if (currentLines >= maxLinesAllowed) {
+                                    e.preventDefault();
+                                    showToast(`⚠️ Máximo ${maxLinesAllowed} líneas por casilla en esta franja`);
+                                    return;
+                                }
+                            }
+
+                            if (e.target.value.length >= maxCharsAllowed) {
+                                e.preventDefault();
+                                showToast(`⚠️ Límite de ${maxCharsAllowed} caracteres alcanzado para esta casilla`);
+                                return;
+                            }
+                        });
+
+                        // Control de entrada y ajuste de desbordamiento visual
+                        textarea.addEventListener('input', (e) => {
+                            if (maxLinesAllowed <= 1) {
+                                e.target.value = e.target.value.replace(/[\r\n]+/g, ' ');
+                            } else {
+                                const lines = e.target.value.split('\n');
+                                if (lines.length > maxLinesAllowed) {
+                                    e.target.value = lines.slice(0, maxLinesAllowed).join('\n');
+                                    showToast(`⚠️ Máximo ${maxLinesAllowed} líneas permitidas`);
+                                }
+                            }
+
+                            if (e.target.value.length > maxCharsAllowed) {
+                                e.target.value = e.target.value.slice(0, maxCharsAllowed);
+                                showToast(`⚠️ Máximo ${maxCharsAllowed} caracteres en este formato`);
+                            }
+
+                            while (e.target.scrollHeight > (e.target.clientHeight + 2) && e.target.value.length > 0) {
+                                e.target.value = e.target.value.slice(0, -1);
+                                showToast('⚠️ Límite de capacidad alcanzado en la celda');
+                            }
+
+                            state.cellData[key] = e.target.value;
+                        });
+
+                        dayCell.appendChild(textarea);
+                        rowDiv.appendChild(dayCell);
+                    }
+
+                    bodyRows.appendChild(rowDiv);
+                });
+
+                tableWrap.appendChild(bodyRows);
+            }
         }
 
-        function renderPreview() {
-            updateHeaderPreview();
-            updateNotesPreview();
-            updateScheduleRowsPreview();
+        function handleNotesInput(el) {
+            // Evitar desplazador en notas: limitación estricta de altura
+            while (el.scrollHeight > el.clientHeight + 2 && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+                showToast('⚠️ Límite de espacio en Notas alcanzado');
+            }
+            const count = document.getElementById('count-notes');
+            if (count) count.textContent = `${el.value.length}/720`;
         }
 
-        // ACCIONES RÁPIDAS
-        function loadExampleData() {
-            isExampleActive = true;
-            renderPreview();
-            showToast('✓ Ejemplo proyectado en la vista previa.');
-        }
-
-        function clearAllData() {
-            isExampleActive = false;
-            const wInput = document.getElementById('input-week-label');
-            if (wInput) { wInput.value = ''; wInput.style.height = ''; }
-            const fInput = document.getElementById('input-week-focus');
-            if (fInput) { fInput.value = ''; fInput.style.height = ''; }
-            const nInput = document.getElementById('input-week-notes');
-            if (nInput) { nInput.value = ''; nInput.style.height = ''; }
-
-            const cWk = document.getElementById('count-week-label');
-            if (cWk) cWk.textContent = '0/20';
-            const cFoc = document.getElementById('count-week-focus');
-            if (cFoc) cFoc.textContent = '0/150';
-            const cNot = document.getElementById('count-week-notes');
-            if (cNot) cNot.textContent = '0/150';
-
-            renderPreview();
-            showToast('✓ Formulario y vista previa limpiados.');
-        }
-
-        function showToast(msg) {
-            const el = document.getElementById('toast-msg');
-            if (!el) return;
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 3000);
-        }
-
-        // CONTROL DEL MODAL
-        function openDownloadModal(isBlank) {
-            isBlankModal = !!isBlank;
-            const modal = document.getElementById('download-modal');
-            if (!modal) return;
-
-            const badge = document.getElementById('modal-badge-label');
-            const title = document.getElementById('modal-title-label');
-            const desc = document.getElementById('modal-desc-label');
-            const btnText = document.getElementById('modal-download-btn-text');
-
-            if (isBlank) {
-                if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
-                if (title) title.textContent = 'Tu Horario en Papel (Para Rellenar a Mano)';
-                if (desc) desc.textContent = 'Descarga la cuadrícula semanal limpia de 7 días y hasta 24 franjas horarias lista para lápiz o pluma.';
-                if (btnText) btnText.innerHTML = '📥 Descargar plantilla horaria limpia en PDF';
-            } else {
-                if (badge) badge.textContent = 'PDF Personalizado con Tus Franjas';
-                if (title) title.textContent = 'Tu Planificador Horario Listo';
-                if (desc) desc.textContent = 'Descarga tu horario semanal con tus metas, horas y notas maquetado en alta resolución.';
-                if (btnText) btnText.innerHTML = '📥 Descargar mi horario en PDF';
+        // ========================================================
+        // ACCIONES RÁPIDAS (EJEMPLO EDITORIAL Y LIMPIEZA)
+        // ========================================================
+        function loadExampleContent(isInitial = false) {
+            if (!isInitial) {
+                const ok = confirm('¿Deseas cargar el ejemplo editorial en el planificador horario? Se sustituirá el contenido actual.');
+                if (!ok) return;
+            }
+            document.getElementById('field-week-title').value = EXAMPLE_DATA.week;
+            document.getElementById('field-week-focus').value = `«${EXAMPLE_DATA.focus}»`;
+            const notesEl = document.getElementById('field-week-notes');
+            if (notesEl) {
+                notesEl.value = EXAMPLE_DATA.notes;
+                handleNotesInput(notesEl);
             }
 
-            modal.classList.add('active');
+            state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3', 3: 'SEM 4' };
+            state.cellData = { ...EXAMPLE_DATA.cells };
+            renderScheduleTable();
+            if (!isInitial) {
+                showToast('✨ Ejemplo editorial cargado en el horario');
+            }
+        }
+
+        function clearAllContent() {
+            const ok = confirm('¿Deseas limpiar todos los textos del planificador horario para empezar en blanco?');
+            if (!ok) return;
+
+            document.getElementById('field-week-title').value = '';
+            document.getElementById('field-week-focus').value = '';
+            const notesEl = document.getElementById('field-week-notes');
+            if (notesEl) {
+                notesEl.value = '';
+                handleNotesInput(notesEl);
+            }
+
+            state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3', 3: 'SEM 4' };
+            state.cellData = {};
+            renderScheduleTable();
+            showToast('🧹 Lienzo limpio para empezar en blanco');
+        }
+
+        // ========================================================
+        // CONTROL DEL MODAL POP-UP DE DESCARGA
+        // ========================================================
+        function openDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.add('active');
         }
 
         function closeDownloadModal() {
@@ -1305,12 +1747,11 @@
         }
 
         // ========================================================
-        // MOTOR DE EXPORTACIÓN PDF VECTORIAL (jsPDF)
+        // MOTOR DE EXPORTACIÓN PDF VECTORIAL A 300 DPI (8.25" × 6")
         // ========================================================
-        function executeScheduleDownload() {
+        function executeScheduleDownload(isBlank) {
             closeDownloadModal();
 
-            // Detección robusta de jsPDF en entornos UMD / CDN / Global
             let jsPDFClass = null;
             if (window.jspdf && window.jspdf.jsPDF) {
                 jsPDFClass = window.jspdf.jsPDF;
@@ -1323,12 +1764,11 @@
                 return;
             }
 
-            const formatVal = document.getElementById('modal-select-format')?.value || 'book';
-            const isBook = (formatVal === 'book');
-            const pageDims = isBook ? [209.55, 152.4] : [297, 210];
+            // FORMATO EXACTO AL MENSUAL: 8.25" × 6" (209.55 × 152.4 mm)
+            const pageDims = [209.55, 152.4];
             const orientation = 'landscape';
 
-            let doc = new jsPDFClass({
+            const doc = new jsPDFClass({
                 orientation: orientation,
                 unit: 'mm',
                 format: pageDims
@@ -1336,7 +1776,7 @@
 
             const pw = doc.internal.pageSize.getWidth();
             const ph = doc.internal.pageSize.getHeight();
-            const m = isBook ? 12 : 16;
+            const m = 12.0; // margen editorial
             const contentW = pw - (m * 2);
 
             // Fondo crema editorial
@@ -1346,14 +1786,13 @@
             let y = m + 1;
 
             // Datos activos
-            const weekInput = document.getElementById('input-week-label')?.value.trim() || '';
-            const activeWeek = isBlankModal ? '' : (weekInput || (isExampleActive ? SCHEDULE_EXAMPLE.week : ''));
+            const weekRaw = document.getElementById('field-week-title')?.value.trim() || '';
+            const focusRaw = document.getElementById('field-week-focus')?.value.trim() || '';
+            const notesRaw = document.getElementById('field-week-notes')?.value.trim() || '';
 
-            const focusInput = document.getElementById('input-week-focus')?.value.trim() || '';
-            const activeFocus = isBlankModal ? '' : (focusInput || (isExampleActive ? SCHEDULE_EXAMPLE.focus : ''));
-
-            const notesInput = document.getElementById('input-week-notes')?.value.trim() || '';
-            const activeNotes = isBlankModal ? '' : (notesInput || (isExampleActive ? SCHEDULE_EXAMPLE.notes : ''));
+            const activeWeek = isBlank ? '' : weekRaw;
+            const activeFocus = isBlank ? '' : focusRaw;
+            const activeNotes = isBlank ? '' : notesRaw;
 
             const startH = getStartHour();
             const stepH = getStepHours();
@@ -1362,205 +1801,279 @@
 
             // 1. KICKER SUPERIOR
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(isBook ? 6.5 : 8);
+            doc.setFontSize(6.5);
             doc.setTextColor(135, 85, 59);
             doc.text('MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL', m, y);
-            y += (isBook ? 4.2 : 5.5);
+            y += 4.2;
 
             // 2. TÍTULO Y SEMANA
             doc.setFont('times', 'bold');
-            doc.setFontSize(isBook ? 15 : 19);
+            doc.setFontSize(15);
             doc.setTextColor(30, 25, 22);
             doc.text('Planificador Horario', m, y);
 
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(isBook ? 8 : 10);
+            doc.setFontSize(8);
             doc.setTextColor(70, 65, 60);
             const headerWeekText = activeWeek ? `SEMANA: ${activeWeek.toUpperCase()}` : 'SEMANA: _______________________';
             doc.text(headerWeekText, pw - m, y, { align: 'right' });
-            y += (isBook ? 2.5 : 3.2);
+            y += 2.5;
 
             // 3. ENFOQUE / LEMA SI EXISTE
             if (activeFocus) {
                 doc.setFont('helvetica', 'italic');
-                doc.setFontSize(isBook ? 7 : 8.5);
+                doc.setFontSize(6.8);
                 doc.setTextColor(90, 85, 80);
-                const fLines = doc.splitTextToSize(`«${activeFocus}»`, contentW - 20);
-                doc.text(fLines[0] || '', m, y + 1.2);
-                y += (isBook ? 3.8 : 4.8);
+                const cleanFocus = activeFocus.startsWith('«') ? activeFocus : `«${activeFocus}»`;
+                const fLines = doc.splitTextToSize(cleanFocus, contentW - 10);
+                const linesToDraw = fLines.slice(0, 2);
+                let focusY = y + 1.2;
+                linesToDraw.forEach(fl => {
+                    doc.text(fl, m, focusY);
+                    focusY += 2.8;
+                });
+                y = focusY + 0.4;
             }
 
             // Línea divisoria de cabecera
             doc.setDrawColor(40, 35, 30);
             doc.setLineWidth(0.35);
             doc.line(m, y, pw - m, y);
-            y += (isBook ? 3.2 : 4);
+            y += 3.0;
 
-            // 4. TABLA HORARIA
-            const timeColW = isBook ? 24 : 32;
+            // PARÁMETROS DE DIMENSIÓN
+            const timeColW = 25.0;
             const daysGridW = contentW - timeColW;
             const dayColW = daysGridW / 7;
             const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
 
-            const headerRowH = isBook ? 4.8 : 6.5;
+            const headerRowH = 4.8;
+            const notesH = 18.0;
+            const gapBetweenBlocks = 2.8;
+            const bottomMarginBeforeFooter = 4.8;
 
-            // Dimensiones dinámicas para ocupar todo el alto útil sin dejar hueco vacío al fondo
-            const notesH = isBook ? 16 : 22;
-            const gapBetweenTableAndNotes = isBook ? 3.5 : 5;
-            const bottomMarginBeforeFooter = isBook ? 4.5 : 6;
+            const footerY = ph - 5.2;
+            const totalAvailableContentH = (footerY - bottomMarginBeforeFooter) - y;
+            const availableTableH = totalAvailableContentH - notesH - gapBetweenBlocks;
 
-            const yTableStart = y;
-            const tableBottomTarget = (ph - m - bottomMarginBeforeFooter) - notesH - gapBetweenTableAndNotes;
-            const availableTableH = Math.max(tableBottomTarget - yTableStart, isBook ? 91 : 126);
-            const rowH = (availableTableH - headerRowH) / rowCount;
+            // Altura por semana
+            const weeksCount = state.weeksCount;
+            const separatorH = (weeksCount > 1) ? 1.4 * (weeksCount - 1) : 0;
+            const heightPerWeek = (availableTableH - separatorH) / weeksCount;
+            const rowH = (heightPerWeek - headerRowH) / rowCount;
 
-            // Capa 1: Fondo de cabecera de la tabla
-            doc.setFillColor(245, 240, 232);
-            doc.setDrawColor(215, 210, 200);
-            doc.setLineWidth(0.2);
-            doc.rect(m, yTableStart, contentW, headerRowH, 'FD');
-
-            // Texto cabecera: HORA
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(isBook ? 5.8 : 7.5);
-            doc.setTextColor(135, 85, 59);
-            doc.text('HORA', m + (timeColW / 2), yTableStart + (headerRowH / 2) + 1.2, { align: 'center' });
-
-            // Textos cabecera: Días de la semana
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(isBook ? 5.8 : 7.5);
-            doc.setTextColor(50, 45, 40);
-            for (let d = 0; d < 7; d++) {
-                const dayX = m + timeColW + (d * dayColW);
-                doc.text(dayNames[d], dayX + (dayColW / 2), yTableStart + (headerRowH / 2) + 1.2, { align: 'center' });
-            }
-
-            // Capa 2: Fondos alternos en las filas
-            for (let i = 0; i < rowCount; i++) {
-                const rY = yTableStart + headerRowH + (i * rowH);
-                if (i % 2 === 1) {
-                    doc.setFillColor(252, 250, 247);
-                    doc.rect(m, rY, contentW, rowH, 'F');
-                }
-            }
-
-            // Capa 3: Líneas horizontales entre todas las filas
-            doc.setDrawColor(225, 220, 212);
-            doc.setLineWidth(0.18);
-            for (let i = 0; i < rowCount; i++) {
-                const rY = yTableStart + headerRowH + (i * rowH);
-                doc.line(m, rY + rowH, m + contentW, rY + rowH);
-            }
-
-            // Capa 4: Textos de las franjas horarias y contenidos de celdas
-            let timeFontSize = isBook ? (rowCount > 16 ? 4.8 : 5.8) : (rowCount > 16 ? 6.2 : 7.5);
-            if (rowCount <= 6) {
-                timeFontSize = isBook ? 6.8 : 8.8;
-            }
-            for (let i = 0; i < rowCount; i++) {
-                const rY = yTableStart + headerRowH + (i * rowH);
-                const slot = slots[i];
+            // FUNCIÓN DIBUJAR NOTAS
+            function drawNotesBox(boxY) {
+                doc.setFillColor(251, 249, 245);
+                doc.setDrawColor(220, 215, 205);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(m, boxY, contentW, notesH, 1.5, 1.5, 'FD');
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(timeFontSize);
-                doc.setTextColor(55, 50, 45);
-                doc.text(slot.label, m + (timeColW / 2), rY + (rowH / 2) + 1, { align: 'center' });
+                doc.setFontSize(6.2);
+                doc.setTextColor(135, 85, 59);
+                doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', m + 3.5, boxY + 3.8);
 
-                if (!isBlankModal && isExampleActive) {
-                    for (let d = 0; d < 7; d++) {
-                        const block = SCHEDULE_EXAMPLE.blocks.find(b => b.row === i && b.day === d);
-                        if (block) {
-                            const cX = m + timeColW + (d * dayColW);
-                            doc.setFillColor(242, 236, 228);
-                            doc.rect(cX + 0.8, rY + 0.8, dayColW - 1.6, rowH - 1.6, 'F');
-
-                            doc.setFont('helvetica', 'normal');
-                            doc.setFontSize(isBook ? 4.6 : 6);
-                            doc.setTextColor(50, 40, 35);
-                            doc.text(block.text, cX + 2, rY + (rowH / 2) + 0.8);
-                        }
-                    }
+                if (activeNotes) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(5.3);
+                    doc.setTextColor(45, 40, 35);
+                    const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
+                    const nLines = doc.splitTextToSize(cleanNotes, contentW - 8);
+                    const maxNotesLines = 6;
+                    const linesToDraw = nLines.slice(0, maxNotesLines);
+                    let noteY = boxY + 6.0;
+                    linesToDraw.forEach(line => {
+                        doc.text(line, m + 3.5, noteY);
+                        noteY += 2.35;
+                    });
                 }
             }
 
-            // Capa 5: Líneas verticales
-            // 1. Líneas divisorias entre días
-            doc.setDrawColor(225, 220, 212);
-            doc.setLineWidth(0.16);
-            for (let d = 1; d < 7; d++) {
-                const dayX = m + timeColW + (d * dayColW);
-                doc.line(dayX, yTableStart, dayX, yTableStart + availableTableH);
+            // FUNCIÓN DIBUJAR TABLA
+            function drawScheduleTable(tableY) {
+                let currentY = tableY;
+
+                for (let w = 0; w < weeksCount; w++) {
+                    // Si es semana 2 o 3, DIBUJAR LA LÍNEA GRUESA HORIZONTAL SEPARADORA (SEPARA EL LUNES DEL LUNES)
+                    if (w > 0) {
+                        doc.setDrawColor(35, 30, 26);
+                        doc.setLineWidth(0.8); // LÍNEA MUY GRUESA Y VISIBLE
+                        doc.line(m, currentY + 0.8, m + contentW, currentY + 0.8);
+                        currentY += 1.4 + 0.5;
+                    }
+
+                    const weekStartY = currentY;
+
+                    // Fondo de cabecera de la tabla
+                    doc.setFillColor(245, 240, 232);
+                    doc.setDrawColor(215, 210, 200);
+                    doc.setLineWidth(0.2);
+                    doc.rect(m, weekStartY, contentW, headerRowH, 'FD');
+
+                    // Texto cabecera: HORA o etiqueta de semana multitabla
+                    let timeLabel = 'HORA';
+                    if (state.mode === 'multi') {
+                        if (isBlank) {
+                            timeLabel = ''; // En blanco no se imprime nada en la casilla
+                        } else {
+                            timeLabel = (state.weekLabels[w] !== undefined ? state.weekLabels[w] : `SEM ${w + 1}`).trim().substring(0, 10);
+                        }
+                    }
+
+                    if (timeLabel) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(timeLabel.length > 7 ? 5.2 : 6.0);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(timeLabel, m + (timeColW / 2), weekStartY + (headerRowH / 2) + 1.2, { align: 'center' });
+                    }
+
+                    // Textos cabecera: Días de la semana
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.0);
+                    doc.setTextColor(40, 35, 30);
+                    for (let d = 0; d < 7; d++) {
+                        const dayX = m + timeColW + (d * dayColW);
+                        doc.text(dayNames[d], dayX + (dayColW / 2), weekStartY + (headerRowH / 2) + 1.2, { align: 'center' });
+                    }
+
+                    // Fondos alternos en las filas
+                    for (let i = 0; i < rowCount; i++) {
+                        const rY = weekStartY + headerRowH + (i * rowH);
+                        if (i % 2 === 1) {
+                            doc.setFillColor(252, 250, 247);
+                            doc.rect(m, rY, contentW, rowH, 'F');
+                        }
+                    }
+
+                    // Líneas horizontales finas entre horas
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.18);
+                    for (let i = 0; i < rowCount; i++) {
+                        const rY = weekStartY + headerRowH + (i * rowH);
+                        doc.line(m, rY + rowH, m + contentW, rY + rowH);
+                    }
+
+                    // Textos de las franjas horarias y contenidos de celdas
+                    let timeFontSize = (rowCount > 12) ? 4.6 : 5.6;
+
+                    for (let i = 0; i < rowCount; i++) {
+                        const rY = weekStartY + headerRowH + (i * rowH);
+                        const slot = slots[i];
+
+                        // Hora
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(timeFontSize);
+                        doc.setTextColor(55, 50, 45);
+                        doc.text(slot.label, m + (timeColW / 2), rY + (rowH / 2) + 1.0, { align: 'center' });
+
+                        // Contenido de celdas multilínea proporcional con ajuste dinámico
+                        if (!isBlank) {
+                            for (let d = 0; d < 7; d++) {
+                                const key = `w_${w}_r_${i}_d_${d}`;
+                                const cellText = state.cellData[key];
+                                if (cellText && cellText.trim()) {
+                                    const cX = m + timeColW + (d * dayColW);
+
+                                    const maxWrapW = dayColW - 1.6;
+                                    let cellFontSize = (rowH > 6.5) ? 5.0 : ((rowH > 4.2) ? 4.3 : 3.7);
+                                    doc.setFont('helvetica', 'normal');
+                                    doc.setFontSize(cellFontSize);
+                                    doc.setTextColor(45, 35, 30);
+
+                                    let wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
+                                    let lineHeight = cellFontSize * 0.38;
+                                    let allowedLines = getMaxLinesAllowedForRow(weeksCount, rowCount);
+                                    let maxLinesFit = Math.min(allowedLines, Math.max(1, Math.floor((rowH - 0.6) / lineHeight)));
+
+                                    // Si excede por poco, ajustar ligeramente tamaño para aprovechar mejor el hueco
+                                    if (wrappedLines.length > maxLinesFit && cellFontSize > 3.4 && allowedLines > 1) {
+                                        cellFontSize -= 0.5;
+                                        doc.setFontSize(cellFontSize);
+                                        lineHeight = cellFontSize * 0.38;
+                                        wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
+                                        maxLinesFit = Math.min(allowedLines, Math.max(1, Math.floor((rowH - 0.6) / lineHeight)));
+                                    }
+
+                                    const linesToDraw = wrappedLines.slice(0, maxLinesFit);
+                                    const blockHeight = linesToDraw.length * lineHeight;
+                                    let startTextY = rY + ((rowH - blockHeight) / 2) + (lineHeight * 0.75);
+                                    linesToDraw.forEach(line => {
+                                        doc.text(line, cX + (dayColW / 2), startTextY, { align: 'center' });
+                                        startTextY += lineHeight;
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Líneas verticales entre días
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.16);
+                    for (let d = 1; d < 7; d++) {
+                        const dayX = m + timeColW + (d * dayColW);
+                        doc.line(dayX, weekStartY, dayX, weekStartY + heightPerWeek);
+                    }
+
+                    // Línea vertical destacada separando HORA de LUNES
+                    doc.setDrawColor(180, 175, 165);
+                    doc.setLineWidth(0.3);
+                    doc.line(m + timeColW, weekStartY, m + timeColW, weekStartY + heightPerWeek);
+
+                    // LÍNEA GRUESA HORIZONTAL DESTACADA PARA SEPARAR LOS DÍAS DE LA SEMANA
+                    doc.setDrawColor(35, 30, 26);
+                    doc.setLineWidth(0.5); // Gruesa y nítida (0.5mm)
+                    doc.line(m, weekStartY + headerRowH, m + contentW, weekStartY + headerRowH);
+
+                    // Marco exterior de esta semana
+                    doc.setDrawColor(200, 195, 185);
+                    doc.setLineWidth(0.28);
+                    doc.rect(m, weekStartY, contentW, heightPerWeek);
+
+                    currentY += heightPerWeek;
+                }
             }
 
-            // 2. Línea divisoria principal entre HORA y LUNES
-            doc.setDrawColor(195, 190, 180);
-            doc.setLineWidth(0.3);
-            doc.line(m + timeColW, yTableStart, m + timeColW, yTableStart + availableTableH);
-
-            // 3. Marco exterior de la tabla
-            doc.setDrawColor(210, 205, 195);
-            doc.setLineWidth(0.28);
-            doc.rect(m, yTableStart, contentW, availableTableH);
-
-            y = yTableStart + availableTableH + gapBetweenTableAndNotes;
-
-            // 5. BLOQUE DE NOTAS Y PRIORIDADES
-            doc.setFillColor(251, 249, 245);
-            doc.setDrawColor(220, 215, 205);
-            doc.setLineWidth(0.2);
-            doc.roundedRect(m, y, contentW, notesH, 1.5, 1.5, 'FD');
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(isBook ? 6 : 7.5);
-            doc.setTextColor(135, 85, 59);
-            doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', m + 3.5, y + (isBook ? 3.5 : 4.5));
-
-            if (activeNotes) {
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(isBook ? 6.5 : 8);
-                doc.setTextColor(45, 40, 35);
-                const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
-                const nLines = doc.splitTextToSize(cleanNotes, contentW - 8);
-                doc.text(nLines.slice(0, 3), m + 3.5, y + (isBook ? 7.2 : 9.2));
+            // DIBUJAR EN EL ORDEN SELECCIONADO (NOTAS ARRIBA O ABAJO)
+            if (state.notesPosition === 'top') {
+                drawNotesBox(y);
+                y += notesH + gapBetweenBlocks;
+                drawScheduleTable(y);
+            } else {
+                drawScheduleTable(y);
+                y += availableTableH + gapBetweenBlocks;
+                drawNotesBox(y);
             }
 
-            // 6. FOOTER EDITORIAL
+            // 6. FOOTER EDITORIAL EXACTO
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(isBook ? 5.8 : 7.2);
+            doc.setFontSize(5.8);
             doc.setTextColor(140, 135, 130);
-            doc.text('MENOS RUIDO · REGISTRO CONSTANTE', m, ph - m + 2);
-            doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
+            doc.text('MENOS RUIDO · SISTEMA PLANIFICADOR HORARIO', m, footerY);
+            doc.text('editorialmenosruido.com', pw - m, footerY, { align: 'right' });
 
             // NOMENCLATURA
             let fileName = '';
-            if (isBlankModal) {
-                fileName = 'menos-ruido-plantilla-planificador-horario.pdf';
+            if (isBlank) {
+                fileName = 'Menos_Ruido_Plantilla_Horario_En_Blanco.pdf';
             } else {
-                const cleanWeek = (activeWeek || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
-                if (cleanWeek) {
-                    fileName = `MENOS RUIDO Planificador Horario ${cleanWeek}.pdf`;
-                } else {
-                    fileName = 'MENOS RUIDO Planificador Horario.pdf';
-                }
+                const cleanW = (activeWeek || 'Semanal').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+                fileName = `Menos_Ruido_Planificador_Horario_${cleanW}.pdf`;
             }
 
             doc.save(fileName);
-            showToast('✓ Archivo "' + fileName + '" descargado.');
+            showToast(`✓ Descargado: ${fileName}`);
 
-            registrarMetricaGratis('/metricas/descarga-pdf-generador-horario.html');
-            trackVercelEvent('descarga_pdf', {
-                herramienta: 'generador_horario',
-                tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado',
-                formato: formatVal
-            });
-        }
-
-        function registrarMetricaGratis(paginaVirtual) {
             try {
                 if (window.va) {
-                    window.va('pageview', { url: paginaVirtual });
+                    window.va('pageview', { url: '/metricas/descarga-pdf-generador-horario.html' });
                 }
             } catch (err) {}
+            trackVercelEvent('descarga_pdf', {
+                herramienta: 'generador_horario',
+                tipo: isBlank ? 'plantilla_blanco' : 'personalizado',
+                formato: 'book_8.25x6'
+            });
         }
 
         function trackVercelEvent(nombreEvento, datos) {
@@ -1571,10 +2084,17 @@
             } catch (err) {}
         }
 
-        // INICIALIZACIÓN
+        // ========================================================
+        // INICIALIZACIÓN AL CARGAR
+        // ========================================================
         document.addEventListener('DOMContentLoaded', () => {
-            populateRowCountSelect(24);
-            renderPreview();
+            state.mode = 'single';
+            state.weeksCount = 1;
+            state.rowsPerWeek = 16;
+            updateModeUI();
+            populateRowCountSelect('16');
+            applyNotesPositionUI();
+            loadExampleContent(true);
         });
     </script>
 </body>
