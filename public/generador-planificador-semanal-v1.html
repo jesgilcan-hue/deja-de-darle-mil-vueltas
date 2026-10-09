@@ -691,23 +691,7 @@
             margin: 0;
         }
 
-        /* PAUTAS DE FONDO PARA NOTAS */
-        .weekly-notes-panel.bg-dots {
-            background-image: radial-gradient(#beb7ad 1px, transparent 1px);
-            background-size: 14px 14px;
-        }
-        .weekly-notes-panel.bg-lines {
-            background-image: repeating-linear-gradient(transparent, transparent 16px, #ece7de 16px, #ece7de 17px);
-        }
-        .weekly-notes-panel.bg-grid {
-            background-image: linear-gradient(to right, #efebe4 1px, transparent 1px),
-                              linear-gradient(to bottom, #efebe4 1px, transparent 1px);
-            background-size: 14px 14px;
-        }
-        .weekly-notes-panel.bg-blank {
-            background-image: none;
-            background-color: #ffffff;
-        }
+
 
         /* PIE EDITORIAL DE LA HOJA */
         .paper-weekly-footer {
@@ -978,10 +962,7 @@
 
         <div class="toolbar-group">
             <button type="button" class="toolbar-btn" id="btn-toggle-check" onclick="toggleCheckboxStyle()" title="Alternar entre casillas cuadradas y circulares">
-                <span>◻️/⚪</span> Casillas
-            </button>
-            <button type="button" class="toolbar-btn" id="btn-toggle-pattern" onclick="cycleNotesPattern()" title="Cambiar pauta de notas (Blanco, Puntos, Líneas, Cuadrícula)">
-                <span>📝</span> Pauta
+                <span>◻️/⚪</span> Casillas: Redondas
             </button>
         </div>
 
@@ -1303,7 +1284,6 @@
         // ESTADO GLOBAL
         const state = {
             checkboxStyle: 'circle', // 'square' o 'circle'
-            notesPattern: 'blank',    // 'blank', 'dots', 'lines', 'grid'
             sections: {
                 habits: true,
                 notes: true
@@ -1312,14 +1292,34 @@
             slotRight: 'notes'   // 'notes' o 'habits'
         };
 
-        const PATTERNS = ['blank', 'dots', 'lines', 'grid'];
-
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
             updateLayoutUI();
-            updateNotesPatternUI();
             updateCheckboxUI();
         });
+
+        // ALTERNAR CASILLAS (REDONDAS ⚪ / CUADRADAS ◻️)
+        function toggleCheckboxStyle() {
+            state.checkboxStyle = (state.checkboxStyle === 'circle') ? 'square' : 'circle';
+            updateCheckboxUI();
+            showToast(state.checkboxStyle === 'circle' ? 'Casillas: Redondas ⚪' : 'Casillas: Cuadradas ◻️');
+        }
+
+        function updateCheckboxUI() {
+            const isCircle = state.checkboxStyle === 'circle';
+            document.querySelectorAll('.day-check-indicator').forEach(el => {
+                el.classList.toggle('circle', isCircle);
+            });
+            document.querySelectorAll('.habit-day-dot').forEach(el => {
+                el.classList.toggle('square', !isCircle);
+            });
+            const btn = document.getElementById('btn-toggle-check');
+            if (btn) {
+                btn.innerHTML = isCircle 
+                    ? '<span>⚪</span> Casillas: Redondas' 
+                    : '<span>◻️</span> Casillas: Cuadradas';
+            }
+        }
 
         // MANEJO DE LÍNEAS FÍSICAS EN DÍAS Y FOCO (HASTA 4 LÍNEAS NORMAL / 7 EXPANDIDO)
         function handleDayInput(el) {
@@ -1535,45 +1535,11 @@
             el.classList.toggle('checked');
         }
 
-        // PAUTA DE NOTAS INTELIGENTE Y CONTROL ESTRICTO DE ALTURA
+        // CONTROL ESTRICTO DE ALTURA EN NOTAS
         function handleNotesInput(el) {
             while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
                 el.value = el.value.slice(0, -1);
             }
-            updateNotesPatternUI();
-        }
-
-        function updateNotesPatternUI() {
-            const notesEl = document.getElementById('field-weekly-notes');
-            const panel = document.getElementById('block-notes');
-            const btnPattern = document.getElementById('btn-toggle-pattern');
-            if (!notesEl || !panel) return;
-
-            const hasText = notesEl.value.trim().length > 0;
-            if (hasText) {
-                panel.className = 'weekly-notes-panel bg-blank';
-                if (btnPattern) btnPattern.title = 'Con texto escrito se imprime en blanco (borra el texto para activar pautas)';
-            } else {
-                panel.className = `weekly-notes-panel bg-${state.notesPattern}`;
-                if (btnPattern) btnPattern.title = 'Cambiar pauta de notas (Blanco, Puntos, Líneas, Cuadrícula)';
-            }
-        }
-
-        function cycleNotesPattern() {
-            const notesEl = document.getElementById('field-weekly-notes');
-            if (notesEl && notesEl.value.trim().length > 0) {
-                showToast('Limpia el texto de notas para elegir pauta analógica');
-                return;
-            }
-
-            const idx = PATTERNS.indexOf(state.notesPattern);
-            state.notesPattern = PATTERNS[(idx + 1) % PATTERNS.length];
-
-            const panel = document.getElementById('block-notes');
-            if (panel) panel.className = `weekly-notes-panel bg-${state.notesPattern}`;
-
-            const names = { blank: 'Blanco limpio', dots: 'Puntos sutiles', lines: 'Rayado', grid: 'Cuadrícula' };
-            showToast(`Pauta de notas: ${names[state.notesPattern]}`);
         }
 
         // LIMPIAR Y CARGAR EJEMPLO
@@ -1591,7 +1557,6 @@
             });
             document.querySelectorAll('.habit-day-dot').forEach(d => d.classList.remove('checked'));
             document.getElementById('field-weekly-notes').value = '';
-            updateNotesPatternUI();
             showToast('Lienzo limpio para empezar de cero');
         }
 
@@ -1635,7 +1600,6 @@
             state.sections.habits = true;
             state.sections.notes = true;
             updateLayoutUI();
-            updateNotesPatternUI();
             showToast('Ejemplo editorial cargado (Semana 42)');
         }
 
@@ -2016,29 +1980,10 @@
                 if (!notesText || isBlank) {
                     const areaTop = startY + 6.0;
                     const areaH = h - 7.0;
-
-                    if (state.notesPattern === 'dots') {
-                        doc.setFillColor(195, 188, 178);
-                        for (let px = startX + 4; px < startX + w - 3; px += 4.5) {
-                            for (let py = areaTop + 3; py < areaTop + areaH - 1; py += 4.5) {
-                                doc.circle(px, py, 0.22, 'F');
-                            }
-                        }
-                    } else if (state.notesPattern === 'lines') {
-                        doc.setDrawColor(225, 220, 212);
-                        doc.setLineWidth(0.15);
-                        for (let py = areaTop + 4.5; py < areaTop + areaH; py += 4.5) {
-                            doc.line(startX + 4, py, startX + w - 4, py);
-                        }
-                    } else if (state.notesPattern === 'grid') {
-                        doc.setDrawColor(232, 228, 220);
-                        doc.setLineWidth(0.12);
-                        for (let px = startX + 4; px < startX + w - 3; px += 4.5) {
-                            doc.line(px, areaTop + 1, px, areaTop + areaH);
-                        }
-                        for (let py = areaTop + 3; py < areaTop + areaH; py += 4.5) {
-                            doc.line(startX + 4, py, startX + w - 4, py);
-                        }
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.15);
+                    for (let py = areaTop + 4.5; py < areaTop + areaH; py += 4.5) {
+                        doc.line(startX + 4, py, startX + w - 4, py);
                     }
                 } else {
                     doc.setFont('times', 'normal');
