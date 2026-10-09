@@ -193,6 +193,42 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
 
+        /* SELECTOR DE PERIODO (TRIMESTRE / CUATRIMESTRE / SEMESTRE / NINGUNO) */
+        .period-selector-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ede6dc;
+            padding: 3px 8px;
+            border-radius: 8px;
+            border: 1px solid #dcd7ce;
+        }
+
+        .period-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #555;
+            letter-spacing: 0.3px;
+        }
+
+        .period-select {
+            background: #ffffff;
+            border: 1px solid #cbbeae;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2b2520;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .period-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135,85,59,0.15);
+        }
+
         .btn-download-primary {
             background: var(--accent);
             color: #fff;
@@ -611,7 +647,7 @@
             background: #ffffff;
             border: 1px solid #dcd6cb;
             border-radius: 5px;
-            padding: 5px 8px;
+            padding: 4px 6px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -626,25 +662,28 @@
             align-items: center;
             border-bottom: 1px solid #ede7dc;
             padding-bottom: 2px;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             flex-shrink: 0;
+            gap: 4px;
         }
 
         .month-tile-name {
             font-size: 0.65rem;
             font-weight: 800;
             color: #2b2520;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .month-tile-quarter {
-            font-size: 0.58rem;
+            font-size: 0.54rem;
             font-weight: 700;
             color: var(--accent);
             background: #f7f3ed;
             padding: 1px 4px;
             border-radius: 3px;
+            white-space: nowrap;
         }
 
         .month-notes-textarea {
@@ -655,11 +694,11 @@
             border: none;
             resize: none;
             font-family: var(--font-sans);
-            font-size: 0.68rem;
-            line-height: 1.35;
+            font-size: 0.74rem;
+            line-height: 1.34;
             color: #222;
             outline: none;
-            padding: 0;
+            padding: 1px 0;
             box-sizing: border-box;
             overflow: hidden;
         }
@@ -840,6 +879,18 @@
                     </svg>
                 </button>
             </div>
+
+            <!-- SELECTOR DE PERIODO -->
+            <div class="period-selector-wrap" title="Agrupación de periodos para los 12 meses">
+                <label for="select-period-type" class="period-label">Periodo:</label>
+                <select id="select-period-type" class="period-select" onchange="setPeriodType(this.value)">
+                    <option value="quarter_q" selected>Trimestre (Q1–Q4)</option>
+                    <option value="trimestre_1">Trimestre (Trimestre 1–4)</option>
+                    <option value="cuatrimestre_1">Cuatrimestre (Cuatrimestre 1–3)</option>
+                    <option value="semestre_1">Semestre (Semestre 1–2)</option>
+                    <option value="none">Sin división</option>
+                </select>
+            </div>
         </div>
 
         <div class="toolbar-group">
@@ -940,6 +991,7 @@
         // ESTADO GLOBAL
         const state = {
             checkboxStyle: 'circle', // 'square' o 'circle'
+            periodType: 'quarter_q', // 'quarter_q', 'trimestre_1', 'cuatrimestre_1', 'semestre_1', 'none'
             // Ubicación de los bloques: cada uno puede estar en 'top' o 'bottom'
             blockPlacement: {
                 priorities: 'top',
@@ -965,18 +1017,18 @@
             notesText: 'Criterio rector: avanzar con calma y foco sostenido mes a mes.',
             // Notas de los 12 meses (índices 0..11)
             monthsNotes: [
-                'Arranque de ciclo y definición de prioridades',
-                'Foco en ejecución profunda y revisión',
-                'Cierre Q1: balance y ajustes de rumbo',
-                'Inicio Q2: lanzamiento y consolidación',
-                'Avance sostenido y simplificación',
-                'Cierre Q2: balance semestral',
-                'Periodo de ritmo pausado y recarga',
-                'Desconexión analógica y perspectiva',
-                'Reanudación Q3 y foco de otoño',
-                'Aceleración de entregas clave',
-                'Consolidación y cierre de compromisos',
-                'Balance general del año y celebración'
+                'Arranque de ciclo y definición de prioridades estratégicas del año',
+                'Foco en ejecución profunda y revisión de los primeros hitos',
+                'Cierre Q1: balance trimestral y ajustes de rumbo operativo',
+                'Inicio Q2: lanzamiento y consolidación de proyectos clave',
+                'Avance sostenido, simplificación de tareas y foco diario',
+                'Cierre Q2: balance semestral y recalibración de prioridades',
+                'Periodo de ritmo pausado, recarga de energía y lecturas clave',
+                'Desconexión analógica y perspectiva para el segundo semestre',
+                'Reanudación Q3 y foco de otoño en entregas de alto impacto',
+                'Aceleración de entregas clave y alineación de objetivos',
+                'Consolidación, resolución de temas abiertos y cierre ágil',
+                'Balance general del año, aprendizajes y celebración'
             ]
         };
 
@@ -990,6 +1042,7 @@
             renderModularStrips();
             renderAnnualGrid();
             updateCheckboxUI();
+            updatePeriodSelectorUI();
             updateSectionPillsUI();
         });
 
@@ -1008,6 +1061,43 @@
             if (btnSquare && btnCircle) {
                 btnSquare.classList.toggle('active', !isCircle);
                 btnCircle.classList.toggle('active', isCircle);
+            }
+        }
+
+        // GESTIÓN DEL SELECTOR DE PERIODOS (TRIMESTRE / CUATRIMESTRE / SEMESTRE / NINGUNO)
+        function setPeriodType(type) {
+            state.periodType = type;
+            renderAnnualGrid();
+            let label = 'Trimestres (Q1–Q4)';
+            if (type === 'trimestre_1') label = 'Trimestres (Trimestre 1–4)';
+            if (type === 'cuatrimestre_1') label = 'Cuatrimestres (Cuatrimestre 1–3)';
+            if (type === 'semestre_1') label = 'Semestres (Semestre 1–2)';
+            if (type === 'none') label = 'Sin división temporal';
+            showToast(`Periodo configurado: ${label}`);
+        }
+
+        function getMonthPeriodBadge(mIdx) {
+            const pType = state.periodType || 'quarter_q';
+            if (pType === 'none') return '';
+            if (pType === 'quarter_q') {
+                return `Q${Math.floor(mIdx / 3) + 1}`;
+            }
+            if (pType === 'trimestre_1') {
+                return `Trimestre ${Math.floor(mIdx / 3) + 1}`;
+            }
+            if (pType === 'cuatrimestre_1') {
+                return `Cuatrimestre ${Math.floor(mIdx / 4) + 1}`;
+            }
+            if (pType === 'semestre_1') {
+                return `Semestre ${Math.floor(mIdx / 6) + 1}`;
+            }
+            return '';
+        }
+
+        function updatePeriodSelectorUI() {
+            const selectEl = document.getElementById('select-period-type');
+            if (selectEl) {
+                selectEl.value = state.periodType || 'quarter_q';
             }
         }
 
@@ -1260,12 +1350,13 @@
             if (!container) return;
 
             container.innerHTML = MONTH_NAMES.map((name, idx) => {
-                const qNum = Math.ceil((idx + 1) / 3);
+                const badge = getMonthPeriodBadge(idx);
+                const badgeHtml = badge ? `<span class="month-tile-quarter">${badge}</span>` : '';
                 return `
                 <div class="annual-month-tile" data-month-idx="${idx}">
                     <div class="month-tile-header">
                         <span class="month-tile-name">${idx + 1}. ${name}</span>
-                        <span class="month-tile-quarter">Q${qNum}</span>
+                        ${badgeHtml}
                     </div>
                     <textarea class="month-notes-textarea"
                               placeholder="Foco o hitos del mes..."
@@ -1349,18 +1440,18 @@
             state.mottoText = 'Menos ruido mental, más profundidad y constancia.';
             state.notesText = 'Criterio rector: avanzar con calma y foco sostenido mes a mes.';
             state.monthsNotes = [
-                'Arranque de ciclo y definición de prioridades',
-                'Foco en ejecución profunda y revisión',
-                'Cierre Q1: balance y ajustes de rumbo',
-                'Inicio Q2: lanzamiento y consolidación',
-                'Avance sostenido y simplificación',
-                'Cierre Q2: balance semestral',
-                'Periodo de ritmo pausado y recarga',
-                'Desconexión analógica y perspectiva',
-                'Reanudación Q3 y foco de otoño',
-                'Aceleración de entregas clave',
-                'Consolidación y cierre de compromisos',
-                'Balance general del año y celebración'
+                'Arranque de ciclo y definición de prioridades estratégicas del año',
+                'Foco en ejecución profunda y revisión de los primeros hitos',
+                'Cierre Q1: balance trimestral y ajustes de rumbo operativo',
+                'Inicio Q2: lanzamiento y consolidación de proyectos clave',
+                'Avance sostenido, simplificación de tareas y foco diario',
+                'Cierre Q2: balance semestral y recalibración de prioridades',
+                'Periodo de ritmo pausado, recarga de energía y lecturas clave',
+                'Desconexión analógica y perspectiva para el segundo semestre',
+                'Reanudación Q3 y foco de otoño en entregas de alto impacto',
+                'Aceleración de entregas clave y alineación de objetivos',
+                'Consolidación, resolución de temas abiertos y cierre ágil',
+                'Balance general del año, aprendizajes y celebración'
             ];
 
             renderModularStrips();
@@ -1634,7 +1725,7 @@
                     const mIdx = r * cols + c;
                     const cellX = startX + c * (colW + gap);
                     const cellY = startY + r * (rowH + gap);
-                    const qNum = Math.ceil((mIdx + 1) / 3);
+                    const badge = getMonthPeriodBadge(mIdx);
 
                     // Marco del mes
                     doc.setFillColor(255, 255, 255);
@@ -1650,15 +1741,17 @@
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(6.2);
                     doc.setTextColor(45, 40, 35);
-                    doc.text(`${mIdx + 1}. ${MONTH_NAMES[mIdx].toUpperCase()}`, cellX + 2.2, cellY + 3.0);
+                    doc.text(`${mIdx + 1}. ${MONTH_NAMES[mIdx].toUpperCase()}`, cellX + 1.8, cellY + 3.0);
 
-                    doc.setFontSize(5.5);
-                    doc.setTextColor(135, 85, 59);
-                    doc.text(`Q${qNum}`, cellX + colW - 2.2, cellY + 3.0, { align: 'right' });
+                    if (badge) {
+                        doc.setFontSize(5.0);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(badge, cellX + colW - 1.8, cellY + 3.0, { align: 'right' });
+                    }
 
-                    // Contenido del mes
+                    // Contenido del mes (aprovecha todo el ancho disponible)
                     if (!isBlank && state.monthsNotes[mIdx]) {
-                        renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 2.2, cellY + 6.6, colW - 4.4, rowH - 7.5);
+                        renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 1.8, cellY + 6.3, colW - 3.6, rowH - 7.0);
                     }
                 }
             }
@@ -1668,16 +1761,17 @@
             if (!text || !text.trim()) return;
             const cleanText = text.trim();
 
-            let bestFontSize = 5.8;
-            let bestLineHeight = 2.4;
+            let bestFontSize = 6.6;
+            let bestLineHeight = 2.6;
             let bestLines = [];
 
-            for (let fSize = 6.0; fSize >= 4.2; fSize -= 0.2) {
+            // Calibración para cubrir todo el ancho de la casilla
+            for (let fSize = 6.8; fSize >= 4.4; fSize -= 0.3) {
                 doc.setFontSize(fSize);
-                const lH = fSize * 0.40;
+                const lH = fSize * 0.41;
                 const lines = doc.splitTextToSize(cleanText, maxW);
                 const totalHeight = lines.length * lH;
-                if (totalHeight <= maxH || fSize <= 4.3) {
+                if (totalHeight <= maxH || fSize <= 4.6) {
                     bestFontSize = fSize;
                     bestLineHeight = lH;
                     bestLines = lines;
