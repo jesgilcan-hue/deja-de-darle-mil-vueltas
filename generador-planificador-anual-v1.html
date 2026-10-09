@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador Anual Interactivo (V1) · Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Control de acceso PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* CABECERA & NAVEGACIÓN */
+        .top-nav {
+            width: 100%;
+            max-width: 980px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: #777;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .badge-version {
+            background: #ede6dc;
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 760px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1816;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.45;
+        }
+
+        /* BARRA DE HERRAMIENTAS PRINCIPAL */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 980px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 6px 11px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #443e39;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .toolbar-btn:hover {
+            background: #ede7dc;
+            border-color: #c9bfb0;
+            color: #111;
+        }
+
+        /* SELECTOR EXCLUYENTE DE CASILLAS (SIN TEXTO) */
+        .checkbox-selector-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: #ebe6dc;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid #dcd7ce;
+        }
+
+        .btn-shape-selector {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            width: 32px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+        .btn-shape-selector:hover {
+            background: #f7f4ed;
+            color: #222;
+        }
+        .btn-shape-selector.active {
+            background: #ffffff;
+            border-color: #cbbeae;
+            color: var(--accent);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 15px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 3px 10px rgba(135,85,59,0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* BARRA DE CONTROL DE SECCIONES (AÑADIR / QUITAR / INTERCAMBIAR) */
+        .sections-toggle-bar {
+            width: 100%;
+            max-width: 980px;
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 8px;
+            padding: 7px 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .sections-toggle-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sections-toggle-pills {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sec-pill {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 14px;
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: #666;
+            padding: 3px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-sec-pill:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn-sec-pill.active {
+            background: #f4efe6;
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .btn-sec-swap {
+            background: #f0ebe1;
+            border: 1px solid #d2cbbe;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #4a3e35;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-sec-swap:hover {
+            background: #e6dfd2;
+            color: #111;
+        }
+
+        /* AVISO CONTEXTUAL (TOAST SUAVE ENTRE SECCIONES Y PAPEL) */
+        .toast-notify {
+            width: 100%;
+            max-width: 980px;
+            background: #faf6f0;
+            border: 1px solid #dfd5c4;
+            color: #6b584a;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: none;
+            margin-bottom: 8px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========================================================
+           EL LIENZO FÍSICO INTERACTIVO APAISADO (LIBRO 8.25" × 6")
+           ======================================================== */
+        .paper-canvas-container {
+            width: 100%;
+            max-width: 980px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .interactive-paper-annual {
+            width: 100%;
+            max-width: 980px;
+            height: 712px;
+            max-height: 712px;
+            aspect-ratio: 8.25 / 6;
+            background-color: var(--paper-color);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.14);
+            border-radius: 4px;
+            border: 1px solid #e7e2d8;
+            padding: 16px 24px 14px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden; /* LA PÁGINA NUNCA CRECE */
+            transition: background 0.2s;
+        }
+
+        /* CABECERA EDITABLE DEL AÑO */
+        .paper-annual-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #222;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .annual-header-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .annual-kicker {
+            font-size: 0.63rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .annual-title-main {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.1;
+        }
+
+        .annual-meta-inputs {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .input-year-inline {
+            font-family: var(--font-sans);
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #222;
+            background: #faf8f5;
+            border: 1px solid #dcd7ce;
+            border-radius: 4px;
+            padding: 3px 8px;
+            width: 78px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-year-inline:focus {
+            border-color: var(--accent);
+        }
+
+        /* FRANJAS MODULARES SUPERIOR E INFERIOR (FLEX VERTICAL) */
+        .modular-strip {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .modular-strip.strip-top {
+            margin-bottom: 8px;
+        }
+        .modular-strip.strip-bottom {
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
+        .modular-subgrid {
+            display: grid;
+            gap: 10px;
+            width: 100%;
+        }
+        .modular-subgrid.subgrid-1col {
+            grid-template-columns: 1fr;
+        }
+        .modular-subgrid.subgrid-2col {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* TARJETA MODULAR (COMÚN A LOS 3 BLOQUES) */
+        .modular-card {
+            background: #faf8f5;
+            border: 1px solid #ddd7cc;
+            border-radius: 5px;
+            padding: 5px 8px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+            min-height: 0;
+            position: relative;
+            width: 100%;
+        }
+
+        .strip-bottom #card-notes {
+            max-height: 58px;
+        }
+
+        .card-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e6dfd3;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #2d2722;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-card-action {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 4px;
+            font-size: 0.64rem;
+            font-weight: 600;
+            color: #555;
+            padding: 1px 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.2;
+            font-family: inherit;
+        }
+        .btn-card-action:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: #faf7f2;
+        }
+        .btn-card-action.btn-del:hover {
+            color: #b03030;
+            border-color: #d88;
+            background: #fff5f5;
+        }
+
+        /* 1. BLOQUE PRIORIDADES ESTRATÉGICAS */
+        .priorities-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-height: 0;
+            justify-content: space-around;
+        }
+        .priority-item-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .priority-checkbox {
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #666;
+            border-radius: 3px;
+            background: #fff;
+            flex-shrink: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .priority-checkbox.circle {
+            border-radius: 50%;
+        }
+        .priority-checkbox.checked::after {
+            content: '✓';
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .single-line-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed #e2dad0;
+            font-family: var(--font-sans);
+            font-size: 0.74rem;
+            color: #222;
+            outline: none;
+            padding: 1px 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .single-line-input:focus {
+            border-bottom-color: var(--accent);
+            background: rgba(0,0,0,0.01);
+        }
+
+        /* 2. BLOQUE LEMA O FOCO ANUAL */
+        .motto-box {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            padding: 2px 4px;
+        }
+        .motto-input {
+            width: 100%;
+            font-family: var(--font-serif);
+            font-size: 0.82rem;
+            font-style: italic;
+            color: #333;
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed #ded7cc;
+            outline: none;
+            padding: 2px 4px;
+        }
+        .motto-input:focus {
+            border-bottom-color: var(--accent);
+        }
+
+        /* 3. BLOQUE NOTAS Y BALANCE ANUAL */
+        .notes-textarea-box {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .notes-content-textarea {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            resize: none;
+            font-family: var(--font-sans);
+            font-size: 0.72rem;
+            line-height: 1.4;
+            color: #222;
+            outline: none;
+            padding: 1px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* ========================================================
+           CUADRÍCULA DE LOS 12 MESES (4 COLUMNAS × 3 FILAS)
+           ======================================================== */
+        .annual-main-grid-wrapper {
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            box-sizing: border-box;
+        }
+
+        .annual-month-tile {
+            background: #ffffff;
+            border: 1px solid #dcd6cb;
+            border-radius: 5px;
+            padding: 5px 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .month-tile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ede7dc;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .month-tile-name {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #2b2520;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .month-tile-quarter {
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: #f7f3ed;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        .month-notes-textarea {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            background: transparent;
+            border: none;
+            resize: none;
+            font-family: var(--font-sans);
+            font-size: 0.68rem;
+            line-height: 1.35;
+            color: #222;
+            outline: none;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* PIE EDITORIAL DEL PAPEL */
+        .paper-editorial-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.58rem;
+            color: #888;
+            border-top: 1px solid #e2ddd3;
+            padding-top: 3px;
+            margin-top: 6px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        /* MODAL DE DESCARGA */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 520px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-btn-download {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 18px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .modal-btn-download:hover {
+            background: var(--accent-hover);
+        }
+
+        .modal-btn-blank {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            color: #443e39;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .modal-btn-blank:hover {
+            background: #ebe6dc;
+            color: #111;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            color: #888;
+            cursor: pointer;
+        }
+        .modal-close-btn:hover { color: #222; }
+
+        @media (max-width: 900px) {
+            .interactive-paper-annual {
+                height: auto;
+                max-height: none;
+                aspect-ratio: auto;
+            }
+            .annual-main-grid-wrapper {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVEGACIÓN SUPERIOR -->
+    <header class="top-nav">
+        <a href="/generador.html" class="back-link">← Volver a generadores</a>
+        <span class="badge-version">Menos Ruido · Edición 1:1</span>
+    </header>
+
+    <!-- TÍTULO -->
+    <div class="header-title-box">
+        <h1>Planificador Anual Interactivo</h1>
+        <p>Escribe tus prioridades, lema y focos de los 12 meses directamente en la hoja. Lo que ves es exactamente lo que se imprime.</p>
+    </div>
+
+    <!-- BARRA DE HERRAMIENTAS PRINCIPAL -->
+    <div class="canvas-toolbar">
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Limpiar todos los textos para empezar en blanco">
+                <span>✕</span> Limpiar
+            </button>
+            <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar contenido de ejemplo">
+                <span>✎</span> Ejemplo
+            </button>
+
+            <!-- SELECTOR EXCLUYENTE DE CASILLAS -->
+            <div class="checkbox-selector-group" title="Estilo de casillas de prioridades">
+                <button type="button" class="btn-shape-selector" id="btn-shape-square" onclick="setCheckboxStyle('square')" title="Casillas cuadradas">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="12" height="12" rx="1.5" />
+                    </svg>
+                </button>
+                <button type="button" class="btn-shape-selector active" id="btn-shape-circle" onclick="setCheckboxStyle('circle')" title="Casillas redondas">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="8" cy="8" r="6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
+                <span>⬇</span> Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- BARRA DE SECCIONES (VISIBILIDAD Y CAMBIO DE FRANJA) -->
+    <div class="sections-toggle-bar">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="sections-toggle-label">Bloques:</span>
+            <div class="sections-toggle-pills">
+                <button type="button" class="btn-sec-pill active" id="pill-priorities" onclick="toggleSection('priorities')">🎯 Prioridades del Año</button>
+                <button type="button" class="btn-sec-pill active" id="pill-motto" onclick="toggleSection('motto')">✨ Lema o Foco</button>
+                <button type="button" class="btn-sec-pill active" id="pill-notes" onclick="toggleSection('notes')">📝 Notas y Balance</button>
+            </div>
+        </div>
+        <button type="button" class="btn-sec-swap" onclick="swapModularStrips()" title="Intercambiar bloques de arriba y abajo">
+            <span>⇄</span> Intercambiar franjas
+        </button>
+    </div>
+
+    <!-- TOAST DE AVISO (PREVENCIÓN DE PÉRDIDAS) -->
+    <div class="toast-notify" id="toast-notify"></div>
+
+    <!-- LIENZO FÍSICO INTERACTIVO (8.25" × 6") -->
+    <div class="paper-canvas-container">
+        <div class="interactive-paper-annual" id="paper-sheet">
+
+            <!-- CABECERA DEL PAPEL -->
+            <div class="paper-annual-header">
+                <div class="annual-header-title-wrap">
+                    <span class="annual-kicker">MENOS RUIDO · PANORÁMICA ANUAL</span>
+                    <h2 class="annual-title-main">Planificación Anual</h2>
+                </div>
+                <div class="annual-meta-inputs">
+                    <label for="input-year" style="font-size: 0.72rem; font-weight: 700; color: #555;">AÑO:</label>
+                    <input type="number" class="input-year-inline" id="input-year" value="2027" min="2020" max="2050" onchange="onYearChanged()">
+                </div>
+            </div>
+
+            <!-- FRANJA SUPERIOR (MODULAR) -->
+            <div class="modular-strip strip-top" id="strip-top">
+                <!-- Se llena dinámicamente con los bloques asignados arriba -->
+            </div>
+
+            <!-- CUADRÍCULA CENTRAL DE LOS 12 MESES (ELEMENTO FIJO) -->
+            <div class="annual-main-grid-wrapper" id="annual-grid-wrapper">
+                <!-- 12 tarjetas de mes generadas dinámicamente -->
+            </div>
+
+            <!-- FRANJA INFERIOR (MODULAR) -->
+            <div class="modular-strip strip-bottom" id="strip-bottom">
+                <!-- Se llena dinámicamente con los bloques asignados abajo -->
+            </div>
+
+            <!-- PIE DE PÁGINA EDITORIAL -->
+            <div class="paper-editorial-footer">
+                <span>EDITORIAL MENOS RUIDO · SISTEMA DE PLANIFICACIÓN ANUAL</span>
+                <span>editorialmenosruido.com</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Planificador Anual</h3>
+            <p class="modal-desc">Elige si quieres tu PDF con los textos que has escrito o una plantilla en blanco para rellenar a mano.</p>
+            
+            <div class="modal-format-badge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · Calidad Imprenta
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="modal-btn-download" onclick="executeDownload(false)">
+                    <span>⬇</span> Descargar con mis textos
+                </button>
+                <button type="button" class="modal-btn-blank" onclick="executeDownload(true)">
+                    <span>📄</span> Descargar plantilla limpia en blanco
+                </button>
+            </div>
+
+            <!-- ENLACE RESEÑA -->
+            <div style="text-align: center; margin-top: 14px;">
+                <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_90_dias', origen: 'modal_generador_anual_v1' })">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL
+        const state = {
+            checkboxStyle: 'circle', // 'square' o 'circle'
+            // Ubicación de los bloques: cada uno puede estar en 'top' o 'bottom'
+            blockPlacement: {
+                priorities: 'top',
+                motto: 'top',
+                notes: 'bottom'
+            },
+            topOrder: ['priorities', 'motto'],
+            bottomOrder: ['notes'],
+            visibility: {
+                priorities: true,
+                motto: true,
+                notes: true
+            },
+            // Prioridades estratégicas (3)
+            prioritiesData: [
+                { text: 'Consolidar nuevo modelo de trabajo sin dispersión digital', checked: false },
+                { text: 'Completar los hitos clave de los proyectos estratégicos', checked: false },
+                { text: 'Preservar espacios innegociables de salud y descanso', checked: false }
+            ],
+            // Lema anual
+            mottoText: 'Menos ruido mental, más profundidad y constancia.',
+            // Notas y balance anual
+            notesText: 'Criterio rector: avanzar con calma y foco sostenido mes a mes.',
+            // Notas de los 12 meses (índices 0..11)
+            monthsNotes: [
+                'Arranque de ciclo y definición de prioridades',
+                'Foco en ejecución profunda y revisión',
+                'Cierre Q1: balance y ajustes de rumbo',
+                'Inicio Q2: lanzamiento y consolidación',
+                'Avance sostenido y simplificación',
+                'Cierre Q2: balance semestral',
+                'Periodo de ritmo pausado y recarga',
+                'Desconexión analógica y perspectiva',
+                'Reanudación Q3 y foco de otoño',
+                'Aceleración de entregas clave',
+                'Consolidación y cierre de compromisos',
+                'Balance general del año y celebración'
+            ]
+        };
+
+        const MONTH_NAMES = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ];
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            renderModularStrips();
+            renderAnnualGrid();
+            updateCheckboxUI();
+            updateSectionPillsUI();
+        });
+
+        // GESTIÓN DE FORMA DE CASILLAS
+        function setCheckboxStyle(style) {
+            state.checkboxStyle = style;
+            updateCheckboxUI();
+            renderModularStrips();
+            showToast(style === 'circle' ? 'Casillas redondas seleccionadas' : 'Casillas cuadradas seleccionadas');
+        }
+
+        function updateCheckboxUI() {
+            const isCircle = state.checkboxStyle === 'circle';
+            const btnSquare = document.getElementById('btn-shape-square');
+            const btnCircle = document.getElementById('btn-shape-circle');
+            if (btnSquare && btnCircle) {
+                btnSquare.classList.toggle('active', !isCircle);
+                btnCircle.classList.toggle('active', isCircle);
+            }
+        }
+
+        // AVISOS CONTEXTUALES (TOAST)
+        let toastTimeout = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notify');
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3600);
+        }
+
+        // ========================================================
+        // VALIDACIÓN DE CAPACIDAD DE TEXTO ANTES DE AGRUPAR O AÑADIR
+        // ========================================================
+        function canFitInHalfColumn(blockKey) {
+            if (blockKey === 'priorities') {
+                return state.prioritiesData.every(p => !p.text || p.text.length <= 44);
+            }
+            if (blockKey === 'motto') {
+                return !state.mottoText || state.mottoText.length <= 50;
+            }
+            return true;
+        }
+
+        function getMaxCharsPerMonthTile(simulatedVisibility = state.visibility) {
+            const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
+            if (countVisible <= 1) return 140; // Casillas de mes muy amplias
+            if (countVisible === 2) return 95;  // Altura estándar
+            return 70;                          // Con 3 bloques, altura más compacta
+        }
+
+        function checkMonthTilesCapacity(targetVisibility) {
+            const maxChars = getMaxCharsPerMonthTile(targetVisibility);
+            const overflowingMonths = [];
+            state.monthsNotes.forEach((txt, idx) => {
+                if (txt && txt.trim().length > maxChars) {
+                    overflowingMonths.push({ idx: idx + 1, len: txt.trim().length, max: maxChars });
+                }
+            });
+            return { ok: overflowingMonths.length === 0, maxChars, overflowingMonths };
+        }
+
+        function handleSingleLineInput(el) {
+            el.value = el.value.replace(/[\r\n]+/g, ' ');
+            while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+        }
+
+        // ========================================================
+        // CONTROL DE SECCIONES (VISIBILIDAD Y MOVIMIENTO)
+        // ========================================================
+        function toggleSection(blockKey) {
+            const willEnable = !state.visibility[blockKey];
+
+            if (willEnable) {
+                const simulatedVisibility = { ...state.visibility, [blockKey]: true };
+                const check = checkMonthTilesCapacity(simulatedVisibility);
+                if (!check.ok) {
+                    showToast(`⚠️ No hay espacio: al añadir este bloque se reducen los meses. Borra texto en los meses (máx ${check.maxChars} caracteres) para hacer hueco.`);
+                    return;
+                }
+            }
+
+            state.visibility[blockKey] = willEnable;
+            updateSectionPillsUI();
+            renderModularStrips();
+            showToast(state.visibility[blockKey] ? `Bloque activado` : `Bloque ocultado`);
+        }
+
+        function updateSectionPillsUI() {
+            const pillPriorities = document.getElementById('pill-priorities');
+            const pillMotto = document.getElementById('pill-motto');
+            const pillNotes = document.getElementById('pill-notes');
+
+            if (pillPriorities) pillPriorities.classList.toggle('active', state.visibility.priorities);
+            if (pillMotto) pillMotto.classList.toggle('active', state.visibility.motto);
+            if (pillNotes) pillNotes.classList.toggle('active', state.visibility.notes);
+        }
+
+        function moveBlockToStrip(blockKey, targetStrip) {
+            const targetOrder = (targetStrip === 'top') ? state.topOrder : state.bottomOrder;
+            const activeOthers = targetOrder.filter(k => k !== blockKey && state.blockPlacement[k] === targetStrip && state.visibility[k]);
+            if (activeOthers.length >= 1) {
+                if (!canFitInHalfColumn(blockKey)) {
+                    showToast('⚠️ No hay espacio en la fila: recorta texto para colocarlo en paralelo');
+                    return;
+                }
+                for (const otherKey of activeOthers) {
+                    if (!canFitInHalfColumn(otherKey)) {
+                        showToast('⚠️ No hay espacio en la fila: recorta texto para colocarlo en paralelo');
+                        return;
+                    }
+                }
+            }
+
+            state.blockPlacement[blockKey] = targetStrip;
+            state.topOrder = state.topOrder.filter(k => k !== blockKey);
+            state.bottomOrder = state.bottomOrder.filter(k => k !== blockKey);
+            if (targetStrip === 'top') {
+                state.topOrder.push(blockKey);
+            } else {
+                state.bottomOrder.push(blockKey);
+            }
+            renderModularStrips();
+            showToast(`Bloque movido a la franja ${targetStrip === 'top' ? 'superior' : 'inferior'}`);
+        }
+
+        function swapModularStrips() {
+            for (const key of ['priorities', 'motto', 'notes']) {
+                state.blockPlacement[key] = (state.blockPlacement[key] === 'top') ? 'bottom' : 'top';
+            }
+            const temp = [...state.topOrder];
+            state.topOrder = [...state.bottomOrder];
+            state.bottomOrder = temp;
+            renderModularStrips();
+            showToast('Franjas superior e inferior intercambiadas');
+        }
+
+        // ========================================================
+        // RENDERIZADO DE LAS FRANJAS MODULARES
+        // ========================================================
+        function renderModularStrips() {
+            renderStripContent(document.getElementById('strip-top'), 'top');
+            renderStripContent(document.getElementById('strip-bottom'), 'bottom');
+        }
+
+        function renderStripContent(stripContainer, stripName) {
+            if (!stripContainer) return;
+            const order = (stripName === 'top') ? state.topOrder : state.bottomOrder;
+            const visibleKeys = order.filter(k => state.blockPlacement[k] === stripName && state.visibility[k]);
+
+            if (visibleKeys.length === 0) {
+                stripContainer.style.display = 'none';
+                stripContainer.innerHTML = '';
+                return;
+            }
+
+            stripContainer.style.display = 'flex';
+            stripContainer.style.flexDirection = 'column';
+            stripContainer.style.gap = '6px';
+
+            let html = '';
+            if (visibleKeys.length === 1) {
+                html += `<div class="modular-subgrid subgrid-1col">${renderBlockHTML(visibleKeys[0], stripName)}</div>`;
+            } else if (visibleKeys.length === 2) {
+                html += `<div class="modular-subgrid subgrid-2col">${renderBlockHTML(visibleKeys[0], stripName)}${renderBlockHTML(visibleKeys[1], stripName)}</div>`;
+            } else if (visibleKeys.length >= 3) {
+                html += `<div class="modular-subgrid subgrid-2col">${renderBlockHTML(visibleKeys[0], stripName)}${renderBlockHTML(visibleKeys[1], stripName)}</div>`;
+                html += `<div class="modular-subgrid subgrid-1col">${renderBlockHTML(visibleKeys[2], stripName)}</div>`;
+            }
+
+            stripContainer.innerHTML = html;
+        }
+
+        function renderBlockHTML(key, currentStrip) {
+            const otherStrip = (currentStrip === 'top') ? 'bottom' : 'top';
+            const otherStripName = (currentStrip === 'top') ? 'Abajo' : 'Arriba';
+            const isCircle = state.checkboxStyle === 'circle';
+
+            if (key === 'priorities') {
+                return `
+                <div class="modular-card" id="card-priorities">
+                    <div class="card-header-bar">
+                        <span class="card-title">🎯 Prioridades Estratégicas del Año</span>
+                        <div class="card-actions">
+                            <button type="button" class="btn-card-action" onclick="moveBlockToStrip('priorities', '${otherStrip}')" title="Mover bloque a la franja de ${otherStripName}">⇄ ${otherStripName}</button>
+                            <button type="button" class="btn-card-action btn-del" onclick="toggleSection('priorities')" title="Ocultar bloque">✕</button>
+                        </div>
+                    </div>
+                    <div class="priorities-list">
+                        ${state.prioritiesData.map((item, idx) => `
+                            <div class="priority-item-row">
+                                <div class="priority-checkbox ${isCircle ? 'circle' : ''} ${item.checked ? 'checked' : ''}" 
+                                     onclick="togglePriorityCheck(${idx})" title="Marcar prioridad"></div>
+                                <input type="text" class="single-line-input" value="${escapeHtml(item.text)}" 
+                                       placeholder="Prioridad ${idx + 1}..." oninput="handleSingleLineInput(this); updatePriorityText(${idx}, this.value)"
+                                       onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+
+            if (key === 'motto') {
+                return `
+                <div class="modular-card" id="card-motto">
+                    <div class="card-header-bar">
+                        <span class="card-title">✨ Lema o Foco Anual</span>
+                        <div class="card-actions">
+                            <button type="button" class="btn-card-action" onclick="moveBlockToStrip('motto', '${otherStrip}')" title="Mover bloque a la franja de ${otherStripName}">⇄ ${otherStripName}</button>
+                            <button type="button" class="btn-card-action btn-del" onclick="toggleSection('motto')" title="Ocultar bloque">✕</button>
+                        </div>
+                    </div>
+                    <div class="motto-box">
+                        <input type="text" class="motto-input" value="${escapeHtml(state.mottoText)}"
+                               placeholder="Lema o foco rector del año..." oninput="handleSingleLineInput(this); state.mottoText=this.value;"
+                               onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+                    </div>
+                </div>`;
+            }
+
+            if (key === 'notes') {
+                return `
+                <div class="modular-card" id="card-notes">
+                    <div class="card-header-bar">
+                        <span class="card-title">📝 Notas y Balance Anual</span>
+                        <div class="card-actions">
+                            <button type="button" class="btn-card-action" onclick="moveBlockToStrip('notes', '${otherStrip}')" title="Mover bloque a la franja de ${otherStripName}">⇄ ${otherStripName}</button>
+                            <button type="button" class="btn-card-action btn-del" onclick="toggleSection('notes')" title="Ocultar bloque">✕</button>
+                        </div>
+                    </div>
+                    <div class="notes-textarea-box">
+                        <textarea class="notes-content-textarea" id="textarea-notes"
+                                  placeholder="Notas, aprendizajes o balance anual..."
+                                  oninput="handleNotesTextareaInput(this)">${escapeHtml(state.notesText)}</textarea>
+                    </div>
+                </div>`;
+            }
+
+            return '';
+        }
+
+        function togglePriorityCheck(idx) {
+            state.prioritiesData[idx].checked = !state.prioritiesData[idx].checked;
+            renderModularStrips();
+        }
+
+        function updatePriorityText(idx, val) {
+            state.prioritiesData[idx].text = val;
+        }
+
+        function handleNotesTextareaInput(el) {
+            while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+            state.notesText = el.value;
+        }
+
+        // ========================================================
+        // CUADRÍCULA DE LOS 12 MESES (RENDERIZADO Y CONTROL)
+        // ========================================================
+        function renderAnnualGrid() {
+            const container = document.getElementById('annual-grid-wrapper');
+            if (!container) return;
+
+            container.innerHTML = MONTH_NAMES.map((name, idx) => {
+                const qNum = Math.ceil((idx + 1) / 3);
+                return `
+                <div class="annual-month-tile" data-month-idx="${idx}">
+                    <div class="month-tile-header">
+                        <span class="month-tile-name">${idx + 1}. ${name}</span>
+                        <span class="month-tile-quarter">Q${qNum}</span>
+                    </div>
+                    <textarea class="month-notes-textarea"
+                              placeholder="Foco o hitos del mes..."
+                              oninput="handleMonthInput(${idx}, this)"
+                              onkeydown="handleMonthKeydown(event)">${escapeHtml(state.monthsNotes[idx] || '')}</textarea>
+                </div>`;
+            }).join('');
+        }
+
+        function handleMonthInput(monthIdx, textarea) {
+            const maxChars = getMaxCharsPerMonthTile(state.visibility);
+            const countVisible = ['priorities', 'motto', 'notes'].filter(k => state.visibility[k]).length;
+            const maxLines = (countVisible <= 1) ? 5 : ((countVisible === 2) ? 4 : 3);
+
+            if (textarea.value.length > maxChars) {
+                textarea.value = textarea.value.slice(0, maxChars);
+                showToast(`⚠️ Máximo ${maxChars} caracteres en este mes según el espacio disponible.`);
+            }
+
+            const lines = textarea.value.split('\n');
+            if (lines.length > maxLines) {
+                textarea.value = lines.slice(0, maxLines).join('\n');
+                showToast(`⚠️ Máximo ${maxLines} líneas por mes según el espacio actual`);
+            }
+
+            while (textarea.scrollHeight > (textarea.clientHeight + 1) && textarea.value.length > 0) {
+                textarea.value = textarea.value.slice(0, -1);
+            }
+            state.monthsNotes[monthIdx] = textarea.value;
+        }
+
+        function handleMonthKeydown(e) {
+            const textarea = e.target;
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'];
+            if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+
+            const countVisible = ['priorities', 'motto', 'notes'].filter(k => state.visibility[k]).length;
+            const maxLines = (countVisible <= 1) ? 5 : ((countVisible === 2) ? 4 : 3);
+            const maxChars = getMaxCharsPerMonthTile(state.visibility);
+
+            if (textarea.value.length >= maxChars) {
+                e.preventDefault();
+                showToast(`⚠️ Límite de ${maxChars} caracteres alcanzado para este mes.`);
+                return;
+            }
+
+            const lines = textarea.value.split('\n');
+            if (e.key === 'Enter' && lines.length >= maxLines) {
+                e.preventDefault();
+                showToast(`⚠️ Máximo ${maxLines} líneas por mes según el espacio actual`);
+            }
+        }
+
+        function onYearChanged() {
+            const yearVal = document.getElementById('input-year').value;
+            showToast(`Año actualizado a ${yearVal}`);
+        }
+
+        // ========================================================
+        // HERRAMIENTAS: LIMPIAR Y CARGAR EJEMPLO
+        // ========================================================
+        function clearAllContent() {
+            if (confirm('¿Deseas limpiar todos los textos del planificador anual para empezar en blanco?')) {
+                state.prioritiesData.forEach(p => { p.text = ''; p.checked = false; });
+                state.mottoText = '';
+                state.notesText = '';
+                state.monthsNotes = new Array(12).fill('');
+
+                renderModularStrips();
+                renderAnnualGrid();
+                showToast('Textos limpios. Listo para escribir o descargar plantilla en blanco.');
+            }
+        }
+
+        function loadExampleContent() {
+            state.prioritiesData = [
+                { text: 'Consolidar nuevo modelo de trabajo sin dispersión digital', checked: true },
+                { text: 'Completar los hitos clave de los proyectos estratégicos', checked: false },
+                { text: 'Preservar espacios innegociables de salud y descanso', checked: false }
+            ];
+            state.mottoText = 'Menos ruido mental, más profundidad y constancia.';
+            state.notesText = 'Criterio rector: avanzar con calma y foco sostenido mes a mes.';
+            state.monthsNotes = [
+                'Arranque de ciclo y definición de prioridades',
+                'Foco en ejecución profunda y revisión',
+                'Cierre Q1: balance y ajustes de rumbo',
+                'Inicio Q2: lanzamiento y consolidación',
+                'Avance sostenido y simplificación',
+                'Cierre Q2: balance semestral',
+                'Periodo de ritmo pausado y recarga',
+                'Desconexión analógica y perspectiva',
+                'Reanudación Q3 y foco de otoño',
+                'Aceleración de entregas clave',
+                'Consolidación y cierre de compromisos',
+                'Balance general del año y celebración'
+            ];
+
+            renderModularStrips();
+            renderAnnualGrid();
+            showToast('Ejemplo anual cargado correctamente.');
+        }
+
+        // ========================================================
+        // MODAL DE DESCARGA
+        // ========================================================
+        function openDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target && e.target.classList.contains('modal-overlay')) {
+                closeDownloadModal();
+            }
+        }
+
+        // ========================================================
+        // MOTOR DE EXPORTACIÓN A PDF 1:1 (jsPDF LANDSCAPE 8.25" × 6")
+        // ========================================================
+        function executeDownload(isBlankTemplate) {
+            closeDownloadModal();
+
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('La librería PDF no se cargó correctamente. Por favor recarga la página.');
+                return;
+            }
+
+            const yearVal = document.getElementById('input-year').value || '2027';
+
+            // FORMATO EXACTO: 8.25" × 6" APAISADO (209.55 × 152.4 mm)
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [209.55, 152.4]
+            });
+
+            const pageWidth = 209.55;
+            const pageHeight = 152.4;
+            const leftMargin = 12;
+            const rightMargin = 12;
+            const topMargin = 9;
+            const usableWidth = pageWidth - leftMargin - rightMargin; // 185.55 mm
+
+            // FONDO CREMA EDITORIAL ANALÓGICO
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+            // 1. CABECERA EDITORIAL
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.5);
+            doc.setTextColor(135, 85, 59);
+            doc.text('MENOS RUIDO · PANORÁMICA ANUAL', leftMargin, topMargin + 2);
+
+            doc.setFont('times', 'bold');
+            doc.setFontSize(15.5);
+            doc.setTextColor(20, 18, 16);
+            doc.text('Planificación Anual', leftMargin, topMargin + 8.2);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9.2);
+            doc.setTextColor(30, 26, 22);
+            doc.text(`AÑO: ${yearVal}`, pageWidth - rightMargin, topMargin + 7.8, { align: 'right' });
+
+            doc.setDrawColor(30, 30, 30);
+            doc.setLineWidth(0.4);
+            doc.line(leftMargin, topMargin + 10.2, pageWidth - rightMargin, topMargin + 10.2);
+
+            let currentY = topMargin + 12.8;
+
+            const visibleTop = state.topOrder.filter(k => state.blockPlacement[k] === 'top' && state.visibility[k]);
+            const visibleBottom = state.bottomOrder.filter(k => state.blockPlacement[k] === 'bottom' && state.visibility[k]);
+
+            const footerY = pageHeight - 5.2; // 147.2 mm
+            const maxContentBottom = footerY - 4.5; // 142.7 mm
+            const totalVerticalBudget = maxContentBottom - currentY;
+
+            function calculateStripHeight(keys) {
+                if (keys.length === 0) return 0;
+                if (keys.length === 1) return 15;
+                if (keys.length === 2) return 15;
+                return 28;
+            }
+
+            const topStripHeight = calculateStripHeight(visibleTop);
+            const bottomStripHeight = calculateStripHeight(visibleBottom);
+
+            const spaceForGrid = totalVerticalBudget - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 2.5 : 0) - (bottomStripHeight > 0 ? 2.5 : 0);
+            const gridHeight = Math.max(spaceForGrid, 62);
+
+            // 2. FRANJA SUPERIOR
+            if (visibleTop.length > 0) {
+                renderPdfModularSection(doc, visibleTop, 'top', leftMargin, currentY, usableWidth, isBlankTemplate, maxContentBottom);
+                currentY += topStripHeight + 2.5;
+            }
+
+            // 3. CUADRÍCULA CENTRAL DE LOS 12 MESES (4 COLUMNAS × 3 FILAS)
+            renderPdfAnnualGrid(doc, leftMargin, currentY, usableWidth, gridHeight, isBlankTemplate);
+            currentY += gridHeight + 2.5;
+
+            // 4. FRANJA INFERIOR
+            if (visibleBottom.length > 0) {
+                renderPdfModularSection(doc, visibleBottom, 'bottom', leftMargin, currentY, usableWidth, isBlankTemplate, maxContentBottom);
+            }
+
+            // 5. PIE DE PÁGINA (FUERA Y SEPARADO DE CUALQUIER RECUADRO)
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(5.5);
+            doc.setTextColor(140, 135, 128);
+            doc.text('EDITORIAL MENOS RUIDO · SISTEMA DE PLANIFICACIÓN ANUAL', leftMargin, footerY);
+            doc.text('editorialmenosruido.com', pageWidth - rightMargin, footerY, { align: 'right' });
+
+            // NOMBRE DEL ARCHIVO OFICIAL
+            let fileName = 'Menos_Ruido_Planificador_Anual_En_Blanco.pdf';
+            if (!isBlankTemplate) {
+                fileName = `Menos_Ruido_Planificador_Anual_${yearVal}.pdf`;
+            }
+
+            doc.save(fileName);
+            showToast(`PDF descargado: ${fileName}`);
+        }
+
+        // ========================================================
+        // RENDERIZADO DE FRANJAS MODULARES EN jsPDF (SIN EMOJIS)
+        // ========================================================
+        function renderPdfModularSection(doc, keys, stripName, startX, startY, totalW, isBlank, maxBottomY) {
+            let curY = startY;
+            let defaultH = 15;
+            if (stripName === 'bottom') {
+                const remainingH = (maxBottomY || 142.7) - curY;
+                defaultH = Math.max(10, Math.min(14, remainingH));
+            }
+
+            if (keys.length === 1) {
+                renderPdfBlock(doc, keys[0], startX, curY, totalW, defaultH, isBlank);
+                curY += defaultH + 2.5;
+            } else if (keys.length === 2) {
+                const halfW = (totalW - 3) / 2;
+                renderPdfBlock(doc, keys[0], startX, curY, halfW, defaultH, isBlank);
+                renderPdfBlock(doc, keys[1], startX + halfW + 3, curY, halfW, defaultH, isBlank);
+                curY += defaultH + 2.5;
+            } else if (keys.length >= 3) {
+                const halfW = (totalW - 3) / 2;
+                renderPdfBlock(doc, keys[0], startX, curY, halfW, defaultH, isBlank);
+                renderPdfBlock(doc, keys[1], startX + halfW + 3, curY, halfW, defaultH, isBlank);
+                curY += defaultH + 2.5;
+                const nextH = Math.max(10, Math.min(14, (maxBottomY || 142.7) - curY));
+                renderPdfBlock(doc, keys[2], startX, curY, totalW, nextH, isBlank);
+                curY += nextH + 2.5;
+            }
+        }
+
+        function renderPdfBlock(doc, key, x, y, w, h, isBlank) {
+            doc.setFillColor(250, 248, 245);
+            doc.setDrawColor(220, 215, 204);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.2);
+            doc.setTextColor(45, 39, 34);
+
+            let titleStr = '';
+            if (key === 'priorities') titleStr = 'PRIORIDADES ESTRATÉGICAS DEL AÑO';
+            if (key === 'motto') titleStr = 'LEMA O FOCO ANUAL';
+            if (key === 'notes') titleStr = 'NOTAS Y BALANCE ANUAL';
+
+            doc.text(titleStr, x + 3.3, y + 4.2);
+
+            doc.setDrawColor(226, 218, 208);
+            doc.setLineWidth(0.15);
+            doc.line(x + 3, y + 5.5, x + w - 3, y + 5.5);
+
+            const contentY = y + 7.2;
+            const isCircle = state.checkboxStyle === 'circle';
+
+            if (key === 'priorities') {
+                const rowH = (h - 8.2) / 3;
+                state.prioritiesData.forEach((item, i) => {
+                    const rowY = contentY + i * rowH;
+                    const boxSize = 2.5;
+                    const isMarked = !isBlank && item.checked;
+
+                    if (isMarked) {
+                        doc.setFillColor(135, 85, 59);
+                        doc.setDrawColor(135, 85, 59);
+                        doc.setLineWidth(0.2);
+                        if (isCircle) {
+                            doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                        } else {
+                            doc.roundedRect(x + 3.2, rowY, boxSize, boxSize, 0.4, 0.4, 'FD');
+                        }
+                        doc.setDrawColor(255, 255, 255);
+                        doc.setLineWidth(0.35);
+                        const ckX = x + (isCircle ? 4.5 : (3.2 + boxSize / 2));
+                        const ckY = rowY + 1.2;
+                        doc.line(ckX - 0.7, ckY, ckX - 0.2, ckY + 0.6);
+                        doc.line(ckX - 0.2, ckY + 0.6, ckX + 0.8, ckY - 0.6);
+                    } else {
+                        doc.setFillColor(255, 255, 255);
+                        doc.setDrawColor(100, 100, 100);
+                        doc.setLineWidth(0.2);
+                        if (isCircle) {
+                            doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                        } else {
+                            doc.rect(x + 3.2, rowY, boxSize, boxSize, 'FD');
+                        }
+                    }
+
+                    doc.setDrawColor(226, 218, 208);
+                    doc.setLineWidth(0.15);
+                    doc.line(x + 7.5, rowY + 2.8, x + w - 3, rowY + 2.8);
+
+                    if (!isBlank && item.text) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(6.5);
+                        doc.setTextColor(30, 30, 30);
+                        const cleanTxt = item.text.replace(/[\r\n]+/g, ' ');
+                        const fitTxt = doc.splitTextToSize(cleanTxt, w - 12)[0] || '';
+                        doc.text(fitTxt, x + 8, rowY + 2.2);
+                    }
+                });
+            } else if (key === 'motto') {
+                if (!isBlank && state.mottoText) {
+                    doc.setFont('helvetica', 'italic');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(40, 35, 30);
+                    const cleanTxt = state.mottoText.replace(/[\r\n]+/g, ' ');
+                    const fitTxt = doc.splitTextToSize(`«${cleanTxt}»`, w - 8)[0] || '';
+                    doc.text(fitTxt, x + 3.5, contentY + 2.5);
+                }
+            } else if (key === 'notes') {
+                if (!isBlank && state.notesText) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(5.8);
+                    doc.setTextColor(30, 30, 30);
+                    const splitNotes = doc.splitTextToSize(state.notesText, w - 6);
+                    const lineH = 2.6;
+                    const maxLines = Math.max(1, Math.floor((h - 6.8) / lineH));
+                    const toPrint = splitNotes.slice(0, maxLines);
+                    toPrint.forEach((line, lIdx) => {
+                        doc.text(line, x + 3.3, contentY + 1.8 + lIdx * lineH);
+                    });
+                }
+            }
+        }
+
+        // ========================================================
+        // RENDERIZADO DE LA CUADRÍCULA DE LOS 12 MESES EN jsPDF
+        // ========================================================
+        function renderPdfAnnualGrid(doc, startX, startY, totalW, totalH, isBlank) {
+            const cols = 4;
+            const rows = 3;
+            const gap = 2.2;
+            const colW = (totalW - gap * (cols - 1)) / cols;
+            const rowH = (totalH - gap * (rows - 1)) / rows;
+            const headerH = 4.2;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const mIdx = r * cols + c;
+                    const cellX = startX + c * (colW + gap);
+                    const cellY = startY + r * (rowH + gap);
+                    const qNum = Math.ceil((mIdx + 1) / 3);
+
+                    // Marco del mes
+                    doc.setFillColor(255, 255, 255);
+                    doc.setDrawColor(220, 215, 205);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(cellX, cellY, colW, rowH, 1, 1, 'FD');
+
+                    // Cabecera del mes
+                    doc.setFillColor(245, 241, 234);
+                    doc.rect(cellX, cellY, colW, headerH, 'F');
+                    doc.line(cellX, cellY + headerH, cellX + colW, cellY + headerH);
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.2);
+                    doc.setTextColor(45, 40, 35);
+                    doc.text(`${mIdx + 1}. ${MONTH_NAMES[mIdx].toUpperCase()}`, cellX + 2.2, cellY + 3.0);
+
+                    doc.setFontSize(5.5);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text(`Q${qNum}`, cellX + colW - 2.2, cellY + 3.0, { align: 'right' });
+
+                    // Contenido del mes
+                    if (!isBlank && state.monthsNotes[mIdx]) {
+                        renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 2.2, cellY + 6.6, colW - 4.4, rowH - 7.5);
+                    }
+                }
+            }
+        }
+
+        function renderMonthCellText(doc, text, x, y, maxW, maxH) {
+            if (!text || !text.trim()) return;
+            const cleanText = text.trim();
+
+            let bestFontSize = 5.8;
+            let bestLineHeight = 2.4;
+            let bestLines = [];
+
+            for (let fSize = 6.0; fSize >= 4.2; fSize -= 0.2) {
+                doc.setFontSize(fSize);
+                const lH = fSize * 0.40;
+                const lines = doc.splitTextToSize(cleanText, maxW);
+                const totalHeight = lines.length * lH;
+                if (totalHeight <= maxH || fSize <= 4.3) {
+                    bestFontSize = fSize;
+                    bestLineHeight = lH;
+                    bestLines = lines;
+                    if (totalHeight <= maxH) break;
+                }
+            }
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(bestFontSize);
+            doc.setTextColor(35, 30, 25);
+
+            const maxVisibleLines = Math.floor(maxH / bestLineHeight);
+            const linesToPrint = bestLines.slice(0, Math.max(maxVisibleLines, 1));
+            linesToPrint.forEach((line, idx) => {
+                doc.text(line, x, y + idx * bestLineHeight);
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function trackVercelEvent(eventName, properties) {
+            if (window.va) {
+                window.va('event', { name: eventName, data: properties });
+            }
+        }
+    </script>
+</body>
+</html>
