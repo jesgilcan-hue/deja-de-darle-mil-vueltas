@@ -267,26 +267,37 @@
             border-color: var(--accent);
         }
 
-        /* AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR */
+        /* AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR (ESPACIO CONSTANTE SIN SALTO VERTICAL) */
         .sheet-inline-notice {
             width: 100%;
             max-width: 980px;
-            margin: 0 auto 10px auto;
-            background: #fbf8f2;
-            color: #4a3c31;
-            border: 1px solid #dfd6c7;
-            padding: 8px 16px;
+            min-height: 34px;
+            margin: 4px auto 10px auto;
+            padding: 6px 14px;
             border-radius: 6px;
             font-size: 0.80rem;
             font-weight: 600;
             text-align: center;
             box-sizing: border-box;
-            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
-            animation: fadeInNotice 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid transparent;
+            background: transparent;
+            color: transparent;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
-        @keyframes fadeInNotice {
-            from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
+        .sheet-inline-notice.active {
+            opacity: 1;
+            visibility: visible;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border-color: #dfd6c7;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            pointer-events: auto;
         }
 
         /* ========================================================
@@ -1068,8 +1079,8 @@
         </div>
     </div>
 
-    <!-- AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR -->
-    <div class="sheet-inline-notice" id="toast-notify" style="display: none;"></div>
+    <!-- AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR (ESPACIO CONSTANTE RESERVADO) -->
+    <div class="sheet-inline-notice" id="toast-notify"></div>
 
     <!-- LIENZO FÍSICO INTERACTIVO HORIZONTAL (8.25" × 6") -->
     <div class="paper-canvas-container">
@@ -1291,11 +1302,11 @@
             const toast = document.getElementById('toast-notify');
             if (!toast) return;
             toast.textContent = msg;
-            toast.style.display = 'block';
+            toast.classList.add('active');
             clearTimeout(toastTimeout);
             toastTimeout = setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3600);
+                toast.classList.remove('active');
+            }, 2800);
         }
 
         // ========================================================
