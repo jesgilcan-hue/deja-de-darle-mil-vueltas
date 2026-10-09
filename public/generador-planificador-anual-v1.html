@@ -366,7 +366,7 @@
             box-shadow: 0 16px 45px rgba(0,0,0,0.14);
             border-radius: 4px;
             border: 1px solid #e7e2d8;
-            padding: 16px 24px 14px;
+            padding: 12px 20px 10px;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -476,14 +476,22 @@
             width: 100%;
         }
 
-        .strip-top .modular-card {
-            min-height: 98px;
-            max-height: 98px;
+        /* Alturas fijas intrínsecas: se preservan exactamente iguales al intercambiar franjas */
+        #card-priorities,
+        #card-motto {
+            min-height: 96px;
+            max-height: 96px;
         }
 
-        .strip-bottom .modular-card {
-            min-height: 68px;
-            max-height: 68px;
+        #card-notes {
+            min-height: 72px;
+            max-height: 72px;
+        }
+
+        /* Si notas comparte fila de 2 columnas con prioridades o lema, se alinea con la fila */
+        .modular-subgrid.subgrid-2col #card-notes {
+            min-height: 96px;
+            max-height: 96px;
         }
 
         .card-header-bar {
@@ -645,7 +653,7 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 8px;
+            gap: 6px;
             box-sizing: border-box;
         }
 
@@ -702,11 +710,11 @@
             border: none;
             resize: none;
             font-family: var(--font-sans);
-            font-size: 0.74rem;
-            line-height: 1.34;
+            font-size: 0.72rem;
+            line-height: 1.28;
             color: #222;
             outline: none;
-            padding: 2px 0 0 0;
+            padding: 1px 0 0 0;
             box-sizing: border-box;
             overflow: hidden;
         }
@@ -1132,18 +1140,18 @@
 
         function getMaxLinesPerMonthTile(simulatedVisibility = state.visibility) {
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
-            if (countVisible === 0) return 13;
-            if (countVisible === 1) return 11;
-            if (countVisible === 2) return 9;
-            return 7; // con los 3 bloques activos: permite 7 líneas completas
+            if (countVisible === 0) return 14;
+            if (countVisible === 1) return 12;
+            if (countVisible === 2) return 10;
+            return 8; // Con los 3 bloques activos: permite 8 líneas completas (hasta el fondo de la casilla)
         }
 
         function getMaxCharsPerMonthTile(simulatedVisibility = state.visibility) {
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
-            if (countVisible === 0) return 360;
-            if (countVisible === 1) return 300;
-            if (countVisible === 2) return 240;
-            return 190; // con los 3 bloques activos: permite hasta 190 caracteres
+            if (countVisible === 0) return 450;
+            if (countVisible === 1) return 380;
+            if (countVisible === 2) return 320;
+            return 280; // Con los 3 bloques activos: permite hasta 280 caracteres
         }
 
         function checkMonthTilesCapacity(targetVisibility) {
@@ -1414,7 +1422,7 @@
             }
 
             // Límite físico: no desbordar la altura natural de la tarjeta
-            while (textarea.scrollHeight > (textarea.clientHeight + 1) && textarea.value.length > 0) {
+            while (textarea.scrollHeight > (textarea.clientHeight + 2) && textarea.value.length > 0) {
                 textarea.value = textarea.value.slice(0, -1);
             }
             state.monthsNotes[monthIdx] = textarea.value;
@@ -1570,16 +1578,17 @@
             const maxContentBottom = footerY - 4.5; // 142.7 mm
             const totalVerticalBudget = maxContentBottom - currentY;
 
-            function calculateStripHeight(keys, stripName) {
-                if (keys.length === 0) return 0;
-                if (stripName === 'bottom' && keys.length === 1 && keys[0] === 'notes') return 16;
-                if (keys.length === 1) return 19;
-                if (keys.length === 2) return 19;
-                return 36;
+            function calculateStripHeight(keys) {
+                if (!keys || keys.length === 0) return 0;
+                if (keys.includes('priorities')) return 19;
+                if (keys.length === 1 && keys[0] === 'notes') return 16;
+                if (keys.length === 1 && keys[0] === 'motto') return 16;
+                if (keys.length === 2) return 16;
+                return 35;
             }
 
-            const topStripHeight = calculateStripHeight(visibleTop, 'top');
-            const bottomStripHeight = calculateStripHeight(visibleBottom, 'bottom');
+            const topStripHeight = calculateStripHeight(visibleTop);
+            const bottomStripHeight = calculateStripHeight(visibleBottom);
 
             const spaceForGrid = totalVerticalBudget - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 2.5 : 0) - (bottomStripHeight > 0 ? 2.5 : 0);
             const gridHeight = Math.max(spaceForGrid, 62);
@@ -1621,7 +1630,7 @@
         // ========================================================
         function renderPdfModularSection(doc, keys, stripName, startX, startY, totalW, isBlank, maxBottomY) {
             let curY = startY;
-            let defaultH = (stripName === 'bottom' && keys.length === 1 && keys[0] === 'notes') ? 16 : 19;
+            let defaultH = keys.includes('priorities') ? 19 : 16;
             if (stripName === 'bottom') {
                 const remainingH = (maxBottomY || 142.7) - curY;
                 defaultH = Math.max(10, Math.min(defaultH, remainingH));
@@ -1782,8 +1791,8 @@
 
                     // Contenido del mes (debajo de la cabecera, con margen de aire limpio garantizado)
                     if (!isBlank && state.monthsNotes[mIdx]) {
-                        const contentStartY = cellY + headerH + 2.8; // 4.2 + 2.8 = 7.0 mm (baseline segura)
-                        const contentMaxH = rowH - headerH - 3.2;
+                        const contentStartY = cellY + headerH + 2.2;
+                        const contentMaxH = rowH - headerH - 2.6;
                         renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 1.8, contentStartY, colW - 3.6, contentMaxH);
                     }
                 }
@@ -1794,13 +1803,13 @@
             if (!text || !text.trim()) return;
             const cleanText = text.trim();
 
-            let bestFontSize = 6.2;
-            let bestLineHeight = 2.6;
+            let bestFontSize = 6.0;
+            let bestLineHeight = 2.45;
             let bestLines = [];
 
-            for (let fSize = 6.4; fSize >= 4.4; fSize -= 0.2) {
+            for (let fSize = 6.2; fSize >= 4.4; fSize -= 0.15) {
                 doc.setFontSize(fSize);
-                const lH = fSize * 0.40;
+                const lH = fSize * 0.41;
                 const lines = doc.splitTextToSize(cleanText, maxW);
                 const totalHeight = lines.length * lH;
                 if (totalHeight <= maxH || fSize <= 4.5) {
