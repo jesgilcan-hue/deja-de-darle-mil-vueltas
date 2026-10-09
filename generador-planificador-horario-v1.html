@@ -1333,7 +1333,7 @@
                 }
                 state.rowsPerWeek = parseInt(select.value || String(defaultRows), 10);
             } else {
-                // Modo Multitabla: Ciclos calibrados que crean directamente 2 o 3 semanas
+                // Modo Multitabla: Ciclos calibrados que crean directamente 2 o 3 semanas (máx. 16 filas por tabla)
                 let multiConfigs = [];
                 if (step === 1) {
                     multiConfigs = [
@@ -1341,7 +1341,6 @@
                         { weeks: 2, rows: 8, label: 'Ciclo 16 horas (2 Semanas · 8 filas / Vigilia)' },
                         { weeks: 2, rows: 12, label: 'Ciclo 24 horas (2 Semanas · 12 filas / 12h por sem)' },
                         { weeks: 2, rows: 16, label: 'Ciclo 32 horas (2 Semanas · 16 filas / 16h por sem)' },
-                        { weeks: 2, rows: 24, label: 'Ciclo 48 horas (2 Semanas · 24 filas / 24h por sem)' },
                         // 3 Semanas
                         { weeks: 3, rows: 6, label: 'Ciclo 18 horas (3 Semanas · 6 filas / 6h por sem)' },
                         { weeks: 3, rows: 8, label: 'Ciclo 24 horas (3 Semanas · 8 filas / 8h por sem)' },
@@ -1664,7 +1663,11 @@
         // ========================================================
         // ACCIONES RÁPIDAS (EJEMPLO EDITORIAL Y LIMPIEZA)
         // ========================================================
-        function loadExampleContent() {
+        function loadExampleContent(isInitial = false) {
+            if (!isInitial) {
+                const ok = confirm('¿Deseas cargar el ejemplo editorial en el planificador horario? Se sustituirá el contenido actual.');
+                if (!ok) return;
+            }
             document.getElementById('field-week-title').value = EXAMPLE_DATA.week;
             document.getElementById('field-week-focus').value = `«${EXAMPLE_DATA.focus}»`;
             const notesEl = document.getElementById('field-week-notes');
@@ -1676,7 +1679,9 @@
             state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3' };
             state.cellData = { ...EXAMPLE_DATA.cells };
             renderScheduleTable();
-            showToast('✨ Ejemplo editorial cargado en el horario');
+            if (!isInitial) {
+                showToast('✨ Ejemplo editorial cargado en el horario');
+            }
         }
 
         function clearAllContent() {
@@ -2064,7 +2069,7 @@
             updateModeUI();
             populateRowCountSelect('16');
             applyNotesPositionUI();
-            loadExampleContent();
+            loadExampleContent(true);
         });
     </script>
 </body>
