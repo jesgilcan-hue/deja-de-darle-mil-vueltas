@@ -438,6 +438,13 @@
             width: 100%;
         }
 
+        .strip-bottom .modular-card {
+            max-height: 80px;
+        }
+        .strip-bottom #card-notes {
+            max-height: 74px;
+        }
+
         .card-header-bar {
             display: flex;
             justify-content: space-between;
@@ -1810,27 +1817,34 @@
             const visibleTop = state.topOrder.filter(k => state.blockPlacement[k] === 'top' && state.visibility[k]);
             const visibleBottom = state.bottomOrder.filter(k => state.blockPlacement[k] === 'bottom' && state.visibility[k]);
 
-            // CÁLCULO DINÁMICO DE ALTURAS DE FRANJAS
+            // CÁLCULO DINÁMICO DE ALTURAS DE FRANJAS (LÍMITE ESTRICTO CONTRA PIE DE PÁGINA)
+            const footerY = pageHeight - 5.2; // 147.2 mm
+            const maxContentBottom = footerY - 5.0; // 142.2 mm (5 mm de aire limpio garantizado)
+            const totalVerticalBudget = maxContentBottom - currentY; // ~129.4 mm
+
             function calculateStripHeight(keys) {
                 if (keys.length === 0) return 0;
-                let h = 0;
                 const hasH = keys.includes('habits');
                 const others = keys.filter(k => k !== 'habits');
-                if (hasH) h += 22; // Hábitos siempre horizontal al 100%
-                if (others.length === 1 || others.length === 2) h += (hasH ? 2.5 : 0) + 21;
-                else if (others.length >= 3) h += (hasH ? 2.5 : 0) + 42;
+                let h = 0;
+                if (hasH) h += 18.5; // Hábitos siempre horizontal al 100%
+                if (others.length === 1 || others.length === 2) {
+                    h += (hasH ? 2.5 : 0) + (hasH ? 16.5 : 18.5);
+                } else if (others.length >= 3) {
+                    h += (hasH ? 2.5 : 0) + 34;
+                }
                 return h;
             }
 
             const topStripHeight = calculateStripHeight(visibleTop);
             const bottomStripHeight = calculateStripHeight(visibleBottom);
 
-            const spaceForCal = (pageHeight - bottomMargin - 6) - currentY - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 2.5 : 0) - (bottomStripHeight > 0 ? 2.5 : 0);
-            const calendarHeight = Math.max(spaceForCal, 54);
+            const spaceForCal = totalVerticalBudget - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 2.5 : 0) - (bottomStripHeight > 0 ? 2.5 : 0);
+            const calendarHeight = Math.max(spaceForCal, 48);
 
             // 2. FRANJA SUPERIOR
             if (visibleTop.length > 0) {
-                renderPdfModularSection(doc, visibleTop, 'top', leftMargin, currentY, usableWidth, isBlankTemplate);
+                renderPdfModularSection(doc, visibleTop, 'top', leftMargin, currentY, usableWidth, isBlankTemplate, maxContentBottom);
                 currentY += topStripHeight + 2.5;
             }
 
@@ -1838,17 +1852,17 @@
             renderPdfCalendar(doc, leftMargin, currentY, usableWidth, calendarHeight, parseInt(yearVal, 10), monthIdx, isBlankTemplate);
             currentY += calendarHeight + 2.5;
 
-            // 4. FRANJA INFERIOR
+            // 4. FRANJA INFERIOR (AJUSTADA AL LÍMITE SUPERIOR DEL PIE)
             if (visibleBottom.length > 0) {
-                renderPdfModularSection(doc, visibleBottom, 'bottom', leftMargin, currentY, usableWidth, isBlankTemplate);
+                renderPdfModularSection(doc, visibleBottom, 'bottom', leftMargin, currentY, usableWidth, isBlankTemplate, maxContentBottom);
             }
 
-            // 5. PIE DE PÁGINA
+            // 5. PIE DE PÁGINA (FUERA Y SEPARADO DE CUALQUIER RECUADRO)
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(5.5);
             doc.setTextColor(140, 135, 128);
-            doc.text('EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO', leftMargin, pageHeight - bottomMargin + 2.2);
-            doc.text('editorialmenosruido.com', pageWidth - rightMargin, pageHeight - bottomMargin + 2.2, { align: 'right' });
+            doc.text('EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO', leftMargin, footerY);
+            doc.text('editorialmenosruido.com', pageWidth - rightMargin, footerY, { align: 'right' });
 
             // NOMBRE DEL ARCHIVO
             let fileName = 'Menos_Ruido_Planificador_Mensual_En_Blanco.pdf';
@@ -1864,36 +1878,50 @@
         // ========================================================
         // RENDERIZADO DE FRANJAS MODULARES EN jsPDF (SIN EMOJIS)
         // ========================================================
-        function renderPdfModularSection(doc, keys, stripName, startX, startY, totalW, isBlank) {
+        function renderPdfModularSection(doc, keys, stripName, startX, startY, totalW, isBlank, maxBottomY) {
             let curY = startY;
             const hasHabits = keys.includes('habits');
             const otherKeys = keys.filter(k => k !== 'habits');
             const habitsFirst = hasHabits && (keys.indexOf('habits') === 0);
 
+            // Si hábitos va primero
             if (hasHabits && habitsFirst) {
-                renderPdfBlock(doc, 'habits', startX, curY, totalW, 22, isBlank);
-                curY += 22 + 2.5;
+                const hHabits = 18.5;
+                renderPdfBlock(doc, 'habits', startX, curY, totalW, hHabits, isBlank);
+                curY += hHabits + 2.5;
+            }
+
+            // Altura para los otros bloques (Metas, Hitos, Notas)
+            let defaultH = 18.5;
+            if (stripName === 'bottom' && hasHabits) {
+                // Achicar recuadro inferior de notas/metas si hábitos ya ocupa espacio arriba
+                const remainingH = (maxBottomY || 142.2) - curY;
+                defaultH = Math.max(12, Math.min(16.5, remainingH));
             }
 
             if (otherKeys.length === 1) {
-                renderPdfBlock(doc, otherKeys[0], startX, curY, totalW, 21, isBlank);
-                curY += 21 + 2.5;
+                renderPdfBlock(doc, otherKeys[0], startX, curY, totalW, defaultH, isBlank);
+                curY += defaultH + 2.5;
             } else if (otherKeys.length === 2) {
                 const halfW = (totalW - 3) / 2;
-                renderPdfBlock(doc, otherKeys[0], startX, curY, halfW, 21, isBlank);
-                renderPdfBlock(doc, otherKeys[1], startX + halfW + 3, curY, halfW, 21, isBlank);
-                curY += 21 + 2.5;
+                renderPdfBlock(doc, otherKeys[0], startX, curY, halfW, defaultH, isBlank);
+                renderPdfBlock(doc, otherKeys[1], startX + halfW + 3, curY, halfW, defaultH, isBlank);
+                curY += defaultH + 2.5;
             } else if (otherKeys.length >= 3) {
                 const halfW = (totalW - 3) / 2;
-                renderPdfBlock(doc, otherKeys[0], startX, curY, halfW, 21, isBlank);
-                renderPdfBlock(doc, otherKeys[1], startX + halfW + 3, curY, halfW, 21, isBlank);
-                curY += 21 + 2.5;
-                renderPdfBlock(doc, otherKeys[2], startX, curY, totalW, 21, isBlank);
-                curY += 21 + 2.5;
+                renderPdfBlock(doc, otherKeys[0], startX, curY, halfW, defaultH, isBlank);
+                renderPdfBlock(doc, otherKeys[1], startX + halfW + 3, curY, halfW, defaultH, isBlank);
+                curY += defaultH + 2.5;
+                const nextH = Math.max(12, Math.min(16.5, (maxBottomY || 142.2) - curY));
+                renderPdfBlock(doc, otherKeys[2], startX, curY, totalW, nextH, isBlank);
+                curY += nextH + 2.5;
             }
 
+            // Si hábitos va después
             if (hasHabits && !habitsFirst) {
-                renderPdfBlock(doc, 'habits', startX, curY, totalW, 22, isBlank);
+                const remainingH = (maxBottomY || 142.2) - curY;
+                const hHabits = Math.max(15, Math.min(18.5, remainingH));
+                renderPdfBlock(doc, 'habits', startX, curY, totalW, hHabits, isBlank);
             }
         }
 
@@ -1919,24 +1947,46 @@
             doc.setLineWidth(0.15);
             doc.line(x + 3, y + 5.5, x + w - 3, y + 5.5);
 
-            const contentY = y + 7.5;
+            const contentY = y + 7.2;
             const isCircle = state.checkboxStyle === 'circle';
 
             if (key === 'goals') {
-                const rowH = (h - 8.5) / 3;
+                const rowH = (h - 8.2) / 3;
                 state.goalsData.forEach((item, i) => {
                     const rowY = contentY + i * rowH;
-                    doc.setDrawColor(100, 100, 100);
-                    doc.setLineWidth(0.2);
-                    doc.setFillColor(255, 255, 255);
-                    const boxSize = 2.4;
-                    if (isCircle) {
-                        doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                    const boxSize = 2.5;
+                    const isMarked = !isBlank && item.checked;
+
+                    if (isMarked) {
+                        doc.setFillColor(135, 85, 59);
+                        doc.setDrawColor(135, 85, 59);
+                        doc.setLineWidth(0.2);
+                        if (isCircle) {
+                            doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                        } else {
+                            doc.roundedRect(x + 3.2, rowY, boxSize, boxSize, 0.4, 0.4, 'FD');
+                        }
+                        // Trazo de check blanco nítido vectorial
+                        doc.setDrawColor(255, 255, 255);
+                        doc.setLineWidth(0.35);
+                        const ckX = x + (isCircle ? 4.5 : (3.2 + boxSize / 2));
+                        const ckY = rowY + 1.2;
+                        doc.line(ckX - 0.7, ckY, ckX - 0.2, ckY + 0.6);
+                        doc.line(ckX - 0.2, ckY + 0.6, ckX + 0.8, ckY - 0.6);
                     } else {
-                        doc.rect(x + 3.3, rowY, boxSize, boxSize, 'FD');
+                        doc.setFillColor(255, 255, 255);
+                        doc.setDrawColor(100, 100, 100);
+                        doc.setLineWidth(0.2);
+                        if (isCircle) {
+                            doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                        } else {
+                            doc.rect(x + 3.2, rowY, boxSize, boxSize, 'FD');
+                        }
                     }
 
+                    // Línea base
                     doc.setDrawColor(226, 218, 208);
+                    doc.setLineWidth(0.15);
                     doc.line(x + 7.5, rowY + 2.8, x + w - 3, rowY + 2.8);
 
                     if (!isBlank && item.text) {
@@ -2036,13 +2086,14 @@
             } else if (key === 'notes') {
                 if (!isBlank && state.notesText) {
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6.2);
+                    doc.setFontSize(5.8);
                     doc.setTextColor(30, 30, 30);
                     const splitNotes = doc.splitTextToSize(state.notesText, w - 6);
-                    const maxLines = Math.floor((h - 8.5) / 3.2);
+                    const lineH = 2.6;
+                    const maxLines = Math.max(1, Math.floor((h - 6.8) / lineH));
                     const toPrint = splitNotes.slice(0, maxLines);
                     toPrint.forEach((line, lIdx) => {
-                        doc.text(line, x + 3.3, contentY + 2.5 + lIdx * 3.2);
+                        doc.text(line, x + 3.3, contentY + 1.8 + lIdx * lineH);
                     });
                 }
                 // Si está en blanco: REGLA DE ORO: NO SE DIBUJAN LÍNEAS (queda limpio y despejado)
