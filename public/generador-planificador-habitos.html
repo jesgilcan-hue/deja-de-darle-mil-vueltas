@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador Planificador de Hábitos · Menos Ruido</title>
 
+    <!-- GUARDIA DE SEGURIDAD / ACCESO POR PIN -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
     <!-- Vercel Web Analytics & Speed Insights -->
     <script>
       window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -20,16 +27,30 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- jsPDF UMD local y CDN de respaldo -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
+
     <style>
         :root {
             --bg-color: #f7f5f0;
             --paper-color: #fffefb;
-            --text-main: #212121;
+            --text-main: #211c18;
             --text-muted: #66615b;
             --accent: #87553b;
             --accent-hover: #70442e;
             --accent-light: rgba(135, 85, 59, 0.08);
             --border-line: #dcd7ce;
+            --border-strong: #28231e;
             --font-serif: 'Playfair Display', Georgia, serif;
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
@@ -46,604 +67,657 @@
             color: var(--text-main);
             line-height: 1.45;
             padding: 16px 14px 60px;
-        }
-
-        .header-container {
-            max-width: 1380px;
-            margin: 0 auto 16px;
-            text-align: center;
-        }
-
-        .tag-pill {
-            display: inline-block;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            background: rgba(135, 85, 59, 0.12);
-            color: var(--accent);
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 8px;
-        }
-
-        h1 {
-            font-family: var(--font-serif);
-            font-size: 1.95rem;
-            color: #1a1614;
-            font-weight: 700;
-            margin-bottom: 4px;
-            letter-spacing: -0.3px;
-        }
-
-        .subtitle {
-            font-size: 0.92rem;
-            color: var(--text-muted);
-            max-width: 760px;
-            margin: 0 auto;
-        }
-
-        /* LAYOUT PRINCIPAL */
-        .app-layout {
-            max-width: 1380px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: minmax(360px, 420px) minmax(480px, 1fr);
-            gap: 28px;
-            align-items: start;
-        }
-
-        /* PANEL DE CONTROLES (IZQUIERDA) */
-        .controls-panel {
-            background: #ffffff;
-            border: 1px solid var(--border-line);
-            border-radius: 12px;
-            padding: 20px 22px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
-            gap: 16px;
-        }
-
-        .panel-header-top {
-            display: flex;
             align-items: center;
+        }
+
+        /* BARRA SUPERIOR DE NAVEGACIÓN */
+        .top-nav {
+            width: 100%;
+            max-width: 980px;
+            margin-bottom: 12px;
+            display: flex;
             justify-content: space-between;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #efeae1;
-        }
-
-        .panel-heading-text {
-            font-size: 1.15rem;
-            font-family: var(--font-serif);
-            font-weight: 700;
-            color: #1e1916;
-        }
-
-        .panel-actions-quick {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-quick {
-            background: #f3efe8;
-            border: none;
-            color: var(--accent);
-            font-size: 0.78rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-quick:hover {
-            background: #e7dfd2;
-            color: var(--accent-hover);
-        }
-
-        .section-box {
-            border: 1px solid #ebe6dc;
-            background: #faf9f6;
-            border-radius: 8px;
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
         }
 
-        .section-header-title {
-            font-size: 0.76rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #4a453e;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-        }
-
-        .char-count {
-            font-size: 0.72rem;
-            color: #999;
-            font-weight: normal;
-        }
-
-        input[type="number"], input[type="text"], select {
-            width: 100%;
-            padding: 8px 11px;
-            border: 1px solid #d5cfc5;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.85rem;
-            background: #ffffff;
-            color: #222;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            box-sizing: border-box;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 8px 11px;
-            border: 1px solid #d5cfc5;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.84rem;
-            background: #ffffff;
-            color: #222;
-            outline: none;
-            resize: vertical;
-            overflow-y: auto;
-            line-height: 1.4;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            box-sizing: border-box;
-        }
-
-        input:focus, textarea:focus, select:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
-        }
-
-        /* GESTIÓN DINÁMICA DE HÁBITOS */
-        .item-input-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-
-        .habit-input-field {
-            flex: 1;
+        .back-link {
             font-size: 0.82rem;
-            padding: 7px 10px;
-            border: 1px solid #d5cfc5;
-            border-radius: 6px;
-            font-family: inherit;
-            background: #ffffff;
-            color: #222;
-            outline: none;
-            resize: vertical;
-            min-height: 34px;
-            line-height: 1.35;
-            box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-remove-item {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 4px 6px;
-            line-height: 1;
+            color: #777;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             transition: color 0.2s;
         }
+        .back-link:hover { color: var(--accent); }
 
-        .btn-remove-item:hover {
-            color: #c44;
-        }
-
-        .btn-add-item {
-            background: #f4efe8;
-            border: 1px solid #dcd7ce;
+        .badge-version {
+            background: #ede6dc;
             color: var(--accent);
-            font-size: 0.74rem;
-            font-weight: 600;
+            font-size: 0.72rem;
+            font-weight: 700;
             padding: 3px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
         }
 
-        .btn-add-item:hover {
-            background: var(--accent);
-            color: #fff;
+        /* CABECERA EDITORIAL DE PÁGINA */
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 760px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1816;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.45;
+        }
+
+        /* BARRA DE HERRAMIENTAS PRINCIPAL (STICKY) */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 980px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            background: #fbf8f2;
+            border: 1px solid #dfd6c7;
+            color: #4a3c31;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+        .toolbar-btn:hover {
+            background: #f1ebd8;
+            border-color: #cbbeae;
+            color: #2e241c;
+        }
+
+        .toolbar-select-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .toolbar-select {
+            padding: 5px 9px;
+            border: 1px solid #d5cfc5;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: #fff;
+            color: #333;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .toolbar-select:focus {
             border-color: var(--accent);
         }
 
-        /* BOTONES DE ACCIÓN PRINCIPALES */
-        .btn-primary-action {
+        /* SELECTOR EXCLUYENTE DE CASILLAS (FORMATO OFICIAL MENOS RUIDO) */
+        .checkbox-selector-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: #ebe6dc;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid #dcd7ce;
+        }
+
+        .btn-shape-selector {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            width: 32px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+        .btn-shape-selector:hover {
+            background: #f7f4ed;
+            color: #222;
+        }
+        .btn-shape-selector.active {
+            background: #ffffff;
+            border-color: #cbbeae;
+            color: var(--accent);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .btn-download-main {
             background: var(--accent);
             color: #ffffff;
             border: none;
-            padding: 12px 18px;
-            border-radius: 8px;
-            font-size: 0.92rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            width: 100%;
-            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.25);
-            margin-bottom: 8px;
-        }
-
-        .btn-primary-action:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(135, 85, 59, 0.32);
-        }
-
-        .btn-secondary-action {
-            background: #ffffff;
-            color: #555;
-            border: 1px solid #d5cfc5;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 0.86rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            width: 100%;
-            margin-top: 4px;
-        }
-
-        .btn-secondary-action:hover {
-            background: #f7f5f0;
-            border-color: #baa;
-            color: var(--accent);
-        }
-
-        /* COLUMNA DERECHA: VISTA PREVIA */
-        .preview-column {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: sticky;
-            top: 16px;
-        }
-
-        .preview-banner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #f1ede5;
-            border: 1px solid #e1dcce;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            color: #665f54;
-            box-sizing: border-box;
-        }
-
-        /* HOJA EDITORIAL HÁBITOS (APROX. 8.25" x 6") */
-        .preview-sheet-frame {
-            background: var(--paper-color);
-            border: 1px solid #dcd7ce;
-            border-radius: 8px;
-            padding: 20px 22px 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-            display: flex;
-            flex-direction: column;
-            aspect-ratio: 8.25 / 6;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .preview-kicker {
-            font-size: 0.62rem;
-            letter-spacing: 1.8px;
-            text-transform: uppercase;
-            color: var(--accent);
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .preview-header-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            border-bottom: 1.5px solid #28231e;
-            padding-bottom: 4px;
-            margin-bottom: 10px;
-            gap: 12px;
-        }
-
-        .preview-main-title {
-            font-family: var(--font-serif);
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #211c19;
-            letter-spacing: -0.2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .preview-date-text {
-            font-size: 0.74rem;
-            letter-spacing: 0.8px;
-            font-weight: 700;
-            color: #444;
-            text-transform: uppercase;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        /* TABLA DE HÁBITOS EN VISTA PREVIA */
-        .habit-table-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #e2ddd3;
-            border-radius: 4px;
-            background: #ffffff;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .habit-table-header {
-            display: flex;
-            background: #f4efea;
-            border-bottom: 1px solid #dfd9ce;
-            font-size: 0.6rem;
-            font-weight: 700;
-            color: #444;
-        }
-
-        .habit-col-name {
-            width: 140px;
-            padding: 5px 8px;
-            border-right: 1px solid #dfd9ce;
-            display: flex;
-            align-items: center;
-        }
-
-        .habit-col-days {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(31, 1fr);
-            text-align: center;
-        }
-
-        .habit-day-num {
-            padding: 4px 0;
-            border-right: 1px solid #eee8df;
-            font-size: 0.52rem;
-            color: #666;
-        }
-        .habit-day-num:last-child {
-            border-right: none;
-        }
-
-        .shape-selector-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
-            margin-bottom: 8px;
-        }
-
-        .btn-shape-opt {
-            background: #ffffff;
-            border: 1px solid #dcd7ce;
+            padding: 7px 16px;
             border-radius: 6px;
-            padding: 5px 12px;
-            font-size: 0.76rem;
-            font-weight: 600;
-            color: #555;
+            font-size: 0.80rem;
+            font-weight: 700;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 6px;
             transition: all 0.2s;
-            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.2);
+        }
+        .btn-download-main:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.28);
         }
 
-        .btn-shape-opt:hover {
-            border-color: #a89f91;
-            color: #222;
-        }
-
-        .btn-shape-opt.active {
-            background: #4a453f;
-            border-color: #322e2a;
-            color: #ffffff;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-        }
-
-        .habit-row {
-            display: flex;
-            border-bottom: 1px solid #eee8df;
-            flex: 1;
-            min-height: 15px;
-        }
-        .habit-row:last-child {
-            border-bottom: none;
-        }
-
-        .habit-row-title {
-            width: 140px;
-            padding: 1px 6px;
-            border-right: 1px solid #eee8df;
-            font-size: 0.54rem;
-            line-height: 1.15;
-            font-family: var(--font-serif);
-            color: #222;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            white-space: normal;
-            word-break: break-word;
-            background: #fcfbf9;
+        /* AVISO CONTEXTUAL INTEGRADO (ZERO CLS) */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            min-height: 34px;
+            margin: 4px auto 10px auto;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            text-align: center;
             box-sizing: border-box;
-        }
-
-        .habit-row-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(31, 1fr);
-        }
-
-        .habit-row-cell {
-            border-right: 1px solid #f0eae1;
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 1px solid transparent;
+            background: transparent;
+            color: transparent;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
-        .habit-row-cell:last-child {
-            border-right: none;
+        .sheet-inline-notice.active {
+            opacity: 1;
+            visibility: visible;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border-color: #dfd6c7;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            pointer-events: auto;
         }
 
-        .habit-circle {
-            width: 7.5px;
-            height: 7.5px;
-            border: 1px solid #b5afa6;
-            border-radius: 50%;
-        }
-
-        .habit-square {
-            width: 7.5px;
-            height: 7.5px;
-            border: 1px solid #b5afa6;
-            border-radius: 1px;
-        }
-
-        /* BLOQUE INFERIOR: REFLEXIÓN / APUNTES */
-        .preview-habit-notes {
-            border: 1px solid #dfd9ce;
-            border-radius: 4px;
-            padding: 6px 10px;
-            background: #fbf9f5;
-            font-size: 0.65rem;
-            color: #444;
-            margin-bottom: 8px;
+        /* LIENZO FÍSICO INTERACTIVO APAISADO 8.25" × 6" */
+        .paper-canvas-container {
+            width: 100%;
+            max-width: 980px;
             display: flex;
             flex-direction: column;
+            align-items: center;
+        }
+
+        .interactive-paper-habits {
+            width: 100%;
+            max-width: 980px;
+            aspect-ratio: 209.55 / 152.4;
+            background-color: var(--paper-color);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: 3px;
+            border: 1px solid #e7e2d8;
+            padding: 12px 24px 10px 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* CABECERA DEL FOLIO */
+        .sheet-header-top {
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 3px;
+            border-bottom: 1.6px solid var(--border-strong);
+            margin-bottom: 5px;
+            flex-shrink: 0;
             gap: 2px;
         }
 
-        .preview-habit-notes-title {
-            font-size: 0.58rem;
+        .sheet-kicker {
+            font-size: 0.62rem;
             font-weight: 700;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
             color: var(--accent);
         }
 
-        .preview-sheet-footer {
-            margin-top: 2px;
+        .sheet-header-title-row {
             display: flex;
             justify-content: space-between;
-            font-size: 0.58rem;
-            color: #8e8880;
-            letter-spacing: 0.8px;
+            align-items: baseline;
+            width: 100%;
+            gap: 12px;
+        }
+
+        .sheet-title-main {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #211c18;
+            line-height: 1.15;
+            letter-spacing: -0.3px;
+        }
+
+        .sheet-meta-fields {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .sheet-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #5d544c;
             text-transform: uppercase;
         }
 
-        /* TOAST DE ESTADO */
-        .toast-notify {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #2b2724;
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-            display: none;
-            z-index: 1000;
+        .inline-input-header {
+            border: none;
+            border-bottom: 1px dashed #cbbeae;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #211c18;
+            padding: 1px 4px;
+            outline: none;
+            transition: border-bottom-color 0.2s;
+        }
+        .inline-input-header:focus {
+            border-bottom: 1.5px solid var(--accent);
+            background: rgba(135, 85, 59, 0.03);
         }
 
-        /* MODAL POP-UP */
-        .modal-overlay {
+        .input-month { width: 105px; }
+        .input-year { width: 44px; text-align: center; }
+
+        /* INTENCIÓN / FOCO DEL MES (EXACTAMENTE 1 LÍNEA, CARACTERES NO SE SALEN) */
+        .sheet-intention-wrap {
+            width: 100%;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .editable-intention-input {
+            width: 100%;
+            height: 20px;
+            line-height: 20px;
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 0.70rem;
+            font-style: italic;
+            color: #4f473f;
+            outline: none;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: clip;
+            border-bottom: 1px dashed transparent;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .editable-intention-input:hover, .editable-intention-input:focus {
+            border-bottom-color: var(--accent);
+            background: rgba(135, 85, 59, 0.02);
+            color: #1a1614;
+        }
+
+        /* CUADRÍCULA DE HÁBITOS */
+        .habits-table-container {
+            width: 100%;
+            border: 1.8px solid var(--border-strong);
+            border-radius: 3px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+            margin-bottom: 4px;
+        }
+        .habits-table-container.table-expanded {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .habits-table-header {
+            display: flex;
+            background: #f5f0e8;
+            border-bottom: 1.8px solid var(--border-strong);
+            height: 22px;
+            align-items: stretch;
+            flex-shrink: 0;
+        }
+
+        .th-habit-name {
+            width: 26%;
+            min-width: 170px;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            font-size: 0.63rem;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: #2b241e;
+            border-right: 1.6px solid var(--border-strong);
+            box-sizing: border-box;
+        }
+
+        .th-days-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(31, 1fr);
+            height: 100%;
+        }
+
+        .th-day-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.58rem;
+            font-weight: 800;
+            color: #3e3832;
+            border-right: 1px solid #dfd8cd;
+            box-sizing: border-box;
+        }
+        .th-day-cell:last-child {
+            border-right: none;
+        }
+
+        .habits-table-body {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex: 1;
+        }
+
+        .habit-data-row {
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid #e5dfd4;
+            transition: background 0.15s;
+        }
+        .habit-data-row:nth-child(even) {
+            background: #faf8f5;
+        }
+        .habit-data-row:last-child {
+            border-bottom: none;
+        }
+
+        .td-habit-name {
+            width: 26%;
+            min-width: 170px;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            border-right: 1.6px solid var(--border-strong);
+            box-sizing: border-box;
+        }
+
+        .editable-habit-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 0.70rem;
+            color: #28221c;
+            outline: none;
+            padding: 1px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .editable-habit-input:focus {
+            color: #000;
+            background: rgba(135, 85, 59, 0.04);
+            border-radius: 2px;
+        }
+
+        .td-days-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(31, 1fr);
+            height: 100%;
+        }
+
+        .td-day-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #ebe5dc;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        .td-day-cell:last-child {
+            border-right: none;
+        }
+        .td-day-cell:hover {
+            background: #f1ebd8;
+        }
+
+        /* FORMA: CÍRCULOS */
+        .habit-check-circle {
+            width: 10.5px;
+            height: 10.5px;
+            border-radius: 50%;
+            border: 1.2px solid #b5afa6;
+            background: #ffffff;
+            box-sizing: border-box;
+            transition: all 0.12s ease;
+        }
+        .td-day-cell.checked .habit-check-circle {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px #ffffff inset;
+        }
+
+        /* FORMA: CUADRADITOS */
+        .habit-check-square {
+            width: 9.5px;
+            height: 9.5px;
+            border-radius: 1.5px;
+            border: 1.2px solid #b5afa6;
+            background: #ffffff;
+            box-sizing: border-box;
+            transition: all 0.12s ease;
+        }
+        .td-day-cell.checked .habit-check-square {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px #ffffff inset;
+        }
+
+        /* BLOQUE DE REFLEXIÓN (SIEMPRE ABAJO: LLEGA DESDE EL FINAL DE LA TABLA AL INICIO DEL PIE DE PÁGINA) */
+        .notes-box-container {
+            width: 100%;
+            background: #faf8f4;
+            border: 1px solid #dfd8cd;
+            border-radius: 4px;
+            padding: 6px 12px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            margin-top: 3px;
+            margin-bottom: 3px;
+            flex: 1;
+            min-height: 60px;
+            overflow: hidden;
+        }
+
+        .notes-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+            flex-shrink: 0;
+        }
+
+        .notes-box-title {
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .notes-char-counter {
+            font-size: 0.60rem;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .editable-notes-textarea {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 0.70rem;
+            color: #3e3834;
+            line-height: 1.45;
+            resize: none;
+            outline: none;
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+            overflow: hidden !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .editable-notes-textarea::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* PIE DE PÁGINA EDITORIAL */
+        .sheet-editorial-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.56rem;
+            color: #8c857b;
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            flex-shrink: 0;
+            padding-top: 2px;
+            margin-top: auto;
+        }
+
+        /* MODAL POP-UP DE DESCARGA */
+        .modal-backdrop {
             position: fixed;
-            inset: 0;
-            background: rgba(20, 18, 16, 0.65);
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(25, 20, 16, 0.65);
             backdrop-filter: blur(4px);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            z-index: 2000;
             padding: 16px;
+            box-sizing: border-box;
         }
-
-        .modal-overlay.active {
+        .modal-backdrop.active {
             display: flex;
         }
 
-        .modal-card {
+        .modal-dialog {
             background: #ffffff;
+            border: 1px solid #e5dfd3;
             border-radius: 14px;
-            max-width: 540px;
+            max-width: 480px;
             width: 100%;
-            padding: 24px 22px;
-            box-shadow: 0 24px 50px rgba(0,0,0,0.22);
-            position: relative;
-            animation: modalIn 0.25s ease-out;
-            max-height: 92vh;
-            overflow-y: auto;
+            padding: 24px 22px 20px;
+            box-shadow: 0 16px 45px rgba(0,0,0,0.22);
             text-align: center;
+            position: relative;
+            box-sizing: border-box;
+            animation: modalFadeIn 0.2s ease;
         }
-
-        @keyframes modalIn {
-            from { transform: translateY(14px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .modal-close-btn {
             position: absolute;
-            top: 14px;
-            right: 14px;
+            top: 12px;
+            right: 12px;
             background: #f1ede5;
             border: none;
+            border-radius: 50%;
             width: 28px;
             height: 28px;
-            border-radius: 50%;
-            font-size: 0.9rem;
             cursor: pointer;
-            color: #666;
+            font-size: 0.82rem;
+            color: #555;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
         }
-
         .modal-close-btn:hover {
             background: #e3ded5;
             color: #111;
@@ -667,48 +741,87 @@
             font-size: 1.35rem;
             font-weight: 700;
             color: #1a1614;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .modal-desc {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             color: #666;
             margin-bottom: 16px;
             line-height: 1.4;
         }
 
-        .btn-modal-download {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.95rem;
+        .modal-format-badge {
+            background: #fbf8f2;
+            border: 1px solid #e5dec9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.76rem;
             font-weight: 600;
+            color: #5d4a3b;
+            margin-bottom: 14px;
+            display: inline-block;
+        }
+
+        .modal-options-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.90rem;
+            font-weight: 700;
             cursor: pointer;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-bottom: 20px;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.22);
         }
-
-        .btn-modal-download:hover {
+        .btn-modal-primary:hover {
             background: var(--accent-hover);
+            transform: translateY(-1px);
         }
 
+        .btn-modal-secondary {
+            background: #ffffff;
+            color: #4a3c31;
+            border: 1px solid #d5cfc5;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-modal-secondary:hover {
+            background: #f8f5ee;
+            border-color: #cbbeae;
+            color: var(--accent);
+        }
+
+        /* MOCKUPS CUADERNOS AMAZON */
         .modal-books-section {
-            background: #faf8f5;
-            border: 1px solid #e7e2d8;
-            border-radius: 10px;
-            padding: 14px 12px;
+            border-top: 1px solid #ebe6dc;
+            padding-top: 14px;
             text-align: left;
         }
-
         .modal-books-header {
-            font-size: 0.72rem;
+            font-size: 0.76rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
@@ -716,294 +829,290 @@
             margin-bottom: 4px;
             text-align: center;
         }
-
         .modal-books-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
             margin-top: 10px;
         }
-
         .modal-book-card {
-            background: #ffffff;
-            border: 1px solid #dfd9ce;
-            border-radius: 6px;
+            background: #faf9f6;
+            border: 1px solid #eae5db;
+            border-radius: 8px;
             padding: 8px;
             display: flex;
-            align-items: center;
             gap: 8px;
+            align-items: center;
         }
-
         .modal-book-thumb {
-            width: 40px;
-            height: 54px;
+            width: 44px;
+            height: 60px;
             object-fit: cover;
-            border-radius: 3px;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
-
         .modal-book-details {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 2px;
-            flex: 1;
-            min-width: 0;
         }
-
         .modal-book-badge {
-            font-size: 0.58rem;
+            font-size: 0.60rem;
             font-weight: 700;
             color: var(--accent);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
-
         .modal-book-title {
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 700;
-            color: #1a1614;
+            color: #222;
             line-height: 1.2;
-            margin: 0;
         }
-
         .btn-book-amazon {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 700;
             color: #ffffff;
             background: var(--accent);
             text-decoration: none;
-            padding: 4px 8px;
+            padding: 3px 7px;
             border-radius: 4px;
             width: fit-content;
             margin-top: 2px;
         }
 
-        /* RESPONSIVE MÓVIL OPTIMIZADO */
-        @media (max-width: 900px) {
-            .app-layout {
-                grid-template-columns: 1fr;
+        .btn-confirm-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.2);
+        }
+        .btn-confirm-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.28);
+        }
+        .btn-confirm-cancel {
+            background: #fbf8f2;
+            border: 1px solid #dfd6c7;
+            color: #4a3c31;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-confirm-cancel:hover {
+            background: #f1ebd8;
+            border-color: #cbbeae;
+            color: #2e241c;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 860px) {
+            .interactive-paper-habits {
+                aspect-ratio: auto;
+                height: auto;
+                padding: 14px 10px;
             }
-            .preview-column {
-                position: static !important;
-                margin-bottom: 50px !important;
-                width: 100% !important;
+            .th-habit-name, .td-habit-name {
+                min-width: 110px;
+                width: 28%;
             }
-            .preview-sheet-frame {
-                aspect-ratio: auto !important;
-                min-height: auto !important;
-                overflow-x: auto !important;
-                padding: 16px 14px 20px !important;
-                margin-bottom: 40px !important;
+            .editable-habit-input {
+                font-size: 0.60rem;
             }
-            .habit-table-container {
-                min-width: 580px;
-            }
-            .modal-books-grid {
-                grid-template-columns: 1fr;
+            .canvas-toolbar {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
     </style>
-
-    <!-- Protección de acceso por código PIN 1111 -->
-    <script>
-        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
-            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
-        }
-    </script>
-
-    <!-- Script de jsPDF local UMD (100% offline y compatible) -->
-    <script src="./jspdf.umd.min.js"></script>
 </head>
 <body>
 
-    <div class="header-container">
-        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
-        <div>
-            <span class="tag-pill">Herramienta Editorial Gratuita</span>
-            <h1>Generador Planificador de Hábitos</h1>
-            <p class="subtitle">Rastreo silencioso y perseverancia analógica a 31 días. Consolida tus rutinas fundamentales sin pantallas ni notificaciones intrusivas.</p>
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
+    <div class="top-nav">
+        <a href="/generador.html" class="back-link">← Volver al catálogo de generadores</a>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge-version">Edición Directa 1:1 · 8.25" × 6"</span>
         </div>
     </div>
 
-    <div class="app-layout">
-        <!-- COLUMNA IZQUIERDA: CONTROLES -->
-        <aside class="controls-panel">
-            
-            <div class="panel-header-top">
-                <span class="panel-heading-text">Configura tu planificador</span>
-                <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
-                    <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
-                </div>
-            </div>
-
-            <!-- 1. MES Y ENFOQUE -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>1. Mes y Enfoque</span>
-                    <span>🌿</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <div class="control-group">
-                        <label for="input-habit-month">Mes</label>
-                        <input type="text" id="input-habit-month" maxlength="15" placeholder="Ej: Octubre" oninput="handleMonthInput(this)">
-                    </div>
-                    <div class="control-group">
-                        <label for="input-habit-year">Año (1900 a 3000)</label>
-                        <input type="number" id="input-habit-year" min="1900" max="3000" placeholder="Ej: 2026" oninput="handleYearInput(this)">
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label for="input-habit-intention">Intención o enfoque del mes <span class="char-count" id="count-intention">0/120</span></label>
-                    <textarea id="input-habit-intention" maxlength="120" rows="1" placeholder="Ej: Calma en las mañanas y desconexión nocturna..." oninput="handleIntentionInput(this)"></textarea>
-                </div>
-            </div>
-
-            <!-- 2. HÁBITOS FUNDAMENTALES (HASTA 12) -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>2. Hábitos Fundamentales</span>
-                    <button type="button" class="btn-add-item" id="btn-add-habit" onclick="addNewHabit()">+ Añadir hábito</button>
-                </div>
-                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">El principio Menos Ruido: máximo 12 hábitos para evitar saturación.</p>
-                
-                <!-- SELECTOR DE FORMA DE CASILLAS -->
-                <div class="control-group" style="margin-top: 4px;">
-                    <label style="font-size: 0.74rem;">Formato de casillas diarias:</label>
-                    <div class="shape-selector-group">
-                        <button type="button" class="btn-shape-opt active" id="btn-shape-circle" onclick="setCheckShape('circle')">
-                            <span style="display:inline-block; width:10px; height:10px; border:1.5px solid currentColor; border-radius:50%;"></span> Círculos
-                        </button>
-                        <button type="button" class="btn-shape-opt" id="btn-shape-square" onclick="setCheckShape('square')">
-                            <span style="display:inline-block; width:10px; height:10px; border:1.5px solid currentColor; border-radius:2px;"></span> Cuadraditos
-                        </button>
-                    </div>
-                </div>
-
-                <div id="habits-container">
-                    <!-- Inyectado dinámicamente -->
-                </div>
-            </div>
-
-            <!-- 3. NOTAS Y BALANCE AL CIERRE -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>3. Reflexión y Balance Mensual</span>
-                    <span>✍️</span>
-                </div>
-                <div class="control-group">
-                    <label for="input-habit-notes">Notas, observaciones o balance <span class="char-count" id="count-notes">0/150</span></label>
-                    <textarea id="input-habit-notes" maxlength="150" rows="2" placeholder="Ej: Observaciones sobre qué momentos del día facilitan mantener el hábito..." oninput="handleNotesInput(this)"></textarea>
-                </div>
-            </div>
-
-            <div style="margin-top: 6px;">
-                <button type="button" class="btn-primary-action" onclick="openDownloadModal(false)">
-                    <span>📥</span>
-                    <span>Descargar mi PDF personalizado (Con datos)</span>
-                </button>
-                <button type="button" class="btn-secondary-action" onclick="openDownloadModal(true)">
-                    <span>📄</span>
-                    <span>Descargar plantilla limpia en blanco (Para escribir a mano)</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- COLUMNA DERECHA: VISTA PREVIA -->
-        <main class="preview-column">
-            <div class="preview-banner">
-                <span>👁️ <strong>Vista previa</strong></span>
-            </div>
-
-            <!-- HOJA EDITORIAL HORIZONTAL PROPORCIONADA -->
-            <div class="preview-sheet-frame" id="live-sheet-preview">
-                
-                <div class="preview-kicker">MENOS RUIDO · RASTREADOR DE HÁBITOS</div>
-                
-                <div class="preview-header-line">
-                    <div>
-                        <div class="preview-main-title">Planificador de Hábitos</div>
-                        <div style="font-size: 0.68rem; color: #666; font-style: italic; margin-top: 1px;" id="prev-intention-text"></div>
-                    </div>
-                    <div class="preview-date-text" id="prev-date-text">MES: ________  ·  AÑO: ______</div>
-                </div>
-
-                <!-- TABLA DE 31 DÍAS -->
-                <div class="habit-table-container">
-                    <div class="habit-table-header">
-                        <div class="habit-col-name">HÁBITO FUNDAMENTAL</div>
-                        <div class="habit-col-days" id="prev-table-days-header">
-                            <!-- 1 a 31 inyectados -->
-                        </div>
-                    </div>
-                    <div id="prev-habits-rows-container" style="flex: 1; display: flex; flex-direction: column;">
-                        <!-- Filas de hábitos inyectadas -->
-                    </div>
-                </div>
-
-                <!-- BLOQUE INFERIOR DE NOTAS -->
-                <div class="preview-habit-notes">
-                    <span class="preview-habit-notes-title">REFLEXIÓN Y OBSERVACIONES DEL MES</span>
-                    <span id="prev-notes-text" style="font-family: var(--font-serif); line-height: 1.3;"></span>
-                </div>
-
-                <!-- FOOTER EDITORIAL -->
-                <div class="preview-sheet-footer">
-                    <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
-                    <span>editorialmenosruido.com</span>
-                </div>
-
-            </div>
-        </main>
+    <!-- CABECERA EDITORIAL DE PÁGINA -->
+    <div class="header-title-box">
+        <h1>Planificador de Hábitos Interactivo</h1>
+        <p>Escribe directamente sobre el folio apaisado 8.25" × 6". Haz seguimiento diario de hasta 20 hábitos del 1 al 31 con casillas configurables y balance mensual completo.</p>
     </div>
 
-    <!-- TOAST DE NOTIFICACIÓN -->
-    <div class="toast-notify" id="toast-msg"></div>
+    <!-- BARRA DE HERRAMIENTAS PRINCIPAL (STICKY) -->
+    <div class="canvas-toolbar">
+        <!-- GRUPO 1: LIMPIAR Y EJEMPLO -->
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Limpiar todos los textos para empezar en blanco">
+                <span>🧹</span> Limpiar
+            </button>
+            <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar ejemplo editorial">
+                <span>✨</span> Cargar ejemplo
+            </button>
+        </div>
 
-    <!-- MODAL POP-UP DE DESCARGA Y COMPRA -->
-    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
-        <div class="modal-card">
-            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
-            <span class="modal-badge" id="modal-badge-label">Descarga Lista</span>
-            <h3 class="modal-title" id="modal-title-label">Tus Hábitos en Papel</h3>
-            <p class="modal-desc" id="modal-desc-label">Genera tu PDF vectorial calibrado para lápiz o pluma estilográfica.</p>
+        <!-- GRUPO 2: CONFIGURACIÓN DE FILAS Y FORMA DE CASILLAS (FORMATO OFICIAL) -->
+        <div class="toolbar-group">
+            <label class="toolbar-select-label" for="select-num-habits">Hábitos:</label>
+            <select id="select-num-habits" class="toolbar-select" onchange="onNumHabitsChange()">
+                <option value="6">6 Hábitos</option>
+                <option value="8">8 Hábitos</option>
+                <option value="10" selected>10 Hábitos (Recomendado)</option>
+                <option value="12">12 Hábitos</option>
+                <option value="15">15 Hábitos</option>
+                <option value="18">18 Hábitos</option>
+                <option value="20">20 Hábitos (Máximo)</option>
+            </select>
 
-            <div class="control-group" style="text-align: left; margin-bottom: 16px;">
-                <label for="modal-select-format" style="font-size: 0.8rem; font-weight: 700; color: #444; margin-bottom: 4px;">Formato de papel:</label>
-                <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
-                    <option value="apaisado">Formato Libro 8.25" × 6" (210 × 152 mm)</option>
-                </select>
+            <div class="checkbox-selector-group" title="Forma de casillas de los 31 días">
+                <button type="button" class="btn-shape-selector" id="btn-shape-square" onclick="setCheckboxStyle('square')" title="Casillas cuadradas" aria-label="Casillas cuadradas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="12" height="12" rx="2" />
+                    </svg>
+                </button>
+                <button type="button" class="btn-shape-selector active" id="btn-shape-circle" onclick="setCheckboxStyle('circle')" title="Casillas redondas" aria-label="Casillas redondas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="8" cy="8" r="6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- GRUPO 3: TOGGLE DE REFLEXIÓN -->
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-toggle-notes" onclick="toggleNotesVisibility()" title="Mostrar u ocultar la caja de reflexión al pie">
+                📝 Reflexión: Visible
+            </button>
+        </div>
+
+        <!-- GRUPO 4: DESCARGA PDF -->
+        <div class="toolbar-group">
+            <button type="button" class="btn-download-main" onclick="openDownloadModal()" title="Exportar planificador en PDF de alta resolución">
+                <span>🖨️</span> Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- AVISO CONTEXTUAL INTEGRADO (ZERO CLS) -->
+    <div class="sheet-inline-notice" id="toast-notify"></div>
+
+    <!-- CONTENEDOR DEL LIENZO INTERACTIVO -->
+    <div class="paper-canvas-container">
+        <div class="interactive-paper-habits" id="paper-sheet">
+
+            <!-- CABECERA DEL FOLIO (CON INTENCIÓN JUSTO DEBAJO DEL TÍTULO A ANCHO COMPLETO) -->
+            <div class="sheet-header-top">
+                <span class="sheet-kicker">MENOS RUIDO · RASTREADOR DE HÁBITOS</span>
+                <div class="sheet-header-title-row">
+                    <h2 class="sheet-title-main">Planificador de Hábitos</h2>
+                    <div class="sheet-meta-fields">
+                        <div class="sheet-meta-item">
+                            <span>MES:</span>
+                            <input type="text" class="inline-input-header input-month" id="field-habit-month" value="NOVIEMBRE" maxlength="18" placeholder="MES">
+                        </div>
+                        <div class="sheet-meta-item">
+                            <span>· AÑO:</span>
+                            <input type="text" class="inline-input-header input-year" id="field-habit-year" value="2026" maxlength="4" placeholder="AÑO">
+                        </div>
+                    </div>
+                </div>
+                <div class="sheet-intention-wrap">
+                    <input type="text" class="editable-intention-input" id="field-habit-intention" maxlength="115" placeholder="«Intención o enfoque del mes: Construir constancia silenciosa y descanso reparador sin sobreexigencia...»" value="«Construir constancia silenciosa y descanso reparador sin sobreexigencia.»" oninput="handleIntentionInput(this)">
+                </div>
             </div>
 
-            <button type="button" class="btn-modal-download" onclick="executeHabitDownload()" id="modal-download-btn-text">
-                📥 Descargar PDF ahora
-            </button>
+            <!-- CUADRÍCULA DE HÁBITOS DE 31 DÍAS -->
+            <div class="habits-table-container" id="habits-table-container">
+                <div class="habits-table-header">
+                    <div class="th-habit-name">HÁBITO FUNDAMENTAL</div>
+                    <div class="th-days-grid" id="header-days-grid">
+                        <!-- Generado por JS: 1 a 31 -->
+                    </div>
+                </div>
+                <div class="habits-table-body" id="habits-table-body">
+                    <!-- Filas generadas por JS -->
+                </div>
+            </div>
 
-            <!-- CUADERNOS FÍSICOS EN AMAZON -->
+            <!-- BLOQUE DE REFLEXIÓN (SIEMPRE ABAJO: LLEGA DESDE EL FINAL DE LA TABLA AL INICIO DEL PIE DE PÁGINA) -->
+            <div class="notes-box-container" id="notes-box-container">
+                <div class="notes-box-header">
+                    <span class="notes-box-title">
+                        📝 REFLEXIÓN Y OBSERVACIONES DEL MES
+                    </span>
+                    <span class="notes-char-counter" id="count-notes">0/900</span>
+                </div>
+                <textarea class="editable-notes-textarea" id="field-habit-notes" maxlength="900" placeholder="• Observa qué hábitos fluyeron con naturalidad y cuáles generaron fricción.&#10;• Recuerda: fallar un día es humano, abandonar es una decisión.&#10;• Anota tus aprendizajes y ajustes para el próximo ciclo." oninput="handleNotesInput(this)">• Buen ritmo en la caminata matutina y en la lectura antes de dormir sin distracciones.
+• La práctica de respiración consciente cuesta más los jueves; conviene agendarla a primera hora antes del desayuno.
+• Menos tiempo de pantalla nocturna se traduce directamente en un descanso más profundo y reparador.
+• El registro diario confirma que simplificar compromisos reduce la fatiga mental y aporta serenidad.
+• Próximo ajuste: proteger tres hábitos clave innegociables y consolidar la rutina de desconexión vespertina.</textarea>
+            </div>
+
+            <!-- PIE DE PÁGINA EDITORIAL -->
+            <div class="sheet-editorial-footer">
+                <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                <span>editorialmenosruido.com</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA PDF -->
+    <div class="modal-backdrop" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-dialog">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()" title="Cerrar modal">✕</button>
+            <span class="modal-badge">Imprenta Editorial 300 DPI</span>
+            <h3 class="modal-title">Descargar Planificador de Hábitos</h3>
+            <p class="modal-desc">Elige si deseas exportar tu planificador con tus hábitos y marcas actuales o descargar una plantilla limpia para escribir a mano.</p>
+            
+            <div class="modal-format-badge">
+                📐 Formato Libro Apaisado 8.25" × 6" (209.55 × 152.4 mm)
+            </div>
+
+            <div class="modal-options-stack">
+                <button type="button" class="btn-modal-primary" onclick="executeDownload(false)">
+                    <span>📥</span> Descargar mi PDF personalizado
+                </button>
+                <button type="button" class="btn-modal-secondary" onclick="executeDownload(true)">
+                    <span>📄</span> Descargar plantilla limpia en blanco (Para rellenar a mano)
+                </button>
+            </div>
+
+            <!-- RECOMENDACIÓN DE CUADERNOS DE PAPEL -->
             <div class="modal-books-section">
-                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
-                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 4px 0 12px 0;">
-                    Esta plantilla te permite sostener tus hábitos mes a mes, pero la metodología integral para consolidar foco a 90 o 180 días está en nuestros cuadernos encuadernados de Editorial Menos Ruido para no perder tus avances.
-                </p>
+                <div class="modal-books-header">Ediciones Encuadernadas Menos Ruido</div>
                 <div class="modal-books-grid">
-                    <!-- Planificador 90 Días -->
                     <div class="modal-book-card">
-                        <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb">
+                        <img src="/cover_90.jpg" alt="Planificador 90 Días" class="modal-book-thumb" onerror="this.src='/favicon.png'">
                         <div class="modal-book-details">
-                            <span class="modal-book-badge">Enfoque trimestral</span>
+                            <span class="modal-book-badge">Trimestral</span>
                             <h4 class="modal-book-title">Planificador 90 Días</h4>
                             <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_habitos' })">
                                 Amazon ↗
                             </a>
                         </div>
                     </div>
-
-                    <!-- Planificador 180 Días -->
                     <div class="modal-book-card">
-                        <img src="/cover_180.jpg" alt="Planificador 180 Días" class="modal-book-thumb">
+                        <img src="/cover_180.jpg" alt="Planificador 180 Días" class="modal-book-thumb" onerror="this.src='/favicon.png'">
                         <div class="modal-book-details">
-                            <span class="modal-book-badge">Hábito semestral</span>
+                            <span class="modal-book-badge">Semestral</span>
                             <h4 class="modal-book-title">Planificador 180 Días</h4>
                             <a href="/ir/amazon-180-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_180_dias', origen: 'modal_habitos' })">
                                 Amazon ↗
@@ -1015,287 +1124,503 @@
         </div>
     </div>
 
+    <!-- MODAL POP-UP DE CONFIRMACIÓN CON ESTILO EDITORIAL MENOS RUIDO -->
+    <div class="modal-backdrop" id="confirm-modal" onclick="closeConfirmModalOnBackdrop(event)">
+        <div class="modal-dialog" style="max-width: 440px; padding: 26px 22px 22px;">
+            <button type="button" class="modal-close-btn" onclick="closeConfirmModal()" title="Cerrar modal">✕</button>
+            <span class="modal-badge" id="confirm-modal-badge">Menos Ruido</span>
+            <h3 class="modal-title" id="confirm-modal-title" style="margin-top: 6px; font-size: 1.28rem;">¿Confirmar acción?</h3>
+            <p class="modal-desc" id="confirm-modal-desc" style="font-size: 0.83rem; line-height: 1.45; margin-bottom: 20px; color: #5a524b;">
+                Esta acción modificará el contenido actual.
+            </p>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                <button type="button" class="btn-confirm-cancel" onclick="closeConfirmModal()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-confirm-action" id="confirm-modal-action-btn" onclick="executeConfirmModalAction()">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ========================================================
-        // ESTADO GLOBAL Y EJEMPLO EDITORIAL
+        // ESTADO GLOBAL DEL PLANIFICADOR DE HÁBITOS (HASTA 20 HÁBITOS)
         // ========================================================
-        let isExampleActive = false;
-        let isBlankModal = false;
-        let activeCheckShape = 'circle'; // 'circle' | 'square'
-
-        let habitsList = [
-            'Lectura pausada (20 min sin pantalla)',
-            'Caminata matinal sin auriculares',
-            'Bloque de trabajo profundo ininterrumpido',
-            'Espacio de desconexión nocturna'
-        ];
-
-        const HABIT_EXAMPLE = {
-            month: 'Octubre',
-            year: '2026',
-            intention: 'Constancia serena en el estudio, lecturas en papel y descanso profundo sin pantallas ni estímulos.',
-            habits: [
-                'Lectura pausada en papel (25 min)',
-                'Caminata o respiración matinal',
-                'Escribir a mano en el cuaderno',
-                'Cero pantallas tras las 22:00',
-                'Hidratación y desayuno pausado',
-                'Revisión serena de prioridades',
-                'Bloque de trabajo profundo 45 min',
-                'Estiramientos y cuidado postural'
-            ],
-            notes: 'La constancia tranquila genera más progreso que los picos de intensidad desordenada y agotamiento.'
+        const state = {
+            numHabits: 10, // 6, 8, 10, 12, 15, 18, 20
+            checkboxStyle: 'circle', // 'square' o 'circle'
+            notesVisible: true, // Siempre abajo cuando es visible; se puede ocultar si se desea
+            habits: Array(20).fill(null).map(() => ({
+                name: '',
+                days: Array(31).fill(false)
+            }))
         };
 
-        // SELECTOR DE FORMA DE CASILLAS
-        function setCheckShape(shape) {
-            activeCheckShape = shape;
-            const btnCircle = document.getElementById('btn-shape-circle');
-            const btnSquare = document.getElementById('btn-shape-square');
-            if (btnCircle) btnCircle.classList.toggle('active', shape === 'circle');
-            if (btnSquare) btnSquare.classList.toggle('active', shape === 'square');
-            updateHabitsPreview();
-            showToast(shape === 'circle' ? '✓ Casillas circulares activadas.' : '✓ Casillas cuadradas activadas.');
+        const EXAMPLE_DATA = {
+            month: 'NOVIEMBRE',
+            year: '2026',
+            intention: '«Construir constancia silenciosa y descanso reparador sin sobreexigencia.»',
+            notes: '• Buen ritmo en la caminata matutina y en la lectura antes de dormir sin distracciones.\n• La práctica de respiración consciente cuesta más los jueves; conviene agendarla a primera hora antes del desayuno.\n• Menos tiempo de pantalla nocturna se traduce directamente en un descanso más profundo y reparador.\n• El registro diario confirma que simplificar compromisos reduce la fatiga mental y aporta serenidad.\n• Próximo ajuste: proteger tres hábitos clave innegociables y consolidar la rutina de desconexión vespertina.',
+            habits: [
+                { name: '1. Caminar 30 min sin auriculares', days: [1,1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,1,1,1] },
+                { name: '2. Lectura en papel 20 min', days: [1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1] },
+                { name: '3. Meditación / Respiración consciente', days: [1,1,1,0,1,0,1,1,1,1,0,1,0,1,1,1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1] },
+                { name: '4. Beber 2L de agua', days: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
+                { name: '5. Bloque de trabajo profundo matutino', days: [1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,0] },
+                { name: '6. Sin pantallas tras las 21:30', days: [0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,1,0,1,1,1,0,1,1] },
+                { name: '7. Escribir balance diario breve', days: [1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1] },
+                { name: '8. Estiramientos suaves 10 min', days: [1,0,1,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,1,0,1,1,0,1] },
+                { name: '9. Cocinar comida real en casa', days: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
+                { name: '10. Ordenar el escritorio antes de salir', days: [1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,0] },
+                { name: '11. Paseo breve de desconexión', days: [1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,1,0,1,1,0,1] },
+                { name: '12. Cero cafeína tras las 15:00', days: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
+                { name: '13. Ventilar la habitación 15 min', days: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
+                { name: '14. Revisión de correo solo a las 12h y 17h', days: [1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,0] },
+                { name: '15. Escuchar música con atención plena', days: [0,1,0,1,1,1,1,0,1,0,1,1,1,1,0,1,0,1,1,1,1,0,1,0,1,1,1,1,0,1,0] },
+                { name: '16. Desayuno sin teléfono móvil', days: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
+                { name: '17. Registro de gastos esenciales', days: [1,0,1,0,1,1,0,1,0,1,0,1,1,0,1,0,1,0,1,1,0,1,0,1,0,1,1,0,1,0,1] },
+                { name: '18. Dormir 7.5 horas de media', days: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
+                { name: '19. Práctica de respiración diafragmática', days: [1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1] },
+                { name: '20. Agradecimiento antes de dormir', days: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] }
+            ]
+        };
+
+        // ========================================================
+        // AVISOS CONTEXTUALES (SIN SALTO VERTICAL / ZERO CLS)
+        // ========================================================
+        let toastTimer = null;
+        function showToast(msg) {
+            const t = document.getElementById('toast-notify');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('active');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                t.classList.remove('active');
+            }, 3000);
         }
 
-        // AUTO-EXPAND TEXTAREAS
-        function autoResizeTextarea(el) {
-            if (!el) return;
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight + 2) + 'px';
-        }
-
-        // HANDLERS ENTRADA
-        function handleMonthInput(input) {
-            isExampleActive = false;
-            updateDatePreview();
-        }
-
-        function handleYearInput(input) {
-            isExampleActive = false;
-            if (input) {
-                input.value = input.value.replace(/[^0-9]/g, '');
-                if (input.value.length > 4) input.value = input.value.slice(0, 4);
+        // ========================================================
+        // RENDERIZADO DE LA TABLA DE HÁBITOS
+        // ========================================================
+        function renderDaysHeader() {
+            const h = document.getElementById('header-days-grid');
+            if (!h) return;
+            let html = '';
+            for (let d = 1; d <= 31; d++) {
+                html += `<div class="th-day-cell">${d}</div>`;
             }
-            updateDatePreview();
+            h.innerHTML = html;
         }
 
-        function updateDatePreview() {
-            const mInput = document.getElementById('input-habit-month');
-            const yInput = document.getElementById('input-habit-year');
-            const prev = document.getElementById('prev-date-text');
-            if (!prev) return;
-
-            const mVal = mInput ? mInput.value.trim().toUpperCase() : '';
-            const yVal = yInput ? yInput.value.trim() : '';
-
-            if (mVal || yVal) {
-                const mStr = mVal ? ('MES: ' + mVal) : 'MES: ________';
-                const yStr = yVal ? ('AÑO: ' + yVal) : 'AÑO: ______';
-                prev.textContent = mStr + '  ·  ' + yStr;
-            } else if (isExampleActive) {
-                prev.textContent = 'MES: ' + HABIT_EXAMPLE.month.toUpperCase() + '  ·  AÑO: ' + HABIT_EXAMPLE.year;
+        function calculateRowHeightPx() {
+            const isNotesHidden = !state.notesVisible;
+            if (isNotesHidden) {
+                // Modo expandido sin notas al pie
+                if (state.numHabits <= 6) return 50;
+                if (state.numHabits <= 8) return 40;
+                if (state.numHabits <= 10) return 34;
+                if (state.numHabits <= 12) return 29;
+                if (state.numHabits <= 15) return 24;
+                if (state.numHabits <= 18) return 21;
+                return 19; // 20 hábitos
             } else {
-                prev.textContent = 'MES: ________  ·  AÑO: ______';
+                // Modo estándar con notas al pie (calibrado 1:1 con el PDF para dar máxima altura y capacidad a las notas)
+                if (state.numHabits <= 6) return 32;
+                if (state.numHabits <= 8) return 27;
+                if (state.numHabits <= 10) return 23.5;
+                if (state.numHabits <= 12) return 20.5;
+                if (state.numHabits <= 15) return 17.5;
+                if (state.numHabits <= 18) return 15.5;
+                return 14.5; // 20 hábitos
             }
         }
 
-        function handleIntentionInput(ta) {
-            isExampleActive = false;
-            autoResizeTextarea(ta);
-            const count = document.getElementById('count-intention');
-            if (count && ta) count.textContent = ta.value.length + '/120';
-            updateIntentionPreview();
-        }
+        function renderHabitsBody() {
+            const tbody = document.getElementById('habits-table-body');
+            if (!tbody) return;
 
-        function updateIntentionPreview() {
-            const input = document.getElementById('input-habit-intention');
-            const prev = document.getElementById('prev-intention-text');
-            if (!prev) return;
-            const val = input ? input.value.trim() : '';
-            prev.textContent = val || (isExampleActive ? ('«' + HABIT_EXAMPLE.intention + '»') : '');
-        }
+            const rowHeightPx = calculateRowHeightPx();
+            const shapeClass = state.checkboxStyle === 'square' ? 'habit-check-square' : 'habit-check-circle';
 
-        function handleNotesInput(ta) {
-            isExampleActive = false;
-            autoResizeTextarea(ta);
-            const count = document.getElementById('count-notes');
-            if (count && ta) count.textContent = ta.value.length + '/150';
-            updateNotesPreview();
-        }
+            let html = '';
+            for (let i = 0; i < state.numHabits; i++) {
+                const habit = state.habits[i];
+                html += `
+                <div class="habit-data-row" style="height: ${rowHeightPx}px;" data-row="${i}">
+                     <div class="td-habit-name">
+                        <input type="text" class="editable-habit-input" id="habit-input-${i}" 
+                               placeholder="Hábito ${i + 1}..." 
+                               maxlength="42" 
+                               value="${escapeHtml(habit.name)}" 
+                               oninput="onHabitNameChange(${i}, this.value)">
+                    </div>
+                    <div class="td-days-grid">`;
 
-        function updateNotesPreview() {
-            const ta = document.getElementById('input-habit-notes');
-            const prev = document.getElementById('prev-notes-text');
-            if (!prev) return;
-            const val = ta ? ta.value.trim() : '';
-            prev.textContent = val || (isExampleActive ? HABIT_EXAMPLE.notes : '');
-        }
-
-        // HÁBITOS DINÁMICOS (HASTA 12)
-        function renderHabitsInputs() {
-            const container = document.getElementById('habits-container');
-            const btnAdd = document.getElementById('btn-add-habit');
-            if (!container) return;
-            container.innerHTML = '';
-
-            habitsList.forEach((h, idx) => {
-                const row = document.createElement('div');
-                row.className = 'item-input-row';
-                row.innerHTML = `
-                    <textarea class="habit-input-field" rows="1" maxlength="50" placeholder="Hábito ${idx + 1} (máx 50 car.)" oninput="isExampleActive = false; autoResizeTextarea(this); habitsList[${idx}] = this.value; updateHabitsPreview();">${h}</textarea>
-                    <button type="button" class="btn-remove-item" title="Eliminar hábito" onclick="removeHabitItem(${idx})">✕</button>
-                `;
-                container.appendChild(row);
-                const ta = row.querySelector('textarea');
-                if (ta) autoResizeTextarea(ta);
-            });
-
-            if (btnAdd) {
-                btnAdd.style.display = habitsList.length >= 12 ? 'none' : 'inline-block';
-            }
-            updateHabitsPreview();
-        }
-
-        function addNewHabit() {
-            if (habitsList.length >= 12) return;
-            isExampleActive = false;
-            habitsList.push('');
-            renderHabitsInputs();
-            showToast('Hábito añadido.');
-        }
-
-        function removeHabitItem(idx) {
-            isExampleActive = false;
-            habitsList.splice(idx, 1);
-            renderHabitsInputs();
-            showToast('Hábito eliminado.');
-        }
-
-        function updateHabitsPreview() {
-            const container = document.getElementById('prev-habits-rows-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const userHasH = habitsList.some(h => h.trim().length > 0);
-            let habitsToRender = [];
-
-            if (userHasH) {
-                habitsToRender = habitsList.map(h => h.trim()).filter(h => h.length > 0);
-            } else if (isExampleActive) {
-                habitsToRender = HABIT_EXAMPLE.habits;
-            } else {
-                habitsToRender = habitsList.map(() => '');
-            }
-
-            // Mostramos siempre las 12 filas completas en la vista previa
-            const totalRows = 12;
-            const shapeClass = (activeCheckShape === 'square') ? 'habit-square' : 'habit-circle';
-
-            for (let i = 0; i < totalRows; i++) {
-                const hTitle = habitsToRender[i] || '';
-                const row = document.createElement('div');
-                row.className = 'habit-row';
-
-                let cellsHtml = '';
-                for (let d = 1; d <= 31; d++) {
-                    cellsHtml += `<div class="habit-row-cell"><div class="${shapeClass}"></div></div>`;
+                for (let d = 0; d < 31; d++) {
+                    const isChecked = !!habit.days[d];
+                    html += `
+                        <div class="td-day-cell ${isChecked ? 'checked' : ''}" 
+                             id="cell-${i}-${d}" 
+                             onclick="toggleDayCheck(${i}, ${d})" 
+                             title="Hábito ${i + 1} - Día ${d + 1}">
+                            <div class="${shapeClass}"></div>
+                        </div>`;
                 }
 
-                row.innerHTML = `
-                    <div class="habit-row-title">${hTitle || '<span style="color:#c5bfb6;">Hábito ' + (i + 1) + '...</span>'}</div>
-                    <div class="habit-row-grid">${cellsHtml}</div>
-                `;
-                container.appendChild(row);
+                html += `
+                    </div>
+                </div>`;
+            }
+            tbody.innerHTML = html;
+            updateNotesLayout();
+        }
+
+        const NOTES_CAPACITY_BY_HABITS = {
+            6:  { maxChars: 2600, maxLines: 26, fontSize: '0.74rem', lineHeight: '1.48' },
+            8:  { maxChars: 2400, maxLines: 24, fontSize: '0.73rem', lineHeight: '1.46' },
+            10: { maxChars: 2200, maxLines: 22, fontSize: '0.72rem', lineHeight: '1.44' },
+            12: { maxChars: 2000, maxLines: 20, fontSize: '0.71rem', lineHeight: '1.42' },
+            15: { maxChars: 1850, maxLines: 19, fontSize: '0.70rem', lineHeight: '1.40' },
+            18: { maxChars: 1750, maxLines: 18, fontSize: '0.69rem', lineHeight: '1.38' },
+            20: { maxChars: 1650, maxLines: 17, fontSize: '0.68rem', lineHeight: '1.36' }
+        };
+
+        function measureNotesLines(text, targetHabits) {
+            if (!text || !text.trim()) return 0;
+
+            let mirror = document.getElementById('notes-measurement-mirror');
+            if (!mirror) {
+                mirror = document.createElement('div');
+                mirror.id = 'notes-measurement-mirror';
+                mirror.style.position = 'absolute';
+                mirror.style.visibility = 'hidden';
+                mirror.style.left = '-9999px';
+                mirror.style.top = '-9999px';
+                mirror.style.pointerEvents = 'none';
+                mirror.style.whiteSpace = 'pre-wrap';
+                mirror.style.wordBreak = 'break-word';
+                mirror.style.boxSizing = 'border-box';
+                document.body.appendChild(mirror);
+            }
+
+            const notesEl = document.getElementById('field-habit-notes');
+            const comp = window.getComputedStyle(notesEl || document.body);
+            const cap = NOTES_CAPACITY_BY_HABITS[targetHabits] || NOTES_CAPACITY_BY_HABITS[10];
+
+            mirror.style.width = ((notesEl && notesEl.clientWidth) || 880) + 'px';
+            mirror.style.fontFamily = comp.fontFamily || 'system-ui, sans-serif';
+            mirror.style.fontSize = cap.fontSize;
+            mirror.style.lineHeight = cap.lineHeight;
+            mirror.style.padding = '0';
+            mirror.textContent = text;
+
+            const totalHeight = mirror.offsetHeight;
+            mirror.textContent = 'M';
+            const singleLineH = mirror.offsetHeight || 18;
+            mirror.textContent = text;
+
+            const measuredLines = Math.ceil(totalHeight / Math.max(1, singleLineH));
+            const explicitLines = text.split('\n').length;
+            return Math.max(explicitLines, measuredLines);
+        }
+
+        function updateNotesLayout() {
+            const notesEl = document.getElementById('field-habit-notes');
+            const countEl = document.getElementById('count-notes');
+            if (!notesEl) return;
+
+            const cap = NOTES_CAPACITY_BY_HABITS[state.numHabits] || NOTES_CAPACITY_BY_HABITS[10];
+            notesEl.style.fontSize = cap.fontSize;
+            notesEl.style.lineHeight = cap.lineHeight;
+            notesEl.maxLength = cap.maxChars;
+
+            if (countEl) {
+                countEl.textContent = `${notesEl.value.length}/${cap.maxChars}`;
             }
         }
 
-        function renderDaysHeader() {
-            const container = document.getElementById('prev-table-days-header');
-            if (!container) return;
-            container.innerHTML = '';
-            for (let d = 1; d <= 31; d++) {
-                const cell = document.createElement('div');
-                cell.className = 'habit-day-num';
-                cell.textContent = d;
-                container.appendChild(cell);
+        function toggleDayCheck(habitIdx, dayIdx) {
+            state.habits[habitIdx].days[dayIdx] = !state.habits[habitIdx].days[dayIdx];
+            const cell = document.getElementById(`cell-${habitIdx}-${dayIdx}`);
+            if (cell) {
+                if (state.habits[habitIdx].days[dayIdx]) {
+                    cell.classList.add('checked');
+                } else {
+                    cell.classList.remove('checked');
+                }
             }
         }
 
-        function renderPreview() {
-            updateDatePreview();
-            updateIntentionPreview();
-            updateHabitsPreview();
-            updateNotesPreview();
+        function onHabitNameChange(habitIdx, val) {
+            state.habits[habitIdx].name = val;
         }
 
-        // RELLENAR EJEMPLO (Solo se proyecta en vista previa)
-        function loadExampleData() {
-            isExampleActive = true;
-            renderPreview();
-            showToast('✓ Ejemplo proyectado en la vista previa.');
+        // ========================================================
+        // FORMA DE CASILLAS (SELECTOR EXCLUYENTE SVG OFICIAL)
+        // ========================================================
+        function setCheckboxStyle(style) {
+            state.checkboxStyle = style;
+            const isCircle = style === 'circle';
+
+            const btnSquare = document.getElementById('btn-shape-square');
+            const btnCircle = document.getElementById('btn-shape-circle');
+            if (btnSquare && btnCircle) {
+                btnSquare.classList.toggle('active', !isCircle);
+                btnCircle.classList.toggle('active', isCircle);
+            }
+
+            renderHabitsBody();
+            showToast(isCircle ? '✓ Casillas circulares activadas' : '✓ Casillas cuadradas activadas');
         }
 
-        // LIMPIAR
-        function clearAllData() {
-            isExampleActive = false;
-            const mInput = document.getElementById('input-habit-month');
-            if (mInput) mInput.value = '';
-            const yInput = document.getElementById('input-habit-year');
-            if (yInput) yInput.value = '';
-            const iInput = document.getElementById('input-habit-intention');
-            if (iInput) { iInput.value = ''; iInput.style.height = ''; }
-            const nInput = document.getElementById('input-habit-notes');
-            if (nInput) { nInput.value = ''; nInput.style.height = ''; }
+        // ========================================================
+        // CONTROL DE NÚMERO DE HÁBITOS (HASTA 20) CON PROTECCIÓN DE CAPACIDAD
+        // ========================================================
+        function onNumHabitsChange() {
+            const sel = document.getElementById('select-num-habits');
+            const targetNum = parseInt(sel.value, 10);
 
-            const cInt = document.getElementById('count-intention');
-            if (cInt) cInt.textContent = '0/120';
-            const cNot = document.getElementById('count-notes');
-            if (cNot) cNot.textContent = '0/150';
+            // 1. Si se reduce el número de hábitos: comprobar si hay hábitos con datos en filas que quedarían fuera
+            if (targetNum < state.numHabits) {
+                let hasHiddenData = false;
+                for (let i = targetNum; i < state.numHabits; i++) {
+                    const h = state.habits[i];
+                    if (h && (h.name.trim().length > 0 || h.days.some(Boolean))) {
+                        hasHiddenData = true;
+                        break;
+                    }
+                }
+                if (hasHiddenData) {
+                    showToast(`⚠️ Hay hábitos con texto o marcas en las filas ${targetNum + 1} a ${state.numHabits}. Bórralos antes de reducir filas.`);
+                    sel.value = state.numHabits.toString();
+                    return;
+                }
+            }
 
-            habitsList = ['', '', '', ''];
-            renderHabitsInputs();
-            renderPreview();
-            showToast('✓ Formulario y vista previa limpiados.');
+            // 2. Si se aumentan hábitos y la reflexión está visible: comprobar si las notas actuales caben en la caja reducida
+            if (targetNum > state.numHabits && state.notesVisible) {
+                const notesEl = document.getElementById('field-habit-notes');
+                const notesText = notesEl ? notesEl.value.trim() : '';
+                if (notesText.length > 0) {
+                    const targetCap = NOTES_CAPACITY_BY_HABITS[targetNum];
+                    if (targetCap) {
+                        const currentChars = notesText.length;
+                        const currentLines = measureNotesLines(notesText, targetNum);
+
+                        const excessChars = currentChars - targetCap.maxChars;
+                        const excessLines = currentLines - targetCap.maxLines;
+
+                        if (excessChars > 0 || excessLines > 0) {
+                            let msg = `⚠️ No se puede añadir a ${targetNum} hábitos porque la caja de notas está llena. `;
+                            if (excessLines > 0 && excessChars > 0) {
+                                msg += `Elimina al menos ${excessLines} fila${excessLines > 1 ? 's' : ''} (o ${excessChars} caracteres) de las notas para hacer espacio.`;
+                            } else if (excessLines > 0) {
+                                msg += `Elimina al menos ${excessLines} fila${excessLines > 1 ? 's' : ''} de las notas para hacer espacio.`;
+                            } else {
+                                msg += `Elimina al menos ${excessChars} caracteres de las notas para hacer espacio.`;
+                            }
+                            showToast(msg);
+                            sel.value = state.numHabits.toString();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            state.numHabits = targetNum;
+            renderHabitsBody();
+            showToast(`Vista ajustada a ${targetNum} hábitos.`);
         }
 
-        function showToast(msg) {
-            const el = document.getElementById('toast-msg');
-            if (!el) return;
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 3000);
-        }
+        // ========================================================
+        // CONTROL DE VISIBILIDAD DE REFLEXIÓN (SIEMPRE AL PIE)
+        // ========================================================
+        function toggleNotesVisibility() {
+            state.notesVisible = !state.notesVisible;
 
-        // MODAL HANDLERS
-        function openDownloadModal(isBlank) {
-            isBlankModal = !!isBlank;
-            const modal = document.getElementById('download-modal');
-            if (!modal) return;
+            const box = document.getElementById('notes-box-container');
+            const btn = document.getElementById('btn-toggle-notes');
+            const tableWrap = document.getElementById('habits-table-container');
 
-            const badge = document.getElementById('modal-badge-label');
-            const title = document.getElementById('modal-title-label');
-            const desc = document.getElementById('modal-desc-label');
-            const btnText = document.getElementById('modal-download-btn-text');
-
-            if (isBlank) {
-                if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
-                if (title) title.textContent = 'Tus Hábitos en Papel (Para Rellenar a Mano)';
-                if (desc) desc.textContent = 'Descarga la cuadrícula limpia de 12 hábitos y 31 días lista para lápiz o pluma en Formato Libro 8.25" × 6" (210 × 152 mm).';
-                if (btnText) btnText.innerHTML = '📥 Descargar plantilla de hábitos limpia en PDF';
+            if (state.notesVisible) {
+                if (box) box.style.display = 'flex';
+                if (btn) btn.textContent = '📝 Reflexión: Visible';
+                if (tableWrap) tableWrap.classList.remove('table-expanded');
+                showToast('✓ Reflexión activada al pie de la tabla.');
             } else {
-                if (badge) badge.textContent = 'PDF Personalizado con Tus Hábitos';
-                if (title) title.textContent = 'Tu Planificador de Hábitos Listo';
-                if (desc) desc.textContent = 'Descarga tu registro mensual de 12 hábitos maquetado en Formato Libro 8.25" × 6" (210 × 152 mm).';
-                if (btnText) btnText.innerHTML = '📥 Descargar mi PDF personalizado';
+                if (box) box.style.display = 'none';
+                if (btn) btn.textContent = '🚫 Reflexión: Oculta';
+                if (tableWrap) tableWrap.classList.add('table-expanded');
+                showToast('✓ Reflexión oculta: tabla ampliada al máximo.');
             }
 
-            modal.classList.add('active');
+            renderHabitsBody();
+        }
+
+        function handleNotesInput(el) {
+            if (!el) return;
+            const cap = NOTES_CAPACITY_BY_HABITS[state.numHabits] || NOTES_CAPACITY_BY_HABITS[10];
+            el.maxLength = cap.maxChars;
+
+            // Evitar que el texto desborde la altura visible de la caja
+            while (el.scrollHeight > el.clientHeight + 2 && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+                showToast('⚠️ Límite de capacidad alcanzado: la caja de notas está completamente llena');
+            }
+
+            const count = document.getElementById('count-notes');
+            if (count) count.textContent = `${el.value.length}/${cap.maxChars}`;
+        }
+
+        function handleIntentionInput(el) {
+            if (!el) return;
+            if (el.value.includes('\n')) {
+                el.value = el.value.replace(/\r?\n/g, ' ');
+            }
+        }
+
+        // ========================================================
+        // MODAL POP-UP DE CONFIRMACIÓN EDITORIAL (ESTILO MENOS RUIDO)
+        // ========================================================
+        let pendingConfirmCallback = null;
+
+        function showConfirmPopup({ badge, title, desc, actionText, actionIcon, onConfirm }) {
+            const modal = document.getElementById('confirm-modal');
+            const badgeEl = document.getElementById('confirm-modal-badge');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const descEl = document.getElementById('confirm-modal-desc');
+            const btnEl = document.getElementById('confirm-modal-action-btn');
+
+            if (badgeEl) badgeEl.textContent = badge || 'Menos Ruido';
+            if (titleEl) titleEl.textContent = title || '¿Confirmar acción?';
+            if (descEl) descEl.textContent = desc || 'Esta acción modificará el contenido actual.';
+            if (btnEl) btnEl.innerHTML = `${actionIcon ? actionIcon + ' ' : ''}${actionText || 'Confirmar'}`;
+
+            pendingConfirmCallback = onConfirm;
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            if (modal) modal.classList.remove('active');
+            pendingConfirmCallback = null;
+        }
+
+        function closeConfirmModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'confirm-modal') {
+                closeConfirmModal();
+            }
+        }
+
+        function executeConfirmModalAction() {
+            const cb = pendingConfirmCallback;
+            closeConfirmModal();
+            if (typeof cb === 'function') {
+                cb();
+            }
+        }
+
+        // ========================================================
+        // LIMPIAR Y CARGAR EJEMPLO
+        // ========================================================
+        function clearAllContent() {
+            showConfirmPopup({
+                badge: '🧹 Limpieza del Lienzo',
+                title: '¿Empezar en blanco?',
+                desc: '¿Deseas limpiar todos los textos del planificador de hábitos? Se vaciarán el mes, el año, la intención, todos los hábitos y las notas de reflexión.',
+                actionText: 'Limpiar todo',
+                actionIcon: '🧹',
+                onConfirm: () => {
+                    document.getElementById('field-habit-month').value = '';
+                    document.getElementById('field-habit-year').value = '';
+                    
+                    const intEl = document.getElementById('field-habit-intention');
+                    if (intEl) {
+                        intEl.value = '';
+                        handleIntentionInput(intEl);
+                    }
+
+                    const notesEl = document.getElementById('field-habit-notes');
+                    if (notesEl) {
+                        notesEl.value = '';
+                        handleNotesInput(notesEl);
+                    }
+
+                    for (let i = 0; i < 20; i++) {
+                        state.habits[i].name = '';
+                        state.habits[i].days.fill(false);
+                    }
+
+                    renderHabitsBody();
+                    showToast('✓ Contenido limpiado para empezar en blanco');
+                }
+            });
+        }
+
+        function loadExampleContent(isInitial = false) {
+            if (isInitial) {
+                applyExampleData();
+                return;
+            }
+
+            showConfirmPopup({
+                badge: '✨ Ejemplo Editorial',
+                title: '¿Cargar ejemplo oficial?',
+                desc: '¿Deseas cargar el ejemplo editorial en el planificador de hábitos? Se sustituirá el contenido actual con la pauta de 20 hábitos recomendados y notas de balance.',
+                actionText: 'Cargar ejemplo',
+                actionIcon: '✨',
+                onConfirm: () => {
+                    applyExampleData();
+                    showToast('✓ Ejemplo editorial cargado con éxito');
+                }
+            });
+        }
+
+        function applyExampleData() {
+            document.getElementById('field-habit-month').value = EXAMPLE_DATA.month;
+            document.getElementById('field-habit-year').value = EXAMPLE_DATA.year;
+            
+            const intEl = document.getElementById('field-habit-intention');
+            if (intEl) {
+                intEl.value = EXAMPLE_DATA.intention;
+                handleIntentionInput(intEl);
+            }
+
+            const notesEl = document.getElementById('field-habit-notes');
+            if (notesEl) {
+                notesEl.value = EXAMPLE_DATA.notes;
+                handleNotesInput(notesEl);
+            }
+
+            for (let i = 0; i < 20; i++) {
+                const ex = EXAMPLE_DATA.habits[i] || { name: '', days: [] };
+                state.habits[i].name = ex.name || '';
+                state.habits[i].days = Array(31).fill(false);
+                if (Array.isArray(ex.days)) {
+                    ex.days.forEach((val, d) => {
+                        state.habits[i].days[d] = !!val;
+                    });
+                }
+            }
+
+            renderHabitsBody();
+        }
+
+        // ========================================================
+        // MODAL DE DESCARGA
+        // ========================================================
+        function openDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.add('active');
         }
 
         function closeDownloadModal() {
-            const modal = document.getElementById('download-modal');
-            if (modal) modal.classList.remove('active');
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.remove('active');
         }
 
         function closeModalOnBackdrop(e) {
@@ -1307,266 +1632,336 @@
         // ========================================================
         // MOTOR DE EXPORTACIÓN PDF VECTORIAL (jsPDF)
         // ========================================================
-        function executeHabitDownload() {
+        function executeDownload(isBlank) {
             closeDownloadModal();
 
             const { jsPDF } = window.jspdf || {};
             if (!jsPDF) {
-                alert('No se pudo inicializar la librería jsPDF.');
+                showToast('⚠️ No se pudo inicializar la librería jsPDF. Por favor, recarga la página.');
                 return;
             }
 
-            // Formato Libro Apaisado 8.25" x 6" [209.55, 152.4] mm
-            const pageDims = [209.55, 152.4];
-            const orientation = 'landscape';
-
-            let doc = new jsPDF({
-                orientation: orientation,
+            // Formato Libro Apaisado 8.25" × 6" [209.55, 152.4] mm
+            const doc = new jsPDF({
+                orientation: 'landscape',
                 unit: 'mm',
-                format: pageDims
+                format: [209.55, 152.4]
             });
 
-            const pw = doc.internal.pageSize.getWidth();
-            const ph = doc.internal.pageSize.getHeight();
-            const m = 13; // margen en mm
-            const contentW = pw - (m * 2);
+            const pw = 209.55;
+            const ph = 152.4;
+            const m = 13.0; // Margen lateral en mm
+            const contentW = pw - (m * 2); // 183.55 mm
 
-            // Fondo crema editorial
+            // Fondo editorial crema cálido
             doc.setFillColor(255, 254, 251);
             doc.rect(0, 0, pw, ph, 'F');
 
-            let y = m + 1;
+            let currentY = m - 0.5;
 
-            // Datos activos
-            const mInput = document.getElementById('input-habit-month')?.value.trim() || '';
-            const activeMonth = isBlankModal ? '' : (mInput || (isExampleActive ? HABIT_EXAMPLE.month : ''));
+            // Datos actuales de pantalla
+            const rawMonth = document.getElementById('field-habit-month')?.value.trim() || '';
+            const rawYear = document.getElementById('field-habit-year')?.value.trim() || '';
+            const rawIntention = document.getElementById('field-habit-intention')?.value.trim() || '';
+            const rawNotes = document.getElementById('field-habit-notes')?.value.trim() || '';
 
-            const yInput = document.getElementById('input-habit-year')?.value.trim() || '';
-            const activeYear = isBlankModal ? '' : (yInput || (isExampleActive ? HABIT_EXAMPLE.year : ''));
+            const activeMonth = isBlank ? '' : rawMonth;
+            const activeYear = isBlank ? '' : rawYear;
+            const activeIntention = isBlank ? '' : rawIntention;
+            const activeNotes = isBlank ? '' : rawNotes;
 
-            const iInput = document.getElementById('input-habit-intention')?.value.trim() || '';
-            const activeIntention = isBlankModal ? '' : (iInput || (isExampleActive ? HABIT_EXAMPLE.intention : ''));
-
-            const nInput = document.getElementById('input-habit-notes')?.value.trim() || '';
-            const activeNotes = isBlankModal ? '' : (nInput || (isExampleActive ? HABIT_EXAMPLE.notes : ''));
-
-            const userHasH = habitsList.some(h => h.trim().length > 0);
-            const activeHabits = isBlankModal 
-                ? [] 
-                : (userHasH ? habitsList.filter(h => h.trim().length > 0) : (isExampleActive ? HABIT_EXAMPLE.habits : []));
-
-            // Kicker superior
+            // 1. KICKER SUPERIOR
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.8);
+            doc.setFontSize(6.4);
             doc.setTextColor(135, 85, 59);
-            doc.text('MENOS RUIDO · RASTREADOR DE HÁBITOS', m, y);
-            y += 4.5;
+            doc.text('MENOS RUIDO · RASTREADOR DE HÁBITOS', m, currentY);
 
-            // Título principal y Mes / Año
+            // 2. TÍTULO PRINCIPAL Y METADATOS (MES / AÑO)
+            currentY += 4.8;
             doc.setFont('times', 'bold');
-            doc.setFontSize(16);
+            doc.setFontSize(15.5);
             doc.setTextColor(30, 25, 22);
-            doc.text('Planificador de Hábitos', m, y);
+            doc.text('Planificador de Hábitos', m, currentY);
 
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(8.5);
+            doc.setFontSize(7.6);
             doc.setTextColor(70, 65, 60);
-            const headerDateText = (activeMonth || activeYear) 
-                ? `MES: ${activeMonth.toUpperCase() || '______'}  ·  AÑO: ${activeYear || '______'}` 
-                : 'MES: ________  ·  AÑO: ______';
-            doc.text(headerDateText, pw - m, y, { align: 'right' });
-            y += 2.5;
 
-            // Intención del mes si existe
-            if (activeIntention) {
+            let headerDateText = '';
+            if (isBlank) {
+                headerDateText = 'MES: ____________   ·   AÑO: ________';
+            } else {
+                const mText = activeMonth ? activeMonth.toUpperCase() : '____________';
+                const yText = activeYear ? activeYear : '________';
+                headerDateText = `MES: ${mText}   ·   AÑO: ${yText}`;
+            }
+            doc.text(headerDateText, pw - m, currentY - 0.2, { align: 'right' });
+
+            // 3. INTENCIÓN / FOCO DEL MES (EXACTAMENTE 1 LÍNEA, NUNCA DESBORDA)
+            currentY += 4.0;
+            if (!isBlank && activeIntention) {
+                const cleanInt = activeIntention.replace(/[•\u2022]/g, '-').trim();
+                const formattedInt = cleanInt.startsWith('«') ? cleanInt : `«${cleanInt}»`;
+
                 doc.setFont('helvetica', 'italic');
-                doc.setFontSize(7.2);
-                doc.setTextColor(90, 85, 80);
-                const iLines = doc.splitTextToSize(`«${activeIntention}»`, contentW - 35);
-                doc.text(iLines[0] || '', m, y + 1.5);
-                y += 4;
+                doc.setFontSize(6.8);
+                doc.setTextColor(80, 75, 70);
+
+                const singleLine = doc.splitTextToSize(formattedInt, contentW)[0] || formattedInt;
+                doc.text(singleLine, m, currentY);
+                currentY += 2.0;
+            } else {
+                currentY += 1.5;
             }
 
-            // Línea divisoria
+            // LÍNEA DIVISORIA DE LA CABECERA
             doc.setDrawColor(40, 35, 30);
-            doc.setLineWidth(0.35);
-            doc.line(m, y, pw - m, y);
-            y += 3.5;
+            doc.setLineWidth(0.38);
+            doc.line(m, currentY, pw - m, currentY);
 
-            // 1. TABLA DE 31 DÍAS (12 HÁBITOS)
-            const colTitleW = 50; // ancho columna nombres de hábitos
-            const daysGridW = contentW - colTitleW;
+            // 4. CÁLCULO DE ALTURA DE TABLA Y CAJA DE REFLEXIÓN AL PIE
+            const gridStartY = currentY + 3.0;
+            const footerY = ph - 5.5;
+            const bottomMarginBeforeFooter = 3.5;
+            const totalUsableHeight = (footerY - bottomMarginBeforeFooter) - gridStartY;
+
+            const isNotesVisible = state.notesVisible;
+            const numHabitsToDraw = state.numHabits;
+
+            let tableTotalH = 0;
+            let notesBoxH = 0;
+
+            if (!isNotesVisible) {
+                // Modo expandido: la tabla ocupa todo el folio
+                tableTotalH = totalUsableHeight;
+                notesBoxH = 0;
+            } else {
+                // Modo estándar: la tabla tiene altura calibrada y la caja de notas LLEGA AL INICIO DEL PIE DE PÁGINA
+                if (numHabitsToDraw <= 6) tableTotalH = 46.0;
+                else if (numHabitsToDraw <= 8) tableTotalH = 50.0;
+                else if (numHabitsToDraw <= 10) tableTotalH = 54.0;
+                else if (numHabitsToDraw <= 12) tableTotalH = 58.0;
+                else if (numHabitsToDraw <= 15) tableTotalH = 62.0;
+                else if (numHabitsToDraw <= 18) tableTotalH = 65.0;
+                else tableTotalH = 68.0; // 20 hábitos
+
+                const notesBoxY = gridStartY + tableTotalH + 3.0;
+                notesBoxH = (footerY - bottomMarginBeforeFooter) - notesBoxY;
+            }
+
+            const headerRowH = 4.2;
+            const bodyH = tableTotalH - headerRowH;
+            const rowH = bodyH / numHabitsToDraw;
+
+            // 5. CUADRÍCULA DE HÁBITOS
+            const habitColW = 46.5;
+            const daysGridW = contentW - habitColW;
             const dayColW = daysGridW / 31;
-            const numHabitsToDraw = 12; // Siempre 12 filas completas
-            const availableTableH = 78;
-            const headerRowH = 5;
-            const rowH = (availableTableH - headerRowH) / numHabitsToDraw; // ~6.08 mm por fila
 
             // Fondo cabecera tabla
             doc.setFillColor(245, 240, 232);
-            doc.setDrawColor(215, 210, 200);
-            doc.setLineWidth(0.2);
-            doc.rect(m, y, contentW, headerRowH, 'FD');
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.38);
+            doc.rect(m, gridStartY, contentW, headerRowH, 'FD');
 
+            // Texto cabecera: HÁBITO FUNDAMENTAL
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.2);
-            doc.setTextColor(50, 45, 40);
-            doc.text('HÁBITO FUNDAMENTAL', m + 3, y + 3.4);
+            doc.setFontSize(6.0);
+            doc.setTextColor(45, 40, 35);
+            doc.text('HÁBITO FUNDAMENTAL', m + 2.5, gridStartY + (headerRowH / 2) + 1.1);
 
-            // Números días 1 a 31 en NEGRITA
+            // Números días 1 a 31 en la cabecera
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(5.2);
             doc.setTextColor(45, 40, 35);
             for (let d = 1; d <= 31; d++) {
-                const dayX = m + colTitleW + ((d - 1) * dayColW);
-                doc.text(d.toString(), dayX + (dayColW / 2), y + 3.4, { align: 'center' });
+                const dayX = m + habitColW + ((d - 1) * dayColW);
+                doc.text(d.toString(), dayX + (dayColW / 2), gridStartY + (headerRowH / 2) + 1.1, { align: 'center' });
             }
 
-            // Capa 1: Fondos alternos en las celdas de hábitos (se dibujan primero para que nunca pisen las líneas)
+            // Líneas divisorias de cabecera días
+            doc.setDrawColor(215, 210, 200);
+            doc.setLineWidth(0.18);
+            for (let d = 1; d <= 31; d++) {
+                const dayX = m + habitColW + ((d - 1) * dayColW);
+                doc.line(dayX, gridStartY, dayX, gridStartY + headerRowH);
+            }
+
+            // Capa 1: Fondos alternos en filas
             for (let i = 0; i < numHabitsToDraw; i++) {
-                const rY = y + headerRowH + (i * rowH);
+                const rY = gridStartY + headerRowH + (i * rowH);
                 if (i % 2 === 1) {
-                    doc.setFillColor(252, 250, 247);
-                    doc.rect(m, rY, colTitleW, rowH, 'F');
+                    doc.setFillColor(252, 250, 246);
+                    doc.rect(m, rY, contentW, rowH, 'F');
                 }
             }
 
-            // Capa 2: Líneas horizontales entre todas las filas (garantiza que estén 100% presentes sin excepción)
+            // Capa 2: Líneas horizontales de filas
             doc.setDrawColor(225, 220, 212);
             doc.setLineWidth(0.18);
-            for (let i = 0; i < numHabitsToDraw; i++) {
-                const rY = y + headerRowH + (i * rowH);
-                doc.line(m, rY + rowH, m + contentW, rY + rowH);
+            for (let i = 1; i <= numHabitsToDraw; i++) {
+                const rY = gridStartY + headerRowH + (i * rowH);
+                doc.line(m, rY, m + contentW, rY);
             }
 
-            // Capa 3: Textos de los hábitos (centrados) y casillas de los 31 días (círculos o cuadraditos)
+            // Capa 3: Líneas verticales entre días
+            for (let d = 1; d <= 31; d++) {
+                const dayX = m + habitColW + ((d - 1) * dayColW);
+                doc.line(dayX, gridStartY + headerRowH, dayX, gridStartY + tableTotalH);
+            }
+
+            // Capa 4: Línea divisoria gruesa entre nombre del hábito y cuadrícula
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.38);
+            doc.line(m + habitColW, gridStartY, m + habitColW, gridStartY + tableTotalH);
+
+            // Capa 5: Marco perimetral de la tabla
+            doc.rect(m, gridStartY, contentW, tableTotalH, 'S');
+
+            // Capa 6: Nombres de hábitos y Casillas (Círculos o Cuadraditos)
+            const isSquare = state.checkboxStyle === 'square';
+            const radius = Math.min(1.30, Math.max(0.85, rowH * 0.28));
+            const sqSize = Math.min(2.35, Math.max(1.6, rowH * 0.50));
+
             for (let i = 0; i < numHabitsToDraw; i++) {
-                const rY = y + headerRowH + (i * rowH);
+                const rY = gridStartY + headerRowH + (i * rowH);
+                const habit = state.habits[i];
 
-                // Texto del hábito: centrado verticalmente en la cuadrícula
-                const hName = activeHabits[i] || '';
-                if (hName) {
-                    const cleanH = hName.replace(/[•\u2022]/g, '-').trim();
+                // Nombre del hábito
+                if (!isBlank && habit && habit.name.trim()) {
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6.4);
-                    doc.setTextColor(35, 30, 25);
-
-                    const hLines = doc.splitTextToSize(cleanH, colTitleW - 5);
-                    if (hLines.length === 1) {
-                        // Centrado exacto vertical
-                        doc.text(hLines[0], m + 3, rY + (rowH / 2) + 0.9);
+                    const nameFontSize = rowH >= 6.0 ? 6.2 : (rowH >= 4.2 ? 5.4 : 4.8);
+                    doc.setFontSize(nameFontSize);
+                    doc.setTextColor(30, 25, 20);
+                    const cleanName = habit.name.replace(/[•\u2022]/g, '-').trim();
+                    const nLines = doc.splitTextToSize(cleanName, habitColW - 4.2);
+                    
+                    if (nLines.length === 1 || rowH < 5.0) {
+                        doc.text(nLines[0], m + 2.2, rY + (rowH / 2) + (nameFontSize * 0.16));
                     } else {
-                        // Dos líneas centradas
-                        doc.setFontSize(5.6);
-                        doc.text(hLines[0], m + 3, rY + (rowH / 2) - 0.5);
-                        doc.text(hLines[1], m + 3, rY + (rowH / 2) + 1.8);
+                        const subFont = nameFontSize * 0.88;
+                        doc.setFontSize(subFont);
+                        doc.text(nLines[0], m + 2.2, rY + (rowH / 2) - 0.4);
+                        doc.text(nLines[1], m + 2.2, rY + (rowH / 2) + 1.6);
                     }
                 }
-                // Si no hay texto: HUECO EN BLANCO LIMPIO (sin ninguna línea horizontal que estorbe)
 
-                // Círculos o Cuadraditos de marcado en cada día
-                for (let d = 1; d <= 31; d++) {
-                    const cX = m + colTitleW + ((d - 1) * dayColW) + (dayColW / 2);
+                // Casillas de los 31 días
+                for (let d = 0; d < 31; d++) {
+                    const cX = m + habitColW + (d * dayColW) + (dayColW / 2);
                     const cY = rY + (rowH / 2);
 
-                    doc.setDrawColor(150, 145, 138);
+                    doc.setDrawColor(165, 158, 148);
                     doc.setLineWidth(0.2);
 
-                    if (activeCheckShape === 'square') {
-                        const sqSize = 2.4;
-                        doc.rect(cX - (sqSize / 2), cY - (sqSize / 2), sqSize, sqSize, 'S');
+                    const isChecked = !isBlank && habit && !!habit.days[d];
+
+                    if (isChecked) {
+                        doc.setFillColor(135, 85, 59);
+                        if (isSquare) {
+                            doc.rect(cX - (sqSize / 2), cY - (sqSize / 2), sqSize, sqSize, 'FD');
+                        } else {
+                            doc.circle(cX, cY, radius, 'FD');
+                        }
                     } else {
-                        doc.circle(cX, cY, 1.25, 'S');
+                        if (isSquare) {
+                            doc.rect(cX - (sqSize / 2), cY - (sqSize / 2), sqSize, sqSize, 'S');
+                        } else {
+                            doc.circle(cX, cY, radius, 'S');
+                        }
                     }
                 }
             }
 
-            // Capa 4: Líneas verticales de la tabla (después de los fondos para que nunca sean tapadas)
-            // 1. Líneas de separación de los días 1 a 31
-            doc.setDrawColor(225, 220, 212);
-            doc.setLineWidth(0.15);
-            for (let d = 1; d <= 31; d++) {
-                const dayX = m + colTitleW + ((d - 1) * dayColW);
-                doc.line(dayX, y, dayX, y + availableTableH);
+            // 6. CAJA DE REFLEXIÓN (SIEMPRE ABAJO: LLEGA HASTA EL INICIO DEL PIE DE PÁGINA Y SE LLENA EN ANCHO Y ALTO)
+            if (isNotesVisible && notesBoxH > 10.0) {
+                const boxY = gridStartY + tableTotalH + 3.0;
+
+                doc.setFillColor(250, 248, 244);
+                doc.setDrawColor(220, 215, 205);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(m, boxY, contentW, notesBoxH, 1.4, 1.4, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.8);
+                doc.setTextColor(135, 85, 59);
+                doc.text('REFLEXIÓN Y OBSERVACIONES DEL MES', m + 3.2, boxY + 3.6);
+
+                if (!isBlank && activeNotes) {
+                    doc.setTextColor(45, 40, 35);
+                    const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
+
+                    const textMarginX = 3.2;
+                    const textAvailW = contentW - (textMarginX * 2);
+                    const textStartY = boxY + 5.5;
+                    const textAvailH = (boxY + notesBoxH) - textStartY - 1.2;
+
+                    // Calibrar fuente base según tamaño de caja
+                    let fontSize = (notesBoxH >= 60.0) ? 6.8 : ((notesBoxH >= 50.0) ? 6.5 : 6.2);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(fontSize);
+
+                    let nLines = doc.splitTextToSize(cleanNotes, textAvailW);
+
+                    // Si hay muchas líneas, reducir proporcionalmente la fuente hasta que quepan
+                    while (nLines.length * 2.1 > textAvailH && fontSize > 4.6) {
+                        fontSize -= 0.3;
+                        doc.setFontSize(fontSize);
+                        nLines = doc.splitTextToSize(cleanNotes, textAvailW);
+                    }
+
+                    // Calcular interlineado dinámico para llenar la caja hasta el fondo sin huecos vacíos
+                    let lineSpacing = (textAvailH - 1.0) / Math.max(1, nLines.length);
+                    if (lineSpacing > 4.2) {
+                        lineSpacing = Math.min(3.6, Math.max(2.8, (textAvailH - 1.0) / Math.max(1, nLines.length)));
+                    }
+                    if (lineSpacing < 2.1) lineSpacing = 2.1;
+
+                    const effectiveMaxLines = Math.floor(textAvailH / lineSpacing);
+                    const linesToDraw = nLines.slice(0, effectiveMaxLines);
+
+                    let lineY = textStartY;
+                    linesToDraw.forEach(line => {
+                        doc.text(line, m + textMarginX, lineY);
+                        lineY += lineSpacing;
+                    });
+                }
             }
 
-            // 2. Línea vertical que divide nombres y cuadrícula (DÍA 1)
-            // Garantiza que las filas pares tengan su línea divisoria impecable
-            doc.setDrawColor(200, 195, 185);
-            doc.setLineWidth(0.28);
-            doc.line(m + colTitleW, y, m + colTitleW, y + availableTableH);
-
-            // 3. Marco exterior de la tabla completa
-            doc.setDrawColor(210, 205, 195);
-            doc.setLineWidth(0.25);
-            doc.rect(m, y, contentW, availableTableH);
-
-            y += availableTableH + 3.5;
-
-            // 2. BLOQUE DE REFLEXIÓN / OBSERVACIONES DEL MES
-            const notesH = 17;
-            doc.setFillColor(251, 249, 245);
-            doc.setDrawColor(220, 215, 205);
-            doc.setLineWidth(0.2);
-            doc.roundedRect(m, y, contentW, notesH, 1.5, 1.5, 'FD');
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.2);
-            doc.setTextColor(135, 85, 59);
-            doc.text('REFLEXIÓN Y OBSERVACIONES DEL MES', m + 3.5, y + 3.8);
-
-            // Si hay notas escritas, se imprimen; si no, queda en BLANCO LIMPIO (sin líneas horizontales)
-            if (activeNotes) {
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(6.8);
-                doc.setTextColor(45, 40, 35);
-                const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
-                const nLines = doc.splitTextToSize(cleanNotes, contentW - 8);
-                doc.text(nLines.slice(0, 3), m + 3.5, y + 7.5);
-            }
-
-            // 3. FOOTER EDITORIAL
+            // 7. PIE DE PÁGINA EDITORIAL
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6);
-            doc.setTextColor(140, 135, 130);
-            doc.text('MENOS RUIDO · REGISTRO CONSTANTE', m, ph - m + 2);
-            doc.text('editorialmenosruido.com', pw - m, ph - m + 2, { align: 'right' });
+            doc.setFontSize(5.8);
+            doc.setTextColor(140, 135, 128);
+            doc.text('MENOS RUIDO · REGISTRO CONSTANTE', m, footerY);
+            doc.text('editorialmenosruido.com', pw - m, footerY, { align: 'right' });
 
-            // NOMENCLATURA EXACTA:
-            // En blanco: menos-ruido-plantilla-de-habitos.pdf
+            // 8. GUARDAR ARCHIVO
             let fileName = '';
-            if (isBlankModal) {
-                fileName = 'menos-ruido-plantilla-de-habitos.pdf';
+            if (isBlank) {
+                fileName = 'Menos_Ruido_Plantilla_Habitos_En_Blanco.pdf';
             } else {
-                const cleanMonth = (activeMonth || '').trim();
-                const cleanYear = (activeYear || '').toString().trim().replace(/[^0-9]/g, '');
-                if (cleanMonth && cleanYear) {
-                    fileName = `MENOS RUIDO Planificador de Habitos ${cleanMonth} ${cleanYear}.pdf`;
-                } else if (cleanMonth) {
-                    fileName = `MENOS RUIDO Planificador de Habitos ${cleanMonth}.pdf`;
-                } else if (cleanYear) {
-                    fileName = `MENOS RUIDO Planificador de Habitos ${cleanYear}.pdf`;
+                const cleanM = (activeMonth || 'Mes').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+                const cleanY = (activeYear || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+                if (cleanY) {
+                    fileName = `Menos_Ruido_Planificador_Habitos_${cleanM}_${cleanY}.pdf`;
                 } else {
-                    fileName = 'MENOS RUIDO Planificador de Habitos.pdf';
+                    fileName = `Menos_Ruido_Planificador_Habitos_${cleanM}.pdf`;
                 }
             }
 
             doc.save(fileName);
-            showToast('✓ Archivo "' + fileName + '" descargado.');
+            showToast(`✓ Descargado: ${fileName}`);
 
-            registrarMetricaGratis('/metricas/descarga-pdf-generador-habitos.html');
-            trackVercelEvent('descarga_pdf', {
-                herramienta: 'generador_habitos',
-                tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado'
-            });
-        }
-
-        function registrarMetricaGratis(paginaVirtual) {
             try {
                 if (window.va) {
-                    window.va('pageview', { url: paginaVirtual });
+                    window.va('pageview', { url: '/metricas/descarga-pdf-generador-habitos.html' });
                 }
             } catch (err) {}
+            trackVercelEvent('descarga_pdf', {
+                herramienta: 'generador_habitos',
+                tipo: isBlank ? 'plantilla_blanco' : 'personalizado',
+                formato: 'book_8.25x6'
+            });
         }
 
         function trackVercelEvent(nombreEvento, datos) {
@@ -1577,11 +1972,29 @@
             } catch (err) {}
         }
 
-        // INICIALIZACIÓN
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        // ========================================================
+        // INICIALIZACIÓN AL CARGAR LA PÁGINA
+        // ========================================================
         document.addEventListener('DOMContentLoaded', () => {
             renderDaysHeader();
-            renderHabitsInputs();
-            renderPreview();
+            loadExampleContent(true);
+            setTimeout(() => {
+                const intEl = document.getElementById('field-habit-intention');
+                if (intEl) handleIntentionInput(intEl);
+            }, 60);
         });
     </script>
 </body>

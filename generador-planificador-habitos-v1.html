@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planificador de Hábitos Interactivo (V1) · Menos Ruido</title>
 
-    <!-- GUARDIA DE SEGURIDAD / ACCESO POR PIN -->
+    <meta http-equiv="refresh" content="0; url=/generador-planificador-habitos.html">
     <script>
-        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
-            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
-        }
+        window.location.replace('/generador-planificador-habitos.html');
     </script>
 
     <!-- Vercel Web Analytics & Speed Insights -->
@@ -881,6 +879,43 @@
             margin-top: 2px;
         }
 
+        .btn-confirm-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.2);
+        }
+        .btn-confirm-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.28);
+        }
+        .btn-confirm-cancel {
+            background: #fbf8f2;
+            border: 1px solid #dfd6c7;
+            color: #4a3c31;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-confirm-cancel:hover {
+            background: #f1ebd8;
+            border-color: #cbbeae;
+            color: #2e241c;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 860px) {
             .interactive-paper-habits {
@@ -1084,6 +1119,27 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE CONFIRMACIÓN CON ESTILO EDITORIAL MENOS RUIDO -->
+    <div class="modal-backdrop" id="confirm-modal" onclick="closeConfirmModalOnBackdrop(event)">
+        <div class="modal-dialog" style="max-width: 440px; padding: 26px 22px 22px;">
+            <button type="button" class="modal-close-btn" onclick="closeConfirmModal()" title="Cerrar modal">✕</button>
+            <span class="modal-badge" id="confirm-modal-badge">Menos Ruido</span>
+            <h3 class="modal-title" id="confirm-modal-title" style="margin-top: 6px; font-size: 1.28rem;">¿Confirmar acción?</h3>
+            <p class="modal-desc" id="confirm-modal-desc" style="font-size: 0.83rem; line-height: 1.45; margin-bottom: 20px; color: #5a524b;">
+                Esta acción modificará el contenido actual.
+            </p>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                <button type="button" class="btn-confirm-cancel" onclick="closeConfirmModal()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-confirm-action" id="confirm-modal-action-btn" onclick="executeConfirmModalAction()">
+                    Confirmar
+                </button>
             </div>
         </div>
     </div>
@@ -1427,44 +1483,103 @@
         }
 
         // ========================================================
+        // MODAL POP-UP DE CONFIRMACIÓN EDITORIAL (ESTILO MENOS RUIDO)
+        // ========================================================
+        let pendingConfirmCallback = null;
+
+        function showConfirmPopup({ badge, title, desc, actionText, actionIcon, onConfirm }) {
+            const modal = document.getElementById('confirm-modal');
+            const badgeEl = document.getElementById('confirm-modal-badge');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const descEl = document.getElementById('confirm-modal-desc');
+            const btnEl = document.getElementById('confirm-modal-action-btn');
+
+            if (badgeEl) badgeEl.textContent = badge || 'Menos Ruido';
+            if (titleEl) titleEl.textContent = title || '¿Confirmar acción?';
+            if (descEl) descEl.textContent = desc || 'Esta acción modificará el contenido actual.';
+            if (btnEl) btnEl.innerHTML = `${actionIcon ? actionIcon + ' ' : ''}${actionText || 'Confirmar'}`;
+
+            pendingConfirmCallback = onConfirm;
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            if (modal) modal.classList.remove('active');
+            pendingConfirmCallback = null;
+        }
+
+        function closeConfirmModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'confirm-modal') {
+                closeConfirmModal();
+            }
+        }
+
+        function executeConfirmModalAction() {
+            const cb = pendingConfirmCallback;
+            closeConfirmModal();
+            if (typeof cb === 'function') {
+                cb();
+            }
+        }
+
+        // ========================================================
         // LIMPIAR Y CARGAR EJEMPLO
         // ========================================================
         function clearAllContent() {
-            if (!confirm('¿Deseas limpiar todos los textos del planificador de hábitos para empezar en blanco?')) {
-                return;
-            }
+            showConfirmPopup({
+                badge: '🧹 Limpieza del Lienzo',
+                title: '¿Empezar en blanco?',
+                desc: '¿Deseas limpiar todos los textos del planificador de hábitos? Se vaciarán el mes, el año, la intención, todos los hábitos y las notas de reflexión.',
+                actionText: 'Limpiar todo',
+                actionIcon: '🧹',
+                onConfirm: () => {
+                    document.getElementById('field-habit-month').value = '';
+                    document.getElementById('field-habit-year').value = '';
+                    
+                    const intEl = document.getElementById('field-habit-intention');
+                    if (intEl) {
+                        intEl.value = '';
+                        handleIntentionInput(intEl);
+                    }
 
-            document.getElementById('field-habit-month').value = '';
-            document.getElementById('field-habit-year').value = '';
-            
-            const intEl = document.getElementById('field-habit-intention');
-            if (intEl) {
-                intEl.value = '';
-                handleIntentionInput(intEl);
-            }
+                    const notesEl = document.getElementById('field-habit-notes');
+                    if (notesEl) {
+                        notesEl.value = '';
+                        handleNotesInput(notesEl);
+                    }
 
-            const notesEl = document.getElementById('field-habit-notes');
-            if (notesEl) {
-                notesEl.value = '';
-                handleNotesInput(notesEl);
-            }
+                    for (let i = 0; i < 20; i++) {
+                        state.habits[i].name = '';
+                        state.habits[i].days.fill(false);
+                    }
 
-            for (let i = 0; i < 20; i++) {
-                state.habits[i].name = '';
-                state.habits[i].days.fill(false);
-            }
-
-            renderHabitsBody();
-            showToast('✓ Contenido limpiado para empezar en blanco');
+                    renderHabitsBody();
+                    showToast('✓ Contenido limpiado para empezar en blanco');
+                }
+            });
         }
 
         function loadExampleContent(isInitial = false) {
-            if (!isInitial) {
-                if (!confirm('¿Deseas cargar el ejemplo editorial en el planificador de hábitos? Se sustituirá el contenido actual.')) {
-                    return;
-                }
+            if (isInitial) {
+                applyExampleData();
+                return;
             }
 
+            showConfirmPopup({
+                badge: '✨ Ejemplo Editorial',
+                title: '¿Cargar ejemplo oficial?',
+                desc: '¿Deseas cargar el ejemplo editorial en el planificador de hábitos? Se sustituirá el contenido actual con la pauta de 20 hábitos recomendados y notas de balance.',
+                actionText: 'Cargar ejemplo',
+                actionIcon: '✨',
+                onConfirm: () => {
+                    applyExampleData();
+                    showToast('✓ Ejemplo editorial cargado con éxito');
+                }
+            });
+        }
+
+        function applyExampleData() {
             document.getElementById('field-habit-month').value = EXAMPLE_DATA.month;
             document.getElementById('field-habit-year').value = EXAMPLE_DATA.year;
             
@@ -1492,9 +1607,6 @@
             }
 
             renderHabitsBody();
-            if (!isInitial) {
-                showToast('✓ Ejemplo editorial cargado con éxito');
-            }
         }
 
         // ========================================================
@@ -1524,7 +1636,7 @@
 
             const { jsPDF } = window.jspdf || {};
             if (!jsPDF) {
-                alert('No se pudo inicializar la librería jsPDF.');
+                showToast('⚠️ No se pudo inicializar la librería jsPDF. Por favor, recarga la página.');
                 return;
             }
 
