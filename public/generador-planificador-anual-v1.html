@@ -652,6 +652,7 @@
             flex-direction: column;
             overflow: hidden;
             min-height: 0;
+            height: 100%;
             box-sizing: border-box;
             position: relative;
         }
@@ -689,6 +690,7 @@
         .month-notes-textarea {
             width: 100%;
             flex: 1;
+            height: 100%;
             min-height: 0;
             background: transparent;
             border: none;
@@ -698,7 +700,7 @@
             line-height: 1.34;
             color: #222;
             outline: none;
-            padding: 1px 0;
+            padding: 2px 0 0 0;
             box-sizing: border-box;
             overflow: hidden;
         }
@@ -884,8 +886,7 @@
             <div class="period-selector-wrap" title="Agrupación de periodos para los 12 meses">
                 <label for="select-period-type" class="period-label">Periodo:</label>
                 <select id="select-period-type" class="period-select" onchange="setPeriodType(this.value)">
-                    <option value="quarter_q" selected>Trimestre (Q1–Q4)</option>
-                    <option value="trimestre_1">Trimestre (Trimestre 1–4)</option>
+                    <option value="trimestre_1" selected>Trimestre (Trimestre 1–4)</option>
                     <option value="cuatrimestre_1">Cuatrimestre (Cuatrimestre 1–3)</option>
                     <option value="semestre_1">Semestre (Semestre 1–2)</option>
                     <option value="none">Sin división</option>
@@ -991,7 +992,7 @@
         // ESTADO GLOBAL
         const state = {
             checkboxStyle: 'circle', // 'square' o 'circle'
-            periodType: 'quarter_q', // 'quarter_q', 'trimestre_1', 'cuatrimestre_1', 'semestre_1', 'none'
+            periodType: 'trimestre_1', // 'trimestre_1', 'cuatrimestre_1', 'semestre_1', 'none'
             // Ubicación de los bloques: cada uno puede estar en 'top' o 'bottom'
             blockPlacement: {
                 priorities: 'top',
@@ -1015,20 +1016,20 @@
             mottoText: 'Menos ruido mental, más profundidad y constancia.',
             // Notas y balance anual
             notesText: 'Criterio rector: avanzar con calma y foco sostenido mes a mes.',
-            // Notas de los 12 meses (índices 0..11)
+            // Notas de los 12 meses (índices 0..11) aprovechando todo el ancho y alto
             monthsNotes: [
-                'Arranque de ciclo y definición de prioridades estratégicas del año',
-                'Foco en ejecución profunda y revisión de los primeros hitos',
-                'Cierre Q1: balance trimestral y ajustes de rumbo operativo',
-                'Inicio Q2: lanzamiento y consolidación de proyectos clave',
-                'Avance sostenido, simplificación de tareas y foco diario',
-                'Cierre Q2: balance semestral y recalibración de prioridades',
-                'Periodo de ritmo pausado, recarga de energía y lecturas clave',
-                'Desconexión analógica y perspectiva para el segundo semestre',
-                'Reanudación Q3 y foco de otoño en entregas de alto impacto',
-                'Aceleración de entregas clave y alineación de objetivos',
-                'Consolidación, resolución de temas abiertos y cierre ágil',
-                'Balance general del año, aprendizajes y celebración'
+                'Arranque de ciclo anual\n• Definición de prioridades\n• Lanzamiento de proyectos clave',
+                'Foco en ejecución profunda\n• Revisión de primeros hitos\n• Simplificar tareas diarias',
+                'Cierre primer trimestre\n• Balance trimestral de avance\n• Ajustes de rumbo y foco',
+                'Inicio nuevo ciclo Q2\n• Consolidar entregas clave\n• Flujos de trabajo ágiles',
+                'Avance sostenido y foco\n• Seguimiento de objetivos\n• Evitar dispersión mental',
+                'Cierre primer semestre\n• Balance general de medio año\n• Recalibración estratégica',
+                'Ritmo pausado y descanso\n• Recarga de energía analógica\n• Lecturas de perspectiva',
+                'Desconexión y balance\n• Pausa activa y reflexión\n• Preparación del ciclo otoñal',
+                'Reanudación de iniciativas\n• Foco en entregas de impacto\n• Compromisos del año',
+                'Aceleración de entregas\n• Cumplimiento de plazos\n• Resolución de bloqueos',
+                'Consolidación y cierre\n• Resolución de temas abiertos\n• Preparación de balances',
+                'Balance y celebración\n• Cierre general del año\n• Aprendizajes y gratitud'
             ]
         };
 
@@ -1068,8 +1069,7 @@
         function setPeriodType(type) {
             state.periodType = type;
             renderAnnualGrid();
-            let label = 'Trimestres (Q1–Q4)';
-            if (type === 'trimestre_1') label = 'Trimestres (Trimestre 1–4)';
+            let label = 'Trimestres (Trimestre 1–4)';
             if (type === 'cuatrimestre_1') label = 'Cuatrimestres (Cuatrimestre 1–3)';
             if (type === 'semestre_1') label = 'Semestres (Semestre 1–2)';
             if (type === 'none') label = 'Sin división temporal';
@@ -1077,11 +1077,8 @@
         }
 
         function getMonthPeriodBadge(mIdx) {
-            const pType = state.periodType || 'quarter_q';
+            const pType = state.periodType || 'trimestre_1';
             if (pType === 'none') return '';
-            if (pType === 'quarter_q') {
-                return `Q${Math.floor(mIdx / 3) + 1}`;
-            }
             if (pType === 'trimestre_1') {
                 return `Trimestre ${Math.floor(mIdx / 3) + 1}`;
             }
@@ -1097,7 +1094,7 @@
         function updatePeriodSelectorUI() {
             const selectEl = document.getElementById('select-period-type');
             if (selectEl) {
-                selectEl.value = state.periodType || 'quarter_q';
+                selectEl.value = state.periodType || 'trimestre_1';
             }
         }
 
@@ -1129,9 +1126,9 @@
 
         function getMaxCharsPerMonthTile(simulatedVisibility = state.visibility) {
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
-            if (countVisible <= 1) return 140; // Casillas de mes muy amplias
-            if (countVisible === 2) return 95;  // Altura estándar
-            return 70;                          // Con 3 bloques, altura más compacta
+            if (countVisible <= 1) return 360; // Casillas de mes con altura máxima (hasta 12 líneas)
+            if (countVisible === 2) return 280;  // Altura estándar (hasta 9 líneas)
+            return 220;                          // Con 3 bloques (hasta 7 líneas completas)
         }
 
         function checkMonthTilesCapacity(targetVisibility) {
@@ -1369,19 +1366,20 @@
         function handleMonthInput(monthIdx, textarea) {
             const maxChars = getMaxCharsPerMonthTile(state.visibility);
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => state.visibility[k]).length;
-            const maxLines = (countVisible <= 1) ? 5 : ((countVisible === 2) ? 4 : 3);
+            const maxLines = (countVisible <= 1) ? 12 : ((countVisible === 2) ? 9 : 7);
 
             if (textarea.value.length > maxChars) {
                 textarea.value = textarea.value.slice(0, maxChars);
-                showToast(`⚠️ Máximo ${maxChars} caracteres en este mes según el espacio disponible.`);
+                showToast(`⚠️ Capacidad máxima alcanzada (${maxChars} caracteres).`);
             }
 
             const lines = textarea.value.split('\n');
             if (lines.length > maxLines) {
                 textarea.value = lines.slice(0, maxLines).join('\n');
-                showToast(`⚠️ Máximo ${maxLines} líneas por mes según el espacio actual`);
+                showToast(`⚠️ Máximo ${maxLines} líneas para esta altura de tarjeta`);
             }
 
+            // Límite físico: no desbordar la altura natural de la tarjeta
             while (textarea.scrollHeight > (textarea.clientHeight + 1) && textarea.value.length > 0) {
                 textarea.value = textarea.value.slice(0, -1);
             }
@@ -1394,19 +1392,19 @@
             if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
 
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => state.visibility[k]).length;
-            const maxLines = (countVisible <= 1) ? 5 : ((countVisible === 2) ? 4 : 3);
+            const maxLines = (countVisible <= 1) ? 12 : ((countVisible === 2) ? 9 : 7);
             const maxChars = getMaxCharsPerMonthTile(state.visibility);
 
             if (textarea.value.length >= maxChars) {
                 e.preventDefault();
-                showToast(`⚠️ Límite de ${maxChars} caracteres alcanzado para este mes.`);
+                showToast(`⚠️ Capacidad máxima alcanzada (${maxChars} caracteres).`);
                 return;
             }
 
             const lines = textarea.value.split('\n');
             if (e.key === 'Enter' && lines.length >= maxLines) {
                 e.preventDefault();
-                showToast(`⚠️ Máximo ${maxLines} líneas por mes según el espacio actual`);
+                showToast(`⚠️ Máximo ${maxLines} líneas para el alto natural de la tarjeta`);
             }
         }
 
@@ -1440,18 +1438,18 @@
             state.mottoText = 'Menos ruido mental, más profundidad y constancia.';
             state.notesText = 'Criterio rector: avanzar con calma y foco sostenido mes a mes.';
             state.monthsNotes = [
-                'Arranque de ciclo y definición de prioridades estratégicas del año',
-                'Foco en ejecución profunda y revisión de los primeros hitos',
-                'Cierre Q1: balance trimestral y ajustes de rumbo operativo',
-                'Inicio Q2: lanzamiento y consolidación de proyectos clave',
-                'Avance sostenido, simplificación de tareas y foco diario',
-                'Cierre Q2: balance semestral y recalibración de prioridades',
-                'Periodo de ritmo pausado, recarga de energía y lecturas clave',
-                'Desconexión analógica y perspectiva para el segundo semestre',
-                'Reanudación Q3 y foco de otoño en entregas de alto impacto',
-                'Aceleración de entregas clave y alineación de objetivos',
-                'Consolidación, resolución de temas abiertos y cierre ágil',
-                'Balance general del año, aprendizajes y celebración'
+                'Arranque de ciclo anual\n• Definición de prioridades\n• Lanzamiento de proyectos clave',
+                'Foco en ejecución profunda\n• Revisión de primeros hitos\n• Simplificar tareas diarias',
+                'Cierre primer trimestre\n• Balance trimestral de avance\n• Ajustes de rumbo y foco',
+                'Inicio nuevo ciclo Q2\n• Consolidar entregas clave\n• Flujos de trabajo ágiles',
+                'Avance sostenido y foco\n• Seguimiento de objetivos\n• Evitar dispersión mental',
+                'Cierre primer semestre\n• Balance general de medio año\n• Recalibración estratégica',
+                'Ritmo pausado y descanso\n• Recarga de energía analógica\n• Lecturas de perspectiva',
+                'Desconexión y balance\n• Pausa activa y reflexión\n• Preparación del ciclo otoñal',
+                'Reanudación de iniciativas\n• Foco en entregas de impacto\n• Compromisos del año',
+                'Aceleración de entregas\n• Cumplimiento de plazos\n• Resolución de bloqueos',
+                'Consolidación y cierre\n• Resolución de temas abiertos\n• Preparación de balances',
+                'Balance y celebración\n• Cierre general del año\n• Aprendizajes y gratitud'
             ];
 
             renderModularStrips();
@@ -1749,9 +1747,9 @@
                         doc.text(badge, cellX + colW - 1.8, cellY + 3.0, { align: 'right' });
                     }
 
-                    // Contenido del mes (aprovecha todo el ancho disponible)
+                    // Contenido del mes (aprovecha todo el ancho y alto disponible)
                     if (!isBlank && state.monthsNotes[mIdx]) {
-                        renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 1.8, cellY + 6.3, colW - 3.6, rowH - 7.0);
+                        renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 1.8, cellY + 5.8, colW - 3.6, rowH - 6.8);
                     }
                 }
             }
@@ -1761,17 +1759,17 @@
             if (!text || !text.trim()) return;
             const cleanText = text.trim();
 
-            let bestFontSize = 6.6;
-            let bestLineHeight = 2.6;
+            let bestFontSize = 6.4;
+            let bestLineHeight = 2.5;
             let bestLines = [];
 
-            // Calibración para cubrir todo el ancho de la casilla
-            for (let fSize = 6.8; fSize >= 4.4; fSize -= 0.3) {
+            // Calibración adaptativa: permite rellenar de arriba a abajo la altura natural del mes
+            for (let fSize = 6.6; fSize >= 4.2; fSize -= 0.2) {
                 doc.setFontSize(fSize);
-                const lH = fSize * 0.41;
+                const lH = fSize * 0.40;
                 const lines = doc.splitTextToSize(cleanText, maxW);
                 const totalHeight = lines.length * lH;
-                if (totalHeight <= maxH || fSize <= 4.6) {
+                if (totalHeight <= maxH || fSize <= 4.3) {
                     bestFontSize = fSize;
                     bestLineHeight = lH;
                     bestLines = lines;
