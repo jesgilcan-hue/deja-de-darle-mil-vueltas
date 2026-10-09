@@ -1084,19 +1084,28 @@
         function setTableMode(newMode) {
             if (newMode === state.mode) return;
 
+            const step = getStepHours();
+            let targetWeeks = 1;
+            let targetRows = state.rowsPerWeek;
+
             if (newMode === 'single') {
-                if (hasTextInWeek(1) || hasTextInWeek(2)) {
-                    showToast('⚠️ No se puede cambiar a Una tabla: las semanas adicionales contienen texto. Bórralo para hacer hueco.');
-                    return;
-                }
-                state.mode = 'single';
-                state.weeksCount = 1;
+                targetWeeks = 1;
+                const maxSingle = Math.min(24, Math.floor(24 / step));
+                targetRows = Math.min(state.rowsPerWeek, maxSingle);
             } else {
-                state.mode = 'multi';
-                if (state.weeksCount === 1) {
-                    state.weeksCount = 2;
-                }
+                targetWeeks = 2;
+                targetRows = Math.min(state.rowsPerWeek, (step === 2 ? 8 : 12));
             }
+
+            const check = checkScheduleCapacity(targetWeeks, targetRows);
+            if (!check.ok) {
+                showToast(check.reason);
+                return;
+            }
+
+            state.mode = newMode;
+            state.weeksCount = targetWeeks;
+            state.rowsPerWeek = targetRows;
 
             updateModeUI();
             populateRowCountSelect();
@@ -1140,10 +1149,10 @@
         }
 
         // ========================================================
-        // VALIDACIÓN DE CAPACIDAD Y PREVENCIÓN DE PÉRDIDAS
+        // VALIDACIÓN DE CAPACIDAD FÍSICA Y PROTECCIÓN DE DATOS
         // ========================================================
         function hasTextInWeek(wIdx) {
-            return Object.keys(state.cellData).some(k => k.startsWith(`w_${wIdx}_`) && state.cellData[k]?.trim());
+            return Object.keys(state.cellData).some(k => k.startsWith(`w_${wIdx}_` ) && state.cellData[k]?.trim());
         }
 
         function hasTextBeyondRow(maxRowsAllowed) {
@@ -1152,6 +1161,86 @@
                 const r = parseInt(parts[3], 10);
                 return r >= maxRowsAllowed && state.cellData[k]?.trim();
             });
+        }
+
+        // Determina el número máximo de líneas de texto según la altura física real de la celda
+        function getMaxLinesAllowedForRow(weeksCount, rowsCount) {
+            if (weeksCount === 1) {
+                if (rowsCount <= 8) return 3;
+                if (rowsCount <= 16) return 2;
+                return 1;
+            } else if (weeksCount === 2) {
+                if (rowsCount <= 6) return 2;
+                return 1;
+            } else { // 3 semanas
+                if (rowsCount <= 4) return 2;
+                return 1;
+            }
+        }
+
+        // Determina el número máximo de caracteres permitidos según la altura física
+        function getMaxCharsAllowedForRow(weeksCount, rowsCount) {
+            const lines = getMaxLinesAllowedForRow(weeksCount, rowsCount);
+            if (lines === 3) return 65;
+            if (lines === 2) return 40;
+            return 20; // 1 sola línea compacta
+        }
+
+        // Comprueba si alguna celda existente excede la capacidad del nuevo formato antes de cambiar
+        function checkScheduleCapacity(targetWeeks, targetRows) {
+            const targetMaxLines = getMaxLinesAllowedForRow(targetWeeks, targetRows);
+            const targetMaxChars = getMaxCharsAllowedForRow(targetWeeks, targetRows);
+
+            // 1. Semanas que quedarían eliminadas
+            if (targetWeeks < state.weeksCount) {
+                for (let w = targetWeeks; w < state.weeksCount; w++) {
+                    if (hasTextInWeek(w)) {
+                        return {
+                            ok: false,
+                            reason: `⚠️ No se puede reducir a ${targetWeeks} semana${targetWeeks > 1 ? 's' : ''}: la Semana ${w + 1} contiene texto. Bórralo para hacer hueco.`
+                        };
+                    }
+                }
+            }
+
+            // 2. Filas que quedarían eliminadas
+            if (targetRows < state.rowsPerWeek) {
+                for (let w = 0; w < targetWeeks; w++) {
+                    for (let r = targetRows; r < state.rowsPerWeek; r++) {
+                        for (let d = 0; d < 7; d++) {
+                            const key = `w_${w}_r_${r}_d_${d}`;
+                            if (state.cellData[key] && state.cellData[key].trim()) {
+                                return {
+                                    ok: false,
+                                    reason: `⚠️ No se puede reducir a ${targetRows} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Celdas con más líneas o caracteres de los que caben físicamente en el nuevo alto
+            for (let w = 0; w < targetWeeks; w++) {
+                for (let r = 0; r < Math.min(state.rowsPerWeek, targetRows); r++) {
+                    for (let d = 0; d < 7; d++) {
+                        const key = `w_${w}_r_${r}_d_${d}`;
+                        const val = state.cellData[key];
+                        if (val && val.trim()) {
+                            const lines = val.trim().split('\n').length;
+                            const len = val.trim().length;
+                            if (lines > targetMaxLines || len > targetMaxChars) {
+                                return {
+                                    ok: false,
+                                    reason: `⚠️ No hay espacio: en este formato más compacto las celdas admiten máx. ${targetMaxLines} línea${targetMaxLines > 1 ? 's' : ''} (${targetMaxChars} caracteres). Recorta texto en el horario para hacer hueco.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { ok: true };
         }
 
         // ========================================================
@@ -1173,12 +1262,14 @@
 
         function formatCycleLabel(rows, step) {
             const totalHours = rows * step;
-            if (totalHours % 24 === 0) {
-                return ` (Ciclo ${totalHours} horas)`;
-            } else if (totalHours === 12) {
-                return ' (12 horas / Medio ciclo)';
+            if (totalHours === 24) {
+                return ' (Ciclo 24 horas / Día completo)';
             } else if (totalHours === 16) {
                 return ' (16 horas / Vigilia)';
+            } else if (totalHours === 12) {
+                return ' (12 horas / Medio ciclo)';
+            } else if (totalHours === 8) {
+                return ' (8 horas / Jornada laboral)';
             }
             return ` (${totalHours} horas)`;
         }
@@ -1190,13 +1281,36 @@
             const step = getStepHours();
 
             if (state.mode === 'single') {
-                const minRows = (step === 12) ? 2 : 4;
-                const maxRows = 24;
-                let defaultRows = (step === 2) ? 12 : 16;
-                const targetVal = preferredVal ? parseInt(preferredVal, 10) : (state.rowsPerWeek || defaultRows);
+                // "Una tabla": estrictamente limitado a lo necesario para 1 día (máx 24 horas de ciclo)
+                let singleRowOptions = [];
+                if (step === 0.5) {
+                    singleRowOptions = [8, 12, 16, 20, 24]; // 4h, 6h, 8h, 10h, 12h
+                } else if (step === 1) {
+                    singleRowOptions = [6, 8, 10, 12, 14, 16, 18, 20, 24]; // hasta 24h
+                } else if (step === 2) {
+                    singleRowOptions = [4, 6, 8, 10, 12]; // hasta 24h
+                } else if (step === 3) {
+                    singleRowOptions = [3, 4, 6, 8]; // hasta 24h
+                } else if (step === 4) {
+                    singleRowOptions = [2, 3, 4, 6]; // hasta 24h
+                } else if (step === 6) {
+                    singleRowOptions = [2, 3, 4]; // hasta 24h
+                } else if (step === 12) {
+                    singleRowOptions = [2]; // 24h
+                } else {
+                    const maxR = Math.min(24, Math.floor(24 / step));
+                    for (let r = 2; r <= maxR; r += 2) singleRowOptions.push(r);
+                }
+
+                const maxAllowedRows = Math.min(24, Math.floor(24 / step));
+                let defaultRows = singleRowOptions.includes(state.rowsPerWeek)
+                    ? state.rowsPerWeek
+                    : (singleRowOptions.includes(16) ? 16 : singleRowOptions[singleRowOptions.length - 1]);
+
+                const targetVal = preferredVal ? parseInt(preferredVal, 10) : defaultRows;
 
                 select.innerHTML = '';
-                for (let r = minRows; r <= maxRows; r++) {
+                singleRowOptions.forEach(r => {
                     const opt = document.createElement('option');
                     opt.value = String(r);
                     const cycleText = formatCycleLabel(r, step);
@@ -1205,26 +1319,59 @@
                         opt.selected = true;
                     }
                     select.appendChild(opt);
+                });
+
+                if (!select.value && select.options.length > 0) {
+                    select.selectedIndex = 0;
                 }
-                if (!select.value) {
-                    select.value = String(defaultRows);
-                }
-                state.rowsPerWeek = parseInt(select.value, 10);
+                state.rowsPerWeek = parseInt(select.value || String(defaultRows), 10);
             } else {
-                // Modo Multitabla: Ciclos que definen 2 o 3 semanas
-                // (24h, 48h, 72h, etc.)
-                const multiConfigs = [
-                    // 2 Semanas
-                    { weeks: 2, rows: (step === 1 ? 8 : 4), label: `Ciclo 16 horas (2 Semanas · ${step === 1 ? 8 : 4} filas / Vigilia)` },
-                    { weeks: 2, rows: (step === 1 ? 12 : 6), label: `Ciclo 24 horas (2 Semanas · ${step === 1 ? 12 : 6} filas)` },
-                    { weeks: 2, rows: (step === 1 ? 16 : 8), label: `Ciclo 32 horas (2 Semanas · ${step === 1 ? 16 : 8} filas)` },
-                    { weeks: 2, rows: (step === 1 ? 24 : 12), label: `Ciclo 48 horas (2 Semanas · ${step === 1 ? 24 : 12} filas · 24h/sem)` },
-                    // 3 Semanas
-                    { weeks: 3, rows: (step === 1 ? 6 : 3), label: `Ciclo 18 horas (3 Semanas · ${step === 1 ? 6 : 3} filas)` },
-                    { weeks: 3, rows: (step === 1 ? 8 : 4), label: `Ciclo 24 horas (3 Semanas · ${step === 1 ? 8 : 4} filas · 8h/sem)` },
-                    { weeks: 3, rows: (step === 1 ? 12 : 6), label: `Ciclo 36 horas (3 Semanas · ${step === 1 ? 12 : 6} filas)` },
-                    { weeks: 3, rows: (step === 1 ? 24 : 12), label: `Ciclo 72 horas (3 Semanas · ${step === 1 ? 24 : 12} filas · 24h/sem)` }
-                ];
+                // Modo Multitabla: Ciclos calibrados que crean directamente 2 o 3 semanas
+                let multiConfigs = [];
+                if (step === 1) {
+                    multiConfigs = [
+                        // 2 Semanas
+                        { weeks: 2, rows: 8, label: 'Ciclo 16 horas (2 Semanas · 8 filas / Vigilia)' },
+                        { weeks: 2, rows: 12, label: 'Ciclo 24 horas (2 Semanas · 12 filas / 12h por sem)' },
+                        { weeks: 2, rows: 16, label: 'Ciclo 32 horas (2 Semanas · 16 filas / 16h por sem)' },
+                        { weeks: 2, rows: 24, label: 'Ciclo 48 horas (2 Semanas · 24 filas / 24h por sem)' },
+                        // 3 Semanas
+                        { weeks: 3, rows: 6, label: 'Ciclo 18 horas (3 Semanas · 6 filas / 6h por sem)' },
+                        { weeks: 3, rows: 8, label: 'Ciclo 24 horas (3 Semanas · 8 filas / 8h por sem)' },
+                        { weeks: 3, rows: 12, label: 'Ciclo 36 horas (3 Semanas · 12 filas / 12h por sem)' },
+                        { weeks: 3, rows: 16, label: 'Ciclo 48 horas (3 Semanas · 16 filas / 16h por sem)' }
+                    ];
+                } else if (step === 2) {
+                    multiConfigs = [
+                        // 2 Semanas
+                        { weeks: 2, rows: 4, label: 'Ciclo 16 horas (2 Semanas · 4 filas / Vigilia)' },
+                        { weeks: 2, rows: 6, label: 'Ciclo 24 horas (2 Semanas · 6 filas / 12h por sem)' },
+                        { weeks: 2, rows: 8, label: 'Ciclo 32 horas (2 Semanas · 8 filas / 16h por sem)' },
+                        { weeks: 2, rows: 12, label: 'Ciclo 48 horas (2 Semanas · 12 filas / 24h por sem)' },
+                        // 3 Semanas
+                        { weeks: 3, rows: 4, label: 'Ciclo 24 horas (3 Semanas · 4 filas / 8h por sem)' },
+                        { weeks: 3, rows: 6, label: 'Ciclo 36 horas (3 Semanas · 6 filas / 12h por sem)' },
+                        { weeks: 3, rows: 8, label: 'Ciclo 48 horas (3 Semanas · 8 filas / 16h por sem)' },
+                        { weeks: 3, rows: 12, label: 'Ciclo 72 horas (3 Semanas · 12 filas / 24h por sem)' }
+                    ];
+                } else if (step === 0.5) {
+                    multiConfigs = [
+                        // 2 Semanas
+                        { weeks: 2, rows: 8, label: 'Ciclo 8 horas (2 Semanas · 8 filas / 4h por sem)' },
+                        { weeks: 2, rows: 12, label: 'Ciclo 12 horas (2 Semanas · 12 filas / 6h por sem)' },
+                        { weeks: 2, rows: 16, label: 'Ciclo 16 horas (2 Semanas · 16 filas / 8h por sem)' },
+                        // 3 Semanas
+                        { weeks: 3, rows: 8, label: 'Ciclo 12 horas (3 Semanas · 8 filas / 4h por sem)' },
+                        { weeks: 3, rows: 12, label: 'Ciclo 18 horas (3 Semanas · 12 filas / 6h por sem)' }
+                    ];
+                } else {
+                    multiConfigs = [
+                        { weeks: 2, rows: 4, label: `Ciclo ${4 * step * 2} horas (2 Semanas · 4 filas)` },
+                        { weeks: 2, rows: 6, label: `Ciclo ${6 * step * 2} horas (2 Semanas · 6 filas)` },
+                        { weeks: 3, rows: 4, label: `Ciclo ${4 * step * 3} horas (3 Semanas · 4 filas)` },
+                        { weeks: 3, rows: 6, label: `Ciclo ${6 * step * 3} horas (3 Semanas · 6 filas)` }
+                    ];
+                }
 
                 select.innerHTML = '';
                 const currentValStr = `${state.weeksCount}_${state.rowsPerWeek}`;
@@ -1241,7 +1388,7 @@
                     select.appendChild(opt);
                 });
 
-                if (!hasMatch) {
+                if (!hasMatch && multiConfigs.length > 0) {
                     select.selectedIndex = 0;
                     const [wStr, rStr] = select.value.split('_');
                     state.weeksCount = parseInt(wStr, 10);
@@ -1251,6 +1398,26 @@
         }
 
         function onIntervalSelectChange() {
+            const step = getStepHours();
+            let targetWeeks = state.weeksCount;
+            let targetRows = state.rowsPerWeek;
+
+            if (state.mode === 'single') {
+                const maxSingle = Math.min(24, Math.floor(24 / step));
+                if (targetRows > maxSingle) {
+                    targetRows = maxSingle;
+                }
+            }
+
+            const check = checkScheduleCapacity(targetWeeks, targetRows);
+            if (!check.ok) {
+                document.getElementById('select-interval').value = String(state.interval || 1);
+                showToast(check.reason);
+                return;
+            }
+
+            state.interval = step;
+            state.rowsPerWeek = targetRows;
             populateRowCountSelect();
             renderScheduleTable();
             showToast('Intervalo actualizado');
@@ -1264,9 +1431,10 @@
         function onRowsCountChange() {
             if (state.mode === 'single') {
                 const newCount = parseInt(document.getElementById('select-row-count').value, 10);
-                if (newCount < state.rowsPerWeek && hasTextBeyondRow(newCount)) {
+                const check = checkScheduleCapacity(1, newCount);
+                if (!check.ok) {
                     document.getElementById('select-row-count').value = String(state.rowsPerWeek);
-                    showToast(`⚠️ No se puede reducir a ${newCount} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`);
+                    showToast(check.reason);
                     return;
                 }
                 state.rowsPerWeek = newCount;
@@ -1278,19 +1446,10 @@
                 const targetWeeks = parseInt(wStr, 10);
                 const targetRows = parseInt(rStr, 10);
 
-                if (targetWeeks < state.weeksCount) {
-                    for (let w = targetWeeks; w < state.weeksCount; w++) {
-                        if (hasTextInWeek(w)) {
-                            document.getElementById('select-row-count').value = `${state.weeksCount}_${state.rowsPerWeek}`;
-                            showToast(`⚠️ No se puede reducir a ${targetWeeks} semanas: la Semana ${w + 1} contiene texto.`);
-                            return;
-                        }
-                    }
-                }
-
-                if (targetRows < state.rowsPerWeek && hasTextBeyondRow(targetRows)) {
+                const check = checkScheduleCapacity(targetWeeks, targetRows);
+                if (!check.ok) {
                     document.getElementById('select-row-count').value = `${state.weeksCount}_${state.rowsPerWeek}`;
-                    showToast(`⚠️ No se puede reducir a ${targetRows} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`);
+                    showToast(check.reason);
                     return;
                 }
 
@@ -1339,7 +1498,8 @@
             tableWrap.innerHTML = '';
 
             const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
-            const maxCharsPerCell = (rowsCount <= 6) ? 100 : (rowsCount <= 10 ? 70 : (rowsCount <= 16 ? 50 : 35));
+            const maxLinesAllowed = getMaxLinesAllowedForRow(state.weeksCount, rowsCount);
+            const maxCharsAllowed = getMaxCharsAllowedForRow(state.weeksCount, rowsCount);
 
             for (let w = 0; w < state.weeksCount; w++) {
                 // Si es semana 2 o 3, insertar la LÍNEA SEPARADORA GRUESA HORIZONTAL (que separa el lunes del lunes)
@@ -1397,7 +1557,7 @@
                     timeCell.textContent = slot.label;
                     rowDiv.appendChild(timeCell);
 
-                    // 7 Celdas de días
+                    // 7 Celdas de días con control estricto de líneas físicas
                     for (let d = 0; d < 7; d++) {
                         const dayCell = document.createElement('div');
                         dayCell.className = 'schedule-day-cell';
@@ -1408,15 +1568,58 @@
                         const textarea = document.createElement('textarea');
                         textarea.className = 'schedule-cell-textarea';
                         textarea.value = val;
-                        textarea.maxLength = maxCharsPerCell;
+                        textarea.maxLength = maxCharsAllowed;
                         textarea.placeholder = '';
                         textarea.dataset.key = key;
 
+                        // Interceptar teclas y bloquear Enter en formato compacto de 1 línea
+                        textarea.addEventListener('keydown', (e) => {
+                            const allowedKeys = ['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'];
+                            if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+
+                            if (e.key === 'Enter') {
+                                if (maxLinesAllowed <= 1) {
+                                    e.preventDefault();
+                                    showToast('⚠️ Solo 1 línea permitida en este formato compacto de horario');
+                                    return;
+                                }
+                                const currentLines = e.target.value.split('\n').length;
+                                if (currentLines >= maxLinesAllowed) {
+                                    e.preventDefault();
+                                    showToast(`⚠️ Máximo ${maxLinesAllowed} líneas por casilla en esta franja`);
+                                    return;
+                                }
+                            }
+
+                            if (e.target.value.length >= maxCharsAllowed) {
+                                e.preventDefault();
+                                showToast(`⚠️ Límite de ${maxCharsAllowed} caracteres alcanzado para esta casilla`);
+                                return;
+                            }
+                        });
+
+                        // Control de entrada y ajuste de desbordamiento visual
                         textarea.addEventListener('input', (e) => {
-                            while (e.target.scrollHeight > e.target.clientHeight + 2 && e.target.value.length > 0) {
+                            if (maxLinesAllowed <= 1) {
+                                e.target.value = e.target.value.replace(/[\r\n]+/g, ' ');
+                            } else {
+                                const lines = e.target.value.split('\n');
+                                if (lines.length > maxLinesAllowed) {
+                                    e.target.value = lines.slice(0, maxLinesAllowed).join('\n');
+                                    showToast(`⚠️ Máximo ${maxLinesAllowed} líneas permitidas`);
+                                }
+                            }
+
+                            if (e.target.value.length > maxCharsAllowed) {
+                                e.target.value = e.target.value.slice(0, maxCharsAllowed);
+                                showToast(`⚠️ Máximo ${maxCharsAllowed} caracteres en este formato`);
+                            }
+
+                            while (e.target.scrollHeight > (e.target.clientHeight + 2) && e.target.value.length > 0) {
                                 e.target.value = e.target.value.slice(0, -1);
                                 showToast('⚠️ Límite de capacidad alcanzado en la celda');
                             }
+
                             state.cellData[key] = e.target.value;
                         });
 
@@ -1733,15 +1936,16 @@
 
                                     let wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
                                     let lineHeight = cellFontSize * 0.38;
-                                    let maxLinesFit = Math.max(1, Math.floor((rowH - 0.6) / lineHeight));
+                                    let allowedLines = getMaxLinesAllowedForRow(weeksCount, rowCount);
+                                    let maxLinesFit = Math.min(allowedLines, Math.max(1, Math.floor((rowH - 0.6) / lineHeight)));
 
                                     // Si excede por poco, ajustar ligeramente tamaño para aprovechar mejor el hueco
-                                    if (wrappedLines.length > maxLinesFit && cellFontSize > 3.4) {
+                                    if (wrappedLines.length > maxLinesFit && cellFontSize > 3.4 && allowedLines > 1) {
                                         cellFontSize -= 0.5;
                                         doc.setFontSize(cellFontSize);
                                         lineHeight = cellFontSize * 0.38;
                                         wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
-                                        maxLinesFit = Math.max(1, Math.floor((rowH - 0.6) / lineHeight));
+                                        maxLinesFit = Math.min(allowedLines, Math.max(1, Math.floor((rowH - 0.6) / lineHeight)));
                                     }
 
                                     const linesToDraw = wrappedLines.slice(0, maxLinesFit);
