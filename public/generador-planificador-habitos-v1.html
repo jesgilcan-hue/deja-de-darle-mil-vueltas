@@ -384,34 +384,35 @@
         .input-month { width: 105px; }
         .input-year { width: 44px; text-align: center; }
 
-        /* INTENCIÓN / FOCO DEL MES (OCUPA TODO EL ANCHO Y NO ESCONDE LETRAS) */
+        /* INTENCIÓN / FOCO DEL MES (EXACTAMENTE 1 LÍNEA, CARACTERES NO SE SALEN) */
         .sheet-intention-wrap {
             width: 100%;
             margin-top: 2px;
             display: flex;
+            align-items: center;
         }
 
-        .editable-intention-textarea {
+        .editable-intention-input {
             width: 100%;
+            height: 20px;
+            line-height: 20px;
             border: none;
             background: transparent;
             font-family: var(--font-sans);
-            font-size: 0.72rem;
+            font-size: 0.70rem;
             font-style: italic;
             color: #4f473f;
             outline: none;
-            resize: none;
-            line-height: 1.38;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: clip;
             border-bottom: 1px dashed transparent;
             transition: border-color 0.2s, background 0.2s;
-            padding: 2px 0;
-            box-sizing: border-box;
-            display: block;
-            word-break: break-word;
-            overflow-wrap: break-word;
         }
-        .editable-intention-textarea:hover, .editable-intention-textarea:focus {
+        .editable-intention-input:hover, .editable-intention-input:focus {
             border-bottom-color: var(--accent);
             background: rgba(135, 85, 59, 0.02);
             color: #1a1614;
@@ -996,7 +997,7 @@
                     </div>
                 </div>
                 <div class="sheet-intention-wrap">
-                    <textarea class="editable-intention-textarea" id="field-habit-intention" maxlength="220" rows="1" placeholder="«Intención o enfoque del mes: Construir constancia silenciosa y descanso reparador sin sobreexigencia...»" oninput="handleIntentionInput(this)">«Construir constancia silenciosa y descanso reparador sin sobreexigencia.»</textarea>
+                    <input type="text" class="editable-intention-input" id="field-habit-intention" maxlength="115" placeholder="«Intención o enfoque del mes: Construir constancia silenciosa y descanso reparador sin sobreexigencia...»" value="«Construir constancia silenciosa y descanso reparador sin sobreexigencia.»" oninput="handleIntentionInput(this)">
                 </div>
             </div>
 
@@ -1221,28 +1222,67 @@
             updateNotesLayout();
         }
 
+        const NOTES_CAPACITY_BY_HABITS = {
+            6:  { maxChars: 1500, maxLines: 16, fontSize: '0.78rem', lineHeight: '1.56' },
+            8:  { maxChars: 1300, maxLines: 14, fontSize: '0.75rem', lineHeight: '1.52' },
+            10: { maxChars: 1100, maxLines: 12, fontSize: '0.72rem', lineHeight: '1.48' },
+            12: { maxChars: 950,  maxLines: 10, fontSize: '0.69rem', lineHeight: '1.44' },
+            15: { maxChars: 750,  maxLines: 8,  fontSize: '0.66rem', lineHeight: '1.38' },
+            18: { maxChars: 550,  maxLines: 6,  fontSize: '0.63rem', lineHeight: '1.32' },
+            20: { maxChars: 420,  maxLines: 4,  fontSize: '0.61rem', lineHeight: '1.26' }
+        };
+
+        function measureNotesLines(text, targetHabits) {
+            if (!text || !text.trim()) return 0;
+
+            let mirror = document.getElementById('notes-measurement-mirror');
+            if (!mirror) {
+                mirror = document.createElement('div');
+                mirror.id = 'notes-measurement-mirror';
+                mirror.style.position = 'absolute';
+                mirror.style.visibility = 'hidden';
+                mirror.style.left = '-9999px';
+                mirror.style.top = '-9999px';
+                mirror.style.pointerEvents = 'none';
+                mirror.style.whiteSpace = 'pre-wrap';
+                mirror.style.wordBreak = 'break-word';
+                mirror.style.boxSizing = 'border-box';
+                document.body.appendChild(mirror);
+            }
+
+            const notesEl = document.getElementById('field-habit-notes');
+            const comp = window.getComputedStyle(notesEl || document.body);
+            const cap = NOTES_CAPACITY_BY_HABITS[targetHabits] || NOTES_CAPACITY_BY_HABITS[10];
+
+            mirror.style.width = ((notesEl && notesEl.clientWidth) || 880) + 'px';
+            mirror.style.fontFamily = comp.fontFamily || 'system-ui, sans-serif';
+            mirror.style.fontSize = cap.fontSize;
+            mirror.style.lineHeight = cap.lineHeight;
+            mirror.style.padding = '0';
+            mirror.textContent = text;
+
+            const totalHeight = mirror.offsetHeight;
+            mirror.textContent = 'M';
+            const singleLineH = mirror.offsetHeight || 18;
+            mirror.textContent = text;
+
+            const measuredLines = Math.ceil(totalHeight / Math.max(1, singleLineH));
+            const explicitLines = text.split('\n').length;
+            return Math.max(explicitLines, measuredLines);
+        }
+
         function updateNotesLayout() {
             const notesEl = document.getElementById('field-habit-notes');
+            const countEl = document.getElementById('count-notes');
             if (!notesEl) return;
-            const n = state.numHabits;
-            if (n <= 6) {
-                notesEl.style.fontSize = '0.78rem';
-                notesEl.style.lineHeight = '1.58';
-            } else if (n <= 8) {
-                notesEl.style.fontSize = '0.74rem';
-                notesEl.style.lineHeight = '1.52';
-            } else if (n <= 10) {
-                notesEl.style.fontSize = '0.71rem';
-                notesEl.style.lineHeight = '1.46';
-            } else if (n <= 12) {
-                notesEl.style.fontSize = '0.68rem';
-                notesEl.style.lineHeight = '1.40';
-            } else if (n <= 15) {
-                notesEl.style.fontSize = '0.65rem';
-                notesEl.style.lineHeight = '1.35';
-            } else {
-                notesEl.style.fontSize = '0.61rem';
-                notesEl.style.lineHeight = '1.28';
+
+            const cap = NOTES_CAPACITY_BY_HABITS[state.numHabits] || NOTES_CAPACITY_BY_HABITS[10];
+            notesEl.style.fontSize = cap.fontSize;
+            notesEl.style.lineHeight = cap.lineHeight;
+            notesEl.maxLength = cap.maxChars;
+
+            if (countEl) {
+                countEl.textContent = `${notesEl.value.length}/${cap.maxChars}`;
             }
         }
 
@@ -1281,13 +1321,13 @@
         }
 
         // ========================================================
-        // CONTROL DE NÚMERO DE HÁBITOS (HASTA 20)
+        // CONTROL DE NÚMERO DE HÁBITOS (HASTA 20) CON PROTECCIÓN DE CAPACIDAD
         // ========================================================
         function onNumHabitsChange() {
             const sel = document.getElementById('select-num-habits');
             const targetNum = parseInt(sel.value, 10);
 
-            // Validar si el usuario tiene textos o marcas en hábitos que quedarían fuera
+            // 1. Si se reduce el número de hábitos: comprobar si hay hábitos con datos en filas que quedarían fuera
             if (targetNum < state.numHabits) {
                 let hasHiddenData = false;
                 for (let i = targetNum; i < state.numHabits; i++) {
@@ -1301,6 +1341,36 @@
                     showToast(`⚠️ Hay hábitos con texto o marcas en las filas ${targetNum + 1} a ${state.numHabits}. Bórralos antes de reducir filas.`);
                     sel.value = state.numHabits.toString();
                     return;
+                }
+            }
+
+            // 2. Si se aumentan hábitos y la reflexión está visible: comprobar si las notas actuales caben en la caja reducida
+            if (targetNum > state.numHabits && state.notesVisible) {
+                const notesEl = document.getElementById('field-habit-notes');
+                const notesText = notesEl ? notesEl.value.trim() : '';
+                if (notesText.length > 0) {
+                    const targetCap = NOTES_CAPACITY_BY_HABITS[targetNum];
+                    if (targetCap) {
+                        const currentChars = notesText.length;
+                        const currentLines = measureNotesLines(notesText, targetNum);
+
+                        const excessChars = currentChars - targetCap.maxChars;
+                        const excessLines = currentLines - targetCap.maxLines;
+
+                        if (excessChars > 0 || excessLines > 0) {
+                            let msg = `⚠️ No se puede añadir a ${targetNum} hábitos porque la caja de notas está llena. `;
+                            if (excessLines > 0 && excessChars > 0) {
+                                msg += `Elimina al menos ${excessLines} fila${excessLines > 1 ? 's' : ''} (o ${excessChars} caracteres) de las notas para hacer espacio.`;
+                            } else if (excessLines > 0) {
+                                msg += `Elimina al menos ${excessLines} fila${excessLines > 1 ? 's' : ''} de las notas para hacer espacio.`;
+                            } else {
+                                msg += `Elimina al menos ${excessChars} caracteres de las notas para hacer espacio.`;
+                            }
+                            showToast(msg);
+                            sel.value = state.numHabits.toString();
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -1335,14 +1405,25 @@
         }
 
         function handleNotesInput(el) {
+            if (!el) return;
+            const cap = NOTES_CAPACITY_BY_HABITS[state.numHabits] || NOTES_CAPACITY_BY_HABITS[10];
+            el.maxLength = cap.maxChars;
+
+            // Evitar que el texto desborde la altura visible de la caja
+            while (el.scrollHeight > el.clientHeight + 2 && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+                showToast('⚠️ Límite de capacidad alcanzado: la caja de notas está completamente llena');
+            }
+
             const count = document.getElementById('count-notes');
-            if (count) count.textContent = `${el.value.length}/900`;
+            if (count) count.textContent = `${el.value.length}/${cap.maxChars}`;
         }
 
         function handleIntentionInput(el) {
             if (!el) return;
-            el.style.height = 'auto';
-            el.style.height = Math.max(20, el.scrollHeight + 2) + 'px';
+            if (el.value.includes('\n')) {
+                el.value = el.value.replace(/\r?\n/g, ' ');
+            }
         }
 
         // ========================================================
@@ -1503,30 +1584,19 @@
             }
             doc.text(headerDateText, pw - m, currentY - 0.2, { align: 'right' });
 
-            // 3. INTENCIÓN / FOCO DEL MES (A ANCHO COMPLETO, NUNCA ESCONDE LETRAS)
-            currentY += 3.8;
+            // 3. INTENCIÓN / FOCO DEL MES (EXACTAMENTE 1 LÍNEA, NUNCA DESBORDA)
+            currentY += 4.0;
             if (!isBlank && activeIntention) {
                 const cleanInt = activeIntention.replace(/[•\u2022]/g, '-').trim();
                 const formattedInt = cleanInt.startsWith('«') ? cleanInt : `«${cleanInt}»`;
 
                 doc.setFont('helvetica', 'italic');
-                let intFontSize = 6.8;
-                doc.setFontSize(intFontSize);
+                doc.setFontSize(6.8);
                 doc.setTextColor(80, 75, 70);
 
-                let intLines = doc.splitTextToSize(formattedInt, contentW);
-                if (intLines.length > 2) {
-                    intFontSize = 6.0;
-                    doc.setFontSize(intFontSize);
-                    intLines = doc.splitTextToSize(formattedInt, contentW);
-                }
-
-                const lineStep = intFontSize === 6.0 ? 2.5 : 2.8;
-                intLines.forEach(line => {
-                    doc.text(line, m, currentY);
-                    currentY += lineStep;
-                });
-                currentY += 0.5;
+                const singleLine = doc.splitTextToSize(formattedInt, contentW)[0] || formattedInt;
+                doc.text(singleLine, m, currentY);
+                currentY += 2.0;
             } else {
                 currentY += 1.5;
             }
