@@ -395,13 +395,13 @@
             border-color: var(--accent);
         }
 
-        /* FRANJAS MODULARES SUPERIOR E INFERIOR */
+        /* FRANJAS MODULARES SUPERIOR E INFERIOR (FLEX VERTICAL) */
         .modular-strip {
-            display: grid;
-            gap: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             flex-shrink: 0;
             transition: all 0.2s ease;
-            margin-bottom: 8px;
         }
         .modular-strip.strip-top {
             margin-bottom: 8px;
@@ -410,14 +410,17 @@
             margin-top: 8px;
             margin-bottom: 4px;
         }
-        .modular-strip[data-count="1"] {
+
+        .modular-subgrid {
+            display: grid;
+            gap: 10px;
+            width: 100%;
+        }
+        .modular-subgrid.subgrid-1col {
             grid-template-columns: 1fr;
         }
-        .modular-strip[data-count="2"] {
+        .modular-subgrid.subgrid-2col {
             grid-template-columns: 1fr 1fr;
-        }
-        .modular-strip[data-count="0"] {
-            display: none;
         }
 
         /* TARJETA MODULAR (COMÚN A LOS 4 BLOQUES) */
@@ -432,6 +435,7 @@
             overflow: hidden;
             min-height: 0;
             position: relative;
+            width: 100%;
         }
 
         .card-header-bar {
@@ -531,6 +535,7 @@
             padding: 1px 2px;
             white-space: nowrap;
             overflow: hidden;
+            box-sizing: border-box;
         }
         .single-line-input:focus {
             border-bottom-color: var(--accent);
@@ -569,11 +574,11 @@
             border-color: var(--accent);
         }
 
-        /* 3. BLOQUE HÁBITOS (TRACKER 1 AL 31) */
+        /* 3. BLOQUE HÁBITOS (HORIZONTAL DE LADO A LADO - CASILLAS AMPLIADAS) */
         .habits-container {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 3px;
             flex: 1;
             min-height: 0;
             justify-content: space-around;
@@ -582,17 +587,17 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 6px;
+            gap: 8px;
         }
         .habit-name-input {
-            width: 130px;
-            min-width: 110px;
-            max-width: 160px;
+            width: 160px;
+            min-width: 140px;
+            max-width: 180px;
             background: transparent;
             border: none;
             border-bottom: 1px dashed #ded7cc;
             font-family: var(--font-sans);
-            font-size: 0.71rem;
+            font-size: 0.74rem;
             color: #222;
             outline: none;
             padding: 1px 2px;
@@ -608,18 +613,19 @@
             align-items: center;
             justify-content: space-between;
             flex: 1;
-            gap: 1.5px;
+            gap: 2.5px;
             overflow: hidden;
         }
         .day-dot-btn {
-            width: 13px;
-            height: 13px;
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
             border: 1px solid #b5ada3;
             background: #ffffff;
-            border-radius: 2px;
-            font-size: 0.52rem;
+            border-radius: 3px;
+            font-size: 0.62rem;
             font-weight: 700;
-            color: #666;
+            color: #333;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -634,6 +640,7 @@
         .day-dot-btn:hover {
             border-color: var(--accent);
             color: var(--accent);
+            background: #faf6f0;
         }
         .day-dot-btn.checked {
             background: var(--accent);
@@ -987,7 +994,7 @@
                 aspect-ratio: auto;
                 padding: 14px 10px;
             }
-            .modular-strip[data-count="2"] {
+            .modular-subgrid.subgrid-2col {
                 grid-template-columns: 1fr;
             }
             .calendar-cells-matrix {
@@ -1089,7 +1096,7 @@
             </div>
 
             <!-- FRANJA SUPERIOR (MODULAR) -->
-            <div class="modular-strip strip-top" id="strip-top" data-count="2">
+            <div class="modular-strip strip-top" id="strip-top">
                 <!-- Se llena dinámicamente con los bloques asignados arriba -->
             </div>
 
@@ -1110,7 +1117,7 @@
             </div>
 
             <!-- FRANJA INFERIOR (MODULAR) -->
-            <div class="modular-strip strip-bottom" id="strip-bottom" data-count="2">
+            <div class="modular-strip strip-bottom" id="strip-bottom">
                 <!-- Se llena dinámicamente con los bloques asignados abajo -->
             </div>
 
@@ -1257,7 +1264,7 @@
         function setCheckboxStyle(style) {
             state.checkboxStyle = style;
             updateCheckboxUI();
-            renderModularStrips(); // Re-renderiza para aplicar estilo a casillas de metas y círculos de hábitos
+            renderModularStrips();
             showToast(style === 'circle' ? 'Casillas redondas seleccionadas' : 'Casillas cuadradas seleccionadas');
         }
 
@@ -1287,6 +1294,27 @@
         }
 
         // ========================================================
+        // VALIDACIÓN DE CAPACIDAD DE TEXTO ANTES DE AGRUPAR
+        // ========================================================
+        function canFitInHalfColumn(blockKey) {
+            if (blockKey === 'goals') {
+                return state.goalsData.every(g => !g.text || g.text.length <= 44);
+            }
+            if (blockKey === 'milestones') {
+                return state.milestonesData.every(m => !m.text || m.text.length <= 40);
+            }
+            return true;
+        }
+
+        // CONTROL DE UNA SOLA LÍNEA SIN DESBORDAMIENTO
+        function handleSingleLineInput(el) {
+            el.value = el.value.replace(/[\r\n]+/g, ' ');
+            while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+        }
+
+        // ========================================================
         // CONTROL DE SECCIONES (VISIBILIDAD Y MOVIMIENTO)
         // ========================================================
         function toggleSection(blockKey) {
@@ -1309,8 +1337,25 @@
         }
 
         function moveBlockToStrip(blockKey, targetStrip) {
+            // Si el bloque a mover es goals, milestones o notes, y en la franja de destino ya hay otro bloque no-hábitos:
+            if (blockKey !== 'habits') {
+                const targetOrder = (targetStrip === 'top') ? state.topOrder : state.bottomOrder;
+                const activeOthers = targetOrder.filter(k => k !== 'habits' && state.blockPlacement[k] === targetStrip && state.visibility[k]);
+                if (activeOthers.length >= 1) {
+                    if (!canFitInHalfColumn(blockKey)) {
+                        showToast('⚠️ No hay espacio en la fila: recorta texto en Metas o Hitos para poder colocarlos en paralelo');
+                        return;
+                    }
+                    for (const otherKey of activeOthers) {
+                        if (!canFitInHalfColumn(otherKey)) {
+                            showToast('⚠️ No hay espacio en la fila: recorta texto en Metas o Hitos para poder colocarlos en paralelo');
+                            return;
+                        }
+                    }
+                }
+            }
+
             state.blockPlacement[blockKey] = targetStrip;
-            // Remover del array anterior y añadir al destino si no estaba
             state.topOrder = state.topOrder.filter(k => k !== blockKey);
             state.bottomOrder = state.bottomOrder.filter(k => k !== blockKey);
             if (targetStrip === 'top') {
@@ -1323,7 +1368,6 @@
         }
 
         function swapModularStrips() {
-            // Cambiar los que están arriba a abajo y viceversa
             for (const key of ['goals', 'milestones', 'habits', 'notes']) {
                 state.blockPlacement[key] = (state.blockPlacement[key] === 'top') ? 'bottom' : 'top';
             }
@@ -1334,33 +1378,56 @@
             showToast('Franjas superior e inferior intercambiadas');
         }
 
-        function swapOrderInsideStrip(strip, keyA, keyB) {
-            const arr = (strip === 'top') ? state.topOrder : state.bottomOrder;
-            const idxA = arr.indexOf(keyA);
-            const idxB = arr.indexOf(keyB);
-            if (idxA !== -1 && idxB !== -1) {
-                arr[idxA] = keyB;
-                arr[idxB] = keyA;
-                renderModularStrips();
-            }
-        }
-
         // ========================================================
         // RENDERIZADO DE LAS FRANJAS MODULARES
+        // REGLA DE ORO: HÁBITOS SIEMPRE AL 100% DE ANCHO
         // ========================================================
         function renderModularStrips() {
-            const stripTop = document.getElementById('strip-top');
-            const stripBottom = document.getElementById('strip-bottom');
+            renderStripContent(document.getElementById('strip-top'), 'top');
+            renderStripContent(document.getElementById('strip-bottom'), 'bottom');
+        }
 
-            // Filtrar bloques visibles por posición
-            const visibleTop = state.topOrder.filter(key => state.blockPlacement[key] === 'top' && state.visibility[key]);
-            const visibleBottom = state.bottomOrder.filter(key => state.blockPlacement[key] === 'bottom' && state.visibility[key]);
+        function renderStripContent(stripContainer, stripName) {
+            if (!stripContainer) return;
+            const order = (stripName === 'top') ? state.topOrder : state.bottomOrder;
+            const visibleKeys = order.filter(k => state.blockPlacement[k] === stripName && state.visibility[k]);
 
-            stripTop.setAttribute('data-count', visibleTop.length);
-            stripBottom.setAttribute('data-count', visibleBottom.length);
+            if (visibleKeys.length === 0) {
+                stripContainer.style.display = 'none';
+                stripContainer.innerHTML = '';
+                return;
+            }
 
-            stripTop.innerHTML = visibleTop.map(key => renderBlockHTML(key, 'top')).join('');
-            stripBottom.innerHTML = visibleBottom.map(key => renderBlockHTML(key, 'bottom')).join('');
+            stripContainer.style.display = 'flex';
+            stripContainer.style.flexDirection = 'column';
+            stripContainer.style.gap = '6px';
+
+            let html = '';
+            const hasHabits = visibleKeys.includes('habits');
+            const otherKeys = visibleKeys.filter(k => k !== 'habits');
+            const habitsIsFirst = hasHabits && (visibleKeys.indexOf('habits') === 0);
+
+            // Si hábitos va primero en el orden de esta franja
+            if (hasHabits && habitsIsFirst) {
+                html += renderBlockHTML('habits', stripName);
+            }
+
+            // Los demás bloques se agrupan en filas (1 bloque = 100%, 2 bloques = 50%/50%)
+            if (otherKeys.length === 1) {
+                html += `<div class="modular-subgrid subgrid-1col">${renderBlockHTML(otherKeys[0], stripName)}</div>`;
+            } else if (otherKeys.length === 2) {
+                html += `<div class="modular-subgrid subgrid-2col">${renderBlockHTML(otherKeys[0], stripName)}${renderBlockHTML(otherKeys[1], stripName)}</div>`;
+            } else if (otherKeys.length === 3) {
+                html += `<div class="modular-subgrid subgrid-2col">${renderBlockHTML(otherKeys[0], stripName)}${renderBlockHTML(otherKeys[1], stripName)}</div>`;
+                html += `<div class="modular-subgrid subgrid-1col">${renderBlockHTML(otherKeys[2], stripName)}</div>`;
+            }
+
+            // Si hábitos va después
+            if (hasHabits && !habitsIsFirst) {
+                html += renderBlockHTML('habits', stripName);
+            }
+
+            stripContainer.innerHTML = html;
         }
 
         function renderBlockHTML(key, currentStrip) {
@@ -1384,7 +1451,7 @@
                                 <div class="goal-checkbox ${isCircle ? 'circle' : ''} ${item.checked ? 'checked' : ''}" 
                                      onclick="toggleGoalCheck(${idx})" title="Marcar meta"></div>
                                 <input type="text" class="single-line-input" value="${escapeHtml(item.text)}" 
-                                       placeholder="Meta ${idx + 1}..." oninput="updateGoalText(${idx}, this.value)"
+                                       placeholder="Meta ${idx + 1}..." oninput="handleSingleLineInput(this); updateGoalText(${idx}, this.value)"
                                        onkeydown="if(event.key==='Enter'){event.preventDefault();}">
                             </div>
                         `).join('')}
@@ -1406,10 +1473,10 @@
                         ${state.milestonesData.map((item, idx) => `
                             <div class="milestone-item-row">
                                 <input type="text" class="milestone-date-input" value="${escapeHtml(item.date)}" 
-                                       placeholder="Día..." oninput="updateMilestoneDate(${idx}, this.value)"
+                                       placeholder="Día..." oninput="handleSingleLineInput(this); updateMilestoneDate(${idx}, this.value)"
                                        onkeydown="if(event.key==='Enter'){event.preventDefault();}">
                                 <input type="text" class="single-line-input" value="${escapeHtml(item.text)}" 
-                                       placeholder="Hito / Evento ${idx + 1}..." oninput="updateMilestoneText(${idx}, this.value)"
+                                       placeholder="Hito / Evento ${idx + 1}..." oninput="handleSingleLineInput(this); updateMilestoneText(${idx}, this.value)"
                                        onkeydown="if(event.key==='Enter'){event.preventDefault();}">
                             </div>
                         `).join('')}
@@ -1419,7 +1486,7 @@
 
             if (key === 'habits') {
                 return `
-                <div class="modular-card" id="card-habits">
+                <div class="modular-card card-habits-full" id="card-habits">
                     <div class="card-header-bar">
                         <span class="card-title">🌱 Hábitos del Mes (Tracker 1–31)</span>
                         <div class="card-actions">
@@ -1431,7 +1498,7 @@
                         ${state.habitsData.map((item, habitIdx) => `
                             <div class="habit-tracker-row">
                                 <input type="text" class="habit-name-input" value="${escapeHtml(item.name)}" 
-                                       placeholder="Hábito ${habitIdx + 1}..." oninput="updateHabitName(${habitIdx}, this.value)"
+                                       placeholder="Hábito ${habitIdx + 1}..." oninput="handleSingleLineInput(this); updateHabitName(${habitIdx}, this.value)"
                                        onkeydown="if(event.key==='Enter'){event.preventDefault();}">
                                 <div class="days-dots-strip">
                                     ${Array.from({ length: 31 }, (_, dayIdx) => `
@@ -1460,7 +1527,7 @@
                     <div class="notes-textarea-box">
                         <textarea class="notes-content-textarea" id="textarea-notes"
                                   placeholder="Notas, aprendizajes o balance mensual..."
-                                  oninput="state.notesText = this.value">${escapeHtml(state.notesText)}</textarea>
+                                  oninput="handleNotesTextareaInput(this)">${escapeHtml(state.notesText)}</textarea>
                     </div>
                 </div>`;
             }
@@ -1494,6 +1561,13 @@
             renderModularStrips();
         }
 
+        function handleNotesTextareaInput(el) {
+            while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+            state.notesText = el.value;
+        }
+
         // ========================================================
         // CALENDARIO DINÁMICO (35 CELDAS) SIN BORRADO DE TEXTO
         // ========================================================
@@ -1505,29 +1579,22 @@
         }
 
         function getCalendarDaysData(year, monthIdx) {
-            // Primer día del mes (0=domingo, 1=lunes, ..., 6=sábado)
             const firstDate = new Date(year, monthIdx, 1);
             const jsDay = firstDate.getDay();
-            // Convertir a Lunes=0 ... Domingo=6
-            const startCol = (jsDay + 6) % 7;
+            const startCol = (jsDay + 6) % 7; // Lunes=0 ... Domingo=6
 
-            // Días totales del mes actual
             const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
-            // Días totales del mes previo
             const daysInPrevMonth = new Date(year, monthIdx, 0).getDate();
 
             const cells = [];
             for (let i = 0; i < 35; i++) {
                 if (i < startCol) {
-                    // Días del mes anterior
                     const dayNum = daysInPrevMonth - startCol + 1 + i;
                     cells.push({ dayNumber: dayNum, isCurrentMonth: false, cellIndex: i });
                 } else if (i < startCol + daysInMonth) {
-                    // Días del mes actual
                     const dayNum = i - startCol + 1;
                     cells.push({ dayNumber: dayNum, isCurrentMonth: true, cellIndex: i });
                 } else {
-                    // Días del mes siguiente
                     const dayNum = i - (startCol + daysInMonth) + 1;
                     cells.push({ dayNumber: dayNum, isCurrentMonth: false, cellIndex: i });
                 }
@@ -1556,7 +1623,7 @@
         }
 
         function handleCellInput(cellIdx, textarea) {
-            // Limitar a máximo 4 líneas físicas
+            // Limitar a máximo 4 líneas físicas y controlar altura visible
             const lines = textarea.value.split('\n');
             if (lines.length > 4) {
                 textarea.value = lines.slice(0, 4).join('\n');
@@ -1615,7 +1682,6 @@
             ];
             state.notesText = 'Aspectos a consolidar este mes: foco en calidad frente a volumen. Disminuir distracciones digitales por las mañanas.';
 
-            // Rellenar unos pocos días clave del calendario
             state.calendarNotes = new Array(35).fill('');
             state.calendarNotes[3] = 'Reunión de alineación\ncon el equipo';
             state.calendarNotes[8] = 'Entrega cliente\nRevisión métricas';
@@ -1648,6 +1714,42 @@
         }
 
         // ========================================================
+        // AUTO-FIT TIPOGRÁFICO EN jsPDF PARA CELDAS DEL CALENDARIO
+        // (CERO PÉRDIDA DE CARACTERES)
+        // ========================================================
+        function renderCalendarCellText(doc, text, x, y, maxW, maxH) {
+            if (!text || !text.trim()) return;
+            const cleanText = text.trim();
+
+            let bestFontSize = 5.5;
+            let bestLineHeight = 2.4;
+            let bestLines = [];
+
+            for (let fSize = 5.8; fSize >= 4.0; fSize -= 0.2) {
+                doc.setFontSize(fSize);
+                const lH = fSize * 0.40;
+                const lines = doc.splitTextToSize(cleanText, maxW);
+                const totalHeight = lines.length * lH;
+                if (totalHeight <= maxH || fSize <= 4.1) {
+                    bestFontSize = fSize;
+                    bestLineHeight = lH;
+                    bestLines = lines;
+                    if (totalHeight <= maxH) break;
+                }
+            }
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(bestFontSize);
+            doc.setTextColor(30, 30, 30);
+
+            const maxVisibleLines = Math.floor(maxH / bestLineHeight);
+            const linesToPrint = bestLines.slice(0, Math.max(maxVisibleLines, 1));
+            linesToPrint.forEach((line, idx) => {
+                doc.text(line, x, y + idx * bestLineHeight);
+            });
+        }
+
+        // ========================================================
         // MOTOR DE EXPORTACIÓN A PDF 1:1 (jsPDF LANDSCAPE 8.25" × 6")
         // ========================================================
         function executeDownload(isBlankTemplate) {
@@ -1663,7 +1765,6 @@
             const yearVal = document.getElementById('input-year').value || '2026';
 
             const { jsPDF } = window.jspdf;
-            // Dimensiones apaisadas 8.25" × 6" en mm
             const doc = new jsPDF({
                 orientation: 'landscape',
                 unit: 'mm',
@@ -1674,8 +1775,8 @@
             const pageHeight = 152.4;
             const leftMargin = 12;
             const rightMargin = 12;
-            const topMargin = 10;
-            const bottomMargin = 8;
+            const topMargin = 9;
+            const bottomMargin = 7.5;
             const usableWidth = pageWidth - leftMargin - rightMargin; // 185.55 mm
 
             // FONDO CREMA EDITORIAL ANALÓGICO
@@ -1685,61 +1786,69 @@
             // 1. CABECERA EDITORIAL
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.5);
-            doc.setTextColor(135, 85, 59); // Tostado Menos Ruido
+            doc.setTextColor(135, 85, 59);
             doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN MENSUAL', leftMargin, topMargin + 2);
 
             doc.setFont('times', 'bold');
-            doc.setFontSize(16);
+            doc.setFontSize(15.5);
             doc.setTextColor(20, 18, 16);
-            doc.text('Planificación Mensual', leftMargin, topMargin + 8.5);
+            doc.text('Planificación Mensual', leftMargin, topMargin + 8.2);
 
-            // Mes y año a la derecha
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9.5);
+            doc.setFontSize(9.2);
             doc.setTextColor(30, 26, 22);
             const metaDateStr = `MES: ${monthName} · AÑO: ${yearVal}`;
-            doc.text(metaDateStr, pageWidth - rightMargin, topMargin + 8, { align: 'right' });
+            doc.text(metaDateStr, pageWidth - rightMargin, topMargin + 7.8, { align: 'right' });
 
-            // Línea divisoria bajo la cabecera
             doc.setDrawColor(30, 30, 30);
             doc.setLineWidth(0.4);
-            doc.line(leftMargin, topMargin + 10.5, pageWidth - rightMargin, topMargin + 10.5);
+            doc.line(leftMargin, topMargin + 10.2, pageWidth - rightMargin, topMargin + 10.2);
 
-            let currentY = topMargin + 13.5;
+            let currentY = topMargin + 12.8;
 
-            // BLOQUES ACTIVOS
+            // BLOQUES ACTIVOS POR POSICIÓN
             const visibleTop = state.topOrder.filter(k => state.blockPlacement[k] === 'top' && state.visibility[k]);
             const visibleBottom = state.bottomOrder.filter(k => state.blockPlacement[k] === 'bottom' && state.visibility[k]);
 
-            // ALTURAS PROPORCIONALES
-            let topStripHeight = (visibleTop.length > 0) ? 23 : 0;
-            let bottomStripHeight = (visibleBottom.length > 0) ? 23 : 0;
-            
-            // Alto para el calendario central
-            const availableForCalendar = (pageHeight - bottomMargin - 7) - currentY - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 3 : 0) - (bottomStripHeight > 0 ? 3 : 0);
-            const calendarHeight = Math.max(availableForCalendar, 55);
+            // CÁLCULO DINÁMICO DE ALTURAS DE FRANJAS
+            function calculateStripHeight(keys) {
+                if (keys.length === 0) return 0;
+                let h = 0;
+                const hasH = keys.includes('habits');
+                const others = keys.filter(k => k !== 'habits');
+                if (hasH) h += 22; // Hábitos siempre horizontal al 100%
+                if (others.length === 1 || others.length === 2) h += (hasH ? 2.5 : 0) + 21;
+                else if (others.length >= 3) h += (hasH ? 2.5 : 0) + 42;
+                return h;
+            }
+
+            const topStripHeight = calculateStripHeight(visibleTop);
+            const bottomStripHeight = calculateStripHeight(visibleBottom);
+
+            const spaceForCal = (pageHeight - bottomMargin - 6) - currentY - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 2.5 : 0) - (bottomStripHeight > 0 ? 2.5 : 0);
+            const calendarHeight = Math.max(spaceForCal, 54);
 
             // 2. FRANJA SUPERIOR
             if (visibleTop.length > 0) {
-                renderPdfModularStrip(doc, visibleTop, leftMargin, currentY, usableWidth, topStripHeight, isBlankTemplate);
-                currentY += topStripHeight + 3;
+                renderPdfModularSection(doc, visibleTop, 'top', leftMargin, currentY, usableWidth, isBlankTemplate);
+                currentY += topStripHeight + 2.5;
             }
 
-            // 3. CALENDARIO DE DÍAS (CENTRAL)
+            // 3. CALENDARIO CENTRAL (7 COLUMNAS × 5 FILAS)
             renderPdfCalendar(doc, leftMargin, currentY, usableWidth, calendarHeight, parseInt(yearVal, 10), monthIdx, isBlankTemplate);
-            currentY += calendarHeight + 3;
+            currentY += calendarHeight + 2.5;
 
             // 4. FRANJA INFERIOR
             if (visibleBottom.length > 0) {
-                renderPdfModularStrip(doc, visibleBottom, leftMargin, currentY, usableWidth, bottomStripHeight, isBlankTemplate);
+                renderPdfModularSection(doc, visibleBottom, 'bottom', leftMargin, currentY, usableWidth, isBlankTemplate);
             }
 
             // 5. PIE DE PÁGINA
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(5.5);
             doc.setTextColor(140, 135, 128);
-            doc.text('EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO', leftMargin, pageHeight - bottomMargin + 2);
-            doc.text('editorialmenosruido.com', pageWidth - rightMargin, pageHeight - bottomMargin + 2, { align: 'right' });
+            doc.text('EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO', leftMargin, pageHeight - bottomMargin + 2.2);
+            doc.text('editorialmenosruido.com', pageWidth - rightMargin, pageHeight - bottomMargin + 2.2, { align: 'right' });
 
             // NOMBRE DEL ARCHIVO
             let fileName = 'Menos_Ruido_Planificador_Mensual_En_Blanco.pdf';
@@ -1755,25 +1864,45 @@
         // ========================================================
         // RENDERIZADO DE FRANJAS MODULARES EN jsPDF (SIN EMOJIS)
         // ========================================================
-        function renderPdfModularStrip(doc, blocks, startX, startY, totalW, height, isBlank) {
-            const count = blocks.length;
-            const gap = 3;
-            const blockW = (count === 1) ? totalW : (totalW - gap) / 2;
+        function renderPdfModularSection(doc, keys, stripName, startX, startY, totalW, isBlank) {
+            let curY = startY;
+            const hasHabits = keys.includes('habits');
+            const otherKeys = keys.filter(k => k !== 'habits');
+            const habitsFirst = hasHabits && (keys.indexOf('habits') === 0);
 
-            blocks.forEach((key, idx) => {
-                const bX = startX + idx * (blockW + gap);
-                renderPdfBlock(doc, key, bX, startY, blockW, height, isBlank);
-            });
+            if (hasHabits && habitsFirst) {
+                renderPdfBlock(doc, 'habits', startX, curY, totalW, 22, isBlank);
+                curY += 22 + 2.5;
+            }
+
+            if (otherKeys.length === 1) {
+                renderPdfBlock(doc, otherKeys[0], startX, curY, totalW, 21, isBlank);
+                curY += 21 + 2.5;
+            } else if (otherKeys.length === 2) {
+                const halfW = (totalW - 3) / 2;
+                renderPdfBlock(doc, otherKeys[0], startX, curY, halfW, 21, isBlank);
+                renderPdfBlock(doc, otherKeys[1], startX + halfW + 3, curY, halfW, 21, isBlank);
+                curY += 21 + 2.5;
+            } else if (otherKeys.length >= 3) {
+                const halfW = (totalW - 3) / 2;
+                renderPdfBlock(doc, otherKeys[0], startX, curY, halfW, 21, isBlank);
+                renderPdfBlock(doc, otherKeys[1], startX + halfW + 3, curY, halfW, 21, isBlank);
+                curY += 21 + 2.5;
+                renderPdfBlock(doc, otherKeys[2], startX, curY, totalW, 21, isBlank);
+                curY += 21 + 2.5;
+            }
+
+            if (hasHabits && !habitsFirst) {
+                renderPdfBlock(doc, 'habits', startX, curY, totalW, 22, isBlank);
+            }
         }
 
         function renderPdfBlock(doc, key, x, y, w, h, isBlank) {
-            // Fondo suave del bloque
             doc.setFillColor(250, 248, 245);
             doc.setDrawColor(220, 215, 204);
             doc.setLineWidth(0.2);
             doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
 
-            // Cabecera del bloque (SIN EMOJIS)
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.2);
             doc.setTextColor(45, 39, 34);
@@ -1786,7 +1915,6 @@
 
             doc.text(titleStr, x + 3, y + 4.2);
 
-            // Línea interior bajo el título
             doc.setDrawColor(230, 223, 211);
             doc.setLineWidth(0.15);
             doc.line(x + 3, y + 5.5, x + w - 3, y + 5.5);
@@ -1798,7 +1926,6 @@
                 const rowH = (h - 8.5) / 3;
                 state.goalsData.forEach((item, i) => {
                     const rowY = contentY + i * rowH;
-                    // Casilla
                     doc.setDrawColor(100, 100, 100);
                     doc.setLineWidth(0.2);
                     doc.setFillColor(255, 255, 255);
@@ -1809,11 +1936,9 @@
                         doc.rect(x + 3.3, rowY, boxSize, boxSize, 'FD');
                     }
 
-                    // Línea base
                     doc.setDrawColor(226, 218, 208);
                     doc.line(x + 7.5, rowY + 2.8, x + w - 3, rowY + 2.8);
 
-                    // Texto si no está en blanco
                     if (!isBlank && item.text) {
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(6.5);
@@ -1827,13 +1952,11 @@
                 const rowH = (h - 8.5) / 3;
                 state.milestonesData.forEach((item, i) => {
                     const rowY = contentY + i * rowH;
-                    // Caja de fecha
                     doc.setDrawColor(210, 205, 196);
                     doc.setLineWidth(0.18);
                     doc.setFillColor(255, 255, 255);
                     doc.roundedRect(x + 3.3, rowY, 9, 3.2, 0.5, 0.5, 'FD');
 
-                    // Fecha si no está en blanco
                     if (!isBlank && item.date) {
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(5.8);
@@ -1841,11 +1964,9 @@
                         doc.text(item.date, x + 7.8, rowY + 2.4, { align: 'center' });
                     }
 
-                    // Línea base del evento
                     doc.setDrawColor(226, 218, 208);
                     doc.line(x + 14, rowY + 2.8, x + w - 3, rowY + 2.8);
 
-                    // Texto del hito
                     if (!isBlank && item.text) {
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(6.5);
@@ -1856,13 +1977,17 @@
                     }
                 });
             } else if (key === 'habits') {
+                // HÁBITOS OCUPA EL 100% HORIZONTAL (w = usableWidth)
                 const rowH = (h - 8.5) / 3;
-                const trackerW = Math.min(w * 0.58, 62);
-                const nameW = w - trackerW - 8;
+                const nameW = 38;
+                const trackerStartX = x + nameW + 5;
+                const trackerW = w - nameW - 8;
+                const dayStep = trackerW / 31;
+                const boxSize = 3.7;
 
                 state.habitsData.forEach((item, i) => {
                     const rowY = contentY + i * rowH;
-                    // Línea de nombre
+                    
                     doc.setDrawColor(226, 218, 208);
                     doc.setLineWidth(0.15);
                     doc.line(x + 3.3, rowY + 2.8, x + 3.3 + nameW, rowY + 2.8);
@@ -1876,27 +2001,36 @@
                         doc.text(fitTxt, x + 3.3, rowY + 2.2);
                     }
 
-                    // 31 casillas vectoriales
-                    const trackStartX = x + 3.3 + nameW + 2;
-                    const dotCellW = trackerW / 31;
+                    // RENDERIZAR LOS 31 DÍAS CON NÚMERO VISIBLE AL IMPRIMIR
                     for (let d = 0; d < 31; d++) {
-                        const dotX = trackStartX + d * dotCellW;
+                        const dotX = trackerStartX + d * dayStep;
+                        const dotY = rowY - 0.3;
                         const isMarked = !isBlank && item.days && item.days[d];
 
-                        doc.setDrawColor(180, 173, 163);
-                        doc.setLineWidth(0.15);
                         if (isMarked) {
-                            doc.setFillColor(135, 85, 59); // Marcado
+                            doc.setFillColor(135, 85, 59);
+                            doc.setDrawColor(135, 85, 59);
                         } else {
                             doc.setFillColor(255, 255, 255);
+                            doc.setDrawColor(170, 164, 154);
+                        }
+                        doc.setLineWidth(0.18);
+
+                        if (isCircle) {
+                            doc.circle(dotX + boxSize / 2, dotY + boxSize / 2, boxSize / 2, 'FD');
+                        } else {
+                            doc.roundedRect(dotX, dotY, boxSize, boxSize, 0.5, 0.5, 'FD');
                         }
 
-                        const dSize = Math.min(dotCellW - 0.3, 1.8);
-                        if (isCircle) {
-                            doc.circle(dotX + dSize / 2, rowY + 1.2, dSize / 2, isMarked ? 'FD' : 'FD');
+                        // IMPRIMIR EL NÚMERO DEL DÍA DENTRO DE LA CASILLA
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(5.0);
+                        if (isMarked) {
+                            doc.setTextColor(255, 255, 255);
                         } else {
-                            doc.rect(dotX, rowY + 0.3, dSize, dSize, isMarked ? 'FD' : 'FD');
+                            doc.setTextColor(55, 50, 45);
                         }
+                        doc.text(String(d + 1), dotX + boxSize / 2, dotY + boxSize / 2 + 0.85, { align: 'center' });
                     }
                 });
             } else if (key === 'notes') {
@@ -1910,20 +2044,14 @@
                     toPrint.forEach((line, lIdx) => {
                         doc.text(line, x + 3.3, contentY + 2.5 + lIdx * 3.2);
                     });
-                } else {
-                    // Pautas tenues si está en blanco
-                    doc.setDrawColor(235, 230, 222);
-                    doc.setLineWidth(0.12);
-                    const lineCount = Math.floor((h - 8.5) / 3.2);
-                    for (let l = 0; l < lineCount; l++) {
-                        doc.line(x + 3.3, contentY + 3 + l * 3.2, x + w - 3.3, contentY + 3 + l * 3.2);
-                    }
                 }
+                // Si está en blanco: REGLA DE ORO: NO SE DIBUJAN LÍNEAS (queda limpio y despejado)
             }
         }
 
         // ========================================================
         // RENDERIZADO DEL CALENDARIO EN jsPDF (7 COLUMNAS × 5 FILAS)
+        // CON BORDES UNIFORMES Y AUTO-FIT TIPOGRÁFICO
         // ========================================================
         function renderPdfCalendar(doc, startX, startY, totalW, totalH, year, monthIdx, isBlank) {
             const colW = totalW / 7;
@@ -1931,14 +2059,65 @@
             const matrixH = totalH - headerH;
             const rowH = matrixH / 5;
 
-            // Marco exterior
-            doc.setDrawColor(40, 35, 30);
-            doc.setLineWidth(0.35);
-            doc.rect(startX, startY, totalW, totalH);
+            // 1. RELLENAR FONDOS DE TODAS LAS CELDAS
+            const cellsData = getCalendarDaysData(year, monthIdx);
 
-            // Cabecera de días
+            for (let r = 0; r < 5; r++) {
+                const cellY = startY + headerH + r * rowH;
+                for (let c = 0; c < 7; c++) {
+                    const cellIdx = r * 7 + c;
+                    const cellX = startX + c * colW;
+                    const cellInfo = cellsData[cellIdx];
+
+                    if (cellInfo.isCurrentMonth) {
+                        doc.setFillColor(255, 255, 255);
+                    } else {
+                        doc.setFillColor(250, 248, 245); // Sombreado tenue idéntico a vista previa
+                    }
+                    doc.rect(cellX, cellY, colW, rowH, 'F');
+                }
+            }
+
+            // 2. LÍNEAS INTERIORES DE LA CUADRÍCULA
+            doc.setDrawColor(224, 218, 208);
+            doc.setLineWidth(0.18);
+            for (let r = 0; r < 5; r++) {
+                const cellY = startY + headerH + r * rowH;
+                for (let c = 0; c < 7; c++) {
+                    const cellX = startX + c * colW;
+                    if (c < 6) doc.line(cellX + colW, cellY, cellX + colW, cellY + rowH);
+                    if (r < 4) doc.line(cellX, cellY + rowH, cellX + colW, cellY + rowH);
+                }
+            }
+
+            // 3. NÚMEROS Y TEXTOS EN CADA CELDA
+            for (let r = 0; r < 5; r++) {
+                const cellY = startY + headerH + r * rowH;
+                for (let c = 0; c < 7; c++) {
+                    const cellIdx = r * 7 + c;
+                    const cellX = startX + c * colW;
+                    const cellInfo = cellsData[cellIdx];
+
+                    // Número del día en la esquina superior derecha
+                    doc.setFont('helvetica', cellInfo.isCurrentMonth ? 'bold' : 'normal');
+                    doc.setFontSize(6.2);
+                    if (cellInfo.isCurrentMonth) {
+                        doc.setTextColor(30, 26, 22);
+                    } else {
+                        doc.setTextColor(181, 174, 159);
+                    }
+                    doc.text(String(cellInfo.dayNumber), cellX + colW - 1.8, cellY + 3.0, { align: 'right' });
+
+                    // Texto con auto-fit tipográfico (cero pérdida de caracteres)
+                    if (!isBlank && state.calendarNotes[cellIdx]) {
+                        renderCalendarCellText(doc, state.calendarNotes[cellIdx], cellX + 1.8, cellY + 5.6, colW - 3.4, rowH - 6.4);
+                    }
+                }
+            }
+
+            // 4. CABECERA DE DÍAS (LUNES ... DOMINGO)
             doc.setFillColor(242, 237, 228);
-            doc.rect(startX, startY, totalW, headerH, 'FD');
+            doc.rect(startX, startY, totalW, headerH, 'F');
 
             const daysHeaders = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
             doc.setFont('helvetica', 'bold');
@@ -1955,62 +2134,11 @@
                 }
             });
 
-            // Línea divisoria bajo la cabecera
+            // 5. MARCO EXTERIOR FINAL (NUNCA TAPADO POR RELLENOS)
             doc.setDrawColor(40, 35, 30);
             doc.setLineWidth(0.35);
+            doc.rect(startX, startY, totalW, totalH);
             doc.line(startX, startY + headerH, startX + totalW, startY + headerH);
-
-            // Datos de los 35 días
-            const cellsData = getCalendarDaysData(year, monthIdx);
-
-            for (let r = 0; r < 5; r++) {
-                const cellY = startY + headerH + r * rowH;
-                for (let c = 0; c < 7; c++) {
-                    const cellIdx = r * 7 + c;
-                    const cellX = startX + c * colW;
-                    const cellInfo = cellsData[cellIdx];
-
-                    // Fondo atenuado para días fuera de mes
-                    if (!cellInfo.isCurrentMonth) {
-                        doc.setFillColor(250, 248, 245);
-                        doc.rect(cellX, cellY, colW, rowH, 'F');
-                    }
-
-                    // Líneas interiores de la cuadrícula
-                    doc.setDrawColor(224, 218, 208);
-                    doc.setLineWidth(0.18);
-                    if (c < 6) doc.line(cellX + colW, cellY, cellX + colW, cellY + rowH);
-                    if (r < 4) doc.line(cellX, cellY + rowH, cellX + colW, cellY + rowH);
-
-                    // Número del día en la esquina superior derecha
-                    doc.setFont('helvetica', cellInfo.isCurrentMonth ? 'bold' : 'normal');
-                    doc.setFontSize(6.2);
-                    if (cellInfo.isCurrentMonth) {
-                        doc.setTextColor(30, 26, 22);
-                    } else {
-                        doc.setTextColor(181, 174, 159);
-                    }
-                    doc.text(String(cellInfo.dayNumber), cellX + colW - 1.8, cellY + 3.0, { align: 'right' });
-
-                    // Texto escrito en la casilla (si no está en blanco)
-                    if (!isBlank && state.calendarNotes[cellIdx]) {
-                        const rawText = state.calendarNotes[cellIdx].trim();
-                        if (rawText) {
-                            doc.setFont('helvetica', 'normal');
-                            doc.setFontSize(5.5);
-                            doc.setTextColor(30, 30, 30);
-
-                            const maxLinesInCell = Math.floor((rowH - 4.5) / 2.6);
-                            const cellLines = doc.splitTextToSize(rawText, colW - 3.2);
-                            const toRender = cellLines.slice(0, Math.max(maxLinesInCell, 1));
-
-                            toRender.forEach((line, lIdx) => {
-                                doc.text(line, cellX + 1.8, cellY + 5.6 + lIdx * 2.6);
-                            });
-                        }
-                    }
-                }
-            }
         }
 
         // ========================================================
