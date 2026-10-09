@@ -1299,7 +1299,7 @@
         }
 
         // ========================================================
-        // VALIDACIÓN DE CAPACIDAD DE TEXTO ANTES DE AGRUPAR
+        // VALIDACIÓN DE CAPACIDAD DE TEXTO ANTES DE AGRUPAR O AÑADIR
         // ========================================================
         function canFitInHalfColumn(blockKey) {
             if (blockKey === 'goals') {
@@ -1309,6 +1309,26 @@
                 return state.milestonesData.every(m => !m.text || m.text.length <= 40);
             }
             return true;
+        }
+
+        // Calcula el límite máximo de caracteres por celda de calendario según el espacio disponible
+        function getMaxCharsPerCalendarCell(simulatedVisibility = state.visibility) {
+            const countVisible = ['goals', 'milestones', 'habits', 'notes'].filter(k => simulatedVisibility[k]).length;
+            if (countVisible <= 1) return 120; // Con 0 o 1 bloque, las casillas son muy altas (hasta 5-6 líneas)
+            if (countVisible === 2) return 80;  // Con 2 bloques, altura estándar
+            return 55;                          // Con 3 o 4 bloques, altura más compacta (3 líneas máx)
+        }
+
+        // Comprueba si alguna casilla del calendario tiene más caracteres de los que caben con la nueva configuración
+        function checkCalendarCellsCapacity(targetVisibility) {
+            const maxChars = getMaxCharsPerCalendarCell(targetVisibility);
+            const overflowingCells = [];
+            state.calendarNotes.forEach((txt, idx) => {
+                if (txt && txt.trim().length > maxChars) {
+                    overflowingCells.push({ idx: idx + 1, len: txt.trim().length, max: maxChars });
+                }
+            });
+            return { ok: overflowingCells.length === 0, maxChars, overflowingCells };
         }
 
         // CONTROL DE UNA SOLA LÍNEA SIN DESBORDAMIENTO
@@ -1323,7 +1343,18 @@
         // CONTROL DE SECCIONES (VISIBILIDAD Y MOVIMIENTO)
         // ========================================================
         function toggleSection(blockKey) {
-            state.visibility[blockKey] = !state.visibility[blockKey];
+            const willEnable = !state.visibility[blockKey];
+
+            if (willEnable) {
+                const simulatedVisibility = { ...state.visibility, [blockKey]: true };
+                const check = checkCalendarCellsCapacity(simulatedVisibility);
+                if (!check.ok) {
+                    showToast(`⚠️ No hay espacio: al añadir esta sección se reduce el calendario. Borra texto en los días del mes (máx ${check.maxChars} caracteres) para hacer hueco.`);
+                    return;
+                }
+            }
+
+            state.visibility[blockKey] = willEnable;
             updateSectionPillsUI();
             renderModularStrips();
             showToast(state.visibility[blockKey] ? `Bloque activado` : `Bloque ocultado`);
@@ -1628,12 +1659,24 @@
         }
 
         function handleCellInput(cellIdx, textarea) {
-            // Limitar a máximo 4 líneas físicas y controlar altura visible
-            const lines = textarea.value.split('\n');
-            if (lines.length > 4) {
-                textarea.value = lines.slice(0, 4).join('\n');
-                showToast('⚠️ Máximo 4 líneas por día');
+            const maxChars = getMaxCharsPerCalendarCell(state.visibility);
+            const countVisible = ['goals', 'milestones', 'habits', 'notes'].filter(k => state.visibility[k]).length;
+            const maxLines = (countVisible <= 1) ? 5 : ((countVisible === 2) ? 4 : 3);
+
+            // Control de longitud máxima de caracteres según el tamaño disponible
+            if (textarea.value.length > maxChars) {
+                textarea.value = textarea.value.slice(0, maxChars);
+                showToast(`⚠️ Máximo ${maxChars} caracteres en este día según el espacio actual del calendario.`);
             }
+
+            // Control de líneas físicas
+            const lines = textarea.value.split('\n');
+            if (lines.length > maxLines) {
+                textarea.value = lines.slice(0, maxLines).join('\n');
+                showToast(`⚠️ Máximo ${maxLines} líneas por día según el espacio actual`);
+            }
+
+            // Control de desbordamiento visual
             while (textarea.scrollHeight > (textarea.clientHeight + 1) && textarea.value.length > 0) {
                 textarea.value = textarea.value.slice(0, -1);
             }
@@ -1645,10 +1688,20 @@
             const allowedKeys = ['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'];
             if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
 
-            const lines = textarea.value.split('\n');
-            if (e.key === 'Enter' && lines.length >= 4) {
+            const countVisible = ['goals', 'milestones', 'habits', 'notes'].filter(k => state.visibility[k]).length;
+            const maxLines = (countVisible <= 1) ? 5 : ((countVisible === 2) ? 4 : 3);
+            const maxChars = getMaxCharsPerCalendarCell(state.visibility);
+
+            if (textarea.value.length >= maxChars) {
                 e.preventDefault();
-                showToast('⚠️ Máximo 4 líneas por día');
+                showToast(`⚠️ Límite de ${maxChars} caracteres alcanzado para este día.`);
+                return;
+            }
+
+            const lines = textarea.value.split('\n');
+            if (e.key === 'Enter' && lines.length >= maxLines) {
+                e.preventDefault();
+                showToast(`⚠️ Máximo ${maxLines} líneas por día según el espacio actual`);
             }
         }
 
