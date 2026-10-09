@@ -1640,6 +1640,58 @@
             return result;
         }
 
+        // RENDERIZADO TIPOGRÁFICO DE DÍAS Y FOCO CON AUTO-AJUSTE (CERO PÉRDIDA DE CARACTERES)
+        function renderDayOrFocusText(docInstance, text, startX, startY, availableW, availableH, targetMaxLines) {
+            if (!text) return;
+
+            const safeW = availableW;
+            const paragraphs = String(text).split('\n');
+
+            let bestFontSize = (targetMaxLines === 7) ? 7.4 : 7.6;
+            let bestLines = [];
+            let bestSpacing = (targetMaxLines === 7) ? 2.8 : 3.0;
+
+            // Búsqueda de escala tipográfica óptima:
+            // Asegura que el 100% del texto quepa completo sin que se corte jamás ninguna línea ni carácter
+            for (let fSize = bestFontSize; fSize >= 5.6; fSize -= 0.2) {
+                docInstance.setFont('times', 'normal');
+                docInstance.setFontSize(fSize);
+
+                const wrapped = [];
+                paragraphs.forEach(p => {
+                    const trimmed = p.trim();
+                    if (!trimmed) {
+                        wrapped.push('');
+                    } else {
+                        const wLines = docInstance.splitTextToSize(trimmed, safeW);
+                        wrapped.push(...wLines);
+                    }
+                });
+
+                bestLines = wrapped;
+                bestFontSize = fSize;
+
+                if (wrapped.length <= targetMaxLines) {
+                    bestSpacing = Math.min((availableH - 1.2) / Math.max(1, wrapped.length), (targetMaxLines === 7 ? 2.8 : 3.0));
+                    break;
+                }
+            }
+
+            // Si supera targetMaxLines ligeramente, condensar espaciado vertical para que entren todas las líneas
+            if (bestLines.length > targetMaxLines) {
+                bestSpacing = (availableH - 1.2) / bestLines.length;
+            }
+
+            docInstance.setFont('times', 'normal');
+            docInstance.setFontSize(bestFontSize);
+            docInstance.setTextColor(30, 25, 20);
+
+            bestLines.forEach((line, idx) => {
+                const yPos = startY + (idx * bestSpacing);
+                docInstance.text(line, startX, yPos, { maxWidth: safeW });
+            });
+        }
+
         // ========================================================
         // MOTOR DE GENERACIÓN PDF 1:1 CON jsPDF (LIBRO 8.25" × 6")
         // Dimensiones en mm: 209.5 × 152.4 mm (Landscape)
@@ -1770,16 +1822,9 @@
 
                 // Texto del día
                 if (day.text) {
-                    doc.setFont('times', 'normal');
                     const maxLines = leftVisible ? 4 : 7;
-                    const fSize = leftVisible ? 7.6 : 7.4;
-                    const lSpacing = leftVisible ? 3.0 : 2.8;
-                    doc.setFontSize(fSize);
-                    doc.setTextColor(40, 35, 30);
-                    const lines = strictSafeWrapText(doc, day.text, colW - 14);
-                    lines.slice(0, maxLines).forEach((line, lIdx) => {
-                        doc.text(line, col1X + 4, rowY + 7.6 + (lIdx * lSpacing), { maxWidth: colW - 14 });
-                    });
+                    const availableH = rowH1 - 7.6;
+                    renderDayOrFocusText(doc, day.text, col1X + 4, rowY + 7.6, colW - 8, availableH, maxLines);
                 }
 
                 // Línea separadora
@@ -1804,16 +1849,9 @@
             doc.text('FOCO DE LA SEMANA (META CLAVE)', col2X + 4, bodyStartY + 4.5);
 
             if (focusText) {
-                doc.setFont('times', 'normal');
                 const maxFLines = rightVisible ? 4 : 7;
-                const fFontSize = rightVisible ? 7.6 : 7.4;
-                const fSpacing = rightVisible ? 3.0 : 2.8;
-                doc.setFontSize(fFontSize);
-                doc.setTextColor(30, 25, 20);
-                const fLines = strictSafeWrapText(doc, focusText, colW - 8);
-                fLines.slice(0, maxFLines).forEach((fLine, lIdx) => {
-                    doc.text(fLine, col2X + 4, bodyStartY + 7.6 + (lIdx * fSpacing), { maxWidth: colW - 8 });
-                });
+                const availableH = rowH2 - 7.6;
+                renderDayOrFocusText(doc, focusText, col2X + 4, bodyStartY + 7.6, colW - 8, availableH, maxFLines);
             }
 
             doc.setDrawColor(220, 215, 208);
@@ -1858,16 +1896,9 @@
                 }
 
                 if (day.text) {
-                    doc.setFont('times', 'normal');
                     const maxLines = rightVisible ? 4 : 7;
-                    const fSize = rightVisible ? 7.6 : 7.4;
-                    const lSpacing = rightVisible ? 3.0 : 2.8;
-                    doc.setFontSize(fSize);
-                    doc.setTextColor(40, 35, 30);
-                    const lines = strictSafeWrapText(doc, day.text, colW - 14);
-                    lines.slice(0, maxLines).forEach((line, lIdx) => {
-                        doc.text(line, col2X + 4, rowY + 7.6 + (lIdx * lSpacing), { maxWidth: colW - 14 });
-                    });
+                    const availableH = rowH2 - 7.6;
+                    renderDayOrFocusText(doc, day.text, col2X + 4, rowY + 7.6, colW - 8, availableH, maxLines);
                 }
 
                 if (idx < 2) {
