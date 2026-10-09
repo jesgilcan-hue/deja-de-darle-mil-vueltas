@@ -438,11 +438,9 @@
             width: 100%;
         }
 
-        .strip-bottom .modular-card {
-            max-height: 80px;
-        }
+        /* En strip-bottom, achicamos específicamente el bloque de notas para que no empuje el pie */
         .strip-bottom #card-notes {
-            max-height: 74px;
+            max-height: 58px;
         }
 
         .card-header-bar {
@@ -1130,7 +1128,7 @@
 
             <!-- PIE DE PÁGINA EDITORIAL -->
             <div class="paper-editorial-footer">
-                <span>EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO</span>
+                <span>EDITORIAL MENOS RUIDO · SISTEMA DE PLANIFICACIÓN MENSUAL</span>
                 <span>editorialmenosruido.com</span>
             </div>
 
@@ -1819,19 +1817,20 @@
 
             // CÁLCULO DINÁMICO DE ALTURAS DE FRANJAS (LÍMITE ESTRICTO CONTRA PIE DE PÁGINA)
             const footerY = pageHeight - 5.2; // 147.2 mm
-            const maxContentBottom = footerY - 5.0; // 142.2 mm (5 mm de aire limpio garantizado)
-            const totalVerticalBudget = maxContentBottom - currentY; // ~129.4 mm
+            const maxContentBottom = footerY - 4.5; // 142.7 mm (margen sagrado antes del pie)
+            const totalVerticalBudget = maxContentBottom - currentY;
 
             function calculateStripHeight(keys) {
                 if (keys.length === 0) return 0;
                 const hasH = keys.includes('habits');
                 const others = keys.filter(k => k !== 'habits');
                 let h = 0;
-                if (hasH) h += 18.5; // Hábitos siempre horizontal al 100%
+                if (hasH) h += 22; // Hábitos con altura completa original (22 mm)
                 if (others.length === 1 || others.length === 2) {
-                    h += (hasH ? 2.5 : 0) + (hasH ? 16.5 : 18.5);
+                    // Si notas/metas comparte franja con hábitos, se achica a 14mm para no robar espacio a hábitos ni pisar el pie
+                    h += (hasH ? 2.5 : 0) + (hasH ? 14 : 20);
                 } else if (others.length >= 3) {
-                    h += (hasH ? 2.5 : 0) + 34;
+                    h += (hasH ? 2.5 : 0) + 32;
                 }
                 return h;
             }
@@ -1861,7 +1860,7 @@
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(5.5);
             doc.setTextColor(140, 135, 128);
-            doc.text('EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO', leftMargin, footerY);
+            doc.text('EDITORIAL MENOS RUIDO · SISTEMA DE PLANIFICACIÓN MENSUAL', leftMargin, footerY);
             doc.text('editorialmenosruido.com', pageWidth - rightMargin, footerY, { align: 'right' });
 
             // NOMBRE DEL ARCHIVO
@@ -1884,19 +1883,21 @@
             const otherKeys = keys.filter(k => k !== 'habits');
             const habitsFirst = hasHabits && (keys.indexOf('habits') === 0);
 
-            // Si hábitos va primero
+            // Si hábitos va primero (ej. en la franja inferior: hábitos arriba y notas debajo)
             if (hasHabits && habitsFirst) {
-                const hHabits = 18.5;
+                const hHabits = 22; // Hábitos siempre conserva su altura completa de 22 mm
                 renderPdfBlock(doc, 'habits', startX, curY, totalW, hHabits, isBlank);
                 curY += hHabits + 2.5;
             }
 
             // Altura para los otros bloques (Metas, Hitos, Notas)
-            let defaultH = 18.5;
+            let defaultH = 20;
             if (stripName === 'bottom' && hasHabits) {
-                // Achicar recuadro inferior de notas/metas si hábitos ya ocupa espacio arriba
-                const remainingH = (maxBottomY || 142.2) - curY;
-                defaultH = Math.max(12, Math.min(16.5, remainingH));
+                // Achicamos Notas (o el bloque que comparta con Hábitos abajo) para encajar perfectamente
+                const remainingH = (maxBottomY || 142.7) - curY;
+                defaultH = Math.max(10, Math.min(14, remainingH));
+            } else if (hasHabits) {
+                defaultH = 14;
             }
 
             if (otherKeys.length === 1) {
@@ -1912,15 +1913,14 @@
                 renderPdfBlock(doc, otherKeys[0], startX, curY, halfW, defaultH, isBlank);
                 renderPdfBlock(doc, otherKeys[1], startX + halfW + 3, curY, halfW, defaultH, isBlank);
                 curY += defaultH + 2.5;
-                const nextH = Math.max(12, Math.min(16.5, (maxBottomY || 142.2) - curY));
+                const nextH = Math.max(10, Math.min(14, (maxBottomY || 142.7) - curY));
                 renderPdfBlock(doc, otherKeys[2], startX, curY, totalW, nextH, isBlank);
                 curY += nextH + 2.5;
             }
 
             // Si hábitos va después
             if (hasHabits && !habitsFirst) {
-                const remainingH = (maxBottomY || 142.2) - curY;
-                const hHabits = Math.max(15, Math.min(18.5, remainingH));
+                const hHabits = 22; // Altura completa original de 22 mm
                 renderPdfBlock(doc, 'habits', startX, curY, totalW, hHabits, isBlank);
             }
         }
