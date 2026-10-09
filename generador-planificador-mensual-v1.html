@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador Mensual Interactivo (V1) · Menos Ruido</title>
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Control de acceso PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-main: #212121;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --border-line: #dcd7ce;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* CABECERA & NAVEGACIÓN */
+        .top-nav {
+            width: 100%;
+            max-width: 980px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: #777;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .badge-version {
+            background: #ede6dc;
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 760px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1816;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.45;
+        }
+
+        /* BARRA DE HERRAMIENTAS PRINCIPAL */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 980px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 6px 11px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #443e39;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .toolbar-btn:hover {
+            background: #ede7dc;
+            border-color: #c9bfb0;
+            color: #111;
+        }
+
+        /* SELECTOR EXCLUYENTE DE CASILLAS (SIN TEXTO) */
+        .checkbox-selector-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: #ebe6dc;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid #dcd7ce;
+        }
+
+        .btn-shape-selector {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            width: 32px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+        .btn-shape-selector:hover {
+            background: #f7f4ed;
+            color: #222;
+        }
+        .btn-shape-selector.active {
+            background: #ffffff;
+            border-color: #cbbeae;
+            color: var(--accent);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 15px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 3px 10px rgba(135,85,59,0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* BARRA DE CONTROL DE SECCIONES (AÑADIR / QUITAR / INTERCAMBIAR) */
+        .sections-toggle-bar {
+            width: 100%;
+            max-width: 980px;
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 8px;
+            padding: 7px 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .sections-toggle-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sections-toggle-pills {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sec-pill {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 14px;
+            padding: 3px 9px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+        .btn-sec-pill.active {
+            background: #443e39;
+            color: #fff;
+            border-color: #443e39;
+        }
+        .btn-sec-pill:hover {
+            border-color: var(--accent);
+        }
+
+        /* AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto 10px auto;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border: 1px solid #dfd6c7;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            animation: fadeInNotice 0.2s ease;
+        }
+        @keyframes fadeInNotice {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========================================================
+           EL LIENZO FÍSICO INTERACTIVO APAISADO (LIBRO 8.25" × 6")
+           ======================================================== */
+        .paper-canvas-container {
+            width: 100%;
+            max-width: 980px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .interactive-paper-monthly {
+            width: 100%;
+            max-width: 980px;
+            height: 712px;
+            max-height: 712px;
+            aspect-ratio: 8.25 / 6;
+            background-color: var(--paper-color);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.14);
+            border-radius: 4px;
+            border: 1px solid #e7e2d8;
+            padding: 16px 24px 14px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden; /* LA PÁGINA NUNCA CRECE */
+            transition: background 0.2s;
+        }
+
+        /* CABECERA EDITABLE DEL MES */
+        .paper-monthly-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #222;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .monthly-header-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .monthly-kicker {
+            font-size: 0.63rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .monthly-title-main {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.1;
+        }
+
+        .monthly-meta-inputs {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .select-month-inline {
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #222;
+            background: #faf8f5;
+            border: 1px solid #dcd7ce;
+            border-radius: 4px;
+            padding: 3px 6px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .select-month-inline:focus {
+            border-color: var(--accent);
+        }
+
+        .input-year-inline {
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #222;
+            background: #faf8f5;
+            border: 1px solid #dcd7ce;
+            border-radius: 4px;
+            padding: 3px 6px;
+            width: 68px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-year-inline:focus {
+            border-color: var(--accent);
+        }
+
+        /* FRANJAS MODULARES SUPERIOR E INFERIOR */
+        .modular-strip {
+            display: grid;
+            gap: 10px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+        .modular-strip.strip-top {
+            margin-bottom: 8px;
+        }
+        .modular-strip.strip-bottom {
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+        .modular-strip[data-count="1"] {
+            grid-template-columns: 1fr;
+        }
+        .modular-strip[data-count="2"] {
+            grid-template-columns: 1fr 1fr;
+        }
+        .modular-strip[data-count="0"] {
+            display: none;
+        }
+
+        /* TARJETA MODULAR (COMÚN A LOS 4 BLOQUES) */
+        .modular-card {
+            background: #faf8f5;
+            border: 1px solid #ddd7cc;
+            border-radius: 5px;
+            padding: 5px 8px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+            min-height: 0;
+            position: relative;
+        }
+
+        .card-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e6dfd3;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #2d2722;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-card-action {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 4px;
+            font-size: 0.64rem;
+            font-weight: 600;
+            color: #555;
+            padding: 1px 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.2;
+            font-family: inherit;
+        }
+        .btn-card-action:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: #faf7f2;
+        }
+        .btn-card-action.btn-del:hover {
+            color: #b03030;
+            border-color: #d88;
+            background: #fff5f5;
+        }
+
+        /* 1. BLOQUE METAS */
+        .goals-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-height: 0;
+            justify-content: space-around;
+        }
+        .goal-item-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .goal-checkbox {
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #666;
+            border-radius: 3px;
+            background: #fff;
+            flex-shrink: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .goal-checkbox.circle {
+            border-radius: 50%;
+        }
+        .goal-checkbox.checked::after {
+            content: '✓';
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .single-line-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed #e2dad0;
+            font-family: var(--font-sans);
+            font-size: 0.74rem;
+            color: #222;
+            outline: none;
+            padding: 1px 2px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .single-line-input:focus {
+            border-bottom-color: var(--accent);
+            background: rgba(0,0,0,0.01);
+        }
+
+        /* 2. BLOQUE HITOS Y FECHAS CLAVE */
+        .milestones-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-height: 0;
+            justify-content: space-around;
+        }
+        .milestone-item-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .milestone-date-input {
+            width: 54px;
+            background: #ffffff;
+            border: 1px solid #dcd7ce;
+            border-radius: 3px;
+            font-family: var(--font-sans);
+            font-size: 0.70rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-align: center;
+            padding: 1px 2px;
+            outline: none;
+            flex-shrink: 0;
+        }
+        .milestone-date-input:focus {
+            border-color: var(--accent);
+        }
+
+        /* 3. BLOQUE HÁBITOS (TRACKER 1 AL 31) */
+        .habits-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-height: 0;
+            justify-content: space-around;
+        }
+        .habit-tracker-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .habit-name-input {
+            width: 130px;
+            min-width: 110px;
+            max-width: 160px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed #ded7cc;
+            font-family: var(--font-sans);
+            font-size: 0.71rem;
+            color: #222;
+            outline: none;
+            padding: 1px 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .habit-name-input:focus {
+            border-bottom-color: var(--accent);
+        }
+        .days-dots-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex: 1;
+            gap: 1.5px;
+            overflow: hidden;
+        }
+        .day-dot-btn {
+            width: 13px;
+            height: 13px;
+            border: 1px solid #b5ada3;
+            background: #ffffff;
+            border-radius: 2px;
+            font-size: 0.52rem;
+            font-weight: 700;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.1s;
+            user-select: none;
+        }
+        .day-dot-btn.circle {
+            border-radius: 50%;
+        }
+        .day-dot-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .day-dot-btn.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        /* 4. BLOQUE NOTAS Y BALANCE */
+        .notes-textarea-box {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .notes-content-textarea {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            resize: none;
+            font-family: var(--font-sans);
+            font-size: 0.72rem;
+            line-height: 1.4;
+            color: #222;
+            outline: none;
+            padding: 1px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* ========================================================
+           LA CUADRÍCULA DE CALENDARIO DE DÍAS (ELEMENTO FIJO)
+           ======================================================== */
+        .calendar-main-grid-wrapper {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            border: 1.5px solid #2b2520;
+            border-radius: 5px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .calendar-days-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #f2ede4;
+            border-bottom: 1.5px solid #2b2520;
+            flex-shrink: 0;
+        }
+
+        .cal-header-day {
+            text-align: center;
+            padding: 3px 2px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #2d2621;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            border-right: 1px solid #dcd7ce;
+        }
+        .cal-header-day:last-child {
+            border-right: none;
+        }
+
+        .calendar-cells-matrix {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            flex: 1;
+            min-height: 0;
+        }
+
+        .cal-day-cell {
+            border-right: 1px solid #e0dad0;
+            border-bottom: 1px solid #e0dad0;
+            display: flex;
+            flex-direction: column;
+            padding: 2px 4px 3px;
+            box-sizing: border-box;
+            min-height: 0;
+            overflow: hidden;
+            position: relative;
+            background: #ffffff;
+            transition: background 0.15s;
+        }
+        .cal-day-cell:nth-child(7n) {
+            border-right: none;
+        }
+        .cal-day-cell:nth-child(n+29) {
+            border-bottom: none;
+        }
+        .cal-day-cell.faded-day {
+            background: #faf8f5;
+        }
+
+        .cell-top-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 1px;
+            flex-shrink: 0;
+        }
+
+        .cell-day-number {
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #222;
+            line-height: 1;
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        .cal-day-cell.faded-day .cell-day-number {
+            color: #b5ae9f;
+            font-weight: 600;
+        }
+
+        .cell-notes-textarea {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            background: transparent;
+            border: none;
+            resize: none;
+            font-family: var(--font-sans);
+            font-size: 0.64rem;
+            line-height: 1.25;
+            color: #222;
+            outline: none;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .cal-day-cell.faded-day .cell-notes-textarea {
+            color: #777;
+        }
+
+        /* PIE EDITORIAL DEL PAPEL */
+        .paper-editorial-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.58rem;
+            color: #888;
+            border-top: 1px solid #e2ddd3;
+            padding-top: 3px;
+            margin-top: 6px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        /* MODAL DE DESCARGA */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 520px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+
+        .btn-modal-secondary {
+            background: #f7f5f0;
+            color: #443e39;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-secondary:hover { background: #ede7dc; }
+
+        .modal-books-section {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-top: 6px;
+        }
+
+        .modal-books-header {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .modal-books-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .modal-books-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-book-card {
+            background: #ffffff;
+            border: 1px solid #e0d9cc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .modal-book-thumb {
+            width: 48px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .modal-book-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .modal-book-badge {
+            font-size: 0.60rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+
+        .modal-book-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #1a1614;
+            line-height: 1.2;
+        }
+
+        .btn-book-amazon {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: 4px;
+        }
+        .btn-book-amazon:hover {
+            text-decoration: underline;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px; right: 14px;
+            background: none; border: none;
+            font-size: 1.2rem; color: #888;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .interactive-paper-monthly {
+                height: auto;
+                max-height: none;
+                aspect-ratio: auto;
+                padding: 14px 10px;
+            }
+            .modular-strip[data-count="2"] {
+                grid-template-columns: 1fr;
+            }
+            .calendar-cells-matrix {
+                height: 480px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <a href="/generador.html" class="back-link">← Catálogo de generadores</a>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge-version">Prototipo V1 · Edición Directa</span>
+            <a href="/generador-planificador-mensual.html" style="font-size:0.75rem; color:var(--accent); text-decoration:none;">Ver versión clásica →</a>
+        </div>
+    </div>
+
+    <div class="header-title-box">
+        <h1>Planificador Mensual Interactivo</h1>
+        <p>Escribe directamente sobre el folio horizontal 8.25" × 6". Organiza tu mes con la cuadrícula de días, tus metas, hitos clave, seguimiento de hábitos y notas de balance.</p>
+    </div>
+
+    <!-- BARRA DE HERRAMIENTAS PRINCIPAL -->
+    <div class="canvas-toolbar">
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Borrar textos para escribir de cero">
+                <span>🧹</span> Limpiar texto
+            </button>
+            <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar ejemplo editorial">
+                <span>✨</span> Cargar ejemplo
+            </button>
+        </div>
+
+        <div class="toolbar-group">
+            <div class="checkbox-selector-group" title="Forma de casillas">
+                <button type="button" class="btn-shape-selector" id="btn-shape-square" onclick="setCheckboxStyle('square')" title="Casillas cuadradas" aria-label="Casillas cuadradas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="12" height="12" rx="2" />
+                    </svg>
+                </button>
+                <button type="button" class="btn-shape-selector active" id="btn-shape-circle" onclick="setCheckboxStyle('circle')" title="Casillas redondas" aria-label="Casillas redondas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="8" cy="8" r="6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
+                <span>📥</span> Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- BARRA VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR / INTERCAMBIAR) -->
+    <div class="sections-toggle-bar">
+        <span class="sections-toggle-label">Secciones visibles:</span>
+        <div class="sections-toggle-pills">
+            <button type="button" class="btn-sec-pill active" id="pill-goals" onclick="toggleSection('goals')">🎯 Metas del mes ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-milestones" onclick="toggleSection('milestones')">📅 Hitos y fechas ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-habits" onclick="toggleSection('habits')">🌱 Hábitos (1-31) ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-notes" onclick="toggleSection('notes')">📝 Notas / Balance ✓</button>
+            <button type="button" class="btn-sec-pill" onclick="swapModularStrips()" title="Intercambiar bloques superiores e inferiores">🔄 Intercambiar franjas (Arriba ⇄ Abajo)</button>
+        </div>
+    </div>
+
+    <!-- AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR -->
+    <div class="sheet-inline-notice" id="toast-notify" style="display: none;"></div>
+
+    <!-- LIENZO FÍSICO INTERACTIVO HORIZONTAL (8.25" × 6") -->
+    <div class="paper-canvas-container">
+        <div class="interactive-paper-monthly" id="monthly-sheet">
+            
+            <!-- CABECERA DEL MES -->
+            <div class="paper-monthly-header">
+                <div class="monthly-header-title-wrap">
+                    <span class="monthly-kicker">MENOS RUIDO · SISTEMA DE PLANIFICACIÓN MENSUAL</span>
+                    <h2 class="monthly-title-main">Planificación Mensual</h2>
+                </div>
+                <div class="monthly-meta-inputs">
+                    <select class="select-month-inline" id="select-month" onchange="onDateSelectionChanged()">
+                        <option value="0">ENERO</option>
+                        <option value="1">FEBRERO</option>
+                        <option value="2">MARZO</option>
+                        <option value="3">ABRIL</option>
+                        <option value="4">MAYO</option>
+                        <option value="5">JUNIO</option>
+                        <option value="6">JULIO</option>
+                        <option value="7">AGOSTO</option>
+                        <option value="8">SEPTIEMBRE</option>
+                        <option value="9" selected>OCTUBRE</option>
+                        <option value="10">NOVIEMBRE</option>
+                        <option value="11">DICIEMBRE</option>
+                    </select>
+                    <input type="number" class="input-year-inline" id="input-year" value="2026" min="2020" max="2050" onchange="onDateSelectionChanged()">
+                </div>
+            </div>
+
+            <!-- FRANJA SUPERIOR (MODULAR) -->
+            <div class="modular-strip strip-top" id="strip-top" data-count="2">
+                <!-- Se llena dinámicamente con los bloques asignados arriba -->
+            </div>
+
+            <!-- CUADRÍCULA CENTRAL DEL CALENDARIO (ELEMENTO FIJO) -->
+            <div class="calendar-main-grid-wrapper" id="calendar-wrapper">
+                <div class="calendar-days-header-row">
+                    <div class="cal-header-day">LUNES</div>
+                    <div class="cal-header-day">MARTES</div>
+                    <div class="cal-header-day">MIÉRCOLES</div>
+                    <div class="cal-header-day">JUEVES</div>
+                    <div class="cal-header-day">VIERNES</div>
+                    <div class="cal-header-day">SÁBADO</div>
+                    <div class="cal-header-day">DOMINGO</div>
+                </div>
+                <div class="calendar-cells-matrix" id="calendar-matrix">
+                    <!-- 35 celdas generadas con números dinámicos y persistencia de texto -->
+                </div>
+            </div>
+
+            <!-- FRANJA INFERIOR (MODULAR) -->
+            <div class="modular-strip strip-bottom" id="strip-bottom" data-count="2">
+                <!-- Se llena dinámicamente con los bloques asignados abajo -->
+            </div>
+
+            <!-- PIE DE PÁGINA EDITORIAL -->
+            <div class="paper-editorial-footer">
+                <span>EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO</span>
+                <span>editorialmenosruido.com</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Planificador Mensual</h3>
+            <p class="modal-desc">Elige si quieres tu PDF con los textos que has escrito o una plantilla en blanco para rellenar a mano.</p>
+            
+            <div class="modal-format-badge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · Calidad Imprenta
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" onclick="executeDownload(false)">
+                    <span>📥</span> Descargar con mi planificación escrita
+                </button>
+                <button type="button" class="btn-modal-secondary" onclick="executeDownload(true)">
+                    <span>📄</span> Descargar plantilla limpia en blanco
+                </button>
+            </div>
+
+            <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN EN AMAZON -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 0 0 12px 0;">
+                    El método completo está en nuestros libros de Editorial Menos Ruido. Toda la metodología y estructura estratégica está explicada en ellos, ideales para tener tus meses reunidos en un solo lugar y evitar hojas sueltas. Si te gusta la sensación de planificar en papel con claridad y sin ruido, el cuaderno físico te dará la experiencia completa y duradera.
+                </p>
+
+                <div class="modal-books-grid">
+                    <!-- 1. Planificador 90 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_90_dias.jpg" alt="Planificador 90 Días" class="modal-book-thumb" onerror="this.src='/cover_semanal_simple.jpg'">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Trimestral</span>
+                            <h4 class="modal-book-title">Planificador 90 Días</h4>
+                            <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_90_dias', origen: 'modal_generador_mensual_v1' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-90-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 2. Planificador 180 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_180_dias.jpg" alt="Planificador 180 Días" class="modal-book-thumb" onerror="this.src='/cover_semanal_reversible.jpg'">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Semestral</span>
+                            <h4 class="modal-book-title">Planificador 180 Días</h4>
+                            <a href="/ir/amazon-180-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_180_dias', origen: 'modal_generador_mensual_v1' })">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-180-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENLACE RESEÑA -->
+            <div style="text-align: center; margin-top: 14px;">
+                <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_90_dias', origen: 'modal_generador_mensual_v1' })">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL
+        const state = {
+            checkboxStyle: 'circle', // 'square' o 'circle'
+            // Ubicación de los 4 bloques: cada uno puede estar en 'top' o 'bottom'
+            blockPlacement: {
+                goals: 'top',
+                milestones: 'top',
+                habits: 'bottom',
+                notes: 'bottom'
+            },
+            // Orden dentro de cada franja
+            topOrder: ['milestones', 'goals'],
+            bottomOrder: ['habits', 'notes'],
+            // Visibilidad individual de cada uno de los 4 bloques
+            visibility: {
+                goals: true,
+                milestones: true,
+                habits: true,
+                notes: true
+            },
+            // Datos del tracker de hábitos: 3 hábitos con texto y array de 31 booleanos
+            habitsData: [
+                { name: 'Caminar 30 min sin móvil', days: new Array(31).fill(false) },
+                { name: 'Lectura analógica (15 min)', days: new Array(31).fill(false) },
+                { name: 'Revisión y cierre del día', days: new Array(31).fill(false) }
+            ],
+            // Contenido de las 35 celdas del calendario (clave: índice 0..34)
+            calendarNotes: new Array(35).fill(''),
+            // Metas (3)
+            goalsData: [
+                { text: 'Completar hito prioritario del proyecto principal', checked: false },
+                { text: 'Mantener 4 bloques de trabajo profundo por semana', checked: false },
+                { text: 'Hacer balance financiero y estratégico del trimestre', checked: false }
+            ],
+            // Hitos (3)
+            milestonesData: [
+                { date: '05/10', text: 'Entrega final propuesta cliente' },
+                { date: '18/10', text: 'Lanzamiento de campaña y revisión' },
+                { date: '28/10', text: 'Cierre contable y facturación mes' }
+            ],
+            // Notas y balance
+            notesText: 'Aspectos a consolidar este mes: foco en calidad frente a volumen. Disminuir distracciones digitales por las mañanas.'
+        };
+
+        // Nombres de los meses para etiquetas y archivos
+        const MONTH_NAMES = [
+            'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+            'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+        ];
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            renderModularStrips();
+            renderCalendarMatrix();
+            updateCheckboxUI();
+            updateSectionPillsUI();
+        });
+
+        // ========================================================
+        // GESTIÓN DE FORMA DE CASILLAS
+        // ========================================================
+        function setCheckboxStyle(style) {
+            state.checkboxStyle = style;
+            updateCheckboxUI();
+            renderModularStrips(); // Re-renderiza para aplicar estilo a casillas de metas y círculos de hábitos
+            showToast(style === 'circle' ? 'Casillas redondas seleccionadas' : 'Casillas cuadradas seleccionadas');
+        }
+
+        function updateCheckboxUI() {
+            const isCircle = state.checkboxStyle === 'circle';
+            const btnSquare = document.getElementById('btn-shape-square');
+            const btnCircle = document.getElementById('btn-shape-circle');
+            if (btnSquare && btnCircle) {
+                btnSquare.classList.toggle('active', !isCircle);
+                btnCircle.classList.toggle('active', isCircle);
+            }
+        }
+
+        // ========================================================
+        // AVISOS CONTEXTUALES (TOAST SUAVE ENTRE SECCIONES Y PAPEL)
+        // ========================================================
+        let toastTimeout = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notify');
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3600);
+        }
+
+        // ========================================================
+        // CONTROL DE SECCIONES (VISIBILIDAD Y MOVIMIENTO)
+        // ========================================================
+        function toggleSection(blockKey) {
+            state.visibility[blockKey] = !state.visibility[blockKey];
+            updateSectionPillsUI();
+            renderModularStrips();
+            showToast(state.visibility[blockKey] ? `Bloque activado` : `Bloque ocultado`);
+        }
+
+        function updateSectionPillsUI() {
+            const pillGoals = document.getElementById('pill-goals');
+            const pillMilestones = document.getElementById('pill-milestones');
+            const pillHabits = document.getElementById('pill-habits');
+            const pillNotes = document.getElementById('pill-notes');
+
+            if (pillGoals) pillGoals.classList.toggle('active', state.visibility.goals);
+            if (pillMilestones) pillMilestones.classList.toggle('active', state.visibility.milestones);
+            if (pillHabits) pillHabits.classList.toggle('active', state.visibility.habits);
+            if (pillNotes) pillNotes.classList.toggle('active', state.visibility.notes);
+        }
+
+        function moveBlockToStrip(blockKey, targetStrip) {
+            state.blockPlacement[blockKey] = targetStrip;
+            // Remover del array anterior y añadir al destino si no estaba
+            state.topOrder = state.topOrder.filter(k => k !== blockKey);
+            state.bottomOrder = state.bottomOrder.filter(k => k !== blockKey);
+            if (targetStrip === 'top') {
+                state.topOrder.push(blockKey);
+            } else {
+                state.bottomOrder.push(blockKey);
+            }
+            renderModularStrips();
+            showToast(`Bloque movido a la franja ${targetStrip === 'top' ? 'superior' : 'inferior'}`);
+        }
+
+        function swapModularStrips() {
+            // Cambiar los que están arriba a abajo y viceversa
+            for (const key of ['goals', 'milestones', 'habits', 'notes']) {
+                state.blockPlacement[key] = (state.blockPlacement[key] === 'top') ? 'bottom' : 'top';
+            }
+            const temp = [...state.topOrder];
+            state.topOrder = [...state.bottomOrder];
+            state.bottomOrder = temp;
+            renderModularStrips();
+            showToast('Franjas superior e inferior intercambiadas');
+        }
+
+        function swapOrderInsideStrip(strip, keyA, keyB) {
+            const arr = (strip === 'top') ? state.topOrder : state.bottomOrder;
+            const idxA = arr.indexOf(keyA);
+            const idxB = arr.indexOf(keyB);
+            if (idxA !== -1 && idxB !== -1) {
+                arr[idxA] = keyB;
+                arr[idxB] = keyA;
+                renderModularStrips();
+            }
+        }
+
+        // ========================================================
+        // RENDERIZADO DE LAS FRANJAS MODULARES
+        // ========================================================
+        function renderModularStrips() {
+            const stripTop = document.getElementById('strip-top');
+            const stripBottom = document.getElementById('strip-bottom');
+
+            // Filtrar bloques visibles por posición
+            const visibleTop = state.topOrder.filter(key => state.blockPlacement[key] === 'top' && state.visibility[key]);
+            const visibleBottom = state.bottomOrder.filter(key => state.blockPlacement[key] === 'bottom' && state.visibility[key]);
+
+            stripTop.setAttribute('data-count', visibleTop.length);
+            stripBottom.setAttribute('data-count', visibleBottom.length);
+
+            stripTop.innerHTML = visibleTop.map(key => renderBlockHTML(key, 'top')).join('');
+            stripBottom.innerHTML = visibleBottom.map(key => renderBlockHTML(key, 'bottom')).join('');
+        }
+
+        function renderBlockHTML(key, currentStrip) {
+            const otherStrip = (currentStrip === 'top') ? 'bottom' : 'top';
+            const otherStripName = (currentStrip === 'top') ? 'Abajo' : 'Arriba';
+            const isCircle = state.checkboxStyle === 'circle';
+
+            if (key === 'goals') {
+                return `
+                <div class="modular-card" id="card-goals">
+                    <div class="card-header-bar">
+                        <span class="card-title">🎯 Metas del Mes</span>
+                        <div class="card-actions">
+                            <button type="button" class="btn-card-action" onclick="moveBlockToStrip('goals', '${otherStrip}')" title="Mover bloque a la franja de ${otherStripName}">⇄ ${otherStripName}</button>
+                            <button type="button" class="btn-card-action btn-del" onclick="toggleSection('goals')" title="Ocultar bloque">✕</button>
+                        </div>
+                    </div>
+                    <div class="goals-list">
+                        ${state.goalsData.map((item, idx) => `
+                            <div class="goal-item-row">
+                                <div class="goal-checkbox ${isCircle ? 'circle' : ''} ${item.checked ? 'checked' : ''}" 
+                                     onclick="toggleGoalCheck(${idx})" title="Marcar meta"></div>
+                                <input type="text" class="single-line-input" value="${escapeHtml(item.text)}" 
+                                       placeholder="Meta ${idx + 1}..." oninput="updateGoalText(${idx}, this.value)"
+                                       onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+
+            if (key === 'milestones') {
+                return `
+                <div class="modular-card" id="card-milestones">
+                    <div class="card-header-bar">
+                        <span class="card-title">📅 Hitos y Fechas Clave</span>
+                        <div class="card-actions">
+                            <button type="button" class="btn-card-action" onclick="moveBlockToStrip('milestones', '${otherStrip}')" title="Mover bloque a la franja de ${otherStripName}">⇄ ${otherStripName}</button>
+                            <button type="button" class="btn-card-action btn-del" onclick="toggleSection('milestones')" title="Ocultar bloque">✕</button>
+                        </div>
+                    </div>
+                    <div class="milestones-list">
+                        ${state.milestonesData.map((item, idx) => `
+                            <div class="milestone-item-row">
+                                <input type="text" class="milestone-date-input" value="${escapeHtml(item.date)}" 
+                                       placeholder="Día..." oninput="updateMilestoneDate(${idx}, this.value)"
+                                       onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+                                <input type="text" class="single-line-input" value="${escapeHtml(item.text)}" 
+                                       placeholder="Hito / Evento ${idx + 1}..." oninput="updateMilestoneText(${idx}, this.value)"
+                                       onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+
+            if (key === 'habits') {
+                return `
+                <div class="modular-card" id="card-habits">
+                    <div class="card-header-bar">
+                        <span class="card-title">🌱 Hábitos del Mes (Tracker 1–31)</span>
+                        <div class="card-actions">
+                            <button type="button" class="btn-card-action" onclick="moveBlockToStrip('habits', '${otherStrip}')" title="Mover bloque a la franja de ${otherStripName}">⇄ ${otherStripName}</button>
+                            <button type="button" class="btn-card-action btn-del" onclick="toggleSection('habits')" title="Ocultar bloque">✕</button>
+                        </div>
+                    </div>
+                    <div class="habits-container">
+                        ${state.habitsData.map((item, habitIdx) => `
+                            <div class="habit-tracker-row">
+                                <input type="text" class="habit-name-input" value="${escapeHtml(item.name)}" 
+                                       placeholder="Hábito ${habitIdx + 1}..." oninput="updateHabitName(${habitIdx}, this.value)"
+                                       onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+                                <div class="days-dots-strip">
+                                    ${Array.from({ length: 31 }, (_, dayIdx) => `
+                                        <button type="button" class="day-dot-btn ${isCircle ? 'circle' : ''} ${item.days[dayIdx] ? 'checked' : ''}" 
+                                                onclick="toggleHabitDay(${habitIdx}, ${dayIdx})" title="Día ${dayIdx + 1}">
+                                            ${dayIdx + 1}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+
+            if (key === 'notes') {
+                return `
+                <div class="modular-card" id="card-notes">
+                    <div class="card-header-bar">
+                        <span class="card-title">📝 Notas y Balance de Cierre</span>
+                        <div class="card-actions">
+                            <button type="button" class="btn-card-action" onclick="moveBlockToStrip('notes', '${otherStrip}')" title="Mover bloque a la franja de ${otherStripName}">⇄ ${otherStripName}</button>
+                            <button type="button" class="btn-card-action btn-del" onclick="toggleSection('notes')" title="Ocultar bloque">✕</button>
+                        </div>
+                    </div>
+                    <div class="notes-textarea-box">
+                        <textarea class="notes-content-textarea" id="textarea-notes"
+                                  placeholder="Notas, aprendizajes o balance mensual..."
+                                  oninput="state.notesText = this.value">${escapeHtml(state.notesText)}</textarea>
+                    </div>
+                </div>`;
+            }
+
+            return '';
+        }
+
+        // ========================================================
+        // ACTUALIZADORES DE DATOS DE LOS BLOQUES
+        // ========================================================
+        function toggleGoalCheck(idx) {
+            state.goalsData[idx].checked = !state.goalsData[idx].checked;
+            renderModularStrips();
+        }
+        function updateGoalText(idx, val) {
+            state.goalsData[idx].text = val;
+        }
+
+        function updateMilestoneDate(idx, val) {
+            state.milestonesData[idx].date = val;
+        }
+        function updateMilestoneText(idx, val) {
+            state.milestonesData[idx].text = val;
+        }
+
+        function updateHabitName(idx, val) {
+            state.habitsData[idx].name = val;
+        }
+        function toggleHabitDay(habitIdx, dayIdx) {
+            state.habitsData[habitIdx].days[dayIdx] = !state.habitsData[habitIdx].days[dayIdx];
+            renderModularStrips();
+        }
+
+        // ========================================================
+        // CALENDARIO DINÁMICO (35 CELDAS) SIN BORRADO DE TEXTO
+        // ========================================================
+        function onDateSelectionChanged() {
+            renderCalendarMatrix();
+            const monthIdx = parseInt(document.getElementById('select-month').value, 10);
+            const yearVal = document.getElementById('input-year').value;
+            showToast(`Calendario actualizado a ${MONTH_NAMES[monthIdx]} ${yearVal} (tu texto se mantiene seguro)`);
+        }
+
+        function getCalendarDaysData(year, monthIdx) {
+            // Primer día del mes (0=domingo, 1=lunes, ..., 6=sábado)
+            const firstDate = new Date(year, monthIdx, 1);
+            const jsDay = firstDate.getDay();
+            // Convertir a Lunes=0 ... Domingo=6
+            const startCol = (jsDay + 6) % 7;
+
+            // Días totales del mes actual
+            const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+            // Días totales del mes previo
+            const daysInPrevMonth = new Date(year, monthIdx, 0).getDate();
+
+            const cells = [];
+            for (let i = 0; i < 35; i++) {
+                if (i < startCol) {
+                    // Días del mes anterior
+                    const dayNum = daysInPrevMonth - startCol + 1 + i;
+                    cells.push({ dayNumber: dayNum, isCurrentMonth: false, cellIndex: i });
+                } else if (i < startCol + daysInMonth) {
+                    // Días del mes actual
+                    const dayNum = i - startCol + 1;
+                    cells.push({ dayNumber: dayNum, isCurrentMonth: true, cellIndex: i });
+                } else {
+                    // Días del mes siguiente
+                    const dayNum = i - (startCol + daysInMonth) + 1;
+                    cells.push({ dayNumber: dayNum, isCurrentMonth: false, cellIndex: i });
+                }
+            }
+            return cells;
+        }
+
+        function renderCalendarMatrix() {
+            const monthIdx = parseInt(document.getElementById('select-month').value, 10);
+            const yearVal = parseInt(document.getElementById('input-year').value, 10) || 2026;
+            const matrixContainer = document.getElementById('calendar-matrix');
+
+            const cellsData = getCalendarDaysData(yearVal, monthIdx);
+
+            matrixContainer.innerHTML = cellsData.map((cell, idx) => `
+                <div class="cal-day-cell ${cell.isCurrentMonth ? '' : 'faded-day'}" data-cell-idx="${idx}">
+                    <div class="cell-top-bar">
+                        <span class="cell-day-number">${cell.dayNumber}</span>
+                    </div>
+                    <textarea class="cell-notes-textarea" 
+                              placeholder="" 
+                              oninput="handleCellInput(${idx}, this)"
+                              onkeydown="handleCellKeydown(event)">${escapeHtml(state.calendarNotes[idx] || '')}</textarea>
+                </div>
+            `).join('');
+        }
+
+        function handleCellInput(cellIdx, textarea) {
+            // Limitar a máximo 4 líneas físicas
+            const lines = textarea.value.split('\n');
+            if (lines.length > 4) {
+                textarea.value = lines.slice(0, 4).join('\n');
+                showToast('⚠️ Máximo 4 líneas por día');
+            }
+            while (textarea.scrollHeight > (textarea.clientHeight + 1) && textarea.value.length > 0) {
+                textarea.value = textarea.value.slice(0, -1);
+            }
+            state.calendarNotes[cellIdx] = textarea.value;
+        }
+
+        function handleCellKeydown(e) {
+            const textarea = e.target;
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'];
+            if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+
+            const lines = textarea.value.split('\n');
+            if (e.key === 'Enter' && lines.length >= 4) {
+                e.preventDefault();
+                showToast('⚠️ Máximo 4 líneas por día');
+            }
+        }
+
+        // ========================================================
+        // HERRAMIENTAS: LIMPIAR Y CARGAR EJEMPLO
+        // ========================================================
+        function clearAllContent() {
+            if (confirm('¿Deseas limpiar todos los textos del planificador mensual para empezar en blanco?')) {
+                state.calendarNotes = new Array(35).fill('');
+                state.goalsData.forEach(g => { g.text = ''; g.checked = false; });
+                state.milestonesData.forEach(m => { m.date = ''; m.text = ''; });
+                state.habitsData.forEach(h => { h.name = ''; h.days.fill(false); });
+                state.notesText = '';
+
+                renderModularStrips();
+                renderCalendarMatrix();
+                showToast('Textos limpios. Listo para escribir o descargar plantilla en blanco.');
+            }
+        }
+
+        function loadExampleContent() {
+            state.goalsData = [
+                { text: 'Completar hito prioritario del proyecto principal', checked: false },
+                { text: 'Mantener 4 bloques de trabajo profundo por semana', checked: true },
+                { text: 'Hacer balance financiero y estratégico del mes', checked: false }
+            ];
+            state.milestonesData = [
+                { date: '05/10', text: 'Entrega final propuesta cliente' },
+                { date: '18/10', text: 'Lanzamiento de campaña y revisión' },
+                { date: '28/10', text: 'Cierre contable y facturación mes' }
+            ];
+            state.habitsData = [
+                { name: 'Caminar 30 min sin móvil', days: [true, true, true, false, true, true, true, false, true, true, false, false, true, true, true, true, true, false, true, true, true, false, true, true, true, true, true, true, false, true, true] },
+                { name: 'Lectura analógica (15 min)', days: [true, false, true, true, true, false, true, true, true, true, false, true, true, true, true, false, true, true, true, true, true, false, true, true, true, true, false, true, true, true, true] },
+                { name: 'Revisión y cierre del día', days: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true] }
+            ];
+            state.notesText = 'Aspectos a consolidar este mes: foco en calidad frente a volumen. Disminuir distracciones digitales por las mañanas.';
+
+            // Rellenar unos pocos días clave del calendario
+            state.calendarNotes = new Array(35).fill('');
+            state.calendarNotes[3] = 'Reunión de alineación\ncon el equipo';
+            state.calendarNotes[8] = 'Entrega cliente\nRevisión métricas';
+            state.calendarNotes[15] = 'Día sin reuniones\nFoco profundo';
+            state.calendarNotes[22] = 'Revisión mensual\nPresupuestos';
+            state.calendarNotes[27] = 'Cierre de ciclo\nBalance general';
+
+            renderModularStrips();
+            renderCalendarMatrix();
+            showToast('Ejemplo editorial cargado correctamente.');
+        }
+
+        // ========================================================
+        // MODAL DE DESCARGA
+        // ========================================================
+        function openDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById('download-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.id === 'download-modal') {
+                closeDownloadModal();
+            }
+        }
+
+        // ========================================================
+        // MOTOR DE EXPORTACIÓN A PDF 1:1 (jsPDF LANDSCAPE 8.25" × 6")
+        // ========================================================
+        function executeDownload(isBlankTemplate) {
+            closeDownloadModal();
+
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert('No se pudo cargar la librería jsPDF. Por favor, comprueba tu conexión.');
+                return;
+            }
+
+            const monthIdx = parseInt(document.getElementById('select-month').value, 10);
+            const monthName = MONTH_NAMES[monthIdx];
+            const yearVal = document.getElementById('input-year').value || '2026';
+
+            const { jsPDF } = window.jspdf;
+            // Dimensiones apaisadas 8.25" × 6" en mm
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [209.55, 152.4]
+            });
+
+            const pageWidth = 209.55;
+            const pageHeight = 152.4;
+            const leftMargin = 12;
+            const rightMargin = 12;
+            const topMargin = 10;
+            const bottomMargin = 8;
+            const usableWidth = pageWidth - leftMargin - rightMargin; // 185.55 mm
+
+            // FONDO CREMA EDITORIAL ANALÓGICO
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+            // 1. CABECERA EDITORIAL
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.5);
+            doc.setTextColor(135, 85, 59); // Tostado Menos Ruido
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN MENSUAL', leftMargin, topMargin + 2);
+
+            doc.setFont('times', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(20, 18, 16);
+            doc.text('Planificación Mensual', leftMargin, topMargin + 8.5);
+
+            // Mes y año a la derecha
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9.5);
+            doc.setTextColor(30, 26, 22);
+            const metaDateStr = `MES: ${monthName} · AÑO: ${yearVal}`;
+            doc.text(metaDateStr, pageWidth - rightMargin, topMargin + 8, { align: 'right' });
+
+            // Línea divisoria bajo la cabecera
+            doc.setDrawColor(30, 30, 30);
+            doc.setLineWidth(0.4);
+            doc.line(leftMargin, topMargin + 10.5, pageWidth - rightMargin, topMargin + 10.5);
+
+            let currentY = topMargin + 13.5;
+
+            // BLOQUES ACTIVOS
+            const visibleTop = state.topOrder.filter(k => state.blockPlacement[k] === 'top' && state.visibility[k]);
+            const visibleBottom = state.bottomOrder.filter(k => state.blockPlacement[k] === 'bottom' && state.visibility[k]);
+
+            // ALTURAS PROPORCIONALES
+            let topStripHeight = (visibleTop.length > 0) ? 23 : 0;
+            let bottomStripHeight = (visibleBottom.length > 0) ? 23 : 0;
+            
+            // Alto para el calendario central
+            const availableForCalendar = (pageHeight - bottomMargin - 7) - currentY - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 3 : 0) - (bottomStripHeight > 0 ? 3 : 0);
+            const calendarHeight = Math.max(availableForCalendar, 55);
+
+            // 2. FRANJA SUPERIOR
+            if (visibleTop.length > 0) {
+                renderPdfModularStrip(doc, visibleTop, leftMargin, currentY, usableWidth, topStripHeight, isBlankTemplate);
+                currentY += topStripHeight + 3;
+            }
+
+            // 3. CALENDARIO DE DÍAS (CENTRAL)
+            renderPdfCalendar(doc, leftMargin, currentY, usableWidth, calendarHeight, parseInt(yearVal, 10), monthIdx, isBlankTemplate);
+            currentY += calendarHeight + 3;
+
+            // 4. FRANJA INFERIOR
+            if (visibleBottom.length > 0) {
+                renderPdfModularStrip(doc, visibleBottom, leftMargin, currentY, usableWidth, bottomStripHeight, isBlankTemplate);
+            }
+
+            // 5. PIE DE PÁGINA
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(5.5);
+            doc.setTextColor(140, 135, 128);
+            doc.text('EDITORIAL MENOS RUIDO · LIBROS Y CUADERNOS DE ENFOQUE ANALÓGICO', leftMargin, pageHeight - bottomMargin + 2);
+            doc.text('editorialmenosruido.com', pageWidth - rightMargin, pageHeight - bottomMargin + 2, { align: 'right' });
+
+            // NOMBRE DEL ARCHIVO
+            let fileName = 'Menos_Ruido_Planificador_Mensual_En_Blanco.pdf';
+            if (!isBlankTemplate) {
+                const cleanMonth = monthName.replace(/[^A-Za-z0-9]/g, '_');
+                fileName = `Menos_Ruido_Planificador_Mensual_${cleanMonth}_${yearVal}.pdf`;
+            }
+
+            doc.save(fileName);
+            showToast(`PDF descargado: ${fileName}`);
+        }
+
+        // ========================================================
+        // RENDERIZADO DE FRANJAS MODULARES EN jsPDF (SIN EMOJIS)
+        // ========================================================
+        function renderPdfModularStrip(doc, blocks, startX, startY, totalW, height, isBlank) {
+            const count = blocks.length;
+            const gap = 3;
+            const blockW = (count === 1) ? totalW : (totalW - gap) / 2;
+
+            blocks.forEach((key, idx) => {
+                const bX = startX + idx * (blockW + gap);
+                renderPdfBlock(doc, key, bX, startY, blockW, height, isBlank);
+            });
+        }
+
+        function renderPdfBlock(doc, key, x, y, w, h, isBlank) {
+            // Fondo suave del bloque
+            doc.setFillColor(250, 248, 245);
+            doc.setDrawColor(220, 215, 204);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
+
+            // Cabecera del bloque (SIN EMOJIS)
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.2);
+            doc.setTextColor(45, 39, 34);
+
+            let titleStr = '';
+            if (key === 'goals') titleStr = 'METAS DEL MES';
+            if (key === 'milestones') titleStr = 'HITOS Y FECHAS CLAVE';
+            if (key === 'habits') titleStr = 'HÁBITOS DEL MES (TRACKER 1-31)';
+            if (key === 'notes') titleStr = 'NOTAS Y BALANCE DE CIERRE';
+
+            doc.text(titleStr, x + 3, y + 4.2);
+
+            // Línea interior bajo el título
+            doc.setDrawColor(230, 223, 211);
+            doc.setLineWidth(0.15);
+            doc.line(x + 3, y + 5.5, x + w - 3, y + 5.5);
+
+            const contentY = y + 7.5;
+            const isCircle = state.checkboxStyle === 'circle';
+
+            if (key === 'goals') {
+                const rowH = (h - 8.5) / 3;
+                state.goalsData.forEach((item, i) => {
+                    const rowY = contentY + i * rowH;
+                    // Casilla
+                    doc.setDrawColor(100, 100, 100);
+                    doc.setLineWidth(0.2);
+                    doc.setFillColor(255, 255, 255);
+                    const boxSize = 2.4;
+                    if (isCircle) {
+                        doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                    } else {
+                        doc.rect(x + 3.3, rowY, boxSize, boxSize, 'FD');
+                    }
+
+                    // Línea base
+                    doc.setDrawColor(226, 218, 208);
+                    doc.line(x + 7.5, rowY + 2.8, x + w - 3, rowY + 2.8);
+
+                    // Texto si no está en blanco
+                    if (!isBlank && item.text) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(6.5);
+                        doc.setTextColor(30, 30, 30);
+                        const cleanTxt = item.text.replace(/[\r\n]+/g, ' ');
+                        const fitTxt = doc.splitTextToSize(cleanTxt, w - 12)[0] || '';
+                        doc.text(fitTxt, x + 8, rowY + 2.2);
+                    }
+                });
+            } else if (key === 'milestones') {
+                const rowH = (h - 8.5) / 3;
+                state.milestonesData.forEach((item, i) => {
+                    const rowY = contentY + i * rowH;
+                    // Caja de fecha
+                    doc.setDrawColor(210, 205, 196);
+                    doc.setLineWidth(0.18);
+                    doc.setFillColor(255, 255, 255);
+                    doc.roundedRect(x + 3.3, rowY, 9, 3.2, 0.5, 0.5, 'FD');
+
+                    // Fecha si no está en blanco
+                    if (!isBlank && item.date) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(5.8);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(item.date, x + 7.8, rowY + 2.4, { align: 'center' });
+                    }
+
+                    // Línea base del evento
+                    doc.setDrawColor(226, 218, 208);
+                    doc.line(x + 14, rowY + 2.8, x + w - 3, rowY + 2.8);
+
+                    // Texto del hito
+                    if (!isBlank && item.text) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(6.5);
+                        doc.setTextColor(30, 30, 30);
+                        const cleanTxt = item.text.replace(/[\r\n]+/g, ' ');
+                        const fitTxt = doc.splitTextToSize(cleanTxt, w - 18)[0] || '';
+                        doc.text(fitTxt, x + 15, rowY + 2.2);
+                    }
+                });
+            } else if (key === 'habits') {
+                const rowH = (h - 8.5) / 3;
+                const trackerW = Math.min(w * 0.58, 62);
+                const nameW = w - trackerW - 8;
+
+                state.habitsData.forEach((item, i) => {
+                    const rowY = contentY + i * rowH;
+                    // Línea de nombre
+                    doc.setDrawColor(226, 218, 208);
+                    doc.setLineWidth(0.15);
+                    doc.line(x + 3.3, rowY + 2.8, x + 3.3 + nameW, rowY + 2.8);
+
+                    if (!isBlank && item.name) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(6.2);
+                        doc.setTextColor(30, 30, 30);
+                        const cleanTxt = item.name.replace(/[\r\n]+/g, ' ');
+                        const fitTxt = doc.splitTextToSize(cleanTxt, nameW - 1)[0] || '';
+                        doc.text(fitTxt, x + 3.3, rowY + 2.2);
+                    }
+
+                    // 31 casillas vectoriales
+                    const trackStartX = x + 3.3 + nameW + 2;
+                    const dotCellW = trackerW / 31;
+                    for (let d = 0; d < 31; d++) {
+                        const dotX = trackStartX + d * dotCellW;
+                        const isMarked = !isBlank && item.days && item.days[d];
+
+                        doc.setDrawColor(180, 173, 163);
+                        doc.setLineWidth(0.15);
+                        if (isMarked) {
+                            doc.setFillColor(135, 85, 59); // Marcado
+                        } else {
+                            doc.setFillColor(255, 255, 255);
+                        }
+
+                        const dSize = Math.min(dotCellW - 0.3, 1.8);
+                        if (isCircle) {
+                            doc.circle(dotX + dSize / 2, rowY + 1.2, dSize / 2, isMarked ? 'FD' : 'FD');
+                        } else {
+                            doc.rect(dotX, rowY + 0.3, dSize, dSize, isMarked ? 'FD' : 'FD');
+                        }
+                    }
+                });
+            } else if (key === 'notes') {
+                if (!isBlank && state.notesText) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6.2);
+                    doc.setTextColor(30, 30, 30);
+                    const splitNotes = doc.splitTextToSize(state.notesText, w - 6);
+                    const maxLines = Math.floor((h - 8.5) / 3.2);
+                    const toPrint = splitNotes.slice(0, maxLines);
+                    toPrint.forEach((line, lIdx) => {
+                        doc.text(line, x + 3.3, contentY + 2.5 + lIdx * 3.2);
+                    });
+                } else {
+                    // Pautas tenues si está en blanco
+                    doc.setDrawColor(235, 230, 222);
+                    doc.setLineWidth(0.12);
+                    const lineCount = Math.floor((h - 8.5) / 3.2);
+                    for (let l = 0; l < lineCount; l++) {
+                        doc.line(x + 3.3, contentY + 3 + l * 3.2, x + w - 3.3, contentY + 3 + l * 3.2);
+                    }
+                }
+            }
+        }
+
+        // ========================================================
+        // RENDERIZADO DEL CALENDARIO EN jsPDF (7 COLUMNAS × 5 FILAS)
+        // ========================================================
+        function renderPdfCalendar(doc, startX, startY, totalW, totalH, year, monthIdx, isBlank) {
+            const colW = totalW / 7;
+            const headerH = 4.2;
+            const matrixH = totalH - headerH;
+            const rowH = matrixH / 5;
+
+            // Marco exterior
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.35);
+            doc.rect(startX, startY, totalW, totalH);
+
+            // Cabecera de días
+            doc.setFillColor(242, 237, 228);
+            doc.rect(startX, startY, totalW, headerH, 'FD');
+
+            const daysHeaders = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(5.8);
+            doc.setTextColor(45, 38, 33);
+
+            daysHeaders.forEach((dayName, colIdx) => {
+                const cX = startX + colIdx * colW;
+                doc.text(dayName, cX + colW / 2, startY + 3.0, { align: 'center' });
+                if (colIdx > 0) {
+                    doc.setDrawColor(220, 215, 206);
+                    doc.setLineWidth(0.2);
+                    doc.line(cX, startY, cX, startY + headerH);
+                }
+            });
+
+            // Línea divisoria bajo la cabecera
+            doc.setDrawColor(40, 35, 30);
+            doc.setLineWidth(0.35);
+            doc.line(startX, startY + headerH, startX + totalW, startY + headerH);
+
+            // Datos de los 35 días
+            const cellsData = getCalendarDaysData(year, monthIdx);
+
+            for (let r = 0; r < 5; r++) {
+                const cellY = startY + headerH + r * rowH;
+                for (let c = 0; c < 7; c++) {
+                    const cellIdx = r * 7 + c;
+                    const cellX = startX + c * colW;
+                    const cellInfo = cellsData[cellIdx];
+
+                    // Fondo atenuado para días fuera de mes
+                    if (!cellInfo.isCurrentMonth) {
+                        doc.setFillColor(250, 248, 245);
+                        doc.rect(cellX, cellY, colW, rowH, 'F');
+                    }
+
+                    // Líneas interiores de la cuadrícula
+                    doc.setDrawColor(224, 218, 208);
+                    doc.setLineWidth(0.18);
+                    if (c < 6) doc.line(cellX + colW, cellY, cellX + colW, cellY + rowH);
+                    if (r < 4) doc.line(cellX, cellY + rowH, cellX + colW, cellY + rowH);
+
+                    // Número del día en la esquina superior derecha
+                    doc.setFont('helvetica', cellInfo.isCurrentMonth ? 'bold' : 'normal');
+                    doc.setFontSize(6.2);
+                    if (cellInfo.isCurrentMonth) {
+                        doc.setTextColor(30, 26, 22);
+                    } else {
+                        doc.setTextColor(181, 174, 159);
+                    }
+                    doc.text(String(cellInfo.dayNumber), cellX + colW - 1.8, cellY + 3.0, { align: 'right' });
+
+                    // Texto escrito en la casilla (si no está en blanco)
+                    if (!isBlank && state.calendarNotes[cellIdx]) {
+                        const rawText = state.calendarNotes[cellIdx].trim();
+                        if (rawText) {
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(5.5);
+                            doc.setTextColor(30, 30, 30);
+
+                            const maxLinesInCell = Math.floor((rowH - 4.5) / 2.6);
+                            const cellLines = doc.splitTextToSize(rawText, colW - 3.2);
+                            const toRender = cellLines.slice(0, Math.max(maxLinesInCell, 1));
+
+                            toRender.forEach((line, lIdx) => {
+                                doc.text(line, cellX + 1.8, cellY + 5.6 + lIdx * 2.6);
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // ========================================================
+        // UTILIDADES
+        // ========================================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function trackVercelEvent(eventName, properties) {
+            if (window.va) {
+                window.va('event', { name: eventName, data: properties });
+            }
+        }
+    </script>
+</body>
+</html>
