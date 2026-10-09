@@ -1166,10 +1166,14 @@
         // Determina el número máximo de líneas de texto según la altura física real de la celda
         function getMaxLinesAllowedForRow(weeksCount, rowsCount) {
             if (weeksCount === 1) {
-                if (rowsCount <= 8) return 3;
+                if (rowsCount <= 4) return 7;
+                if (rowsCount <= 6) return 5;
+                if (rowsCount <= 8) return 4;
+                if (rowsCount <= 12) return 3;
                 if (rowsCount <= 16) return 2;
                 return 1;
             } else if (weeksCount === 2) {
+                if (rowsCount <= 4) return 3;
                 if (rowsCount <= 6) return 2;
                 return 1;
             } else { // 3 semanas
@@ -1181,9 +1185,12 @@
         // Determina el número máximo de caracteres permitidos según la altura física
         function getMaxCharsAllowedForRow(weeksCount, rowsCount) {
             const lines = getMaxLinesAllowedForRow(weeksCount, rowsCount);
+            if (lines >= 7) return 160;
+            if (lines === 5) return 120;
+            if (lines === 4) return 90;
             if (lines === 3) return 65;
-            if (lines === 2) return 40;
-            return 20; // 1 sola línea compacta
+            if (lines === 2) return 42;
+            return 22; // 1 sola línea compacta
         }
 
         // Comprueba si alguna celda existente excede la capacidad del nuevo formato antes de cambiar
@@ -1571,6 +1578,16 @@
                         textarea.maxLength = maxCharsAllowed;
                         textarea.placeholder = '';
                         textarea.dataset.key = key;
+
+                        if (rowsCount <= 4 && state.weeksCount === 1) {
+                            textarea.style.fontSize = '0.62rem';
+                        } else if (rowsCount <= 6 && state.weeksCount === 1) {
+                            textarea.style.fontSize = '0.58rem';
+                        } else if (rowsCount <= 8 && state.weeksCount === 1) {
+                            textarea.style.fontSize = '0.56rem';
+                        } else if (rowsCount >= 18) {
+                            textarea.style.fontSize = '0.50rem';
+                        }
 
                         // Interceptar teclas y bloquear Enter en formato compacto de 1 línea
                         textarea.addEventListener('keydown', (e) => {
