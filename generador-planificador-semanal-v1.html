@@ -312,11 +312,11 @@
         }
 
         .weekly-column-box.expanded-col .day-interactive-row {
-            padding: 7px 10px;
+            padding: 4px 10px;
         }
 
         .weekly-column-box.expanded-col .weekly-focus-card {
-            padding: 7px 10px;
+            padding: 5px 10px;
         }
 
         /* FILA DE DÍA */
@@ -1032,8 +1032,9 @@
                                     <input type="text" class="day-number-input" id="num-lunes" maxlength="2" value="7" placeholder="" title="Día del mes">
                                 </div>
                             </div>
-                            <textarea class="textarea-day-inline" id="field-lunes" rows="3" maxlength="280"
+                            <textarea class="textarea-day-inline" id="field-lunes" maxlength="500"
                                       placeholder="Prioridad clave del lunes..."
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Cerrar revisión del presupuesto de imprenta</textarea>
                         </div>
 
@@ -1044,8 +1045,9 @@
                                     <input type="text" class="day-number-input" id="num-martes" maxlength="2" value="8" placeholder="" title="Día del mes">
                                 </div>
                             </div>
-                            <textarea class="textarea-day-inline" id="field-martes" rows="3" maxlength="280"
+                            <textarea class="textarea-day-inline" id="field-martes" maxlength="500"
                                       placeholder="Prioridad clave del martes..."
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Reunión de balance trimestral con el equipo editorial</textarea>
                         </div>
 
@@ -1056,8 +1058,9 @@
                                     <input type="text" class="day-number-input" id="num-miercoles" maxlength="2" value="9" placeholder="" title="Día del mes">
                                 </div>
                             </div>
-                            <textarea class="textarea-day-inline" id="field-miercoles" rows="3" maxlength="280"
+                            <textarea class="textarea-day-inline" id="field-miercoles" maxlength="500"
                                       placeholder="Prioridad clave del miércoles..."
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Redacción de los dos ensayos para el lanzamiento</textarea>
                         </div>
 
@@ -1068,8 +1071,9 @@
                                     <input type="text" class="day-number-input" id="num-jueves" maxlength="2" value="10" placeholder="" title="Día del mes">
                                 </div>
                             </div>
-                            <textarea class="textarea-day-inline" id="field-jueves" rows="3" maxlength="280"
+                            <textarea class="textarea-day-inline" id="field-jueves" maxlength="500"
                                       placeholder="Prioridad clave del jueves..."
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Pruebas de impresión de cubiertas y calibración de color</textarea>
                         </div>
                     </div>
@@ -1148,8 +1152,9 @@
                     <div class="weekly-column-box" id="col-days-right">
                         <div class="weekly-focus-card">
                             <span class="weekly-focus-label">🎯 FOCO DE LA SEMANA (META CLAVE)</span>
-                            <textarea class="textarea-focus-inline" id="field-focus" rows="3" maxlength="280"
+                            <textarea class="textarea-focus-inline" id="field-focus" maxlength="500"
                                       placeholder="¿Qué único resultado justificaría toda esta semana?"
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Entregar los originales completos para enviar a encuadernación</textarea>
                         </div>
 
@@ -1160,8 +1165,9 @@
                                     <input type="text" class="day-number-input" id="num-viernes" maxlength="2" value="11" placeholder="" title="Día del mes">
                                 </div>
                             </div>
-                            <textarea class="textarea-day-inline" id="field-viernes" rows="3" maxlength="280"
+                            <textarea class="textarea-day-inline" id="field-viernes" maxlength="500"
                                       placeholder="Prioridad clave del viernes..."
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Cierre de tareas pendientes y balance de la semana</textarea>
                         </div>
 
@@ -1172,8 +1178,9 @@
                                     <input type="text" class="day-number-input" id="num-sabado" maxlength="2" value="12" placeholder="" title="Día del mes">
                                 </div>
                             </div>
-                            <textarea class="textarea-day-inline" id="field-sabado" rows="3" maxlength="280"
+                            <textarea class="textarea-day-inline" id="field-sabado" maxlength="500"
                                       placeholder="Descanso, lectura o proyectos personales..."
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Caminar por la sierra y lectura profunda sin pantallas</textarea>
                         </div>
 
@@ -1184,8 +1191,9 @@
                                     <input type="text" class="day-number-input" id="num-domingo" maxlength="2" value="13" placeholder="" title="Día del mes">
                                 </div>
                             </div>
-                            <textarea class="textarea-day-inline" id="field-domingo" rows="3" maxlength="280"
+                            <textarea class="textarea-day-inline" id="field-domingo" maxlength="500"
                                       placeholder="Revisión tranquila y preparación de la semana siguiente..."
+                                      onkeydown="handleDayKeydown(event)"
                                       oninput="handleDayInput(this)">Planificar la semana entrante con calma antes de cenar</textarea>
                         </div>
                     </div>
@@ -1320,48 +1328,95 @@
             const lines = el.value.split('\n');
             if (lines.length > maxLines) {
                 el.value = lines.slice(0, maxLines).join('\n');
+                showToast(`⚠️ Máximo ${maxLines} líneas para este día${isExpanded ? '' : ' (elimina la sección inferior para permitir hasta 7 líneas)'}`);
             }
             while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
                 el.value = el.value.slice(0, -1);
             }
         }
 
-        // MANEJO DE UNA SOLA LÍNEA ESTRICTA (SIN ENTER Y HASTA EL BORDE DERECHO)
-        function handleSingleLineInput(el) {
-            el.value = el.value.replace(/[\r\n]+/g, ' ');
-            while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
-                el.value = el.value.slice(0, -1);
+        function handleDayKeydown(e) {
+            const el = e.target;
+            const allowedControlKeys = [
+                'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+                'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Escape'
+            ];
+            if (allowedControlKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+            const isExpanded = el.closest('.weekly-column-box') && el.closest('.weekly-column-box').classList.contains('expanded-col');
+            const maxLines = isExpanded ? 7 : 4;
+            const lines = el.value.split('\n');
+            if (e.key === 'Enter' && lines.length >= maxLines) {
+                e.preventDefault();
+                showToast(`⚠️ Máximo ${maxLines} líneas para este día${isExpanded ? '' : ' (elimina la sección inferior para escribir hasta 7 líneas)'}`);
+                return false;
             }
         }
 
-        // ANALÍTICA VERCEL: TRACKING DE EVENTOS
-        function trackVercelEvent(name, data) {
-            try {
-                if (typeof window.va === 'function') {
-                    window.va('event', { name: name, data: data || {} });
-                }
-            } catch(e) {}
+        // ========================================================
+        // VALIDACIÓN DE CAPACIDAD DE TEXTO (BLOQUEO SI NO HAY ESPACIO)
+        // ========================================================
+        function getDayTextLinesCount(fieldId) {
+            const el = document.getElementById(fieldId);
+            if (!el) return 0;
+            const text = el.value.trim();
+            if (!text) return 0;
+
+            let mirror = document.getElementById('day-measurement-mirror');
+            if (!mirror) {
+                mirror = document.createElement('div');
+                mirror.id = 'day-measurement-mirror';
+                mirror.style.position = 'absolute';
+                mirror.style.visibility = 'hidden';
+                mirror.style.pointerEvents = 'none';
+                mirror.style.whiteSpace = 'pre-wrap';
+                mirror.style.wordBreak = 'break-word';
+                mirror.style.boxSizing = 'border-box';
+                document.body.appendChild(mirror);
+            }
+
+            const comp = window.getComputedStyle(el);
+            mirror.style.width = (el.clientWidth || 380) + 'px';
+            mirror.style.fontFamily = comp.fontFamily;
+            mirror.style.fontSize = comp.fontSize;
+            mirror.style.lineHeight = comp.lineHeight;
+            mirror.style.padding = comp.padding;
+            mirror.textContent = el.value;
+
+            const totalHeight = mirror.offsetHeight;
+            mirror.textContent = 'M';
+            const singleLineHeight = mirror.offsetHeight || 16;
+            mirror.textContent = el.value;
+
+            const measuredLines = Math.ceil(totalHeight / singleLineHeight);
+            const explicitLines = el.value.split('\n').length;
+            return Math.max(explicitLines, measuredLines);
         }
 
-        // ALTERNAR CASILLAS (CUADRADA / CÍRCULO)
-        function toggleCheckboxStyle() {
-            state.checkboxStyle = state.checkboxStyle === 'circle' ? 'square' : 'circle';
-            updateCheckboxUI();
-            showToast(`Casillas: ${state.checkboxStyle === 'circle' ? 'Círculos' : 'Cuadradas'}`);
-        }
+        function canShrinkColumn(columnSide) {
+            const fieldIds = (columnSide === 'left') 
+                ? ['field-lunes', 'field-martes', 'field-miercoles', 'field-jueves']
+                : ['field-focus', 'field-viernes', 'field-sabado', 'field-domingo'];
 
-        function updateCheckboxUI() {
-            const isCircle = state.checkboxStyle === 'circle';
-            document.querySelectorAll('.day-check-indicator').forEach(el => {
-                el.className = `day-check-indicator ${isCircle ? 'circle' : ''}`;
-            });
-            document.querySelectorAll('.habit-day-dot').forEach(el => {
-                if (isCircle) {
-                    el.classList.remove('square');
-                } else {
-                    el.classList.add('square');
+            for (const fId of fieldIds) {
+                const el = document.getElementById(fId);
+                if (!el) continue;
+                const text = el.value.trim();
+                if (!text) continue;
+
+                // Comprobación de líneas (máximo 4 permitidas en modo normal con sección inferior)
+                const explicitLines = el.value.split('\n').length;
+                if (explicitLines > 4) {
+                    return false;
                 }
-            });
+
+                const measuredLines = getDayTextLinesCount(fId);
+                if (measuredLines > 4) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         // CONTROL DINÁMICO DE SECCIONES (ELIMINAR / MOSTRAR / INTERCAMBIAR)
@@ -1429,6 +1484,15 @@
         }
 
         function toggleSection(secKey) {
+            if (!state.sections[secKey]) {
+                // El usuario quiere reactivar/añadir esta sección: verificar si la columna tiene espacio suficiente
+                const targetSide = (state.slotLeft === secKey) ? 'left' : 'right';
+                if (!canShrinkColumn(targetSide)) {
+                    showToast('⚠️ No hay espacio en la hoja: borra el texto en los días de la semana para hacer hueco');
+                    return;
+                }
+            }
+
             state.sections[secKey] = !state.sections[secKey];
             updateLayoutUI();
             const name = secKey === 'habits' ? 'Hábitos de la semana' : 'Secundarias / Notas';
@@ -1443,6 +1507,22 @@
         }
 
         function swapBottomSections() {
+            const leftIsVisible = state.sections[state.slotLeft];
+            const rightIsVisible = state.sections[state.slotRight];
+
+            // Si una columna está ampliada y al intercambiar recibirá un bloque y se encogerá:
+            if (!leftIsVisible && rightIsVisible) {
+                if (!canShrinkColumn('left')) {
+                    showToast('⚠️ No hay espacio en la hoja: borra el texto en los días de la semana para hacer hueco');
+                    return;
+                }
+            } else if (leftIsVisible && !rightIsVisible) {
+                if (!canShrinkColumn('right')) {
+                    showToast('⚠️ No hay espacio en la hoja: borra el texto en los días de la semana para hacer hueco');
+                    return;
+                }
+            }
+
             const temp = state.slotLeft;
             state.slotLeft = state.slotRight;
             state.slotRight = temp;
@@ -1727,9 +1807,9 @@
                 // Texto del día
                 if (day.text) {
                     doc.setFont('times', 'normal');
-                    const maxLines = leftVisible ? 4 : 6;
-                    const fSize = leftVisible ? 7.6 : 7.8;
-                    const lSpacing = leftVisible ? 3.2 : 3.4;
+                    const maxLines = leftVisible ? 4 : 7;
+                    const fSize = leftVisible ? 7.6 : 7.4;
+                    const lSpacing = leftVisible ? 3.0 : 2.8;
                     doc.setFontSize(fSize);
                     doc.setTextColor(40, 35, 30);
                     const lines = strictSafeWrapText(doc, day.text, colW - 14);
@@ -1761,9 +1841,9 @@
 
             if (focusText) {
                 doc.setFont('times', 'bold');
-                const maxFLines = rightVisible ? 4 : 6;
-                const fFontSize = rightVisible ? 7.8 : 8.0;
-                const fSpacing = rightVisible ? 3.2 : 3.4;
+                const maxFLines = rightVisible ? 4 : 7;
+                const fFontSize = rightVisible ? 7.8 : 7.4;
+                const fSpacing = rightVisible ? 3.0 : 2.8;
                 doc.setFontSize(fFontSize);
                 doc.setTextColor(25, 20, 15);
                 const fLines = strictSafeWrapText(doc, focusText, colW - 8);
@@ -1815,9 +1895,9 @@
 
                 if (day.text) {
                     doc.setFont('times', 'normal');
-                    const maxLines = rightVisible ? 4 : 6;
-                    const fSize = rightVisible ? 7.6 : 7.8;
-                    const lSpacing = rightVisible ? 3.2 : 3.4;
+                    const maxLines = rightVisible ? 4 : 7;
+                    const fSize = rightVisible ? 7.6 : 7.4;
+                    const lSpacing = rightVisible ? 3.0 : 2.8;
                     doc.setFontSize(fSize);
                     doc.setTextColor(40, 35, 30);
                     const lines = strictSafeWrapText(doc, day.text, colW - 14);
