@@ -672,9 +672,13 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .annual-month-tile.tile-overflow-warning {
+        .annual-month-tile.tile-overflow-warning,
+        .modular-card.tile-overflow-warning,
+        input.field-overflow-warning,
+        textarea.field-overflow-warning {
             border-color: #c94a29 !important;
             box-shadow: 0 0 0 2px rgba(201, 74, 41, 0.25) !important;
+            background-color: #fffaf8 !important;
             animation: shakePulse 0.35s ease-in-out;
         }
 
@@ -1037,9 +1041,9 @@
             },
             // Prioridades estratégicas (3)
             prioritiesData: [
-                { text: 'Consolidar nuevo modelo de trabajo sin dispersión digital', checked: false },
-                { text: 'Completar los hitos clave de los proyectos estratégicos', checked: false },
-                { text: 'Preservar espacios innegociables de salud y descanso', checked: false }
+                { text: 'Consolidar modelo de trabajo sin dispersión', checked: false },
+                { text: 'Completar hitos de proyectos estratégicos', checked: false },
+                { text: 'Cuidar espacios clave de salud y descanso', checked: false }
             ],
             // Lema anual
             mottoText: 'Menos ruido mental, más profundidad y constancia.',
@@ -1144,16 +1148,6 @@
         // ========================================================
         // VALIDACIÓN DE CAPACIDAD DE TEXTO ANTES DE AGRUPAR O AÑADIR
         // ========================================================
-        function canFitInHalfColumn(blockKey) {
-            if (blockKey === 'priorities') {
-                return state.prioritiesData.every(p => !p.text || p.text.length <= 44);
-            }
-            if (blockKey === 'motto') {
-                return !state.mottoText || state.mottoText.length <= 50;
-            }
-            return true;
-        }
-
         function syncMonthsNotesFromDOM() {
             const textareas = document.querySelectorAll('.month-notes-textarea');
             textareas.forEach((ta, idx) => {
@@ -1161,6 +1155,112 @@
                     state.monthsNotes[idx] = ta.value;
                 }
             });
+        }
+
+        function syncAllInputsFromDOM() {
+            syncMonthsNotesFromDOM();
+            const priInputs = document.querySelectorAll('.priorities-list .single-line-input');
+            priInputs.forEach((inp, idx) => {
+                if (state.prioritiesData[idx] && inp) {
+                    state.prioritiesData[idx].text = inp.value;
+                }
+            });
+            const mottoInp = document.querySelector('.motto-input');
+            if (mottoInp) {
+                state.mottoText = mottoInp.value;
+            }
+            const notesTa = document.getElementById('textarea-notes');
+            if (notesTa) {
+                state.notesText = notesTa.value;
+            }
+        }
+
+        function isBlockInTwoColumns(blockKey, simulatedVisibility = state.visibility, simulatedPlacement = state.blockPlacement) {
+            const strip = simulatedPlacement[blockKey];
+            const order = (strip === 'top') ? state.topOrder : state.bottomOrder;
+            const activeInStrip = order.filter(k => simulatedPlacement[k] === strip && simulatedVisibility[k]);
+            return activeInStrip.length >= 2;
+        }
+
+        function getMaxCharsForBlock(blockKey, simulatedVisibility = state.visibility, simulatedPlacement = state.blockPlacement) {
+            const isHalf = isBlockInTwoColumns(blockKey, simulatedVisibility, simulatedPlacement);
+            if (blockKey === 'motto') {
+                return isHalf ? 50 : 105;
+            }
+            if (blockKey === 'priorities') {
+                return isHalf ? 45 : 95;
+            }
+            return 160;
+        }
+
+        function highlightMottoOverflow() {
+            const mottoInp = document.querySelector('.motto-input');
+            const mottoCard = document.getElementById('card-motto');
+            if (mottoInp) {
+                mottoInp.classList.add('field-overflow-warning');
+                mottoInp.focus();
+                setTimeout(() => mottoInp.classList.remove('field-overflow-warning'), 2600);
+            } else if (mottoCard) {
+                mottoCard.classList.add('tile-overflow-warning');
+                setTimeout(() => mottoCard.classList.remove('tile-overflow-warning'), 2600);
+            }
+        }
+
+        function highlightPriorityOverflow(idx) {
+            const priInputs = document.querySelectorAll('.priorities-list .single-line-input');
+            const priCard = document.getElementById('card-priorities');
+            if (priInputs[idx]) {
+                priInputs[idx].classList.add('field-overflow-warning');
+                priInputs[idx].focus();
+                setTimeout(() => priInputs[idx].classList.remove('field-overflow-warning'), 2600);
+            } else if (priCard) {
+                priCard.classList.add('tile-overflow-warning');
+                setTimeout(() => priCard.classList.remove('tile-overflow-warning'), 2600);
+            }
+        }
+
+        function checkModularStripsCapacity(targetVisibility, targetPlacement = state.blockPlacement) {
+            syncAllInputsFromDOM();
+
+            for (const strip of ['top', 'bottom']) {
+                const order = (strip === 'top') ? state.topOrder : state.bottomOrder;
+                const activeInStrip = order.filter(k => targetPlacement[k] === strip && targetVisibility[k]);
+
+                if (activeInStrip.length >= 2) {
+                    for (const key of activeInStrip.slice(0, 2)) {
+                        if (key === 'motto') {
+                            const txt = state.mottoText ? state.mottoText.trim() : '';
+                            if (txt.length > 50) {
+                                return {
+                                    ok: false,
+                                    blockKey: 'motto',
+                                    chars: txt.length,
+                                    maxChars: 50,
+                                    name: 'el Lema Anual',
+                                    msg: `⚠️ No se puede compartir la franja porque el Lema Anual es demasiado amplio (tiene ${txt.length} letras, máx: 50). Recorta el lema para poder colocar ambos bloques.`
+                                };
+                            }
+                        }
+                        if (key === 'priorities') {
+                            for (let pIdx = 0; pIdx < state.prioritiesData.length; pIdx++) {
+                                const pTxt = state.prioritiesData[pIdx]?.text ? state.prioritiesData[pIdx].text.trim() : '';
+                                if (pTxt.length > 45) {
+                                    return {
+                                        ok: false,
+                                        blockKey: 'priorities',
+                                        priorityIdx: pIdx,
+                                        chars: pTxt.length,
+                                        maxChars: 45,
+                                        name: `la Prioridad ${pIdx + 1}`,
+                                        msg: `⚠️ No se puede compartir la franja porque la Prioridad ${pIdx + 1} es demasiado amplia (tiene ${pTxt.length} letras, máx: 45). Recorta el texto para poder colocar ambos bloques.`
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return { ok: true };
         }
 
         function getMaxLinesPerMonthTile(simulatedVisibility = state.visibility) {
@@ -1227,6 +1327,32 @@
             }
         }
 
+        function handlePriorityInput(idx, el) {
+            el.value = el.value.replace(/[\r\n]+/g, ' ');
+            const isHalf = isBlockInTwoColumns('priorities');
+            const maxChars = isHalf ? 45 : 95;
+            if (el.value.length > maxChars) {
+                el.value = el.value.slice(0, maxChars);
+            }
+            while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+            updatePriorityText(idx, el.value);
+        }
+
+        function handleMottoInput(el) {
+            el.value = el.value.replace(/[\r\n]+/g, ' ');
+            const isHalf = isBlockInTwoColumns('motto');
+            const maxChars = isHalf ? 50 : 105;
+            if (el.value.length > maxChars) {
+                el.value = el.value.slice(0, maxChars);
+            }
+            while (el.scrollWidth > el.clientWidth && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+            state.mottoText = el.value;
+        }
+
         // ========================================================
         // CONTROL DE SECCIONES (VISIBILIDAD Y MOVIMIENTO)
         // ========================================================
@@ -1234,13 +1360,30 @@
             const willEnable = !state.visibility[blockKey];
 
             if (willEnable) {
-                syncMonthsNotesFromDOM();
+                syncAllInputsFromDOM();
                 const simulatedVisibility = { ...state.visibility, [blockKey]: true };
-                const check = checkMonthTilesCapacity(simulatedVisibility);
-                if (!check.ok) {
-                    const firstErr = check.overflowingMonths[0];
+
+                // 1. Validar compatibilidad entre bloques modulares en la misma franja (Lema vs Prioridades)
+                const stripCheck = checkModularStripsCapacity(simulatedVisibility);
+                if (!stripCheck.ok) {
+                    if (stripCheck.blockKey === 'motto') {
+                        highlightMottoOverflow();
+                    } else if (stripCheck.blockKey === 'priorities') {
+                        highlightPriorityOverflow(stripCheck.priorityIdx);
+                    }
+                    const blockNames = { priorities: 'las Prioridades del Año', motto: 'el Lema Anual', notes: 'las Notas y Balance' };
+                    const targetName = blockNames[blockKey] || 'este bloque';
+                    const genderWord = stripCheck.blockKey === 'priorities' ? 'demasiado amplia' : 'demasiado amplio';
+                    showToast(`⚠️ No se puede agregar ${targetName} porque ${stripCheck.name} es ${genderWord} para compartir fila (tiene ${stripCheck.chars} letras, máx: ${stripCheck.maxChars}). Recorta el texto para poder agregarlo.`);
+                    return;
+                }
+
+                // 2. Validar capacidad de las tarjetas de los meses en el calendario
+                const monthCheck = checkMonthTilesCapacity(simulatedVisibility);
+                if (!monthCheck.ok) {
+                    const firstErr = monthCheck.overflowingMonths[0];
                     highlightOverflowingMonth(firstErr.idx - 1);
-                    showToast(`⚠️ No se puede agregar este bloque porque el calendario contiene demasiado texto. Elimina caracteres en ${firstErr.name} (tiene ${firstErr.chars} letras / ${firstErr.lines} líneas, máx: ${check.maxChars} letras / ${check.maxLines} líneas) para poder agregarlo.`);
+                    showToast(`⚠️ No se puede agregar este bloque porque el calendario contiene demasiado texto. Elimina caracteres en ${firstErr.name} (tiene ${firstErr.chars} letras / ${firstErr.lines} líneas, máx: ${monthCheck.maxChars} letras / ${monthCheck.maxLines} líneas) para poder agregarlo.`);
                     return;
                 }
             }
@@ -1263,19 +1406,18 @@
         }
 
         function moveBlockToStrip(blockKey, targetStrip) {
-            const targetOrder = (targetStrip === 'top') ? state.topOrder : state.bottomOrder;
-            const activeOthers = targetOrder.filter(k => k !== blockKey && state.blockPlacement[k] === targetStrip && state.visibility[k]);
-            if (activeOthers.length >= 1) {
-                if (!canFitInHalfColumn(blockKey)) {
-                    showToast('⚠️ No hay espacio en la fila: recorta texto para colocarlo en paralelo');
-                    return;
+            syncAllInputsFromDOM();
+            const simulatedPlacement = { ...state.blockPlacement, [blockKey]: targetStrip };
+            const stripCheck = checkModularStripsCapacity(state.visibility, simulatedPlacement);
+            if (!stripCheck.ok) {
+                if (stripCheck.blockKey === 'motto') {
+                    highlightMottoOverflow();
+                } else if (stripCheck.blockKey === 'priorities') {
+                    highlightPriorityOverflow(stripCheck.priorityIdx);
                 }
-                for (const otherKey of activeOthers) {
-                    if (!canFitInHalfColumn(otherKey)) {
-                        showToast('⚠️ No hay espacio en la fila: recorta texto para colocarlo en paralelo');
-                        return;
-                    }
-                }
+                const genderWord = stripCheck.blockKey === 'priorities' ? 'demasiado amplia' : 'demasiado amplio';
+                showToast(`⚠️ No se puede mover el bloque a la franja porque ${stripCheck.name} es ${genderWord} para compartir fila (tiene ${stripCheck.chars} letras, máx: ${stripCheck.maxChars}). Recorta el texto para poder colocar ambos bloques.`);
+                return;
             }
 
             state.blockPlacement[blockKey] = targetStrip;
@@ -1341,8 +1483,12 @@
             const otherStrip = (currentStrip === 'top') ? 'bottom' : 'top';
             const otherStripName = (currentStrip === 'top') ? 'Abajo' : 'Arriba';
             const isCircle = state.checkboxStyle === 'circle';
+            const order = (currentStrip === 'top') ? state.topOrder : state.bottomOrder;
+            const visibleInStrip = order.filter(k => state.blockPlacement[k] === currentStrip && state.visibility[k]);
+            const isHalfCol = visibleInStrip.length >= 2;
 
             if (key === 'priorities') {
+                const maxPriChars = isHalfCol ? 45 : 95;
                 return `
                 <div class="modular-card" id="card-priorities">
                     <div class="card-header-bar">
@@ -1358,7 +1504,8 @@
                                 <div class="priority-checkbox ${isCircle ? 'circle' : ''} ${item.checked ? 'checked' : ''}" 
                                      onclick="togglePriorityCheck(${idx})" title="Marcar prioridad"></div>
                                 <input type="text" class="single-line-input" value="${escapeHtml(item.text)}" 
-                                       placeholder="Prioridad ${idx + 1}..." oninput="handleSingleLineInput(this); updatePriorityText(${idx}, this.value)"
+                                       placeholder="Prioridad ${idx + 1}..." maxlength="${maxPriChars}"
+                                       oninput="handlePriorityInput(${idx}, this)"
                                        onkeydown="if(event.key==='Enter'){event.preventDefault();}">
                             </div>
                         `).join('')}
@@ -1367,6 +1514,7 @@
             }
 
             if (key === 'motto') {
+                const maxMottoChars = isHalfCol ? 50 : 105;
                 return `
                 <div class="modular-card" id="card-motto">
                     <div class="card-header-bar">
@@ -1378,7 +1526,8 @@
                     </div>
                     <div class="motto-box">
                         <input type="text" class="motto-input" value="${escapeHtml(state.mottoText)}"
-                               placeholder="Lema o foco rector del año..." oninput="handleSingleLineInput(this); state.mottoText=this.value;"
+                               placeholder="Lema o foco rector del año..." maxlength="${maxMottoChars}"
+                               oninput="handleMottoInput(this)"
                                onkeydown="if(event.key==='Enter'){event.preventDefault();}">
                     </div>
                 </div>`;
@@ -1511,9 +1660,9 @@
 
         function loadExampleContent() {
             state.prioritiesData = [
-                { text: 'Consolidar nuevo modelo de trabajo sin dispersión digital', checked: true },
-                { text: 'Completar los hitos clave de los proyectos estratégicos', checked: false },
-                { text: 'Preservar espacios innegociables de salud y descanso', checked: false }
+                { text: 'Consolidar modelo de trabajo sin dispersión', checked: true },
+                { text: 'Completar hitos de proyectos estratégicos', checked: false },
+                { text: 'Cuidar espacios clave de salud y descanso', checked: false }
             ];
             state.mottoText = 'Menos ruido mental, más profundidad y constancia.';
             state.notesText = 'Criterio rector: avanzar con calma y foco sostenido mes a mes.';
