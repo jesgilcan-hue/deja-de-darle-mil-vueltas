@@ -48,7 +48,6 @@
             --text-muted: #66615b;
             --accent: #87553b;
             --accent-hover: #70442e;
-            --accent-light: rgba(135, 85, 59, 0.08);
             --border-line: #dcd7ce;
             --border-strong: #28231e;
             --font-serif: 'Playfair Display', Georgia, serif;
@@ -248,22 +247,25 @@
 
         /* CONTENEDOR DEL LIENZO INTERACTIVO */
         .paper-canvas-container {
-            max-width: 1040px;
+            width: 100%;
+            max-width: 980px;
             margin: 0 auto;
             display: flex;
             justify-content: center;
         }
 
-        /* HOJA EDITORIAL HORARIO (8.25" × 6" APAISADO) */
+        /* HOJA EDITORIAL HORARIO (8.25" × 6" APAISADO - IDÉNTICA A MENSUAL) */
         .interactive-paper-schedule {
             width: 100%;
-            max-width: 1040px;
+            max-width: 980px;
+            height: 712px;
+            max-height: 712px;
             aspect-ratio: 8.25 / 6;
             background: var(--paper-color);
             border: 1px solid #dcd7ce;
-            border-radius: 8px;
-            box-shadow: 0 10px 32px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-            padding: 16px 20px 12px;
+            border-radius: 4px;
+            box-shadow: 0 16px 45px rgba(0,0,0,0.14);
+            padding: 16px 24px 14px;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
@@ -369,7 +371,6 @@
             display: grid;
             grid-template-columns: 86px repeat(7, 1fr);
             background: #f4efea;
-            /* LÍNEA GRUESA HORIZONTAL OBLIGATORIA PARA SEPARAR DÍAS DE LA SEMANA */
             border-bottom: 2.2px solid var(--border-strong);
             font-size: 0.58rem;
             font-weight: 800;
@@ -395,6 +396,15 @@
             font-weight: 800;
             color: var(--accent);
             border-right: 1.5px solid #cbbeae;
+        }
+
+        /* LÍNEA SEPARADORA GRUESA HORIZONTAL ENTRE SEMANAS (SEPARA EL LUNES DEL LUNES) */
+        .week-separator-divider {
+            height: 4px;
+            background: var(--border-strong);
+            border-top: 1px solid #111;
+            border-bottom: 1px solid #111;
+            width: 100%;
         }
 
         /* CUERPO DE FILAS */
@@ -447,16 +457,16 @@
             border-right: none;
         }
 
-        /* TEXTAREA MULTILÍNEA QUE LLENA LA CASILLA CON TEXTO ADAPTABLE */
+        /* TEXTAREA MULTILÍNEA: NUNCA CAMBIA DE COLOR DE FONDO AL ESCRIBIR */
         .schedule-cell-textarea {
             width: 100%;
             height: 100%;
             border: none;
-            background: transparent;
+            background: transparent !important;
             font-family: var(--font-sans);
             font-size: 0.54rem;
             line-height: 1.25;
-            color: #332d29;
+            color: #2b2520;
             text-align: center;
             outline: none;
             padding: 2px 2px;
@@ -465,28 +475,20 @@
             display: block;
             overflow: hidden;
             word-break: break-word;
-            transition: background 0.15s;
-        }
-        .schedule-cell-textarea:hover, .schedule-cell-textarea:focus {
-            background: rgba(135, 85, 59, 0.08);
-        }
-        .schedule-cell-textarea.has-content {
-            background: rgba(135, 85, 59, 0.05);
-            font-weight: 600;
-            color: #2b1f17;
         }
 
-        /* BLOQUE MODULAR DE NOTAS Y PRIORIDADES */
+        /* BLOQUE MODULAR DE NOTAS Y PRIORIDADES (SIN DESPLAZADOR / OVERFLOW HIDDEN) */
         .modular-notes-box {
             background: #faf8f4;
             border: 1px solid #dfd7cc;
             border-radius: 5px;
-            padding: 6px 10px;
+            padding: 5px 10px 4px 10px;
             display: flex;
             flex-direction: column;
             gap: 2px;
             box-sizing: border-box;
             flex-shrink: 0;
+            overflow: hidden;
         }
 
         .notes-box-header {
@@ -521,8 +523,16 @@
             line-height: 1.35;
             resize: none;
             outline: none;
-            height: 38px;
+            height: 44px;
+            overflow: hidden !important; /* CERO DESPLAZADOR */
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
             box-sizing: border-box;
+        }
+        .editable-notes-textarea::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
         }
         .editable-notes-textarea:focus {
             background: rgba(255, 255, 255, 0.6);
@@ -620,6 +630,18 @@
             color: #666;
             margin-bottom: 16px;
             line-height: 1.4;
+        }
+
+        .modal-format-badge {
+            background: #fbf8f2;
+            border: 1px solid #e5dec9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #5d4a3b;
+            margin-bottom: 14px;
+            display: inline-block;
         }
 
         .btn-modal-primary {
@@ -785,8 +807,14 @@
             </button>
         </div>
 
-        <!-- GRUPO 2: CONFIGURACIÓN DE FRANJAS HORARIAS Y CICLO -->
+        <!-- GRUPO 2: CONFIGURACIÓN DE SEMANAS, HORARIO Y CICLO -->
         <div class="toolbar-group">
+            <label class="toolbar-select-label" for="select-weeks-count">Semanas:</label>
+            <select id="select-weeks-count" class="toolbar-select" onchange="onWeeksCountChange()">
+                <option value="1" selected>1 Semana</option>
+                <option value="2">2 Semanas</option>
+            </select>
+
             <label class="toolbar-select-label" for="select-start-hour">Inicio:</label>
             <select id="select-start-hour" class="toolbar-select" onchange="onTimeConfigChange()">
                 <option value="0">00:00</option>
@@ -872,31 +900,16 @@
 • Paseo diario de 30 minutos sin auriculares para despejar la mente.</textarea>
                 </div>
 
-                <!-- 2. TABLA DEL HORARIO (CON LÍNEA GRUESA HORIZONTAL SEPARADORA DE DÍAS) -->
+                <!-- 2. TABLA DEL HORARIO (CON LÍNEA GRUESA HORIZONTAL SEPARADORA) -->
                 <div class="schedule-table-wrapper" id="block-schedule-table">
-                    <!-- CABECERA DE DÍAS -->
-                    <div class="schedule-header-row">
-                        <div class="schedule-header-cell schedule-header-time-title">HORA</div>
-                        <div class="schedule-header-cell">LUNES</div>
-                        <div class="schedule-header-cell">MARTES</div>
-                        <div class="schedule-header-cell">MIÉRCOLES</div>
-                        <div class="schedule-header-cell">JUEVES</div>
-                        <div class="schedule-header-cell">VIERNES</div>
-                        <div class="schedule-header-cell">SÁBADO</div>
-                        <div class="schedule-header-cell">DOMINGO</div>
-                    </div>
-
-                    <!-- FILAS DE FRANJAS HORARIAS DINÁMICAS -->
-                    <div class="schedule-body-rows" id="schedule-body-rows">
-                        <!-- Generadas dinámicamente -->
-                    </div>
+                    <!-- Generada dinámicamente: para 1 o 2 semanas con su separador horizontal grueso -->
                 </div>
 
             </div>
 
-            <!-- PIE DE PÁGINA EDITORIAL -->
+            <!-- PIE DE PÁGINA EDITORIAL EXACTO -->
             <div class="paper-schedule-footer">
-                <span>MENOS RUIDO · REGISTRO CONSTANTE</span>
+                <span>MENOS RUIDO · SISTEMA PLANIFICADOR HORARIO</span>
                 <span>editorialmenosruido.com</span>
             </div>
 
@@ -911,12 +924,8 @@
             <h3 class="modal-title">Descargar Planificador Horario</h3>
             <p class="modal-desc">Elige si deseas tu PDF maquetado con tus bloques y notas escritas o una plantilla en blanco para rellenar a lápiz o pluma.</p>
 
-            <div style="text-align: left; margin-bottom: 16px;">
-                <label for="modal-select-format" style="font-size: 0.8rem; font-weight: 700; color: #444; margin-bottom: 4px; display: block;">Formato de papel:</label>
-                <select id="modal-select-format" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;">
-                    <option value="book" selected>Formato Libro 8.25" × 6" (210 × 152 mm)</option>
-                    <option value="a4">Folio DIN A4 Apaisado (297 × 210 mm)</option>
-                </select>
+            <div class="modal-format-badge">
+                📐 Formato Libro 8.25" × 6" (210 × 152 mm) · Calidad Imprenta 300 DPI
             </div>
 
             <!-- ACCIONES DEL MODAL: CON DATOS O EN BLANCO -->
@@ -964,12 +973,15 @@
     <script>
         // ESTADO GLOBAL
         const state = {
+            weeksCount: 1, // 1 | 2
             startHour: 8,
             interval: 1, // horas por fila
-            rowCount: 24,
+            rowsPerWeek: 16, // filas horarias por cada semana
             notesPosition: 'bottom', // 'top' | 'bottom'
-            cellData: {} // key: `r_${rowIdx}_d_${dayIdx}` => string
+            cellData: {} // key: `w_${weekIdx}_r_${rowIdx}_d_${dayIdx}` => string
         };
+
+        let previousRowsCount = 16;
 
         // EJEMPLO EDITORIAL
         const EXAMPLE_DATA = {
@@ -977,16 +989,16 @@
             focus: 'Proteger las primeras horas del día para el trabajo que requiere concentración profunda.',
             notes: '• Bloques de trabajo profundo por la mañana sin revisar notificaciones.\n• Paseo diario de 30 minutos sin auriculares para despejar la mente.\n• Desconexión digital estricta a partir de las 20:30.',
             cells: {
-                'r_0_d_0': 'Enfoque Profundo',
-                'r_0_d_1': 'Enfoque Profundo',
-                'r_0_d_2': 'Enfoque Profundo',
-                'r_0_d_3': 'Enfoque Profundo',
-                'r_0_d_4': 'Planificación',
-                'r_1_d_0': 'Gestión / Email',
-                'r_1_d_2': 'Reunión de equipo',
-                'r_2_d_4': 'Balance semanal',
-                'r_3_d_5': 'Caminata y calma',
-                'r_3_d_6': 'Lectura reposada'
+                'w_0_r_0_d_0': 'Enfoque Profundo',
+                'w_0_r_0_d_1': 'Enfoque Profundo',
+                'w_0_r_0_d_2': 'Enfoque Profundo',
+                'w_0_r_0_d_3': 'Enfoque Profundo',
+                'w_0_r_0_d_4': 'Planificación',
+                'w_0_r_1_d_0': 'Gestión / Email',
+                'w_0_r_1_d_2': 'Reunión de equipo',
+                'w_0_r_2_d_4': 'Balance semanal',
+                'w_0_r_3_d_5': 'Caminata y calma',
+                'w_0_r_3_d_6': 'Lectura reposada'
             }
         };
 
@@ -1002,7 +1014,7 @@
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => {
                 t.classList.remove('active');
-            }, 2800);
+            }, 3000);
         }
 
         // ========================================================
@@ -1032,6 +1044,21 @@
         }
 
         // ========================================================
+        // VALIDACIÓN DE CAPACIDAD Y PREVENCIÓN DE PÉRDIDAS
+        // ========================================================
+        function hasTextInWeek(wIdx) {
+            return Object.keys(state.cellData).some(k => k.startsWith(`w_${wIdx}_`) && state.cellData[k]?.trim());
+        }
+
+        function hasTextBeyondRow(maxRowsAllowed) {
+            return Object.keys(state.cellData).some(k => {
+                const parts = k.split('_');
+                const r = parseInt(parts[3], 10);
+                return r >= maxRowsAllowed && state.cellData[k]?.trim();
+            });
+        }
+
+        // ========================================================
         // CÁLCULO DE FRANJAS HORARIAS Y SELECTOR DE FILAS (CICLOS 24H, 48H...)
         // ========================================================
         function getStepHours() {
@@ -1045,8 +1072,8 @@
         }
 
         function getRowCount() {
-            const val = parseInt(document.getElementById('select-row-count')?.value || '24', 10);
-            return isNaN(val) ? 24 : val;
+            const val = parseInt(document.getElementById('select-row-count')?.value || '16', 10);
+            return isNaN(val) ? 16 : val;
         }
 
         function formatCycleLabel(rows, step) {
@@ -1067,10 +1094,10 @@
 
             const step = getStepHours();
             const minRows = (step === 12) ? 2 : 4;
-            const maxRows = 24;
+            const maxRows = (state.weeksCount === 2) ? 12 : 24;
 
-            let defaultRows = Math.min(Math.round(24 / step), 24);
-            if (step === 0.5) defaultRows = 24;
+            let defaultRows = (state.weeksCount === 2) ? 8 : 16;
+            if (step === 2 && state.weeksCount === 1) defaultRows = 12;
 
             const targetVal = preferredRows || (select.value ? parseInt(select.value, 10) : defaultRows);
 
@@ -1089,6 +1116,20 @@
             if (!select.value) {
                 select.value = String(defaultRows);
             }
+            previousRowsCount = parseInt(select.value, 10);
+        }
+
+        function onWeeksCountChange() {
+            const newWeeks = parseInt(document.getElementById('select-weeks-count').value, 10);
+            if (newWeeks < state.weeksCount && hasTextInWeek(1)) {
+                document.getElementById('select-weeks-count').value = String(state.weeksCount);
+                showToast('⚠️ No se puede reducir a 1 semana: la Semana 2 contiene texto. Borra el texto para hacer hueco.');
+                return;
+            }
+            state.weeksCount = newWeeks;
+            populateRowCountSelect();
+            renderScheduleTable();
+            showToast(newWeeks === 2 ? 'Vista de 2 Semanas activada con separación horizontal' : 'Vista de 1 Semana activada');
         }
 
         function onIntervalSelectChange() {
@@ -1103,6 +1144,13 @@
         }
 
         function onRowsCountChange() {
+            const newCount = getRowCount();
+            if (newCount < previousRowsCount && hasTextBeyondRow(newCount)) {
+                document.getElementById('select-row-count').value = String(previousRowsCount);
+                showToast(`⚠️ No se puede reducir a ${newCount} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`);
+                return;
+            }
+            previousRowsCount = newCount;
             renderScheduleTable();
             showToast('Número de filas actualizado');
         }
@@ -1134,65 +1182,100 @@
         // RENDERIZADO DE LA TABLA DIRECTA EN EL LIENZO 1:1
         // ========================================================
         function renderScheduleTable() {
-            const container = document.getElementById('schedule-body-rows');
-            if (!container) return;
+            const tableWrap = document.getElementById('block-schedule-table');
+            if (!tableWrap) return;
 
             const startH = getStartHour();
             const stepH = getStepHours();
             const rowsCount = getRowCount();
             const slots = generateTimeSlots(startH, stepH, rowsCount);
 
-            container.innerHTML = '';
+            tableWrap.innerHTML = '';
 
-            // Capacidad máxima de caracteres por celda según el alto de fila
+            const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
             const maxCharsPerCell = (rowsCount <= 8) ? 80 : (rowsCount <= 14 ? 50 : 35);
 
-            slots.forEach((slot, rIdx) => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'schedule-data-row';
-
-                // Celda de hora
-                const timeCell = document.createElement('div');
-                timeCell.className = 'schedule-time-cell';
-                timeCell.textContent = slot.label;
-                rowDiv.appendChild(timeCell);
-
-                // 7 Celdas de días (Lunes a Domingo)
-                for (let d = 0; d < 7; d++) {
-                    const dayCell = document.createElement('div');
-                    dayCell.className = 'schedule-day-cell';
-
-                    const key = `r_${rIdx}_d_${d}`;
-                    const val = state.cellData[key] || '';
-
-                    // Usar textarea para permitir multilínea y cubrir la casilla natural
-                    const textarea = document.createElement('textarea');
-                    textarea.className = 'schedule-cell-textarea' + (val ? ' has-content' : '');
-                    textarea.value = val;
-                    textarea.maxLength = maxCharsPerCell;
-                    textarea.placeholder = '';
-                    textarea.dataset.key = key;
-
-                    textarea.addEventListener('input', (e) => {
-                        // Control estricto de desbordamiento vertical de la casilla
-                        if (e.target.scrollHeight > e.target.clientHeight + 4) {
-                            e.target.value = e.target.value.slice(0, -1);
-                            showToast('⚠️ Límite de capacidad alcanzado en la celda');
-                            return;
-                        }
-                        state.cellData[key] = e.target.value;
-                        e.target.classList.toggle('has-content', Boolean(e.target.value.trim()));
-                    });
-
-                    dayCell.appendChild(textarea);
-                    rowDiv.appendChild(dayCell);
+            for (let w = 0; w < state.weeksCount; w++) {
+                // Si es la semana 2, insertar la LÍNEA SEPARADORA GRUESA HORIZONTAL (que separa el lunes del lunes)
+                if (w > 0) {
+                    const separator = document.createElement('div');
+                    separator.className = 'week-separator-divider';
+                    tableWrap.appendChild(separator);
                 }
 
-                container.appendChild(rowDiv);
-            });
+                // CABECERA DE DÍAS (CON LÍNEA GRUESA HORIZONTAL DE DÍAS)
+                const headerRow = document.createElement('div');
+                headerRow.className = 'schedule-header-row';
+
+                const timeHeader = document.createElement('div');
+                timeHeader.className = 'schedule-header-cell schedule-header-time-title';
+                timeHeader.textContent = (state.weeksCount === 2) ? `SEM ${w + 1} · HORA` : 'HORA';
+                headerRow.appendChild(timeHeader);
+
+                dayNames.forEach(dName => {
+                    const dCell = document.createElement('div');
+                    dCell.className = 'schedule-header-cell';
+                    dCell.textContent = dName;
+                    headerRow.appendChild(dCell);
+                });
+
+                tableWrap.appendChild(headerRow);
+
+                // CUERPO DE FILAS
+                const bodyRows = document.createElement('div');
+                bodyRows.className = 'schedule-body-rows';
+
+                slots.forEach((slot, rIdx) => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'schedule-data-row';
+
+                    // Celda de hora
+                    const timeCell = document.createElement('div');
+                    timeCell.className = 'schedule-time-cell';
+                    timeCell.textContent = slot.label;
+                    rowDiv.appendChild(timeCell);
+
+                    // 7 Celdas de días
+                    for (let d = 0; d < 7; d++) {
+                        const dayCell = document.createElement('div');
+                        dayCell.className = 'schedule-day-cell';
+
+                        const key = `w_${w}_r_${rIdx}_d_${d}`;
+                        const val = state.cellData[key] || '';
+
+                        const textarea = document.createElement('textarea');
+                        textarea.className = 'schedule-cell-textarea';
+                        textarea.value = val;
+                        textarea.maxLength = maxCharsPerCell;
+                        textarea.placeholder = '';
+                        textarea.dataset.key = key;
+
+                        textarea.addEventListener('input', (e) => {
+                            if (e.target.scrollHeight > e.target.clientHeight + 4) {
+                                e.target.value = e.target.value.slice(0, -1);
+                                showToast('⚠️ Límite de capacidad alcanzado en la celda');
+                                return;
+                            }
+                            state.cellData[key] = e.target.value;
+                        });
+
+                        dayCell.appendChild(textarea);
+                        rowDiv.appendChild(dayCell);
+                    }
+
+                    bodyRows.appendChild(rowDiv);
+                });
+
+                tableWrap.appendChild(bodyRows);
+            }
         }
 
         function handleNotesInput(el) {
+            // Evitar desplazador en notas: limitación estricta de altura
+            while (el.scrollHeight > el.clientHeight + 2 && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+                showToast('⚠️ Límite de espacio en Notas alcanzado');
+            }
             const count = document.getElementById('count-notes');
             if (count) count.textContent = `${el.value.length}/260`;
         }
@@ -1251,7 +1334,7 @@
         }
 
         // ========================================================
-        // MOTOR DE EXPORTACIÓN PDF VECTORIAL (jsPDF) A 300 DPI
+        // MOTOR DE EXPORTACIÓN PDF VECTORIAL A 300 DPI (8.25" × 6")
         // ========================================================
         function executeScheduleDownload(isBlank) {
             closeDownloadModal();
@@ -1268,9 +1351,8 @@
                 return;
             }
 
-            const formatVal = document.getElementById('modal-select-format')?.value || 'book';
-            const isBook = (formatVal === 'book');
-            const pageDims = isBook ? [209.55, 152.4] : [297, 210];
+            // FORMATO EXACTO AL MENSUAL: 8.25" × 6" (209.55 × 152.4 mm)
+            const pageDims = [209.55, 152.4];
             const orientation = 'landscape';
 
             const doc = new jsPDFClass({
@@ -1281,7 +1363,7 @@
 
             const pw = doc.internal.pageSize.getWidth();
             const ph = doc.internal.pageSize.getHeight();
-            const m = isBook ? 12 : 16;
+            const m = 12.0; // margen editorial
             const contentW = pw - (m * 2);
 
             // Fondo crema editorial
@@ -1306,56 +1388,61 @@
 
             // 1. KICKER SUPERIOR
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(isBook ? 6.5 : 8);
+            doc.setFontSize(6.5);
             doc.setTextColor(135, 85, 59);
             doc.text('MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL', m, y);
-            y += (isBook ? 4.2 : 5.5);
+            y += 4.2;
 
             // 2. TÍTULO Y SEMANA
             doc.setFont('times', 'bold');
-            doc.setFontSize(isBook ? 15 : 19);
+            doc.setFontSize(15);
             doc.setTextColor(30, 25, 22);
             doc.text('Planificador Horario', m, y);
 
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(isBook ? 8 : 10);
+            doc.setFontSize(8);
             doc.setTextColor(70, 65, 60);
             const headerWeekText = activeWeek ? `SEMANA: ${activeWeek.toUpperCase()}` : 'SEMANA: _______________________';
             doc.text(headerWeekText, pw - m, y, { align: 'right' });
-            y += (isBook ? 2.5 : 3.2);
+            y += 2.5;
 
             // 3. ENFOQUE / LEMA SI EXISTE
             if (activeFocus) {
                 doc.setFont('helvetica', 'italic');
-                doc.setFontSize(isBook ? 7 : 8.5);
+                doc.setFontSize(7);
                 doc.setTextColor(90, 85, 80);
                 const cleanFocus = activeFocus.startsWith('«') ? activeFocus : `«${activeFocus}»`;
                 const fLines = doc.splitTextToSize(cleanFocus, contentW - 10);
                 doc.text(fLines[0] || '', m, y + 1.2);
-                y += (isBook ? 3.8 : 4.8);
+                y += 3.8;
             }
 
             // Línea divisoria de cabecera
             doc.setDrawColor(40, 35, 30);
             doc.setLineWidth(0.35);
             doc.line(m, y, pw - m, y);
-            y += (isBook ? 3.0 : 4.0);
+            y += 3.0;
 
             // PARÁMETROS DE DIMENSIÓN
-            const timeColW = isBook ? 25 : 34;
+            const timeColW = 25.0;
             const daysGridW = contentW - timeColW;
             const dayColW = daysGridW / 7;
             const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
 
-            const headerRowH = isBook ? 4.8 : 6.5;
-            const notesH = isBook ? 15.5 : 21.0;
-            const gapBetweenBlocks = isBook ? 3.0 : 4.2;
-            const bottomMarginBeforeFooter = isBook ? 4.8 : 6.0;
+            const headerRowH = 4.8;
+            const notesH = 15.0;
+            const gapBetweenBlocks = 3.0;
+            const bottomMarginBeforeFooter = 4.8;
 
-            const footerY = ph - (isBook ? 5.2 : 6.5);
+            const footerY = ph - 5.2;
             const totalAvailableContentH = (footerY - bottomMarginBeforeFooter) - y;
             const availableTableH = totalAvailableContentH - notesH - gapBetweenBlocks;
-            const rowH = (availableTableH - headerRowH) / rowCount;
+
+            // Altura por semana
+            const weeksCount = state.weeksCount;
+            const separatorH = (weeksCount === 2) ? 1.5 : 0;
+            const heightPerWeek = (availableTableH - separatorH) / weeksCount;
+            const rowH = (heightPerWeek - headerRowH) / rowCount;
 
             // FUNCIÓN DIBUJAR NOTAS
             function drawNotesBox(boxY) {
@@ -1365,134 +1452,148 @@
                 doc.roundedRect(m, boxY, contentW, notesH, 1.5, 1.5, 'FD');
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(isBook ? 6.2 : 7.6);
+                doc.setFontSize(6.2);
                 doc.setTextColor(135, 85, 59);
-                doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', m + 3.5, boxY + (isBook ? 4.2 : 5.4));
+                doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', m + 3.5, boxY + 4.2);
 
                 if (activeNotes) {
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(isBook ? 6.2 : 7.6);
+                    doc.setFontSize(6.2);
                     doc.setTextColor(45, 40, 35);
                     const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
                     const nLines = doc.splitTextToSize(cleanNotes, contentW - 8);
-                    const maxNotesLines = isBook ? 4 : 5;
+                    const maxNotesLines = 4;
                     const linesToDraw = nLines.slice(0, maxNotesLines);
-                    let noteY = boxY + (isBook ? 7.4 : 9.2);
+                    let noteY = boxY + 7.4;
                     linesToDraw.forEach(line => {
                         doc.text(line, m + 3.5, noteY);
-                        noteY += (isBook ? 3.0 : 3.8);
+                        noteY += 3.0;
                     });
                 }
             }
 
             // FUNCIÓN DIBUJAR TABLA
             function drawScheduleTable(tableY) {
-                // Fondo de cabecera de la tabla
-                doc.setFillColor(245, 240, 232);
-                doc.setDrawColor(215, 210, 200);
-                doc.setLineWidth(0.2);
-                doc.rect(m, tableY, contentW, headerRowH, 'FD');
+                let currentY = tableY;
 
-                // Texto cabecera: HORA
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(isBook ? 6.0 : 7.8);
-                doc.setTextColor(135, 85, 59);
-                doc.text('HORA', m + (timeColW / 2), tableY + (headerRowH / 2) + 1.2, { align: 'center' });
-
-                // Textos cabecera: Días de la semana
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(isBook ? 6.0 : 7.8);
-                doc.setTextColor(40, 35, 30);
-                for (let d = 0; d < 7; d++) {
-                    const dayX = m + timeColW + (d * dayColW);
-                    doc.text(dayNames[d], dayX + (dayColW / 2), tableY + (headerRowH / 2) + 1.2, { align: 'center' });
-                }
-
-                // Fondos alternos en las filas
-                for (let i = 0; i < rowCount; i++) {
-                    const rY = tableY + headerRowH + (i * rowH);
-                    if (i % 2 === 1) {
-                        doc.setFillColor(252, 250, 247);
-                        doc.rect(m, rY, contentW, rowH, 'F');
+                for (let w = 0; w < weeksCount; w++) {
+                    // Si es la semana 2, DIBUJAR LA LÍNEA GRUESA HORIZONTAL SEPARADORA (SEPARA EL LUNES DEL LUNES)
+                    if (w > 0) {
+                        doc.setDrawColor(35, 30, 26);
+                        doc.setLineWidth(0.8); // LÍNEA MUY GRUESA Y VISIBLE
+                        doc.line(m, currentY + 0.8, m + contentW, currentY + 0.8);
+                        currentY += separatorH + 0.5;
                     }
-                }
 
-                // Líneas horizontales finas entre horas
-                doc.setDrawColor(225, 220, 212);
-                doc.setLineWidth(0.18);
-                for (let i = 0; i < rowCount; i++) {
-                    const rY = tableY + headerRowH + (i * rowH);
-                    doc.line(m, rY + rowH, m + contentW, rY + rowH);
-                }
+                    const weekStartY = currentY;
 
-                // Textos de las franjas horarias y contenidos de celdas
-                let timeFontSize = isBook ? (rowCount > 16 ? 4.8 : 5.8) : (rowCount > 16 ? 6.2 : 7.5);
-                if (rowCount <= 6) timeFontSize = isBook ? 6.8 : 8.8;
+                    // Fondo de cabecera de la tabla
+                    doc.setFillColor(245, 240, 232);
+                    doc.setDrawColor(215, 210, 200);
+                    doc.setLineWidth(0.2);
+                    doc.rect(m, weekStartY, contentW, headerRowH, 'FD');
 
-                for (let i = 0; i < rowCount; i++) {
-                    const rY = tableY + headerRowH + (i * rowH);
-                    const slot = slots[i];
-
-                    // Hora
+                    // Texto cabecera: HORA
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(timeFontSize);
-                    doc.setTextColor(55, 50, 45);
-                    doc.text(slot.label, m + (timeColW / 2), rY + (rowH / 2) + 1.0, { align: 'center' });
+                    doc.setFontSize(6.0);
+                    doc.setTextColor(135, 85, 59);
+                    const timeLabel = (weeksCount === 2) ? `SEM ${w + 1} · HORA` : 'HORA';
+                    doc.text(timeLabel, m + (timeColW / 2), weekStartY + (headerRowH / 2) + 1.2, { align: 'center' });
 
-                    // Contenido de celdas multilínea con envoltorio inteligente
-                    if (!isBlank) {
-                        for (let d = 0; d < 7; d++) {
-                            const key = `r_${i}_d_${d}`;
-                            const cellText = state.cellData[key];
-                            if (cellText && cellText.trim()) {
-                                const cX = m + timeColW + (d * dayColW);
-                                doc.setFillColor(242, 236, 228);
-                                doc.rect(cX + 0.6, rY + 0.6, dayColW - 1.2, rowH - 1.2, 'F');
+                    // Textos cabecera: Días de la semana
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.0);
+                    doc.setTextColor(40, 35, 30);
+                    for (let d = 0; d < 7; d++) {
+                        const dayX = m + timeColW + (d * dayColW);
+                        doc.text(dayNames[d], dayX + (dayColW / 2), weekStartY + (headerRowH / 2) + 1.2, { align: 'center' });
+                    }
 
-                                const maxWrapW = dayColW - 1.6;
-                                let cellFontSize = isBook ? (rowCount > 16 ? 4.3 : (rowCount > 10 ? 4.9 : 5.8)) : (rowCount > 16 ? 5.6 : 7.0);
-                                doc.setFont('helvetica', 'normal');
-                                doc.setFontSize(cellFontSize);
-                                doc.setTextColor(45, 35, 30);
+                    // Fondos alternos en las filas
+                    for (let i = 0; i < rowCount; i++) {
+                        const rY = weekStartY + headerRowH + (i * rowH);
+                        if (i % 2 === 1) {
+                            doc.setFillColor(252, 250, 247);
+                            doc.rect(m, rY, contentW, rowH, 'F');
+                        }
+                    }
 
-                                const wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
-                                const lineHeight = isBook ? (cellFontSize * 0.38) : (cellFontSize * 0.42);
-                                const maxLinesFit = Math.max(1, Math.floor((rowH - 0.8) / lineHeight));
-                                const linesToDraw = wrappedLines.slice(0, maxLinesFit);
+                    // Líneas horizontales finas entre horas
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.18);
+                    for (let i = 0; i < rowCount; i++) {
+                        const rY = weekStartY + headerRowH + (i * rowH);
+                        doc.line(m, rY + rowH, m + contentW, rY + rowH);
+                    }
 
-                                const blockHeight = linesToDraw.length * lineHeight;
-                                let startTextY = rY + ((rowH - blockHeight) / 2) + (lineHeight * 0.75);
-                                linesToDraw.forEach(line => {
-                                    doc.text(line, cX + (dayColW / 2), startTextY, { align: 'center' });
-                                    startTextY += lineHeight;
-                                });
+                    // Textos de las franjas horarias y contenidos de celdas
+                    let timeFontSize = (rowCount > 12) ? 4.6 : 5.6;
+
+                    for (let i = 0; i < rowCount; i++) {
+                        const rY = weekStartY + headerRowH + (i * rowH);
+                        const slot = slots[i];
+
+                        // Hora
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(timeFontSize);
+                        doc.setTextColor(55, 50, 45);
+                        doc.text(slot.label, m + (timeColW / 2), rY + (rowH / 2) + 1.0, { align: 'center' });
+
+                        // Contenido de celdas multilínea proporcional
+                        if (!isBlank) {
+                            for (let d = 0; d < 7; d++) {
+                                const key = `w_${w}_r_${i}_d_${d}`;
+                                const cellText = state.cellData[key];
+                                if (cellText && cellText.trim()) {
+                                    const cX = m + timeColW + (d * dayColW);
+
+                                    const maxWrapW = dayColW - 1.6;
+                                    let cellFontSize = (rowCount > 12) ? 4.2 : 5.0;
+                                    doc.setFont('helvetica', 'normal');
+                                    doc.setFontSize(cellFontSize);
+                                    doc.setTextColor(45, 35, 30);
+
+                                    const wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
+                                    const lineHeight = cellFontSize * 0.38;
+                                    const maxLinesFit = Math.max(1, Math.floor((rowH - 0.8) / lineHeight));
+                                    const linesToDraw = wrappedLines.slice(0, maxLinesFit);
+
+                                    const blockHeight = linesToDraw.length * lineHeight;
+                                    let startTextY = rY + ((rowH - blockHeight) / 2) + (lineHeight * 0.75);
+                                    linesToDraw.forEach(line => {
+                                        doc.text(line, cX + (dayColW / 2), startTextY, { align: 'center' });
+                                        startTextY += lineHeight;
+                                    });
+                                }
                             }
                         }
                     }
+
+                    // Líneas verticales entre días
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.16);
+                    for (let d = 1; d < 7; d++) {
+                        const dayX = m + timeColW + (d * dayColW);
+                        doc.line(dayX, weekStartY, dayX, weekStartY + heightPerWeek);
+                    }
+
+                    // Línea vertical destacada separando HORA de LUNES
+                    doc.setDrawColor(180, 175, 165);
+                    doc.setLineWidth(0.3);
+                    doc.line(m + timeColW, weekStartY, m + timeColW, weekStartY + heightPerWeek);
+
+                    // LÍNEA GRUESA HORIZONTAL DESTACADA PARA SEPARAR LOS DÍAS DE LA SEMANA
+                    doc.setDrawColor(35, 30, 26);
+                    doc.setLineWidth(0.5); // Gruesa y nítida (0.5mm)
+                    doc.line(m, weekStartY + headerRowH, m + contentW, weekStartY + headerRowH);
+
+                    // Marco exterior de esta semana
+                    doc.setDrawColor(200, 195, 185);
+                    doc.setLineWidth(0.28);
+                    doc.rect(m, weekStartY, contentW, heightPerWeek);
+
+                    currentY += heightPerWeek;
                 }
-
-                // Líneas verticales entre días
-                doc.setDrawColor(225, 220, 212);
-                doc.setLineWidth(0.16);
-                for (let d = 1; d < 7; d++) {
-                    const dayX = m + timeColW + (d * dayColW);
-                    doc.line(dayX, tableY, dayX, tableY + availableTableH);
-                }
-
-                // Línea vertical destacada separando HORA de LUNES
-                doc.setDrawColor(180, 175, 165);
-                doc.setLineWidth(0.3);
-                doc.line(m + timeColW, tableY, m + timeColW, tableY + availableTableH);
-
-                // LÍNEA GRUESA HORIZONTAL DESTACADA PARA SEPARAR LOS DÍAS DE LA SEMANA
-                doc.setDrawColor(35, 30, 26);
-                doc.setLineWidth(0.5); // Gruesa y nítida (0.5mm)
-                doc.line(m, tableY + headerRowH, m + contentW, tableY + headerRowH);
-
-                // Marco exterior de la tabla
-                doc.setDrawColor(200, 195, 185);
-                doc.setLineWidth(0.28);
-                doc.rect(m, tableY, contentW, availableTableH);
             }
 
             // DIBUJAR EN EL ORDEN SELECCIONADO (NOTAS ARRIBA O ABAJO)
@@ -1506,11 +1607,11 @@
                 drawNotesBox(y);
             }
 
-            // 6. FOOTER EDITORIAL
+            // 6. FOOTER EDITORIAL EXACTO
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(isBook ? 5.8 : 7.2);
+            doc.setFontSize(5.8);
             doc.setTextColor(140, 135, 130);
-            doc.text('MENOS RUIDO · REGISTRO CONSTANTE', m, footerY);
+            doc.text('MENOS RUIDO · SISTEMA PLANIFICADOR HORARIO', m, footerY);
             doc.text('editorialmenosruido.com', pw - m, footerY, { align: 'right' });
 
             // NOMENCLATURA
@@ -1533,7 +1634,7 @@
             trackVercelEvent('descarga_pdf', {
                 herramienta: 'generador_horario_v1',
                 tipo: isBlank ? 'plantilla_blanco' : 'personalizado',
-                formato: formatVal
+                formato: 'book_8.25x6'
             });
         }
 
@@ -1549,7 +1650,7 @@
         // INICIALIZACIÓN AL CARGAR
         // ========================================================
         document.addEventListener('DOMContentLoaded', () => {
-            populateRowCountSelect(24);
+            populateRowCountSelect(16);
             applyNotesPositionUI();
             loadExampleContent();
         });
