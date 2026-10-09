@@ -669,6 +669,21 @@
             height: 100%;
             box-sizing: border-box;
             position: relative;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .annual-month-tile.tile-overflow-warning {
+            border-color: #c94a29 !important;
+            box-shadow: 0 0 0 2px rgba(201, 74, 41, 0.25) !important;
+            animation: shakePulse 0.35s ease-in-out;
+        }
+
+        @keyframes shakePulse {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            50% { transform: translateX(3px); }
+            75% { transform: translateX(-2px); }
+            100% { transform: translateX(0); }
         }
 
         .month-tile-header {
@@ -1046,6 +1061,7 @@
                 'Balance y celebración\n• Cierre general del año\n• Aprendizajes y gratitud'
             ]
         };
+        window.state = state;
 
         const MONTH_NAMES = [
             'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -1138,23 +1154,44 @@
             return true;
         }
 
+        function syncMonthsNotesFromDOM() {
+            const textareas = document.querySelectorAll('.month-notes-textarea');
+            textareas.forEach((ta, idx) => {
+                if (ta) {
+                    state.monthsNotes[idx] = ta.value;
+                }
+            });
+        }
+
         function getMaxLinesPerMonthTile(simulatedVisibility = state.visibility) {
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
-            if (countVisible === 0) return 14;
-            if (countVisible === 1) return 12;
-            if (countVisible === 2) return 10;
-            return 8; // Con los 3 bloques activos: permite 8 líneas completas (hasta el fondo de la casilla)
+            if (countVisible === 0) return 13;
+            if (countVisible === 1) return 11;
+            if (countVisible === 2) return 9;
+            return 7; // Con los 3 bloques activos: permite 7 líneas completas (X líneas)
         }
 
         function getMaxCharsPerMonthTile(simulatedVisibility = state.visibility) {
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
-            if (countVisible === 0) return 450;
-            if (countVisible === 1) return 380;
-            if (countVisible === 2) return 320;
-            return 280; // Con los 3 bloques activos: permite hasta 280 caracteres
+            if (countVisible === 0) return 420;
+            if (countVisible === 1) return 340;
+            if (countVisible === 2) return 270;
+            return 205; // Con los 3 bloques activos: permite hasta 205 caracteres (X caracteres)
+        }
+
+        function highlightOverflowingMonth(monthIdx) {
+            const tile = document.querySelector(`.annual-month-tile[data-month-idx="${monthIdx}"]`);
+            if (!tile) return;
+            tile.classList.add('tile-overflow-warning');
+            const ta = tile.querySelector('textarea');
+            if (ta) ta.focus();
+            setTimeout(() => {
+                tile.classList.remove('tile-overflow-warning');
+            }, 2600);
         }
 
         function checkMonthTilesCapacity(targetVisibility) {
+            syncMonthsNotesFromDOM();
             const maxChars = getMaxCharsPerMonthTile(targetVisibility);
             const maxLines = getMaxLinesPerMonthTile(targetVisibility);
             const overflowingMonths = [];
@@ -1197,11 +1234,13 @@
             const willEnable = !state.visibility[blockKey];
 
             if (willEnable) {
+                syncMonthsNotesFromDOM();
                 const simulatedVisibility = { ...state.visibility, [blockKey]: true };
                 const check = checkMonthTilesCapacity(simulatedVisibility);
                 if (!check.ok) {
                     const firstErr = check.overflowingMonths[0];
-                    showToast(`⚠️ No hay espacio: al añadir este bloque se reducen los meses. Recorta texto en ${firstErr.name} (máx ${check.maxLines} líneas / ${check.maxChars} letras) para hacer hueco.`);
+                    highlightOverflowingMonth(firstErr.idx - 1);
+                    showToast(`⚠️ No se puede agregar este bloque porque el calendario contiene demasiado texto. Elimina caracteres en ${firstErr.name} (tiene ${firstErr.chars} letras / ${firstErr.lines} líneas, máx: ${check.maxChars} letras / ${check.maxLines} líneas) para poder agregarlo.`);
                     return;
                 }
             }
