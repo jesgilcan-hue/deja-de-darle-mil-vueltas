@@ -476,8 +476,14 @@
             width: 100%;
         }
 
-        .strip-bottom #card-notes {
-            max-height: 58px;
+        .strip-top .modular-card {
+            min-height: 82px;
+            max-height: 82px;
+        }
+
+        .strip-bottom .modular-card {
+            min-height: 70px;
+            max-height: 70px;
         }
 
         .card-header-bar {
@@ -1124,22 +1130,49 @@
             return true;
         }
 
+        function getMaxLinesPerMonthTile(simulatedVisibility = state.visibility) {
+            const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
+            if (countVisible === 0) return 10;
+            if (countVisible === 1) return 8;
+            if (countVisible === 2) return 6;
+            return 4; // con los 3 bloques activos
+        }
+
         function getMaxCharsPerMonthTile(simulatedVisibility = state.visibility) {
             const countVisible = ['priorities', 'motto', 'notes'].filter(k => simulatedVisibility[k]).length;
-            if (countVisible <= 1) return 360; // Casillas de mes con altura máxima (hasta 12 líneas)
-            if (countVisible === 2) return 280;  // Altura estándar (hasta 9 líneas)
-            return 220;                          // Con 3 bloques (hasta 7 líneas completas)
+            if (countVisible === 0) return 260;
+            if (countVisible === 1) return 200;
+            if (countVisible === 2) return 150;
+            return 100; // con los 3 bloques activos
         }
 
         function checkMonthTilesCapacity(targetVisibility) {
             const maxChars = getMaxCharsPerMonthTile(targetVisibility);
+            const maxLines = getMaxLinesPerMonthTile(targetVisibility);
             const overflowingMonths = [];
+
             state.monthsNotes.forEach((txt, idx) => {
-                if (txt && txt.trim().length > maxChars) {
-                    overflowingMonths.push({ idx: idx + 1, len: txt.trim().length, max: maxChars });
+                if (!txt || !txt.trim()) return;
+                const trimmed = txt.trim();
+                const lines = trimmed.split('\n');
+                if (trimmed.length > maxChars || lines.length > maxLines) {
+                    overflowingMonths.push({
+                        idx: idx + 1,
+                        name: MONTH_NAMES[idx],
+                        chars: trimmed.length,
+                        lines: lines.length,
+                        maxChars,
+                        maxLines
+                    });
                 }
             });
-            return { ok: overflowingMonths.length === 0, maxChars, overflowingMonths };
+
+            return {
+                ok: overflowingMonths.length === 0,
+                maxChars,
+                maxLines,
+                overflowingMonths
+            };
         }
 
         function handleSingleLineInput(el) {
@@ -1159,7 +1192,8 @@
                 const simulatedVisibility = { ...state.visibility, [blockKey]: true };
                 const check = checkMonthTilesCapacity(simulatedVisibility);
                 if (!check.ok) {
-                    showToast(`⚠️ No hay espacio: al añadir este bloque se reducen los meses. Borra texto en los meses (máx ${check.maxChars} caracteres) para hacer hueco.`);
+                    const firstErr = check.overflowingMonths[0];
+                    showToast(`⚠️ No hay espacio: al añadir este bloque se reducen los meses. Recorta texto en ${firstErr.name} (máx ${check.maxLines} líneas / ${check.maxChars} letras) para hacer hueco.`);
                     return;
                 }
             }
@@ -1167,6 +1201,7 @@
             state.visibility[blockKey] = willEnable;
             updateSectionPillsUI();
             renderModularStrips();
+            renderAnnualGrid();
             showToast(state.visibility[blockKey] ? `Bloque activado` : `Bloque ocultado`);
         }
 
@@ -1365,18 +1400,17 @@
 
         function handleMonthInput(monthIdx, textarea) {
             const maxChars = getMaxCharsPerMonthTile(state.visibility);
-            const countVisible = ['priorities', 'motto', 'notes'].filter(k => state.visibility[k]).length;
-            const maxLines = (countVisible <= 1) ? 12 : ((countVisible === 2) ? 9 : 7);
+            const maxLines = getMaxLinesPerMonthTile(state.visibility);
 
             if (textarea.value.length > maxChars) {
                 textarea.value = textarea.value.slice(0, maxChars);
-                showToast(`⚠️ Capacidad máxima alcanzada (${maxChars} caracteres).`);
+                showToast(`⚠️ Capacidad máxima alcanzada (${maxChars} caracteres) para este mes.`);
             }
 
             const lines = textarea.value.split('\n');
             if (lines.length > maxLines) {
                 textarea.value = lines.slice(0, maxLines).join('\n');
-                showToast(`⚠️ Máximo ${maxLines} líneas para esta altura de tarjeta`);
+                showToast(`⚠️ Máximo ${maxLines} líneas para la altura disponible de este mes.`);
             }
 
             // Límite físico: no desbordar la altura natural de la tarjeta
@@ -1391,20 +1425,19 @@
             const allowedKeys = ['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'];
             if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
 
-            const countVisible = ['priorities', 'motto', 'notes'].filter(k => state.visibility[k]).length;
-            const maxLines = (countVisible <= 1) ? 12 : ((countVisible === 2) ? 9 : 7);
+            const maxLines = getMaxLinesPerMonthTile(state.visibility);
             const maxChars = getMaxCharsPerMonthTile(state.visibility);
 
             if (textarea.value.length >= maxChars) {
                 e.preventDefault();
-                showToast(`⚠️ Capacidad máxima alcanzada (${maxChars} caracteres).`);
+                showToast(`⚠️ Capacidad máxima alcanzada (${maxChars} caracteres) para este mes.`);
                 return;
             }
 
             const lines = textarea.value.split('\n');
             if (e.key === 'Enter' && lines.length >= maxLines) {
                 e.preventDefault();
-                showToast(`⚠️ Máximo ${maxLines} líneas para el alto natural de la tarjeta`);
+                showToast(`⚠️ Máximo ${maxLines} líneas para la altura disponible de este mes.`);
             }
         }
 
@@ -1537,15 +1570,16 @@
             const maxContentBottom = footerY - 4.5; // 142.7 mm
             const totalVerticalBudget = maxContentBottom - currentY;
 
-            function calculateStripHeight(keys) {
+            function calculateStripHeight(keys, stripName) {
                 if (keys.length === 0) return 0;
-                if (keys.length === 1) return 15;
-                if (keys.length === 2) return 15;
-                return 28;
+                if (stripName === 'bottom' && keys.length === 1 && keys[0] === 'notes') return 16;
+                if (keys.length === 1) return 19;
+                if (keys.length === 2) return 19;
+                return 36;
             }
 
-            const topStripHeight = calculateStripHeight(visibleTop);
-            const bottomStripHeight = calculateStripHeight(visibleBottom);
+            const topStripHeight = calculateStripHeight(visibleTop, 'top');
+            const bottomStripHeight = calculateStripHeight(visibleBottom, 'bottom');
 
             const spaceForGrid = totalVerticalBudget - topStripHeight - bottomStripHeight - (topStripHeight > 0 ? 2.5 : 0) - (bottomStripHeight > 0 ? 2.5 : 0);
             const gridHeight = Math.max(spaceForGrid, 62);
@@ -1587,10 +1621,10 @@
         // ========================================================
         function renderPdfModularSection(doc, keys, stripName, startX, startY, totalW, isBlank, maxBottomY) {
             let curY = startY;
-            let defaultH = 15;
+            let defaultH = (stripName === 'bottom' && keys.length === 1 && keys[0] === 'notes') ? 16 : 19;
             if (stripName === 'bottom') {
                 const remainingH = (maxBottomY || 142.7) - curY;
-                defaultH = Math.max(10, Math.min(14, remainingH));
+                defaultH = Math.max(10, Math.min(defaultH, remainingH));
             }
 
             if (keys.length === 1) {
@@ -1606,7 +1640,7 @@
                 renderPdfBlock(doc, keys[0], startX, curY, halfW, defaultH, isBlank);
                 renderPdfBlock(doc, keys[1], startX + halfW + 3, curY, halfW, defaultH, isBlank);
                 curY += defaultH + 2.5;
-                const nextH = Math.max(10, Math.min(14, (maxBottomY || 142.7) - curY));
+                const nextH = Math.max(10, Math.min(16, (maxBottomY || 142.7) - curY));
                 renderPdfBlock(doc, keys[2], startX, curY, totalW, nextH, isBlank);
                 curY += nextH + 2.5;
             }
@@ -1637,10 +1671,12 @@
             const isCircle = state.checkboxStyle === 'circle';
 
             if (key === 'priorities') {
-                const rowH = (h - 8.2) / 3;
+                const headerOffset = 6.4;
+                const rowH = (h - headerOffset - 1.5) / 3;
                 state.prioritiesData.forEach((item, i) => {
-                    const rowY = contentY + i * rowH;
-                    const boxSize = 2.5;
+                    const rowY = y + headerOffset + i * rowH;
+                    const midY = rowY + rowH / 2;
+                    const boxSize = 2.6;
                     const isMarked = !isBlank && item.checked;
 
                     if (isMarked) {
@@ -1648,30 +1684,27 @@
                         doc.setDrawColor(135, 85, 59);
                         doc.setLineWidth(0.2);
                         if (isCircle) {
-                            doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                            doc.circle(x + 4.5, midY, boxSize / 2, 'FD');
                         } else {
-                            doc.roundedRect(x + 3.2, rowY, boxSize, boxSize, 0.4, 0.4, 'FD');
+                            doc.roundedRect(x + 3.2, midY - boxSize / 2, boxSize, boxSize, 0.4, 0.4, 'FD');
                         }
                         doc.setDrawColor(255, 255, 255);
                         doc.setLineWidth(0.35);
                         const ckX = x + (isCircle ? 4.5 : (3.2 + boxSize / 2));
-                        const ckY = rowY + 1.2;
-                        doc.line(ckX - 0.7, ckY, ckX - 0.2, ckY + 0.6);
-                        doc.line(ckX - 0.2, ckY + 0.6, ckX + 0.8, ckY - 0.6);
+                        doc.line(ckX - 0.7, midY, ckX - 0.2, midY + 0.6);
+                        doc.line(ckX - 0.2, midY + 0.6, ckX + 0.8, midY - 0.6);
                     } else {
                         doc.setFillColor(255, 255, 255);
-                        doc.setDrawColor(100, 100, 100);
+                        doc.setDrawColor(110, 105, 100);
                         doc.setLineWidth(0.2);
                         if (isCircle) {
-                            doc.circle(x + 4.5, rowY + 1.2, boxSize / 2, 'FD');
+                            doc.circle(x + 4.5, midY, boxSize / 2, 'FD');
                         } else {
-                            doc.rect(x + 3.2, rowY, boxSize, boxSize, 'FD');
+                            doc.rect(x + 3.2, midY - boxSize / 2, boxSize, boxSize, 'FD');
                         }
                     }
 
-                    doc.setDrawColor(226, 218, 208);
-                    doc.setLineWidth(0.15);
-                    doc.line(x + 7.5, rowY + 2.8, x + w - 3, rowY + 2.8);
+                    // Se omite la línea horizontal divisoria para mantener una estética analógica limpia y sin apiñamiento
 
                     if (!isBlank && item.text) {
                         doc.setFont('helvetica', 'normal');
@@ -1679,7 +1712,7 @@
                         doc.setTextColor(30, 30, 30);
                         const cleanTxt = item.text.replace(/[\r\n]+/g, ' ');
                         const fitTxt = doc.splitTextToSize(cleanTxt, w - 12)[0] || '';
-                        doc.text(fitTxt, x + 8, rowY + 2.2);
+                        doc.text(fitTxt, x + 8, midY + 0.9);
                     }
                 });
             } else if (key === 'motto') {
@@ -1747,9 +1780,11 @@
                         doc.text(badge, cellX + colW - 1.8, cellY + 3.0, { align: 'right' });
                     }
 
-                    // Contenido del mes (aprovecha todo el ancho y alto disponible)
+                    // Contenido del mes (debajo de la cabecera, con margen de aire limpio garantizado)
                     if (!isBlank && state.monthsNotes[mIdx]) {
-                        renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 1.8, cellY + 5.8, colW - 3.6, rowH - 6.8);
+                        const contentStartY = cellY + headerH + 2.8; // 4.2 + 2.8 = 7.0 mm (baseline segura)
+                        const contentMaxH = rowH - headerH - 3.2;
+                        renderMonthCellText(doc, state.monthsNotes[mIdx], cellX + 1.8, contentStartY, colW - 3.6, contentMaxH);
                     }
                 }
             }
@@ -1759,17 +1794,16 @@
             if (!text || !text.trim()) return;
             const cleanText = text.trim();
 
-            let bestFontSize = 6.4;
-            let bestLineHeight = 2.5;
+            let bestFontSize = 6.2;
+            let bestLineHeight = 2.6;
             let bestLines = [];
 
-            // Calibración adaptativa: permite rellenar de arriba a abajo la altura natural del mes
-            for (let fSize = 6.6; fSize >= 4.2; fSize -= 0.2) {
+            for (let fSize = 6.4; fSize >= 4.4; fSize -= 0.2) {
                 doc.setFontSize(fSize);
                 const lH = fSize * 0.40;
                 const lines = doc.splitTextToSize(cleanText, maxW);
                 const totalHeight = lines.length * lH;
-                if (totalHeight <= maxH || fSize <= 4.3) {
+                if (totalHeight <= maxH || fSize <= 4.5) {
                     bestFontSize = fSize;
                     bestLineHeight = lH;
                     bestLines = lines;
