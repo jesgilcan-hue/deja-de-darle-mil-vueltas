@@ -706,23 +706,60 @@
             width: 100%;
         }
 
-        /* TOAST NOTIFICACIONES */
-        .toast-msg {
-            position: fixed;
-            bottom: 24px;
+        /* SELECTOR EXCLUYENTE DE CASILLAS (SIN TEXTO) */
+        .checkbox-selector-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: #ebe6dc;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid #dcd7ce;
+        }
+
+        .btn-shape-selector {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            width: 32px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+        .btn-shape-selector:hover {
+            background: #f7f4ed;
+            color: #222;
+        }
+        .btn-shape-selector.active {
+            background: #ffffff;
+            border-color: #cbbeae;
+            color: var(--accent);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        /* AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto 10px auto;
             background: #2b2520;
             color: #f7f5f0;
+            padding: 8px 16px;
+            border-radius: 6px;
             font-size: 0.82rem;
             font-weight: 600;
-            padding: 9px 18px;
-            border-radius: 8px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-            z-index: 10000;
-            display: none;
-            animation: fadeInToast 0.2s ease;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+            animation: fadeInNotice 0.2s ease;
         }
-        @keyframes fadeInToast {
-            from { opacity: 0; transform: translateY(8px); }
+        @keyframes fadeInNotice {
+            from { opacity: 0; transform: translateY(-4px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -961,9 +998,18 @@
         </div>
 
         <div class="toolbar-group">
-            <button type="button" class="toolbar-btn" id="btn-toggle-check" onclick="toggleCheckboxStyle()" title="Alternar entre casillas cuadradas y circulares">
-                <span>◻️/⚪</span> Casillas: Redondas
-            </button>
+            <div class="checkbox-selector-group" title="Forma de casillas">
+                <button type="button" class="btn-shape-selector" id="btn-shape-square" onclick="setCheckboxStyle('square')" title="Casillas cuadradas" aria-label="Casillas cuadradas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="12" height="12" rx="2" />
+                    </svg>
+                </button>
+                <button type="button" class="btn-shape-selector active" id="btn-shape-circle" onclick="setCheckboxStyle('circle')" title="Casillas redondas" aria-label="Casillas redondas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="8" cy="8" r="6" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <div class="toolbar-group">
@@ -982,6 +1028,9 @@
             <button type="button" class="btn-sec-pill" onclick="swapBottomSections()" title="Intercambiar la posición de Hábitos y Notas">🔄 Intercambiar posición</button>
         </div>
     </div>
+
+    <!-- AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR -->
+    <div class="sheet-inline-notice" id="toast-notify" style="display: none;"></div>
 
     <!-- LIENZO FÍSICO INTERACTIVO HORIZONTAL (8.25" × 6") -->
     <div class="paper-canvas-container">
@@ -1277,9 +1326,6 @@
         </div>
     </div>
 
-    <!-- TOAST INFORMATIVO -->
-    <div class="toast-msg" id="toast-notify"></div>
-
     <script>
         // ESTADO GLOBAL
         const state = {
@@ -1298,27 +1344,27 @@
             updateCheckboxUI();
         });
 
-        // ALTERNAR CASILLAS (REDONDAS ⚪ / CUADRADAS ◻️)
-        function toggleCheckboxStyle() {
-            state.checkboxStyle = (state.checkboxStyle === 'circle') ? 'square' : 'circle';
+        // SELECCIONAR FORMA DE CASILLAS (CUADRADA ◻️ / REDONDA ⚪)
+        function setCheckboxStyle(style) {
+            state.checkboxStyle = style;
             updateCheckboxUI();
-            showToast(state.checkboxStyle === 'circle' ? 'Casillas: Redondas ⚪' : 'Casillas: Cuadradas ◻️');
+            showToast(style === 'circle' ? 'Casillas redondas seleccionadas' : 'Casillas cuadradas seleccionadas');
         }
 
         function updateCheckboxUI() {
             const isCircle = state.checkboxStyle === 'circle';
+            const btnSquare = document.getElementById('btn-shape-square');
+            const btnCircle = document.getElementById('btn-shape-circle');
+            if (btnSquare && btnCircle) {
+                btnSquare.classList.toggle('active', !isCircle);
+                btnCircle.classList.toggle('active', isCircle);
+            }
             document.querySelectorAll('.day-check-indicator').forEach(el => {
                 el.classList.toggle('circle', isCircle);
             });
             document.querySelectorAll('.habit-day-dot').forEach(el => {
                 el.classList.toggle('square', !isCircle);
             });
-            const btn = document.getElementById('btn-toggle-check');
-            if (btn) {
-                btn.innerHTML = isCircle 
-                    ? '<span>⚪</span> Casillas: Redondas' 
-                    : '<span>◻️</span> Casillas: Cuadradas';
-            }
         }
 
         // MANEJO DE LÍNEAS FÍSICAS EN DÍAS Y FOCO (HASTA 4 LÍNEAS NORMAL / 7 EXPANDIDO)
