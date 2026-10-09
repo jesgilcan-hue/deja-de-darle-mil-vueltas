@@ -167,6 +167,38 @@
             color: #2e241c;
         }
 
+        /* SELECTOR DE MODO: UNA TABLA vs MULTITABLA */
+        .table-mode-toggle {
+            display: inline-flex;
+            background: #ede8df;
+            border-radius: 20px;
+            padding: 2px;
+            gap: 2px;
+            border: 1px solid #d5cfc5;
+        }
+        .btn-mode-pill {
+            background: transparent;
+            border: none;
+            border-radius: 16px;
+            padding: 4px 11px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #554d45;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-mode-pill.active {
+            background: #ffffff;
+            color: #1a1614;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+        .btn-mode-pill:hover:not(.active) {
+            color: var(--accent);
+        }
+
         .toolbar-select-label {
             font-size: 0.74rem;
             font-weight: 700;
@@ -215,7 +247,7 @@
         /* AVISO CONTEXTUAL INTEGRADO (ESPACIO CONSTANTE SIN SALTO VERTICAL / ZERO CLS) */
         .sheet-inline-notice {
             width: 100%;
-            max-width: 1040px;
+            max-width: 980px;
             min-height: 34px;
             margin: 4px auto 10px auto;
             padding: 6px 14px;
@@ -396,6 +428,32 @@
             font-weight: 800;
             color: var(--accent);
             border-right: 1.5px solid #cbbeae;
+            padding: 2px 4px;
+        }
+
+        /* INPUT EDITABLE EN ESQUINA MULTITABLA (SEM 1 / MÁX 10 CARACTERES) */
+        .schedule-corner-input {
+            width: 100%;
+            max-width: 80px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed rgba(135, 85, 59, 0.45);
+            font-family: var(--font-sans);
+            font-size: 0.58rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            outline: none;
+            padding: 1px 2px;
+            box-sizing: border-box;
+            transition: all 0.15s ease;
+        }
+        .schedule-corner-input:focus {
+            border-bottom: 1.5px solid var(--accent);
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 2px;
         }
 
         /* LÍNEA SEPARADORA GRUESA HORIZONTAL ENTRE SEMANAS (SEPARA EL LUNES DEL LUNES) */
@@ -807,13 +865,16 @@
             </button>
         </div>
 
-        <!-- GRUPO 2: CONFIGURACIÓN DE SEMANAS, HORARIO Y CICLO -->
+        <!-- GRUPO 2: CONFIGURACIÓN DE TABLA, HORARIO Y CICLO -->
         <div class="toolbar-group">
-            <label class="toolbar-select-label" for="select-weeks-count">Semanas:</label>
-            <select id="select-weeks-count" class="toolbar-select" onchange="onWeeksCountChange()">
-                <option value="1" selected>1 Semana</option>
-                <option value="2">2 Semanas</option>
-            </select>
+            <div class="table-mode-toggle">
+                <button type="button" class="btn-mode-pill active" id="btn-mode-single" onclick="setTableMode('single')" title="Vista de una única tabla semanal">
+                    Una tabla
+                </button>
+                <button type="button" class="btn-mode-pill" id="btn-mode-multi" onclick="setTableMode('multi')" title="Vista multitabla con 2 o 3 semanas apiladas">
+                    Multitabla
+                </button>
+            </div>
 
             <label class="toolbar-select-label" for="select-start-hour">Inicio:</label>
             <select id="select-start-hour" class="toolbar-select" onchange="onTimeConfigChange()">
@@ -854,7 +915,7 @@
                 <option value="12">12 horas</option>
             </select>
 
-            <label class="toolbar-select-label" for="select-row-count">Filas:</label>
+            <label class="toolbar-select-label" for="select-row-count" id="label-row-count">Filas:</label>
             <select id="select-row-count" class="toolbar-select" onchange="onRowsCountChange()">
                 <!-- Se llena dinámicamente con Ciclo 24 horas, Ciclo 48 horas, etc. -->
             </select>
@@ -880,9 +941,9 @@
                 <span class="paper-kicker">MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL</span>
                 <div class="paper-header-row">
                     <span class="paper-title">Planificador Horario</span>
-                    <input type="text" class="editable-week-input" id="field-week-title" maxlength="26" placeholder="Semana 42 / 14 - 20 Octubre" value="Semana 42">
+                    <input type="text" class="editable-week-input" id="field-week-title" maxlength="30" placeholder="Semana 42 / 14 - 20 Octubre" value="Semana 42">
                 </div>
-                <input type="text" class="editable-focus-input" id="field-week-focus" maxlength="150" placeholder="«Enfoque semanal: Proteger las primeras horas para concentración profunda...»" value="«Proteger las primeras horas del día para el trabajo que requiere concentración profunda.»">
+                <input type="text" class="editable-focus-input" id="field-week-focus" maxlength="160" placeholder="«Enfoque semanal: Proteger las primeras horas para concentración profunda...»" value="«Proteger las primeras horas del día para el trabajo que requiere concentración profunda.»">
             </div>
 
             <!-- CUERPO MODULAR INTERCAMBIABLE (ORDEN REVERSIBLE SEGÚN POSICIÓN) -->
@@ -894,9 +955,9 @@
                         <span class="notes-box-title">
                             📝 NOTAS Y PRIORIDADES DE LA SEMANA
                         </span>
-                        <span class="notes-char-counter" id="count-notes">0/260</span>
+                        <span class="notes-char-counter" id="count-notes">0/280</span>
                     </div>
-                    <textarea class="editable-notes-textarea" id="field-week-notes" maxlength="260" placeholder="• Bloques de trabajo profundo por la mañana sin notificaciones.&#10;• Paseo diario de 30 minutos sin auriculares para despejar la mente." oninput="handleNotesInput(this)">• Bloques de trabajo profundo por la mañana sin notificaciones.
+                    <textarea class="editable-notes-textarea" id="field-week-notes" maxlength="280" placeholder="• Bloques de trabajo profundo por la mañana sin notificaciones.&#10;• Paseo diario de 30 minutos sin auriculares para despejar la mente." oninput="handleNotesInput(this)">• Bloques de trabajo profundo por la mañana sin notificaciones.
 • Paseo diario de 30 minutos sin auriculares para despejar la mente.</textarea>
                 </div>
 
@@ -973,15 +1034,15 @@
     <script>
         // ESTADO GLOBAL
         const state = {
-            weeksCount: 1, // 1 | 2
+            mode: 'single', // 'single' | 'multi'
+            weeksCount: 1, // 1 | 2 | 3
             startHour: 8,
             interval: 1, // horas por fila
             rowsPerWeek: 16, // filas horarias por cada semana
             notesPosition: 'bottom', // 'top' | 'bottom'
+            weekLabels: { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3' },
             cellData: {} // key: `w_${weekIdx}_r_${rowIdx}_d_${dayIdx}` => string
         };
-
-        let previousRowsCount = 16;
 
         // EJEMPLO EDITORIAL
         const EXAMPLE_DATA = {
@@ -1015,6 +1076,41 @@
             toastTimer = setTimeout(() => {
                 t.classList.remove('active');
             }, 3000);
+        }
+
+        // ========================================================
+        // CONTROL DE MODOS: UNA TABLA vs MULTITABLA
+        // ========================================================
+        function setTableMode(newMode) {
+            if (newMode === state.mode) return;
+
+            if (newMode === 'single') {
+                if (hasTextInWeek(1) || hasTextInWeek(2)) {
+                    showToast('⚠️ No se puede cambiar a Una tabla: las semanas adicionales contienen texto. Bórralo para hacer hueco.');
+                    return;
+                }
+                state.mode = 'single';
+                state.weeksCount = 1;
+            } else {
+                state.mode = 'multi';
+                if (state.weeksCount === 1) {
+                    state.weeksCount = 2;
+                }
+            }
+
+            updateModeUI();
+            populateRowCountSelect();
+            renderScheduleTable();
+            showToast(state.mode === 'single' ? 'Modo: Una tabla activado' : `Modo: Multitabla activado (${state.weeksCount} semanas)`);
+        }
+
+        function updateModeUI() {
+            const btnSingle = document.getElementById('btn-mode-single');
+            const btnMulti = document.getElementById('btn-mode-multi');
+            const labelRows = document.getElementById('label-row-count');
+            if (btnSingle) btnSingle.classList.toggle('active', state.mode === 'single');
+            if (btnMulti) btnMulti.classList.toggle('active', state.mode === 'multi');
+            if (labelRows) labelRows.textContent = (state.mode === 'single') ? 'Filas:' : 'Ciclo / Semanas:';
         }
 
         // ========================================================
@@ -1059,7 +1155,7 @@
         }
 
         // ========================================================
-        // CÁLCULO DE FRANJAS HORARIAS Y SELECTOR DE FILAS (CICLOS 24H, 48H...)
+        // CÁLCULO DE FRANJAS HORARIAS Y SELECTOR DE FILAS (CICLOS 24H, 48H, 72H...)
         // ========================================================
         function getStepHours() {
             const val = parseFloat(document.getElementById('select-interval')?.value || '1');
@@ -1072,8 +1168,7 @@
         }
 
         function getRowCount() {
-            const val = parseInt(document.getElementById('select-row-count')?.value || '16', 10);
-            return isNaN(val) ? 16 : val;
+            return state.rowsPerWeek || 16;
         }
 
         function formatCycleLabel(rows, step) {
@@ -1088,48 +1183,71 @@
             return ` (${totalHours} horas)`;
         }
 
-        function populateRowCountSelect(preferredRows) {
+        function populateRowCountSelect(preferredVal) {
             const select = document.getElementById('select-row-count');
             if (!select) return;
 
             const step = getStepHours();
-            const minRows = (step === 12) ? 2 : 4;
-            const maxRows = (state.weeksCount === 2) ? 12 : 24;
 
-            let defaultRows = (state.weeksCount === 2) ? 8 : 16;
-            if (step === 2 && state.weeksCount === 1) defaultRows = 12;
+            if (state.mode === 'single') {
+                const minRows = (step === 12) ? 2 : 4;
+                const maxRows = 24;
+                let defaultRows = (step === 2) ? 12 : 16;
+                const targetVal = preferredVal ? parseInt(preferredVal, 10) : (state.rowsPerWeek || defaultRows);
 
-            const targetVal = preferredRows || (select.value ? parseInt(select.value, 10) : defaultRows);
-
-            select.innerHTML = '';
-            for (let r = minRows; r <= maxRows; r++) {
-                const opt = document.createElement('option');
-                opt.value = r;
-                const cycleText = formatCycleLabel(r, step);
-                opt.textContent = `${r} filas${cycleText}`;
-                if (r === targetVal || (r === defaultRows && !preferredRows && !select.value)) {
-                    opt.selected = true;
+                select.innerHTML = '';
+                for (let r = minRows; r <= maxRows; r++) {
+                    const opt = document.createElement('option');
+                    opt.value = String(r);
+                    const cycleText = formatCycleLabel(r, step);
+                    opt.textContent = `${r} filas${cycleText}`;
+                    if (r === targetVal) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
                 }
-                select.appendChild(opt);
-            }
+                if (!select.value) {
+                    select.value = String(defaultRows);
+                }
+                state.rowsPerWeek = parseInt(select.value, 10);
+            } else {
+                // Modo Multitabla: Ciclos que definen 2 o 3 semanas
+                // (24h, 48h, 72h, etc.)
+                const multiConfigs = [
+                    // 2 Semanas
+                    { weeks: 2, rows: (step === 1 ? 8 : 4), label: `Ciclo 16 horas (2 Semanas · ${step === 1 ? 8 : 4} filas / Vigilia)` },
+                    { weeks: 2, rows: (step === 1 ? 12 : 6), label: `Ciclo 24 horas (2 Semanas · ${step === 1 ? 12 : 6} filas)` },
+                    { weeks: 2, rows: (step === 1 ? 16 : 8), label: `Ciclo 32 horas (2 Semanas · ${step === 1 ? 16 : 8} filas)` },
+                    { weeks: 2, rows: (step === 1 ? 24 : 12), label: `Ciclo 48 horas (2 Semanas · ${step === 1 ? 24 : 12} filas · 24h/sem)` },
+                    // 3 Semanas
+                    { weeks: 3, rows: (step === 1 ? 6 : 3), label: `Ciclo 18 horas (3 Semanas · ${step === 1 ? 6 : 3} filas)` },
+                    { weeks: 3, rows: (step === 1 ? 8 : 4), label: `Ciclo 24 horas (3 Semanas · ${step === 1 ? 8 : 4} filas · 8h/sem)` },
+                    { weeks: 3, rows: (step === 1 ? 12 : 6), label: `Ciclo 36 horas (3 Semanas · ${step === 1 ? 12 : 6} filas)` },
+                    { weeks: 3, rows: (step === 1 ? 24 : 12), label: `Ciclo 72 horas (3 Semanas · ${step === 1 ? 24 : 12} filas · 24h/sem)` }
+                ];
 
-            if (!select.value) {
-                select.value = String(defaultRows);
-            }
-            previousRowsCount = parseInt(select.value, 10);
-        }
+                select.innerHTML = '';
+                const currentValStr = `${state.weeksCount}_${state.rowsPerWeek}`;
+                let hasMatch = false;
 
-        function onWeeksCountChange() {
-            const newWeeks = parseInt(document.getElementById('select-weeks-count').value, 10);
-            if (newWeeks < state.weeksCount && hasTextInWeek(1)) {
-                document.getElementById('select-weeks-count').value = String(state.weeksCount);
-                showToast('⚠️ No se puede reducir a 1 semana: la Semana 2 contiene texto. Borra el texto para hacer hueco.');
-                return;
+                multiConfigs.forEach(cfg => {
+                    const opt = document.createElement('option');
+                    opt.value = `${cfg.weeks}_${cfg.rows}`;
+                    opt.textContent = cfg.label;
+                    if (opt.value === currentValStr || opt.value === preferredVal) {
+                        opt.selected = true;
+                        hasMatch = true;
+                    }
+                    select.appendChild(opt);
+                });
+
+                if (!hasMatch) {
+                    select.selectedIndex = 0;
+                    const [wStr, rStr] = select.value.split('_');
+                    state.weeksCount = parseInt(wStr, 10);
+                    state.rowsPerWeek = parseInt(rStr, 10);
+                }
             }
-            state.weeksCount = newWeeks;
-            populateRowCountSelect();
-            renderScheduleTable();
-            showToast(newWeeks === 2 ? 'Vista de 2 Semanas activada con separación horizontal' : 'Vista de 1 Semana activada');
         }
 
         function onIntervalSelectChange() {
@@ -1144,15 +1262,43 @@
         }
 
         function onRowsCountChange() {
-            const newCount = getRowCount();
-            if (newCount < previousRowsCount && hasTextBeyondRow(newCount)) {
-                document.getElementById('select-row-count').value = String(previousRowsCount);
-                showToast(`⚠️ No se puede reducir a ${newCount} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`);
-                return;
+            if (state.mode === 'single') {
+                const newCount = parseInt(document.getElementById('select-row-count').value, 10);
+                if (newCount < state.rowsPerWeek && hasTextBeyondRow(newCount)) {
+                    document.getElementById('select-row-count').value = String(state.rowsPerWeek);
+                    showToast(`⚠️ No se puede reducir a ${newCount} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`);
+                    return;
+                }
+                state.rowsPerWeek = newCount;
+                renderScheduleTable();
+                showToast('Número de filas actualizado');
+            } else {
+                const val = document.getElementById('select-row-count').value;
+                const [wStr, rStr] = val.split('_');
+                const targetWeeks = parseInt(wStr, 10);
+                const targetRows = parseInt(rStr, 10);
+
+                if (targetWeeks < state.weeksCount) {
+                    for (let w = targetWeeks; w < state.weeksCount; w++) {
+                        if (hasTextInWeek(w)) {
+                            document.getElementById('select-row-count').value = `${state.weeksCount}_${state.rowsPerWeek}`;
+                            showToast(`⚠️ No se puede reducir a ${targetWeeks} semanas: la Semana ${w + 1} contiene texto.`);
+                            return;
+                        }
+                    }
+                }
+
+                if (targetRows < state.rowsPerWeek && hasTextBeyondRow(targetRows)) {
+                    document.getElementById('select-row-count').value = `${state.weeksCount}_${state.rowsPerWeek}`;
+                    showToast(`⚠️ No se puede reducir a ${targetRows} filas: hay texto en franjas posteriores. Borra el texto para hacer hueco.`);
+                    return;
+                }
+
+                state.weeksCount = targetWeeks;
+                state.rowsPerWeek = targetRows;
+                renderScheduleTable();
+                showToast(`Multitabla configurada: ${targetWeeks} semanas (${targetRows} filas por semana)`);
             }
-            previousRowsCount = newCount;
-            renderScheduleTable();
-            showToast('Número de filas actualizado');
         }
 
         // GENERACIÓN DE LABELS DE TIEMPO
@@ -1193,10 +1339,10 @@
             tableWrap.innerHTML = '';
 
             const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
-            const maxCharsPerCell = (rowsCount <= 8) ? 80 : (rowsCount <= 14 ? 50 : 35);
+            const maxCharsPerCell = (rowsCount <= 6) ? 100 : (rowsCount <= 10 ? 70 : (rowsCount <= 16 ? 50 : 35));
 
             for (let w = 0; w < state.weeksCount; w++) {
-                // Si es la semana 2, insertar la LÍNEA SEPARADORA GRUESA HORIZONTAL (que separa el lunes del lunes)
+                // Si es semana 2 o 3, insertar la LÍNEA SEPARADORA GRUESA HORIZONTAL (que separa el lunes del lunes)
                 if (w > 0) {
                     const separator = document.createElement('div');
                     separator.className = 'week-separator-divider';
@@ -1207,9 +1353,25 @@
                 const headerRow = document.createElement('div');
                 headerRow.className = 'schedule-header-row';
 
+                // Celda de esquina (HORA o input editable SEM 1 / máx 10 caracteres)
                 const timeHeader = document.createElement('div');
                 timeHeader.className = 'schedule-header-cell schedule-header-time-title';
-                timeHeader.textContent = (state.weeksCount === 2) ? `SEM ${w + 1} · HORA` : 'HORA';
+
+                if (state.mode === 'multi') {
+                    const cornerInput = document.createElement('input');
+                    cornerInput.type = 'text';
+                    cornerInput.className = 'schedule-corner-input';
+                    cornerInput.maxLength = 10;
+                    cornerInput.value = state.weekLabels[w] !== undefined ? state.weekLabels[w] : `SEM ${w + 1}`;
+                    cornerInput.placeholder = `SEM ${w + 1}`;
+                    cornerInput.title = 'Editar encabezado (máx. 10 caracteres)';
+                    cornerInput.addEventListener('input', (e) => {
+                        state.weekLabels[w] = e.target.value.substring(0, 10);
+                    });
+                    timeHeader.appendChild(cornerInput);
+                } else {
+                    timeHeader.textContent = 'HORA';
+                }
                 headerRow.appendChild(timeHeader);
 
                 dayNames.forEach(dName => {
@@ -1251,10 +1413,9 @@
                         textarea.dataset.key = key;
 
                         textarea.addEventListener('input', (e) => {
-                            if (e.target.scrollHeight > e.target.clientHeight + 4) {
+                            while (e.target.scrollHeight > e.target.clientHeight + 2 && e.target.value.length > 0) {
                                 e.target.value = e.target.value.slice(0, -1);
                                 showToast('⚠️ Límite de capacidad alcanzado en la celda');
-                                return;
                             }
                             state.cellData[key] = e.target.value;
                         });
@@ -1277,7 +1438,7 @@
                 showToast('⚠️ Límite de espacio en Notas alcanzado');
             }
             const count = document.getElementById('count-notes');
-            if (count) count.textContent = `${el.value.length}/260`;
+            if (count) count.textContent = `${el.value.length}/280`;
         }
 
         // ========================================================
@@ -1292,6 +1453,7 @@
                 handleNotesInput(notesEl);
             }
 
+            state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3' };
             state.cellData = { ...EXAMPLE_DATA.cells };
             renderScheduleTable();
             showToast('✨ Ejemplo editorial cargado en el horario');
@@ -1309,6 +1471,7 @@
                 handleNotesInput(notesEl);
             }
 
+            state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3' };
             state.cellData = {};
             renderScheduleTable();
             showToast('🧹 Lienzo limpio para empezar en blanco');
@@ -1409,12 +1572,17 @@
             // 3. ENFOQUE / LEMA SI EXISTE
             if (activeFocus) {
                 doc.setFont('helvetica', 'italic');
-                doc.setFontSize(7);
+                doc.setFontSize(6.8);
                 doc.setTextColor(90, 85, 80);
                 const cleanFocus = activeFocus.startsWith('«') ? activeFocus : `«${activeFocus}»`;
                 const fLines = doc.splitTextToSize(cleanFocus, contentW - 10);
-                doc.text(fLines[0] || '', m, y + 1.2);
-                y += 3.8;
+                const linesToDraw = fLines.slice(0, 2);
+                let focusY = y + 1.2;
+                linesToDraw.forEach(fl => {
+                    doc.text(fl, m, focusY);
+                    focusY += 2.8;
+                });
+                y = focusY + 0.4;
             }
 
             // Línea divisoria de cabecera
@@ -1430,8 +1598,8 @@
             const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
 
             const headerRowH = 4.8;
-            const notesH = 15.0;
-            const gapBetweenBlocks = 3.0;
+            const notesH = 15.5;
+            const gapBetweenBlocks = 2.8;
             const bottomMarginBeforeFooter = 4.8;
 
             const footerY = ph - 5.2;
@@ -1440,7 +1608,7 @@
 
             // Altura por semana
             const weeksCount = state.weeksCount;
-            const separatorH = (weeksCount === 2) ? 1.5 : 0;
+            const separatorH = (weeksCount > 1) ? 1.4 * (weeksCount - 1) : 0;
             const heightPerWeek = (availableTableH - separatorH) / weeksCount;
             const rowH = (heightPerWeek - headerRowH) / rowCount;
 
@@ -1454,20 +1622,20 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.2);
                 doc.setTextColor(135, 85, 59);
-                doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', m + 3.5, boxY + 4.2);
+                doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', m + 3.5, boxY + 3.8);
 
                 if (activeNotes) {
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6.2);
+                    doc.setFontSize(5.8);
                     doc.setTextColor(45, 40, 35);
                     const cleanNotes = activeNotes.replace(/[•\u2022]/g, '-');
                     const nLines = doc.splitTextToSize(cleanNotes, contentW - 8);
                     const maxNotesLines = 4;
                     const linesToDraw = nLines.slice(0, maxNotesLines);
-                    let noteY = boxY + 7.4;
+                    let noteY = boxY + 6.6;
                     linesToDraw.forEach(line => {
                         doc.text(line, m + 3.5, noteY);
-                        noteY += 3.0;
+                        noteY += 2.6;
                     });
                 }
             }
@@ -1477,12 +1645,12 @@
                 let currentY = tableY;
 
                 for (let w = 0; w < weeksCount; w++) {
-                    // Si es la semana 2, DIBUJAR LA LÍNEA GRUESA HORIZONTAL SEPARADORA (SEPARA EL LUNES DEL LUNES)
+                    // Si es semana 2 o 3, DIBUJAR LA LÍNEA GRUESA HORIZONTAL SEPARADORA (SEPARA EL LUNES DEL LUNES)
                     if (w > 0) {
                         doc.setDrawColor(35, 30, 26);
                         doc.setLineWidth(0.8); // LÍNEA MUY GRUESA Y VISIBLE
                         doc.line(m, currentY + 0.8, m + contentW, currentY + 0.8);
-                        currentY += separatorH + 0.5;
+                        currentY += 1.4 + 0.5;
                     }
 
                     const weekStartY = currentY;
@@ -1493,12 +1661,22 @@
                     doc.setLineWidth(0.2);
                     doc.rect(m, weekStartY, contentW, headerRowH, 'FD');
 
-                    // Texto cabecera: HORA
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.0);
-                    doc.setTextColor(135, 85, 59);
-                    const timeLabel = (weeksCount === 2) ? `SEM ${w + 1} · HORA` : 'HORA';
-                    doc.text(timeLabel, m + (timeColW / 2), weekStartY + (headerRowH / 2) + 1.2, { align: 'center' });
+                    // Texto cabecera: HORA o etiqueta de semana multitabla
+                    let timeLabel = 'HORA';
+                    if (state.mode === 'multi') {
+                        if (isBlank) {
+                            timeLabel = ''; // En blanco no se imprime nada en la casilla
+                        } else {
+                            timeLabel = (state.weekLabels[w] !== undefined ? state.weekLabels[w] : `SEM ${w + 1}`).trim().substring(0, 10);
+                        }
+                    }
+
+                    if (timeLabel) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(timeLabel.length > 7 ? 5.2 : 6.0);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(timeLabel, m + (timeColW / 2), weekStartY + (headerRowH / 2) + 1.2, { align: 'center' });
+                    }
 
                     // Textos cabecera: Días de la semana
                     doc.setFont('helvetica', 'bold');
@@ -1539,7 +1717,7 @@
                         doc.setTextColor(55, 50, 45);
                         doc.text(slot.label, m + (timeColW / 2), rY + (rowH / 2) + 1.0, { align: 'center' });
 
-                        // Contenido de celdas multilínea proporcional
+                        // Contenido de celdas multilínea proporcional con ajuste dinámico
                         if (!isBlank) {
                             for (let d = 0; d < 7; d++) {
                                 const key = `w_${w}_r_${i}_d_${d}`;
@@ -1548,16 +1726,25 @@
                                     const cX = m + timeColW + (d * dayColW);
 
                                     const maxWrapW = dayColW - 1.6;
-                                    let cellFontSize = (rowCount > 12) ? 4.2 : 5.0;
+                                    let cellFontSize = (rowH > 6.5) ? 5.0 : ((rowH > 4.2) ? 4.3 : 3.7);
                                     doc.setFont('helvetica', 'normal');
                                     doc.setFontSize(cellFontSize);
                                     doc.setTextColor(45, 35, 30);
 
-                                    const wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
-                                    const lineHeight = cellFontSize * 0.38;
-                                    const maxLinesFit = Math.max(1, Math.floor((rowH - 0.8) / lineHeight));
-                                    const linesToDraw = wrappedLines.slice(0, maxLinesFit);
+                                    let wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
+                                    let lineHeight = cellFontSize * 0.38;
+                                    let maxLinesFit = Math.max(1, Math.floor((rowH - 0.6) / lineHeight));
 
+                                    // Si excede por poco, ajustar ligeramente tamaño para aprovechar mejor el hueco
+                                    if (wrappedLines.length > maxLinesFit && cellFontSize > 3.4) {
+                                        cellFontSize -= 0.5;
+                                        doc.setFontSize(cellFontSize);
+                                        lineHeight = cellFontSize * 0.38;
+                                        wrappedLines = doc.splitTextToSize(cellText.trim(), maxWrapW);
+                                        maxLinesFit = Math.max(1, Math.floor((rowH - 0.6) / lineHeight));
+                                    }
+
+                                    const linesToDraw = wrappedLines.slice(0, maxLinesFit);
                                     const blockHeight = linesToDraw.length * lineHeight;
                                     let startTextY = rY + ((rowH - blockHeight) / 2) + (lineHeight * 0.75);
                                     linesToDraw.forEach(line => {
@@ -1650,7 +1837,11 @@
         // INICIALIZACIÓN AL CARGAR
         // ========================================================
         document.addEventListener('DOMContentLoaded', () => {
-            populateRowCountSelect(16);
+            state.mode = 'single';
+            state.weeksCount = 1;
+            state.rowsPerWeek = 16;
+            updateModeUI();
+            populateRowCountSelect('16');
             applyNotesPositionUI();
             loadExampleContent();
         });
