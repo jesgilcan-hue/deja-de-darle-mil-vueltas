@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tutorial: Cómo Generar tu Planificador Semanal en la Web | Menos Ruido</title>
+    <meta name="description" content="Tutorial práctico paso a paso para diseñar, personalizar e imprimir tu Planificador Semanal en PDF a 300 DPI con el generador interactivo de Menos Ruido." />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Control de acceso privado por PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="./style.css" />
+
+    <style>
+        :root {
+            --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-display: 'Playfair Display', Georgia, serif;
+            --bg-page: #f6f3ed;
+            --bg-paper: #fffefb;
+            --text-main: #211d1a;
+            --text-muted: #6b635b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.08);
+            --border-soft: #e5ded3;
+            --border-strong: #2c2520;
+            --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.03);
+            --shadow-photo: 0 16px 40px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.75;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* BARRA SUPERIOR PRIVADA */
+        .private-top-bar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-soft);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 12px 24px;
+        }
+
+        .private-top-container {
+            max-width: 1040px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .private-top-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-back-pre {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 6px;
+            background: var(--accent-light);
+            transition: all 0.2s ease;
+        }
+        .btn-back-pre:hover {
+            background: var(--accent);
+            color: #ffffff;
+        }
+
+        .private-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8c5d31;
+            background: #fff4e6;
+            border: 1px solid rgba(140, 93, 49, 0.25);
+            padding: 3px 10px;
+            border-radius: 50px;
+        }
+
+        /* CABECERA DEL TUTORIAL */
+        .guide-hero {
+            background: linear-gradient(180deg, #ffffff 0%, var(--bg-page) 100%);
+            border-bottom: 1px solid var(--border-soft);
+            padding: 54px 20px 44px;
+            text-align: center;
+        }
+
+        .guide-hero-container {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .hero-kicker {
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 14px;
+            display: inline-block;
+        }
+
+        .guide-hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.1rem, 4.2vw, 3.1rem);
+            line-height: 1.2;
+            color: #1e1916;
+            margin: 0 0 16px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .guide-hero-lead {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 740px;
+            margin: 0 auto 24px auto;
+            line-height: 1.6;
+        }
+
+        .guide-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            font-size: 0.82rem;
+            color: #7a7269;
+            flex-wrap: wrap;
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .guide-main-layout {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        .guide-prose {
+            font-size: 1.08rem;
+            color: #2b2520;
+            line-height: 1.85;
+        }
+
+        .guide-prose p {
+            margin-bottom: 1.6rem;
+        }
+
+        .guide-prose h2 {
+            font-family: var(--font-display);
+            font-size: 1.95rem;
+            color: #1a1613;
+            margin: 3.5rem 0 1.2rem;
+            line-height: 1.3;
+            letter-spacing: -0.3px;
+            border-bottom: 1.5px solid var(--border-soft);
+            padding-bottom: 8px;
+        }
+
+        .guide-prose h3 {
+            font-family: var(--font-display);
+            font-size: 1.42rem;
+            color: #2e2621;
+            margin: 2.4rem 0 0.8rem;
+            line-height: 1.35;
+        }
+
+        .guide-prose strong {
+            color: #15110e;
+            font-weight: 600;
+        }
+
+        .guide-prose em {
+            font-family: var(--font-display);
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        /* FIGURAS DE FOTOS REALES, MOCKUPS Y CAPTURAS */
+        .photo-card {
+            margin: 2.8rem 0;
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: var(--shadow-photo);
+            transition: transform 0.2s ease;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        .photo-caption {
+            padding: 12px 18px;
+            font-size: 0.84rem;
+            color: #6a6259;
+            background: #fdfbf7;
+            border-top: 1px solid var(--border-soft);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.5;
+        }
+        .photo-caption strong {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* GRID DE DOS FOTOS */
+        .photos-dual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 2.6rem 0;
+        }
+
+        .photos-dual-grid .photo-card {
+            margin: 0;
+        }
+
+        /* PASOS NUMERADOS (STEP CARDS) */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 24px 26px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            color: #1a1613;
+            margin: 0;
+        }
+
+        /* CALLOUTS */
+        .guide-callout {
+            background: #fdfbf7;
+            border: 1px solid #e7ded2;
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 22px 24px;
+            margin: 2.4rem 0;
+            box-shadow: var(--shadow-card);
+        }
+
+        .guide-callout h4 {
+            font-family: var(--font-display);
+            font-size: 1.20rem;
+            color: #211c18;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guide-callout p {
+            margin: 0;
+            font-size: 0.98rem;
+            color: #4f463e;
+            line-height: 1.7;
+        }
+        .guide-callout p + p {
+            margin-top: 10px;
+        }
+
+        /* CITA EDITORIAL */
+        .guide-quote {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-style: italic;
+            color: #382e27;
+            background: rgba(135, 85, 59, 0.04);
+            border-left: 3px solid var(--accent);
+            padding: 18px 24px;
+            margin: 2.8rem 0;
+            line-height: 1.5;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* GRID COMPARATIVO / BOTONES */
+        .action-box {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin: 2.8rem 0;
+            box-shadow: var(--shadow-card);
+        }
+
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: #ffffff;
+            padding: 12px 26px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.25);
+        }
+        .btn-action-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        /* PIE DE PÁGINA PRIVADO */
+        .private-footer {
+            border-top: 1px solid var(--border-soft);
+            background: #ffffff;
+            padding: 34px 24px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .guide-hero {
+                padding: 36px 16px 28px;
+            }
+            .guide-main-layout {
+                padding: 24px 16px 60px;
+            }
+            .step-block {
+                padding: 18px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN PRIVADA -->
+    <header class="private-top-bar">
+        <div class="private-top-container">
+            <div class="private-top-left">
+                <a href="/pre-lecturas.html" class="btn-back-pre">← Volver a pre-Lecturas</a>
+                <span class="private-badge-pill">🔒 Tutorial Web Exclusivo</span>
+            </div>
+            <div>
+                <a href="/generador-planificador-semanal.html" target="_blank" class="btn-back-pre" style="background: var(--accent); color: #ffffff;">
+                    Abrir Generador en Vivo ↗
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CABECERA DEL TUTORIAL -->
+    <section class="guide-hero">
+        <div class="guide-hero-container">
+            <span class="hero-kicker">Herramientas Digitales & Impresión · Menos Ruido</span>
+            <h1>Tutorial: Cómo Generar tu Planificador Semanal en la Web</h1>
+            <p class="guide-hero-lead">
+                Aprende a configurar tu semana, personalizar las prioridades innegociables y descargar un PDF vectorial de alta resolución (300 DPI) listo para imprimir en casa o encuadernar.
+            </p>
+            <div class="guide-meta-row">
+                <span>🖥️ <strong>Aplicación:</strong> Generador Semanal Oficial (8.25" × 6")</span>
+                <span>·</span>
+                <span>⏱️ <strong>Duración:</strong> 8 minutos de lectura</span>
+                <span>·</span>
+                <span>🖨️ <strong>Salida:</strong> PDF Vectorial a 300 DPI</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTENIDO DEL TUTORIAL -->
+    <main class="guide-main-layout">
+        <article class="guide-prose">
+
+            <!-- MOCKUP Y FOTO INICIAL -->
+            <div class="photos-dual-grid">
+                <figure class="photo-card">
+                    <img src="/planner_simple_mockup.png" alt="Mockup 3D del Planificador Semanal sobre el escritorio" loading="eager" />
+                    <figcaption class="photo-caption">
+                        <strong>El resultado final:</strong> Formato horizontal 8.25" × 6" que reposa cómodamente bajo el teclado de tu ordenador.
+                    </figcaption>
+                </figure>
+                <figure class="photo-card">
+                    <img src="/images/interior-simple-3.jpg" alt="Foto real del planificador semanal abierto sobre mesa de madera" loading="eager" />
+                    <figcaption class="photo-caption">
+                        <strong>Fotografía real:</strong> Cuaderno físico con apertura 180° y papel crema antireflejo de 90 g/m².
+                    </figcaption>
+                </figure>
+            </div>
+
+            <!-- INTRODUCCIÓN -->
+            <h2>1. ¿Por qué un generador web para un método en papel?</h2>
+            <p>
+                En <strong>Menos Ruido</strong> creemos en pensar en papel para desconectar de la fatiga digital. Sin embargo, no todas las semanas son iguales: hay semanas en las que necesitas una <strong>plantilla totalmente limpia</strong> para escribir a mano con pluma o bolígrafo, y semanas en las que prefieres <strong>tipear tus compromisos clave antes de imprimir</strong> para llegar al lunes con la mente despejada.
+            </p>
+            <p>
+                Para eso creamos el <strong>Generador de Planificador Semanal</strong>: una aplicación web interactiva que traduce tus prioridades a una hoja tipográfica impecable, calibrada al milímetro con las proporciones exactas de nuestros cuadernos oficiales de Amazon (209.55 × 152.4 mm).
+            </p>
+
+            <div class="guide-quote">
+                «Configuras en pantalla en 3 minutos. Imprimes una sola hoja. Apagas la pantalla y vives la semana con serenidad analógica.»
+            </div>
+
+            <!-- PASO A PASO -->
+            <h2>2. Flujo de Trabajo Paso a Paso (Tutorial Visual)</h2>
+            <p>
+                Sigue estos 5 pasos dentro de la herramienta para generar tu planificador semanal personalizado:
+            </p>
+
+            <!-- PASO 1 -->
+            <div class="step-block">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Acceder al Generador y Conocer la Interfaz</h3>
+                </div>
+                <p>
+                    Entra en <a href="/generador-planificador-semanal.html" target="_blank" style="color: var(--accent); font-weight:600;">/generador-planificador-semanal.html</a>. La pantalla está dividida en dos zonas armoniosas:
+                </p>
+                <ul>
+                    <li><strong>Panel de Controles (Izquierda):</strong> Donde seleccionas la semana, redactas el Foco Semanal, defines las prioridades diarias de lunes a domingo y eliges el tipo de rayado para notas.</li>
+                    <li><strong>Lienzo de Vista Previa 1:1 (Derecha):</strong> Un espejo exacto de lo que saldrá por tu impresora. Lo que ves en pantalla es idéntico a lo que se imprime (What You See Is What You Print).</li>
+                </ul>
+            </div>
+
+            <!-- CAPTURA INTERIOR DESPLEGADO -->
+            <figure class="photo-card">
+                <img src="/planner_simple_full_spread.jpg" alt="Captura maquetada de la doble página del planificador semanal" loading="lazy" />
+                <figcaption class="photo-caption">
+                    <span>📐 <strong>Estructura del lienzo:</strong> Caja superior de foco, 7 columnas diarias (lunes a domingo) y caja inferior de tareas secundarias/descompresión.</span>
+                </figcaption>
+            </figure>
+
+            <!-- PASO 2 -->
+            <div class="step-block">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Fijar las Coordenadas: Semana, Año y Foco</h3>
+                </div>
+                <p>
+                    En el primer bloque de configuración:
+                </p>
+                <ol>
+                    <li><strong>Número de Semana y Año:</strong> Selecciona la semana del año (por ejemplo, <em>Semana 42 · 2026</em>). Las fechas se actualizarán automáticamente en la cabecera.</li>
+                    <li><strong>Foco Semanal Innegociable:</strong> Redacta la gran meta que define el éxito de los próximos 7 días (máximo 120 caracteres). Por ejemplo: <em>«Cerrar la estructura del nuevo proyecto y blindar el descanso el fin de semana»</em>.</li>
+                </ol>
+            </div>
+
+            <!-- PASO 3 -->
+            <div class="step-block">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Repartir la Carga Diaria: La Regla de 1 Prioridad por Día</h3>
+                </div>
+                <p>
+                    Despliega los días de la semana de lunes a domingo. El generador te ofrece dos campos por jornada:
+                </p>
+                <ul>
+                    <li><strong>Prioridad Principal (La Roca):</strong> Una sola tarea indispensable por día. Si no tienes nada cerrado para ese día, déjalo en blanco para rellenarlo a mano cada mañana.</li>
+                    <li><strong>Soporte / Cita:</strong> Una pequeña anotación secundaria o compromiso de horario (ej. <em>«Reunión 11:00h»</em>).</li>
+                </ul>
+                <div class="guide-callout" style="margin: 14px 0 0 0;">
+                    <h4>💡 Consejo Editorial</h4>
+                    <p>
+                        No llenes los 7 días con compromisos pesados. Deja al menos 2 tardes con espacio en blanco para absorber los imprevistos que siempre surgen a mitad de semana.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FOTO REAL INTERIOR RELLENO -->
+            <figure class="photo-card">
+                <img src="/images/interior-simple-2.jpg" alt="Foto real de una página semanal rellenada a mano con anotaciones sobrias" loading="lazy" />
+                <figcaption class="photo-caption">
+                    <span>📸 <strong>Ejemplo en uso real:</strong> Distribución limpia con prioridades claras y espacio libre para respirar.</span>
+                </figcaption>
+            </figure>
+
+            <!-- PASO 4 -->
+            <div class="step-block">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <h3 class="step-title">Personalizar el Bloque Inferior: Tipo de Rayado</h3>
+                </div>
+                <p>
+                    La parte inferior de la hoja está reservada para <strong>Tareas Secundarias y Descompresión</strong>. El generador te permite elegir el fondo que mejor se adapte a tu estilo de escritura:
+                </p>
+                <ul>
+                    <li><strong>Puntos (Dot Grid):</strong> Discreto y versátil para dibujar esquemas o listas con viñetas.</li>
+                    <li><strong>Líneas Clásicas:</strong> Renglones sutiles para escribir reflexiones o notas continuas.</li>
+                    <li><strong>Cuadrícula (Grid):</strong> Perfecto para métricas o seguimiento numérico.</li>
+                    <li><strong>Liso (Blank):</strong> Papel en blanco puro para libertad total.</li>
+                </ul>
+            </div>
+
+            <!-- PASO 5 -->
+            <div class="step-block">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <h3 class="step-title">Descargar el PDF Listo para Imprenta (Modal de Opciones)</h3>
+                </div>
+                <p>
+                    Al hacer clic en el botón principal <strong>🖨️ Descargar PDF</strong>, se abrirá el modal exclusivo de descarga con dos modalidades:
+                </p>
+                <ul>
+                    <li><strong>Opción A: «Descargar mi Planificador Personalizado»:</strong> Genera el PDF vectorial con todos los textos, foco y prioridades que acabas de escribir en el formulario.</li>
+                    <li><strong>Opción B: «Descargar Plantilla en Blanco»:</strong> Genera la misma plantilla con formato perfecto pero con todas las casillas vacías, ideal para imprimir paquetes de varias semanas y rellenarlas 100% a mano con lápiz o pluma.</li>
+                    <li><strong>Selector de Copias / Páginas:</strong> Puedes elegir imprimir 1, 2, 4 o más copias en un único archivo PDF continuo.</li>
+                </ul>
+            </div>
+
+            <!-- SECCIÓN 3: ESPECIFICACIONES TÉCNICAS -->
+            <h2>3. Especificaciones Técnicas de Impresión</h2>
+            <p>
+                Para obtener la máxima calidad al imprimir tus hojas generadas:
+            </p>
+            <ul>
+                <li><strong>Tamaño de papel:</strong> Selecciona en tu impresora <em>«Ajustar al área de impresión»</em> o imprime en un folio A4 en orientación horizontal y recorta por el margen si deseas el tamaño exacto 8.25" × 6".</li>
+                <li><strong>Gramaje recomendado:</strong> Si imprimes en casa, utiliza papel de <strong>90 g/m² o 100 g/m² color crema o marfil suave</strong>. Evita el papel blanco fluorescente de oficina para descansar la vista.</li>
+                <li><strong>Calidad de vectorización:</strong> Nuestro motor genera trazos vectoriales nativos a 300 DPI, por lo que las líneas, tipografías y fechas saldrán nítidas sin importar el zoom de tu impresora.</li>
+            </ul>
+
+            <!-- ACCIÓN RÁPIDA -->
+            <div class="action-box">
+                <h3 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 8px;">¿Listo para planificar tu próxima semana?</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 18px;">
+                    Abre el generador en vivo, prueba la función de «Cargar ejemplo» o diseña tu plantilla desde cero.
+                </p>
+                <a href="/generador-planificador-semanal.html" target="_blank" class="btn-action-primary">
+                    Abrir Generador Planificador Semanal ↗
+                </a>
+            </div>
+
+        </article>
+    </main>
+
+    <!-- PIE DE PÁGINA PRIVADO -->
+    <footer class="private-footer">
+        <p>
+            <strong>Editorial Menos Ruido</strong> · Tutorial Privado para Creadores · Acceso Restringido PIN 1111<br />
+            © 2026 Menos Ruido · Todos los derechos reservados.
+        </p>
+    </footer>
+
+</body>
+</html>
