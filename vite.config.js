@@ -46,7 +46,6 @@ export default defineConfig({
         generador: resolve(__dirname, 'generador.html'),
         generadorPlanificadorDiario: resolve(__dirname, 'generador-planificador-diario.html'),
         generadorPlanificadorSemanal: resolve(__dirname, 'generador-planificador-semanal.html'),
-        generadorPlanificadorSemanalV1: resolve(__dirname, 'generador-planificador-semanal-v1.html'),
         generadorPlanificadorMensual: resolve(__dirname, 'generador-planificador-mensual.html'),
         generadorPlanificadorMensualV1: resolve(__dirname, 'generador-planificador-mensual-v1.html'),
         generadorPlanificadorHabitos: resolve(__dirname, 'generador-planificador-habitos.html'),

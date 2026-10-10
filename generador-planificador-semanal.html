@@ -15,6 +15,22 @@
     </script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Control de acceso PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
     <style>
         :root {
             --bg-color: #f7f5f0;
@@ -23,11 +39,9 @@
             --text-muted: #66615b;
             --accent: #87553b;
             --accent-hover: #70442e;
-            --forest: #2b3a31;
-            --sage: #586851;
             --border-line: #dcd7ce;
             --font-serif: 'Playfair Display', Georgia, serif;
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         * {
@@ -40,713 +54,822 @@
             font-family: var(--font-sans);
             background-color: var(--bg-color);
             color: var(--text-main);
-            line-height: 1.5;
-            padding: 20px 16px 60px;
-        }
-
-        .header-container {
-            max-width: 1320px;
-            margin: 0 auto 16px;
-            text-align: center;
-        }
-
-        .tag-pill {
-            display: inline-block;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            background: rgba(135, 85, 59, 0.12);
-            color: var(--accent);
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 8px;
-        }
-
-        h1 {
-            font-family: var(--font-serif);
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-            color: #1e1916;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            max-width: 660px;
-            margin: 0 auto 18px;
-        }
-
-        /* LAYOUT PRINCIPAL */
-        .app-layout {
-            max-width: 1320px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 460px 1fr;
-            gap: 28px;
-            align-items: start;
-        }
-
-        @media (max-width: 1080px) {
-            .app-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 900px) {
-            body {
-                padding: 16px 10px 50px;
-            }
-            .preview-column {
-                position: static !important;
-                margin-bottom: 40px !important;
-                width: 100% !important;
-            }
-            .preview-sheet-frame {
-                aspect-ratio: auto !important;
-                min-height: auto !important;
-                overflow: visible !important;
-                padding: 18px 14px 16px !important;
-                margin-bottom: 30px !important;
-                width: 100% !important;
-            }
-            .preview-week-grid {
-                grid-template-columns: 1fr !important;
-                gap: 10px !important;
-            }
-            .preview-bottom-box {
-                height: auto !important;
-                min-height: 64px !important;
-                max-height: none !important;
-                overflow: visible !important;
-            }
-        }
-
-        /* PANEL DE CONTROLES */
-        .controls-panel {
-            background: #ffffff;
-            border: 1px solid var(--border-line);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            line-height: 1.45;
+            padding: 16px 14px 60px;
             display: flex;
             flex-direction: column;
-            gap: 18px;
-        }
-
-        .panel-header-top {
-            display: flex;
             align-items: center;
+        }
+
+        /* CABECERA & NAVEGACIÓN */
+        .top-nav {
+            width: 100%;
+            max-width: 980px;
+            margin-bottom: 12px;
+            display: flex;
             justify-content: space-between;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #eee8df;
-            margin-bottom: 2px;
-        }
-
-        .panel-heading-text {
-            font-size: 1.15rem;
-            font-family: var(--font-serif);
-            font-weight: 700;
-            color: #1e1916;
-        }
-
-        .panel-actions-quick {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-quick {
-            background: #f3efe8;
-            border: none;
-            color: var(--accent);
-            font-size: 0.78rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-quick:hover {
-            background: #e6dfd3;
-            color: var(--accent-hover);
-        }
-
-        .section-box {
-            border: 1px solid #ebe6dc;
-            background: #faf9f6;
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .section-header-title {
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--accent);
-            display: flex;
             align-items: center;
-            justify-content: space-between;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        label {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #4a453e;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .char-count {
-            font-size: 0.75rem;
-            color: #999;
-            font-weight: normal;
-        }
-
-        input[type="number"], select {
-            width: 100%;
-            padding: 9px 12px;
-            border: 1px solid #d5cfc5;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.88rem;
-            background: #ffffff;
-            color: #222;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 9px 12px;
-            border: 1px solid #d5cfc5;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.88rem;
-            background: #ffffff;
-            color: #222;
-            outline: none;
-            resize: vertical;
-            overflow-y: auto;
-            line-height: 1.4;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            box-sizing: border-box;
-        }
-
-        input[type="number"]:focus, textarea:focus, select:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
-        }
-
-        /* GRID DE DÍAS CON TEXTAREAS VISIBLES */
-        .days-grid-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            flex-wrap: wrap;
             gap: 10px;
         }
 
-        @media (max-width: 520px) {
-            .days-grid-inputs {
-                grid-template-columns: 1fr;
-            }
+        .back-link {
+            font-size: 0.82rem;
+            color: #777;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .badge-version {
+            background: #ede6dc;
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
         }
 
-        .day-input-card {
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 760px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1816;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.45;
+        }
+
+        /* BARRA DE HERRAMIENTAS PRINCIPAL */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 980px;
             background: #ffffff;
             border: 1px solid #e2ddd3;
-            border-radius: 6px;
-            padding: 8px 10px;
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
         }
 
-        .day-label-tag {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .day-input-card textarea {
-            padding: 6px 8px;
-            font-size: 0.82rem;
-            border: 1px solid #e0dbd0;
-            border-radius: 4px;
-            min-height: 48px;
-            resize: vertical;
-            line-height: 1.35;
-        }
-
-        .style-pills {
+        .toolbar-group {
             display: flex;
+            align-items: center;
             gap: 8px;
             flex-wrap: wrap;
         }
 
-        .style-pill-btn {
-            background: #ffffff;
-            border: 1px solid #d5cfc5;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: #555;
+        .toolbar-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 6px 11px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #443e39;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             transition: all 0.2s;
         }
-
-        .style-pill-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+        .toolbar-btn:hover {
+            background: #ede7dc;
+            border-color: #c9bfb0;
+            color: #111;
         }
 
-        .style-pill-btn.active {
+        .btn-download-primary {
             background: var(--accent);
-            border-color: var(--accent);
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        /* BOTONES PRINCIPALES */
-        .btn-main-action {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: var(--accent);
-            color: #ffffff;
+            color: #fff;
             border: none;
-            padding: 13px 20px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
+            border-radius: 6px;
+            padding: 7px 15px;
+            font-size: 0.82rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s, transform 0.15s;
-            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
-            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 3px 10px rgba(135,85,59,0.25);
+            transition: background 0.2s, transform 0.1s;
         }
-
-        .btn-main-action:hover {
+        .btn-download-primary:hover {
             background: var(--accent-hover);
             transform: translateY(-1px);
         }
 
-        .btn-secondary-action {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: #ffffff;
-            color: #3e3832;
-            border: 1.5px solid #d0c8bd;
-            padding: 11px 18px;
-            border-radius: 8px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+        /* ========================================================
+           EL LIENZO FÍSICO INTERACTIVO APAISADO (LIBRO 8.25" × 6")
+           ======================================================== */
+        .paper-canvas-container {
             width: 100%;
-        }
-
-        .btn-secondary-action:hover {
-            background: #faf8f5;
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        /* COLUMNA DERECHA: VISTA PREVIA */
-        .preview-column {
-            position: sticky;
-            top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .preview-banner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #f1ede5;
-            border: 1px solid #e1dcce;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            color: #665f54;
-        }
-
-        /* HOJA EDITORIAL EQUILIBRADA CON AIRE ARMONIOSO */
-        .preview-sheet-frame {
-            background: var(--paper-color);
-            border: 1px solid #dcd7ce;
-            border-radius: 8px;
-            padding: 24px 28px 20px;
-            box-shadow: 0 12px 34px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-            display: flex;
-            flex-direction: column;
-            aspect-ratio: 8.25 / 6;
-            box-sizing: border-box;
+            max-width: 980px;
             position: relative;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .preview-kicker {
-            font-size: 0.66rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--accent);
-            margin-bottom: 4px;
+        .interactive-paper-weekly {
+            width: 100%;
+            max-width: 980px;
+            height: 712px;
+            max-height: 712px;
+            aspect-ratio: 8.25 / 6;
+            background-color: var(--paper-color);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.14);
+            border-radius: 4px;
+            border: 1px solid #e7e2d8;
+            padding: 22px 32px 18px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden; /* LA PÁGINA NUNCA CRECE */
+            transition: background 0.2s;
         }
 
-        .preview-header-line {
+        /* CABECERA EDITABLE DE LA SEMANA */
+        .paper-weekly-header {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            border-bottom: 1.5px solid #2b2520;
-            padding-bottom: 6px;
-            margin-bottom: 14px;
+            border-bottom: 1.5px solid #222;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            width: 100%;
         }
 
-        .preview-main-title {
+        .weekly-header-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .weekly-kicker {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .weekly-title-main {
             font-family: var(--font-serif);
-            font-size: 1.25rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #1e1916;
+            color: #111;
+            line-height: 1.1;
         }
 
-        .preview-date-text {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #4a453e;
-            letter-spacing: 0.6px;
+        .weekly-meta-inputs {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
         }
 
-        /* CUADRÍCULA SEMANAL 2 COLUMNAS DISTRIBUIDA */
-        .preview-week-grid {
+        .editable-week-num {
+            font-family: var(--font-sans);
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #333;
+            background: transparent;
+            border: 1px dashed transparent;
+            outline: none;
+            padding: 2px 5px;
+            border-radius: 4px;
+            text-align: right;
+            transition: border-color 0.2s;
+        }
+        .editable-week-num:hover, .editable-week-num:focus {
+            border-color: #d0c8bd;
+            background: rgba(0,0,0,0.02);
+        }
+
+        /* CUERPO PRINCIPAL: 2 COLUMNAS EDITORIALES (IZQUIERDA Y DERECHA) */
+        .weekly-columns-wrapper {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
             flex: 1;
             min-height: 0;
+            margin-bottom: 6px;
         }
 
-        .preview-column-card {
+        .weekly-main-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .weekly-bottom-slot {
+            height: 146px;
+            max-height: 146px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s ease;
+        }
+
+        /* COLUMNAS DE DÍAS */
+        .weekly-column-box {
             background: #ffffff;
             border: 1px solid #ddd7cc;
             border-radius: 6px;
-            padding: 0;
             display: flex;
             flex-direction: column;
-            justify-content: stretch;
             min-height: 0;
             overflow: hidden;
+            flex: 1;
+            transition: all 0.2s ease;
         }
 
-        .preview-day-row {
+        /* Cuando la columna se expande porque el panel inferior correspondiente se ha eliminado */
+        .weekly-column-box.expanded-col {
+            flex: 1;
+        }
+
+        .weekly-column-box.expanded-col .day-interactive-row {
+            padding: 4px 10px;
+        }
+
+        .weekly-column-box.expanded-col .weekly-focus-card {
+            padding: 5px 10px;
+        }
+
+        /* FILA DE DÍA */
+        .day-interactive-row {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            gap: 2px;
             border-bottom: 1px dashed #e8e2d8;
-            padding: 5px 12px 4px 12px;
+            padding: 4px 10px;
             box-sizing: border-box;
             min-height: 0;
+            position: relative;
         }
-
-        .preview-day-row:last-child {
+        .day-interactive-row:last-child {
             border-bottom: none;
-            padding-bottom: 4px;
         }
 
-        .preview-day-head {
+        .day-interactive-head {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
         }
 
-        .preview-day-name {
-            font-size: 0.66rem;
+        .day-interactive-name {
+            font-size: 0.68rem;
             font-weight: 800;
             color: #2b2622;
             letter-spacing: 0.8px;
-            line-height: 1.1;
+            text-transform: uppercase;
         }
 
-        .preview-day-text {
+        /* CASILLA / CIRCULITO PARA ESCRIBIR EL NÚMERO DEL DÍA */
+        .day-check-indicator {
+            width: 24px;
+            height: 24px;
+            border: 1.5px solid #555;
+            border-radius: 4px;
+            flex-shrink: 0;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            transition: border-radius 0.2s, border-color 0.2s;
+            cursor: text;
+        }
+        .day-check-indicator.circle {
+            border-radius: 50%;
+        }
+
+        .day-number-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-family: var(--font-sans);
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #111;
+            outline: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .textarea-day-inline {
             font-family: var(--font-serif);
-            font-size: 0.75rem;
-            color: #333;
-            line-height: 1.3;
+            font-size: 0.74rem;
+            color: #222;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
             white-space: pre-wrap;
             word-break: break-word;
-            margin-top: 1px;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
         }
 
-        .preview-focus-card {
-            background: #ffffff;
+        /* FOCO DE LA SEMANA (DESTACADO EN LA SEGUNDA COLUMNA) */
+        .weekly-focus-card {
+            background: #faf8f5;
             border: none;
-            border-bottom: 1px dashed #e8e2d8;
-            margin: 0;
-            padding: 5px 12px 4px 12px;
+            border-bottom: 1.5px solid #e0d8cc;
+            padding: 4px 10px;
             box-sizing: border-box;
-            min-height: 0;
-            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            flex: 1;
+            min-height: 0;
         }
 
-        .preview-focus-title {
+        .weekly-focus-label {
             font-size: 0.66rem;
             font-weight: 800;
             color: var(--accent);
             letter-spacing: 0.8px;
-            line-height: 1.1;
+            text-transform: uppercase;
             margin-bottom: 2px;
         }
 
-        .preview-focus-content {
+        .textarea-focus-inline {
             font-family: var(--font-serif);
-            font-size: 0.75rem;
+            font-size: 0.74rem;
+            font-weight: 500;
             color: #1e1916;
-            font-weight: 600;
-            line-height: 1.3;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
             white-space: pre-wrap;
             word-break: break-word;
-            margin-top: 1px;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
         }
 
-        /* TAREAS SECUNDARIAS / NOTAS CON RESPIRO */
-        .preview-bottom-section {
-            margin-top: 10px;
+        /* BARRA DE SECCIONES VISIBLES (PILLS) */
+        .sections-toggle-bar {
+            width: 100%;
+            max-width: 980px;
+            background: #f0ebe2;
+            border: 1px solid #e0d8cc;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin-bottom: 12px;
             display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex-shrink: 0;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 0.74rem;
         }
 
-        .preview-bottom-label {
-            font-size: 0.66rem;
+        .sections-toggle-label {
             font-weight: 700;
-            color: #4a453e;
-            letter-spacing: 0.6px;
-            text-align: left;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            letter-spacing: 0.5px;
         }
 
-        .preview-bottom-box {
+        .sections-toggle-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .btn-sec-pill {
             background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 14px;
+            padding: 3px 9px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+        .btn-sec-pill.active {
+            background: #443e39;
+            color: #fff;
+            border-color: #443e39;
+        }
+        .btn-sec-pill:hover {
+            border-color: var(--accent);
+        }
+
+        /* BOTONES DE ACCIÓN DENTRO DE LOS BLOQUES */
+        .btn-block-action {
+            background: #ffffff;
+            border: 1px solid #d5cfc4;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #555;
+            padding: 1px 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.2;
+            font-family: inherit;
+        }
+        .btn-block-action:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: #faf7f2;
+        }
+        .btn-block-action.btn-del-section:hover {
+            color: #b03030;
+            border-color: #d88;
+            background: #fff5f5;
+        }
+
+        /* ========================================================
+           SECCIÓN INFERIOR DIVIDIDA: HÁBITOS SEMANALES + NOTAS
+           ======================================================== */
+        .weekly-bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            height: 148px;
+            max-height: 148px;
+            flex-shrink: 0;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+        }
+
+        /* BLOQUE HÁBITOS DE LA SEMANA */
+        .weekly-habits-panel {
+            background: #faf8f5;
             border: 1px solid #ddd7cc;
             border-radius: 6px;
-            padding: 8px 12px;
-            height: 68px;
-            max-height: 68px;
-            font-family: var(--font-serif);
-            font-size: 0.76rem;
-            color: #333;
-            line-height: 1.35;
-            white-space: pre-wrap;
-            word-break: break-word;
-            text-align: left;
-            position: relative;
-            overflow: hidden;
+            padding: 6px 10px;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            align-items: flex-start;
+            justify-content: space-between;
+            box-sizing: border-box;
+            overflow: hidden;
+            height: 100%;
+            flex: 1;
         }
 
-        .preview-bottom-box.rayado-dots {
-            background-image: radial-gradient(#beb7ad 1px, transparent 1px);
-            background-size: 16px 16px;
-        }
-
-        .preview-bottom-box.rayado-lines {
-            background-image: repeating-linear-gradient(transparent, transparent 18px, #e8e2d8 18px, #e8e2d8 19px);
-        }
-
-        .preview-bottom-box.rayado-grid {
-            background-image: linear-gradient(to right, #ece6dc 1px, transparent 1px),
-                              linear-gradient(to bottom, #ece6dc 1px, transparent 1px);
-            background-size: 16px 16px;
-        }
-
-        .preview-bottom-box.rayado-blank {
-            background-image: none;
-        }
-
-        #prev-secundarias-text {
-            text-align: left;
-            width: 100%;
-        }
-
-        .preview-sheet-footer {
-            margin-top: 8px;
+        .habits-panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #e6dfd3;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
+        }
+
+        .habits-panel-title {
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: #333;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .habits-days-legend {
+            display: flex;
+            gap: 7px;
             font-size: 0.62rem;
+            font-weight: 800;
+            color: #777;
+            padding-right: 2px;
+        }
+        .habits-days-legend span {
+            width: 13px;
+            text-align: center;
+        }
+
+        .habit-track-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 2px 0;
+            border-bottom: 1px dashed #eee8de;
+        }
+        .habit-track-row:last-child {
+            border-bottom: none;
+        }
+
+        .textarea-habit-track-inline {
+            font-family: var(--font-sans);
+            font-size: 0.74rem;
+            color: #333;
+            background: transparent;
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 0;
+            line-height: 1.25;
+            resize: none;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 0;
+            margin: 0;
+        }
+
+        .habit-days-checks {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .habit-day-dot {
+            width: 13px;
+            height: 13px;
+            border: 1.2px solid #999;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .habit-day-dot.checked {
+            background: #333;
+            border-color: #333;
+        }
+        .habit-day-dot.square {
+            border-radius: 2px;
+        }
+
+        /* BLOQUE TAREAS SECUNDARIAS / NOTAS */
+        .weekly-notes-panel {
+            background: #ffffff;
+            border: 1px solid #ddd7cc;
+            border-radius: 6px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            flex: 1;
+        }
+
+        .notes-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee8df;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
+        }
+
+        .notes-panel-title {
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: #333;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .textarea-weekly-notes {
+            font-family: var(--font-serif);
+            font-size: 0.78rem;
+            color: #222;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            line-height: 1.4;
+            resize: none;
+            overflow: hidden; /* CERO DESPLEGABLES / SCROLL */
+            box-sizing: border-box;
+            padding: 2px;
+            margin: 0;
+        }
+
+
+
+        /* PIE EDITORIAL DE LA HOJA */
+        .paper-weekly-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.60rem;
             color: #888;
             border-top: 1px solid #e0dacd;
             padding-top: 4px;
             flex-shrink: 0;
+            width: 100%;
         }
 
-        /* MODAL POP-UP DE DESCARGA */
+        /* SELECTOR EXCLUYENTE DE CASILLAS (SIN TEXTO) */
+        .checkbox-selector-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: #ebe6dc;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid #dcd7ce;
+        }
+
+        .btn-shape-selector {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            width: 32px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+        .btn-shape-selector:hover {
+            background: #f7f4ed;
+            color: #222;
+        }
+        .btn-shape-selector.active {
+            background: #ffffff;
+            border-color: #cbbeae;
+            color: var(--accent);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        /* AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR (ESPACIO CONSTANTE SIN SALTO VERTICAL) */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            min-height: 34px;
+            margin: 4px auto 10px auto;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            text-align: center;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid transparent;
+            background: transparent;
+            color: transparent;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .sheet-inline-notice.active {
+            opacity: 1;
+            visibility: visible;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border-color: #dfd6c7;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            pointer-events: auto;
+        }
+
+        /* MODAL DE DESCARGA */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(30, 25, 20, 0.68);
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
             backdrop-filter: blur(4px);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
             padding: 16px;
         }
-
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
 
         .modal-card {
             background: #ffffff;
             border-radius: 14px;
-            max-width: 540px;
+            max-width: 520px;
             width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
             max-height: 90vh;
             overflow-y: auto;
-            padding: 26px 24px;
-            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
-            position: relative;
-            text-align: center;
-            animation: modalFadeIn 0.25s ease;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.96); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .modal-close-btn {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            color: #888;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-
-        .modal-badge {
-            display: inline-block;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--accent);
-            background: rgba(135, 85, 59, 0.1);
-            padding: 3px 10px;
-            border-radius: 20px;
-            margin-bottom: 8px;
         }
 
         .modal-title {
             font-family: var(--font-serif);
-            font-size: 1.45rem;
+            font-size: 1.35rem;
             color: #1e1916;
             margin-bottom: 6px;
         }
-
         .modal-desc {
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-bottom: 18px;
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
         }
 
-        .modal-pages-selector {
-            background: #faf8f5;
-            border: 1px solid #e7e2d8;
-            border-radius: 8px;
-            padding: 12px 14px;
-            margin-bottom: 18px;
-            display: flex;
+        .modal-format-badge {
+            display: inline-flex;
             align-items: center;
-            justify-content: space-between;
-        }
-
-        .modal-pages-label {
-            font-size: 0.84rem;
-            font-weight: 700;
-            text-align: left;
-        }
-
-        .modal-pages-hint {
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.72rem;
-            color: #777;
-            display: block;
-            font-weight: 400;
-        }
-
-        .pages-stepper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-step {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 1px solid #d5cebf;
-            background: #fff;
-            color: #333;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .pages-count-display {
-            font-size: 1rem;
             font-weight: 700;
-            min-width: 24px;
-            text-align: center;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
         }
 
-        .btn-modal-download {
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-modal-primary {
             background: var(--accent);
             color: #fff;
             border: none;
-            padding: 13px 20px;
             border-radius: 8px;
-            font-size: 0.95rem;
+            padding: 11px 16px;
+            font-size: 0.88rem;
             font-weight: 700;
             cursor: pointer;
-            width: 100%;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+
+        .btn-modal-secondary {
+            background: #f7f5f0;
+            color: #443e39;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-secondary:hover { background: #ede7dc; }
 
         .modal-books-section {
             background: #faf8f5;
@@ -754,6 +877,7 @@
             border-radius: 10px;
             padding: 14px;
             text-align: left;
+            margin-top: 6px;
         }
 
         .modal-books-header {
@@ -813,10 +937,10 @@
 
         .modal-book-title {
             font-family: var(--font-serif);
-            font-size: 0.86rem;
+            font-size: 0.84rem;
             font-weight: 700;
             color: #1a1715;
-            margin: 1px 0 3px 0;
+            margin: 1px 0 4px 0;
             line-height: 1.2;
         }
 
@@ -831,287 +955,338 @@
             text-decoration: none;
             transition: background 0.2s;
         }
-
         .btn-book-amazon:hover {
             background: #6e442e;
         }
 
-        .toast-msg {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #1e1916;
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-            display: none;
-            z-index: 10000;
-            pointer-events: none;
+        .modal-close-btn {
+            position: absolute;
+            top: 14px; right: 14px;
+            background: none; border: none;
+            font-size: 1.2rem; color: #888;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .interactive-paper-weekly {
+                height: auto;
+                max-height: none;
+                aspect-ratio: auto;
+                padding: 16px 14px;
+            }
+            .weekly-body-grid, .weekly-bottom-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+                max-height: none;
+            }
         }
     </style>
-
-    <!-- Protección de acceso por código PIN 1111 -->
-    <script>
-        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
-            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
-        }
-    </script>
-    <!-- Script de jsPDF local UMD (100% offline y compatible con CSP) -->
-    <script src="./jspdf.umd.min.js"></script>
 </head>
 <body>
 
-    <div class="header-container">
-        <a href="/generador.html" style="display: inline-block; font-size: 0.8rem; color: #777; text-decoration: none; margin-bottom: 6px;">← Volver al catálogo de generadores</a>
-        <div>
-            <span class="tag-pill">Herramienta Editorial Gratuita</span>
-            <h1>Generador de Planificador Semanal</h1>
-            <p class="subtitle">Estructura tus 7 días en un único plano horizontal. Imprime tu PDF relleno o en blanco para rellenarlo posteriormente a mano sin saturación digital.</p>
-            <div style="margin-top: 6px; margin-bottom: 12px;">
-                <a href="/generador-planificador-semanal-v1.html" style="font-size: 0.82rem; font-weight: 700; color: var(--accent); text-decoration: underline; background: rgba(135,85,59,0.08); padding: 5px 12px; border-radius: 6px;">✨ Probar nueva versión con edición directa y hábitos semanales (V1) →</a>
-            </div>
+    <div class="top-nav">
+        <a href="/generador.html" class="back-link">← Catálogo de generadores</a>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge-version">Edición Directa 1:1</span>
         </div>
     </div>
 
-    <div class="app-layout">
-        <!-- COLUMNA IZQUIERDA: CONTROLES -->
-        <aside class="controls-panel">
-            
-            <!-- ENCABEZADO TU SEMANA EN PAPEL (CON BOTONES ARRIBA) -->
-            <div class="panel-header-top">
-                <span class="panel-heading-text">Configura tu planificador</span>
-                <div class="panel-actions-quick">
-                    <button type="button" class="btn-quick" onclick="loadExampleData()">Rellenar ejemplo</button>
-                    <button type="button" class="btn-quick" onclick="clearAllData()">Limpiar</button>
-                </div>
-            </div>
-
-            <!-- 1. SEMANA (1 AL 55) -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>1. Semana del Año</span>
-                    <span>🗓️</span>
-                </div>
-                <div class="control-group">
-                    <label for="input-week-number">Semana (1 a 55)</label>
-                    <input type="number" id="input-week-number" min="1" max="55" placeholder="Ej: 42" oninput="handleDatesInput()">
-                </div>
-                <div class="control-group">
-                    <label for="input-week-focus">Foco principal de la semana (1 meta clave) <span class="char-count" id="count-focus">0/140</span></label>
-                    <textarea id="input-week-focus" maxlength="140" rows="2" placeholder="Ej: Cerrar la propuesta de diseño y avanzar 3 capítulos del libro..." oninput="handleFocusInput()"></textarea>
-                </div>
-            </div>
-
-            <!-- 2. DÍAS LABORABLES Y FIN DE SEMANA (MÁX 140 CARACTERES POR DÍA CON ESPACIO VISIBLE) -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>2. Prioridades por Día (Lunes a Domingo)</span>
-                    <span>✏️</span>
-                </div>
-                <p style="font-size: 0.74rem; color: #777; margin-top: -6px;">Anota el objetivo principal de cada jornada en el cuadro visible o déjalo en blanco para lápiz.</p>
-                <div class="days-grid-inputs">
-                    <div class="day-input-card">
-                        <span class="day-label-tag">Lunes</span>
-                        <textarea id="input-lunes" maxlength="140" rows="2" placeholder="Prioridad del lunes..." oninput="handleDayInput('lunes')"></textarea>
-                    </div>
-                    <div class="day-input-card">
-                        <span class="day-label-tag">Martes</span>
-                        <textarea id="input-martes" maxlength="140" rows="2" placeholder="Prioridad del martes..." oninput="handleDayInput('martes')"></textarea>
-                    </div>
-                    <div class="day-input-card">
-                        <span class="day-label-tag">Miércoles</span>
-                        <textarea id="input-miercoles" maxlength="140" rows="2" placeholder="Prioridad del miércoles..." oninput="handleDayInput('miercoles')"></textarea>
-                    </div>
-                    <div class="day-input-card">
-                        <span class="day-label-tag">Jueves</span>
-                        <textarea id="input-jueves" maxlength="140" rows="2" placeholder="Prioridad del jueves..." oninput="handleDayInput('jueves')"></textarea>
-                    </div>
-                    <div class="day-input-card">
-                        <span class="day-label-tag">Viernes</span>
-                        <textarea id="input-viernes" maxlength="140" rows="2" placeholder="Prioridad del viernes..." oninput="handleDayInput('viernes')"></textarea>
-                    </div>
-                    <div class="day-input-card">
-                        <span class="day-label-tag">Sábado</span>
-                        <textarea id="input-sabado" maxlength="140" rows="2" placeholder="Descanso / Recados..." oninput="handleDayInput('sabado')"></textarea>
-                    </div>
-                </div>
-                <div class="day-input-card" style="margin-top: 4px;">
-                    <span class="day-label-tag">Domingo (Balance y Desconexión)</span>
-                    <textarea id="input-domingo" maxlength="140" rows="2" placeholder="Revisión de la semana / Pausa..." oninput="handleDayInput('domingo')"></textarea>
-                </div>
-            </div>
-
-            <!-- 3. TAREAS SECUNDARIAS / NOTAS INFERIORES CON LÍMITE A 320 CARACTERES -->
-            <div class="section-box">
-                <div class="section-header-title">
-                    <span>3. Tareas Secundarias / Notas</span>
-                    <span>📝</span>
-                </div>
-                <div class="control-group">
-                    <label for="input-secundarias">Tareas secundarias o notas importantes <span class="char-count" id="count-secundarias">0/320</span></label>
-                    <textarea id="input-secundarias" maxlength="320" rows="3" placeholder="• Enviar presupuestos&#10;• Comprar recambios de pluma&#10;• Organizar carpetas del ordenador" oninput="handleSecundariasInput()"></textarea>
-                </div>
-            </div>
-
-            <!-- Formato predeterminado y gestión transparente -->
-            <input type="hidden" id="select-format" value="apaisado">
-
-            <!-- BOTONES DE ACCIÓN PRINCIPALES -->
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
-                <button type="button" class="btn-main-action" onclick="openDownloadModal(false)">
-                    <span>📥</span>
-                    <span>Descargar mi PDF semanal personalizado</span>
-                </button>
-                <button type="button" class="btn-secondary-action" onclick="openDownloadModal(true)">
-                    <span>📄</span>
-                    <span>Descargar plantilla limpia en blanco (1 a 4 semanas)</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- COLUMNA DERECHA: VISTA PREVIA -->
-        <main class="preview-column">
-            <div class="preview-banner">
-                <span>👁️ <strong>Vista previa</strong></span>
-            </div>
-
-            <!-- HOJA FÍSICA HORIZONTAL PROPORCIONADA Y ELEGANTE -->
-            <div class="preview-sheet-frame" id="live-sheet-preview">
-                
-                <div class="preview-kicker">MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL</div>
-                
-                <div class="preview-header-line">
-                    <div class="preview-main-title">Planificación Semanal</div>
-                    <div class="preview-date-text" id="prev-dates-text">SEMANA: ____</div>
-                </div>
-
-                <!-- CUADRÍCULA 2 COLUMNAS EQUILIBRADA -->
-                <div class="preview-week-grid">
-                    
-                    <!-- COLUMNA IZQUIERDA: LUNES A JUEVES -->
-                    <div class="preview-column-card">
-                        <div class="preview-day-row">
-                            <div class="preview-day-head">
-                                <span class="preview-day-name">LUNES</span>
-                            </div>
-                            <div class="preview-day-text" id="prev-lunes-text"></div>
-                        </div>
-
-                        <div class="preview-day-row">
-                            <div class="preview-day-head">
-                                <span class="preview-day-name">MARTES</span>
-                            </div>
-                            <div class="preview-day-text" id="prev-martes-text"></div>
-                        </div>
-
-                        <div class="preview-day-row">
-                            <div class="preview-day-head">
-                                <span class="preview-day-name">MIÉRCOLES</span>
-                            </div>
-                            <div class="preview-day-text" id="prev-miercoles-text"></div>
-                        </div>
-
-                        <div class="preview-day-row">
-                            <div class="preview-day-head">
-                                <span class="preview-day-name">JUEVES</span>
-                            </div>
-                            <div class="preview-day-text" id="prev-jueves-text"></div>
-                        </div>
-                    </div>
-
-                    <!-- COLUMNA DERECHA: VIERNES A DOMINGO + FOCO -->
-                    <div class="preview-column-card">
-                        <div class="preview-focus-card">
-                            <div class="preview-focus-title">FOCO DE LA SEMANA</div>
-                            <div class="preview-focus-content" id="prev-focus-text"></div>
-                        </div>
-
-                        <div class="preview-day-row">
-                            <div class="preview-day-head">
-                                <span class="preview-day-name">VIERNES</span>
-                            </div>
-                            <div class="preview-day-text" id="prev-viernes-text"></div>
-                        </div>
-
-                        <div class="preview-day-row">
-                            <div class="preview-day-head">
-                                <span class="preview-day-name">SÁBADO</span>
-                            </div>
-                            <div class="preview-day-text" id="prev-sabado-text"></div>
-                        </div>
-
-                        <div class="preview-day-row">
-                            <div class="preview-day-head">
-                                <span class="preview-day-name">DOMINGO</span>
-                            </div>
-                            <div class="preview-day-text" id="prev-domingo-text"></div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- SECCIÓN INFERIOR: TAREAS SECUNDARIAS / NOTAS (ALINEADAS ARRIBA, NUNCA DESBORDAN) -->
-                <div class="preview-bottom-section">
-                    <div class="preview-bottom-label">
-                        <span>TAREAS SECUNDARIAS / NOTAS IMPORTANTES</span>
-                    </div>
-                    <div class="preview-bottom-box rayado-blank" id="prev-bottom-box">
-                        <div id="prev-secundarias-text"></div>
-                    </div>
-                </div>
-
-                <!-- FOOTER EDITORIAL -->
-                <div class="preview-sheet-footer">
-                    <span>MENOS RUIDO · VISTA SEMANAL ATEMPORAL</span>
-                    <span>editorialmenosruido.com</span>
-                </div>
-
-            </div>
-        </main>
+    <div class="header-title-box">
+        <h1>Planificador Semanal Interactivo</h1>
+        <p>Escribe directamente sobre el folio horizontal. Incluye tu foco semanal, prioridades por día, seguimiento de hábitos y notas de reflexión.</p>
     </div>
 
-    <!-- MODAL POP-UP DE DESCARGA Y COMPRA -->
+    <!-- BARRA DE HERRAMIENTAS PRINCIPAL -->
+    <div class="canvas-toolbar">
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Borrar textos para escribir de cero">
+                <span>🧹</span> Limpiar texto
+            </button>
+            <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar ejemplo editorial">
+                <span>✨</span> Cargar ejemplo
+            </button>
+        </div>
+
+        <div class="toolbar-group">
+            <div class="checkbox-selector-group" title="Forma de casillas">
+                <button type="button" class="btn-shape-selector" id="btn-shape-square" onclick="setCheckboxStyle('square')" title="Casillas cuadradas" aria-label="Casillas cuadradas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="12" height="12" rx="2" />
+                    </svg>
+                </button>
+                <button type="button" class="btn-shape-selector active" id="btn-shape-circle" onclick="setCheckboxStyle('circle')" title="Casillas redondas" aria-label="Casillas redondas">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="8" cy="8" r="6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
+                <span>📥</span> Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- BARRA VISIBLE DE CONTROL DE SECCIONES (AÑADIR / QUITAR / INTERCAMBIAR) -->
+    <div class="sections-toggle-bar">
+        <span class="sections-toggle-label">Secciones visibles:</span>
+        <div class="sections-toggle-pills">
+            <button type="button" class="btn-sec-pill active" id="pill-habits" onclick="toggleSection('habits')">🌱 Hábitos de la semana ✓</button>
+            <button type="button" class="btn-sec-pill active" id="pill-notes" onclick="toggleSection('notes')">📝 Secundarias / Notas ✓</button>
+            <button type="button" class="btn-sec-pill" onclick="swapBottomSections()" title="Intercambiar la posición de Hábitos y Notas">🔄 Intercambiar posición</button>
+        </div>
+    </div>
+
+    <!-- AVISO CONTEXTUAL INTEGRADO ENTRE SECCIONES Y PLANIFICADOR (ESPACIO CONSTANTE RESERVADO) -->
+    <div class="sheet-inline-notice" id="toast-notify"></div>
+
+    <!-- LIENZO FÍSICO INTERACTIVO HORIZONTAL (8.25" × 6") -->
+    <div class="paper-canvas-container">
+        <div class="interactive-paper-weekly" id="weekly-sheet">
+            
+            <!-- CABECERA DE LA SEMANA -->
+            <div class="paper-weekly-header">
+                <div class="weekly-header-title-wrap">
+                    <span class="weekly-kicker">MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL</span>
+                    <h2 class="weekly-title-main">Planificación Semanal</h2>
+                </div>
+                <div class="weekly-meta-inputs">
+                    <input type="text" class="editable-week-num" id="field-week-num" maxlength="30" 
+                           value="SEMANA: 42 · OCTUBRE" placeholder="SEMANA: __"
+                           oninput="handleSingleLineInput(this)">
+                </div>
+            </div>
+
+            <!-- CUERPO PRINCIPAL: 2 COLUMNAS EDITORIALES (IZQUIERDA Y DERECHA) -->
+            <div class="weekly-columns-wrapper">
+                
+                <!-- COLUMNA PRINCIPAL IZQUIERDA -->
+                <div class="weekly-main-column" id="main-col-left">
+                    <div class="weekly-column-box" id="col-days-left">
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">LUNES</span>
+                                <div class="day-check-indicator circle" id="chk-lunes">
+                                    <input type="text" class="day-number-input" id="num-lunes" maxlength="2" value="7" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-lunes" maxlength="500"
+                                      placeholder="Prioridad clave del lunes..."
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Cerrar revisión del presupuesto de imprenta</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">MARTES</span>
+                                <div class="day-check-indicator circle" id="chk-martes">
+                                    <input type="text" class="day-number-input" id="num-martes" maxlength="2" value="8" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-martes" maxlength="500"
+                                      placeholder="Prioridad clave del martes..."
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Reunión de balance trimestral con el equipo editorial</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">MIÉRCOLES</span>
+                                <div class="day-check-indicator circle" id="chk-miercoles">
+                                    <input type="text" class="day-number-input" id="num-miercoles" maxlength="2" value="9" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-miercoles" maxlength="500"
+                                      placeholder="Prioridad clave del miércoles..."
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Redacción de los dos ensayos para el lanzamiento</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">JUEVES</span>
+                                <div class="day-check-indicator circle" id="chk-jueves">
+                                    <input type="text" class="day-number-input" id="num-jueves" maxlength="2" value="10" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-jueves" maxlength="500"
+                                      placeholder="Prioridad clave del jueves..."
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Pruebas de impresión de cubiertas y calibración de color</textarea>
+                        </div>
+                    </div>
+
+                    <!-- SLOT INFERIOR IZQUIERDO -->
+                    <div class="weekly-bottom-slot" id="slot-bottom-left">
+                        <!-- PANEL HÁBITOS DE LA SEMANA (TRACKER L M X J V S D) -->
+                        <div class="weekly-habits-panel" id="block-habits" data-id="habits">
+                            <div class="habits-panel-header">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span class="habits-panel-title">HÁBITOS DE LA SEMANA</span>
+                                    <button type="button" class="btn-block-action" onclick="swapBottomSections()" title="Intercambiar con la otra columna">⇄</button>
+                                    <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('habits')" title="Eliminar sección de hábitos y ampliar días">✕</button>
+                                </div>
+                                <div class="habits-days-legend">
+                                    <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                                </div>
+                            </div>
+
+                            <!-- Fila Hábito 1 -->
+                            <div class="habit-track-row">
+                                <textarea class="textarea-habit-track-inline" id="field-habit-1" rows="1" maxlength="100"
+                                          placeholder="Hábito 1..."
+                                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                          oninput="handleSingleLineInput(this)">Lectura analógica (30 min)</textarea>
+                                <div class="habit-days-checks">
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                </div>
+                            </div>
+
+                            <!-- Fila Hábito 2 -->
+                            <div class="habit-track-row">
+                                <textarea class="textarea-habit-track-inline" id="field-habit-2" rows="1" maxlength="100"
+                                          placeholder="Hábito 2..."
+                                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                          oninput="handleSingleLineInput(this)">Caminar al aire libre sin móvil</textarea>
+                                <div class="habit-days-checks">
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot checked" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                </div>
+                            </div>
+
+                            <!-- Fila Hábito 3 -->
+                            <div class="habit-track-row">
+                                <textarea class="textarea-habit-track-inline" id="field-habit-3" rows="1" maxlength="100"
+                                          placeholder="Hábito 3..."
+                                          onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                                          oninput="handleSingleLineInput(this)">Cero pantallas después de las 22:00</textarea>
+                                <div class="habit-days-checks">
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                    <div class="habit-day-dot" onclick="toggleDot(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUMNA PRINCIPAL DERECHA -->
+                <div class="weekly-main-column" id="main-col-right">
+                    <div class="weekly-column-box" id="col-days-right">
+                        <div class="weekly-focus-card">
+                            <span class="weekly-focus-label">FOCO DE LA SEMANA (META CLAVE)</span>
+                            <textarea class="textarea-focus-inline" id="field-focus" maxlength="500"
+                                      placeholder="¿Qué único resultado justificaría toda esta semana?"
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Entregar los originales completos para enviar a encuadernación</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">VIERNES</span>
+                                <div class="day-check-indicator circle" id="chk-viernes">
+                                    <input type="text" class="day-number-input" id="num-viernes" maxlength="2" value="11" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-viernes" maxlength="500"
+                                      placeholder="Prioridad clave del viernes..."
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Cierre de tareas pendientes y balance de la semana</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">SÁBADO</span>
+                                <div class="day-check-indicator circle" id="chk-sabado">
+                                    <input type="text" class="day-number-input" id="num-sabado" maxlength="2" value="12" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-sabado" maxlength="500"
+                                      placeholder="Descanso, lectura o proyectos personales..."
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Caminar por la sierra y lectura profunda sin pantallas</textarea>
+                        </div>
+
+                        <div class="day-interactive-row">
+                            <div class="day-interactive-head">
+                                <span class="day-interactive-name">DOMINGO</span>
+                                <div class="day-check-indicator circle" id="chk-domingo">
+                                    <input type="text" class="day-number-input" id="num-domingo" maxlength="2" value="13" placeholder="" title="Día del mes">
+                                </div>
+                            </div>
+                            <textarea class="textarea-day-inline" id="field-domingo" maxlength="500"
+                                      placeholder="Revisión tranquila y preparación de la semana siguiente..."
+                                      onkeydown="handleDayKeydown(event)"
+                                      oninput="handleDayInput(this)">Planificar la semana entrante con calma antes de cenar</textarea>
+                        </div>
+                    </div>
+
+                    <!-- SLOT INFERIOR DERECHO -->
+                    <div class="weekly-bottom-slot" id="slot-bottom-right">
+                        <!-- PANEL TAREAS SECUNDARIAS / NOTAS -->
+                        <div class="weekly-notes-panel bg-blank" id="block-notes" data-id="notes">
+                            <div class="notes-panel-header">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span class="notes-panel-title">TAREAS SECUNDARIAS / NOTAS</span>
+                                    <button type="button" class="btn-block-action" onclick="swapBottomSections()" title="Intercambiar con la otra columna">⇄</button>
+                                    <button type="button" class="btn-block-action btn-del-section" onclick="removeSection('notes')" title="Eliminar sección de notas y ampliar días">✕</button>
+                                </div>
+                            </div>
+                            <textarea class="textarea-weekly-notes" id="field-weekly-notes" maxlength="350"
+                                      placeholder="Anota recados secundarios, llamadas o reflexiones de la semana..."
+                                      oninput="handleNotesInput(this)">• Revisar renovación de dominio web&#10;• Comprar recambios de tinta&#10;• Enviar mensaje de balance a Javier</textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- PIE EDITORIAL -->
+            <div class="paper-weekly-footer">
+                <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL</span>
+                <span>editorialmenosruido.com</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE DESCARGA -->
     <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
         <div class="modal-card">
             <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
-            <span class="modal-badge" id="modal-badge-label">Descarga Lista</span>
-            <h3 class="modal-title" id="modal-title-label">Tu Semana en Papel</h3>
-            <p class="modal-desc" id="modal-desc-label">Genera tu PDF vectorial de alta definición listo para imprimir o utilizar.</p>
-
-            <!-- OPCIONES PARA PLANTILLA LIMPIA EN BLANCO: SEMANAS Y FORMATO -->
-            <div id="modal-blank-options" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 14px;">
-                <div class="modal-pages-selector" id="modal-weeks-selector" style="display: flex; margin-bottom: 0;">
-                    <div>
-                        <span class="modal-pages-label">¿Cuántas semanas quieres imprimir?</span>
-                        <span class="modal-pages-hint">Elige de 1 a 4 semanas para tener un mes completo encadenado en un solo PDF.</span>
-                    </div>
-                    <div class="pages-stepper">
-                        <button type="button" class="btn-step" onclick="changeWeeksCount(-1)">−</button>
-                        <span class="pages-count-display" id="modal-weeks-count">1</span>
-                        <button type="button" class="btn-step" onclick="changeWeeksCount(1)">+</button>
-                    </div>
-                </div>
-
-                <div style="text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px;">
-                    <label for="modal-select-format-weekly" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px;">Formato de papel:</label>
-                    <select id="modal-select-format-weekly" style="width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; background: #fff;" onchange="document.getElementById('select-format').value = this.value">
-                        <option value="apaisado">Formato Libro 8.25" × 6" (210 × 152 mm)</option>
-                        <option value="a4">Formato DIN A4 (297 × 210 mm)</option>
-                    </select>
-                </div>
+            <h3 class="modal-title">Descargar Planificador Semanal</h3>
+            <p class="modal-desc">Elige si quieres tu PDF con los textos que has escrito o una plantilla en blanco para rellenar a lápiz.</p>
+            
+            <div class="modal-format-badge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · Calidad Imprenta
             </div>
 
-            <!-- AVISO DE FORMATO PARA PERSONALIZADO -->
-            <div id="modal-personalized-format-info" style="display: block; text-align: left; background: #faf9f6; border: 1px solid #ebe5da; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
-                <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px;">Formato de exportación:</span>
-                <span style="font-size: 0.82rem; color: #333;">Formato Libro 8.25" × 6" (210 × 152 mm)</span>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" onclick="executeDownload(false)">
+                    <span>📥</span> Descargar con mi planificación escrita
+                </button>
+                <button type="button" class="btn-modal-secondary" onclick="executeDownload(true)">
+                    <span>📄</span> Descargar plantilla limpia en blanco
+                </button>
             </div>
-
-            <button type="button" class="btn-modal-download" onclick="executeWeeklyDownload()">
-                <span>📥 <span id="modal-download-btn-text">Descargar PDF ahora</span></span>
-            </button>
 
             <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN SEMANAL EN AMAZON -->
             <div class="modal-books-section">
@@ -1127,7 +1302,7 @@
                         <div class="modal-book-details">
                             <span class="modal-book-badge">Formato Apaisado</span>
                             <h4 class="modal-book-title">Planificador Semanal</h4>
-                            <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal' })">
+                            <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal_v1' })">
                                 Comprar en Amazon ↗
                             </a>
                             <a href="/planificador-semanal-simple.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
@@ -1142,7 +1317,7 @@
                         <div class="modal-book-details">
                             <span class="modal-book-badge">Doble Portada</span>
                             <h4 class="modal-book-title">Semanal Reversible</h4>
-                            <a href="/ir/amazon-semanal-reversible.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'semanal_reversible', origen: 'modal_generador_semanal' })">
+                            <a href="/ir/amazon-semanal-reversible.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon" onclick="trackVercelEvent('amazon_click', { libro: 'semanal_reversible', origen: 'modal_generador_semanal_v1' })">
                                 Comprar en Amazon ↗
                             </a>
                             <a href="/planificador-semanal-reversible.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
@@ -1155,578 +1330,809 @@
 
             <!-- ENLACE RESEÑA -->
             <div style="text-align: center; margin-top: 14px;">
-                <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal' })">
+                <a href="/ir/amazon-semanal-simple.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_semanal', origen: 'modal_generador_semanal_v1' })">
                     ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
                 </a>
             </div>
         </div>
     </div>
 
-    <div class="toast-msg" id="toast-msg"></div>
-
     <script>
-        // ANALÍTICA VERCEL: TRACKING DE EVENTOS
-        function trackVercelEvent(name, data) {
-            try {
-                if (typeof window.va === 'function') {
-                    window.va('event', { name: name, data: data || {} });
-                }
-            } catch(e) {}
-        }
-
-        // MÉTRICA VERCEL GRATIS (TABLA PAGES)
-        function registrarMetricaGratis(url) {
-            try {
-                const ifr = document.createElement('iframe');
-                ifr.style.display = 'none';
-                ifr.src = url;
-                document.body.appendChild(ifr);
-                setTimeout(() => ifr.remove(), 4000);
-            } catch(e) {}
-        }
-
-        // CONTROL DE VISIBILIDAD DE VISTA PREVIA
-        let isPreviewVisible = false;
-        let isExampleActive = false;
-
-        const WEEKLY_EXAMPLE = {
-            weekNumber: 42,
-            focus: 'Cerrar el primer borrador del nuevo libro y blindar 2 mañanas completas para trabajo creativo sin interrupciones.',
-            lunes: 'Planificar prioridades semanales y preparar esquema de trabajo',
-            martes: 'Bloque de escritura profunda de 9:00 a 12:30',
-            miercoles: 'Revisar cuentas del mes y avance de entregas',
-            jueves: 'Cierre de presupuestos y llamadas con la imprenta',
-            viernes: 'Revisión general, archivar notas y bandeja a cero',
-            sabado: 'Caminata por la naturaleza, lectura y descanso analógico',
-            domingo: 'Revisión suave de la semana y preparación del lunes',
-            secundarias: '• Renovar tintas para la pluma\n• Organizar mesa de trabajo y carpetas físicas\n• Desconectar el móvil antes de cenar'
+        // ESTADO GLOBAL
+        const state = {
+            checkboxStyle: 'circle', // 'square' o 'circle'
+            sections: {
+                habits: true,
+                notes: true
+            },
+            slotLeft: 'habits',  // 'habits' o 'notes'
+            slotRight: 'notes'   // 'notes' o 'habits'
         };
 
-        // ESTADO DE CONFIGURACIÓN
-        let activeRayado = 'blank';
-        let isBlankModal = false;
-        let modalWeeksCount = 1;
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLayoutUI();
+            updateCheckboxUI();
+        });
 
-        function setStyle(type, val) {
-            if (type === 'rayado') {
-                activeRayado = 'blank';
-                const box = document.getElementById('prev-bottom-box');
-                if (box) {
-                    box.className = 'preview-bottom-box rayado-blank';
-                }
+        // SELECCIONAR FORMA DE CASILLAS (CUADRADA ◻️ / REDONDA ⚪)
+        function setCheckboxStyle(style) {
+            state.checkboxStyle = style;
+            updateCheckboxUI();
+            showToast(style === 'circle' ? 'Casillas redondas seleccionadas' : 'Casillas cuadradas seleccionadas');
+        }
+
+        function updateCheckboxUI() {
+            const isCircle = state.checkboxStyle === 'circle';
+            const btnSquare = document.getElementById('btn-shape-square');
+            const btnCircle = document.getElementById('btn-shape-circle');
+            if (btnSquare && btnCircle) {
+                btnSquare.classList.toggle('active', !isCircle);
+                btnCircle.classList.toggle('active', isCircle);
             }
-        }
-
-        function updateDatesPreview() {
-            const input = document.getElementById('input-week-number');
-            const prev = document.getElementById('prev-dates-text');
-            if (!prev) return;
-
-            let num = input ? input.value.replace(/[^0-9]/g, '') : '';
-            if (num.length > 0) {
-                let n = parseInt(num, 10);
-                if (n > 55) n = 55;
-                if (n < 1) n = 1;
-                prev.textContent = 'SEMANA: ' + n;
-            } else if (isExampleActive) {
-                prev.textContent = 'SEMANA: ' + WEEKLY_EXAMPLE.weekNumber;
-            } else {
-                prev.textContent = 'SEMANA: ____';
-            }
-        }
-
-        function handleDatesInput() {
-            isExampleActive = false;
-            const input = document.getElementById('input-week-number');
-            if (input && input.value) {
-                let num = input.value.replace(/[^0-9]/g, '');
-                if (num.length > 0) {
-                    let n = parseInt(num, 10);
-                    if (n > 55) n = 55;
-                    if (n < 1) n = 1;
-                    input.value = n;
-                }
-            }
-            updateDatesPreview();
-        }
-
-        function updateFocusPreview() {
-            const input = document.getElementById('input-week-focus');
-            const count = document.getElementById('count-focus');
-            const prev = document.getElementById('prev-focus-text');
-            if (!prev) return;
-
-            const val = input ? input.value.trim() : '';
-            if (count) count.textContent = (input ? input.value.length : 0) + '/140';
-            prev.textContent = val || (isExampleActive ? WEEKLY_EXAMPLE.focus : '');
-        }
-
-        function handleFocusInput() {
-            isExampleActive = false;
-            updateFocusPreview();
-        }
-
-        function updateDayPreview(day) {
-            const input = document.getElementById('input-' + day);
-            const prev = document.getElementById('prev-' + day + '-text');
-            if (!prev) return;
-
-            const val = input ? input.value.trim() : '';
-            prev.textContent = val || (isExampleActive ? (WEEKLY_EXAMPLE[day] || '') : '');
-        }
-
-        function handleDayInput(day) {
-            isExampleActive = false;
-            updateDayPreview(day);
-        }
-
-        function updateSecundariasPreview() {
-            const input = document.getElementById('input-secundarias');
-            const count = document.getElementById('count-secundarias');
-            const prev = document.getElementById('prev-secundarias-text');
-            if (!prev) return;
-
-            const val = input ? input.value : '';
-            if (count) count.textContent = val.length + '/320';
-            prev.textContent = val.trim() ? val : (isExampleActive ? WEEKLY_EXAMPLE.secundarias : '');
-        }
-
-        function handleSecundariasInput() {
-            isExampleActive = false;
-            updateSecundariasPreview();
-        }
-
-        function renderPreview() {
-            updateDatesPreview();
-            updateFocusPreview();
-            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(updateDayPreview);
-            updateSecundariasPreview();
-        }
-
-        // RELLENAR EJEMPLO (Solo se proyecta en la vista previa, sin rellenar los inputs del formulario)
-        function loadExampleData() {
-            isExampleActive = true;
-            renderPreview();
-            showToast('✓ Ejemplo proyectado en la vista previa.');
-        }
-
-        function autoResizeTextarea(el) {
-            if (!el) return;
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight + 2) + 'px';
-        }
-
-        function clearAllData() {
-            isExampleActive = false;
-            if (document.getElementById('input-week-number')) document.getElementById('input-week-number').value = '';
-            if (document.getElementById('input-week-focus')) {
-                const el = document.getElementById('input-week-focus');
-                el.value = '';
-                el.style.height = '';
-            }
-            ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(function(d) {
-                const el = document.getElementById('input-' + d);
-                if (el) {
-                    el.value = '';
-                    el.style.height = '';
-                }
+            document.querySelectorAll('.day-check-indicator').forEach(el => {
+                el.classList.toggle('circle', isCircle);
             });
-            if (document.getElementById('input-secundarias')) {
-                const el = document.getElementById('input-secundarias');
-                el.value = '';
-                el.style.height = '';
-            }
-            renderPreview();
-            showToast('✓ Formulario y vista previa limpiados.');
+            document.querySelectorAll('.habit-day-dot').forEach(el => {
+                el.classList.toggle('square', !isCircle);
+            });
         }
 
-        function showToast(msg) {
-            const el = document.getElementById('toast-msg');
-            if (!el) return;
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        // MANEJO DE LÍNEAS FÍSICAS EN DÍAS Y FOCO (HASTA 4 LÍNEAS NORMAL / 7 EXPANDIDO)
+        function handleDayInput(el) {
+            const isExpanded = el.closest('.weekly-column-box') && el.closest('.weekly-column-box').classList.contains('expanded-col');
+            const maxLines = isExpanded ? 7 : 4;
+            const lines = el.value.split('\n');
+            if (lines.length > maxLines) {
+                el.value = lines.slice(0, maxLines).join('\n');
+                showToast(`⚠️ Máximo ${maxLines} líneas para este bloque${isExpanded ? '' : ' (elimina la sección inferior para permitir hasta 7 líneas)'}`);
+            }
+            while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+        }
+
+        function handleDayKeydown(e) {
+            const el = e.target;
+            const allowedControlKeys = [
+                'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+                'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Escape'
+            ];
+            if (allowedControlKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+            const isExpanded = el.closest('.weekly-column-box') && el.closest('.weekly-column-box').classList.contains('expanded-col');
+            const maxLines = isExpanded ? 7 : 4;
+            const lines = el.value.split('\n');
+            if (e.key === 'Enter' && lines.length >= maxLines) {
+                e.preventDefault();
+                showToast(`⚠️ Máximo ${maxLines} líneas para este bloque${isExpanded ? '' : ' (elimina la sección inferior para escribir hasta 7 líneas)'}`);
+                return false;
+            }
+        }
+
+        // ========================================================
+        // VALIDACIÓN DE CAPACIDAD DE TEXTO (BLOQUEO SI NO HAY ESPACIO)
+        // ========================================================
+        function getDayTextLinesCount(fieldId) {
+            const el = document.getElementById(fieldId);
+            if (!el) return 0;
+            const text = el.value.trim();
+            if (!text) return 0;
+
+            let mirror = document.getElementById('day-measurement-mirror');
+            if (!mirror) {
+                mirror = document.createElement('div');
+                mirror.id = 'day-measurement-mirror';
+                mirror.style.position = 'absolute';
+                mirror.style.visibility = 'hidden';
+                mirror.style.pointerEvents = 'none';
+                mirror.style.whiteSpace = 'pre-wrap';
+                mirror.style.wordBreak = 'break-word';
+                mirror.style.boxSizing = 'border-box';
+                document.body.appendChild(mirror);
+            }
+
+            const comp = window.getComputedStyle(el);
+            mirror.style.width = (el.clientWidth || 380) + 'px';
+            mirror.style.fontFamily = comp.fontFamily;
+            mirror.style.fontSize = comp.fontSize;
+            mirror.style.lineHeight = comp.lineHeight;
+            mirror.style.padding = comp.padding;
+            mirror.textContent = el.value;
+
+            const totalHeight = mirror.offsetHeight;
+            mirror.textContent = 'M';
+            const singleLineHeight = mirror.offsetHeight || 16;
+            mirror.textContent = el.value;
+
+            const measuredLines = Math.ceil(totalHeight / singleLineHeight);
+            const explicitLines = el.value.split('\n').length;
+            return Math.max(explicitLines, measuredLines);
+        }
+
+        function canShrinkColumn(columnSide) {
+            const fieldIds = (columnSide === 'left') 
+                ? ['field-lunes', 'field-martes', 'field-miercoles', 'field-jueves']
+                : ['field-focus', 'field-viernes', 'field-sabado', 'field-domingo'];
+
+            for (const fId of fieldIds) {
+                const el = document.getElementById(fId);
+                if (!el) continue;
+                const text = el.value.trim();
+                if (!text) continue;
+
+                // Comprobación de líneas (máximo 4 permitidas en modo normal con sección inferior)
+                const explicitLines = el.value.split('\n').length;
+                if (explicitLines > 4) {
+                    return false;
+                }
+
+                const measuredLines = getDayTextLinesCount(fId);
+                if (measuredLines > 4) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // CONTROL DINÁMICO DE SECCIONES (ELIMINAR / MOSTRAR / INTERCAMBIAR)
+        function updateLayoutUI() {
+            const slotLeft = document.getElementById('slot-bottom-left');
+            const slotRight = document.getElementById('slot-bottom-right');
+            const blockHabits = document.getElementById('block-habits');
+            const blockNotes = document.getElementById('block-notes');
+            const colLeft = document.getElementById('col-days-left');
+            const colRight = document.getElementById('col-days-right');
+            const pillHabits = document.getElementById('pill-habits');
+            const pillNotes = document.getElementById('pill-notes');
+
+            if (!slotLeft || !slotRight || !blockHabits || !blockNotes) return;
+
+            // Reubicar bloques en sus slots correspondientes
+            if (state.slotLeft === 'habits') {
+                if (blockHabits.parentElement !== slotLeft) slotLeft.appendChild(blockHabits);
+                if (blockNotes.parentElement !== slotRight) slotRight.appendChild(blockNotes);
+            } else {
+                if (blockNotes.parentElement !== slotLeft) slotLeft.appendChild(blockNotes);
+                if (blockHabits.parentElement !== slotRight) slotRight.appendChild(blockHabits);
+            }
+
+            // Visibilidad y expansión de columna izquierda
+            const isLeftVisible = state.sections[state.slotLeft];
+            if (isLeftVisible) {
+                slotLeft.style.display = 'flex';
+                colLeft.classList.remove('expanded-col');
+            } else {
+                slotLeft.style.display = 'none';
+                colLeft.classList.add('expanded-col');
+            }
+
+            // Visibilidad y expansión de columna derecha
+            const isRightVisible = state.sections[state.slotRight];
+            if (isRightVisible) {
+                slotRight.style.display = 'flex';
+                colRight.classList.remove('expanded-col');
+            } else {
+                slotRight.style.display = 'none';
+                colRight.classList.add('expanded-col');
+            }
+
+            // Actualizar botones pills superiores
+            if (pillHabits) {
+                if (state.sections.habits) {
+                    pillHabits.classList.add('active');
+                    pillHabits.innerHTML = '🌱 Hábitos de la semana ✓';
+                } else {
+                    pillHabits.classList.remove('active');
+                    pillHabits.innerHTML = '🌱 Hábitos (+ Añadir)';
+                }
+            }
+
+            if (pillNotes) {
+                if (state.sections.notes) {
+                    pillNotes.classList.add('active');
+                    pillNotes.innerHTML = '📝 Secundarias / Notas ✓';
+                } else {
+                    pillNotes.classList.remove('active');
+                    pillNotes.innerHTML = '📝 Secundarias / Notas (+ Añadir)';
+                }
+            }
+        }
+
+        function toggleSection(secKey) {
+            if (!state.sections[secKey]) {
+                // El usuario quiere reactivar/añadir esta sección: verificar si la columna tiene espacio suficiente
+                const targetSide = (state.slotLeft === secKey) ? 'left' : 'right';
+                if (!canShrinkColumn(targetSide)) {
+                    showToast('⚠️ No hay espacio en la hoja: borra el texto en los días de la semana para hacer hueco');
+                    return;
+                }
+            }
+
+            state.sections[secKey] = !state.sections[secKey];
+            updateLayoutUI();
+            const name = secKey === 'habits' ? 'Hábitos de la semana' : 'Secundarias / Notas';
+            showToast(state.sections[secKey] ? `Añadido: ${name}` : `Eliminado: ${name} (columna ampliada)`);
+        }
+
+        function removeSection(secKey) {
+            state.sections[secKey] = false;
+            updateLayoutUI();
+            const name = secKey === 'habits' ? 'Hábitos' : 'Secundarias / Notas';
+            showToast(`Eliminado: ${name} (días ampliados)`);
+        }
+
+        function swapBottomSections() {
+            const leftIsVisible = state.sections[state.slotLeft];
+            const rightIsVisible = state.sections[state.slotRight];
+
+            // Si una columna está ampliada y al intercambiar recibirá un bloque y se encogerá:
+            if (!leftIsVisible && rightIsVisible) {
+                if (!canShrinkColumn('left')) {
+                    showToast('⚠️ No hay espacio en la hoja: borra el texto en los días de la semana para hacer hueco');
+                    return;
+                }
+            } else if (leftIsVisible && !rightIsVisible) {
+                if (!canShrinkColumn('right')) {
+                    showToast('⚠️ No hay espacio en la hoja: borra el texto en los días de la semana para hacer hueco');
+                    return;
+                }
+            }
+
+            const temp = state.slotLeft;
+            state.slotLeft = state.slotRight;
+            state.slotRight = temp;
+            updateLayoutUI();
+            showToast(`Posición intercambiada: ${state.slotLeft === 'habits' ? 'Hábitos izq. / Notas der.' : 'Notas izq. / Hábitos der.'}`);
+        }
+
+        // ALTERNAR SELECCIÓN DE DÍAS EN HÁBITOS
+        function toggleDot(el) {
+            el.classList.toggle('checked');
+        }
+
+        // CONTROL ESTRICTO DE ALTURA EN NOTAS
+        function handleNotesInput(el) {
+            while (el.scrollHeight > (el.clientHeight + 1) && el.value.length > 0) {
+                el.value = el.value.slice(0, -1);
+            }
+        }
+
+        // LIMPIAR Y CARGAR EJEMPLO
+        function clearAllContent() {
+            if (confirm('¿Deseas limpiar todos los textos del planificador semanal para empezar en blanco?')) {
+                document.getElementById('field-focus').value = '';
+                ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].forEach(d => {
+                    const el = document.getElementById('field-' + d);
+                    if (el) el.value = '';
+                    const numEl = document.getElementById('num-' + d);
+                    if (numEl) numEl.value = '';
+                });
+                ['1','2','3'].forEach(n => {
+                    const el = document.getElementById('field-habit-' + n);
+                    if (el) el.value = '';
+                });
+                document.querySelectorAll('.habit-day-dot').forEach(d => d.classList.remove('checked'));
+                document.getElementById('field-weekly-notes').value = '';
+                showToast('Lienzo limpio para empezar en blanco');
+            }
+        }
+
+        function loadExampleContent() {
+            document.getElementById('field-week-num').value = 'SEMANA: 42 · OCTUBRE';
+            document.getElementById('field-focus').value = 'Entregar los originales completos para enviar a encuadernación';
+            
+            const daysData = [
+                { id: 'lunes', num: '7', text: 'Cerrar revisión del presupuesto de imprenta' },
+                { id: 'martes', num: '8', text: 'Reunión de balance trimestral con el equipo editorial' },
+                { id: 'miercoles', num: '9', text: 'Redacción de los dos ensayos para el lanzamiento' },
+                { id: 'jueves', num: '10', text: 'Pruebas de impresión de cubiertas y calibración de color' },
+                { id: 'viernes', num: '11', text: 'Cierre de tareas pendientes y balance de la semana' },
+                { id: 'sabado', num: '12', text: 'Caminar por la sierra y lectura profunda sin pantallas' },
+                { id: 'domingo', num: '13', text: 'Planificar la semana entrante con calma antes de cenar' }
+            ];
+
+            daysData.forEach(d => {
+                const txtEl = document.getElementById('field-' + d.id);
+                if (txtEl) txtEl.value = d.text;
+                const numEl = document.getElementById('num-' + d.id);
+                if (numEl) numEl.value = d.num;
+            });
+
+            document.getElementById('field-habit-1').value = 'Lectura analógica (30 min)';
+            document.getElementById('field-habit-2').value = 'Caminar al aire libre sin móvil';
+            document.getElementById('field-habit-3').value = 'Cero pantallas después de las 22:00';
+
+            const rows = document.querySelectorAll('.habit-track-row');
+            if (rows.length >= 3) {
+                const dots1 = rows[0].querySelectorAll('.habit-day-dot');
+                dots1.forEach((dot, i) => { if (i < 5) dot.classList.add('checked'); else dot.classList.remove('checked'); });
+                const dots2 = rows[1].querySelectorAll('.habit-day-dot');
+                dots2.forEach((dot, i) => { if (i < 4) dot.classList.add('checked'); else dot.classList.remove('checked'); });
+                const dots3 = rows[2].querySelectorAll('.habit-day-dot');
+                dots3.forEach((dot, i) => { if (i < 3) dot.classList.add('checked'); else dot.classList.remove('checked'); });
+            }
+
+            document.getElementById('field-weekly-notes').value = '• Revisar renovación de dominio web\n• Comprar recambios de tinta\n• Enviar mensaje de balance a Javier';
+
+            state.sections.habits = true;
+            state.sections.notes = true;
+            updateLayoutUI();
+            showToast('Ejemplo editorial cargado (Semana 42)');
         }
 
         // MODAL HANDLERS
-        function openDownloadModal(isBlank) {
-            isBlankModal = !!isBlank;
-            const modal = document.getElementById('download-modal');
-            if (!modal) return;
-
-            const blankOpts = document.getElementById('modal-blank-options');
-            const persInfo = document.getElementById('modal-personalized-format-info');
-            const badge = document.getElementById('modal-badge-label');
-            const title = document.getElementById('modal-title-label');
-            const desc = document.getElementById('modal-desc-label');
-            const btnText = document.getElementById('modal-download-btn-text');
-
-            if (isBlank) {
-                if (badge) badge.textContent = 'Plantilla Limpia en Blanco';
-                if (title) title.textContent = 'Tu Semana en Papel (Para Rellenar a Mano)';
-                if (desc) desc.textContent = 'Descarga la cuadrícula semanal limpia lista para lápiz o pluma estilográfica en formato Libro o Folio DIN A4.';
-                if (blankOpts) blankOpts.style.display = 'flex';
-                if (persInfo) persInfo.style.display = 'none';
-                modalWeeksCount = 1;
-                const countEl = document.getElementById('modal-weeks-count');
-                if (countEl) countEl.textContent = '1';
-                const modalFormat = document.getElementById('modal-select-format-weekly');
-                if (modalFormat) modalFormat.value = document.getElementById('select-format').value;
-                if (btnText) btnText.textContent = 'Descargar 1 semana limpia en PDF';
-            } else {
-                if (badge) badge.textContent = 'PDF Personalizado con Tus Tareas';
-                if (title) title.textContent = 'Tu Planificación Semanal Lista';
-                if (desc) desc.textContent = 'Descarga tu semana en Formato Libro Apaisado 8.25" x 6" con todos tus textos maquetados.';
-                if (blankOpts) blankOpts.style.display = 'none';
-                if (persInfo) persInfo.style.display = 'block';
-                if (btnText) btnText.textContent = 'Descargar mi PDF personalizado';
-            }
-
-            modal.classList.add('active');
+        function openDownloadModal() {
+            document.getElementById('download-modal').classList.add('active');
         }
-
         function closeDownloadModal() {
-            const modal = document.getElementById('download-modal');
-            if (modal) modal.classList.remove('active');
+            document.getElementById('download-modal').classList.remove('active');
         }
-
         function closeModalOnBackdrop(e) {
-            if (e && e.target && e.target.id === 'download-modal') {
-                closeDownloadModal();
-            }
+            if (e.target && e.target.id === 'download-modal') closeDownloadModal();
         }
 
-        function changeWeeksCount(delta) {
-            modalWeeksCount = Math.max(1, Math.min(4, modalWeeksCount + delta));
-            const countEl = document.getElementById('modal-weeks-count');
-            if (countEl) countEl.textContent = modalWeeksCount;
-            const btnText = document.getElementById('modal-download-btn-text');
-            if (btnText && isBlankModal) {
-                btnText.textContent = `Descargar ${modalWeeksCount} ${modalWeeksCount === 1 ? 'semana limpia' : 'semanas limpias'} en PDF`;
-            }
+        function showToast(msg) {
+            const t = document.getElementById('toast-notify');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('active');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                t.classList.remove('active');
+            }, 2600);
         }
 
-        // EXPORTACIÓN A PDF VECTORIAL (jsPDF) CALIBRADO Y EQUILIBRADO
-        function executeWeeklyDownload() {
+        // ENVOLTORIO SEGURO DE TEXTO PARA PDF
+        function strictSafeWrapText(docInstance, text, maxWidth) {
+            if (!text) return [];
+            const safeMaxW = Math.max(10, maxWidth - 1.5);
+            const paragraphs = String(text).split('\n');
+            const result = [];
+            paragraphs.forEach(p => {
+                const trimmed = p.trim();
+                if (!trimmed) {
+                    result.push('');
+                    return;
+                }
+                const wrapped = docInstance.splitTextToSize(trimmed, safeMaxW);
+                result.push(...wrapped);
+            });
+            return result;
+        }
+
+        // RENDERIZADO TIPOGRÁFICO DE DÍAS Y FOCO CON AUTO-AJUSTE (CERO PÉRDIDA DE CARACTERES)
+        function renderDayOrFocusText(docInstance, text, startX, startY, availableW, availableH, targetMaxLines) {
+            if (!text) return;
+
+            const safeW = availableW;
+            const paragraphs = String(text).split('\n');
+
+            let bestFontSize = (targetMaxLines === 7) ? 7.4 : 7.6;
+            let bestLines = [];
+            let bestSpacing = (targetMaxLines === 7) ? 2.8 : 3.0;
+
+            // Búsqueda de escala tipográfica óptima:
+            // Asegura que el 100% del texto quepa completo sin que se corte jamás ninguna línea ni carácter
+            for (let fSize = bestFontSize; fSize >= 5.6; fSize -= 0.2) {
+                docInstance.setFont('times', 'normal');
+                docInstance.setFontSize(fSize);
+
+                const wrapped = [];
+                paragraphs.forEach(p => {
+                    const trimmed = p.trim();
+                    if (!trimmed) {
+                        wrapped.push('');
+                    } else {
+                        const wLines = docInstance.splitTextToSize(trimmed, safeW);
+                        wrapped.push(...wLines);
+                    }
+                });
+
+                bestLines = wrapped;
+                bestFontSize = fSize;
+
+                if (wrapped.length <= targetMaxLines) {
+                    bestSpacing = Math.min((availableH - 1.2) / Math.max(1, wrapped.length), (targetMaxLines === 7 ? 2.8 : 3.0));
+                    break;
+                }
+            }
+
+            // Si supera targetMaxLines ligeramente, condensar espaciado vertical para que entren todas las líneas
+            if (bestLines.length > targetMaxLines) {
+                bestSpacing = (availableH - 1.2) / bestLines.length;
+            }
+
+            docInstance.setFont('times', 'normal');
+            docInstance.setFontSize(bestFontSize);
+            docInstance.setTextColor(30, 25, 20);
+
+            bestLines.forEach((line, idx) => {
+                const yPos = startY + (idx * bestSpacing);
+                docInstance.text(line, startX, yPos, { maxWidth: safeW });
+            });
+        }
+
+        // ========================================================
+        // MOTOR DE GENERACIÓN PDF 1:1 CON jsPDF (LIBRO 8.25" × 6")
+        // Dimensiones en mm: 209.5 × 152.4 mm (Landscape)
+        // ========================================================
+        function executeDownload(isBlank = false) {
             closeDownloadModal();
 
             const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
             if (!jsPDFClass) {
-                alert('No se pudo inicializar la librería jsPDF. Por favor recarga la página.');
+                alert('La librería jsPDF aún se está cargando. Por favor espera un segundo.');
                 return;
             }
 
-            const formatChoice = document.getElementById('select-format').value;
-            // REGLA: Personalizado se descarga siempre en Formato Libro Apaisado 8.25" x 6"; en blanco se puede elegir entre Libro Apaisado o DIN A4
-            const isCustomBook = isBlankModal ? (formatChoice === 'apaisado') : true;
-            // 8.25" x 6" en mm: 209.5 x 152.4 mm (landscape)
-            const pageDims = isCustomBook ? [209.5, 152.4] : 'a4';
-
-            let doc = new jsPDFClass({
+            const doc = new jsPDFClass({
                 orientation: 'landscape',
                 unit: 'mm',
-                format: pageDims
+                format: [209.5, 152.4] // 8.25" × 6" libro apaisado
             });
 
-            const weekNumVal = document.getElementById('input-week-number').value.trim();
-            const userWeekNum = isBlankModal ? '' : (weekNumVal || (isExampleActive ? String(WEEKLY_EXAMPLE.weekNumber) : ''));
-            const userDates = isBlankModal ? 'SEMANA: ____' : (userWeekNum ? ('SEMANA: ' + userWeekNum) : 'SEMANA: ____');
-            
-            const focusVal = document.getElementById('input-week-focus').value.trim();
-            const userFocus = isBlankModal ? '' : (focusVal || (isExampleActive ? WEEKLY_EXAMPLE.focus : ''));
+            const pw = doc.internal.pageSize.getWidth();  // 209.5 mm
+            const ph = doc.internal.pageSize.getHeight(); // 152.4 mm
+            const margin = 12; // 12 mm margen
+            const cw = pw - (margin * 2); // 185.5 mm útiles
 
-            const daysData = {
-                lunes: isBlankModal ? '' : (document.getElementById('input-lunes').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.lunes : '')),
-                martes: isBlankModal ? '' : (document.getElementById('input-martes').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.martes : '')),
-                miercoles: isBlankModal ? '' : (document.getElementById('input-miercoles').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.miercoles : '')),
-                jueves: isBlankModal ? '' : (document.getElementById('input-jueves').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.jueves : '')),
-                viernes: isBlankModal ? '' : (document.getElementById('input-viernes').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.viernes : '')),
-                sabado: isBlankModal ? '' : (document.getElementById('input-sabado').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.sabado : '')),
-                domingo: isBlankModal ? '' : (document.getElementById('input-domingo').value.trim() || (isExampleActive ? WEEKLY_EXAMPLE.domingo : ''))
-            };
+            // Fondo crema editorial
+            doc.setFillColor(255, 254, 251);
+            doc.rect(0, 0, pw, ph, 'F');
 
-            const secVal = document.getElementById('input-secundarias').value.trim();
-            const userSecundarias = isBlankModal ? '' : (secVal || (isExampleActive ? WEEKLY_EXAMPLE.secundarias : ''));
-            const pagesToRender = isBlankModal ? modalWeeksCount : 1;
+            // 1. CABECERA
+            let y = margin + 2;
 
-            function renderWeeklyPage(docInstance, pageIndex) {
-                const pWidth = docInstance.internal.pageSize.getWidth();
-                const pHeight = docInstance.internal.pageSize.getHeight();
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.0);
+            doc.setTextColor(135, 85, 59);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', margin, y);
+
+            const weekText = isBlank ? 'SEMANA: ____' : (document.getElementById('field-week-num').value.trim() || 'SEMANA: ____');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.0);
+            doc.setTextColor(70, 65, 60);
+            doc.text(weekText, pw - margin, y + 2.5, { align: 'right' });
+
+            y += 4.5;
+            doc.setFont('times', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(20, 18, 16);
+            doc.text('Planificación Semanal', margin, y);
+
+            y += 2.5;
+            doc.setDrawColor(30, 25, 20);
+            doc.setLineWidth(0.35);
+            doc.line(margin, y, pw - margin, y);
+            y += 4;
+
+            // 2. CUERPO: 2 COLUMNAS EDITORIALES
+            const colGap = 6;
+            const colW = (cw - colGap) / 2; // ~89.75 mm
+            const bodyStartY = y;
+            const col1X = margin;
+            const col2X = margin + colW + colGap;
+
+            const isCircle = state.checkboxStyle === 'circle';
+
+            // Alturas dinámicas según visibilidad de la sección inferior
+            const normalBodyH = 73.0; // Altura estándar con bloque inferior
+            const bottomGap = 3.5;
+            const bottomH = 32.4;
+            const expandedBodyH = normalBodyH + bottomGap + bottomH; // ~108.9 mm
+            const bottomY = bodyStartY + normalBodyH + bottomGap; // 101.0 mm
+
+            const leftVisible = state.sections[state.slotLeft];
+            const rightVisible = state.sections[state.slotRight];
+
+            const bodyH1 = leftVisible ? normalBodyH : expandedBodyH;
+            const bodyH2 = rightVisible ? normalBodyH : expandedBodyH;
+
+            // Marco Columna 1 (Lunes a Jueves)
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(210, 205, 198);
+            doc.setLineWidth(0.25);
+            doc.roundedRect(col1X, bodyStartY, colW, bodyH1, 1.5, 1.5, 'FD');
+
+            // Marco Columna 2 (Foco + Viernes a Domingo)
+            doc.roundedRect(col2X, bodyStartY, colW, bodyH2, 1.5, 1.5, 'FD');
+
+            // --- DIBUJAR COLUMNA 1: LUNES A JUEVES (4 FILAS) ---
+            const rowH1 = bodyH1 / 4;
+            const daysCol1 = [
+                { id: 'lunes', name: 'LUNES', text: isBlank ? '' : document.getElementById('field-lunes').value.trim() },
+                { id: 'martes', name: 'MARTES', text: isBlank ? '' : document.getElementById('field-martes').value.trim() },
+                { id: 'miercoles', name: 'MIÉRCOLES', text: isBlank ? '' : document.getElementById('field-miercoles').value.trim() },
+                { id: 'jueves', name: 'JUEVES', text: isBlank ? '' : document.getElementById('field-jueves').value.trim() }
+            ];
+
+            daysCol1.forEach((day, idx) => {
+                const rowY = bodyStartY + (idx * rowH1);
                 
-                // Márgenes calibrados
-                const margin = isCustomBook ? 13 : 18;
-                const cWidth = pWidth - (margin * 2);
+                // Nombre del día
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(30, 25, 20);
+                doc.text(day.name, col1X + 4, rowY + 4.5);
 
-                // Fondo crema suave editorial
-                docInstance.setFillColor(255, 254, 251);
-                docInstance.rect(0, 0, pWidth, pHeight, 'F');
+                // Casilla / Círculo grande para el número de día
+                const boxCenterX = col1X + colW - 6.0;
+                const boxCenterY = rowY + 4.2;
+                const boxRadius = 2.6;
+                const boxSize = 5.2;
 
-                // Cabecera superior
-                let y = margin + (isCustomBook ? 3.5 : 5);
-
-                docInstance.setFont('helvetica', 'bold');
-                docInstance.setFontSize(isCustomBook ? 7.5 : 8.5);
-                docInstance.setTextColor(135, 85, 59);
-                docInstance.text('PLANIFICADOR MENOS RUIDO · VISTA SEMANAL HORIZONTAL', margin, y);
-                y += (isCustomBook ? 5.5 : 7);
-
-                // Título y Semana
-                docInstance.setFont('times', 'bold');
-                docInstance.setFontSize(isCustomBook ? 15 : 19);
-                docInstance.setTextColor(30, 25, 22);
-                docInstance.text('Planificación Semanal', margin, y);
-
-                docInstance.setFont('helvetica', 'bold');
-                docInstance.setFontSize(isCustomBook ? 8.5 : 10);
-                docInstance.setTextColor(80, 75, 70);
-                docInstance.text(userDates, pWidth - margin, y, { align: 'right' });
-                y += (isCustomBook ? 3.5 : 4.5);
-
-                // Línea separadora limpia
-                docInstance.setDrawColor(40, 35, 30);
-                docInstance.setLineWidth(0.4);
-                docInstance.line(margin, y, pWidth - margin, y);
-                y += (isCustomBook ? 5.5 : 7.5);
-
-                // Distribución en 2 Columnas
-                const colWidth = (cWidth - (isCustomBook ? 8 : 12)) / 2;
-                const gridTop = y;
-
-                // Altura de cuadrícula calibrada para que el texto de 3 líneas respire con holgura
-                const gridHeight = isCustomBook ? 78 : 106;
-
-                // Marco Columna Izquierda (Lunes a Jueves)
-                docInstance.setFillColor(255, 255, 255);
-                docInstance.setDrawColor(180, 175, 165);
-                docInstance.setLineWidth(0.3);
-                docInstance.roundedRect(margin, gridTop, colWidth, gridHeight, 2, 2, 'FD');
-
-                // Marco Columna Derecha (Foco + Viernes a Domingo)
-                const rightColX = margin + colWidth + (isCustomBook ? 8 : 12);
-                docInstance.roundedRect(rightColX, gridTop, colWidth, gridHeight, 2, 2, 'FD');
-
-                // DIBUJAR COLUMNA IZQUIERDA (4 bloques: Lun, Mar, Mié, Jue)
-                const leftRowH = gridHeight / 4;
-                const leftDays = [
-                    { key: 'lunes', label: 'LUNES', text: daysData.lunes },
-                    { key: 'martes', label: 'MARTES', text: daysData.martes },
-                    { key: 'miercoles', label: 'MIÉRCOLES', text: daysData.miercoles },
-                    { key: 'jueves', label: 'JUEVES', text: daysData.jueves }
-                ];
-
-                leftDays.forEach((item, idx) => {
-                    const rowY = gridTop + (idx * leftRowH);
-                    docInstance.setFont('helvetica', 'bold');
-                    docInstance.setFontSize(isCustomBook ? 7.5 : 9);
-                    docInstance.setTextColor(40, 35, 30);
-                    docInstance.text(item.label, margin + 4, rowY + (isCustomBook ? 5 : 6));
-
-                    // Línea fina bajo etiqueta de día
-                    docInstance.setDrawColor(215, 210, 200);
-                    docInstance.setLineWidth(0.2);
-                    docInstance.line(margin + 4, rowY + (isCustomBook ? 6.5 : 8), margin + colWidth - 4, rowY + (isCustomBook ? 6.5 : 8));
-
-                    if (item.text) {
-                        docInstance.setFont('times', 'normal');
-                        docInstance.setFontSize(isCustomBook ? 8.2 : 9.8);
-                        docInstance.setTextColor(25, 20, 15);
-                        docInstance.text(item.text, margin + 4, rowY + (isCustomBook ? 10.2 : 12.5), { 
-                            maxWidth: colWidth - 8, 
-                            lineHeightFactor: 1.25 
-                        });
-                    }
-
-                    // Línea divisoria entre días
-                    if (idx < 3) {
-                        docInstance.setDrawColor(220, 215, 205);
-                        docInstance.setLineWidth(0.25);
-                        docInstance.line(margin, rowY + leftRowH, margin + colWidth, rowY + leftRowH);
-                    }
-                });
-
-                // DIBUJAR COLUMNA DERECHA (Foco + Vie, Sáb, Dom)
-                const focusH = isCustomBook ? 21 : 28;
-                const rightRemainingH = gridHeight - focusH;
-                const rightRowH = rightRemainingH / 3;
-
-                // 1. Foco
-                // 1. Foco (Limpio y blanco, sin líneas que lo encierren)
-                docInstance.setFont('helvetica', 'bold');
-                docInstance.setFontSize(isCustomBook ? 7.5 : 9);
-                docInstance.setTextColor(135, 85, 59);
-                docInstance.text('FOCO DE LA SEMANA', rightColX + 4, gridTop + (isCustomBook ? 5 : 6));
-
-                if (userFocus) {
-                    docInstance.setFont('times', 'bold');
-                    docInstance.setFontSize(isCustomBook ? 8.2 : 9.8);
-                    docInstance.setTextColor(30, 25, 20);
-                    docInstance.text(userFocus, rightColX + 4, gridTop + (isCustomBook ? 9.5 : 11.5), { 
-                        maxWidth: colWidth - 8, 
-                        lineHeightFactor: 1.25 
-                    });
-                }
-
-                // Línea divisoria entre el Foco y el Viernes (idéntica a la separación entre días)
-                docInstance.setDrawColor(220, 215, 205);
-                docInstance.setLineWidth(0.25);
-                docInstance.line(rightColX, gridTop + focusH, rightColX + colWidth, gridTop + focusH);
-
-                // 2. Viernes, Sábado, Domingo (con altura suficiente para 3 líneas completas)
-                const rightDays = [
-                    { key: 'viernes', label: 'VIERNES', text: daysData.viernes },
-                    { key: 'sabado', label: 'SÁBADO', text: daysData.sabado },
-                    { key: 'domingo', label: 'DOMINGO', text: daysData.domingo }
-                ];
-
-                rightDays.forEach((item, idx) => {
-                    const rowY = gridTop + focusH + (idx * rightRowH);
-                    docInstance.setFont('helvetica', 'bold');
-                    docInstance.setFontSize(isCustomBook ? 7.5 : 9);
-                    docInstance.setTextColor(40, 35, 30);
-                    docInstance.text(item.label, rightColX + 4, rowY + (isCustomBook ? 5 : 6));
-
-                    docInstance.setDrawColor(215, 210, 200);
-                    docInstance.setLineWidth(0.2);
-                    docInstance.line(rightColX + 4, rowY + (isCustomBook ? 6.5 : 8), rightColX + colWidth - 4, rowY + (isCustomBook ? 6.5 : 8));
-
-                    if (item.text) {
-                        docInstance.setFont('times', 'normal');
-                        docInstance.setFontSize(isCustomBook ? 8.2 : 9.8);
-                        docInstance.setTextColor(25, 20, 15);
-                        docInstance.text(item.text, rightColX + 4, rowY + (isCustomBook ? 10.2 : 12.5), { 
-                            maxWidth: colWidth - 8, 
-                            lineHeightFactor: 1.25 
-                        });
-                    }
-
-                    if (idx < 2) {
-                        docInstance.setDrawColor(220, 215, 205);
-                        docInstance.setLineWidth(0.25);
-                        docInstance.line(rightColX, rowY + rightRowH, rightColX + colWidth, rowY + rightRowH);
-                    }
-                });
-
-                // SECCIÓN INFERIOR: TAREAS SECUNDARIAS / NOTAS (CALIBRADA Y PROPORCIONADA)
-                const secTop = gridTop + gridHeight + (isCustomBook ? 4.5 : 6.5);
-                docInstance.setFont('helvetica', 'bold');
-                docInstance.setFontSize(isCustomBook ? 7.5 : 8.5);
-                docInstance.setTextColor(60, 55, 50);
-                docInstance.text('TAREAS SECUNDARIAS / NOTAS IMPORTANTES', margin, secTop + 3);
-
-                const footY = pHeight - margin + (isCustomBook ? 1 : 2);
-                const boxY = secTop + (isCustomBook ? 4.5 : 5.5);
-                const secHeight = footY - boxY - (isCustomBook ? 5.5 : 7.5);
-
-                // Cuadro de notas
-                docInstance.setFillColor(252, 250, 247);
-                docInstance.setDrawColor(215, 210, 202);
-                docInstance.setLineWidth(0.25);
-                docInstance.roundedRect(margin, boxY, cWidth, secHeight, 1.5, 1.5, 'FD');
-
-                const step = isCustomBook ? 5 : 6;
-
-                if (activeRayado === 'dots') {
-                    docInstance.setFillColor(190, 183, 173);
-                    for (let px = margin + step; px <= margin + cWidth - step; px += step) {
-                        for (let py = boxY + 4; py <= boxY + secHeight - 3; py += step) {
-                            docInstance.circle(px, py, 0.18, 'F');
-                        }
-                    }
-                } else if (activeRayado === 'lines') {
-                    docInstance.setDrawColor(220, 215, 208);
-                    docInstance.setLineWidth(0.2);
-                    for (let py = boxY + step; py <= boxY + secHeight - 2; py += step) {
-                        docInstance.line(margin + 4, py, margin + cWidth - 4, py);
-                    }
-                } else if (activeRayado === 'grid') {
-                    docInstance.setDrawColor(225, 220, 214);
-                    docInstance.setLineWidth(0.15);
-                    for (let px = margin + step; px <= margin + cWidth - step; px += step) {
-                        docInstance.line(px, boxY + 2, px, boxY + secHeight - 2);
-                    }
-                    for (let py = boxY + step; py <= boxY + secHeight - 2; py += step) {
-                        docInstance.line(margin + 4, py, margin + cWidth - 4, py);
-                    }
-                }
-
-                if (userSecundarias) {
-                    docInstance.setFont('times', 'normal');
-                    docInstance.setFontSize(isCustomBook ? 8.5 : 9.5);
-                    docInstance.setTextColor(30, 25, 20);
-                    docInstance.text(userSecundarias, margin + 4, boxY + 5.5, { 
-                        maxWidth: cWidth - 8, 
-                        lineHeightFactor: 1.35 
-                    });
-                }
-
-                // FOOTER EDITORIAL
-                docInstance.setDrawColor(215, 210, 202);
-                docInstance.setLineWidth(0.2);
-                docInstance.line(margin, footY - 2.5, pWidth - margin, footY - 2.5);
-
-                docInstance.setFont('helvetica', 'normal');
-                docInstance.setFontSize(isCustomBook ? 6.5 : 7.5);
-                docInstance.setTextColor(140, 135, 130);
-
-                const footerText = pagesToRender > 1
-                    ? ('MENOS RUIDO · VISTA SEMANAL HORIZONTAL (SEMANA ' + (pageIndex + 1) + ' DE ' + pagesToRender + ')')
-                    : 'MENOS RUIDO · VISTA SEMANAL HORIZONTAL';
-                docInstance.text(footerText, margin, footY);
-
-                docInstance.setTextColor(135, 85, 59);
-                docInstance.textWithLink('editorialmenosruido.com', pWidth - margin, footY, { url: 'https://editorialmenosruido.com', align: 'right' });
-            }
-
-            // Renderizar páginas
-            for (let i = 0; i < pagesToRender; i++) {
-                if (i > 0) {
-                    doc.addPage(pageDims, 'landscape');
-                }
-                renderWeeklyPage(doc, i);
-            }
-
-            let fileName = '';
-            if (isBlankModal) {
-                fileName = pagesToRender > 1
-                    ? `Menos_Ruido_Plantilla_Semanal_${pagesToRender}_semanas.pdf`
-                    : 'Menos_Ruido_Plantilla_Semanal.pdf';
-            } else {
-                const weekInput = document.getElementById('input-week-number') || document.getElementById('input-week');
-                let weekVal = (weekInput?.value || '').trim();
-                if (!weekVal && isExampleActive) {
-                    weekVal = (WEEKLY_EXAMPLE.week || '').toString();
-                }
-                const cleanWeek = weekVal.replace(/[^0-9]/g, '');
-                if (cleanWeek) {
-                    fileName = `Menos_Ruido_Planificador_Semanal_${cleanWeek}.pdf`;
+                doc.setDrawColor(70, 65, 60);
+                doc.setLineWidth(0.22);
+                if (isCircle) {
+                    doc.circle(boxCenterX, boxCenterY, boxRadius, 'S');
                 } else {
-                    fileName = 'Menos_Ruido_Planificador_Semanal.pdf';
+                    doc.roundedRect(boxCenterX - boxRadius, boxCenterY - boxRadius, boxSize, boxSize, 0.7, 0.7, 'S');
+                }
+
+                // Número escrito dentro de la casilla
+                if (!isBlank) {
+                    const numVal = (document.getElementById('num-' + day.id).value || '').trim();
+                    if (numVal) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.2);
+                        doc.setTextColor(25, 20, 15);
+                        doc.text(numVal, boxCenterX, boxCenterY + 0.9, { align: 'center' });
+                    }
+                }
+
+                // Texto del día
+                if (day.text) {
+                    const maxLines = leftVisible ? 4 : 7;
+                    const availableH = rowH1 - 7.6;
+                    renderDayOrFocusText(doc, day.text, col1X + 4, rowY + 7.6, colW - 8, availableH, maxLines);
+                }
+
+                // Línea separadora
+                if (idx < 3) {
+                    doc.setDrawColor(230, 225, 218);
+                    doc.setLineWidth(0.15);
+                    doc.line(col1X + 3, rowY + rowH1, col1X + colW - 3, rowY + rowH1);
+                }
+            });
+
+            // --- DIBUJAR COLUMNA 2: FOCO + VIERNES A DOMINGO ---
+            const rowH2 = bodyH2 / 4;
+
+            // Foco de la semana
+            const focusText = isBlank ? '' : document.getElementById('field-focus').value.trim();
+            doc.setFillColor(250, 248, 245);
+            doc.roundedRect(col2X, bodyStartY, colW, rowH2, 1.5, 1.5, 'F');
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.8);
+            doc.setTextColor(135, 85, 59);
+            doc.text('FOCO DE LA SEMANA (META CLAVE)', col2X + 4, bodyStartY + 4.5);
+
+            if (focusText) {
+                const maxFLines = rightVisible ? 4 : 7;
+                const availableH = rowH2 - 7.6;
+                renderDayOrFocusText(doc, focusText, col2X + 4, bodyStartY + 7.6, colW - 8, availableH, maxFLines);
+            }
+
+            doc.setDrawColor(220, 215, 208);
+            doc.setLineWidth(0.2);
+            doc.line(col2X, bodyStartY + rowH2, col2X + colW, bodyStartY + rowH2);
+
+            const daysCol2 = [
+                { id: 'viernes', name: 'VIERNES', text: isBlank ? '' : document.getElementById('field-viernes').value.trim() },
+                { id: 'sabado', name: 'SÁBADO', text: isBlank ? '' : document.getElementById('field-sabado').value.trim() },
+                { id: 'domingo', name: 'DOMINGO', text: isBlank ? '' : document.getElementById('field-domingo').value.trim() }
+            ];
+
+            daysCol2.forEach((day, idx) => {
+                const rowY = bodyStartY + rowH2 + (idx * rowH2);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(30, 25, 20);
+                doc.text(day.name, col2X + 4, rowY + 4.5);
+
+                const boxCenterX = col2X + colW - 6.0;
+                const boxCenterY = rowY + 4.2;
+                const boxRadius = 2.6;
+                const boxSize = 5.2;
+
+                doc.setDrawColor(70, 65, 60);
+                doc.setLineWidth(0.22);
+                if (isCircle) {
+                    doc.circle(boxCenterX, boxCenterY, boxRadius, 'S');
+                } else {
+                    doc.roundedRect(boxCenterX - boxRadius, boxCenterY - boxRadius, boxSize, boxSize, 0.7, 0.7, 'S');
+                }
+
+                if (!isBlank) {
+                    const numVal = (document.getElementById('num-' + day.id).value || '').trim();
+                    if (numVal) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.2);
+                        doc.setTextColor(25, 20, 15);
+                        doc.text(numVal, boxCenterX, boxCenterY + 0.9, { align: 'center' });
+                    }
+                }
+
+                if (day.text) {
+                    const maxLines = rightVisible ? 4 : 7;
+                    const availableH = rowH2 - 7.6;
+                    renderDayOrFocusText(doc, day.text, col2X + 4, rowY + 7.6, colW - 8, availableH, maxLines);
+                }
+
+                if (idx < 2) {
+                    doc.setDrawColor(230, 225, 218);
+                    doc.setLineWidth(0.15);
+                    doc.line(col2X + 3, rowY + rowH2, col2X + colW - 3, rowY + rowH2);
+                }
+            });
+
+            // --- 3. SECCIÓN INFERIOR: RENDERIZADO MODULAR SEGÚN POSICIÓN Y VISIBILIDAD ---
+            function drawHabits(startX, startY, w, h) {
+                doc.setFillColor(252, 250, 247);
+                doc.setDrawColor(215, 210, 202);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(startX, startY, w, h, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.6);
+                doc.setTextColor(30, 25, 20);
+                doc.text('HÁBITOS DE LA SEMANA', startX + 4, startY + 4.0);
+
+                const dotStartX = startX + w - 32;
+                const dotSpacing = 4.2;
+                const letters = ['L','M','X','J','V','S','D'];
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.8);
+                doc.setTextColor(110, 105, 100);
+                letters.forEach((l, li) => {
+                    doc.text(l, dotStartX + (li * dotSpacing), startY + 4.0, { align: 'center' });
+                });
+
+                doc.setDrawColor(228, 222, 214);
+                doc.setLineWidth(0.15);
+                doc.line(startX + 3, startY + 5.5, startX + w - 3, startY + 5.5);
+
+                const habitRowH = (h - 6.5) / 3;
+                const habits = [
+                    { id: '1', text: isBlank ? '' : document.getElementById('field-habit-1').value.trim() },
+                    { id: '2', text: isBlank ? '' : document.getElementById('field-habit-2').value.trim() },
+                    { id: '3', text: isBlank ? '' : document.getElementById('field-habit-3').value.trim() }
+                ];
+
+                const trackRows = document.querySelectorAll('.habit-track-row');
+
+                habits.forEach((hab, hi) => {
+                    const hy = startY + 6.0 + (hi * habitRowH);
+                    
+                    if (hab.text) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7.0);
+                        doc.setTextColor(40, 35, 30);
+                        const hLines = strictSafeWrapText(doc, hab.text, dotStartX - startX - 6);
+                        doc.text(hLines[0] || '', startX + 4, hy + 4.5);
+                    }
+
+                    // 7 Casillas para marcar con relleno si están seleccionadas en pantalla
+                    const dotEls = (trackRows[hi]) ? trackRows[hi].querySelectorAll('.habit-day-dot') : [];
+                    letters.forEach((l, li) => {
+                        const cx = dotStartX + (li * dotSpacing);
+                        const cy = hy + 4.0;
+                        const isChecked = !isBlank && dotEls[li] && dotEls[li].classList.contains('checked');
+                        
+                        if (isChecked) {
+                            doc.setFillColor(50, 45, 40);
+                            if (isCircle) {
+                                doc.circle(cx, cy, 1.4, 'F');
+                            } else {
+                                doc.rect(cx - 1.4, cy - 1.4, 2.8, 2.8, 'F');
+                            }
+                        } else {
+                            doc.setDrawColor(120, 115, 110);
+                            doc.setLineWidth(0.2);
+                            if (isCircle) {
+                                doc.circle(cx, cy, 1.4, 'S');
+                            } else {
+                                doc.rect(cx - 1.4, cy - 1.4, 2.8, 2.8);
+                            }
+                        }
+                    });
+
+                    if (hi < 2) {
+                        doc.setDrawColor(235, 230, 222);
+                        doc.setLineWidth(0.12);
+                        doc.line(startX + 3, hy + habitRowH, startX + w - 3, hy + habitRowH);
+                    }
+                });
+            }
+
+            function drawNotes(startX, startY, w, h) {
+                doc.setFillColor(255, 255, 255);
+                doc.setDrawColor(215, 210, 202);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(startX, startY, w, h, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.6);
+                doc.setTextColor(30, 25, 20);
+                doc.text('TAREAS SECUNDARIAS / NOTAS', startX + 4, startY + 4.0);
+
+                doc.setDrawColor(228, 222, 214);
+                doc.setLineWidth(0.15);
+                doc.line(startX + 3, startY + 5.5, startX + w - 3, startY + 5.5);
+
+                const notesText = isBlank ? '' : document.getElementById('field-weekly-notes').value.trim();
+
+                if (!notesText || isBlank) {
+                    const areaTop = startY + 6.0;
+                    const areaH = h - 7.0;
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.15);
+                    for (let py = areaTop + 4.5; py < areaTop + areaH; py += 4.5) {
+                        doc.line(startX + 4, py, startX + w - 4, py);
+                    }
+                } else {
+                    doc.setFont('times', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(30, 25, 20);
+                    const nLines = strictSafeWrapText(doc, notesText, w - 8);
+                    let ny = startY + 9.0;
+                    nLines.slice(0, 6).forEach(line => {
+                        doc.text(line, startX + 4, ny);
+                        ny += 3.8;
+                    });
                 }
             }
 
-            doc.save(fileName);
-            showToast('✓ Archivo "' + fileName + '" descargado.');
+            // Renderizar el bloque de la izquierda si está activo
+            if (leftVisible) {
+                if (state.slotLeft === 'habits') {
+                    drawHabits(col1X, bottomY, colW, bottomH);
+                } else {
+                    drawNotes(col1X, bottomY, colW, bottomH);
+                }
+            }
 
-            // Métricas
-            registrarMetricaGratis('/metricas/descarga-pdf-generador-semanal.html');
-            trackVercelEvent('descarga_pdf', {
-                herramienta: 'generador_semanal',
-                tipo: isBlankModal ? 'plantilla_blanco' : 'personalizado',
-                semanas: pagesToRender,
-                formato: formatChoice,
-                rayado: activeRayado
-            });
+            // Renderizar el bloque de la derecha si está activo
+            if (rightVisible) {
+                if (state.slotRight === 'habits') {
+                    drawHabits(col2X, bottomY, colW, bottomH);
+                } else {
+                    drawNotes(col2X, bottomY, colW, bottomH);
+                }
+            }
+
+            // 4. PIE DE IMPRENTA
+            const footerY = 137.0;
+            doc.setDrawColor(210, 205, 198);
+            doc.setLineWidth(0.18);
+            doc.line(margin, footerY, pw - margin, footerY);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(5.8);
+            doc.setTextColor(130, 125, 120);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', margin, footerY + 3.0);
+            doc.text('editorialmenosruido.com', pw - margin, footerY + 3.0, { align: 'right' });
+
+            // Descarga: Menos_Ruido_Planificador_Semanal_(semana).pdf
+            let weekSuffix = '';
+            const rawWeek = (document.getElementById('field-week-num') ? document.getElementById('field-week-num').value : '').trim();
+            if (rawWeek) {
+                weekSuffix = rawWeek
+                    .replace(/[^\w\d\sáéíóúÁÉÍÓÚñÑ-]/gi, ' ')
+                    .trim()
+                    .replace(/\s+/g, '_');
+            }
+            if (!weekSuffix) {
+                weekSuffix = isBlank ? 'Plantilla_En_Blanco' : 'Semana';
+            }
+            const filename = `Menos_Ruido_Planificador_Semanal_${weekSuffix}.pdf`;
+            doc.save(filename);
+            showToast(`✓ PDF descargado: ${filename}`);
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            renderPreview();
-            document.querySelectorAll('textarea').forEach(ta => {
-                ta.addEventListener('input', function() {
-                    autoResizeTextarea(this);
-                });
-                autoResizeTextarea(ta);
-            });
-        });
     </script>
 </body>
 </html>

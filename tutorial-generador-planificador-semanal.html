@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tutorial: Cómo Generar tu Planificador Semanal en la Web | Menos Ruido</title>
-    <meta name="description" content="Tutorial práctico paso a paso para diseñar, personalizar e imprimir tu Planificador Semanal en PDF a 300 DPI con el generador interactivo de Menos Ruido." />
+    <meta name="description" content="Manual de usuario paso a paso del Generador de Planificador Semanal interactivo de Menos Ruido: edición directa 1:1, control de límites y desborde, gestión de secciones y exportación a PDF." />
     <meta name="robots" content="noindex, nofollow" />
 
     <!-- Favicon -->
@@ -20,7 +20,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="./style.css" />
@@ -29,6 +29,7 @@
         :root {
             --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             --font-display: 'Playfair Display', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
             --bg-page: #f6f3ed;
             --bg-paper: #fffefb;
             --text-main: #211d1a;
@@ -202,59 +203,202 @@
             font-weight: 600;
         }
 
-        .guide-prose em {
-            font-family: var(--font-display);
-            font-style: italic;
-            color: var(--accent);
-        }
-
-        /* FIGURAS DE FOTOS REALES, MOCKUPS Y CAPTURAS */
-        .photo-card {
-            margin: 2.8rem 0;
+        /* UI MOCKUPS Y TARJETAS DE INTERFAZ DE LA WEB */
+        .ui-screen-card {
             background: #ffffff;
             border: 1px solid var(--border-soft);
-            border-radius: 14px;
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow-photo);
-            transition: transform 0.2s ease;
+            margin: 2.6rem 0;
         }
 
-        .photo-card img {
-            width: 100%;
-            height: auto;
-            display: block;
-            object-fit: cover;
+        .ui-screen-header {
+            background: #2b2520;
+            color: #ffffff;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.80rem;
+            font-weight: 600;
         }
 
-        .photo-caption {
+        .ui-screen-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .ui-screen-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .ui-dot-red { background: #ff5f56; }
+        .ui-dot-yellow { background: #ffbd2e; }
+        .ui-dot-green { background: #27c93f; }
+
+        .ui-screen-body {
+            padding: 22px;
+            background: #faf8f5;
+        }
+
+        .ui-screen-caption {
             padding: 12px 18px;
+            background: #ffffff;
+            border-top: 1px solid var(--border-soft);
             font-size: 0.84rem;
             color: #6a6259;
-            background: #fdfbf7;
-            border-top: 1px solid var(--border-soft);
             display: flex;
             align-items: center;
             gap: 8px;
-            line-height: 1.5;
         }
-        .photo-caption strong {
+        .ui-screen-caption strong {
             color: var(--accent);
             font-weight: 700;
         }
 
-        /* GRID DE DOS FOTOS */
-        .photos-dual-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin: 2.6rem 0;
+        /* REPRODUCCIÓN VISUAL DE LA BARRA DE HERRAMIENTAS WEB */
+        .mock-toolbar {
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 10px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 12px;
         }
 
-        .photos-dual-grid .photo-card {
-            margin: 0;
+        .mock-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 7px 13px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #443e39;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* PASOS NUMERADOS (STEP CARDS) */
+        .mock-btn-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 3px 8px rgba(135, 85, 59, 0.25);
+        }
+
+        .mock-shapes {
+            display: inline-flex;
+            background: #ebe6dc;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid #dcd7ce;
+            gap: 3px;
+        }
+        .mock-shape-icon {
+            width: 26px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+        .mock-shape-icon.active {
+            background: #ffffff;
+            color: var(--accent);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* REPRODUCCIÓN VISUAL DE LA BARRA DE SECCIONES (PILLS) */
+        .mock-pills-bar {
+            background: #f0ebe2;
+            border: 1px solid #e0d8cc;
+            border-radius: 8px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.78rem;
+        }
+
+        .mock-pill {
+            background: #443e39;
+            color: #ffffff;
+            border-radius: 14px;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mock-pill.inactive {
+            background: #ffffff;
+            color: #443e39;
+            border: 1px solid #d5cfc4;
+        }
+
+        /* REPRODUCCIÓN DEL AVISO CONTEXTUAL (TOAST INLINE) */
+        .mock-toast-box {
+            background: #fbf8f2;
+            color: #4a3c31;
+            border: 1.5px solid #dfd6c7;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            margin: 14px 0;
+        }
+
+        /* REPRODUCCIÓN DEL MODAL DE DESCARGA */
+        .mock-modal-box {
+            background: #ffffff;
+            border: 1px solid #e0d8cc;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .mock-modal-option {
+            background: #faf8f5;
+            border: 1.5px solid #dfd6c7;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .mock-modal-option.active {
+            border-color: var(--accent);
+            background: #fbf6f0;
+        }
+
+        /* PASOS NUMERADOS */
         .step-block {
             background: #ffffff;
             border: 1px solid var(--border-soft);
@@ -324,6 +468,43 @@
             margin-top: 10px;
         }
 
+        .guide-callout.warning {
+            border-left-color: #c2593f;
+            background: #fffcf9;
+        }
+        .guide-callout.warning h4 {
+            color: #b03030;
+        }
+
+        /* TABLA DE BOTONES */
+        .buttons-reference-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.92rem;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-soft);
+        }
+        .buttons-reference-table th, .buttons-reference-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .buttons-reference-table th {
+            background: #fbf9f5;
+            font-weight: 700;
+            color: #2b2520;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .buttons-reference-table tr:last-child td {
+            border-bottom: none;
+        }
+
         /* CITA EDITORIAL */
         .guide-quote {
             font-family: var(--font-display);
@@ -338,17 +519,7 @@
             border-radius: 0 8px 8px 0;
         }
 
-        /* GRID COMPARATIVO / BOTONES */
-        .action-box {
-            background: #ffffff;
-            border: 1px solid var(--border-soft);
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-            margin: 2.8rem 0;
-            box-shadow: var(--shadow-card);
-        }
-
+        /* BOTÓN DE ACCIÓN */
         .btn-action-primary {
             display: inline-flex;
             align-items: center;
@@ -412,17 +583,17 @@
     <!-- CABECERA DEL TUTORIAL -->
     <section class="guide-hero">
         <div class="guide-hero-container">
-            <span class="hero-kicker">Herramientas Digitales & Impresión · Menos Ruido</span>
-            <h1>Tutorial: Cómo Generar tu Planificador Semanal en la Web</h1>
+            <span class="hero-kicker">Guía Técnica de Uso · Web Menos Ruido</span>
+            <h1>Manual del Generador Planificador Semanal</h1>
             <p class="guide-hero-lead">
-                Aprende a configurar tu semana, personalizar las prioridades innegociables y descargar un PDF vectorial de alta resolución (300 DPI) listo para imprimir en casa o encuadernar.
+                Guía completa de funcionamiento: cómo escribir directamente sobre el lienzo 1:1, para qué sirve cada botón, cómo gestionar el desborde de texto, eliminar o añadir secciones y exportar tu PDF vectorial a 300 DPI (con datos o en blanco).
             </p>
             <div class="guide-meta-row">
-                <span>🖥️ <strong>Aplicación:</strong> Generador Semanal Oficial (8.25" × 6")</span>
+                <span>🖥️ <strong>Enlace oficial:</strong> <code>/generador-planificador-semanal.html</code></span>
                 <span>·</span>
-                <span>⏱️ <strong>Duración:</strong> 8 minutos de lectura</span>
+                <span>📏 <strong>Formato:</strong> Libro Apaisado 8.25" × 6" (WYSIWYG 1:1)</span>
                 <span>·</span>
-                <span>🖨️ <strong>Salida:</strong> PDF Vectorial a 300 DPI</span>
+                <span>⏱️ <strong>Lectura:</strong> 9 minutos</span>
             </div>
         </div>
     </section>
@@ -431,160 +602,253 @@
     <main class="guide-main-layout">
         <article class="guide-prose">
 
-            <!-- MOCKUP Y FOTO INICIAL -->
-            <div class="photos-dual-grid">
-                <figure class="photo-card">
-                    <img src="/planner_simple_mockup.png" alt="Mockup 3D del Planificador Semanal sobre el escritorio" loading="eager" />
-                    <figcaption class="photo-caption">
-                        <strong>El resultado final:</strong> Formato horizontal 8.25" × 6" que reposa cómodamente bajo el teclado de tu ordenador.
-                    </figcaption>
-                </figure>
-                <figure class="photo-card">
-                    <img src="/images/interior-simple-3.jpg" alt="Foto real del planificador semanal abierto sobre mesa de madera" loading="eager" />
-                    <figcaption class="photo-caption">
-                        <strong>Fotografía real:</strong> Cuaderno físico con apertura 180° y papel crema antireflejo de 90 g/m².
-                    </figcaption>
-                </figure>
-            </div>
-
-            <!-- INTRODUCCIÓN -->
-            <h2>1. ¿Por qué un generador web para un método en papel?</h2>
+            <!-- INTRODUCCIÓN AL CONCEPTO DE EDICIÓN DIRECTA 1:1 -->
+            <h2>1. El Paradigma de Edición Directa 1:1 (Sin formularios externos)</h2>
             <p>
-                En <strong>Menos Ruido</strong> creemos en pensar en papel para desconectar de la fatiga digital. Sin embargo, no todas las semanas son iguales: hay semanas en las que necesitas una <strong>plantilla totalmente limpia</strong> para escribir a mano con pluma o bolígrafo, y semanas en las que prefieres <strong>tipear tus compromisos clave antes de imprimir</strong> para llegar al lunes con la mente despejada.
+                A diferencia de los generadores antiguos donde rellenabas campos en un formulario lateral y mirabas una vista previa estática, el <strong>Generador Planificador Semanal</strong> de Menos Ruido es un <strong>lienzo interactivo vivo</strong>.
             </p>
             <p>
-                Para eso creamos el <strong>Generador de Planificador Semanal</strong>: una aplicación web interactiva que traduce tus prioridades a una hoja tipográfica impecable, calibrada al milímetro con las proporciones exactas de nuestros cuadernos oficiales de Amazon (209.55 × 152.4 mm).
+                El papel apaisado que ves en tu pantalla tiene exactamente las mismas proporciones milimétricas (8.25" × 6" / 209.55 × 152.4 mm) y el mismo espacio tipográfico que el PDF generado para impresión. <strong>No hay campos ocultos: haces clic directamente sobre cualquier casilla del papel y escribes.</strong>
             </p>
 
             <div class="guide-quote">
-                «Configuras en pantalla en 3 minutos. Imprimes una sola hoja. Apagas la pantalla y vives la semana con serenidad analógica.»
+                «What You See Is What You Print: La hoja no tiene barras de desplazamiento ni crece hacia abajo. Si un texto cabe en pantalla, cabe con exactitud matemática en tu hoja impresa.»
             </div>
 
-            <!-- PASO A PASO -->
-            <h2>2. Flujo de Trabajo Paso a Paso (Tutorial Visual)</h2>
+            <!-- SECCIÓN 2: PARA QUÉ SIRVE CADA BOTÓN (REFERENCIA DE INTERFAZ) -->
+            <h2>2. ¿Para qué sirve cada botón de la barra de herramientas?</h2>
             <p>
-                Sigue estos 5 pasos dentro de la herramienta para generar tu planificador semanal personalizado:
+                En la parte superior del generador dispones de una botonera diseñada para agilizar tu flujo de trabajo sin recargar la vista:
             </p>
 
-            <!-- PASO 1 -->
-            <div class="step-block">
-                <div class="step-header">
-                    <div class="step-number">1</div>
-                    <h3 class="step-title">Acceder al Generador y Conocer la Interfaz</h3>
+            <!-- REPRESENTACIÓN VISUAL DE LA BARRA DE HERRAMIENTAS -->
+            <div class="ui-screen-card">
+                <div class="ui-screen-header">
+                    <div class="ui-screen-dots">
+                        <span class="ui-dot-red"></span>
+                        <span class="ui-dot-yellow"></span>
+                        <span class="ui-dot-green"></span>
+                    </div>
+                    <span>Barra de Herramientas Principal · /generador-planificador-semanal.html</span>
+                    <span>Menos Ruido Web</span>
                 </div>
-                <p>
-                    Entra en <a href="/generador-planificador-semanal.html" target="_blank" style="color: var(--accent); font-weight:600;">/generador-planificador-semanal.html</a>. La pantalla está dividida en dos zonas armoniosas:
-                </p>
-                <ul>
-                    <li><strong>Panel de Controles (Izquierda):</strong> Donde seleccionas la semana, redactas el Foco Semanal, defines las prioridades diarias de lunes a domingo y eliges el tipo de rayado para notas.</li>
-                    <li><strong>Lienzo de Vista Previa 1:1 (Derecha):</strong> Un espejo exacto de lo que saldrá por tu impresora. Lo que ves en pantalla es idéntico a lo que se imprime (What You See Is What You Print).</li>
-                </ul>
-            </div>
-
-            <!-- CAPTURA INTERIOR DESPLEGADO -->
-            <figure class="photo-card">
-                <img src="/planner_simple_full_spread.jpg" alt="Captura maquetada de la doble página del planificador semanal" loading="lazy" />
-                <figcaption class="photo-caption">
-                    <span>📐 <strong>Estructura del lienzo:</strong> Caja superior de foco, 7 columnas diarias (lunes a domingo) y caja inferior de tareas secundarias/descompresión.</span>
-                </figcaption>
-            </figure>
-
-            <!-- PASO 2 -->
-            <div class="step-block">
-                <div class="step-header">
-                    <div class="step-number">2</div>
-                    <h3 class="step-title">Fijar las Coordenadas: Semana, Año y Foco</h3>
+                <div class="ui-screen-body">
+                    <div class="mock-toolbar">
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <div class="mock-btn">🧹 Limpiar texto</div>
+                            <div class="mock-btn">✨ Cargar ejemplo</div>
+                        </div>
+                        <div class="mock-shapes">
+                            <div class="mock-shape-icon">◻️</div>
+                            <div class="mock-shape-icon active">⚪</div>
+                        </div>
+                        <div>
+                            <div class="mock-btn-primary">📥 Descargar PDF</div>
+                        </div>
+                    </div>
                 </div>
-                <p>
-                    En el primer bloque de configuración:
-                </p>
-                <ol>
-                    <li><strong>Número de Semana y Año:</strong> Selecciona la semana del año (por ejemplo, <em>Semana 42 · 2026</em>). Las fechas se actualizarán automáticamente en la cabecera.</li>
-                    <li><strong>Foco Semanal Innegociable:</strong> Redacta la gran meta que define el éxito de los próximos 7 días (máximo 120 caracteres). Por ejemplo: <em>«Cerrar la estructura del nuevo proyecto y blindar el descanso el fin de semana»</em>.</li>
-                </ol>
-            </div>
-
-            <!-- PASO 3 -->
-            <div class="step-block">
-                <div class="step-header">
-                    <div class="step-number">3</div>
-                    <h3 class="step-title">Repartir la Carga Diaria: La Regla de 1 Prioridad por Día</h3>
-                </div>
-                <p>
-                    Despliega los días de la semana de lunes a domingo. El generador te ofrece dos campos por jornada:
-                </p>
-                <ul>
-                    <li><strong>Prioridad Principal (La Roca):</strong> Una sola tarea indispensable por día. Si no tienes nada cerrado para ese día, déjalo en blanco para rellenarlo a mano cada mañana.</li>
-                    <li><strong>Soporte / Cita:</strong> Una pequeña anotación secundaria o compromiso de horario (ej. <em>«Reunión 11:00h»</em>).</li>
-                </ul>
-                <div class="guide-callout" style="margin: 14px 0 0 0;">
-                    <h4>💡 Consejo Editorial</h4>
-                    <p>
-                        No llenes los 7 días con compromisos pesados. Deja al menos 2 tardes con espacio en blanco para absorber los imprevistos que siempre surgen a mitad de semana.
-                    </p>
+                <div class="ui-screen-caption">
+                    <strong>Captura de interfaz:</strong> Botones superiores para limpieza, precarga de datos de ejemplo, selector de forma de casillas y descarga de PDF.
                 </div>
             </div>
 
-            <!-- FOTO REAL INTERIOR RELLENO -->
-            <figure class="photo-card">
-                <img src="/images/interior-simple-2.jpg" alt="Foto real de una página semanal rellenada a mano con anotaciones sobrias" loading="lazy" />
-                <figcaption class="photo-caption">
-                    <span>📸 <strong>Ejemplo en uso real:</strong> Distribución limpia con prioridades claras y espacio libre para respirar.</span>
-                </figcaption>
-            </figure>
+            <!-- TABLA EXPLICATIVA DE BOTONES -->
+            <table class="buttons-reference-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Botón / Control</th>
+                        <th style="width: 35%;">Función Principal</th>
+                        <th style="width: 40%;">Comportamiento en la Web</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>🧹 Limpiar texto</strong></td>
+                        <td>Vaciar todo el contenido escrito</td>
+                        <td>Pide confirmación modal nativa para evitar borrados accidentales. Deja todos los días, hábitos y notas limpios para empezar de cero.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>✨ Cargar ejemplo</strong></td>
+                        <td>Rellenar con datos editoriales de muestra</td>
+                        <td>Introduce un ejemplo equilibrado con prioridades realistas de lunes a domingo, 3 hábitos modelo y notas de foco.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Selector ◻️ / ⚪</strong></td>
+                        <td>Elegir casillas Cuadradas o Redondas</td>
+                        <td>Alterna de forma instantánea entre círculos o cuadrados tanto para los números de los días (Lunes a Domingo) como para los 7 días de los hábitos.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📥 Descargar PDF</strong></td>
+                        <td>Abrir el modal de exportación</td>
+                        <td>Despliega la ventana flotante donde eliges si deseas imprimir con tus datos personalizados o en blanco para escribir a mano.</td>
+                    </tr>
+                </tbody>
+            </table>
 
-            <!-- PASO 4 -->
-            <div class="step-block">
-                <div class="step-header">
-                    <div class="step-number">4</div>
-                    <h3 class="step-title">Personalizar el Bloque Inferior: Tipo de Rayado</h3>
-                </div>
-                <p>
-                    La parte inferior de la hoja está reservada para <strong>Tareas Secundarias y Descompresión</strong>. El generador te permite elegir el fondo que mejor se adapte a tu estilo de escritura:
-                </p>
-                <ul>
-                    <li><strong>Puntos (Dot Grid):</strong> Discreto y versátil para dibujar esquemas o listas con viñetas.</li>
-                    <li><strong>Líneas Clásicas:</strong> Renglones sutiles para escribir reflexiones o notas continuas.</li>
-                    <li><strong>Cuadrícula (Grid):</strong> Perfecto para métricas o seguimiento numérico.</li>
-                    <li><strong>Liso (Blank):</strong> Papel en blanco puro para libertad total.</li>
-                </ul>
-            </div>
-
-            <!-- PASO 5 -->
-            <div class="step-block">
-                <div class="step-header">
-                    <div class="step-number">5</div>
-                    <h3 class="step-title">Descargar el PDF Listo para Imprenta (Modal de Opciones)</h3>
-                </div>
-                <p>
-                    Al hacer clic en el botón principal <strong>🖨️ Descargar PDF</strong>, se abrirá el modal exclusivo de descarga con dos modalidades:
-                </p>
-                <ul>
-                    <li><strong>Opción A: «Descargar mi Planificador Personalizado»:</strong> Genera el PDF vectorial con todos los textos, foco y prioridades que acabas de escribir en el formulario.</li>
-                    <li><strong>Opción B: «Descargar Plantilla en Blanco»:</strong> Genera la misma plantilla con formato perfecto pero con todas las casillas vacías, ideal para imprimir paquetes de varias semanas y rellenarlas 100% a mano con lápiz o pluma.</li>
-                    <li><strong>Selector de Copias / Páginas:</strong> Puedes elegir imprimir 1, 2, 4 o más copias en un único archivo PDF continuo.</li>
-                </ul>
-            </div>
-
-            <!-- SECCIÓN 3: ESPECIFICACIONES TÉCNICAS -->
-            <h2>3. Especificaciones Técnicas de Impresión</h2>
+            <!-- SECCIÓN 3: CONTROL DE SECCIONES (HÁBITOS VS NOTAS) -->
+            <h2>3. Barra de Secciones Visibles: Añadir, Quitar e Intercambiar</h2>
             <p>
-                Para obtener la máxima calidad al imprimir tus hojas generadas:
+                Justo debajo de la barra de herramientas encontrarás la barra de control de bloques inferiores:
+            </p>
+
+            <div class="ui-screen-card">
+                <div class="ui-screen-header">
+                    <div class="ui-screen-dots">
+                        <span class="ui-dot-red"></span>
+                        <span class="ui-dot-yellow"></span>
+                        <span class="ui-dot-green"></span>
+                    </div>
+                    <span>Control de Secciones Inferiores</span>
+                    <span>Modulación de Espacio</span>
+                </div>
+                <div class="ui-screen-body">
+                    <div class="mock-pills-bar">
+                        <span style="font-weight:700; color:#443e39;">SECCIONES VISIBLES:</span>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <span class="mock-pill">🌱 Hábitos de la semana ✓</span>
+                            <span class="mock-pill">📝 Secundarias / Notas ✓</span>
+                            <span class="mock-btn" style="background:#ffffff; border-color:#d5cfc4;">🔄 Intercambiar posición</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="ui-screen-caption">
+                    <strong>Píldoras interactivas:</strong> Permiten activar o desactivar el bloque de Hábitos o el de Notas, o invertir su orden de columna izquierda/derecha.
+                </div>
+            </div>
+
+            <h3>¿Qué ocurre si eliminas una sección?</h3>
+            <p>
+                Si decides eliminar el panel de <strong>Hábitos</strong> (columna izquierda) o el de <strong>Notas</strong> (columna derecha) haciendo clic en su píldora o en el botón <strong>✕</strong> del encabezado:
             </p>
             <ul>
-                <li><strong>Tamaño de papel:</strong> Selecciona en tu impresora <em>«Ajustar al área de impresión»</em> o imprime en un folio A4 en orientación horizontal y recorta por el margen si deseas el tamaño exacto 8.25" × 6".</li>
-                <li><strong>Gramaje recomendado:</strong> Si imprimes en casa, utiliza papel de <strong>90 g/m² o 100 g/m² color crema o marfil suave</strong>. Evita el papel blanco fluorescente de oficina para descansar la vista.</li>
-                <li><strong>Calidad de vectorización:</strong> Nuestro motor genera trazos vectoriales nativos a 300 DPI, por lo que las líneas, tipografías y fechas saldrán nítidas sin importar el zoom de tu impresora.</li>
+                <li>La sección inferior desaparece de la vista y del PDF impreso.</li>
+                <li><strong>La columna de días correspondiente se amplía automáticamente hacia abajo</strong>, aprovechando todo el alto del papel.</li>
+                <li>En modo normal dispones de hasta <strong>4 líneas de texto por día</strong>. Al eliminar la sección inferior, la columna ampliada te permite escribir <strong>hasta 7 líneas por cada día</strong>.</li>
             </ul>
 
+            <!-- SECCIÓN 4: GESTIÓN DE LÍMITES Y DESBORDE (QUÉ PASA CUANDO UNA CASILLA SE LLENA) -->
+            <h2>4. ¿Qué ocurre cuando una casilla se llena y quieres añadir más texto?</h2>
+            <p>
+                Para garantizar que el PDF impreso sea 100% idéntico a lo que ves en pantalla y que nunca se corte texto ni se solapen líneas, el generador cuenta con un <strong>motor estricto de contención de desborde</strong>:
+            </p>
+
+            <div class="guide-callout warning">
+                <h4>⚠️ El Principio Anti-Desborde Físico</h4>
+                <p>
+                    En el papel físico, el espacio no se estira infinitamente. Si una casilla de día o la caja de notas se llena, <strong>el generador no te permite seguir pulsando saltos de línea ni escribiendo caracteres invisibles</strong>.
+                </p>
+                <p>
+                    Si sigues escribiendo cuando la altura máxima está alcanzada, el sistema detiene la entrada y muestra el aviso en la barra contextual sin mover el resto de la página.
+                </p>
+            </div>
+
+            <!-- AVISO DE DESBORDE EN PANTALLA -->
+            <div class="ui-screen-card">
+                <div class="ui-screen-body" style="padding:16px;">
+                    <div class="mock-toast-box">
+                        <span>⚠️ Máximo 4 líneas para este bloque (elimina la sección inferior para permitir hasta 7 líneas)</span>
+                    </div>
+                </div>
+                <div class="ui-screen-caption">
+                    <strong>Aviso contextual integrado:</strong> Ocupa un espacio fijo reservado para evitar que el planificador sufra saltos visuales en pantalla.
+                </div>
+            </div>
+
+            <h3>¿Qué pasa si tienes mucho texto en los días y quieres volver a añadir la sección inferior?</h3>
+            <p>
+                Supongamos que eliminaste la sección de Hábitos para escribir 6 líneas en el Lunes y el Martes. Si más tarde intentas pulsar la píldora <strong>«🌱 Hábitos (+ Añadir)»</strong>, el sistema comprobará si hay hueco físico en la columna.
+            </p>
+            <p>
+                Si tus textos ocupan más de las 4 líneas permitidas en el modo estándar con hábitos, el generador <strong>bloqueará la reactivación</strong> y te advertirá mediante el siguiente aviso:
+            </p>
+
+            <div class="mock-toast-box" style="border-color:#d58872; background:#fff8f6; color:#9c3322;">
+                <span>⚠️ No hay espacio en la hoja: borra el texto en los días de la semana para hacer hueco</span>
+            </div>
+
+            <p>
+                <strong>La solución:</strong> Edita el texto de tus días reduciéndolo a 3 o 4 líneas concisas. En cuanto el texto quepa con holgura, podrás reactivar la sección de Hábitos con un solo clic.
+            </p>
+
+            <!-- SECCIÓN 5: CÓMO ESCRIBIR EN CADA ZONA -->
+            <h2>5. Cómo escribir en cada casilla del papel interactivo</h2>
+            <p>
+                Todo el documento es editable haciendo clic directamente con el cursor del ratón o con el dedo en pantallas táctiles:
+            </p>
+            <ul>
+                <li><strong>Cabecera (Semana):</strong> Haz clic en <em>«SEMANA: 42 · OCTUBRE»</em> para editar el número y el mes. Es un campo de una sola línea horizontal.</li>
+                <li><strong>Casillas numéricas del día (Lunes a Domingo):</strong> Haz clic en el círculo/cuadrado del día para escribir el número del mes (ej. <em>14</em>, <em>28</em>).</li>
+                <li><strong>Prioridades diarias:</strong> Haz clic en el área bajo el día de la semana. Escribe tu prioridad clave (máximo 4 líneas en vista estándar o 7 en vista expandida).</li>
+                <li><strong>Foco de la Semana:</strong> Situado en la cabecera de la columna derecha, destacado con fondo crema suave para la gran meta innegociable de la semana.</li>
+                <li><strong>Hábitos Semanales:</strong> Escribe el nombre de hasta 3 hábitos (ej. <em>Lectura analógica</em>, <em>Caminar 30 min</em>) y haz clic en los circulitos de L a D para marcarlos o desmarcarlos visualmente antes de imprimir.</li>
+                <li><strong>Secundarias / Notas:</strong> Espacio de texto libre con cálculo de altura sincronizado con la fuente tipográfica de jsPDF.</li>
+            </ul>
+
+            <!-- SECCIÓN 6: MODAL DE DESCARGA E IMPRESIÓN -->
+            <h2>6. Cómo Imprimir: El Modal de Descarga</h2>
+            <p>
+                Cuando tu planificador esté listo, haz clic en el botón granate <strong>📥 Descargar PDF</strong>. Se abrirá la ventana modal de opciones:
+            </p>
+
+            <div class="ui-screen-card">
+                <div class="ui-screen-header">
+                    <div class="ui-screen-dots">
+                        <span class="ui-dot-red"></span>
+                        <span class="ui-dot-yellow"></span>
+                        <span class="ui-dot-green"></span>
+                    </div>
+                    <span>Ventana de Descarga de PDF · Menos Ruido</span>
+                    <span>Exportación Vectorial</span>
+                </div>
+                <div class="ui-screen-body">
+                    <div class="mock-modal-box">
+                        <div style="font-size:0.7rem; font-weight:700; color:var(--accent); text-transform:uppercase; margin-bottom:4px;">Exportación Vectorial a 300 DPI</div>
+                        <h4 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:12px;">Descargar Planificador Semanal</h4>
+                        
+                        <!-- OPCIÓN 1 -->
+                        <div class="mock-modal-option active">
+                            <div>
+                                <strong style="font-size:0.85rem; color:#111;">Descargar mi PDF personalizado</strong>
+                                <span style="display:block; font-size:0.75rem; color:#666;">Incluye todos tus textos, fechas, prioridades y hábitos marcados.</span>
+                            </div>
+                            <span style="font-size:1.1rem; color:var(--accent);">✓</span>
+                        </div>
+
+                        <!-- OPCIÓN 2 -->
+                        <div class="mock-modal-option">
+                            <div>
+                                <strong style="font-size:0.85rem; color:#111;">Descargar plantilla en blanco</strong>
+                                <span style="display:block; font-size:0.75rem; color:#666;">Sin textos ni hábitos: casillas limpias para rellenar a mano con pluma.</span>
+                            </div>
+                            <span style="font-size:1.1rem; color:#aaa;">⚪</span>
+                        </div>
+
+                        <div style="margin-top:16px;">
+                            <div class="mock-btn-primary" style="width:100%; justify-content:center; padding:11px;">
+                                📥 Generar PDF Vectorial (Listo para imprimir)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ui-screen-caption">
+                    <strong>Modal de descarga:</strong> Permite alternar con un clic entre tu planificador con datos o una plantilla limpia para escribir a mano.
+                </div>
+            </div>
+
+            <h3>Diferencia entre las dos opciones de descarga:</h3>
+            <ol>
+                <li><strong>Descargar mi PDF personalizado:</strong> Ideal para quienes planifican los domingos en el ordenador. Imprime la hoja ya estructurada con todas tus reuniones, focos y hábitos listos para la semana.</li>
+                <li><strong>Descargar plantilla en blanco:</strong> Ideal para quienes quieren desconectar 100% de la tecnología. Genera una hoja perfecta sin ningún texto escrito, manteniendo las cajas, días y tipografías para que escribas todo a mano con tu lápiz o pluma estilográfica favorita.</li>
+            </ol>
+
             <!-- ACCIÓN RÁPIDA -->
-            <div class="action-box">
-                <h3 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 8px;">¿Listo para planificar tu próxima semana?</h3>
-                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 18px;">
-                    Abre el generador en vivo, prueba la función de «Cargar ejemplo» o diseña tu plantilla desde cero.
+            <div style="text-align: center; margin: 3.5rem 0 2rem 0; padding: 24px; background: #ffffff; border: 1px solid var(--border-soft); border-radius: 12px; box-shadow: var(--shadow-card);">
+                <h3 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 8px;">¿Listo para probar el generador interactivo?</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">
+                    Accede a la herramienta oficial con edición directa 1:1 y experimenta el control de espacio en tiempo real.
                 </p>
                 <a href="/generador-planificador-semanal.html" target="_blank" class="btn-action-primary">
-                    Abrir Generador Planificador Semanal ↗
+                    Abrir Generador Planificador Semanal en Vivo ↗
                 </a>
             </div>
 
@@ -594,7 +858,7 @@
     <!-- PIE DE PÁGINA PRIVADO -->
     <footer class="private-footer">
         <p>
-            <strong>Editorial Menos Ruido</strong> · Tutorial Privado para Creadores · Acceso Restringido PIN 1111<br />
+            <strong>Editorial Menos Ruido</strong> · Tutorial Técnico de Aplicaciones Web · Acceso Restringido PIN 1111<br />
             © 2026 Menos Ruido · Todos los derechos reservados.
         </p>
     </footer>
