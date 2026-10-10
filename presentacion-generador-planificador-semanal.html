@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Presentación Interactiva: Generador Semanal en 5 Pasos | Menos Ruido</title>
+    <meta name="description" content="Presentación interactiva en diapositivas para aprender a usar el Generador Semanal en 1 minuto. Sin rodeos, visual y paso a paso." />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Control de acceso privado por PIN 1111 -->
+    <script>
+        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="./style.css" />
+
+    <style>
+        :root {
+            --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-display: 'Playfair Display', Georgia, serif;
+            --bg-page: #f6f3ed;
+            --bg-paper: #fffefb;
+            --text-main: #211d1a;
+            --text-muted: #6b635b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.08);
+            --border-soft: #e5ded3;
+            --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
+            --shadow-deck: 0 16px 45px rgba(0, 0, 0, 0.08), 0 4px 14px rgba(0, 0, 0, 0.03);
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* BARRA SUPERIOR */
+        .deck-top-bar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-soft);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 12px 24px;
+        }
+
+        .deck-top-container {
+            max-width: 1080px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-top-nav {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 6px;
+            background: var(--accent-light);
+            transition: all 0.2s ease;
+        }
+        .btn-top-nav:hover {
+            background: var(--accent);
+            color: #ffffff;
+        }
+
+        .btn-top-cta {
+            background: var(--accent);
+            color: #ffffff;
+        }
+        .btn-top-cta:hover {
+            background: var(--accent-hover);
+            color: #ffffff;
+        }
+
+        /* HERO HEADER */
+        .deck-hero {
+            text-align: center;
+            padding: 38px 20px 22px;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .hero-kicker {
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent);
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .deck-hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(1.9rem, 3.8vw, 2.7rem);
+            line-height: 1.22;
+            color: #1e1916;
+            margin: 0 0 10px 0;
+        }
+
+        .deck-hero-desc {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* CONTENEDOR PRINCIPAL DEL DECK */
+        .presentation-wrapper {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 10px 20px 60px;
+        }
+
+        .deck-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            box-shadow: var(--shadow-deck);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* BARRA DE CONTROL DEL REPRODUCTOR */
+        .deck-toolbar {
+            background: #fbf9f5;
+            border-bottom: 1px solid var(--border-soft);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .deck-step-pills {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .step-pill-btn {
+            background: #f0ebe1;
+            border: 1px solid #ddd5c7;
+            color: #554d45;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .step-pill-btn:hover {
+            background: #e5ded2;
+            color: #1f1b18;
+        }
+        .step-pill-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 2px 6px rgba(135, 85, 59, 0.25);
+        }
+
+        .deck-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .deck-toggle-btn {
+            background: #ffffff;
+            border: 1px solid #dcd5c9;
+            color: #4b423a;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .deck-toggle-btn:hover {
+            background: #f5efe6;
+            color: #1a1614;
+        }
+
+        /* LÍNEA DE PROGRESO */
+        .deck-progress-bar {
+            height: 3px;
+            background: #eee8de;
+            width: 100%;
+            position: relative;
+        }
+        .deck-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 20%;
+            transition: width 0.35s ease;
+        }
+
+        /* ESCENARIO DE DIAPOSITIVAS */
+        .deck-stage {
+            padding: 32px 36px 36px;
+            min-height: 480px;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .deck-stage {
+                padding: 20px 16px 24px;
+            }
+        }
+
+        .slide-pane {
+            display: none;
+            opacity: 0;
+            animation: fadeInSlide 0.35s ease forwards;
+        }
+        .slide-pane.active {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 36px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .slide-pane.active {
+                grid-template-columns: 1fr;
+                gap: 22px;
+            }
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* LADO VISUAL (CAPTURA) */
+        .slide-visual-frame {
+            background: #faf8f5;
+            border: 1.5px solid var(--border-soft);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            position: relative;
+        }
+
+        .slide-visual-frame img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        .slide-visual-tag {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(33, 29, 26, 0.85);
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 4px;
+            backdrop-filter: blur(4px);
+            letter-spacing: 0.5px;
+        }
+
+        /* LADO EXPLICATIVO (TEXTO Y CONSEJOS) */
+        .slide-copy-frame {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-step-counter {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--accent);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .slide-copy-frame h2 {
+            font-family: var(--font-display);
+            font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+            color: #1a1613;
+            margin: 0 0 14px 0;
+            line-height: 1.3;
+        }
+
+        .slide-copy-frame p {
+            font-size: 0.98rem;
+            color: #3b3530;
+            line-height: 1.65;
+            margin: 0 0 16px 0;
+        }
+
+        .slide-tip-box {
+            background: #fdfaf6;
+            border: 1px solid #ebd9c9;
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            font-size: 0.88rem;
+            color: #483d34;
+        }
+        .slide-tip-box strong {
+            color: #1c1815;
+        }
+
+        .slide-action-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #5d544b;
+            background: #f2ede4;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        /* BARRA INFERIOR DE NAVEGACIÓN */
+        .deck-nav-bottom {
+            background: #fbf9f5;
+            border-top: 1px solid var(--border-soft);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1.5px solid #d9d2c6;
+            color: #3e3630;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: #f5efe6;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #e4dfd6;
+        }
+
+        .nav-btn.primary {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 3px 10px rgba(135, 85, 59, 0.22);
+        }
+        .nav-btn.primary:hover {
+            background: var(--accent-hover);
+            color: #ffffff;
+        }
+
+        .deck-dots-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot-btn {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dcd4c7;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.25s ease;
+        }
+        .dot-btn.active {
+            background: var(--accent);
+            transform: scale(1.35);
+        }
+
+        /* MODO PANTALLA COMPLETA */
+        .deck-card.fullscreen-active {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            border-radius: 0;
+            z-index: 99999;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .deck-card.fullscreen-active .deck-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        /* SECCIÓN RESUMEN INFERIOR */
+        .deck-summary-section {
+            margin-top: 45px;
+            border-top: 1.5px solid var(--border-soft);
+            padding-top: 35px;
+        }
+
+        .deck-summary-section h3 {
+            font-family: var(--font-display);
+            font-size: 1.45rem;
+            color: #1a1613;
+            margin: 0 0 18px 0;
+            text-align: center;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 35px;
+        }
+
+        .step-thumb-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .step-thumb-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+        }
+        .step-thumb-card strong {
+            display: block;
+            font-size: 0.88rem;
+            color: #1e1916;
+            margin-bottom: 4px;
+        }
+        .step-thumb-card span {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            display: block;
+        }
+
+        /* CTA FINAL */
+        .bottom-cta-banner {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 28px 20px;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+        }
+        .btn-big-open {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: #ffffff;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.22);
+        }
+        .btn-big-open:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        /* FOOTER */
+        .deck-footer {
+            border-top: 1px solid var(--border-soft);
+            background: #ffffff;
+            padding: 24px 20px;
+            text-align: center;
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="deck-top-bar">
+        <div class="deck-top-container">
+            <a href="/pre-lecturas.html" class="btn-top-nav">← Volver a pre-Lecturas</a>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <a href="/tutorial-generador-planificador-semanal.html" class="btn-top-nav">Ver versión texto completo</a>
+                <a href="/generador-planificador-semanal.html" target="_blank" class="btn-top-nav btn-top-cta">
+                    Probar generador en directo ↗
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CABECERA DE LA PRESENTACIÓN -->
+    <section class="deck-hero">
+        <span class="hero-kicker">Menos Ruido · Presentación Interactiva</span>
+        <h1>Cómo crear tu semana en papel en 1 minuto</h1>
+        <p class="deck-hero-desc">
+            Pasa las diapositivas con las flechas o tu teclado. 5 pasos directos, sin formularios raros y con capturas reales de la web.
+        </p>
+    </section>
+
+    <!-- COMPONENTE PRINCIPAL DE LA PRESENTACIÓN -->
+    <main class="presentation-wrapper">
+        <div class="deck-card" id="presentationCard">
+
+            <!-- BARRA DE CONTROL -->
+            <div class="deck-toolbar">
+                <div class="deck-step-pills">
+                    <button class="step-pill-btn active" data-step="0">1. Pantalla Inicial</button>
+                    <button class="step-pill-btn" data-step="1">2. Días y Fechas</button>
+                    <button class="step-pill-btn" data-step="2">3. Foco Semanal</button>
+                    <button class="step-pill-btn" data-step="3">4. Hábitos y Espacio</button>
+                    <button class="step-pill-btn" data-step="4">5. Descargar PDF</button>
+                </div>
+                <div class="deck-actions-group">
+                    <button class="deck-toggle-btn" id="btnAutoPlay">
+                        <span id="playIcon">▶️</span> <span id="playText">Auto (7s)</span>
+                    </button>
+                    <button class="deck-toggle-btn" id="btnFullscreen">
+                        <span>⛶</span> Pantalla completa
+                    </button>
+                </div>
+            </div>
+
+            <!-- PROGRESO -->
+            <div class="deck-progress-bar">
+                <div class="deck-progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- ESCENARIO CON LAS 5 DIAPOSITIVAS -->
+            <div class="deck-stage">
+
+                <!-- DIAPOSITIVA 1 -->
+                <div class="slide-pane active" data-index="0">
+                    <div class="slide-visual-frame">
+                        <img src="/images/tutorial-semanal/slide-1-web-folio.png" alt="Pantalla inicial del generador con la barra de herramientas y el folio interactivo" />
+                        <span class="slide-visual-tag">VISTA 1:1 EN PANTALLA</span>
+                    </div>
+                    <div class="slide-copy-frame">
+                        <div class="slide-step-counter">PASO 01 / 05 · ENTRAR Y ESCRIBIR</div>
+                        <h2>Haces clic sobre la hoja y escribes</h2>
+                        <p>
+                            Aquí no hay formularios duplicados a la izquierda. La misma hoja que ves en la pantalla es la que saldrá por tu impresora.
+                        </p>
+                        <p>
+                            Solo tienes que pulsar con el ratón (o con el dedo si estás en el móvil) sobre cualquier texto de la hoja para cambiarlo al momento.
+                        </p>
+                        <div class="slide-tip-box">
+                            <strong>💡 El botón rápido:</strong> Si entras y no sabes por dónde empezar, dale arriba a <strong>«✨ Cargar ejemplo»</strong> para ver una semana real ya completada.
+                        </div>
+                        <div>
+                            <span class="slide-action-badge">✍️ Clic directo</span>
+                            <span class="slide-action-badge">🧹 Limpiar texto</span>
+                            <span class="slide-action-badge">✨ Cargar ejemplo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIAPOSITIVA 2 -->
+                <div class="slide-pane" data-index="1">
+                    <div class="slide-visual-frame">
+                        <img src="/images/tutorial-semanal/slide-2-dias-prioridades.png" alt="Enfoque en los días de la semana con fecha y una sola prioridad clara" />
+                        <span class="slide-visual-tag">DE LUNES A DOMINGO</span>
+                    </div>
+                    <div class="slide-copy-frame">
+                        <div class="slide-step-counter">PASO 02 / 05 · PRIORIDADES DIARIAS</div>
+                        <h2>Una sola cosa imprescindible al día</h2>
+                        <p>
+                            Arriba pones el número de la semana y el mes (ej: <em>Semana 42 · Octubre</em>). En cada día tienes un circulito para el día del mes y renglones para tu tarea clave.
+                        </p>
+                        <p>
+                            La regla de oro de Menos Ruido es <strong>no meter 10 tareas en un solo día</strong>. Apunta la única meta que no puede pasar de esa jornada.
+                        </p>
+                        <div class="slide-tip-box">
+                            <strong>☕ Espacio en blanco:</strong> Si te sobra hueco en los renglones, déjalo libre para apuntar recados o notas imprevistas a mano durante el día.
+                        </div>
+                        <div>
+                            <span class="slide-action-badge">📅 7 días completos</span>
+                            <span class="slide-action-badge">🎯 1 prioridad sagrada</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIAPOSITIVA 3 -->
+                <div class="slide-pane" data-index="2">
+                    <div class="slide-visual-frame">
+                        <img src="/images/tutorial-semanal/slide-3-foco-semana.png" alt="Caja destacada del Foco de la Semana con fondo crema" />
+                        <span class="slide-visual-tag">META CLAVE DESTACADA</span>
+                    </div>
+                    <div class="slide-copy-frame">
+                        <div class="slide-step-counter">PASO 03 / 05 · FOCO DE LA SEMANA</div>
+                        <h2>La gran meta que define los 7 días</h2>
+                        <p>
+                            En la columna de la derecha verás una caja en tono crema titulada <strong>FOCO DE LA SEMANA (META CLAVE)</strong>.
+                        </p>
+                        <p>
+                            Ahí no pones tareas sueltas: pones el objetivo general de tus 7 días (por ejemplo: <em>«Cerrar los presupuestos del mes y no mirar el correo el fin de semana»</em>).
+                        </p>
+                        <div class="slide-tip-box">
+                            <strong>🧭 Para no dispersarte:</strong> Cada vez que dudes a mitad de semana sobre qué hacer, miras esa caja y sabes hacia dónde vas.
+                        </div>
+                        <div>
+                            <span class="slide-action-badge">📌 Caja destacada</span>
+                            <span class="slide-action-badge">🧠 Menos sobrepensamiento</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIAPOSITIVA 4 -->
+                <div class="slide-pane" data-index="3">
+                    <div class="slide-visual-frame">
+                        <img src="/images/tutorial-semanal/slide-4-habitos-espacio.png" alt="Bloques inferiores de hábitos y notas con los botones de intercambio y cierre" />
+                        <span class="slide-visual-tag">FRANJA INFERIOR CONFIGURABLE</span>
+                    </div>
+                    <div class="slide-copy-frame">
+                        <div class="slide-step-counter">PASO 04 / 05 · HÁBITOS Y ESPACIO</div>
+                        <h2>Adapta la parte de abajo a tu gusto</h2>
+                        <p>
+                            Abajo tienes dos bloques: <strong>🌱 Hábitos</strong> (con casillas de L a D) y <strong>📝 Tareas Secundarias / Notas</strong>.
+                        </p>
+                        <p>
+                            ¿Prefieres las notas a la izquierda? Dale a <strong>🔄 Intercambiar</strong>. ¿No necesitas rastrear hábitos esta semana? Pulsa la <strong>✕</strong> y quítalos.
+                        </p>
+                        <div class="slide-tip-box">
+                            <strong>⭐ El truco para escribir más:</strong> Si quitas el bloque de hábitos, los días de la semana ganan el doble de altura y podrás meter hasta 7 líneas de texto por día en lugar de 4.
+                        </div>
+                        <div>
+                            <span class="slide-action-badge">🔄 Intercambiar cajas</span>
+                            <span class="slide-action-badge">📐 Más renglones por día</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIAPOSITIVA 5 -->
+                <div class="slide-pane" data-index="4">
+                    <div class="slide-visual-frame">
+                        <img src="/images/tutorial-semanal/slide-5-modal-descarga.png" alt="Ventana de descarga en PDF con las dos opciones disponibles" />
+                        <span class="slide-visual-tag">DESCARGA LIMPIA EN 1 CLIC</span>
+                    </div>
+                    <div class="slide-copy-frame">
+                        <div class="slide-step-counter">PASO 05 / 05 · DESCARGAR E IMPRIMIR</div>
+                        <h2>Elige cómo te lo llevas a tu impresora</h2>
+                        <p>
+                            Cuando tengas la hoja a tu gusto, haz clic en el botón granate <strong>📥 Descargar PDF</strong>. Se te abrirá una ventana limpia con dos opciones:
+                        </p>
+                        <p>
+                            <strong>1. Con mi planificación escrita:</strong> Te descarga el PDF con tus textos y tareas listos.<br />
+                            <strong>2. Plantilla limpia en blanco:</strong> Te descarga el folio vacío para imprimir varias copias y rellenarlas a mano con lápiz.
+                        </p>
+                        <div class="slide-tip-box">
+                            <strong>🖨️ Calidad de imprenta:</strong> Se genera en formato libro apaisado 8.25" × 6" a 300 DPI. En tu impresora, selecciona <em>«Ajustar a la página»</em> en posición horizontal.
+                        </div>
+                        <div>
+                            <span class="slide-action-badge">📄 PDF 300 DPI</span>
+                            <span class="slide-action-badge">🖊️ Listo para tu mesa</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- NAVEGACIÓN INFERIOR -->
+            <div class="deck-nav-bottom">
+                <button class="nav-btn" id="btnPrev" disabled>
+                    ← Anterior
+                </button>
+
+                <div class="deck-dots-indicator" id="dotsContainer">
+                    <button class="dot-btn active" data-step="0" aria-label="Paso 1"></button>
+                    <button class="dot-btn" data-step="1" aria-label="Paso 2"></button>
+                    <button class="dot-btn" data-step="2" aria-label="Paso 3"></button>
+                    <button class="dot-btn" data-step="3" aria-label="Paso 4"></button>
+                    <button class="dot-btn" data-step="4" aria-label="Paso 5"></button>
+                </div>
+
+                <button class="nav-btn primary" id="btnNext">
+                    Siguiente →
+                </button>
+            </div>
+
+        </div>
+
+        <!-- RESUMEN VISUAL RÁPIDO (TODOS LOS PASOS DE UN VISTAZO) -->
+        <section class="deck-summary-section">
+            <h3>Los 5 pasos resumidos en una frase</h3>
+            <div class="steps-grid">
+                <div class="step-thumbCard step-thumb-card" onclick="goToStep(0)">
+                    <strong>01. Clic directo</strong>
+                    <span>Pinchas en cualquier texto y escribes sin menús laterales.</span>
+                </div>
+                <div class="step-thumbCard step-thumb-card" onclick="goToStep(1)">
+                    <strong>02. Semana y días</strong>
+                    <span>Una sola prioridad imprescindible por jornada.</span>
+                </div>
+                <div class="step-thumbCard step-thumb-card" onclick="goToStep(2)">
+                    <strong>03. Foco semanal</strong>
+                    <span>Tu meta principal en la caja crema de la derecha.</span>
+                </div>
+                <div class="step-thumbCard step-thumb-card" onclick="goToStep(3)">
+                    <strong>04. Hábitos y espacio</strong>
+                    <span>Quita hábitos para tener casillas de días más grandes.</span>
+                </div>
+                <div class="step-thumbCard step-thumb-card" onclick="goToStep(4)">
+                    <strong>05. Descargar PDF</strong>
+                    <span>Elige con tu texto o en blanco para escribir a mano.</span>
+                </div>
+            </div>
+
+            <!-- CTA DIRECTO AL GENERADOR -->
+            <div class="bottom-cta-banner">
+                <h3 style="margin-top:0; margin-bottom:8px;">¿Listo para preparar tu semana?</h3>
+                <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:20px;">
+                    Abre el generador interactivo ahora mismo y descarga tu folio en PDF.
+                </p>
+                <a href="/generador-planificador-semanal.html" target="_blank" class="btn-big-open">
+                    Abrir el Generador Semanal en la Web ↗
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="deck-footer">
+        <p>
+            <strong>Menos Ruido</strong> · Presentación Interactiva de Producto · Acceso privado<br />
+            editorialmenosruido.com
+        </p>
+    </footer>
+
+    <!-- SCRIPT DE CONTROL INTERACTIVO DE DIAPOSITIVAS -->
+    <script>
+        const totalSteps = 5;
+        let currentStep = 0;
+        let autoPlayInterval = null;
+        let isAutoPlaying = false;
+
+        const slides = document.querySelectorAll('.slide-pane');
+        const pills = document.querySelectorAll('.step-pill-btn');
+        const dots = document.querySelectorAll('.dot-btn');
+        const progressFill = document.getElementById('progressFill');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnAutoPlay = document.getElementById('btnAutoPlay');
+        const playIcon = document.getElementById('playIcon');
+        const playText = document.getElementById('playText');
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        const presentationCard = document.getElementById('presentationCard');
+
+        function updateSlide(index) {
+            currentStep = Math.max(0, Math.min(totalSteps - 1, index));
+
+            // Actualizar diapositivas
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === currentStep);
+            });
+
+            // Actualizar botones de píldora
+            pills.forEach((pill, i) => {
+                pill.classList.toggle('active', i === currentStep);
+            });
+
+            // Actualizar dots
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentStep);
+            });
+
+            // Barra de progreso
+            const percent = ((currentStep + 1) / totalSteps) * 100;
+            progressFill.style.width = percent + '%';
+
+            // Botones Anterior / Siguiente
+            btnPrev.disabled = currentStep === 0;
+            if (currentStep === totalSteps - 1) {
+                btnNext.textContent = 'Probar en la web ↗';
+                btnNext.classList.add('finish');
+            } else {
+                btnNext.textContent = 'Siguiente →';
+                btnNext.classList.remove('finish');
+            }
+        }
+
+        function goToStep(index) {
+            updateSlide(index);
+        }
+
+        btnPrev.addEventListener('click', () => {
+            if (currentStep > 0) updateSlide(currentStep - 1);
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (currentStep < totalSteps - 1) {
+                updateSlide(currentStep + 1);
+            } else {
+                window.open('/generador-planificador-semanal.html', '_blank');
+            }
+        });
+
+        // Clic en píldoras
+        pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                const step = parseInt(pill.getAttribute('data-step'), 10);
+                updateSlide(step);
+            });
+        });
+
+        // Clic en dots
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const step = parseInt(dot.getAttribute('data-step'), 10);
+                updateSlide(step);
+            });
+        });
+
+        // Navegación con teclado (Flechas izquierda / derecha)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                if (currentStep < totalSteps - 1) updateSlide(currentStep + 1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                if (currentStep > 0) updateSlide(currentStep - 1);
+            } else if (e.key === 'Escape' && presentationCard.classList.contains('fullscreen-active')) {
+                toggleFullscreen();
+            }
+        });
+
+        // Soporte táctil Swipe para móviles
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        presentationCard.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        presentationCard.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) {
+                // Swipe izquierda -> Siguiente
+                if (currentStep < totalSteps - 1) updateSlide(currentStep + 1);
+            }
+            if (touchEndX > touchStartX + threshold) {
+                // Swipe derecha -> Anterior
+                if (currentStep > 0) updateSlide(currentStep - 1);
+            }
+        }
+
+        // Modo Automático (Auto-play 7s)
+        function toggleAutoPlay() {
+            if (isAutoPlaying) {
+                clearInterval(autoPlayInterval);
+                isAutoPlaying = false;
+                playIcon.textContent = '▶️';
+                playText.textContent = 'Auto (7s)';
+                btnAutoPlay.style.background = '#ffffff';
+            } else {
+                isAutoPlaying = true;
+                playIcon.textContent = '⏸️';
+                playText.textContent = 'Pausar';
+                btnAutoPlay.style.background = '#f2ede4';
+                autoPlayInterval = setInterval(() => {
+                    if (currentStep < totalSteps - 1) {
+                        updateSlide(currentStep + 1);
+                    } else {
+                        updateSlide(0);
+                    }
+                }, 7000);
+            }
+        }
+        btnAutoPlay.addEventListener('click', toggleAutoPlay);
+
+        // Pantalla completa
+        function toggleFullscreen() {
+            presentationCard.classList.toggle('fullscreen-active');
+            if (presentationCard.classList.contains('fullscreen-active')) {
+                btnFullscreen.innerHTML = '<span>✕</span> Salir pantalla completa';
+            } else {
+                btnFullscreen.innerHTML = '<span>⛶</span> Pantalla completa';
+            }
+        }
+        btnFullscreen.addEventListener('click', toggleFullscreen);
+
+        // Inicializar
+        updateSlide(0);
+    </script>
+</body>
+</html>
