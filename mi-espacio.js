@@ -282,10 +282,26 @@ async function loadUserDesigns(user) {
           </div>
         `;
 
-        card.querySelector('.btn-action-delete').addEventListener('click', async () => {
-          if (confirm('¿Deseas eliminar este diseño guardado?')) {
+        const deleteBtn = card.querySelector('.btn-action-delete');
+        deleteBtn.addEventListener('click', async () => {
+          if (!deleteBtn.dataset.confirming) {
+            deleteBtn.dataset.confirming = 'true';
+            deleteBtn.textContent = '¿Confirmar?';
+            deleteBtn.style.background = '#b91c1c';
+            deleteBtn.style.color = '#ffffff';
+            setTimeout(() => {
+              if (deleteBtn.isConnected) {
+                deleteBtn.removeAttribute('data-confirming');
+                deleteBtn.textContent = 'Eliminar';
+                deleteBtn.style.background = '#fdf2f2';
+                deleteBtn.style.color = '#b91c1c';
+              }
+            }, 3000);
+          } else {
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Borrando...';
             await deleteDoc(doc(db, 'users', user.uid, 'designs', docSnap.id));
-            showToast('Diseño eliminado');
+            showToast('✓ Diseño eliminado');
             loadUserDesigns(user);
           }
         });

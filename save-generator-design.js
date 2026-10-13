@@ -37,7 +37,7 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
       if (typeof window.showToast === 'function') {
         window.showToast('✓ Guardado con éxito en Mi Espacio');
       } else {
-        alert('✓ Guardado con éxito en Mi Espacio');
+        showInlineFallbackToast('✓ Guardado con éxito en Mi Espacio');
       }
 
       btn.innerHTML = originalText;
@@ -51,4 +51,19 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
       btn.innerHTML = '<span>💾</span> Guardar en Mi Espacio';
     }
   });
+}
+
+function showInlineFallbackToast(msg) {
+  let toast = document.getElementById('save-fallback-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'save-fallback-toast';
+    toast.className = 'toast-msg';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3500);
 }
