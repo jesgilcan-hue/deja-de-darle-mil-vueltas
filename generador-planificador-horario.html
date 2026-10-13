@@ -2238,22 +2238,56 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function applyHorarioData(data) {
+            if (!data) return;
+            if (data.title !== undefined && document.getElementById('field-week-title')) document.getElementById('field-week-title').value = data.title;
+            if (data.week !== undefined && document.getElementById('field-week-title')) document.getElementById('field-week-title').value = data.week;
+            if (data.focus !== undefined && document.getElementById('field-week-focus')) document.getElementById('field-week-focus').value = data.focus;
+            if (data.notes !== undefined && document.getElementById('field-week-notes')) document.getElementById('field-week-notes').value = data.notes;
+            if (typeof state !== 'undefined') {
+                if (data.mode) state.mode = data.mode;
+                if (data.weeksCount) state.weeksCount = data.weeksCount;
+                if (data.startHour !== undefined) state.startHour = data.startHour;
+                if (data.interval !== undefined) state.interval = data.interval;
+                if (data.rowsPerWeek !== undefined) state.rowsPerWeek = data.rowsPerWeek;
+                if (data.notesPosition) state.notesPosition = data.notesPosition;
+                if (data.weekLabels) state.weekLabels = { ...data.weekLabels };
+                if (data.cellData) state.cellData = { ...data.cellData };
+            }
+            if (typeof updateModeUI === 'function') updateModeUI();
+            if (typeof populateRowCountSelect === 'function' && typeof state !== 'undefined') populateRowCountSelect(state.rowsPerWeek.toString());
+            if (typeof applyNotesPositionUI === 'function') applyNotesPositionUI();
+            if (typeof renderScheduleTable === 'function') renderScheduleTable();
+        }
 
         setupGeneratorSave('btn-save-generator-horario', () => {
-            const weekText = (document.getElementById('input-week-label') ? document.getElementById('input-week-label').value : '').trim();
-            const dateRange = (document.getElementById('input-date-range') ? document.getElementById('input-date-range').value : '').trim();
+            const title = (document.getElementById('field-week-title') ? document.getElementById('field-week-title').value : '').trim();
+            const focus = (document.getElementById('field-week-focus') ? document.getElementById('field-week-focus').value : '').trim();
+            const notes = (document.getElementById('field-week-notes') ? document.getElementById('field-week-notes').value : '').trim();
 
             return {
-                name: (weekText || dateRange) ? `Planificador Horario · ${weekText} ${dateRange}`.trim() : 'Planificador Horario Personalizado',
+                name: title ? `Planificador Horario · ${title}` : 'Planificador Horario Personalizado',
                 type: 'Planificador Horario',
-                summary: dateRange ? `Rango: ${dateRange}` : (weekText || 'Estructura por horas'),
+                summary: focus ? `Enfoque: "${focus}"` : (title || 'Estructura por horas'),
                 data: {
-                    week: weekText,
-                    range: dateRange
+                    title,
+                    focus,
+                    notes,
+                    mode: typeof state !== 'undefined' ? state.mode : 'single',
+                    weeksCount: typeof state !== 'undefined' ? state.weeksCount : 1,
+                    startHour: typeof state !== 'undefined' ? state.startHour : 8,
+                    interval: typeof state !== 'undefined' ? state.interval : 1,
+                    rowsPerWeek: typeof state !== 'undefined' ? state.rowsPerWeek : 16,
+                    notesPosition: typeof state !== 'undefined' ? state.notesPosition : 'bottom',
+                    weekLabels: typeof state !== 'undefined' ? { ...state.weekLabels } : {},
+                    cellData: typeof state !== 'undefined' ? { ...state.cellData } : {}
                 }
             };
         });
+
+        checkAndLoadSavedDesign(applyHorarioData);
     </script>
 </body>
 </html>

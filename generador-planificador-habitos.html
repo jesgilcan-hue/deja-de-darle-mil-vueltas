@@ -2024,22 +2024,53 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function applyHabitosData(data) {
+            if (!data) return;
+            if (data.month !== undefined && document.getElementById('field-habit-month')) document.getElementById('field-habit-month').value = data.month;
+            if (data.year !== undefined && document.getElementById('field-habit-year')) document.getElementById('field-habit-year').value = data.year;
+            if (data.intention !== undefined && document.getElementById('field-habit-intention')) document.getElementById('field-habit-intention').value = data.intention;
+            if (data.notes !== undefined && document.getElementById('field-habit-notes')) document.getElementById('field-habit-notes').value = data.notes;
+            if (typeof state !== 'undefined') {
+                if (data.numHabits) state.numHabits = data.numHabits;
+                if (data.checkboxStyle) state.checkboxStyle = data.checkboxStyle;
+                if (data.notesVisible !== undefined) state.notesVisible = data.notesVisible;
+                if (Array.isArray(data.habits)) {
+                    state.habits = JSON.parse(JSON.stringify(data.habits));
+                }
+            }
+            const selCount = document.getElementById('select-habits-count');
+            if (selCount && data.numHabits) selCount.value = data.numHabits.toString();
+            if (typeof renderHabitsBody === 'function') renderHabitsBody();
+            if (typeof setCheckboxStyle === 'function' && data.checkboxStyle) setCheckboxStyle(data.checkboxStyle);
+        }
 
         setupGeneratorSave('btn-save-generator-habitos', () => {
-            const cycleText = (document.getElementById('field-habit-cycle') ? document.getElementById('field-habit-cycle').value : '').trim();
+            const month = (document.getElementById('field-habit-month') ? document.getElementById('field-habit-month').value : '').trim();
+            const year = (document.getElementById('field-habit-year') ? document.getElementById('field-habit-year').value : '').trim();
             const intentionText = (document.getElementById('field-habit-intention') ? document.getElementById('field-habit-intention').value : '').trim();
+            const notesText = (document.getElementById('field-habit-notes') ? document.getElementById('field-habit-notes').value : '').trim();
+            const cycle = [month, year].filter(Boolean).join(' · ');
 
             return {
-                name: cycleText ? `Planificador de Hábitos · ${cycleText}` : 'Planificador de Hábitos Personalizado',
+                name: cycle ? `Planificador de Hábitos · ${cycle}` : 'Planificador de Hábitos Personalizado',
                 type: 'Planificador de Hábitos',
-                summary: intentionText ? `Intención: "${intentionText}"` : (cycleText || 'Registro de hábitos'),
+                summary: intentionText ? `Intención: "${intentionText}"` : (cycle || 'Registro de hábitos'),
                 data: {
-                    cycle: cycleText,
-                    intention: intentionText
+                    month,
+                    year,
+                    intention: intentionText,
+                    notes: notesText,
+                    numHabits: typeof state !== 'undefined' ? state.numHabits : 10,
+                    checkboxStyle: typeof state !== 'undefined' ? state.checkboxStyle : 'circle',
+                    notesVisible: typeof state !== 'undefined' ? state.notesVisible : true,
+                    habits: typeof state !== 'undefined' ? JSON.parse(JSON.stringify(state.habits)) : []
                 }
             };
         });
+
+        checkAndLoadSavedDesign(applyHabitosData);
     </script>
 </body>
 </html>

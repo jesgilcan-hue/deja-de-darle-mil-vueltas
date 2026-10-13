@@ -2422,7 +2422,30 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function applyMensualData(data) {
+            if (!data) return;
+            if (data.month !== undefined && document.getElementById('input-month-name')) document.getElementById('input-month-name').value = data.month;
+            if (data.year !== undefined && document.getElementById('input-year-name')) document.getElementById('input-year-name').value = data.year;
+            if (data.focus !== undefined && document.getElementById('input-monthly-focus')) document.getElementById('input-monthly-focus').value = data.focus;
+            if (typeof state !== 'undefined') {
+                if (data.checkboxStyle) state.checkboxStyle = data.checkboxStyle;
+                if (data.visibility) state.visibility = { ...state.visibility, ...data.visibility };
+                if (Array.isArray(data.topOrder)) state.topOrder = [...data.topOrder];
+                if (Array.isArray(data.bottomOrder)) state.bottomOrder = [...data.bottomOrder];
+                if (Array.isArray(data.habitsData)) state.habitsData = JSON.parse(JSON.stringify(data.habitsData));
+                if (Array.isArray(data.calendarNotes)) state.calendarNotes = [...data.calendarNotes];
+                if (Array.isArray(data.goalsData)) state.goalsData = JSON.parse(JSON.stringify(data.goalsData));
+                if (Array.isArray(data.milestonesData)) state.milestonesData = JSON.parse(JSON.stringify(data.milestonesData));
+                if (data.notesText !== undefined) state.notesText = data.notesText;
+            }
+
+            if (typeof renderModularStrips === 'function') renderModularStrips();
+            if (typeof renderCalendarMatrix === 'function') renderCalendarMatrix();
+            if (typeof updateCheckboxUI === 'function') updateCheckboxUI();
+            if (typeof updateSectionPillsUI === 'function') updateSectionPillsUI();
+        }
 
         setupGeneratorSave('btn-save-generator-mensual', () => {
             const monthText = (document.getElementById('input-month-name') ? document.getElementById('input-month-name').value : '').trim();
@@ -2436,10 +2459,21 @@
                 data: {
                     month: monthText,
                     year: yearText,
-                    focus: focusText
+                    focus: focusText,
+                    checkboxStyle: typeof state !== 'undefined' ? state.checkboxStyle : 'square',
+                    visibility: typeof state !== 'undefined' ? { ...state.visibility } : {},
+                    topOrder: typeof state !== 'undefined' ? [...state.topOrder] : [],
+                    bottomOrder: typeof state !== 'undefined' ? [...state.bottomOrder] : [],
+                    habitsData: typeof state !== 'undefined' ? state.habitsData : [],
+                    calendarNotes: typeof state !== 'undefined' ? [...state.calendarNotes] : [],
+                    goalsData: typeof state !== 'undefined' ? state.goalsData : [],
+                    milestonesData: typeof state !== 'undefined' ? state.milestonesData : [],
+                    notesText: typeof state !== 'undefined' ? state.notesText : ''
                 }
             };
         });
+
+        checkAndLoadSavedDesign(applyMensualData);
     </script>
 </body>
 </html>

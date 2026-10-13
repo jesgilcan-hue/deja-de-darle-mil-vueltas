@@ -5,10 +5,52 @@ import {
   addDoc, 
   updateDoc, 
   doc, 
+  getDoc,
   getDocs, 
   serverTimestamp 
 } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { openAuthModal } from './auth-modal.js';
+
+export function checkAndLoadSavedDesign(applyDataFn) {
+  const params = new URLSearchParams(window.location.search);
+  const designId = params.get('load');
+  if (!designId) return;
+
+  let loaded = false;
+
+  const runLoad = async (user) => {
+    if (!user || loaded) return;
+    loaded = true;
+
+    try {
+      const designDocRef = doc(db, 'users', user.uid, 'designs', designId);
+      const snap = await getDoc(designDocRef);
+      if (snap.exists()) {
+        const item = snap.data();
+        if (item.data && typeof applyDataFn === 'function') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+              applyDataFn(item.data);
+            });
+          } else {
+            applyDataFn(item.data);
+          }
+          notifyToast(`✓ Diseño "${item.name || 'Guardado'}" cargado`);
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      } else {
+        notifyToast('No se encontró el diseño seleccionado.');
+      }
+    } catch (err) {
+      console.error('Error al cargar diseño guardado:', err);
+      notifyToast('No se pudo cargar el diseño guardado.');
+    }
+  };
+
+  onAuthStateChanged(auth, runLoad);
+}
 
 export function setupGeneratorSave(btnId, getGeneratorDataFn) {
   const btn = document.getElementById(btnId);

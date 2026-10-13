@@ -265,6 +265,11 @@ async function loadUserDesigns(user) {
         const item = docSnap.data();
         const card = document.createElement('div');
         card.className = 'design-card';
+        const rawTargetUrl = item.editUrl || '/generador-planificador-semanal.html';
+        const urlWithLoad = rawTargetUrl.includes('?') 
+          ? `${rawTargetUrl}&load=${docSnap.id}` 
+          : `${rawTargetUrl}?load=${docSnap.id}`;
+
         card.innerHTML = `
           <div class="design-card-header">
             <h3>${item.name || 'Mi Planificador'}</h3>
@@ -277,7 +282,7 @@ async function loadUserDesigns(user) {
             ${item.summary || 'Configuración personalizada guardada.'}
           </div>
           <div class="design-card-actions">
-            <a href="${item.editUrl || '/generador-planificador-semanal.html'}" class="btn-card-action btn-action-open">Abrir</a>
+            <a href="${urlWithLoad}" class="btn-card-action btn-action-open">Abrir</a>
             <button type="button" class="btn-card-action btn-action-delete" data-id="${docSnap.id}">Eliminar</button>
           </div>
         `;

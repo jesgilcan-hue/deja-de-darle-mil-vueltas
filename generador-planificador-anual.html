@@ -2195,22 +2195,58 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function applyAnualData(data) {
+            if (!data) return;
+            if (data.year !== undefined && document.getElementById('input-year')) {
+                document.getElementById('input-year').value = data.year;
+                if (typeof onYearChanged === 'function') onYearChanged();
+            }
+            if (typeof state !== 'undefined') {
+                if (data.mottoText !== undefined) state.mottoText = data.mottoText;
+                if (data.notesText !== undefined) state.notesText = data.notesText;
+                if (Array.isArray(data.prioritiesData)) state.prioritiesData = JSON.parse(JSON.stringify(data.prioritiesData));
+                if (Array.isArray(data.monthsNotes)) state.monthsNotes = [...data.monthsNotes];
+                if (data.checkboxStyle) state.checkboxStyle = data.checkboxStyle;
+                if (data.periodType) state.periodType = data.periodType;
+                if (data.visibility) state.visibility = { ...state.visibility, ...data.visibility };
+                if (data.blockPlacement) state.blockPlacement = { ...state.blockPlacement, ...data.blockPlacement };
+                if (Array.isArray(data.topOrder)) state.topOrder = [...data.topOrder];
+                if (Array.isArray(data.bottomOrder)) state.bottomOrder = [...data.bottomOrder];
+            }
+            if (typeof renderModularStrips === 'function') renderModularStrips();
+            if (typeof renderAnnualGrid === 'function') renderAnnualGrid();
+            if (typeof updateCheckboxUI === 'function') updateCheckboxUI();
+            if (typeof updatePeriodSelectorUI === 'function') updatePeriodSelectorUI();
+            if (typeof updateSectionPillsUI === 'function') updateSectionPillsUI();
+        }
 
         setupGeneratorSave('btn-save-generator-anual', () => {
-            const yearText = (document.getElementById('input-year-title') ? document.getElementById('input-year-title').value : '').trim();
-            const focusText = (document.getElementById('input-year-focus') ? document.getElementById('input-year-focus').value : '').trim();
+            const yearText = (document.getElementById('input-year') ? document.getElementById('input-year').value : '').trim();
+            const motto = typeof state !== 'undefined' ? (state.mottoText || '') : '';
 
             return {
                 name: yearText ? `Planificador Anual · ${yearText}` : 'Planificador Anual Personalizado',
                 type: 'Planificador Anual',
-                summary: focusText ? `Foco del año: "${focusText}"` : (yearText ? `Año: ${yearText}` : 'Visión anual personalizada'),
+                summary: motto ? `Lema: "${motto}"` : (yearText ? `Año: ${yearText}` : 'Visión anual personalizada'),
                 data: {
                     year: yearText,
-                    focus: focusText
+                    mottoText: typeof state !== 'undefined' ? state.mottoText : '',
+                    notesText: typeof state !== 'undefined' ? state.notesText : '',
+                    prioritiesData: typeof state !== 'undefined' ? JSON.parse(JSON.stringify(state.prioritiesData)) : [],
+                    monthsNotes: typeof state !== 'undefined' ? [...state.monthsNotes] : [],
+                    checkboxStyle: typeof state !== 'undefined' ? state.checkboxStyle : 'circle',
+                    periodType: typeof state !== 'undefined' ? state.periodType : 'trimestre_1',
+                    visibility: typeof state !== 'undefined' ? { ...state.visibility } : {},
+                    blockPlacement: typeof state !== 'undefined' ? { ...state.blockPlacement } : {},
+                    topOrder: typeof state !== 'undefined' ? [...state.topOrder] : [],
+                    bottomOrder: typeof state !== 'undefined' ? [...state.bottomOrder] : []
                 }
             };
         });
+
+        checkAndLoadSavedDesign(applyAnualData);
     </script>
 </body>
 </html>

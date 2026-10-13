@@ -2418,24 +2418,87 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function applyWeeklyData(data) {
+            if (!data) return;
+            if (data.weekNum !== undefined && document.getElementById('field-week-num')) {
+                document.getElementById('field-week-num').value = data.weekNum;
+            } else if (data.week !== undefined && document.getElementById('field-week-num')) {
+                document.getElementById('field-week-num').value = data.week;
+            }
+            const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+            days.forEach(day => {
+                if (data[day] !== undefined) {
+                    if (typeof data[day] === 'object') {
+                        if (data[day].num !== undefined && document.getElementById(`num-${day}`)) {
+                            document.getElementById(`num-${day}`).value = data[day].num;
+                        }
+                        if (data[day].text !== undefined && document.getElementById(`field-${day}`)) {
+                            document.getElementById(`field-${day}`).value = data[day].text;
+                        }
+                    } else if (typeof data[day] === 'string' && document.getElementById(`field-${day}`)) {
+                        document.getElementById(`field-${day}`).value = data[day];
+                    }
+                }
+            });
+            if (data.focus !== undefined && document.getElementById('field-focus')) {
+                document.getElementById('field-focus').value = data.focus;
+            }
+            if (Array.isArray(data.habits)) {
+                data.habits.forEach((h, idx) => {
+                    const hEl = document.getElementById(`field-habit-${idx + 1}`);
+                    if (hEl) hEl.value = h || '';
+                });
+            }
+            if (data.notes !== undefined && document.getElementById('field-weekly-notes')) {
+                document.getElementById('field-weekly-notes').value = data.notes;
+            }
+            if (data.checkboxStyle && typeof setCheckboxStyle === 'function') {
+                setCheckboxStyle(data.checkboxStyle);
+            }
+            if (data.sections && typeof state !== 'undefined') {
+                state.sections = { ...state.sections, ...data.sections };
+            }
+            if (data.slotLeft && typeof state !== 'undefined') state.slotLeft = data.slotLeft;
+            if (data.slotRight && typeof state !== 'undefined') state.slotRight = data.slotRight;
+            if (typeof updateLayoutUI === 'function') updateLayoutUI();
+            if (typeof updateCheckboxUI === 'function') updateCheckboxUI();
+        }
 
         setupGeneratorSave('btn-save-generator-design', () => {
             const rawWeek = (document.getElementById('field-week-num') ? document.getElementById('field-week-num').value : '').trim();
-            const rawDates = (document.getElementById('field-dates') ? document.getElementById('field-dates').value : '').trim();
-            const rawFocus = (document.getElementById('field-weekly-focus') ? document.getElementById('field-weekly-focus').value : '').trim();
+            const rawFocus = (document.getElementById('field-focus') ? document.getElementById('field-focus').value : '').trim();
             
             return {
                 name: rawWeek ? `Planificador Semanal · ${rawWeek}` : 'Planificador Semanal Personalizado',
                 type: 'Planificador Semanal',
-                summary: rawFocus ? `Foco: "${rawFocus}" (${rawDates || 'Sin fechas'})` : (rawDates || 'Diseño semanal a medida'),
+                summary: rawFocus ? `Foco: "${rawFocus}"` : (rawWeek || 'Diseño semanal a medida'),
                 data: {
-                    week: rawWeek,
-                    dates: rawDates,
-                    focus: rawFocus
+                    weekNum: rawWeek,
+                    focus: rawFocus,
+                    lunes: { num: document.getElementById('num-lunes')?.value || '', text: document.getElementById('field-lunes')?.value || '' },
+                    martes: { num: document.getElementById('num-martes')?.value || '', text: document.getElementById('field-martes')?.value || '' },
+                    miercoles: { num: document.getElementById('num-miercoles')?.value || '', text: document.getElementById('field-miercoles')?.value || '' },
+                    jueves: { num: document.getElementById('num-jueves')?.value || '', text: document.getElementById('field-jueves')?.value || '' },
+                    viernes: { num: document.getElementById('num-viernes')?.value || '', text: document.getElementById('field-viernes')?.value || '' },
+                    sabado: { num: document.getElementById('num-sabado')?.value || '', text: document.getElementById('field-sabado')?.value || '' },
+                    domingo: { num: document.getElementById('num-domingo')?.value || '', text: document.getElementById('field-domingo')?.value || '' },
+                    habits: [
+                        document.getElementById('field-habit-1')?.value || '',
+                        document.getElementById('field-habit-2')?.value || '',
+                        document.getElementById('field-habit-3')?.value || ''
+                    ],
+                    notes: document.getElementById('field-weekly-notes')?.value || '',
+                    checkboxStyle: typeof state !== 'undefined' ? state.checkboxStyle : 'circle',
+                    sections: typeof state !== 'undefined' ? { ...state.sections } : {},
+                    slotLeft: typeof state !== 'undefined' ? state.slotLeft : 'habits',
+                    slotRight: typeof state !== 'undefined' ? state.slotRight : 'notes'
                 }
             };
         });
+
+        checkAndLoadSavedDesign(applyWeeklyData);
     </script>
 </body>
 </html>
