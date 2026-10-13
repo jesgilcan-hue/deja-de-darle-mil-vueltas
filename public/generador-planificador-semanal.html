@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador Planificador Semanal · Menos Ruido</title>
+    <title>Generador planificación semanal · Menos Ruido</title>
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-planificador-semanal.html" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
 
     <!-- Vercel Web Analytics & Speed Insights -->
     <script>
@@ -24,6 +26,8 @@
     <script src="./jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="./style.css" />
 
     <style>
         :root {
@@ -49,10 +53,20 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             line-height: 1.45;
-            padding: 16px 14px 60px;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .generator-container-wrap {
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 24px 14px 40px;
+            flex: 1;
         }
 
         /* CABECERA & NAVEGACIÓN */
@@ -1016,17 +1030,91 @@
 </head>
 <body>
 
-    <div class="top-nav">
-        <a href="/generador.html" class="back-link">← Catálogo de generadores</a>
-        <div style="display:flex; align-items:center; gap:8px;">
-            <span class="badge-version">Edición Directa 1:1</span>
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="nav-left">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;">Menos Ruido</a>
+            </div>
+            <nav>
+                <div class="nav-drawer-header">
+                    <span class="nav-drawer-title">Menos Ruido</span>
+                    <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <a href="/" onclick="document.body.classList.remove('nav-open')">Home</a>
+                <div class="dropdown">
+                    <a href="/#cuadernos" style="cursor: default;">Cuadernos ▾</a>
+                    <div class="dropdown-content tree-dropdown">
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Cuadernos Guiados</span>
+                            <div class="tree-branch-items">
+                                <a href="/habla-claro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Habla Claro</a>
+                                <a href="/deja-de-darle-mil-vueltas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Deja de darle mil vueltas</a>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Planificadores</span>
+                            <div class="tree-branch-items">
+                                <a href="/planificador-90-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 90 Días</a>
+                                <a href="/planificador-180-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 180 Días</a>
+                                <a href="/planificador-semanal-simple.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Atemporal</a>
+                                <a href="/planificador-semanal-reversible.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Reversible</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="/lecturas.html" style="cursor: default;">Lecturas ▾</a>
+                    <div class="dropdown-content tree-dropdown">
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Lecturas</span>
+                            <div class="tree-branch-items">
+                                <a href="/lecturas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Todas las lecturas</a>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Guías de uso</span>
+                            <div class="tree-branch-items">
+                                <a href="/guia-uso-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Guía Planificador Semanal</a>
+                                <a href="/guia-uso-planificador-90-180-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Guía 90 & 180 Días</a>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Tutoriales</span>
+                            <div class="tree-branch-items">
+                                <a href="/tutorial-generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Tutorial Generador Semanal</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
         </div>
-    </div>
+    </header>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
 
-    <div class="header-title-box">
-        <h1>Planificador Semanal Interactivo</h1>
-        <p>Escribe directamente sobre el folio horizontal. Incluye tu foco semanal, prioridades por día, seguimiento de hábitos y notas de reflexión.</p>
-    </div>
+    <main class="generator-container-wrap">
+        <div class="top-nav">
+            <a href="/tutorial-generador-planificador-semanal.html" class="back-link">📖 Ver Tutorial paso a paso</a>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge-version">Edición Directa 1:1</span>
+            </div>
+        </div>
+
+        <div class="header-title-box">
+            <h1>Generador planificación semanal</h1>
+            <p>Escribe directamente sobre el folio horizontal. Incluye tu foco semanal, prioridades por día, seguimiento de hábitos y notas de reflexión.</p>
+        </div>
 
     <!-- BARRA DE HERRAMIENTAS PRINCIPAL -->
     <div class="canvas-toolbar">
@@ -1298,6 +1386,66 @@
 
         </div>
     </div>
+
+    <!-- SECCIÓN PROMOCIONAL PLANIFICADORES EN PAPEL (AMAZON) -->
+    <section class="planner-amazon-promo" style="width: 100%; max-width: 980px; margin: 40px auto 10px; background: #ffffff; border: 1px solid #e5dfd5; border-radius: 14px; padding: 32px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); text-align: center;">
+        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); display: inline-block; margin-bottom: 8px;">Ediciones Físicas en Papel</span>
+        <h3 style="font-family: var(--font-serif); font-size: 1.65rem; color: #1a1816; margin-bottom: 10px; font-weight: 700;">¿Prefieres no imprimir cada semana?</h3>
+        <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px; margin: 0 auto 24px; line-height: 1.6;">
+            Llévate a tu mesa de trabajo nuestros cuadernos encuadernados en papel de alto gramaje (120 g/m²) y formato apaisado. Sin fechas, listos para empezar cualquier semana del año.
+        </p>
+
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px;">
+            <a href="https://www.amazon.es/dp/B0HGFH4621" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #ffffff; padding: 12px 22px; border-radius: 8px; font-size: 0.92rem; font-weight: 600; text-decoration: none; box-shadow: 0 4px 12px rgba(135,85,59,0.2); transition: all 0.2s;">
+                🛒 Planificador Semanal Simple en Amazon ↗
+            </a>
+            <a href="https://www.amazon.es/dp/B0HGFF6772" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; background: #2f2a26; color: #ffffff; padding: 12px 22px; border-radius: 8px; font-size: 0.92rem; font-weight: 600; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;">
+                🔄 Planificador Semanal Reversible en Amazon ↗
+            </a>
+        </div>
+
+        <div style="margin-top: 14px;">
+            <a href="https://www.amazon.es/review/create-review/?ie=UTF8&channel=glance-detail&asin=B0HGFH4621" target="_blank" rel="noopener noreferrer" style="font-size: 0.82rem; color: #7a7269; text-decoration: underline; transition: color 0.2s;">
+                ¿Ya tienes el cuaderno físico? Deja tu reseña en Amazon ★
+            </a>
+        </div>
+    </section>
+    </main>
+
+    <!-- FOOTER CORPORATIVO -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem;">Menos Ruido</h3>
+                    <p style="opacity: 0.8; font-size: 0.9rem;">Cuadernos guiados y herramientas en papel para pensar con calma.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navegación</h4>
+                    <a href="/">Página Principal</a>
+                    <a href="/#cuadernos">Nuestros Cuadernos</a>
+                    <a href="/#pruebalo">Pruébalo e imprímelo</a>
+                    <a href="/lecturas.html">Lecturas</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Comunidad</h4>
+                    <a href="https://www.youtube.com/channel/UCUD4OWhpMG5OzqVQhjpeqtw" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
+                    <a href="https://www.instagram.com/editorialmenosruido/" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+                    <a href="/links.html">Enlaces Rápidos</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="mailto:contacto@editorialmenosruido.com" onclick="event.preventDefault(); navigator.clipboard.writeText('contacto@editorialmenosruido.com'); const original = this.innerText; this.innerText = '¡Copiado al portapapeles!'; setTimeout(() => this.innerText = original, 2000);" title="Haz clic para copiar el email">contacto@editorialmenosruido.com</a>
+                    <a href="./aviso-legal.html" target="_blank">Aviso Legal</a>
+                    <a href="./politica-privacidad.html" target="_blank">Política de Privacidad</a>
+                    <a href="./politica-cookies.html" target="_blank">Política de Cookies</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="year"></span> Menos Ruido. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
 
     <!-- MODAL POP-UP DE DESCARGA -->
     <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
@@ -2251,5 +2399,6 @@
             showToast(`✓ PDF descargado: ${filename}`);
         }
     </script>
+    <script type="module" src="./main.js"></script>
 </body>
 </html>

@@ -541,8 +541,8 @@ if ('serviceWorker' in navigator) {
         <a href="/tutorial-generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
           <img src="/images/tutorial-semanal/portada-tutorial-web-semanal.png" alt="Tutorial Generador Semanal" class="mobile-book-thumb" loading="lazy" />
           <div class="mobile-book-info">
-            <span class="mobile-book-title">Tutorial Generador Semanal</span>
-            <span class="mobile-book-subtitle">Crea e imprime tu plantilla</span>
+            <span class="mobile-book-title">Generador Semanal Gratuito</span>
+            <span class="mobile-book-subtitle">Tutorial paso a paso</span>
           </div>
         </a>
       </div>
