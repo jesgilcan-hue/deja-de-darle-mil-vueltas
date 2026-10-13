@@ -491,6 +491,32 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
+    <!-- Generadores Desplegable -->
+    <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Generadores</div>
+    <div class="mobile-planners-accordion">
+      <button type="button" class="mobile-planners-toggle">
+        <span>Generadores</span>
+        <span class="toggle-icon">▾</span>
+      </button>
+      <div class="mobile-planners-list">
+        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 6px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Planificación Semanal</div>
+        <a href="/generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/images/tutorial-semanal/captura-web-planificador-completo.png" alt="Generador Semanal Web" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Generador Semanal Web</span>
+            <span class="mobile-book-subtitle">Diseña e imprime tu plantilla</span>
+          </div>
+        </a>
+        <a href="/tutorial-generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/images/tutorial-semanal/portada-tutorial-web-semanal.png" alt="Tutorial Generador Semanal" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Tutorial paso a paso</span>
+            <span class="mobile-book-subtitle">Cómo organizar tu semana</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
     <!-- Lecturas Desplegable -->
     <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Lecturas</div>
     <div class="mobile-planners-accordion">
