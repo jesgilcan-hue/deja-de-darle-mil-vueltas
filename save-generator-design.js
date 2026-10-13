@@ -202,8 +202,15 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
   });
 
   btn.addEventListener('click', async () => {
-    // Si auth aún está resolviéndose, esperar brevemente a auth.currentUser
+    // Si auth aún está resolviéndose, esperar a auth.authStateReady
     let user = auth.currentUser;
+    if (!user && typeof auth.authStateReady === 'function') {
+      try {
+        await auth.authStateReady();
+        user = auth.currentUser;
+      } catch (e) {}
+    }
+
     if (!user) {
       // Guardar el estado actual del generador antes de abrir el modal para que no se pierda jamás
       try {
@@ -234,22 +241,29 @@ async function triggerSaveFlow(btn, currentDesign, user) {
 
     // Consultar diseños del usuario en Firestore
     const designsRef = collection(db, 'users', user.uid, 'designs');
-    const snap = await getDocs(designsRef);
+    let snap = null;
+    try {
+      snap = await getDocs(designsRef);
+    } catch (firestoreErr) {
+      console.warn('Aviso al consultar diseños existentes:', firestoreErr);
+    }
     
     const existingDesigns = [];
-    snap.forEach(d => {
-      const data = d.data();
-      if (data.type === currentType) {
-        existingDesigns.push({ id: d.id, ...data });
-      }
-    });
+    if (snap) {
+      snap.forEach(d => {
+        const data = d.data();
+        if (data.type === currentType) {
+          existingDesigns.push({ id: d.id, ...data });
+        }
+      });
 
-    // Ordenar por fecha descendente
-    existingDesigns.sort((a, b) => {
-      const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
-      const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
-      return timeB - timeA;
-    });
+      // Ordenar por fecha descendente
+      existingDesigns.sort((a, b) => {
+        const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+        const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+        return timeB - timeA;
+      });
+    }
 
     btn.disabled = false;
     btn.innerHTML = originalText;
