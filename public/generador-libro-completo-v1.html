@@ -1086,8 +1086,8 @@
     <footer class="hub-footer-block">
         <p>
             <strong>Menos Ruido · Editorial de Foco Analógico</strong><br />
-            Todas las páginas se generan en formato apaisado libro 8.25" × 6" (209.55 × 152.4 mm) a 300 DPI.<br />
-            ¿Prefieres el cuaderno encuadernado de imprenta? Descubre nuestras ediciones oficiales en Amazon KDP.
+            Todas las páginas se generan en formato apaisado libro 8.25" × 6" (209.55 × 152.4 mm).<br />
+            ¿Prefieres el cuaderno encuadernado de imprenta? Descubre nuestras ediciones oficiales en KDP.
         </p>
     </footer>
 
@@ -1125,7 +1125,7 @@
         let bookConfig = {
             title: "PLANIFICADOR Y BITÁCORA ANUAL",
             subtitle: "Registro silencioso y perseverancia analógica",
-            owner: "Jesús Gil",
+            owner: "Clara Beltrán",
             dedication: "Dedica cada jornada a una sola prioridad que de verdad importe. El resto es ruido.",
             year: 2026,
             dateMode: "auto2026", // "auto2026", "auto2027", "blank"
@@ -1142,7 +1142,8 @@
                     name: "Calendario Anual (12 Meses)", 
                     type: "calendar", 
                     active: true, 
-                    pages: 1 
+                    pages: 1,
+                    design: { yearMode: "auto" } // "auto", "2026", "2027", "blank"
                 },
                 { 
                     id: "annual", 
@@ -1187,7 +1188,7 @@
                     active: false, 
                     pages: 4, 
                     countLabel: "páginas",
-                    design: { startHour: "08:00", interval: "1h", rows: 12 } // startHour: 06:00..09:00 | interval: 30m/1h/2h | rows: 8..24
+                    design: { startHour: "08:00", interval: "1h", rows: 12 } // startHour: 06:00..09:00 | interval: 30m/1h/2h | rows: 6..24
                 },
                 { 
                     id: "daily", 
@@ -1200,12 +1201,12 @@
                 },
                 { 
                     id: "notes", 
-                    name: "Cuadrícula de Puntos / Notas", 
+                    name: "Notas", 
                     type: "notes", 
                     active: true, 
                     pages: 8, 
                     countLabel: "páginas",
-                    design: { gridStyle: "dots" } // dots, lines
+                    design: { gridStyle: "dots" } // dots, squares, lines, blank
                 }
             ]
         };
@@ -1368,7 +1369,21 @@
 
                 // Formar bloque de diseño específico si aplica
                 let designControlsHtml = '';
-                if (sec.type === 'weekly') {
+                if (sec.type === 'calendar') {
+                    designControlsHtml = `
+                        <div class="section-design-box">
+                            <div class="design-opt-row">
+                                <label>Año del calendario:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'yearMode', this.value)">
+                                    <option value="auto" ${sec.design.yearMode === 'auto' ? 'selected' : ''}>Seguir modo general (${bookConfig.year})</option>
+                                    <option value="2026" ${sec.design.yearMode === '2026' ? 'selected' : ''}>📅 Año 2026</option>
+                                    <option value="2027" ${sec.design.yearMode === '2027' ? 'selected' : ''}>📅 Año 2027</option>
+                                    <option value="blank" ${sec.design.yearMode === 'blank' ? 'selected' : ''}>⚪ Atemporal (Sin fechas)</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                } else if (sec.type === 'weekly') {
                     designControlsHtml = `
                         <div class="section-design-box">
                             <div class="design-opt-row">
@@ -1399,6 +1414,8 @@
                                     <option value="8" ${sec.design.habitCount === 8 ? 'selected' : ''}>8 Hábitos</option>
                                     <option value="10" ${sec.design.habitCount === 10 ? 'selected' : ''}>10 Hábitos (estándar)</option>
                                     <option value="12" ${sec.design.habitCount === 12 ? 'selected' : ''}>12 Hábitos</option>
+                                    <option value="15" ${sec.design.habitCount === 15 ? 'selected' : ''}>15 Hábitos</option>
+                                    <option value="18" ${sec.design.habitCount === 18 ? 'selected' : ''}>18 Hábitos</option>
                                 </select>
                             </div>
                             <div class="design-opt-row">
@@ -1428,6 +1445,34 @@
                                     <option value="30m" ${sec.design.interval === '30m' ? 'selected' : ''}>30 minutos</option>
                                     <option value="1h" ${sec.design.interval === '1h' ? 'selected' : ''}>1 hora</option>
                                     <option value="2h" ${sec.design.interval === '2h' ? 'selected' : ''}>2 horas</option>
+                                </select>
+                            </div>
+                            <div class="design-opt-row">
+                                <label>Filas (Horas):</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'rows', parseInt(this.value, 10))">
+                                    <option value="6" ${sec.design.rows === 6 ? 'selected' : ''}>6 filas</option>
+                                    <option value="8" ${sec.design.rows === 8 ? 'selected' : ''}>8 filas</option>
+                                    <option value="10" ${sec.design.rows === 10 ? 'selected' : ''}>10 filas</option>
+                                    <option value="12" ${sec.design.rows === 12 ? 'selected' : ''}>12 filas (medio ciclo)</option>
+                                    <option value="14" ${sec.design.rows === 14 ? 'selected' : ''}>14 filas</option>
+                                    <option value="16" ${sec.design.rows === 16 ? 'selected' : ''}>16 filas (vigilia)</option>
+                                    <option value="18" ${sec.design.rows === 18 ? 'selected' : ''}>18 filas</option>
+                                    <option value="20" ${sec.design.rows === 20 ? 'selected' : ''}>20 filas</option>
+                                    <option value="24" ${sec.design.rows === 24 ? 'selected' : ''}>24 filas (día completo)</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                } else if (sec.type === 'notes') {
+                    designControlsHtml = `
+                        <div class="section-design-box">
+                            <div class="design-opt-row">
+                                <label>Tipo de papel:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'gridStyle', this.value)">
+                                    <option value="dots" ${sec.design.gridStyle === 'dots' ? 'selected' : ''}>• Cuadrícula de Puntos (5 mm)</option>
+                                    <option value="squares" ${sec.design.gridStyle === 'squares' ? 'selected' : ''}>◻️ Cuadritos / Grid (5 mm)</option>
+                                    <option value="lines" ${sec.design.gridStyle === 'lines' ? 'selected' : ''}>— Renglones / Líneas (7 mm)</option>
+                                    <option value="blank" ${sec.design.gridStyle === 'blank' ? 'selected' : ''}>⚪ Papel Blanco / Liso</option>
                                 </select>
                             </div>
                         </div>
@@ -1487,6 +1532,10 @@
                 recalcPages();
                 renderPreviewPage();
             }
+        }
+
+        function moveHabitRow(index, delta) {
+            renderPreviewPage();
         }
 
         function moveSection(index, delta) {
@@ -1579,17 +1628,21 @@
 
             // 2. CALENDARIO ANUAL (PANORÁMICA 12 MESES)
             else if (page.type === 'calendar') {
+                const calDesignMode = page.design.yearMode || 'auto';
+                const calIsBlank = calDesignMode === 'blank' || (calDesignMode === 'auto' && isBlank);
+                const calYear = calDesignMode === '2026' ? 2026 : (calDesignMode === '2027' ? 2027 : year);
+
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
                         <div class="page-header-row">
                             <div>
                                 <span class="page-header-kicker">MENOS RUIDO · PANORÁMICA DE 12 MESES</span>
-                                <span class="page-header-title">Calendario Anual ${isBlank ? 'Atemporal' : year}</span>
+                                <span class="page-header-title">Calendario Anual ${calIsBlank ? 'Atemporal' : calYear}</span>
                             </div>
-                            <span class="page-header-meta">${isBlank ? 'SIN FECHAS FIJAS' : 'AÑO ' + year}</span>
+                            <span class="page-header-meta">${calIsBlank ? 'SIN FECHAS FIJAS' : 'AÑO ' + calYear}</span>
                         </div>
                         <div class="calendar-months-grid" style="display:grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap:8px 12px; flex:1;">
-                            ${renderCalendarMonthsHtml(year, isBlank)}
+                            ${renderCalendarMonthsHtml(calYear, calIsBlank)}
                         </div>
                         <div class="sheet-footer">
                             <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
@@ -1611,13 +1664,8 @@
                             <span class="page-header-meta">${isBlank ? 'AÑO: _________' : 'AÑO ' + year}</span>
                         </div>
 
-                        <div style="border: 1.5px solid #222; border-radius: 4px; padding: 6px 10px; background: #faf8f5; margin-bottom: 8px;">
+                        <div style="border: 1.5px solid #222; border-radius: 4px; padding: 8px 12px; background: #faf8f5; margin-bottom: 8px;">
                             <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent);">PRIORIDADES ESTRATÉGICAS DEL AÑO (MÁXIMO 3)</strong>
-                            <div style="display:flex; gap:12px; margin-top:4px;">
-                                <div class="handwriting-line" style="flex:1;"></div>
-                                <div class="handwriting-line" style="flex:1;"></div>
-                                <div class="handwriting-line" style="flex:1;"></div>
-                            </div>
                         </div>
 
                         <div class="annual-quarters-grid">
@@ -1625,10 +1673,6 @@
                                 <div class="annual-quarter-box">
                                     <span class="quarter-title">${q}</span>
                                     <div style="font-size:0.65rem; color:#666; margin-bottom:2px;">Meta del trimestre:</div>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
                                 </div>
                             `).join('')}
                         </div>
@@ -1648,6 +1692,46 @@
                 const titleStr = isBlank ? `Planificador Mensual` : `${monthNames[monthIndex]}`;
                 const metaStr = isBlank ? `MES: _________ · AÑO: _________` : `AÑO ${year}`;
 
+                // Cálculo exacto de los días según el calendario (Lunes=0 ... Domingo=6)
+                let cellsHtml = '';
+                if (isBlank) {
+                    cellsHtml = Array.from({length: 35}).map(() => `
+                        <div class="monthly-grid-cell">
+                            <span style="font-size:0.60rem; font-weight:800; color:#555;"></span>
+                        </div>
+                    `).join('');
+                } else {
+                    const firstDate = new Date(year, monthIndex, 1);
+                    const startCol = (firstDate.getDay() + 6) % 7;
+                    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+                    const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
+
+                    for (let i = 0; i < 35; i++) {
+                        if (i < startCol) {
+                            const dNum = daysInPrevMonth - startCol + 1 + i;
+                            cellsHtml += `
+                                <div class="monthly-grid-cell" style="background:#faf8f5;">
+                                    <span style="font-size:0.58rem; font-weight:600; color:#b5ab9e;">${dNum}</span>
+                                </div>
+                            `;
+                        } else if (i < startCol + daysInMonth) {
+                            const dNum = i - startCol + 1;
+                            cellsHtml += `
+                                <div class="monthly-grid-cell">
+                                    <span style="font-size:0.62rem; font-weight:800; color:#222;">${dNum}</span>
+                                </div>
+                            `;
+                        } else {
+                            const dNum = i - (startCol + daysInMonth) + 1;
+                            cellsHtml += `
+                                <div class="monthly-grid-cell" style="background:#faf8f5;">
+                                    <span style="font-size:0.58rem; font-weight:600; color:#b5ab9e;">${dNum}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
                         <div class="page-header-row">
@@ -1665,11 +1749,7 @@
                                     <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
                                 </div>
                                 <div class="monthly-cells-grid-35">
-                                    ${Array.from({length: 35}).map((_, i) => `
-                                        <div class="monthly-grid-cell">
-                                            <span style="font-size:0.60rem; font-weight:800; color:#555;">${isBlank ? '' : (i < 30 ? i + 1 : '')}</span>
-                                        </div>
-                                    `).join('')}
+                                    ${cellsHtml}
                                 </div>
                             </div>
 
@@ -1677,19 +1757,12 @@
                             <div class="monthly-sidebar-col">
                                 <div class="monthly-side-card" style="background:#faf8f5; border-color:#dcd4c7;">
                                     <strong style="font-size:0.68rem; text-transform:uppercase; color:var(--accent);">🎯 METAS DEL MES (MÁXIMO 3)</strong>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
                                 </div>
                                 <div class="monthly-side-card">
                                     <strong style="font-size:0.68rem; text-transform:uppercase;">📌 FECHAS CLAVE & HITOS</strong>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
                                 </div>
                                 <div class="monthly-side-card">
                                     <strong style="font-size:0.68rem; text-transform:uppercase;">📝 NOTAS & BALANCE</strong>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
                                 </div>
                             </div>
                         </div>
@@ -1711,6 +1784,26 @@
                 const habitCount = page.design.habitCount || 10;
                 const isCircle = page.design.markerShape !== 'square';
 
+                // Generar filas de hábitos con estilo idéntico al oficial de Menos Ruido
+                const habitRowsHtml = Array.from({length: habitCount}).map((_, h) => `
+                    <div style="display:flex; align-items:stretch; border-bottom:1px solid #e5dfd4; min-height:0; flex:1; background:${h % 2 === 1 ? '#faf8f5' : '#fff'};">
+                        <div style="width:26%; min-width:160px; padding:0 6px; display:flex; align-items:center; justify-content:space-between; border-right:1.6px solid #222; box-sizing:border-box;">
+                            <span style="font-size:0.68rem; color:#665f58; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">· Hábito ${h + 1}</span>
+                            <div style="display:inline-flex; gap:2px; opacity:0.6;">
+                                <button type="button" onclick="moveHabitRow(${h}, -1)" ${h === 0 ? 'disabled' : ''} style="background:transparent; border:none; cursor:pointer; font-size:0.60rem; padding:0 2px;" title="Subir hábito">▲</button>
+                                <button type="button" onclick="moveHabitRow(${h}, 1)" ${h === habitCount - 1 ? 'disabled' : ''} style="background:transparent; border:none; cursor:pointer; font-size:0.60rem; padding:0 2px;" title="Bajar hábito">▼</button>
+                            </div>
+                        </div>
+                        <div style="flex:1; display:grid; grid-template-columns:repeat(31, 1fr); height:100%;">
+                            ${Array.from({length: 31}).map(() => `
+                                <div style="display:flex; align-items:center; justify-content:center; border-right:1px solid #ebe5dc;">
+                                    <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:9px; height:9px; border-width:1px; border-color:#b5afa6;"></span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
                         <div class="page-header-row">
@@ -1721,31 +1814,32 @@
                             <span class="page-header-meta">${metaStr}</span>
                         </div>
 
-                        <table class="habits-sheet-table">
-                            <thead>
-                                <tr style="background:#f7f4ec;">
-                                    <th class="col-h-name">HÁBITO FUNDAMENTAL</th>
-                                    ${Array.from({length: 31}).map((_, d) => `<th style="width:2.2%; font-size:0.60rem;">${d+1}</th>`).join('')}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Array.from({length: habitCount}).map((_, h) => `
-                                    <tr>
-                                        <td class="col-h-name" style="color:#888;">· _______________________________</td>
-                                        ${Array.from({length: 31}).map(() => `
-                                            <td>
-                                                <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:9px; height:9px; border-width:1px;"></span>
-                                            </td>
-                                        `).join('')}
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                        <!-- TABLA OFICIAL MENOS RUIDO (CABECERA + CUERPO) -->
+                        <div style="width:100%; border:1.8px solid #222; border-radius:3px; background:#fff; display:flex; flex-direction:column; overflow:hidden; margin-top:4px; flex:${habitCount <= 8 ? '0.75' : (habitCount <= 12 ? '0.82' : '0.88')}; min-height:0;">
+                            <div style="display:flex; background:#f5f0e8; border-bottom:1.8px solid #222; height:20px; align-items:stretch; flex-shrink:0;">
+                                <div style="width:26%; min-width:160px; padding:0 8px; display:flex; align-items:center; font-size:0.62rem; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:#2b241e; border-right:1.6px solid #222; box-sizing:border-box;">
+                                    HÁBITO FUNDAMENTAL
+                                </div>
+                                <div style="flex:1; display:grid; grid-template-columns:repeat(31, 1fr); height:100%;">
+                                    ${Array.from({length: 31}).map((_, d) => `
+                                        <div style="display:flex; align-items:center; justify-content:center; font-size:0.56rem; font-weight:800; color:#3e3832; border-right:1px solid #dfd8cd; box-sizing:border-box;">
+                                            ${d + 1}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; width:100%; flex:1; min-height:0;">
+                                ${habitRowsHtml}
+                            </div>
+                        </div>
 
-                        <div style="margin-top:6px; border:1px solid #d5cebf; border-radius:4px; padding:6px 10px; background:#fff; font-size:0.68rem;">
-                            <strong style="text-transform:uppercase; color:var(--accent);">📝 REFLEXIÓN Y OBSERVACIONES DEL MES</strong>
-                            <div class="handwriting-line"></div>
-                            <div class="handwriting-line"></div>
+                        <!-- BLOQUE DE REFLEXIÓN PERMANENTE AL PIE -->
+                        <div style="width:100%; background:#faf8f4; border:1px solid #dfd8cd; border-radius:4px; padding:6px 12px; display:flex; flex-direction:column; box-sizing:border-box; margin-top:4px; margin-bottom:2px; flex:${habitCount <= 8 ? '0.25' : (habitCount <= 12 ? '0.18' : '0.12')}; min-height:36px; overflow:hidden;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                <span style="font-size:0.64rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--accent);">
+                                    📝 REFLEXIÓN Y OBSERVACIONES DEL MES
+                                </span>
+                            </div>
                         </div>
 
                         <div class="sheet-footer">
@@ -1783,8 +1877,6 @@
                                             <strong style="font-size:0.72rem; color:#222;">${day}</strong>
                                             <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}"></span>
                                         </div>
-                                        <div class="handwriting-line"></div>
-                                        <div class="handwriting-line"></div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -1792,10 +1884,8 @@
                             <!-- COLUMNA DERECHA: FOCO + VIERNES A DOMINGO -->
                             <div style="display:flex; flex-direction:column; gap:6px;">
                                 <!-- FOCO -->
-                                <div class="weekly-card-frame" style="background:#faf8f5; border-color:#d5cdbf; padding:6px 8px;">
+                                <div class="weekly-card-frame" style="background:#faf8f5; border-color:#d5cdbf; padding:8px 10px;">
                                     <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent);">FOCO DE LA SEMANA (META CLAVE)</strong>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
                                 </div>
 
                                 <!-- VIERNES, SÁBADO, DOMINGO -->
@@ -1805,7 +1895,6 @@
                                             <strong style="font-size:0.72rem;">VIERNES</strong>
                                             <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}"></span>
                                         </div>
-                                        <div class="handwriting-line"></div>
                                     </div>
                                     <div style="display:flex; border-top:1px dashed #e4ded4; flex:1;">
                                         <div class="weekly-day-row" style="flex:1; border-right:1px dashed #e4ded4; border-bottom:none;">
@@ -1813,14 +1902,12 @@
                                                 <strong style="font-size:0.72rem;">SÁBADO</strong>
                                                 <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}"></span>
                                             </div>
-                                            <div class="handwriting-line"></div>
                                         </div>
                                         <div class="weekly-day-row" style="flex:1; border-bottom:none;">
                                             <div class="weekly-day-meta">
                                                 <strong style="font-size:0.72rem;">DOMINGO</strong>
                                                 <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}"></span>
                                             </div>
-                                            <div class="handwriting-line"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1831,23 +1918,34 @@
                         ${page.design.bottomSection !== 'none' ? `
                             <div style="display:grid; grid-template-columns:${hasHabits && hasNotes ? '1fr 1fr' : '1fr'}; gap:10px; margin-top:8px;">
                                 ${hasHabits ? `
-                                    <div class="weekly-card-frame" style="padding:6px 8px;">
-                                        <strong style="font-size:0.68rem; text-transform:uppercase;">🌱 HÁBITOS DE LA SEMANA</strong>
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                                            <span style="font-size:0.65rem; color:#777;">Hábito 1: _________________</span>
-                                            <span style="font-size:0.60rem; color:#888;">L M X J V S D</span>
+                                    <div class="weekly-card-frame" style="padding:6px 10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:4px;">
+                                            <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">🌱 HÁBITOS DE LA SEMANA</strong>
+                                            <div style="display:flex; gap:6px; font-size:0.60rem; font-weight:800; color:#777;">
+                                                <span style="width:13px; text-align:center;">L</span>
+                                                <span style="width:13px; text-align:center;">M</span>
+                                                <span style="width:13px; text-align:center;">X</span>
+                                                <span style="width:13px; text-align:center;">J</span>
+                                                <span style="width:13px; text-align:center;">V</span>
+                                                <span style="width:13px; text-align:center;">S</span>
+                                                <span style="width:13px; text-align:center;">D</span>
+                                            </div>
                                         </div>
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                                            <span style="font-size:0.65rem; color:#777;">Hábito 2: _________________</span>
-                                            <span style="font-size:0.60rem; color:#888;">L M X J V S D</span>
-                                        </div>
+                                        ${[1, 2, 3].map(hNum => `
+                                            <div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:${hNum < 3 ? '1px dashed #eee8de' : 'none'};">
+                                                <span style="font-size:0.66rem; color:#555;">Hábito ${hNum}</span>
+                                                <div style="display:flex; gap:6px;">
+                                                    ${['L','M','X','J','V','S','D'].map(() => `
+                                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:13px; height:13px; border-width:1px; border-color:#999;"></span>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                        `).join('')}
                                     </div>
                                 ` : ''}
                                 ${hasNotes ? `
-                                    <div class="weekly-card-frame" style="padding:6px 8px;">
-                                        <strong style="font-size:0.68rem; text-transform:uppercase;">📝 TAREAS SECUNDARIAS / NOTAS</strong>
-                                        <div class="handwriting-line"></div>
-                                        <div class="handwriting-line"></div>
+                                    <div class="weekly-card-frame" style="padding:6px 10px;">
+                                        <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">📝 TAREAS SECUNDARIAS / NOTAS</strong>
                                     </div>
                                 ` : ''}
                             </div>
@@ -1925,23 +2023,18 @@
                                 <div style="border: 1.5px solid #222; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1;">
                                     <strong style="font-size:0.76rem; text-transform:uppercase; color:var(--accent);">1. LA GRAN PRIORIDAD DEL DÍA</strong>
                                     <p style="font-size:0.70rem; color:#777; margin-top:2px;">La única meta que no puede pasar de hoy.</p>
-                                    <div class="handwriting-line" style="margin-top:6px;"></div>
-                                    <div class="handwriting-line"></div>
                                 </div>
                                 <div style="border: 1px solid #d0c8b9; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.2;">
                                     <strong style="font-size:0.74rem; text-transform:uppercase;">2. TAREAS SECUNDARIAS (MÁXIMO 3)</strong>
-                                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+                                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:10px;">
                                         <div style="display:flex; align-items:center; gap:8px;">
                                             <span class="box-marker-square"></span>
-                                            <div class="handwriting-line" style="flex:1;"></div>
                                         </div>
                                         <div style="display:flex; align-items:center; gap:8px;">
                                             <span class="box-marker-square"></span>
-                                            <div class="handwriting-line" style="flex:1;"></div>
                                         </div>
                                         <div style="display:flex; align-items:center; gap:8px;">
                                             <span class="box-marker-square"></span>
-                                            <div class="handwriting-line" style="flex:1;"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1951,17 +2044,11 @@
                             <div style="display:flex; flex-direction:column; gap:10px;">
                                 <div style="border: 1px solid #d0c8b9; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.2;">
                                     <strong style="font-size:0.74rem; text-transform:uppercase;">DESCARGA MENTAL & NOTAS</strong>
-                                    <div class="handwriting-line" style="margin-top:6px;"></div>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
-                                    <div class="handwriting-line"></div>
                                 </div>
                                 <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:10px 12px; flex:1;">
                                     <strong style="font-size:0.74rem; text-transform:uppercase; color:#443c34;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
-                                    <div style="font-size:0.68rem; color:#666; margin-top:4px;">• ¿Qué ha salido bien hoy?</div>
-                                    <div class="handwriting-line"></div>
-                                    <div style="font-size:0.68rem; color:#666; margin-top:4px;">• ¿Qué dejo para mañana sin culpa?</div>
-                                    <div class="handwriting-line"></div>
+                                    <div style="font-size:0.68rem; color:#666; margin-top:6px;">• ¿Qué ha salido bien hoy?</div>
+                                    <div style="font-size:0.68rem; color:#666; margin-top:8px;">• ¿Qué dejo para mañana sin culpa?</div>
                                 </div>
                             </div>
                         </div>
@@ -1975,18 +2062,44 @@
             }
 
             // 9. CUADRÍCULA DE PUNTOS / NOTAS
+            // 9. PÁGINA DE NOTAS (PUNTOS, CUADRITOS, LÍNEAS O BLANCO)
             else if (page.type === 'notes') {
+                const gridStyle = page.design.gridStyle || 'dots';
+                let patternCss = '';
+                let metaLabel = '';
+
+                if (gridStyle === 'dots') {
+                    patternCss = 'background-image: radial-gradient(#887f72 1.2px, transparent 1.2px); background-size: 14px 14px;';
+                    metaLabel = 'PUNTOS · 5 MM';
+                } else if (gridStyle === 'squares') {
+                    patternCss = 'background-image: linear-gradient(to right, #e2dad0 1px, transparent 1px), linear-gradient(to bottom, #e2dad0 1px, transparent 1px); background-size: 14px 14px;';
+                    metaLabel = 'CUADRÍCULA · 5 MM';
+                } else if (gridStyle === 'lines') {
+                    patternCss = 'background-image: repeating-linear-gradient(to bottom, transparent, transparent 19px, #ded7cc 20px);';
+                    metaLabel = 'RENGLONES · 7 MM';
+                } else {
+                    patternCss = 'background-image: none;';
+                    metaLabel = 'PAPEL LISO · BLANCO';
+                }
+
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
                         <div class="page-header-row">
                             <div>
                                 <span class="page-header-kicker">MENOS RUIDO · CUADERNO ANALÓGICO</span>
-                                <span class="page-header-title">Notas & Bocetos Libres</span>
+                                <span class="page-header-title">Notas</span>
                             </div>
-                            <span class="page-header-meta">CUADRÍCULA DE PUNTOS · 5 MM</span>
+                            <span class="page-header-meta">${metaLabel}</span>
                         </div>
 
-                        <div style="flex:1; background-image: radial-gradient(#887f72 1px, transparent 1px); background-size: 14px 14px; border: 1px solid #dfd8cc; border-radius: 4px; margin-top: 6px; background-color: #fff;"></div>
+                        <div style="flex:1; ${patternCss} border: 1px solid #dfd8cc; border-radius: 4px; margin-top: 6px; background-color: #fff; position:relative;"></div>
+
+                        <div style="display:flex; justify-content:center; gap:8px; margin-top:6px;">
+                            <button type="button" class="btn-template-preset ${gridStyle === 'dots' ? 'active' : ''}" style="padding:3px 10px; font-size:0.65rem;" onclick="updateSectionDesign('${page.sectionId}', 'gridStyle', 'dots');">· Puntos</button>
+                            <button type="button" class="btn-template-preset ${gridStyle === 'squares' ? 'active' : ''}" style="padding:3px 10px; font-size:0.65rem;" onclick="updateSectionDesign('${page.sectionId}', 'gridStyle', 'squares');">◻️ Cuadritos</button>
+                            <button type="button" class="btn-template-preset ${gridStyle === 'lines' ? 'active' : ''}" style="padding:3px 10px; font-size:0.65rem;" onclick="updateSectionDesign('${page.sectionId}', 'gridStyle', 'lines');">— Líneas</button>
+                            <button type="button" class="btn-template-preset ${gridStyle === 'blank' ? 'active' : ''}" style="padding:3px 10px; font-size:0.65rem;" onclick="updateSectionDesign('${page.sectionId}', 'gridStyle', 'blank');">⚪ Blanco</button>
+                        </div>
 
                         <div class="sheet-footer">
                             <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
@@ -2199,10 +2312,14 @@
 
             // 2. CALENDARIO ANUAL
             } else if (page.type === 'calendar') {
+                const calDesignMode = page.design.yearMode || 'auto';
+                const calIsBlank = calDesignMode === 'blank' || (calDesignMode === 'auto' && isBlank);
+                const calYear = calDesignMode === '2026' ? 2026 : (calDesignMode === '2027' ? 2027 : year);
+
                 doc.setFont('times', 'bold');
                 doc.setFontSize(14);
                 doc.setTextColor(25, 22, 19);
-                doc.text(`Calendario Anual ${isBlank ? 'Atemporal' : year}`, M, M + 4);
+                doc.text(`Calendario Anual ${calIsBlank ? 'Atemporal' : calYear}`, M, M + 4);
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7);
@@ -2233,7 +2350,7 @@
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(6.5);
                         doc.setTextColor(40, 35, 30);
-                        doc.text(`${months[mIdx]} ${isBlank ? '' : year}`, bX + (colW / 2), bY + 4, { align: 'center' });
+                        doc.text(`${months[mIdx]} ${calIsBlank ? '' : calYear}`, bX + (colW / 2), bY + 4, { align: 'center' });
                         doc.line(bX, bY + 5.5, bX + colW, bY + 5.5);
 
                         doc.setFontSize(5);
@@ -2243,7 +2360,7 @@
                             doc.text(d, bX + (i * daysW) + (daysW / 2), bY + 8, { align: 'center' });
                         });
 
-                        if (isBlank) {
+                        if (calIsBlank) {
                             doc.setTextColor(160, 150, 140);
                             for (let wr = 0; wr < 5; wr++) {
                                 for (let wc = 0; wc < 7; wc++) {
@@ -2251,8 +2368,8 @@
                                 }
                             }
                         } else {
-                            const firstDay = (new Date(year, mIdx, 1).getDay() + 6) % 7;
-                            const totalDays = new Date(year, mIdx + 1, 0).getDate();
+                            const firstDay = (new Date(calYear, mIdx, 1).getDay() + 6) % 7;
+                            const totalDays = new Date(calYear, mIdx + 1, 0).getDate();
                             let cur = 1;
                             doc.setTextColor(30, 25, 20);
                             for (let wr = 0; wr < 6; wr++) {
@@ -2368,15 +2485,40 @@
 
                 doc.setDrawColor(40, 35, 30);
                 doc.setLineWidth(0.25);
+
+                const firstDate = new Date(year, monthIndex, 1);
+                const startCol = (firstDate.getDay() + 6) % 7;
+                const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+                const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
+
                 for (let r = 0; r < 5; r++) {
                     for (let c = 0; c < 7; c++) {
-                        doc.rect(M + (c * cellW), startY + (r * cellH), cellW, cellH);
+                        const cellIdx = (r * 7) + c;
+                        const cellX = M + (c * cellW);
+                        const cellY = startY + (r * cellH);
+
+                        doc.setDrawColor(40, 35, 30);
+                        doc.rect(cellX, cellY, cellW, cellH);
+
                         if (!isBlank) {
-                            const dNum = (r * 7) + c + 1;
-                            if (dNum <= 31) {
+                            if (cellIdx < startCol) {
+                                const dNum = daysInPrevMonth - startCol + 1 + cellIdx;
+                                doc.setFont('helvetica', 'normal');
+                                doc.setFontSize(5);
+                                doc.setTextColor(170, 160, 150);
+                                doc.text(String(dNum), cellX + 2, cellY + 3.5);
+                            } else if (cellIdx < startCol + daysInMonth) {
+                                const dNum = cellIdx - startCol + 1;
                                 doc.setFont('helvetica', 'bold');
                                 doc.setFontSize(6);
-                                doc.text(String(dNum), M + (c * cellW) + 2, startY + (r * cellH) + 3.5);
+                                doc.setTextColor(40, 35, 30);
+                                doc.text(String(dNum), cellX + 2, cellY + 3.5);
+                            } else {
+                                const dNum = cellIdx - (startCol + daysInMonth) + 1;
+                                doc.setFont('helvetica', 'normal');
+                                doc.setFontSize(5);
+                                doc.setTextColor(170, 160, 150);
+                                doc.text(String(dNum), cellX + 2, cellY + 3.5);
                             }
                         }
                     }
@@ -2438,48 +2580,54 @@
                 const nameColW = 52;
                 const daysTotalW = gridW - nameColW;
                 const dayColW = daysTotalW / 31;
-                const rowH = habitCount === 6 ? 12 : (habitCount === 8 ? 9.8 : (habitCount === 12 ? 6.8 : 8.2));
                 const startY = M + 10;
+                const availableH = H - M - startY - 10; // Espacio total disponible hasta el pie
+                // Asignar 80% a la tabla de hábitos y 20% a observaciones (mínimo 12mm)
+                const obsBoxH = Math.max(12, availableH * (habitCount <= 8 ? 0.28 : (habitCount <= 12 ? 0.20 : 0.14)));
+                const tableH = availableH - obsBoxH - 3;
+                const headerH = 5.5;
+                const rowH = (tableH - headerH) / habitCount;
 
                 doc.setDrawColor(40, 35, 30);
                 doc.setLineWidth(0.25);
 
-                doc.rect(M, startY, nameColW, 6);
+                doc.rect(M, startY, nameColW, headerH);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6);
-                doc.text('HÁBITO FUNDAMENTAL', M + 3, startY + 4);
+                doc.text('HÁBITO FUNDAMENTAL', M + 3, startY + 3.8);
 
                 for (let d = 0; d < 31; d++) {
-                    doc.rect(M + nameColW + (d * dayColW), startY, dayColW, 6);
-                    doc.text(String(d + 1), M + nameColW + (d * dayColW) + (dayColW / 2), startY + 4, { align: 'center' });
+                    doc.rect(M + nameColW + (d * dayColW), startY, dayColW, headerH);
+                    doc.text(String(d + 1), M + nameColW + (d * dayColW) + (dayColW / 2), startY + 3.8, { align: 'center' });
                 }
 
                 for (let h = 0; h < habitCount; h++) {
-                    const rY = startY + 6 + (h * rowH);
+                    const rY = startY + headerH + (h * rowH);
                     doc.rect(M, rY, nameColW, rowH);
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6.5);
+                    doc.setFontSize(6);
                     doc.setTextColor(120, 110, 100);
-                    doc.text('· ___________________________', M + 3, rY + (rowH / 2) + 1);
+                    doc.text(`· Hábito ${h + 1}`, M + 3, rY + (rowH / 2) + 1);
 
                     for (let d = 0; d < 31; d++) {
                         doc.rect(M + nameColW + (d * dayColW), rY, dayColW, rowH);
                         const cX = M + nameColW + (d * dayColW) + (dayColW / 2);
                         const cY = rY + (rowH / 2);
                         doc.setDrawColor(100, 90, 80);
+                        const dotR = rowH < 7 ? 1.1 : 1.4;
                         if (isCircle) {
-                            doc.circle(cX, cY, 1.4);
+                            doc.circle(cX, cY, dotR);
                         } else {
-                            doc.rect(cX - 1.4, cY - 1.4, 2.8, 2.8);
+                            doc.rect(cX - dotR, cY - dotR, dotR * 2, dotR * 2);
                         }
                         doc.setDrawColor(40, 35, 30);
                     }
                 }
 
                 // Observaciones
-                const boxY = startY + 6 + (habitCount * rowH) + 3;
+                const boxY = startY + headerH + (habitCount * rowH) + 3;
                 doc.setDrawColor(180, 170, 155);
-                doc.rect(M, boxY, gridW, 14);
+                doc.rect(M, boxY, gridW, obsBoxH);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.5);
                 doc.setTextColor(60, 50, 40);
@@ -2538,18 +2686,15 @@
                         doc.rect(boxX - 2.5, boxY - 2.5, 5.0, 5.0);
                     }
 
-                    // Líneas guía
-                    doc.setDrawColor(230, 225, 218);
-                    doc.line(M + 4, y + 12, M + colW - 6, y + 12);
-                    doc.line(M + 4, y + 18, M + colW - 6, y + 18);
-
                     if (idx < 3) {
+                        doc.setDrawColor(210, 205, 198);
                         doc.line(M, y + dayH1, M + colW, y + dayH1);
                     }
                 });
 
                 // Columna derecha: Foco + Viernes a Domingo
                 const rX = M + colW + 6;
+                doc.setDrawColor(210, 205, 198);
                 doc.rect(rX, startY, colW, bodyH);
 
                 // Foco
@@ -2560,9 +2705,6 @@
                 doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
                 doc.text('FOCO DE LA SEMANA (META CLAVE)', rX + 4, startY + 4.5);
-                doc.setDrawColor(230, 225, 218);
-                doc.line(rX + 4, startY + 12, rX + colW - 6, startY + 12);
-                doc.line(rX + 4, startY + 18, rX + colW - 6, startY + 18);
 
                 // Viernes
                 const yViernes = startY + focoH;
@@ -2571,7 +2713,7 @@
                 doc.text('VIERNES', rX + 4, yViernes + 4.5);
                 if (isCircle) doc.circle(rX + colW - 6.0, yViernes + 4.2, 2.5);
                 else doc.rect(rX + colW - 8.5, yViernes + 1.7, 5.0, 5.0);
-                doc.line(rX + 4, yViernes + 12, rX + colW - 6, yViernes + 12);
+                doc.setDrawColor(210, 205, 198);
                 doc.line(rX, yViernes + dayH1, rX + colW, yViernes + dayH1);
 
                 // Sábado & Domingo
@@ -2597,24 +2739,37 @@
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(6.8);
                         doc.text('HÁBITOS DE LA SEMANA', M + 4, botY + 4.5);
+
+                        // Cabecera L M X J V S D
+                        doc.setFontSize(5.5);
+                        doc.setTextColor(110, 100, 90);
+                        ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach((d, di) => {
+                            doc.text(d, M + colW - 27 + (di * 3.8), botY + 4.5, { align: 'center' });
+                        });
+
                         for (let hb = 0; hb < 3; hb++) {
-                            const hy = botY + 10 + (hb * 7);
+                            const hy = botY + 11 + (hb * 7);
                             doc.setFont('helvetica', 'normal');
                             doc.setFontSize(6);
-                            doc.text(`Hábito ${hb + 1}: _______________`, M + 4, hy);
+                            doc.setTextColor(60, 55, 50);
+                            doc.text(`Hábito ${hb + 1}`, M + 4, hy);
+                            doc.setDrawColor(120, 110, 100);
                             ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach((d, di) => {
-                                doc.circle(M + colW - 25 + (di * 3.5), hy - 1, 1.2);
+                                const dotX = M + colW - 27 + (di * 3.8);
+                                if (isCircle) {
+                                    doc.circle(dotX, hy - 1, 1.3);
+                                } else {
+                                    doc.rect(dotX - 1.3, hy - 2.3, 2.6, 2.6);
+                                }
                             });
                         }
 
+                        doc.setDrawColor(210, 205, 198);
                         doc.rect(rX, botY, colW, botH);
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(6.8);
+                        doc.setTextColor(30, 25, 20);
                         doc.text('TAREAS SECUNDARIAS / NOTAS', rX + 4, botY + 4.5);
-                        doc.setDrawColor(230, 225, 218);
-                        for (let n = 0; n < 3; n++) {
-                            doc.line(rX + 4, botY + 11 + (n * 7), rX + colW - 4, botY + 11 + (n * 7));
-                        }
                     }
                 }
 
@@ -2750,17 +2905,23 @@
                 doc.text('• ¿Qué dejo para mañana sin culpa?', M + 10 + colW, startY + 97);
                 doc.line(M + 10 + colW, startY + 104, M + (colW * 2) + 2, startY + 104);
 
-            // 9. CUADRÍCULA DE PUNTOS / NOTAS
+            // 9. PÁGINA DE NOTAS (PUNTOS, CUADRITOS, LÍNEAS O BLANCO)
             } else if (page.type === 'notes') {
+                const gridStyle = page.design.gridStyle || 'dots';
+                let metaLabel = 'PUNTOS · 5 MM';
+                if (gridStyle === 'squares') metaLabel = 'CUADRÍCULA · 5 MM';
+                else if (gridStyle === 'lines') metaLabel = 'RENGLONES · 7 MM';
+                else if (gridStyle === 'blank') metaLabel = 'PAPEL LISO · BLANCO';
+
                 doc.setFont('times', 'bold');
                 doc.setFontSize(14);
                 doc.setTextColor(25, 22, 19);
-                doc.text('Notas & Bocetos Libres', M, M + 4);
+                doc.text('Notas', M, M + 4);
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7);
                 doc.setTextColor(135, 85, 59);
-                doc.text('CUADRÍCULA DE PUNTOS · 5 MM', W - M, M + 4, { align: 'right' });
+                doc.text(metaLabel, W - M, M + 4, { align: 'right' });
 
                 doc.setLineWidth(0.4);
                 doc.setDrawColor(30, 25, 20);
@@ -2771,12 +2932,32 @@
                 const endX = W - M - 2;
                 const endY = H - M - 6;
 
-                doc.setFillColor(140, 130, 120);
-                for (let y = startY; y <= endY; y += 5) {
+                if (gridStyle === 'dots') {
+                    doc.setFillColor(140, 130, 120);
+                    for (let y = startY; y <= endY; y += 5) {
+                        for (let x = startX; x <= endX; x += 5) {
+                            doc.circle(x, y, 0.25, 'F');
+                        }
+                    }
+                } else if (gridStyle === 'squares') {
+                    doc.setDrawColor(220, 214, 204);
+                    doc.setLineWidth(0.18);
+                    // Líneas verticales
                     for (let x = startX; x <= endX; x += 5) {
-                        doc.circle(x, y, 0.25, 'F');
+                        doc.line(x, startY, x, endY);
+                    }
+                    // Líneas horizontales
+                    for (let y = startY; y <= endY; y += 5) {
+                        doc.line(startX, y, endX, y);
+                    }
+                } else if (gridStyle === 'lines') {
+                    doc.setDrawColor(215, 208, 198);
+                    doc.setLineWidth(0.2);
+                    for (let y = startY; y <= endY; y += 7) {
+                        doc.line(startX, y, endX, y);
                     }
                 }
+                // Si gridStyle === 'blank', no dibujamos tramas para dejar el papel liso
             }
         }
 
