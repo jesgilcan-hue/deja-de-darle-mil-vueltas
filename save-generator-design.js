@@ -221,8 +221,7 @@ function openUnsavedWarningModal(targetUrl) {
   });
 
   saveAndLeaveBtn?.addEventListener('click', async () => {
-    saveAndLeaveBtn.disabled = true;
-    saveAndLeaveBtn.innerHTML = '<span>⏳</span> Guardando...';
+    closeModal();
 
     let user = auth.currentUser;
     if (!user && typeof auth.authStateReady === 'function') {
@@ -232,48 +231,18 @@ function openUnsavedWarningModal(targetUrl) {
       } catch (e) {}
     }
 
+    const currentDraft = currentGeneratorGetter ? currentGeneratorGetter() : {};
+
     if (!user) {
       try {
-        const currentDraft = currentGeneratorGetter ? currentGeneratorGetter() : {};
         window.localStorage.setItem('mr_pending_save_design', JSON.stringify(currentDraft));
         window.localStorage.setItem('mr_auth_return_url', targetUrl);
       } catch (e) {}
-      closeModal();
       openAuthModal();
       return;
     }
 
-    try {
-      const currentDraft = currentGeneratorGetter ? currentGeneratorGetter() : {};
-      if (currentActiveDesign) {
-        const designDocRef = doc(db, 'users', user.uid, 'designs', currentActiveDesign.id);
-        await updateDoc(designDocRef, {
-          summary: currentDraft.summary || '',
-          editUrl: window.location.pathname,
-          data: currentDraft.data || {},
-          updatedAt: serverTimestamp()
-        });
-      } else {
-        const designsRef = collection(db, 'users', user.uid, 'designs');
-        await addDoc(designsRef, {
-          name: currentDraft.name || 'Planificador Personalizado',
-          type: currentDraft.type || 'Planificador',
-          summary: currentDraft.summary || '',
-          editUrl: window.location.pathname,
-          data: currentDraft.data || {},
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-      }
-      hasUnsavedChanges = false;
-      closeModal();
-      window.location.href = targetUrl;
-    } catch (err) {
-      console.error('Error al guardar y salir:', err);
-      notifyToast('No se pudieron guardar los cambios.');
-      saveAndLeaveBtn.disabled = false;
-      saveAndLeaveBtn.innerHTML = '<span>💾</span> Guardar cambios y salir';
-    }
+    await triggerSaveFlow(null, currentDraft, user, targetUrl);
   });
 }
 
@@ -408,11 +377,13 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
   });
 }
 
-async function triggerSaveFlow(btn, currentDesign, user) {
-  let originalText = btn.innerHTML;
+async function triggerSaveFlow(btn, currentDesign, user, redirectAfterUrl = null) {
+  let originalText = btn ? btn.innerHTML : '';
   try {
-    btn.disabled = true;
-    btn.innerHTML = '<span>⏳</span> Consultando...';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Consultando...';
+    }
 
     const currentType = currentDesign.type || 'Planificador Semanal';
 
@@ -442,21 +413,25 @@ async function triggerSaveFlow(btn, currentDesign, user) {
       });
     }
 
-    btn.disabled = false;
-    btn.innerHTML = originalText;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
 
     // Abrir modal de selección
-    openSaveChoiceModal(currentDesign, existingDesigns, user);
+    openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfterUrl);
 
   } catch (err) {
     console.error('Error al preparar guardado:', err);
     notifyToast('No se pudieron cargar tus diseños. Inténtalo de nuevo.');
-    btn.disabled = false;
-    btn.innerHTML = originalText || '<span>💾</span> Guardar en Mi Espacio';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText || '<span>💾</span> Guardar en Mi Espacio';
+    }
   }
 }
 
-function openSaveChoiceModal(currentDesign, existingDesigns, user) {
+function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfterUrl = null) {
   let modalOverlay = document.getElementById('save-choice-modal-overlay');
   if (modalOverlay) modalOverlay.remove();
 
@@ -554,6 +529,11 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user) {
       hasUnsavedChanges = false;
       modalOverlay.remove();
       notifyToast(`✓ "${finalName}" guardado en Mi Espacio`);
+      if (redirectAfterUrl) {
+        setTimeout(() => {
+          window.location.href = redirectAfterUrl;
+        }, 400);
+      }
     } catch (err) {
       console.error('Error al guardar nuevo diseño:', err);
       notifyToast('Error al guardar el nuevo diseño.');
@@ -590,6 +570,11 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user) {
         hasUnsavedChanges = false;
         modalOverlay.remove();
         notifyToast(`✓ "${targetName}" sobrescrito y actualizado`);
+        if (redirectAfterUrl) {
+          setTimeout(() => {
+            window.location.href = redirectAfterUrl;
+          }, 400);
+        }
       } catch (err) {
         console.error('Error al sobrescribir diseño:', err);
         notifyToast('Error al actualizar el diseño.');
