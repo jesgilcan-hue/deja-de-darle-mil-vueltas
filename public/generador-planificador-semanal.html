@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1151,6 +1151,9 @@
         </div>
 
         <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-save-generator-design" title="Guardar diseño en Mi Espacio">
+                <span>💾</span> Guardar en Mi Espacio
+            </button>
             <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
                 <span>📥</span> Descargar PDF
             </button>
@@ -2408,5 +2411,25 @@
         }
     </script>
     <script type="module" src="./main.js"></script>
+    <script type="module">
+        import { setupGeneratorSave } from './save-generator-design.js';
+
+        setupGeneratorSave('btn-save-generator-design', () => {
+            const rawWeek = (document.getElementById('field-week-num') ? document.getElementById('field-week-num').value : '').trim();
+            const rawDates = (document.getElementById('field-dates') ? document.getElementById('field-dates').value : '').trim();
+            const rawFocus = (document.getElementById('field-weekly-focus') ? document.getElementById('field-weekly-focus').value : '').trim();
+            
+            return {
+                name: rawWeek ? `Planificador Semanal · ${rawWeek}` : 'Planificador Semanal Personalizado',
+                type: 'Planificador Semanal',
+                summary: rawFocus ? `Foco: "${rawFocus}" (${rawDates || 'Sin fechas'})` : (rawDates || 'Diseño semanal a medida'),
+                data: {
+                    week: rawWeek,
+                    dates: rawDates,
+                    focus: rawFocus
+                }
+            };
+        });
+    </script>
 </body>
 </html>
