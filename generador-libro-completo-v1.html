@@ -1976,6 +1976,24 @@
                         totalPagesInSection: 1,
                         design: coverSec.design || {}
                     });
+
+                    // Páginas institucionales: Editorial (Pág. 2) e Índice (Pág. 3)
+                    generatedPageList.push({
+                        type: 'editorial',
+                        sectionId: 'editorial',
+                        sectionName: 'Editorial Menos Ruido · Manifiesto',
+                        pageIndexInSection: 0,
+                        totalPagesInSection: 1,
+                        design: {}
+                    });
+                    generatedPageList.push({
+                        type: 'index',
+                        sectionId: 'index',
+                        sectionName: 'Índice del Planificador',
+                        pageIndexInSection: 0,
+                        totalPagesInSection: 1,
+                        design: {}
+                    });
                 }
 
                 // 2. Calendario Anual si está activo
@@ -2135,12 +2153,52 @@
                     }
                 }
 
+                // Página final institucional de gratitud
+                generatedPageList.push({
+                    type: 'gratitude',
+                    sectionId: 'gratitude',
+                    sectionName: 'Cierre & Gratitud · Menos Ruido',
+                    pageIndexInSection: 0,
+                    totalPagesInSection: 1,
+                    design: {}
+                });
+
             } else {
                 // ========================================================
                 // MODO BLOQUES CONTINUOS (Estándar agrupado)
                 // ========================================================
                 bookConfig.sections.forEach(sec => {
                     if (!sec.active) return;
+
+                    if (sec.type === 'cover') {
+                        generatedPageList.push({
+                            type: 'cover',
+                            sectionId: 'cover',
+                            sectionName: sec.name,
+                            pageIndexInSection: 0,
+                            totalPagesInSection: 1,
+                            design: sec.design || {}
+                        });
+                        // Páginas institucionales: Editorial (Pág. 2) e Índice (Pág. 3)
+                        generatedPageList.push({
+                            type: 'editorial',
+                            sectionId: 'editorial',
+                            sectionName: 'Editorial Menos Ruido · Manifiesto',
+                            pageIndexInSection: 0,
+                            totalPagesInSection: 1,
+                            design: {}
+                        });
+                        generatedPageList.push({
+                            type: 'index',
+                            sectionId: 'index',
+                            sectionName: 'Índice del Planificador',
+                            pageIndexInSection: 0,
+                            totalPagesInSection: 1,
+                            design: {}
+                        });
+                        return;
+                    }
+
                     if (sec.type === 'calendar' && sec.design && sec.design.yearMode === 'both') {
                         generatedPageList.push({
                             type: 'calendar',
@@ -2174,6 +2232,16 @@
                             design: sec.design || {}
                         });
                     }
+                });
+
+                // Página final institucional de gratitud
+                generatedPageList.push({
+                    type: 'gratitude',
+                    sectionId: 'gratitude',
+                    sectionName: 'Cierre & Gratitud · Menos Ruido',
+                    pageIndexInSection: 0,
+                    totalPagesInSection: 1,
+                    design: {}
                 });
             }
 
@@ -2464,7 +2532,71 @@
                         </div>
                     </div>
                     <div class="sheet-footer">
-                        <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
+                        <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
+                        <span>editorialmenosruido.com · Pág. ${pageNum}</span>
+                    </div>
+                `;
+            }
+
+            // PÁGINA 2: EDITORIAL MENOS RUIDO · MANIFIESTO
+            else if (page.type === 'editorial') {
+                pageCanvas.innerHTML = `
+                    <div style="height:100%; display:flex; flex-direction:column; justify-content:space-between; padding: 10px 20px;">
+                        <div>
+                            <span class="page-header-kicker" style="color:var(--accent); font-weight:800; font-size:0.75rem; letter-spacing:1px; display:block; margin-bottom:8px;">EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO</span>
+                            <h2 style="font-family:'Times New Roman', serif; font-size:1.6rem; color:#222; margin-bottom:14px; font-weight:700;">Menos ruido mental, más profundidad y presencia.</h2>
+                            <p style="font-size:0.86rem; line-height:1.6; color:#4a4239; margin-bottom:12px;">Vivimos en un entorno diseñado para fragmentar nuestra atención. Notificaciones constantes, listas interminables y una prisa constante por llegar a ninguna parte nos alejan de lo que verdaderamente merece nuestra energía.</p>
+                            <p style="font-size:0.86rem; line-height:1.6; color:#4a4239; margin-bottom:16px;">Este cuaderno no es una agenda más para saturarte de tareas. Es un filtro analógico: un espacio deliberado de calma donde cada mañana eliges una sola prioridad y cada noche cierras el día con agradecimiento y serenidad.</p>
+                            
+                            <div style="background:#faf8f5; border:1px solid #e2dacd; border-radius:8px; padding:12px 18px; margin-top:8px;">
+                                <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--accent); margin-bottom:8px; letter-spacing:0.5px;">LOS TRES PRINCIPIOS DE MENOS RUIDO</div>
+                                <div style="font-size:0.80rem; color:#3a3229; line-height:1.5; display:flex; flex-direction:column; gap:6px;">
+                                    <div><strong>1. Un solo foco cada vez:</strong> Si tienes más de tres prioridades, no tienes ninguna. Protege tu atención.</div>
+                                    <div><strong>2. El papel como filtro natural:</strong> La fricción de escribir a mano te obliga a pensar antes de registrar.</div>
+                                    <div><strong>3. La constancia sobre la velocidad:</strong> Un pequeño paso deliberado cada día construye vidas plenas.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end; border-top:1px solid #e7e0d4; padding-top:12px;">
+                            <div>
+                                <div style="font-size:0.75rem; font-weight:700; color:#2c2520;">Editorial Menos Ruido</div>
+                                <div style="font-size:0.70rem; color:#7a7065;">Papelería analógica para pensar con calma</div>
+                            </div>
+                            <div style="font-size:0.72rem; color:var(--accent); font-weight:600;">editorialmenosruido.com</div>
+                        </div>
+                    </div>
+                    <div class="sheet-footer">
+                        <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
+                        <span>editorialmenosruido.com · Pág. ${pageNum}</span>
+                    </div>
+                `;
+            }
+
+            // PÁGINA 3: ÍNDICE DE CONTENIDOS DEL CUADERNO
+            else if (page.type === 'index') {
+                pageCanvas.innerHTML = `
+                    <div style="height:100%; display:flex; flex-direction:column; justify-content:space-between; padding: 8px 16px;">
+                        <div>
+                            <div class="page-header-row" style="margin-bottom:12px;">
+                                <div>
+                                    <span class="page-header-kicker">EDITORIAL MENOS RUIDO · SUMARIO DEL CUADERNO</span>
+                                    <span class="page-header-title">Índice de Contenidos</span>
+                                </div>
+                                <span class="page-header-meta">${total} PÁGINAS COMPILADAS</span>
+                            </div>
+
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; margin-top:8px;">
+                                ${generatePrintIndexHtml()}
+                            </div>
+                        </div>
+
+                        <div style="font-size:0.70rem; color:#888; font-style:italic; text-align:center; padding-top:8px; border-top:1px solid #ede7dc;">
+                            Utiliza este índice para orientar tus ciclos de enfoque, semanas y meses de trabajo consciente.
+                        </div>
+                    </div>
+                    <div class="sheet-footer">
+                        <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
                         <span>editorialmenosruido.com · Pág. ${pageNum}</span>
                     </div>
                 `;
@@ -2888,41 +3020,66 @@
                             <span class="page-header-meta">${dayInfo.meta}</span>
                         </div>
 
-                        <div class="daily-sheet-split">
-                            <!-- MITAD IZQUIERDA: PRIORIDAD + SECUNDARIAS -->
-                            <div style="display:flex; flex-direction:column; gap:10px;">
-                                <div style="border: 1.5px solid #222; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1;">
-                                    <strong style="font-size:0.76rem; text-transform:uppercase; color:var(--accent);">1. LA GRAN PRIORIDAD DEL DÍA</strong>
+                        <div class="daily-sheet-split" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; flex:1;">
+                            <!-- COLUMNA IZQUIERDA: PRIORIDAD + SECUNDARIAS + HÁBITOS CLAVE -->
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <!-- 1. La Gran Prioridad del Día -->
+                                <div style="border: 1.5px solid #222; border-radius: 6px; padding: 8px 10px; background: #fff; flex: 1; display:flex; flex-direction:column;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                        <strong style="font-size:0.72rem; text-transform:uppercase; color:var(--accent);">1. LA GRAN PRIORIDAD DEL DÍA</strong>
+                                        <span class="box-marker-circle" style="width:16px; height:16px;"></span>
+                                    </div>
+                                    <div style="flex:1;"></div>
                                 </div>
-                                <div style="border: 1px solid #d0c8b9; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.2;">
-                                    <strong style="font-size:0.74rem; text-transform:uppercase;">2. TAREAS SECUNDARIAS (MÁXIMO 3)</strong>
-                                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:10px;">
+
+                                <!-- 2. Tareas Secundarias (Máximo 3) -->
+                                <div style="border: 1px solid #d0c8b9; border-radius: 6px; padding: 8px 10px; background: #fff; flex: 1.2; display:flex; flex-direction:column;">
+                                    <strong style="font-size:0.70rem; text-transform:uppercase; margin-bottom:6px; color:#333;">2. TAREAS SECUNDARIAS (MÁXIMO 3)</strong>
+                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <span class="box-marker-square"></span>
+                                            <span class="box-marker-square" style="width:14px; height:14px;"></span>
                                         </div>
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <span class="box-marker-square"></span>
+                                            <span class="box-marker-square" style="width:14px; height:14px;"></span>
                                         </div>
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <span class="box-marker-square"></span>
+                                            <span class="box-marker-square" style="width:14px; height:14px;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Hábitos Clave del Día -->
+                                <div style="border: 1px solid #d0c8b9; border-radius: 6px; padding: 8px 10px; background: #fff; flex: 1.1; display:flex; flex-direction:column;">
+                                    <strong style="font-size:0.70rem; text-transform:uppercase; margin-bottom:6px; color:#333;">3. HÁBITOS CLAVE DEL DÍA</strong>
+                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span class="box-marker-circle" style="width:14px; height:14px;"></span>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span class="box-marker-circle" style="width:14px; height:14px;"></span>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span class="box-marker-circle" style="width:14px; height:14px;"></span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- MITAD DERECHA: DESCARGA MENTAL + CIERRE NOCTURNO -->
-                            <div style="display:flex; flex-direction:column; gap:10px;">
-                                <div style="border: 1px solid #d0c8b9; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.2;">
-                                    <strong style="font-size:0.74rem; text-transform:uppercase;">DESCARGA MENTAL & NOTAS</strong>
+                            <!-- COLUMNA DERECHA: DESCARGA MENTAL + REFLEXIÓN DE CIERRE NOCTURNO -->
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <div style="border: 1px solid #d0c8b9; border-radius: 6px; padding: 8px 10px; background: #fff; flex: 1.4; display:flex; flex-direction:column;">
+                                    <strong style="font-size:0.70rem; text-transform:uppercase; color:#333; margin-bottom:6px;">DESCARGA MENTAL & NOTAS RÁPIDAS</strong>
+                                    <div style="flex:1;"></div>
                                 </div>
-                                <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:10px 12px; flex:1;">
-                                    <strong style="font-size:0.74rem; text-transform:uppercase; color:#443c34;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
+                                <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:8px 10px; flex:1; display:flex; flex-direction:column;">
+                                    <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent); margin-bottom:6px;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
+                                    <div style="flex:1;"></div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="sheet-footer">
-                            <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
+                            <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
                             <span>editorialmenosruido.com · Pág. ${pageNum}</span>
                         </div>
                     </div>
@@ -2962,9 +3119,29 @@
                         <div style="flex:1; ${patternCss} border: 1px solid #dfd8cc; border-radius: 4px; margin-top: 6px; background-color: #fff; position:relative;"></div>
 
                         <div class="sheet-footer">
-                            <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
+                            <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
                             <span>editorialmenosruido.com · Pág. ${pageNum}</span>
                         </div>
+                    </div>
+                `;
+            }
+
+            // 10. PÁGINA FINAL INSTITUCIONAL DE GRATITUD
+            else if (page.type === 'gratitude') {
+                pageCanvas.innerHTML = `
+                    <div style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding: 20px 40px;">
+                        <span class="page-header-kicker" style="color:var(--accent); font-weight:800; font-size:0.75rem; letter-spacing:1px; margin-bottom:12px;">EDITORIAL MENOS RUIDO · CIERRE DEL CUADERNO</span>
+                        <h2 style="font-family:'Times New Roman', serif; font-size:1.8rem; color:#222; margin-bottom:16px; font-weight:700;">Gracias por habernos elegido</h2>
+                        <p style="font-size:0.92rem; line-height:1.6; color:#4a4239; max-width:540px; margin-bottom:16px;">Has completado o configurado este cuaderno con un propósito claro: proteger tu mente de la dispersión digital y dedicar tu tiempo a lo que verdaderamente importa.</p>
+                        <p style="font-size:0.86rem; line-height:1.6; color:#605548; max-width:520px; margin-bottom:24px;">Esperamos que cada página en blanco haya sido un refugio de calma, claridad y constancia silenciosa. Recuerda que la vida no se mide por la velocidad con la que tachas tareas, sino por la profundidad con la que las vives.</p>
+                        
+                        <div style="border-top:1px solid #dfd7cb; width:220px; margin-bottom:16px;"></div>
+                        <div style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.95rem; color:#2e2621; margin-bottom:4px;">Editorial Menos Ruido</div>
+                        <div style="font-size:0.74rem; color:var(--accent); font-weight:600;">editorialmenosruido.com</div>
+                    </div>
+                    <div class="sheet-footer">
+                        <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
+                        <span>editorialmenosruido.com · Pág. ${pageNum}</span>
                     </div>
                 `;
             }
@@ -3016,6 +3193,100 @@
                 html += `</tbody></table></div>`;
             }
             return html;
+        }
+
+        // GENERACIÓN FORMAL DE LÍNEAS DE ÍNDICE PARA LA PÁGINA 3 (HTML Y PDF)
+        function getBookIndexSummaryEntries() {
+            const entries = [];
+            let lastSecKey = null;
+            let curEntry = null;
+
+            generatedPageList.forEach((pg, idx) => {
+                const pageNum = idx + 1;
+                // Agrupamos portada, editorial, índice
+                let groupKey = pg.type;
+                let groupLabel = pg.sectionName;
+
+                if (pg.type === 'cover') {
+                    groupKey = 'cover';
+                    groupLabel = 'Portada Interior & Dedicatoria';
+                } else if (pg.type === 'editorial') {
+                    groupKey = 'editorial';
+                    groupLabel = 'Manifiesto Editorial Menos Ruido';
+                } else if (pg.type === 'index') {
+                    groupKey = 'index';
+                    groupLabel = 'Índice de Contenidos';
+                } else if (pg.type === 'gratitude') {
+                    groupKey = 'gratitude';
+                    groupLabel = 'Cierre & Gratitud Editorial';
+                } else if (pg.type === 'calendar') {
+                    groupKey = 'calendar_' + (pg.calendarYear || 'cal');
+                    groupLabel = `Calendario Anual (${pg.calendarYear || bookConfig.year})`;
+                } else if (pg.type === 'annual') {
+                    groupKey = 'annual';
+                    groupLabel = 'Planificador Anual Estratégico (Trimestres)';
+                } else if (pg.type === 'monthly') {
+                    const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                    const mName = (pg.monthIndex !== undefined && mNames[pg.monthIndex]) ? mNames[pg.monthIndex] : `Mes ${pg.pageIndexInSection + 1}`;
+                    groupKey = 'monthly_' + pg.monthIndex;
+                    groupLabel = bookConfig.layoutMode === 'alterno' ? `Ciclo Mensual · ${mName}` : `Planificador Mensual (${mName})`;
+                } else if (pg.type === 'habits') {
+                    const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                    const mName = (pg.monthIndex !== undefined && mNames[pg.monthIndex]) ? mNames[pg.monthIndex] : `Mes ${pg.pageIndexInSection + 1}`;
+                    groupKey = 'habits_' + pg.monthIndex;
+                    groupLabel = `Rastreador de Hábitos (${mName})`;
+                } else if (pg.type === 'weekly') {
+                    groupKey = bookConfig.layoutMode === 'alterno' ? ('weekly_block_' + Math.floor(pg.pageIndexInSection / 4)) : 'weekly_all';
+                    groupLabel = bookConfig.layoutMode === 'alterno' ? `Semanas de Enfoque (Semana ${pg.weekNum})` : `Planificador Semanal (${pg.totalPagesInSection} semanas)`;
+                } else if (pg.type === 'daily') {
+                    groupKey = bookConfig.layoutMode === 'alterno' ? ('daily_block_' + Math.floor(pg.pageIndexInSection / 7)) : 'daily_all';
+                    groupLabel = bookConfig.layoutMode === 'alterno' ? `Bitácoras Diarias` : `Bitácora Diaria (${pg.totalPagesInSection} días)`;
+                } else if (pg.type === 'hourly') {
+                    groupKey = 'hourly_all';
+                    groupLabel = `Planificador Horario Semanal`;
+                } else if (pg.type === 'notes') {
+                    groupKey = 'notes_all';
+                    groupLabel = `Páginas de Notas & Reflexión Libre`;
+                }
+
+                if (groupKey === lastSecKey && curEntry) {
+                    curEntry.endPage = pageNum;
+                    curEntry.count++;
+                } else {
+                    if (curEntry) entries.push(curEntry);
+                    curEntry = {
+                        key: groupKey,
+                        label: groupLabel,
+                        startPage: pageNum,
+                        endPage: pageNum,
+                        count: 1
+                    };
+                    lastSecKey = groupKey;
+                }
+            });
+            if (curEntry) entries.push(curEntry);
+            return entries;
+        }
+
+        function generatePrintIndexHtml() {
+            const entries = getBookIndexSummaryEntries();
+            if (entries.length === 0) return '<div style="color:#888;">No hay secciones configuradas.</div>';
+
+            const half = Math.ceil(entries.length / 2);
+            const col1 = entries.slice(0, half);
+            const col2 = entries.slice(half);
+
+            const renderCol = (list) => list.map(e => `
+                <div style="display:flex; justify-content:space-between; align-items:baseline; padding:4px 0; border-bottom:1px dotted #dfd6c8; font-size:0.75rem;">
+                    <span style="color:#2c2520; font-weight:600; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:80%;">${escapeHtml(e.label)}</span>
+                    <span style="color:var(--accent); font-weight:700; font-size:0.72rem;">${e.startPage === e.endPage ? 'pág. ' + e.startPage : 'págs. ' + e.startPage + '-' + e.endPage}</span>
+                </div>
+            `).join('');
+
+            return `
+                <div style="display:flex; flex-direction:column; gap:4px;">${renderCol(col1)}</div>
+                <div style="display:flex; flex-direction:column; gap:4px;">${renderCol(col2)}</div>
+            `;
         }
 
         // =========================================================================
@@ -3155,6 +3426,9 @@
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             let label = p.sectionName;
             if (p.type === 'cover') label = 'Portada Interior & Dedicatoria';
+            else if (p.type === 'editorial') label = 'Editorial Menos Ruido · Manifiesto Analógico';
+            else if (p.type === 'index') label = 'Índice de Contenidos del Libro';
+            else if (p.type === 'gratitude') label = 'Gracias por habernos elegido · Cierre';
             else if (p.type === 'calendar') label = `Calendario Anual (${p.calendarYear || bookConfig.year})`;
             else if (p.type === 'annual') label = `Planificador Anual Estratégico · Trimestres`;
             else if (p.type === 'monthly') {
@@ -3313,7 +3587,7 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.5);
             doc.setTextColor(140, 131, 120);
-            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN', M, H - 7);
+            doc.text('MENOS RUIDO · PLANIFICADOR PERSONALIZADO', M, H - 7);
             doc.text(`editorialmenosruido.com · Pág. ${pageNum}`, W - M, H - 7, { align: 'right' });
 
             // 1. PORTADA INTERIOR
@@ -3376,6 +3650,149 @@
                 const dedLines = doc.splitTextToSize(`«${bookConfig.dedication}»`, fieldW + 12);
                 doc.text(dedLines, W / 2, dedY + 6.5, { align: 'center' });
 
+            // PÁGINA 2: EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO
+            } else if (page.type === 'editorial') {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text('EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO', M + 5, M + 10);
+
+                doc.setFont('times', 'bold');
+                doc.setFontSize(18);
+                doc.setTextColor(25, 22, 19);
+                doc.text('Menos ruido mental, más profundidad y presencia.', M + 5, M + 20);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(65, 58, 52);
+                const p1 = 'Vivimos en un entorno diseñado para fragmentar nuestra atención. Notificaciones constantes, listas interminables y una prisa constante por llegar a ninguna parte nos alejan de lo que verdaderamente merece nuestra energía.';
+                const p1Lines = doc.splitTextToSize(p1, W - (M * 2) - 10);
+                doc.text(p1Lines, M + 5, M + 29);
+
+                const p2 = 'Este cuaderno no es una agenda más para saturarte de tareas. Es un filtro analógico: un espacio deliberado de calma donde cada mañana eliges una sola prioridad y cada noche cierras el día con agradecimiento y serenidad.';
+                const p2Lines = doc.splitTextToSize(p2, W - (M * 2) - 10);
+                doc.text(p2Lines, M + 5, M + 44);
+
+                // Recuadro de los 3 principios
+                const boxY = M + 60;
+                const boxW = W - (M * 2) - 10;
+                doc.setFillColor(250, 248, 244);
+                doc.setDrawColor(220, 212, 200);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(M + 5, boxY, boxW, 44, 2, 2, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7);
+                doc.setTextColor(135, 85, 59);
+                doc.text('LOS TRES PRINCIPIOS DE MENOS RUIDO', M + 11, boxY + 7);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(40, 35, 30);
+                doc.text('1. Un solo foco cada vez:', M + 11, boxY + 15);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Si tienes más de tres prioridades, no tienes ninguna. Protege tu atención.', M + 46, boxY + 15);
+
+                doc.setFont('helvetica', 'bold');
+                doc.text('2. El papel como filtro natural:', M + 11, boxY + 24);
+                doc.setFont('helvetica', 'normal');
+                doc.text('La fricción de escribir a mano te obliga a pensar antes de registrar.', M + 52, boxY + 24);
+
+                doc.setFont('helvetica', 'bold');
+                doc.text('3. La constancia sobre la velocidad:', M + 11, boxY + 33);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Un pequeño paso deliberado cada día construye vidas plenas.', M + 58, boxY + 33);
+
+                // Cierre inferior de página
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.2);
+                doc.line(M + 5, H - 22, W - M - 5, H - 22);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(40, 35, 30);
+                doc.text('Editorial Menos Ruido', M + 5, H - 16);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.8);
+                doc.setTextColor(120, 110, 100);
+                doc.text('Papelería analógica para pensar con calma', M + 5, H - 12);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.2);
+                doc.setTextColor(135, 85, 59);
+                doc.text('editorialmenosruido.com', W - M - 5, H - 14, { align: 'right' });
+
+            // PÁGINA 3: ÍNDICE DE CONTENIDOS DEL CUADERNO
+            } else if (page.type === 'index') {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text('EDITORIAL MENOS RUIDO · SUMARIO DEL CUADERNO', M, M + 2.5);
+
+                doc.setFont('times', 'bold');
+                doc.setFontSize(15.5);
+                doc.setTextColor(20, 18, 16);
+                doc.text('Índice de Contenidos', M, M + 8.5);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8.0);
+                doc.setTextColor(70, 65, 60);
+                doc.text(`${total} PÁGINAS COMPILADAS`, W - M, M + 8.2, { align: 'right' });
+
+                doc.setLineWidth(0.35);
+                doc.setDrawColor(30, 25, 20);
+                doc.line(M, M + 10.5, W - M, M + 10.5);
+
+                const entries = getBookIndexSummaryEntries();
+                const half = Math.ceil(entries.length / 2);
+                const col1 = entries.slice(0, half);
+                const col2 = entries.slice(half);
+
+                const gridW = W - (M * 2);
+                const colGap = 12;
+                const colW = (gridW - colGap) / 2;
+                const startY = M + 16;
+                const lineH = 5.6;
+
+                // Columna 1
+                col1.forEach((e, i) => {
+                    const y = startY + (i * lineH);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(40, 35, 30);
+                    doc.text(e.label, M, y);
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    const pRange = e.startPage === e.endPage ? `Pág. ${e.startPage}` : `Págs. ${e.startPage}-${e.endPage}`;
+                    doc.text(pRange, M + colW, y, { align: 'right' });
+
+                    doc.setDrawColor(230, 225, 218);
+                    doc.setLineWidth(0.12);
+                    doc.line(M, y + 1.2, M + colW, y + 1.2);
+                });
+
+                // Columna 2
+                col2.forEach((e, i) => {
+                    const y = startY + (i * lineH);
+                    const x = M + colW + colGap;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(40, 35, 30);
+                    doc.text(e.label, x, y);
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(135, 85, 59);
+                    const pRange = e.startPage === e.endPage ? `Pág. ${e.startPage}` : `Págs. ${e.startPage}-${e.endPage}`;
+                    doc.text(pRange, x + colW, y, { align: 'right' });
+
+                    doc.setDrawColor(230, 225, 218);
+                    doc.setLineWidth(0.12);
+                    doc.line(x, y + 1.2, x + colW, y + 1.2);
+                });
+
             // 2. CALENDARIO ANUAL (PANORÁMICA 12 MESES CON TARJETAS REDONDEADAS Y CABECERA AVENA)
             } else if (page.type === 'calendar') {
                 const calDesignMode = page.design.yearMode || 'auto';
@@ -3395,7 +3812,7 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(8.5);
                 doc.setTextColor(30, 26, 22);
-                doc.text(calIsBlank ? 'SIN FECHAS FIJAS' : `AÑO ${calYear}`, W - M, M + 8.2, { align: 'right' });
+                doc.text(calIsBlank ? '' : `AÑO ${calYear}`, W - M, M + 8.2, { align: 'right' });
 
                 doc.setLineWidth(0.4);
                 doc.setDrawColor(30, 25, 20);
@@ -3444,14 +3861,7 @@
                         });
 
                         // Cuadrícula de números
-                        if (calIsBlank) {
-                            doc.setTextColor(170, 160, 150);
-                            for (let wr = 0; wr < 5; wr++) {
-                                for (let wc = 0; wc < 7; wc++) {
-                                    doc.text('·', bX + (wc * daysW) + (daysW / 2), bY + 11.2 + (wr * 3.8), { align: 'center' });
-                                }
-                            }
-                        } else {
+                        if (!calIsBlank) {
                             const firstDay = (new Date(calYear, mIdx, 1).getDay() + 6) % 7;
                             const totalDays = new Date(calYear, mIdx + 1, 0).getDate();
                             let cur = 1;
@@ -3522,10 +3932,6 @@
                     doc.setDrawColor(110, 105, 100);
                     doc.setLineWidth(0.2);
                     doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
-
-                    doc.setDrawColor(226, 218, 208);
-                    doc.setLineWidth(0.15);
-                    doc.line(M + 7.5, rowY + 2.5, M + prioW - 3, rowY + 2.5);
                 }
 
                 // Tarjeta 2: Lema o Foco Anual
@@ -3542,11 +3948,6 @@
                 doc.setDrawColor(226, 218, 208);
                 doc.setLineWidth(0.15);
                 doc.line(mottoX + 3, topStripY + 5.2, mottoX + mottoW - 3, topStripY + 5.2);
-
-                doc.setFont('helvetica', 'italic');
-                doc.setFontSize(6.6);
-                doc.setTextColor(80, 75, 70);
-                doc.text('«Menos ruido mental, más profundidad y constancia.»', mottoX + 3.5, topStripY + 10.5);
 
                 // CUADRÍCULA CENTRAL DE LOS 12 MESES (4 COLUMNAS × 3 FILAS)
                 const gridStartY = topStripY + topStripH + 2.5;
@@ -3666,10 +4067,6 @@
                     doc.setDrawColor(100, 100, 100);
                     doc.setLineWidth(0.18);
                     doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
-
-                    doc.setDrawColor(226, 218, 208);
-                    doc.setLineWidth(0.15);
-                    doc.line(M + 7.5, rowY + 2.5, M + w1 - 3, rowY + 2.5);
                 }
 
                 // Tarjeta 2: Hitos y Fechas Clave
@@ -3694,15 +4091,6 @@
                     doc.setLineWidth(0.18);
                     doc.setFillColor(255, 255, 255);
                     doc.roundedRect(x2 + 3.3, rowY, 8.5, 2.8, 0.4, 0.4, 'FD');
-
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(5.2);
-                    doc.setTextColor(135, 85, 59);
-                    doc.text('---', x2 + 7.55, rowY + 2.0, { align: 'center' });
-
-                    doc.setDrawColor(226, 218, 208);
-                    doc.setLineWidth(0.15);
-                    doc.line(x2 + 13.5, rowY + 2.5, x2 + w2 - 3, rowY + 2.5);
                 }
 
                 // CUADRÍCULA DE CALENDARIO DE ANCHO COMPLETO (7 COLUMNAS × 5 FILAS)
@@ -3914,10 +4302,6 @@
 
                 for (let i = 0; i < habitCount; i++) {
                     const rY = gridStartY + headerRowH + (i * rowH);
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(5.6);
-                    doc.setTextColor(110, 100, 90);
-                    doc.text(`· Hábito ${i + 1}`, M + 2.5, rY + (rowH / 2) + 1.0);
 
                     for (let d = 0; d < daysInMonth; d++) {
                         const cX = M + habitColW + (d * dayColW) + (dayColW / 2);
@@ -4160,10 +4544,6 @@
 
                         for (let hb = 0; hb < 3; hb++) {
                             const hy = botY + 10.5 + (hb * 7.2);
-                            doc.setFont('helvetica', 'normal');
-                            doc.setFontSize(5.8);
-                            doc.setTextColor(70, 65, 60);
-                            doc.text(`· Hábito ${hb + 1}`, col1X + 4, hy);
 
                             doc.setDrawColor(150, 142, 132);
                             doc.setLineWidth(0.18);
@@ -4298,7 +4678,7 @@
                 doc.setLineWidth(0.15);
                 doc.line(M + 3, botNotesY + 5.0, M + gridW - 3, botNotesY + 5.0);
 
-            // 8. BITÁCORA DIARIA (ESTÁNDAR EDITORIAL MENOS RUIDO)
+            // 8. BITÁCORA DIARIA (ESTÁNDAR EDITORIAL MENOS RUIDO: 3 BLOQUES IZQUIERDA, 2 DERECHA, SIN LÍNEAS)
             } else if (page.type === 'daily') {
                 const dayInfo = getDailyDateInfo(year, page.pageIndexInSection, isBlank);
 
@@ -4328,56 +4708,77 @@
                 const col1X = M;
                 const col2X = M + colW + colGap;
 
-                // Columna izquierda: 1. Gran Prioridad + 2. Tareas Secundarias
-                const prioBoxH = 44.0;
-                const secBoxH = 65.0;
-                const secBoxY = startY + prioBoxH + 3.0;
+                // COLUMNA IZQUIERDA: 1. Gran Prioridad + 2. Tareas Secundarias + 3. Hábitos Clave
+                const b1H = 32.0;
+                const b2H = 40.0;
+                const b3H = 37.0;
+                const gapY = 2.5;
+
+                const b1Y = startY;
+                const b2Y = b1Y + b1H + gapY;
+                const b3Y = b2Y + b2H + gapY;
 
                 // 1. La Gran Prioridad del Día
                 doc.setFillColor(255, 255, 255);
-                doc.setDrawColor(210, 205, 198);
-                doc.setLineWidth(0.25);
-                doc.roundedRect(col1X, startY, colW, prioBoxH, 1.5, 1.5, 'FD');
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.3);
+                doc.roundedRect(col1X, b1Y, colW, b1H, 1.5, 1.5, 'FD');
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
-                doc.text('1. LA GRAN PRIORIDAD DEL DÍA', col1X + 4, startY + 4.5);
+                doc.text('1. LA GRAN PRIORIDAD DEL DÍA', col1X + 4, b1Y + 4.5);
 
-                doc.setDrawColor(226, 218, 208);
-                doc.setLineWidth(0.15);
-                doc.line(col1X + 4, startY + 16, col1X + colW - 4, startY + 16);
-                doc.line(col1X + 4, startY + 27, col1X + colW - 4, startY + 27);
-                doc.line(col1X + 4, startY + 38, col1X + colW - 4, startY + 38);
+                // Casilla para marcar la prioridad (círculo limpio)
+                doc.setDrawColor(120, 110, 100);
+                doc.setLineWidth(0.22);
+                doc.circle(col1X + colW - 6.5, b1Y + 4.2, 2.2, 'S');
 
                 // 2. Tareas Secundarias (Máximo 3)
                 doc.setFillColor(255, 255, 255);
                 doc.setDrawColor(210, 205, 198);
                 doc.setLineWidth(0.25);
-                doc.roundedRect(col1X, secBoxY, colW, secBoxH, 1.5, 1.5, 'FD');
+                doc.roundedRect(col1X, b2Y, colW, b2H, 1.5, 1.5, 'FD');
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(40, 35, 30);
-                doc.text('2. TAREAS SECUNDARIAS (MÁXIMO 3)', col1X + 4, secBoxY + 4.5);
+                doc.text('2. TAREAS SECUNDARIAS (MÁXIMO 3)', col1X + 4, b2Y + 4.5);
 
+                const secStep = (b2H - 7) / 3;
                 for (let k = 0; k < 3; k++) {
-                    const rowY = secBoxY + 14.0 + (k * 16.0);
+                    const rowY = b2Y + 7.5 + (k * secStep) + (secStep / 2);
                     doc.setDrawColor(120, 110, 100);
                     doc.setLineWidth(0.2);
-                    doc.roundedRect(col1X + 4.5, rowY - 1.6, 3.2, 3.2, 0.5, 0.5, 'S');
-
-                    doc.setDrawColor(226, 218, 208);
-                    doc.setLineWidth(0.15);
-                    doc.line(col1X + 11.0, rowY, col1X + colW - 4, rowY);
+                    doc.roundedRect(col1X + 4.5, rowY - 1.8, 3.4, 3.4, 0.6, 0.6, 'S');
                 }
 
-                // Columna derecha: Descarga mental & Reflexión de cierre nocturno
-                const mentalBoxH = 65.0;
-                const nightBoxH = 44.0;
-                const nightBoxY = startY + mentalBoxH + 3.0;
+                // 3. Hábitos Clave del Día (3 casillas limpias)
+                doc.setFillColor(255, 255, 255);
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(col1X, b3Y, colW, b3H, 1.5, 1.5, 'FD');
 
-                // Descarga Mental & Notas
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(40, 35, 30);
+                doc.text('3. HÁBITOS CLAVE DEL DÍA', col1X + 4, b3Y + 4.5);
+
+                const habStep = (b3H - 7) / 3;
+                for (let k = 0; k < 3; k++) {
+                    const rowY = b3Y + 7.5 + (k * habStep) + (habStep / 2);
+                    doc.setDrawColor(120, 110, 100);
+                    doc.setLineWidth(0.2);
+                    doc.circle(col1X + 6.2, rowY, 1.8, 'S');
+                }
+
+                // COLUMNA DERECHA: Descarga mental & Reflexión de cierre nocturno
+                const totalRightH = b1H + b2H + b3H + (gapY * 2);
+                const mentalBoxH = 65.0;
+                const nightBoxH = totalRightH - mentalBoxH - gapY;
+                const nightBoxY = startY + mentalBoxH + gapY;
+
+                // Descarga Mental & Notas Rápidas (espacio limpio sin líneas)
                 doc.setFillColor(255, 255, 255);
                 doc.setDrawColor(210, 205, 198);
                 doc.setLineWidth(0.25);
@@ -4388,13 +4789,7 @@
                 doc.setTextColor(40, 35, 30);
                 doc.text('DESCARGA MENTAL & NOTAS RÁPIDAS', col2X + 4, startY + 4.5);
 
-                doc.setDrawColor(226, 218, 208);
-                doc.setLineWidth(0.15);
-                for (let n = 0; n < 4; n++) {
-                    doc.line(col2X + 4, startY + 16.0 + (n * 12.0), col2X + colW - 4, startY + 16.0 + (n * 12.0));
-                }
-
-                // Reflexión de Cierre Nocturno
+                // Reflexión de Cierre Nocturno (espacio limpio sin líneas)
                 doc.setFillColor(250, 248, 244);
                 doc.setDrawColor(220, 215, 204);
                 doc.setLineWidth(0.2);
@@ -4404,12 +4799,6 @@
                 doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
                 doc.text('REFLEXIÓN DE CIERRE NOCTURNO', col2X + 4, nightBoxY + 4.5);
-
-                doc.setDrawColor(226, 218, 208);
-                doc.setLineWidth(0.15);
-                doc.line(col2X + 4, nightBoxY + 15.0, col2X + colW - 4, nightBoxY + 15.0);
-                doc.line(col2X + 4, nightBoxY + 25.0, col2X + colW - 4, nightBoxY + 25.0);
-                doc.line(col2X + 4, nightBoxY + 35.0, col2X + colW - 4, nightBoxY + 35.0);
 
             // 9. PÁGINA DE NOTAS (PUNTOS, CUADRITOS, LÍNEAS O BLANCO)
             } else if (page.type === 'notes') {
@@ -4464,6 +4853,44 @@
                     }
                 }
                 // Si gridStyle === 'blank', no dibujamos tramas para dejar el papel liso
+
+            // 10. PÁGINA FINAL INSTITUCIONAL DE GRATITUD
+            } else if (page.type === 'gratitude') {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text('EDITORIAL MENOS RUIDO · CIERRE DEL CUADERNO', W / 2, M + 26, { align: 'center' });
+
+                doc.setFont('times', 'bold');
+                doc.setFontSize(22);
+                doc.setTextColor(25, 22, 19);
+                doc.text('Gracias por habernos elegido', W / 2, M + 38, { align: 'center' });
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9.5);
+                doc.setTextColor(65, 58, 52);
+                const g1 = 'Has completado o configurado este cuaderno con un propósito claro: proteger tu mente de la dispersión digital y dedicar tu tiempo a lo que verdaderamente importa.';
+                const g1Lines = doc.splitTextToSize(g1, 140);
+                doc.text(g1Lines, W / 2, M + 50, { align: 'center' });
+
+                const g2 = 'Esperamos que cada página en blanco haya sido un refugio de calma, claridad y constancia silenciosa. Recuerda que la vida no se mide por la velocidad con la que tachas tareas, sino por la profundidad con la que las vives.';
+                const g2Lines = doc.splitTextToSize(g2, 140);
+                doc.text(g2Lines, W / 2, M + 64, { align: 'center' });
+
+                // Separador y firma
+                doc.setDrawColor(215, 205, 190);
+                doc.setLineWidth(0.3);
+                doc.line((W / 2) - 30, M + 84, (W / 2) + 30, M + 84);
+
+                doc.setFont('times', 'italic');
+                doc.setFontSize(11);
+                doc.setTextColor(35, 30, 25);
+                doc.text('Editorial Menos Ruido', W / 2, M + 92, { align: 'center' });
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text('editorialmenosruido.com', W / 2, M + 98, { align: 'center' });
             }
         }
 
