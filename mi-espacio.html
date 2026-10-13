@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Espacio | Menos Ruido</title>
+    <meta name="description" content="Tu espacio personal en Menos Ruido. Gestiona tus diseños guardados, configuraciones y datos de entrega.">
+    <link rel="icon" type="image/png" href="./public/logo_icono_verde.png">
+    
+    <!-- Fuentes Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        .espacio-hero {
+            padding: 50px 20px 30px;
+            background: var(--color-bg);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .espacio-profile-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .espacio-user-info {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .espacio-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            color: white;
+            font-size: 1.6rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(135, 85, 59, 0.25);
+        }
+        .espacio-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .espacio-user-details h1 {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-display);
+        }
+        .espacio-user-details p {
+            color: var(--color-text-muted);
+            font-size: 0.95rem;
+        }
+        .role-badge {
+            font-size: 0.72rem;
+            font-family: var(--font-sans);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .role-badge.dev {
+            background: #111;
+            color: #f3eee5;
+        }
+        .role-badge.client {
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--color-accent);
+        }
+        .btn-logout {
+            padding: 9px 18px;
+            border: 1px solid #dcd5ca;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--color-text);
+            transition: var(--transition);
+        }
+        .btn-logout:hover {
+            background: #eae3d7;
+            border-color: #baa795;
+        }
+
+        /* Pestañas */
+        .espacio-nav-tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid #e5ded3;
+            margin: 35px 0 25px;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab-btn:hover {
+            color: var(--color-text);
+        }
+        .tab-btn.active {
+            color: var(--color-accent);
+            border-bottom-color: var(--color-accent);
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mis Diseños */
+        .designs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 22px;
+            margin-top: 20px;
+        }
+        .design-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease;
+        }
+        .design-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .design-card-header h3 {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+        }
+        .design-card-meta {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-bottom: 16px;
+        }
+        .design-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .btn-card-action {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+        }
+        .btn-action-open {
+            background: var(--color-accent);
+            color: white;
+        }
+        .btn-action-open:hover {
+            background: var(--color-accent-hover);
+        }
+        .btn-action-delete {
+            background: #fdf2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .btn-action-delete:hover {
+            background: #fee2e2;
+        }
+        .empty-designs {
+            background: white;
+            padding: 48px 24px;
+            text-align: center;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            max-width: 600px;
+            margin: 30px auto;
+        }
+        .empty-designs h3 {
+            font-family: var(--font-display);
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        .empty-designs p {
+            color: var(--color-text-muted);
+            margin-bottom: 22px;
+            font-size: 0.95rem;
+        }
+
+        /* Formulario Envío */
+        .envio-form-wrap {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 32px;
+            box-shadow: var(--shadow-sm);
+            max-width: 720px;
+            margin: 0 auto;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        .form-grid .full-width {
+            grid-column: span 2;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--color-text);
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d5cec2;
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            background: #faf7f2;
+            transition: var(--transition);
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
+        }
+        .btn-save-envio {
+            margin-top: 24px;
+            background: var(--color-accent);
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+        .btn-save-envio:hover {
+            background: var(--color-accent-hover);
+        }
+
+        /* Panel Exclusivo Desarrollador */
+        .dev-panel-box {
+            background: #1c1a18;
+            color: #f3eee5;
+            border-radius: var(--border-radius);
+            padding: 32px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 30px;
+        }
+        .dev-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 16px;
+        }
+        .dev-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: #f3eee5;
+        }
+        .dev-lock-screen {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+        .dev-pin-input {
+            width: 180px;
+            text-align: center;
+            font-size: 1.8rem;
+            letter-spacing: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 2px solid #555;
+            background: #2a2724;
+            color: #f3eee5;
+            margin: 20px auto;
+            display: block;
+            font-family: monospace;
+        }
+        .dev-pin-input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+        .btn-dev-unlock {
+            background: var(--color-accent);
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .dev-sections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .dev-card {
+            background: #2a2724;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .dev-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #e5ded3;
+            font-family: var(--font-display);
+        }
+        .dev-links-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .dev-links-list li {
+            margin-bottom: 8px;
+        }
+        .dev-links-list a {
+            color: #baa795;
+            text-decoration: underline;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .dev-links-list a:hover {
+            color: #ffffff;
+        }
+        
+        /* Notificación Toast */
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #212121;
+            color: #ffffff;
+            padding: 14px 22px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            font-size: 0.92rem;
+            z-index: 10000;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="navbar">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between;">
+            <div class="logo-wrap">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;">Menos Ruido</a>
+            </div>
+            <nav>
+                <div class="nav-drawer-header">
+                    <span class="nav-drawer-title">Menos Ruido</span>
+                    <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <a href="/">Home</a>
+                <a href="/generador-planificador-semanal.html">Generadores</a>
+                <a href="/lecturas.html">Lecturas</a>
+                <a href="/mi-espacio.html" style="font-weight: 700; color: var(--color-accent);">Mi Espacio</a>
+            </nav>
+        </div>
+    </header>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
+
+    <main>
+        <!-- ESTADO NO AUTENTICADO -->
+        <div id="unauth-container" class="container" style="display: none; padding: 80px 20px; text-align: center;">
+            <div style="background: white; max-width: 500px; margin: 0 auto; padding: 48px 32px; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.05);">
+                <span style="font-size: 2.2rem; display: block; margin-bottom: 12px;">🌿</span>
+                <h1 style="font-size: 1.8rem; margin-bottom: 10px; font-family: var(--font-display);">Acceso a Mi Espacio</h1>
+                <p style="color: var(--color-text-muted); margin-bottom: 24px; font-size: 0.95rem;">Inicia sesión con tu cuenta de Google o enlace de correo para consultar tus diseños personalizados y datos de entrega.</p>
+                <button type="button" class="btn-primary" id="btn-login-prompt" style="padding: 12px 28px; cursor: pointer;">Acceder a mi cuenta</button>
+            </div>
+        </div>
+
+        <!-- ESTADO AUTENTICADO -->
+        <div id="auth-container" style="display: none;">
+            <section class="espacio-hero">
+                <div class="container">
+                    <div class="espacio-profile-card">
+                        <div class="espacio-user-info">
+                            <div class="espacio-avatar" id="user-avatar-display">U</div>
+                            <div class="espacio-user-details">
+                                <h1 id="user-name-display">Mi Espacio <span id="user-role-badge" class="role-badge client">Cliente</span></h1>
+                                <p id="user-email-display">usuario@email.com</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-logout" id="btn-signout">Cerrar sesión</button>
+                    </div>
+
+                    <!-- Navegación de pestañas -->
+                    <div class="espacio-nav-tabs">
+                        <button type="button" class="tab-btn active" data-tab="tab-disenos">Mis Diseños Guardados</button>
+                        <button type="button" class="tab-btn" data-tab="tab-envio">Mis Datos de Envío</button>
+                        <button type="button" class="tab-btn" id="tab-btn-dev" data-tab="tab-dev" style="display: none;">⚡ Panel Desarrollador</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="container" style="padding: 30px 20px 80px;">
+                <!-- PESTAÑA 1: MIS DISEÑOS GUARDADOS -->
+                <div id="tab-disenos" class="tab-pane active">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h2 style="font-family: var(--font-display); font-size: 1.5rem;">Diseños y Plantillas Guardadas</h2>
+                            <p style="color: var(--color-text-muted); font-size: 0.95rem;">Tus configuraciones personalizadas en los generadores.</p>
+                        </div>
+                        <a href="/generador-planificador-semanal.html" class="btn-primary" style="font-size: 0.9rem; padding: 9px 18px;">+ Crear nuevo diseño</a>
+                    </div>
+
+                    <div id="designs-list-container">
+                        <div class="empty-designs" id="empty-designs-view">
+                            <span style="font-size: 2.2rem; display: block; margin-bottom: 10px;">📐</span>
+                            <h3>Aún no tienes diseños guardados</h3>
+                            <p>Personaliza una agenda o planificador en nuestros generadores y pulsa en el botón <strong>«Guardar en Mi Espacio»</strong> para conservarlo siempre aquí.</p>
+                            <a href="/generador-planificador-semanal.html" class="btn-primary" style="padding: 10px 20px;">Abrir generador semanal</a>
+                        </div>
+                        <div class="designs-grid" id="designs-grid" style="display: none;">
+                            <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA 2: MIS DATOS DE ENVÍO -->
+                <div id="tab-envio" class="tab-pane">
+                    <div class="envio-form-wrap">
+                        <div style="margin-bottom: 24px; text-align: center;">
+                            <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 6px;">Dirección de Entrega</h2>
+                            <p style="color: var(--color-text-muted); font-size: 0.95rem;">Guarda tus datos de envío para agilizar futuros pedidos físicos de papelería.</p>
+                        </div>
+
+                        <form id="envio-form" onsubmit="return false;">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="envio-nombre">Nombre y Apellidos completos</label>
+                                    <input type="text" id="envio-nombre" placeholder="Ej: María González Pérez" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="envio-telefono">Teléfono móvil</label>
+                                    <input type="tel" id="envio-telefono" placeholder="+34 600 000 000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="envio-dni">NIF / DNI (para transporte)</label>
+                                    <input type="text" id="envio-dni" placeholder="12345678Z">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="envio-direccion">Dirección completa (Calle, número, piso, puerta)</label>
+                                    <input type="text" id="envio-direccion" placeholder="Calle Ejemplo 12, 3º B" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="envio-cp">Código Postal</label>
+                                    <input type="text" id="envio-cp" placeholder="28001" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="envio-ciudad">Ciudad / Población</label>
+                                    <input type="text" id="envio-ciudad" placeholder="Madrid" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="envio-provincia">Provincia</label>
+                                    <input type="text" id="envio-provincia" placeholder="Madrid" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="envio-pais">País</label>
+                                    <input type="text" id="envio-pais" value="España" required>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="envio-notas">Instrucciones de entrega (opcional)</label>
+                                    <textarea id="envio-notas" rows="2" placeholder="Dejar en conserjería si no estoy, timbre derecho..."></textarea>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-save-envio" id="btn-save-envio">Guardar datos de envío</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA 3: PANEL EXCLUSIVO DESARROLLADOR (SOLO jesgilcan@gmail.com) -->
+                <div id="tab-dev" class="tab-pane">
+                    <div class="dev-panel-box">
+                        <div class="dev-header">
+                            <div>
+                                <h2>⚡ Panel Exclusivo de Desarrollador</h2>
+                                <p style="color: #baa795; font-size: 0.9rem;">Zona de pruebas técnicas, páginas ocultas y validación interna.</p>
+                            </div>
+                            <span class="role-badge dev">ADMIN LEVEL 1</span>
+                        </div>
+
+                        <!-- PANTALLA DE BLOQUEO POR PIN (1111) -->
+                        <div id="dev-locked-view" class="dev-lock-screen">
+                            <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">🔒</span>
+                            <h3 style="font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 8px;">Acceso Protegido por PIN</h3>
+                            <p style="color: #aaa; font-size: 0.9rem;">Introduce la clave de 4 dígitos para desbloquear las herramientas:</p>
+                            <input type="password" id="dev-pin-input" class="dev-pin-input" maxlength="4" placeholder="••••" autocomplete="off" />
+                            <button type="button" class="btn-dev-unlock" id="btn-unlock-dev">Desbloquear Panel</button>
+                            <p id="dev-pin-error" style="color: #f87171; font-size: 0.85rem; margin-top: 10px; display: none;">PIN incorrecto. Vuelve a intentarlo.</p>
+                        </div>
+
+                        <!-- CONTENIDO DESBLOQUEADO -->
+                        <div id="dev-unlocked-content" style="display: none;">
+                            <div class="dev-sections-grid">
+                                <!-- Páginas en Borrador / Ocultas -->
+                                <div class="dev-card">
+                                    <h3>📑 Borradores y Páginas Ocultas</h3>
+                                    <ul class="dev-links-list">
+                                        <li><a href="/pre-lecturas.html" target="_blank">↗ Pre-Lecturas (Ensayos en preparación)</a></li>
+                                        <li><a href="/generador-libro-completo-v1.html" target="_blank">↗ Generador Libro Completo V1</a></li>
+                                        <li><a href="/presentacion-generador-planificador-semanal.html" target="_blank">↗ Presentación Generador Semanal</a></li>
+                                        <li><a href="/demo_generador_pdf_planificador.html" target="_blank">↗ Demo Generador Diario PDF</a></li>
+                                        <li><a href="/demo_generador_pdf_planificador_semanal.html" target="_blank">↗ Demo Generador Semanal PDF</a></li>
+                                    </ul>
+                                </div>
+
+                                <!-- Simuladores y Visores 3D -->
+                                <div class="dev-card">
+                                    <h3>📖 Visores 3D FlipBook</h3>
+                                    <ul class="dev-links-list">
+                                        <li><a href="/visor-deja-de-darle-mil-vueltas.html" target="_blank">↗ Visor 3D: Deja de darle mil vueltas</a></li>
+                                        <li><a href="/visor-habla-claro.html" target="_blank">↗ Visor 3D: Habla Claro</a></li>
+                                        <li><a href="/visor-planificador-semanal-simple.html" target="_blank">↗ Visor 3D: Semanal Simple</a></li>
+                                        <li><a href="/visor-planificador-semanal-reversible.html" target="_blank">↗ Visor 3D: Semanal Reversible</a></li>
+                                        <li><a href="/visor-planificador-90-dias.html" target="_blank">↗ Visor 3D: 90 Días</a></li>
+                                        <li><a href="/visor-planificador-180-dias.html" target="_blank">↗ Visor 3D: 180 Días</a></li>
+                                    </ul>
+                                </div>
+
+                                <!-- Generadores Paramétricos -->
+                                <div class="dev-card">
+                                    <h3>⚙️ Banco de Generadores Web</h3>
+                                    <ul class="dev-links-list">
+                                        <li><a href="/generador-planificador-semanal.html" target="_blank">↗ Generador Semanal</a></li>
+                                        <li><a href="/generador-planificador-diario.html" target="_blank">↗ Generador Diario</a></li>
+                                        <li><a href="/generador-planificador-mensual.html" target="_blank">↗ Generador Mensual</a></li>
+                                        <li><a href="/generador-planificador-habitos.html" target="_blank">↗ Generador Hábitos</a></li>
+                                        <li><a href="/generador-planificador-horario.html" target="_blank">↗ Generador Horarios</a></li>
+                                    </ul>
+                                </div>
+
+                                <!-- Herramientas de Prueba y Simulación -->
+                                <div class="dev-card">
+                                    <h3>🧪 Simulador de Pedidos y Pruebas</h3>
+                                    <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 12px;">Crea un registro de pedido simulado en Firestore para validar la estructura de datos:</p>
+                                    <button type="button" class="btn-dev-unlock" id="btn-simulate-order" style="background: #3f3b37; font-size: 0.85rem; padding: 7px 14px;">Simular Pedido de Prueba</button>
+                                    <div id="sim-order-result" style="font-size: 0.82rem; color: #4ade80; margin-top: 10px; display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- TOAST DE NOTIFICACIONES -->
+    <div id="toast-notification" class="toast-msg"></div>
+
+    <script type="module" src="./mi-espacio.js"></script>
+</body>
+</html>
