@@ -617,6 +617,40 @@
         .faq-section-wrapper {
             margin: 40px 0 20px;
         }
+        .faq-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .faq-toggle-all-btn {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            padding: 0.4rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text, #1a1613);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        .faq-toggle-all-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(135, 85, 59, 0.04);
+        }
+        .faq-toggle-icon {
+            font-size: 1.15rem;
+            line-height: 1;
+            font-weight: 700;
+            color: var(--accent);
+        }
         .faq-list {
             display: flex;
             flex-direction: column;
@@ -1130,8 +1164,13 @@
             </p>
 
             <!-- PREGUNTAS FRECUENTES -->
-            <div class="faq-section-wrapper">
-                <h2>4. Preguntas frecuentes sobre el generador horario</h2>
+            <div class="faq-section-wrapper" id="faq">
+                <div class="faq-header-row">
+                    <h2 style="margin: 0;">4. Preguntas frecuentes sobre el generador horario</h2>
+                    <button type="button" class="faq-toggle-all-btn" id="faq-toggle-btn" aria-label="Abrir o cerrar todas las preguntas" onclick="toggleAllFaqs(this)">
+                        <span class="faq-toggle-icon">+</span> <span class="faq-toggle-text">Abrir todas</span>
+                    </button>
+                </div>
                 <div class="faq-list">
                     <details class="faq-item">
                         <summary>¿Qué diferencia hay entre el modo «Una tabla» y «Multitabla»?</summary>
@@ -1355,6 +1394,44 @@
         // Actualizar año en pie
         const yearSpan = document.getElementById('year');
         if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+        // GESTIÓN EXPANDIR/COLAPSAR TODAS LAS PREGUNTAS FRECUENTES
+        function toggleAllFaqs(btn) {
+            const container = btn.closest('.faq-section-wrapper') || document;
+            const details = container.querySelectorAll('.faq-list details.faq-item');
+            if (!details.length) return;
+            const icon = btn.querySelector('.faq-toggle-icon');
+            const text = btn.querySelector('.faq-toggle-text');
+            const shouldOpen = icon.textContent.trim() === '+';
+            details.forEach(d => {
+                d.open = shouldOpen;
+            });
+            icon.textContent = shouldOpen ? '−' : '+';
+            text.textContent = shouldOpen ? 'Cerrar todas' : 'Abrir todas';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const details = document.querySelectorAll('.faq-list details.faq-item');
+            const btn = document.getElementById('faq-toggle-btn');
+            if (!btn || !details.length) return;
+            const icon = btn.querySelector('.faq-toggle-icon');
+            const text = btn.querySelector('.faq-toggle-text');
+            details.forEach(d => {
+                d.addEventListener('toggle', () => {
+                    const allOpen = Array.from(details).every(item => item.open);
+                    if (allOpen) {
+                        icon.textContent = '−';
+                        text.textContent = 'Cerrar todas';
+                    } else {
+                        const anyClosed = Array.from(details).some(item => !item.open);
+                        if (anyClosed) {
+                            icon.textContent = '+';
+                            text.textContent = 'Abrir todas';
+                        }
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>

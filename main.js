@@ -523,6 +523,9 @@ if ('serviceWorker' in navigator) {
         <span class="toggle-icon">▾</span>
       </button>
       <div class="mobile-planners-list">
+        <a href="/generador.html" class="site-drawer-link" style="font-size: 0.85rem; padding: 6px 8px 10px; color: var(--color-accent); font-weight: 600; display: block;" onclick="document.body.classList.remove('nav-open')">
+          Ver todos los generadores &rarr;
+        </a>
         <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 6px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Planificación Semanal</div>
         <a href="/generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
           <img src="/images/tutorial-semanal/captura-web-planificador-completo.png" alt="Generador Semanal Web" class="mobile-book-thumb" loading="lazy" />
