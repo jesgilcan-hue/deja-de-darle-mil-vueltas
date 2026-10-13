@@ -14,6 +14,9 @@ import { openAuthModal } from './auth-modal.js';
 
 let hasUnsavedChanges = false;
 let trackingInitialized = false;
+let currentActiveDesign = null; // { id, name, type }
+let currentGeneratorGetter = null;
+let currentSaveBtn = null;
 
 export function setUnsavedChanges(val) {
   hasUnsavedChanges = !!val;
@@ -21,6 +24,10 @@ export function setUnsavedChanges(val) {
 
 export function getUnsavedChanges() {
   return hasUnsavedChanges;
+}
+
+export function getActiveDesign() {
+  return currentActiveDesign;
 }
 
 function initUnsavedTracking() {
@@ -34,7 +41,8 @@ function initUnsavedTracking() {
       e.target.closest('.modal-backdrop') ||
       e.target.closest('#download-modal') ||
       e.target.closest('#confirm-modal') ||
-      e.target.closest('#unsaved-warning-modal-overlay')
+      e.target.closest('#unsaved-warning-modal-overlay') ||
+      e.target.closest('#save-choice-modal-overlay')
     )) {
       return;
     }
@@ -48,7 +56,7 @@ function initUnsavedTracking() {
   document.addEventListener('click', (e) => {
     const target = e.target;
     if (!target || !target.closest) return;
-    if (target.closest('.auth-modal-overlay') || target.closest('#unsaved-warning-modal-overlay')) return;
+    if (target.closest('.auth-modal-overlay') || target.closest('#unsaved-warning-modal-overlay') || target.closest('#save-choice-modal-overlay')) return;
 
     if (
       target.closest('.habit-day-dot') || 
@@ -86,30 +94,105 @@ function initUnsavedTracking() {
   });
 }
 
+function updateActiveDesignUI() {
+  if (!currentSaveBtn) return;
+  const parent = currentSaveBtn.parentElement;
+  if (!parent) return;
+
+  // 1. Badge indicando qué diseño se está editando actualmente
+  let pill = document.getElementById('mr-active-design-pill');
+  if (currentActiveDesign) {
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.id = 'mr-active-design-pill';
+      pill.className = 'active-design-status-pill';
+      parent.insertBefore(pill, currentSaveBtn);
+    }
+    pill.style.display = 'inline-flex';
+    pill.innerHTML = `
+      <span class="pill-dot"></span>
+      <span style="font-size: 0.78rem; opacity: 0.85;">Editando:</span>
+      <span class="pill-name" title="${escapeHtml(currentActiveDesign.name)}">${escapeHtml(currentActiveDesign.name)}</span>
+    `;
+    currentSaveBtn.innerHTML = '<span>💾</span> Guardar cambios';
+    currentSaveBtn.title = `Guardar cambios directamente en "${currentActiveDesign.name}"`;
+  } else {
+    if (pill) pill.style.display = 'none';
+    currentSaveBtn.innerHTML = '<span>💾</span> Guardar en Mi Espacio';
+    currentSaveBtn.title = 'Guardar diseño en Mi Espacio';
+  }
+
+  // 2. Botón secundario para guardar una copia o nuevo archivo
+  let copyBtn = document.getElementById('btn-save-as-copy');
+  if (currentActiveDesign) {
+    if (!copyBtn) {
+      copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.id = 'btn-save-as-copy';
+      copyBtn.className = 'btn-save-as-copy';
+      copyBtn.innerHTML = '<span>➕</span> Guardar como nuevo...';
+      copyBtn.title = 'Crear un nuevo archivo independiente a partir de este diseño';
+      if (currentSaveBtn.nextSibling) {
+        parent.insertBefore(copyBtn, currentSaveBtn.nextSibling);
+      } else {
+        parent.appendChild(copyBtn);
+      }
+      copyBtn.addEventListener('click', async () => {
+        let user = auth.currentUser;
+        if (!user && typeof auth.authStateReady === 'function') {
+          try {
+            await auth.authStateReady();
+            user = auth.currentUser;
+          } catch (e) {}
+        }
+        if (!user) {
+          openAuthModal();
+          return;
+        }
+        if (currentGeneratorGetter) {
+          await triggerSaveFlow(copyBtn, currentGeneratorGetter(), user);
+        }
+      });
+    }
+    copyBtn.style.display = 'inline-flex';
+  } else {
+    if (copyBtn) copyBtn.style.display = 'none';
+  }
+}
+
 function openUnsavedWarningModal(targetUrl) {
   let modalOverlay = document.getElementById('unsaved-warning-modal-overlay');
   if (modalOverlay) modalOverlay.remove();
 
+  const activeNameText = currentActiveDesign 
+    ? ` en <strong>${escapeHtml(currentActiveDesign.name)}</strong>` 
+    : '';
+
   const html = `
     <div id="unsaved-warning-modal-overlay" class="auth-modal-overlay" style="display: flex; z-index: 999999;">
-      <div class="auth-modal-card" style="max-width: 440px; text-align: center; padding: 28px 24px;">
+      <div class="auth-modal-card" style="max-width: 460px; text-align: center; padding: 28px 24px;">
         <button type="button" class="auth-modal-close" id="btn-close-unsaved-warning" style="font-size: 1.4rem;">×</button>
         
         <div class="auth-modal-header" style="margin-bottom: 14px;">
           <span class="auth-modal-brand" style="font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; color: #87553b; font-weight: 700;">Menos Ruido</span>
           <h2 class="auth-modal-title" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.35rem; margin: 8px 0 6px; color: #1a1816;">¿Deseas salir sin guardar?</h2>
-          <p class="auth-modal-subtitle" style="font-size: 0.88rem; color: #5a524b; line-height: 1.5; margin: 0 auto; max-width: 360px;">
-            Has realizado modificaciones en tu planificador. Si abandonas la página ahora, los cambios que no hayas guardado en <strong>Mi Espacio</strong> se perderán.
+          <p class="auth-modal-subtitle" style="font-size: 0.88rem; color: #5a524b; line-height: 1.5; margin: 0 auto; max-width: 380px;">
+            Has realizado modificaciones${activeNameText}. Elige qué deseas hacer antes de abandonar la página:
           </p>
         </div>
 
-        <div style="display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 22px;">
-          <button type="button" id="btn-stay-editing" style="flex: 1; background: #2f2a26; color: #ffffff; padding: 11px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.88rem; transition: background 0.15s;">
-            Continuar editando
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 22px;">
+          <button type="button" id="btn-save-and-leave" style="background: var(--color-accent, #87553b); color: #ffffff; padding: 11px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.9rem; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>💾</span> Guardar cambios y salir
           </button>
-          <button type="button" id="btn-leave-page" style="flex: 1; background: #fdf2f2; color: #991b1b; padding: 11px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: 1px solid #fecaca; font-size: 0.88rem; transition: background 0.15s;">
-            Salir sin guardar
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" id="btn-stay-editing" style="flex: 1; background: #2f2a26; color: #ffffff; padding: 10px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.86rem; transition: background 0.15s;">
+              Continuar editando
+            </button>
+            <button type="button" id="btn-leave-page" style="flex: 1; background: #fdf2f2; color: #991b1b; padding: 10px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: 1px solid #fecaca; font-size: 0.86rem; transition: background 0.15s;">
+              Salir sin guardar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -121,6 +204,7 @@ function openUnsavedWarningModal(targetUrl) {
   const closeBtn = document.getElementById('btn-close-unsaved-warning');
   const stayBtn = document.getElementById('btn-stay-editing');
   const leaveBtn = document.getElementById('btn-leave-page');
+  const saveAndLeaveBtn = document.getElementById('btn-save-and-leave');
 
   const closeModal = () => modalOverlay?.remove();
 
@@ -134,6 +218,62 @@ function openUnsavedWarningModal(targetUrl) {
     hasUnsavedChanges = false;
     closeModal();
     window.location.href = targetUrl;
+  });
+
+  saveAndLeaveBtn?.addEventListener('click', async () => {
+    saveAndLeaveBtn.disabled = true;
+    saveAndLeaveBtn.innerHTML = '<span>⏳</span> Guardando...';
+
+    let user = auth.currentUser;
+    if (!user && typeof auth.authStateReady === 'function') {
+      try {
+        await auth.authStateReady();
+        user = auth.currentUser;
+      } catch (e) {}
+    }
+
+    if (!user) {
+      try {
+        const currentDraft = currentGeneratorGetter ? currentGeneratorGetter() : {};
+        window.localStorage.setItem('mr_pending_save_design', JSON.stringify(currentDraft));
+        window.localStorage.setItem('mr_auth_return_url', targetUrl);
+      } catch (e) {}
+      closeModal();
+      openAuthModal();
+      return;
+    }
+
+    try {
+      const currentDraft = currentGeneratorGetter ? currentGeneratorGetter() : {};
+      if (currentActiveDesign) {
+        const designDocRef = doc(db, 'users', user.uid, 'designs', currentActiveDesign.id);
+        await updateDoc(designDocRef, {
+          summary: currentDraft.summary || '',
+          editUrl: window.location.pathname,
+          data: currentDraft.data || {},
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        const designsRef = collection(db, 'users', user.uid, 'designs');
+        await addDoc(designsRef, {
+          name: currentDraft.name || 'Planificador Personalizado',
+          type: currentDraft.type || 'Planificador',
+          summary: currentDraft.summary || '',
+          editUrl: window.location.pathname,
+          data: currentDraft.data || {},
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+      hasUnsavedChanges = false;
+      closeModal();
+      window.location.href = targetUrl;
+    } catch (err) {
+      console.error('Error al guardar y salir:', err);
+      notifyToast('No se pudieron guardar los cambios.');
+      saveAndLeaveBtn.disabled = false;
+      saveAndLeaveBtn.innerHTML = '<span>💾</span> Guardar cambios y salir';
+    }
   });
 }
 
@@ -154,6 +294,13 @@ export function checkAndLoadSavedDesign(applyDataFn) {
       const snap = await getDoc(designDocRef);
       if (snap.exists()) {
         const item = snap.data();
+        currentActiveDesign = {
+          id: designId,
+          name: item.name || 'Mi Planificador',
+          type: item.type || ''
+        };
+        updateActiveDesignUI();
+
         if (item.data && typeof applyDataFn === 'function') {
           if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -164,7 +311,7 @@ export function checkAndLoadSavedDesign(applyDataFn) {
             applyDataFn(item.data);
             setTimeout(() => { hasUnsavedChanges = false; }, 400);
           }
-          notifyToast(`✓ Diseño "${item.name || 'Guardado'}" cargado`);
+          notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
           const cleanUrl = window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
         }
@@ -184,6 +331,10 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
   initUnsavedTracking();
   const btn = document.getElementById(btnId);
   if (!btn) return;
+
+  currentSaveBtn = btn;
+  currentGeneratorGetter = getGeneratorDataFn;
+  updateActiveDesignUI();
 
   // Si el usuario acaba de iniciar sesión tras haber intentado guardar, recuperar el borrador y disparar el guardado
   window.addEventListener('mr-auth-success', async (e) => {
@@ -227,6 +378,32 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
     }
 
     const currentDesign = getGeneratorDataFn();
+
+    // Si ya estamos editando un diseño existente, guardar directamente en él sin preguntar
+    if (currentActiveDesign) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Guardando...';
+      try {
+        const designDocRef = doc(db, 'users', user.uid, 'designs', currentActiveDesign.id);
+        await updateDoc(designDocRef, {
+          summary: currentDesign.summary || '',
+          editUrl: window.location.pathname,
+          data: currentDesign.data || {},
+          updatedAt: serverTimestamp()
+        });
+        hasUnsavedChanges = false;
+        notifyToast(`✓ Cambios guardados en "${currentActiveDesign.name}"`);
+      } catch (err) {
+        console.error('Error al guardar cambios directos:', err);
+        notifyToast('Error al actualizar el diseño.');
+      } finally {
+        btn.disabled = false;
+        updateActiveDesignUI();
+      }
+      return;
+    }
+
+    // Si es un diseño nuevo que aún no se ha guardado, abrir modal para darle nombre
     await triggerSaveFlow(btn, currentDesign, user);
   });
 }
@@ -357,7 +534,7 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user) {
 
     try {
       const designsRef = collection(db, 'users', user.uid, 'designs');
-      await addDoc(designsRef, {
+      const docRef = await addDoc(designsRef, {
         name: finalName,
         type: currentDesign.type || 'Planificador',
         summary: currentDesign.summary || '',
@@ -366,6 +543,13 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user) {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+
+      currentActiveDesign = {
+        id: docRef.id,
+        name: finalName,
+        type: currentDesign.type || 'Planificador'
+      };
+      updateActiveDesignUI();
 
       hasUnsavedChanges = false;
       modalOverlay.remove();
@@ -395,6 +579,13 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user) {
           data: currentDesign.data || {},
           updatedAt: serverTimestamp()
         });
+
+        currentActiveDesign = {
+          id: docId,
+          name: targetName,
+          type: currentDesign.type || 'Planificador'
+        };
+        updateActiveDesignUI();
 
         hasUnsavedChanges = false;
         modalOverlay.remove();

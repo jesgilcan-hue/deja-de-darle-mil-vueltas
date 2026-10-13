@@ -33,15 +33,21 @@ export function initPwaInstall() {
 function showPwaBanner(type = 'standard') {
   if (document.getElementById('pwa-install-banner')) return;
 
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const titleText = isMobile ? 'Menos Ruido en tu móvil' : 'Menos Ruido en tu escritorio';
+  const descText = isMobile 
+    ? 'Accede a tus planificadores y lecturas a pantalla completa, sin barras ni distracciones.'
+    : 'Instala la aplicación en tu equipo para acceder a tus planificadores en un clic, sin barras ni distracciones.';
+
   const bannerHtml = `
     <div id="pwa-install-banner" class="pwa-banner-wrap">
       <div class="pwa-banner-card">
         <div class="pwa-banner-icon">
-          <img src="/logo_icono_verde.png" alt="Menos Ruido" />
+          <img src="/icons/icon-192.png" alt="Menos Ruido" onerror="this.src='/favicon.png'" />
         </div>
         <div class="pwa-banner-text">
-          <h4>Menos Ruido en tu móvil</h4>
-          <p>Accede a tus planificadores y lecturas a pantalla completa, sin barras ni distracciones.</p>
+          <h4>${titleText}</h4>
+          <p>${descText}</p>
         </div>
         <div class="pwa-banner-actions">
           <button type="button" class="btn-pwa-install" id="btn-pwa-install">Instalar app</button>
