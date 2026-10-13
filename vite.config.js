@@ -58,6 +58,7 @@ export default defineConfig({
         guiaUsoSemanal: resolve(__dirname, 'guia-uso-planificador-semanal.html'),
         guiaUso90180: resolve(__dirname, 'guia-uso-planificador-90-180-dias.html'),
         tutorialGeneradorSemanal: resolve(__dirname, 'tutorial-generador-planificador-semanal.html'),
+        tutorialGeneradorDiario: resolve(__dirname, 'tutorial-generador-planificador-diario.html'),
         presentacionGeneradorSemanal: resolve(__dirname, 'presentacion-generador-planificador-semanal.html'),
         generadorLibroCompletoV1: resolve(__dirname, 'generador-libro-completo-v1.html'),
         notFound: resolve(__dirname, '404.html')
