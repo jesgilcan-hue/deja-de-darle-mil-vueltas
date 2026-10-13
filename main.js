@@ -491,31 +491,6 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
-    <!-- Guías de Uso Desplegable -->
-    <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Guías de Uso</div>
-    <div class="mobile-planners-accordion">
-      <button type="button" class="mobile-planners-toggle">
-        <span>Guías de Uso de Libros</span>
-        <span class="toggle-icon">▾</span>
-      </button>
-      <div class="mobile-planners-list">
-        <a href="/guia-uso-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-          <img src="/cover_semanal_simple.jpg" alt="Guía Planificador Semanal" class="mobile-book-thumb" loading="lazy" />
-          <div class="mobile-book-info">
-            <span class="mobile-book-title">Guía Planificador Semanal</span>
-            <span class="mobile-book-subtitle">Método horizontal 8.25" × 6"</span>
-          </div>
-        </a>
-        <a href="/guia-uso-planificador-90-180-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-          <img src="/cover_90.jpg" alt="Guía Planificadores 90 & 180 Días" class="mobile-book-thumb" loading="lazy" />
-          <div class="mobile-book-info">
-            <span class="mobile-book-title">Guía 90 & 180 Días</span>
-            <span class="mobile-book-subtitle">Ciclos de 13 semanas</span>
-          </div>
-        </a>
-      </div>
-    </div>
-
     <!-- Lecturas Desplegable -->
     <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Lecturas</div>
     <div class="mobile-planners-accordion">
@@ -524,6 +499,8 @@ if ('serviceWorker' in navigator) {
         <span class="toggle-icon">▾</span>
       </button>
       <div class="mobile-planners-list">
+        <!-- Subsección: Lecturas -->
+        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 6px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Lecturas</div>
         <a href="/como-decir-que-no-en-el-trabajo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
           <img src="/images/lecturas/como-decir-que-no-portada.webp" alt="Cómo decir que no en el trabajo" class="mobile-book-thumb" loading="lazy" />
           <div class="mobile-book-info">
@@ -538,8 +515,35 @@ if ('serviceWorker' in navigator) {
             <span class="mobile-book-subtitle">Decisiones & Claridad</span>
           </div>
         </a>
-        <a href="/lecturas.html" class="site-drawer-link" style="font-size: 0.9rem; padding: 6px 8px; color: var(--color-accent); font-weight: 600;" onclick="document.body.classList.remove('nav-open')">
+        <a href="/lecturas.html" class="site-drawer-link" style="font-size: 0.85rem; padding: 4px 8px 10px; color: var(--color-accent); font-weight: 600;" onclick="document.body.classList.remove('nav-open')">
           Ver todas las lecturas &rarr;
+        </a>
+
+        <!-- Subsección: Guías de uso -->
+        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 8px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Guías de uso</div>
+        <a href="/guia-uso-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/cover_semanal_simple.jpg" alt="Guía Planificador Semanal" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Guía Planificador Semanal</span>
+            <span class="mobile-book-subtitle">Método horizontal 8.25" × 6"</span>
+          </div>
+        </a>
+        <a href="/guia-uso-planificador-90-180-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/cover_90.jpg" alt="Guía Planificadores 90 & 180 Días" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Guía 90 & 180 Días</span>
+            <span class="mobile-book-subtitle">Ciclos de 13 semanas</span>
+          </div>
+        </a>
+
+        <!-- Subsección: Tutoriales -->
+        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 8px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Tutoriales</div>
+        <a href="/tutorial-generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/images/tutorial-semanal/portada-tutorial-web-semanal.png" alt="Tutorial Generador Semanal" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Tutorial Generador Semanal</span>
+            <span class="mobile-book-subtitle">Crea e imprime tu plantilla</span>
+          </div>
         </a>
       </div>
     </div>
