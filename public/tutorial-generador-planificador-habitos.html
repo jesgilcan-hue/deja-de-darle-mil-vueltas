@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Cómo Generar tu Planificador de Hábitos en la Web · Menos Ruido</title>
+    <meta name="description" content="Guía visual paso a paso para generar tu rastreador y planificador de hábitos apaisado 8.25 x 6 en la web: cuadrícula de 31 días, de 6 a 20 hábitos, reflexión mensual y descarga en PDF listo para imprimir.">
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Estilos base corporativos -->
+    <link rel="stylesheet" href="/style.css">
+
+    <style>
+        :root {
+            --font-display: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --bg-crema: #fdfbf7;
+            --bg-card: #ffffff;
+            --text-dark: #222222;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: #f7ede6;
+            --border-soft: #e8e2d8;
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --shadow-float: 0 12px 35px rgba(0, 0, 0, 0.08);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            background-color: var(--bg-crema);
+            color: var(--text-dark);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* HEADER EDITORIAL */
+        .top-editorial-bar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-soft);
+            padding: 14px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-editorial-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-link {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-back-link {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .nav-back-link:hover {
+            color: var(--accent);
+        }
+
+        .btn-open-app {
+            background: var(--accent);
+            color: #ffffff !important;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-open-app:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* HERO */
+        .guide-hero {
+            padding: 56px 20px 36px;
+            text-align: center;
+            background: linear-gradient(180deg, #ffffff 0%, var(--bg-crema) 100%);
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .guide-hero-container {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        .hero-kicker {
+            display: inline-block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            font-weight: 700;
+            background: var(--accent-light);
+            padding: 4px 12px;
+            border-radius: 50px;
+            margin-bottom: 16px;
+        }
+
+        .guide-hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 2.85rem);
+            line-height: 1.2;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .guide-hero-lead {
+            font-size: 1.08rem;
+            color: var(--text-muted);
+            max-width: 660px;
+            margin: 0 auto 24px;
+            line-height: 1.6;
+        }
+
+        .guide-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .guide-main-layout {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        .guide-prose {
+            font-size: 1.02rem;
+            color: #2b2520;
+            line-height: 1.7;
+        }
+
+        .guide-prose h2 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            margin: 48px 0 16px;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+
+        .guide-prose h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            margin: 32px 0 12px;
+            color: var(--text-dark);
+        }
+
+        .guide-prose p {
+            margin-bottom: 20px;
+        }
+
+        /* TARJETA INTERACTIVA DE DIAPOSITIVAS */
+        .presentation-deck-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-float);
+            margin: 20px 0 50px;
+            overflow: hidden;
+        }
+
+        .deck-top-bar {
+            background: #faf8f5;
+            border-bottom: 1px solid var(--border-soft);
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .deck-pills-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .step-pill-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .step-pill-btn:hover {
+            color: var(--text-dark);
+            background: rgba(0,0,0,0.03);
+        }
+
+        .step-pill-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(135, 85, 59, 0.3);
+        }
+
+        .deck-controls-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .deck-toggle-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .deck-toggle-btn:hover {
+            color: var(--text-dark);
+            border-color: #c9bfaf;
+        }
+
+        .deck-progress-bar {
+            height: 3px;
+            background: #eee8de;
+            width: 100%;
+        }
+
+        .deck-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 20%;
+            transition: width 0.3s ease;
+        }
+
+        .deck-stage {
+            position: relative;
+            min-height: 480px;
+        }
+
+        .slide-pane {
+            display: none;
+            padding: 32px 28px;
+            grid-template-columns: 1.15fr 0.95fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .slide-pane.active {
+            display: grid;
+        }
+
+        @media (max-width: 820px) {
+            .slide-pane {
+                grid-template-columns: 1fr;
+                gap: 24px;
+                padding: 24px 18px;
+            }
+        }
+
+        .slide-visual-frame {
+            background: #f7f4ed;
+            border: 1px solid #e3dcce;
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 320px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .slide-visual-tag {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8c8273;
+            font-weight: 700;
+        }
+
+        .mock-habits-sheet {
+            background: #ffffff;
+            border: 1px solid #dcd5c8;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 440px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+            font-size: 0.70rem;
+        }
+
+        .mock-habits-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1.5px solid #28231e;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+
+        .mock-habits-title {
+            font-family: var(--font-display);
+            font-size: 0.96rem;
+            font-weight: 700;
+            color: #211c18;
+        }
+
+        .mock-habits-table {
+            border: 1px solid #d5cfc4;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #fff;
+            margin-top: 5px;
+        }
+
+        .mock-habits-row-head {
+            display: flex;
+            background: #f5f0e8;
+            border-bottom: 1.5px solid #28231e;
+            font-size: 0.52rem;
+            font-weight: 800;
+            padding: 3px 6px;
+            justify-content: space-between;
+        }
+
+        .mock-habits-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ede7dc;
+            font-size: 0.54rem;
+            padding: 4px 6px;
+            min-height: 22px;
+        }
+
+        .mock-habits-dots {
+            display: flex;
+            gap: 2px;
+        }
+
+        .mock-dot-circle {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            border: 1px solid #87553b;
+            display: inline-block;
+        }
+        .mock-dot-circle.filled {
+            background: #87553b;
+        }
+
+        .slide-copy-frame {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-step-counter {
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent);
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .slide-copy-frame h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            line-height: 1.25;
+            margin: 0 0 14px 0;
+            color: var(--text-dark);
+        }
+
+        .slide-copy-frame p {
+            font-size: 0.94rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .slide-tip-box {
+            background: #fbf7f0;
+            border-left: 3px solid var(--accent);
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.85rem;
+            color: #4a3e35;
+            margin: 10px 0 14px;
+            line-height: 1.5;
+        }
+
+        .slide-action-badge {
+            display: inline-block;
+            background: #f0ebe1;
+            color: #4a3e35;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .deck-nav-bottom {
+            background: #faf8f5;
+            border-top: 1px solid var(--border-soft);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            color: var(--text-dark);
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            border-color: #b5a995;
+            background: #f5f0e6;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .nav-btn.primary {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .nav-btn.primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        .deck-dots-indicator {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot-btn {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #d6cdbd;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dot-btn.active {
+            background: var(--accent);
+            transform: scale(1.3);
+        }
+
+        /* TARJETAS DE PASO A PASO */
+        .simple-step-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-md);
+            padding: 22px 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .simple-step-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .step-pill-badge {
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 2px 9px;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .simple-step-title {
+            font-family: var(--font-display);
+            font-size: 1.22rem;
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .tip-box {
+            background: #fbf7f0;
+            border: 1px solid #ebd9c9;
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 24px 0;
+        }
+
+        .tip-box p {
+            margin: 0;
+            font-size: 0.92rem;
+            color: #4a3e35;
+        }
+
+        .cta-bottom-block {
+            background: linear-gradient(135deg, #2a221c 0%, #3a3028 100%);
+            border-radius: var(--radius-lg);
+            padding: 44px 32px;
+            text-align: center;
+            color: #ffffff;
+            margin: 50px 0 20px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        }
+
+        .btn-open-generator {
+            background: #ffffff;
+            color: #222222 !important;
+            padding: 12px 28px;
+            border-radius: 6px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-open-generator:hover {
+            background: #f4ede4;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        /* PREGUNTAS FRECUENTES */
+        .faq-item {
+            border-bottom: 1px solid var(--border-soft);
+            padding: 16px 0;
+        }
+
+        .faq-question {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+
+        .faq-answer {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA EDITORIAL SUPERIOR -->
+    <header class="top-editorial-bar">
+        <div class="top-editorial-inner">
+            <a href="/" class="brand-link">Menos Ruido</a>
+            <div class="nav-links-right">
+                <a href="/pre-lecturas.html" class="nav-back-link">
+                    ← Volver a pre-Lecturas
+                </a>
+                <a href="/generador-planificador-habitos.html" target="_blank" class="btn-open-app">
+                    Abrir Generador de Hábitos ↗
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CABECERA -->
+    <section class="guide-hero">
+        <div class="guide-hero-container">
+            <span class="hero-kicker">Tutorial paso a paso · Menos Ruido</span>
+            <h1>Generador gratuito de planificador de hábitos</h1>
+            <p class="guide-hero-lead">
+                Construye constancia silenciosa en papel: cuadrícula mensual de 31 días, seguimiento configurable de 6 a 20 hábitos fundamentales, intención del mes y descarga en PDF listo para imprimir.
+            </p>
+            <div class="guide-meta-row">
+                <span>⚡ <strong>Tiempo de uso:</strong> 2 a 3 minutos</span>
+                <span>·</span>
+                <span>📄 <strong>Resultado:</strong> 1 folio apaisado libro 8.25" × 6"</span>
+                <span>·</span>
+                <span>✏️ <strong>Opciones:</strong> De 6 a 20 hábitos, reflexión visible/oculta y casillas interactivas</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTENIDO EDITORIAL -->
+    <main class="guide-main-layout">
+        <article class="guide-prose">
+
+            <!-- PRESENTACIÓN EN 5 PASOS -->
+            <div class="presentation-deck-card" id="presentationCard">
+                
+                <div class="deck-top-bar">
+                    <div class="deck-pills-nav">
+                        <button type="button" class="step-pill-btn active" data-step="0">1. Cuadrícula de 31 Días</button>
+                        <button type="button" class="step-pill-btn" data-step="1">2. Densidad (6 a 20 Hábitos)</button>
+                        <button type="button" class="step-pill-btn" data-step="2">3. Intención del Mes</button>
+                        <button type="button" class="step-pill-btn" data-step="3">4. Reflexión y Balance</button>
+                        <button type="button" class="step-pill-btn" data-step="4">5. Descarga en PDF</button>
+                    </div>
+                    <div class="deck-controls-right">
+                        <button type="button" class="deck-toggle-btn" id="btnAutoPlay">
+                            <span id="playIcon">▶️</span> <span id="playText">Auto (7s)</span>
+                        </button>
+                        <button type="button" class="deck-toggle-btn" id="btnFullscreen">
+                            <span>⛶</span> Pantalla completa
+                        </button>
+                    </div>
+                </div>
+
+                <div class="deck-progress-bar">
+                    <div class="deck-progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="deck-stage">
+
+                    <!-- SLIDE 1 -->
+                    <div class="slide-pane active" data-index="0">
+                        <div class="slide-visual-frame">
+                            <div class="mock-habits-sheet">
+                                <div class="mock-habits-header">
+                                    <div>
+                                        <div style="font-size:0.56rem; color:var(--accent); font-weight:800; letter-spacing:1px; text-transform:uppercase;">MENOS RUIDO · RASTREADOR DE HÁBITOS</div>
+                                        <span class="mock-habits-title">Planificador de Hábitos</span>
+                                    </div>
+                                    <div style="font-weight:700; color:#333; font-size:0.75rem;">NOVIEMBRE 2026</div>
+                                </div>
+                                <div style="font-size:0.60rem; color:#666; font-style:italic; margin-bottom:5px;">
+                                    «Construir constancia silenciosa y descanso reparador sin sobreexigencia.»
+                                </div>
+                                <div class="mock-habits-table">
+                                    <div class="mock-habits-row-head">
+                                        <span>HÁBITO FUNDAMENTAL</span>
+                                        <span>DÍAS 1 AL 31</span>
+                                    </div>
+                                    <div class="mock-habits-row">
+                                        <span>1. Caminar 30 min sin auriculares</span>
+                                        <div class="mock-habits-dots">
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                        </div>
+                                    </div>
+                                    <div class="mock-habits-row">
+                                        <span>2. Lectura en papel 20 min</span>
+                                        <div class="mock-habits-dots">
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                        </div>
+                                    </div>
+                                    <div class="mock-habits-row">
+                                        <span>3. Sin pantallas tras las 21:30</span>
+                                        <div class="mock-habits-dots">
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle filled"></span>
+                                            <span class="mock-dot-circle"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="slide-visual-tag">VISTA 1:1 EN PANTALLA</span>
+                        </div>
+                        <div class="slide-copy-frame">
+                            <div class="slide-step-counter">PASO 01 / 05 · SEGUIMIENTO MENSUAL</div>
+                            <h3>Todo el mes de hábitos en un solo golpe de vista</h3>
+                            <p>
+                                Las aplicaciones de hábitos fomentan la culpa con alertas estridentes y rachas gamificadas que generan ansiedad si fallas un solo día.
+                            </p>
+                            <p>
+                                En papel, la cuadrícula de 31 días te ofrece una perspectiva honesta: no se trata de lograr el 100% perfecto, sino de ver la tendencia general de tu constancia a lo largo de las cuatro semanas.
+                            </p>
+                            <div class="slide-tip-box">
+                                <strong>💡 El botón rápido:</strong> Si entras por primera vez, pulsa arriba <strong>«✨ Cargar ejemplo»</strong> para ver una pauta editorial con hábitos saludables de desconexión y foco.
+                            </div>
+                            <div>
+                                <span class="slide-action-badge">✍️ Clic directo sobre el folio</span>
+                                <span class="slide-action-badge">📅 Cuadrícula 1 a 31</span>
+                                <span class="slide-action-badge">✨ Cargar ejemplo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 2 -->
+                    <div class="slide-pane" data-index="1">
+                        <div class="slide-visual-frame">
+                            <div class="mock-habits-sheet">
+                                <div style="background:#faf8f5; border:1.5px solid var(--accent); border-radius:6px; padding:12px; margin-bottom:8px;">
+                                    <div style="font-size:0.65rem; font-weight:800; color:var(--accent); text-transform:uppercase; margin-bottom:6px;">
+                                        🎯 SELECTOR DE NÚMERO DE HÁBITOS
+                                    </div>
+                                    <div style="font-size:0.72rem; color:#333; line-height:1.45;">
+                                        • <strong>6 u 8 Hábitos:</strong> Foco minimalista con filas ultra espaciosas.<br>
+                                        • <strong>10 Hábitos (Recomendado):</strong> Equilibrio editorial idóneo.<br>
+                                        • <strong>12, 16 o 20 Hábitos:</strong> Máxima densidad para seguimiento integral.
+                                    </div>
+                                </div>
+                                <div style="font-size:0.68rem; color:#777; text-align:center; font-style:italic;">
+                                    «El generador recalcula el alto de las filas para que nunca haya desbordes.»
+                                </div>
+                            </div>
+                            <span class="slide-visual-tag">DENSIDAD CONFIGURABLE</span>
+                        </div>
+                        <div class="slide-copy-frame">
+                            <div class="slide-step-counter">PASO 02 / 05 · NÚMERO DE HÁBITOS</div>
+                            <h3>Elige cuántas rutinas quieres seguir</h3>
+                            <p>
+                                En el menú desplegable superior puedes calibrar la cantidad de hábitos que quieres registrar:
+                            </p>
+                            <p>
+                                • <strong>6 a 8 hábitos:</strong> Si estás empezando y prefieres consolidar 3 o 4 rutinas clave sin dispersión.<br>
+                                • <strong>10 hábitos (Estándar recomendado):</strong> Proporción equilibrada entre hábitos físicos, mentales y profesionales.<br>
+                                • <strong>12 a 20 hábitos:</strong> Para rutinas completas de salud, trabajo, estudio y descanso.
+                            </p>
+                            <div class="slide-tip-box">
+                                <strong>🔘 Cuadrícula o círculos:</strong> En la barra de herramientas puedes alternar entre casillas cuadradas clásicas o círculos sutiles con un solo clic.
+                            </div>
+                            <div>
+                                <span class="slide-action-badge">🔢 De 6 a 20 hábitos</span>
+                                <span class="slide-action-badge">🔘 Círculos o cuadrados</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 3 -->
+                    <div class="slide-pane" data-index="2">
+                        <div class="slide-visual-frame">
+                            <div class="mock-habits-sheet">
+                                <div style="background:#faf8f5; border:1.5px solid #2e5a44; border-radius:6px; padding:12px; margin-bottom:8px;">
+                                    <div style="font-size:0.64rem; font-weight:800; color:#2e5a44; text-transform:uppercase; margin-bottom:4px;">
+                                        🧭 INTENCIÓN DEL MES
+                                    </div>
+                                    <div style="font-family:var(--font-display); font-size:0.88rem; font-weight:700; color:#1f1915; font-style:italic; line-height:1.35;">
+                                        «Construir constancia silenciosa y descanso reparador sin sobreexigencia.»
+                                    </div>
+                                </div>
+                                <div style="font-size:0.68rem; color:#666; text-align:center;">
+                                    Una frase en la cabecera que te recuerda el propósito de tus hábitos cuando aparezca la pereza o la prisa.
+                                </div>
+                            </div>
+                            <span class="slide-visual-tag">PROPÓSITO CLARO</span>
+                        </div>
+                        <div class="slide-copy-frame">
+                            <div class="slide-step-counter">PASO 03 / 05 · INTENCIÓN DEL MES</div>
+                            <h3>El propósito detrás de la repetición</h3>
+                            <p>
+                                Los hábitos no son un fin en sí mismos: son el vehículo para cuidar tu energía, tu claridad mental y tu trabajo profundo.
+                            </p>
+                            <p>
+                                En la cabecera del folio tienes una línea para tu <strong>Intención del Mes</strong>: la brújula que te recuerda por qué te levantas antes, por qué apagas el móvil a tiempo o por qué caminas 30 minutos al día.
+                            </p>
+                            <div class="slide-tip-box">
+                                <strong>🛑 El límite de caracteres:</strong> La línea está calibrada al milímetro para que el texto nunca salte a una segunda fila ni rompa la maquetación.
+                            </div>
+                            <div>
+                                <span class="slide-action-badge">🧭 Brújula mensual</span>
+                                <span class="slide-action-badge">🧘 Sin sobreexigencia</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 4 -->
+                    <div class="slide-pane" data-index="3">
+                        <div class="slide-visual-frame">
+                            <div class="mock-habits-sheet">
+                                <div style="background:#faf8f5; border:1px solid #dcd5c8; border-radius:4px; padding:10px; margin-bottom:6px;">
+                                    <div style="font-size:0.64rem; font-weight:700; color:var(--accent); margin-bottom:4px;">
+                                        📝 REFLEXIÓN Y OBSERVACIONES DEL MES
+                                    </div>
+                                    <div style="font-size:0.60rem; color:#555; line-height:1.35;">
+                                        • Buen ritmo en la caminata matutina y en la lectura antes de dormir.<br>
+                                        • El hábito de apagar pantallas cuesta más los jueves; conviene agendar una alarma analógica a las 21:00.<br>
+                                        • Ajuste para el mes que viene: simplificar rutinas de tarde.
+                                    </div>
+                                </div>
+                                <div style="font-size:0.66rem; color:#777; text-align:center;">
+                                    Pulsa <strong>«Reflexión: Visible/Oculta»</strong> para ocultar este bloque si prefieres más filas de hábitos.
+                                </div>
+                            </div>
+                            <span class="slide-visual-tag">APRENDIZAJES REALES</span>
+                        </div>
+                        <div class="slide-copy-frame">
+                            <div class="slide-step-counter">PASO 04 / 05 · REFLEXIÓN Y BALANCE</div>
+                            <h3>Aprender de lo que ha costado</h3>
+                            <p>
+                                El verdadero valor de un rastreador de hábitos no está solo en marcar casillas, sino en reflexionar a final de mes sobre qué ha funcionado y qué necesita reajuste.
+                            </p>
+                            <p>
+                                En la parte inferior dispones del bloque <strong>📝 Reflexión y Observaciones del Mes</strong> para anotar tus conclusiones sinceras.
+                            </p>
+                            <div class="slide-tip-box">
+                                <strong>🔄 Bloque opcional:</strong> Si necesitas registrar 16 o 20 hábitos y no requieres espacio de notas, puedes pulsar <em>«Reflexión: Oculta»</em> y la tabla se expandirá cubriendo toda la hoja.
+                            </div>
+                            <div>
+                                <span class="slide-action-badge">📝 Notas de cierre</span>
+                                <span class="slide-action-badge">👁️ Bloque conmutable</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 5 -->
+                    <div class="slide-pane" data-index="4">
+                        <div class="slide-visual-frame">
+                            <div style="background:#ffffff; border:1.5px solid var(--accent); border-radius:8px; padding:20px; width:100%; max-width:360px; text-align:center; box-shadow:0 8px 25px rgba(0,0,0,0.08);">
+                                <div style="font-size:0.72rem; font-weight:800; color:var(--accent); text-transform:uppercase; margin-bottom:8px;">
+                                    🖨️ DESCARGAR PLANIFICADOR DE HÁBITOS
+                                </div>
+                                <div style="font-size:0.80rem; color:#555; margin-bottom:14px;">
+                                    📐 Libro Apaisado 8.25" × 6" (209.55 × 152.4 mm)
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:6px;">
+                                    <div style="background:var(--accent); color:#fff; padding:8px 12px; border-radius:6px; font-size:0.78rem; font-weight:700;">
+                                        📥 Con mi planificación de hábitos
+                                    </div>
+                                    <div style="background:#f7f4ed; border:1px solid #dcd5c8; color:#3a3229; padding:8px 12px; border-radius:6px; font-size:0.78rem; font-weight:600;">
+                                        📄 Plantilla limpia en blanco
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="slide-visual-tag">DESCARGA LIMPIA EN 1 CLIC</span>
+                        </div>
+                        <div class="slide-copy-frame">
+                            <div class="slide-step-counter">PASO 05 / 05 · DESCARGAR E IMPRIMIR</div>
+                            <h3>Tu folio listo para tu corcho o mesa</h3>
+                            <p>
+                                Al terminar tu configuración, pulsa el botón <strong>📥 Descargar PDF</strong>. La ventana modal te ofrece dos opciones:
+                            </p>
+                            <p>
+                                <strong>1. Con mi planificación de hábitos:</strong> Tus hábitos redactados con tipografía limpia y nítida listos para marcar cada día.<br>
+                                <strong>2. Plantilla limpia en blanco:</strong> Cuadrícula con las líneas y días vacíos para escribir tus hábitos a mano con pluma o estilográfica.
+                            </p>
+                            <div class="slide-tip-box">
+                                <strong>🖨️ Calidad de impresión:</strong> En las opciones de tu impresora elige orientación horizontal y <em>«Ajustar a la página»</em> en folios A4 o Carta.
+                            </div>
+                            <div>
+                                <span class="slide-action-badge">📄 PDF vectorial limpio</span>
+                                <span class="slide-action-badge">📌 Listo para imprimir</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CONTROLES INFERIORES -->
+                <div class="deck-nav-bottom">
+                    <button type="button" class="nav-btn" id="btnPrev" disabled>
+                        ← Anterior
+                    </button>
+
+                    <div class="deck-dots-indicator" id="dotsContainer">
+                        <button type="button" class="dot-btn active" data-step="0" aria-label="Paso 1"></button>
+                        <button type="button" class="dot-btn" data-step="1" aria-label="Paso 2"></button>
+                        <button type="button" class="dot-btn" data-step="2" aria-label="Paso 3"></button>
+                        <button type="button" class="dot-btn" data-step="3" aria-label="Paso 4"></button>
+                        <button type="button" class="dot-btn" data-step="4" aria-label="Paso 5"></button>
+                    </div>
+
+                    <button type="button" class="nav-btn primary" id="btnNext">
+                        Siguiente →
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- EXPLICACIÓN PASO A PASO -->
+            <h2>1. ¿Cómo funciona la herramienta? (Edición directa sobre el papel)</h2>
+            <p>
+                Al igual que en toda la colección de generadores de Menos Ruido, <strong>la hoja que ves en la pantalla es exactamente la que saldrá por tu impresora</strong>.
+            </p>
+            <p>
+                Haz clic en cualquier celda o línea y edita directamente:
+            </p>
+
+            <div class="simple-step-card">
+                <div class="simple-step-header">
+                    <span class="step-pill-badge">Paso 1</span>
+                    <h3 class="simple-step-title">Fija el mes, el año y tu intención</h3>
+                </div>
+                <p>
+                    En la cabecera indica el mes en curso (ejemplo: <em>NOVIEMBRE</em>) y el año. En la línea inferior escribe tu intención mensual: la actitud o principio que guiará tus rutinas durante las próximas cuatro semanas.
+                </p>
+            </div>
+
+            <div class="simple-step-card">
+                <div class="simple-step-header">
+                    <span class="step-pill-badge">Paso 2</span>
+                    <h3 class="simple-step-title">Elige el número de hábitos</h3>
+                </div>
+                <p>
+                    En la barra de herramientas selecciona cuántos hábitos quieres monitorizar (6, 8, 10, 12 o hasta 20 hábitos). Para la mayoría de personas, <strong>10 hábitos</strong> es el número óptimo para construir constancia sin sobrecargarse.
+                </p>
+                <div class="tip-box">
+                    <p>💡 <strong>Consejo Menos Ruido:</strong> No elijas 15 hábitos nuevos a la vez. Combina 5 hábitos que ya tengas consolidados (para ganar confianza) con 2 o 3 nuevos que quieras incorporar poco a poco.</p>
+                </div>
+            </div>
+
+            <div class="simple-step-card">
+                <div class="simple-step-header">
+                    <span class="step-pill-badge">Paso 3</span>
+                    <h3 class="simple-step-title">Escribe los hábitos fundamentales</h3>
+                </div>
+                <p>
+                    Escribe cada hábito con una acción clara y concreta. En lugar de poner «Salud», escribe <em>«Caminar 30 min sin auriculares»</em> o <em>«Beber 2L de agua»</em>. Cuanto más específica sea la acción, más fácil será cumplirla.
+                </p>
+            </div>
+
+            <div class="simple-step-card">
+                <div class="simple-step-header">
+                    <span class="step-pill-badge">Paso 4</span>
+                    <h3 class="simple-step-title">Ajusta la caja de reflexión</h3>
+                </div>
+                <p>
+                    Si quieres un espacio para notas y aprendizajes de final de mes, deja el bloque de <em>Reflexión: Visible</em>. Si prefieres maximizar la tabla de hábitos, puedes ocultarlo con un clic.
+                </p>
+            </div>
+
+            <div class="simple-step-card">
+                <div class="simple-step-header">
+                    <span class="step-pill-badge">Paso 5</span>
+                    <h3 class="simple-step-title">Descarga e imprime</h3>
+                </div>
+                <p>
+                    Pulsa <strong>Descargar PDF</strong>. Guarda tu folio con tus textos o descárgate la plantilla en blanco para marcar a mano con rotulador, pluma o lápiz día a día.
+                </p>
+            </div>
+
+            <!-- POR QUÉ EL PAPEL -->
+            <h2>2. Por qué registrar tus hábitos en papel en lugar de apps</h2>
+            <p>
+                Las aplicaciones digitales de seguimiento de hábitos utilizan notificaciones invasivas, barras de progreso y rachas de días que se rompen con estrépito si un día estás enfermo o descansando. Ese enfoque genera una relación neurótica con la disciplina.
+            </p>
+            <p>
+                En una hoja física colocada sobre tu mesa o en la pared, el registro es un ritual tranquilo. No hay sonido, no hay notificaciones emergentes ni métricas de juicio. Solo una marca con lápiz que confirma que hoy te has cuidado.
+            </p>
+
+            <!-- PREGUNTAS FRECUENTES -->
+            <h2>3. Preguntas frecuentes sobre el generador de hábitos</h2>
+
+            <div class="faq-item">
+                <h4 class="faq-question">¿Puedo marcar las casillas directamente en la pantalla antes de imprimir?</h4>
+                <p class="faq-answer">
+                    Sí. Si haces clic sobre los círculos o cuadrados de los días en la pantalla, puedes marcarlos o desmarcarlos interactivamente. Al pulsar «Descargar PDF (con mis datos)», el PDF conservará exactamente las marcas que hayas rellenado.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <h4 class="faq-question">¿Qué tamaño de papel debo usar?</h4>
+                <p class="faq-answer">
+                    El documento está maquetado en proporción apaisada libro 8.25" × 6". En tu impresora selecciona orientación horizontal y la opción «Ajustar a la página» sobre cualquier folio estándar A4 o Carta.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <h4 class="faq-question">¿Mis hábitos son privados?</h4>
+                <p class="faq-answer">
+                    100% privados. Todo el procesamiento se realiza en tu propio navegador mediante código JavaScript local. Ningún texto viaja por internet ni se guarda en ningún servidor ajeno.
+                </p>
+            </div>
+
+            <!-- LLAMADA A LA ACCIÓN FINAL -->
+            <div class="cta-bottom-block">
+                <h3 style="font-family: var(--font-display); font-size: 1.55rem; margin-bottom: 8px;">¿Quieres crear tu hoja de hábitos para este mes?</h3>
+                <p style="color: #dfd7cc; font-size: 0.98rem; margin-bottom: 22px;">
+                    Entra al generador de hábitos, define tus rutinas y tu intención mensual y llévate tu folio listo para imprimir en dos minutos.
+                </p>
+                <a href="/generador-planificador-habitos.html" target="_blank" class="btn-open-generator">
+                    Abrir el Planificador de Hábitos en la Web ↗
+                </a>
+            </div>
+
+        </article>
+    </main>
+
+    <!-- FOOTER CORPORATIVO -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem;">Menos Ruido</h3>
+                    <p style="opacity: 0.8; font-size: 0.9rem;">Cuadernos guiados y herramientas en papel para pensar con calma.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navegación</h4>
+                    <a href="/">Página Principal</a>
+                    <a href="/#cuadernos">Nuestros Cuadernos</a>
+                    <a href="/generador.html">Catálogo de Generadores</a>
+                    <a href="/lecturas.html">Lecturas</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Comunidad</h4>
+                    <a href="https://www.youtube.com/channel/UCUD4OWhpMG5OzqVQhjpeqtw" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
+                    <a href="https://www.instagram.com/editorialmenosruido/" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+                    <a href="/links.html">Enlaces Rápidos</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="mailto:contacto@editorialmenosruido.com" onclick="event.preventDefault(); navigator.clipboard.writeText('contacto@editorialmenosruido.com'); const original = this.innerText; this.innerText = '¡Copiado al portapapeles!'; setTimeout(() => this.innerText = original, 2000);" title="Haz clic para copiar el email">contacto@editorialmenosruido.com</a>
+                    <a href="./aviso-legal.html" target="_blank">Aviso Legal</a>
+                    <a href="./politica-privacidad.html" target="_blank">Política de Privacidad</a>
+                    <a href="./politica-cookies.html" target="_blank">Política de Cookies</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="year"></span> Menos Ruido. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPT DE CONTROL INTERACTIVO DE DIAPOSITIVAS -->
+    <script>
+        const totalSteps = 5;
+        let currentStep = 0;
+        let autoPlayInterval = null;
+        let isAutoPlaying = false;
+
+        const slides = document.querySelectorAll('.slide-pane');
+        const pills = document.querySelectorAll('.step-pill-btn');
+        const dots = document.querySelectorAll('.dot-btn');
+        const progressFill = document.getElementById('progressFill');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnAutoPlay = document.getElementById('btnAutoPlay');
+        const playIcon = document.getElementById('playIcon');
+        const playText = document.getElementById('playText');
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        const presentationCard = document.getElementById('presentationCard');
+
+        function updateSlide(index) {
+            currentStep = Math.max(0, Math.min(totalSteps - 1, index));
+
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === currentStep);
+            });
+
+            pills.forEach((pill, i) => {
+                pill.classList.toggle('active', i === currentStep);
+            });
+
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentStep);
+            });
+
+            const percent = ((currentStep + 1) / totalSteps) * 100;
+            if (progressFill) progressFill.style.width = percent + '%';
+
+            if (btnPrev) btnPrev.disabled = currentStep === 0;
+            if (btnNext) {
+                if (currentStep === totalSteps - 1) {
+                    btnNext.textContent = 'Probar en la web ↗';
+                } else {
+                    btnNext.textContent = 'Siguiente →';
+                }
+            }
+        }
+
+        if (btnPrev) {
+            btnPrev.addEventListener('click', () => {
+                if (currentStep > 0) updateSlide(currentStep - 1);
+            });
+        }
+
+        if (btnNext) {
+            btnNext.addEventListener('click', () => {
+                if (currentStep < totalSteps - 1) {
+                    updateSlide(currentStep + 1);
+                } else {
+                    window.open('/generador-planificador-habitos.html', '_blank');
+                }
+            });
+        }
+
+        pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                const step = parseInt(pill.getAttribute('data-step'), 10);
+                updateSlide(step);
+            });
+        });
+
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const step = parseInt(dot.getAttribute('data-step'), 10);
+                updateSlide(step);
+            });
+        });
+
+        // Autoplay
+        function startAutoPlay() {
+            isAutoPlaying = true;
+            if (playIcon) playIcon.textContent = '⏸️';
+            if (playText) playText.textContent = 'Pausar';
+            autoPlayInterval = setInterval(() => {
+                if (currentStep < totalSteps - 1) {
+                    updateSlide(currentStep + 1);
+                } else {
+                    updateSlide(0);
+                }
+            }, 7000);
+        }
+
+        function stopAutoPlay() {
+            isAutoPlaying = false;
+            if (playIcon) playIcon.textContent = '▶️';
+            if (playText) playText.textContent = 'Auto (7s)';
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+        }
+
+        if (btnAutoPlay) {
+            btnAutoPlay.addEventListener('click', () => {
+                if (isAutoPlaying) {
+                    stopAutoPlay();
+                } else {
+                    startAutoPlay();
+                }
+            });
+        }
+
+        // Pantalla completa
+        if (btnFullscreen && presentationCard) {
+            btnFullscreen.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    presentationCard.requestFullscreen().catch(err => {
+                        console.error('Error al entrar en pantalla completa:', err);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+        }
+
+        // Teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                if (currentStep < totalSteps - 1) updateSlide(currentStep + 1);
+            } else if (e.key === 'ArrowLeft') {
+                if (currentStep > 0) updateSlide(currentStep - 1);
+            }
+        });
+
+        // Actualizar año en pie
+        const yearSpan = document.getElementById('year');
+        if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
