@@ -28,18 +28,39 @@ document.addEventListener('keydown', (e) => {
 });
 
 
-// Add smooth scrolling for anchor links (fallback for browsers that don't support smooth scrolling CSS)
+// Add smooth scrolling for anchor links with dynamic sticky bar offset
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
-        e.preventDefault();
         const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
+        if (!targetId || targetId === '#' || targetId.length <= 1) return;
         
         const targetElement = document.querySelector(targetId);
         if (targetElement) {
-            targetElement.scrollIntoView({
+            e.preventDefault();
+            
+            // Calculamos altura real de las barras sticky fijas (navbar + subnav si existe)
+            const navbar = document.querySelector('.navbar');
+            const subnav = document.querySelector('.subnav-sticky-bar, .home-subnav, .lecturas-subnav');
+            const navH = navbar ? navbar.offsetHeight : 0;
+            const subnavH = subnav ? subnav.offsetHeight : 0;
+            const stickyOffset = navH + subnavH;
+
+            // Buscamos el elemento visual clave del bloque (título o encabezado)
+            const heading = targetElement.querySelector('h2, .section-header, .split-content, .reading-tag') || targetElement;
+            const headingRect = heading.getBoundingClientRect();
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Colocamos el encabezado justo debajo de las barras fijas con 10px de margen limpio
+            const targetY = headingRect.top + currentScroll - stickyOffset - 10;
+            
+            window.scrollTo({
+                top: Math.max(0, targetY),
                 behavior: 'smooth'
             });
+            
+            if (history.pushState) {
+                history.pushState(null, null, targetId);
+            }
         }
     });
 });
@@ -507,13 +528,6 @@ if ('serviceWorker' in navigator) {
             <span class="mobile-book-subtitle">Diseña e imprime tu plantilla</span>
           </div>
         </a>
-        <a href="/tutorial-generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-          <img src="/images/tutorial-semanal/portada-tutorial-web-semanal.png" alt="Tutorial Generador Semanal" class="mobile-book-thumb" loading="lazy" />
-          <div class="mobile-book-info">
-            <span class="mobile-book-title">Tutorial paso a paso</span>
-            <span class="mobile-book-subtitle">Cómo organizar tu semana</span>
-          </div>
-        </a>
       </div>
     </div>
 
@@ -565,9 +579,9 @@ if ('serviceWorker' in navigator) {
         <!-- Subsección: Tutoriales -->
         <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 8px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Tutoriales</div>
         <a href="/tutorial-generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-          <img src="/images/tutorial-semanal/portada-tutorial-web-semanal.png" alt="Tutorial Generador Semanal" class="mobile-book-thumb" loading="lazy" />
+          <img src="/images/tutorial-semanal/portada-tutorial-web-semanal.png" alt="Generador gratuito de planificación semanal" class="mobile-book-thumb" loading="lazy" />
           <div class="mobile-book-info">
-            <span class="mobile-book-title">Generador Semanal Gratuito</span>
+            <span class="mobile-book-title">Generador gratuito de planificación semanal</span>
             <span class="mobile-book-subtitle">Tutorial paso a paso</span>
           </div>
         </a>
