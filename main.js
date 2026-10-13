@@ -490,19 +490,70 @@ if ('serviceWorker' in navigator) {
         </div>
       </div>
     </div>
-    <a href="/lecturas.html" class="site-drawer-link" onclick="document.body.classList.remove('nav-open')">Lecturas & Vídeos</a>
+
+    <!-- Guías de Uso Desplegable -->
+    <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Guías de Uso</div>
+    <div class="mobile-planners-accordion">
+      <button type="button" class="mobile-planners-toggle">
+        <span>Guías de Uso de Libros</span>
+        <span class="toggle-icon">▾</span>
+      </button>
+      <div class="mobile-planners-list">
+        <a href="/guia-uso-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/cover_semanal_simple.jpg" alt="Guía Planificador Semanal" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Guía Planificador Semanal</span>
+            <span class="mobile-book-subtitle">Método horizontal 8.25" × 6"</span>
+          </div>
+        </a>
+        <a href="/guia-uso-planificador-90-180-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/cover_90.jpg" alt="Guía Planificadores 90 & 180 Días" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Guía 90 & 180 Días</span>
+            <span class="mobile-book-subtitle">Ciclos de 13 semanas</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Lecturas Desplegable -->
+    <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Lecturas</div>
+    <div class="mobile-planners-accordion">
+      <button type="button" class="mobile-planners-toggle">
+        <span>Lecturas</span>
+        <span class="toggle-icon">▾</span>
+      </button>
+      <div class="mobile-planners-list">
+        <a href="/como-decir-que-no-en-el-trabajo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/images/lecturas/como-decir-que-no-portada.webp" alt="Cómo decir que no en el trabajo" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Cómo decir que no en el trabajo</span>
+            <span class="mobile-book-subtitle">Comunicación & Límites</span>
+          </div>
+        </a>
+        <a href="/como-dejar-de-sobrepensar-las-decisiones.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+          <img src="/images/lecturas/como-dejar-de-sobrepensar-portada.webp" alt="Cómo dejar de sobrepensar las decisiones" class="mobile-book-thumb" loading="lazy" />
+          <div class="mobile-book-info">
+            <span class="mobile-book-title">Cómo dejar de sobrepensar</span>
+            <span class="mobile-book-subtitle">Decisiones & Claridad</span>
+          </div>
+        </a>
+        <a href="/lecturas.html" class="site-drawer-link" style="font-size: 0.9rem; padding: 6px 8px; color: var(--color-accent); font-weight: 600;" onclick="document.body.classList.remove('nav-open')">
+          Ver todas las lecturas &rarr;
+        </a>
+      </div>
+    </div>
   `;
 
-  // Toggle de Planificadores (sin cerrar el drawer)
-  const plannersToggle = siteNav.querySelector('.mobile-planners-toggle');
-  const plannersAccordion = siteNav.querySelector('.mobile-planners-accordion');
-  if (plannersToggle && plannersAccordion) {
+  // Toggles de acordeones (sin cerrar el drawer)
+  siteNav.querySelectorAll('.mobile-planners-toggle').forEach(plannersToggle => {
     plannersToggle.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      plannersAccordion.classList.toggle('open');
+      const accordion = plannersToggle.closest('.mobile-planners-accordion');
+      if (accordion) accordion.classList.toggle('open');
     });
-  }
+  });
 
   drawerBody.appendChild(siteNav);
   drawer.appendChild(drawerBody);
