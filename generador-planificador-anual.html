@@ -975,6 +975,9 @@
         </div>
 
         <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-save-generator-anual" title="Guardar diseño en Mi Espacio">
+                <span>💾</span> Guardar en Mi Espacio
+            </button>
             <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
                 <span>⬇</span> Descargar PDF
             </button>
@@ -2189,6 +2192,25 @@
                 window.va('event', { name: eventName, data: properties });
             }
         }
+    </script>
+    <script type="module" src="./main.js"></script>
+    <script type="module">
+        import { setupGeneratorSave } from './save-generator-design.js';
+
+        setupGeneratorSave('btn-save-generator-anual', () => {
+            const yearText = (document.getElementById('input-year-title') ? document.getElementById('input-year-title').value : '').trim();
+            const focusText = (document.getElementById('input-year-focus') ? document.getElementById('input-year-focus').value : '').trim();
+
+            return {
+                name: yearText ? `Planificador Anual · ${yearText}` : 'Planificador Anual Personalizado',
+                type: 'Planificador Anual',
+                summary: focusText ? `Foco del año: "${focusText}"` : (yearText ? `Año: ${yearText}` : 'Visión anual personalizada'),
+                data: {
+                    year: yearText,
+                    focus: focusText
+                }
+            };
+        });
     </script>
 </body>
 </html>

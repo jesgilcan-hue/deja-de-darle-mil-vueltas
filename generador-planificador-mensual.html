@@ -1095,6 +1095,9 @@
         </div>
 
         <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-save-generator-mensual" title="Guardar diseño en Mi Espacio">
+                <span>💾</span> Guardar en Mi Espacio
+            </button>
             <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
                 <span>📥</span> Descargar PDF
             </button>
@@ -2416,6 +2419,27 @@
                 window.va('event', { name: eventName, data: properties });
             }
         }
+    </script>
+    <script type="module" src="./main.js"></script>
+    <script type="module">
+        import { setupGeneratorSave } from './save-generator-design.js';
+
+        setupGeneratorSave('btn-save-generator-mensual', () => {
+            const monthText = (document.getElementById('input-month-name') ? document.getElementById('input-month-name').value : '').trim();
+            const yearText = (document.getElementById('input-year-name') ? document.getElementById('input-year-name').value : '').trim();
+            const focusText = (document.getElementById('input-monthly-focus') ? document.getElementById('input-monthly-focus').value : '').trim();
+
+            return {
+                name: (monthText || yearText) ? `Planificador Mensual · ${monthText} ${yearText}`.trim() : 'Planificador Mensual Personalizado',
+                type: 'Planificador Mensual',
+                summary: focusText ? `Foco: "${focusText}"` : (monthText ? `Mes: ${monthText}` : 'Configuración mensual a medida'),
+                data: {
+                    month: monthText,
+                    year: yearText,
+                    focus: focusText
+                }
+            };
+        });
     </script>
 </body>
 </html>
