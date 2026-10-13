@@ -88,15 +88,26 @@ function injectAuthModal() {
       showStatus('Conectando con Google...', 'info');
       const result = await signInWithPopup(auth, googleProvider);
       await syncUserProfile(result.user);
-      showStatus('¡Acceso concedido! Redirigiendo...', 'success');
+      showStatus('¡Acceso concedido!', 'success');
       setTimeout(() => {
         closeAuthModal();
-        if (window.location.pathname.endsWith('mi-espacio.html')) {
-          window.location.reload();
-        } else {
-          window.location.href = '/mi-espacio.html';
+        // Si hay una URL de retorno o estamos en un generador, nos quedamos o volvemos a la página
+        const returnUrl = window.localStorage.getItem('mr_auth_return_url');
+        if (returnUrl) {
+          window.localStorage.removeItem('mr_auth_return_url');
+          if (returnUrl !== window.location.href) {
+            window.location.href = returnUrl;
+            return;
+          }
         }
-      }, 700);
+        // Si ya estamos en la página del generador o cualquier otra página, simplemente recargar o cerrar
+        if (!window.location.pathname.endsWith('mi-espacio.html')) {
+          // Si estamos en un generador, un evento o cierre basta sin expulsar al usuario
+          window.dispatchEvent(new CustomEvent('mr-auth-success', { detail: result.user }));
+        } else {
+          window.location.reload();
+        }
+      }, 500);
     } catch (err) {
       console.error('Error Google Auth:', err);
       if (err.code === 'auth/unauthorized-domain') {
@@ -117,8 +128,10 @@ function injectAuthModal() {
 
     try {
       showStatus('Generando tu enlace de acceso seguro...', 'info');
+      const returnUrl = window.location.href;
+      window.localStorage.setItem('mr_auth_return_url', returnUrl);
       const actionCodeSettings = {
-        url: window.location.origin + '/mi-espacio.html',
+        url: returnUrl,
         handleCodeInApp: true
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
@@ -267,10 +280,18 @@ function promptEmailConfirmation(callback) {
         status.className = 'auth-status-msg auth-status-success';
         setTimeout(() => {
           modal.remove();
+          const returnUrl = window.localStorage.getItem('mr_auth_return_url');
+          if (returnUrl) {
+            window.localStorage.removeItem('mr_auth_return_url');
+            if (returnUrl !== window.location.href) {
+              window.location.href = returnUrl;
+              return;
+            }
+          }
           if (window.location.pathname.endsWith('mi-espacio.html')) {
             window.location.reload();
           } else {
-            window.location.href = '/mi-espacio.html';
+            window.dispatchEvent(new CustomEvent('mr-auth-success', { detail: auth.currentUser }));
           }
         }, 700);
       } else {
@@ -291,8 +312,18 @@ async function checkEmailLinkCallback() {
         window.localStorage.removeItem('emailForSignIn');
         await syncUserProfile(result.user);
         window.history.replaceState({}, document.title, window.location.pathname);
-        if (!window.location.pathname.endsWith('mi-espacio.html')) {
-          window.location.href = '/mi-espacio.html';
+        const returnUrl = window.localStorage.getItem('mr_auth_return_url');
+        if (returnUrl) {
+          window.localStorage.removeItem('mr_auth_return_url');
+          if (returnUrl !== window.location.href) {
+            window.location.href = returnUrl;
+            return;
+          }
+        }
+        if (window.location.pathname.endsWith('mi-espacio.html')) {
+          window.location.reload();
+        } else {
+          window.dispatchEvent(new CustomEvent('mr-auth-success', { detail: result.user }));
         }
       } catch (err) {
         console.error('Error auto-login email link:', err);

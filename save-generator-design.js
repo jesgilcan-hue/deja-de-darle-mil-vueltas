@@ -14,9 +14,33 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
 
+  // Si el usuario acaba de iniciar sesión tras haber intentado guardar, recuperar el borrador y disparar el guardado
+  window.addEventListener('mr-auth-success', async (e) => {
+    const pendingRaw = window.localStorage.getItem('mr_pending_save_design');
+    if (pendingRaw) {
+      try {
+        const pendingDesign = JSON.parse(pendingRaw);
+        window.localStorage.removeItem('mr_pending_save_design');
+        if (e.detail) {
+          await triggerSaveFlow(btn, pendingDesign, e.detail);
+        }
+      } catch (err) {
+        console.error('Error restaurando diseño pendiente:', err);
+      }
+    }
+  });
+
   btn.addEventListener('click', async () => {
-    const user = auth.currentUser;
+    // Si auth aún está resolviéndose, esperar brevemente a auth.currentUser
+    let user = auth.currentUser;
     if (!user) {
+      // Guardar el estado actual del generador antes de abrir el modal para que no se pierda jamás
+      try {
+        const currentDraft = getGeneratorDataFn();
+        window.localStorage.setItem('mr_pending_save_design', JSON.stringify(currentDraft));
+        window.localStorage.setItem('mr_auth_return_url', window.location.href);
+      } catch (e) {}
+
       if (typeof window.showToast === 'function') {
         window.showToast('Inicia sesión para guardar tu diseño en Mi Espacio');
       }
@@ -24,46 +48,50 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
       return;
     }
 
-    try {
-      btn.disabled = true;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span>⏳</span> Consultando...';
-
-      const currentDesign = getGeneratorDataFn();
-      const currentType = currentDesign.type || 'Planificador Semanal';
-
-      // Consultar diseños del usuario en Firestore
-      const designsRef = collection(db, 'users', user.uid, 'designs');
-      const snap = await getDocs(designsRef);
-      
-      const existingDesigns = [];
-      snap.forEach(d => {
-        const data = d.data();
-        if (data.type === currentType) {
-          existingDesigns.push({ id: d.id, ...data });
-        }
-      });
-
-      // Ordenar por fecha descendente
-      existingDesigns.sort((a, b) => {
-        const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
-        const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
-        return timeB - timeA;
-      });
-
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-
-      // Abrir modal de selección
-      openSaveChoiceModal(currentDesign, existingDesigns, user);
-
-    } catch (err) {
-      console.error('Error al preparar guardado:', err);
-      notifyToast('No se pudieron cargar tus diseños. Inténtalo de nuevo.');
-      btn.disabled = false;
-      btn.innerHTML = '<span>💾</span> Guardar en Mi Espacio';
-    }
+    const currentDesign = getGeneratorDataFn();
+    await triggerSaveFlow(btn, currentDesign, user);
   });
+}
+
+async function triggerSaveFlow(btn, currentDesign, user) {
+  let originalText = btn.innerHTML;
+  try {
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Consultando...';
+
+    const currentType = currentDesign.type || 'Planificador Semanal';
+
+    // Consultar diseños del usuario en Firestore
+    const designsRef = collection(db, 'users', user.uid, 'designs');
+    const snap = await getDocs(designsRef);
+    
+    const existingDesigns = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.type === currentType) {
+        existingDesigns.push({ id: d.id, ...data });
+      }
+    });
+
+    // Ordenar por fecha descendente
+    existingDesigns.sort((a, b) => {
+      const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+      const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+      return timeB - timeA;
+    });
+
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+
+    // Abrir modal de selección
+    openSaveChoiceModal(currentDesign, existingDesigns, user);
+
+  } catch (err) {
+    console.error('Error al preparar guardado:', err);
+    notifyToast('No se pudieron cargar tus diseños. Inténtalo de nuevo.');
+    btn.disabled = false;
+    btn.innerHTML = originalText || '<span>💾</span> Guardar en Mi Espacio';
+  }
 }
 
 function openSaveChoiceModal(currentDesign, existingDesigns, user) {

@@ -54,6 +54,8 @@ export default defineConfig({
         generadorSemanal: resolve(__dirname, 'demo_generador_pdf_planificador_semanal.html'),
         guiaUsoSemanal: resolve(__dirname, 'guia-uso-planificador-semanal.html'),
         guiaUso90180: resolve(__dirname, 'guia-uso-planificador-90-180-dias.html'),
+        guiaUsoDeja: resolve(__dirname, 'guia-uso-deja-de-darle-mil-vueltas.html'),
+        guiaUsoHabla: resolve(__dirname, 'guia-uso-habla-claro.html'),
         tutorialGeneradorSemanal: resolve(__dirname, 'tutorial-generador-planificador-semanal.html'),
         tutorialGeneradorDiario: resolve(__dirname, 'tutorial-generador-planificador-diario.html'),
         tutorialGeneradorMensual: resolve(__dirname, 'tutorial-generador-planificador-mensual.html'),
