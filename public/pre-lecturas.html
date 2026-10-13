@@ -12,11 +12,20 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#87553b" />
 
-  <!-- Protección de acceso por PIN 1111 -->
-  <script>
-    if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
-      window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
-    }
+  <!-- Control de acceso exclusivo para Desarrollador -->
+  <script type="module">
+    import { auth, DEVELOPER_EMAIL } from './firebase-config.js';
+    import { onAuthStateChanged } from 'firebase/auth';
+
+    document.documentElement.style.display = 'none';
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user || user.email.toLowerCase() !== DEVELOPER_EMAIL.toLowerCase()) {
+        window.location.replace('/404.html');
+      } else {
+        document.documentElement.style.display = '';
+      }
+    });
   </script>
 
   <!-- Tipografías -->
@@ -665,7 +674,6 @@
           <a href="/tutorial-generador-planificador-diario.html" class="read-more">
             Ver tutorial paso a paso (Privado) &rarr;
           </a>
-        </div>
       </article>
 
       <!-- TARJETA DESTACADA: TUTORIAL GENERADOR SEMANAL -->

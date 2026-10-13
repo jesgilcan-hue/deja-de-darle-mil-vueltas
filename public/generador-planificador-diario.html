@@ -1016,6 +1016,9 @@
         </div>
 
         <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-save-generator-diario" title="Guardar diseño en Mi Espacio">
+                <span>💾</span> Guardar en Mi Espacio
+            </button>
             <button type="button" class="btn-download-primary" onclick="openDownloadModal()">
                 <span>📥</span> Descargar PDF
             </button>
@@ -2187,6 +2190,27 @@
             doc.save(filename);
             showToast(`✓ Descargado: ${filename}`);
         }
+    </script>
+    <script type="module" src="./main.js"></script>
+    <script type="module">
+        import { setupGeneratorSave } from './save-generator-design.js';
+
+        setupGeneratorSave('btn-save-generator-diario', () => {
+            const dayText = (document.getElementById('input-day') ? document.getElementById('input-day').value : '').trim();
+            const dateText = (document.getElementById('input-date') ? document.getElementById('input-date').value : '').trim();
+            const prioText = (document.getElementById('prio-textarea') ? document.getElementById('prio-textarea').value : '').trim();
+
+            return {
+                name: (dayText || dateText) ? `Planificador Diario · ${dayText} ${dateText}`.trim() : 'Planificador Diario Personalizado',
+                type: 'Planificador Diario',
+                summary: prioText ? `Prioridad: "${prioText}"` : (dateText || 'Configuración diaria personalizada'),
+                data: {
+                    day: dayText,
+                    date: dateText,
+                    priority: prioText
+                }
+            };
+        });
     </script>
 </body>
 </html>

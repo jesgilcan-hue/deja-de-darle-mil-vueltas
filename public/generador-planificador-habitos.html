@@ -999,8 +999,11 @@
             </button>
         </div>
 
-        <!-- GRUPO 4: DESCARGA PDF -->
+        <!-- GRUPO 4: DESCARGA PDF Y GUARDADO -->
         <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" id="btn-save-generator-habitos" title="Guardar diseño en Mi Espacio">
+                <span>💾</span> Guardar en Mi Espacio
+            </button>
             <button type="button" class="btn-download-main" onclick="openDownloadModal()" title="Exportar planificador en PDF de alta resolución">
                 <span>🖨️</span> Descargar PDF
             </button>
@@ -2017,6 +2020,25 @@
                 const intEl = document.getElementById('field-habit-intention');
                 if (intEl) handleIntentionInput(intEl);
             }, 60);
+        });
+    </script>
+    <script type="module" src="./main.js"></script>
+    <script type="module">
+        import { setupGeneratorSave } from './save-generator-design.js';
+
+        setupGeneratorSave('btn-save-generator-habitos', () => {
+            const cycleText = (document.getElementById('field-habit-cycle') ? document.getElementById('field-habit-cycle').value : '').trim();
+            const intentionText = (document.getElementById('field-habit-intention') ? document.getElementById('field-habit-intention').value : '').trim();
+
+            return {
+                name: cycleText ? `Planificador de Hábitos · ${cycleText}` : 'Planificador de Hábitos Personalizado',
+                type: 'Planificador de Hábitos',
+                summary: intentionText ? `Intención: "${intentionText}"` : (cycleText || 'Registro de hábitos'),
+                data: {
+                    cycle: cycleText,
+                    intention: intentionText
+                }
+            };
         });
     </script>
 </body>
