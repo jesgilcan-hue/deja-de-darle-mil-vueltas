@@ -12,7 +12,133 @@ import {
 import { onAuthStateChanged } from 'firebase/auth';
 import { openAuthModal } from './auth-modal.js';
 
+let hasUnsavedChanges = false;
+let trackingInitialized = false;
+
+export function setUnsavedChanges(val) {
+  hasUnsavedChanges = !!val;
+}
+
+export function getUnsavedChanges() {
+  return hasUnsavedChanges;
+}
+
+function initUnsavedTracking() {
+  if (trackingInitialized) return;
+  trackingInitialized = true;
+
+  // Detectar cambios en inputs y textareas (salvo dentro de modales)
+  const markDirty = (e) => {
+    if (e.target && e.target.closest && (
+      e.target.closest('.auth-modal-overlay') ||
+      e.target.closest('.modal-backdrop') ||
+      e.target.closest('#download-modal') ||
+      e.target.closest('#confirm-modal') ||
+      e.target.closest('#unsaved-warning-modal-overlay')
+    )) {
+      return;
+    }
+    hasUnsavedChanges = true;
+  };
+
+  document.addEventListener('input', markDirty);
+  document.addEventListener('change', markDirty);
+
+  // Detectar clics en controles interactivos de la plantilla
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!target || !target.closest) return;
+    if (target.closest('.auth-modal-overlay') || target.closest('#unsaved-warning-modal-overlay')) return;
+
+    if (
+      target.closest('.habit-day-dot') || 
+      target.closest('.day-check-indicator') || 
+      target.closest('.btn-block-action') || 
+      target.closest('.td-day-cell') || 
+      target.closest('.btn-shape') ||
+      target.closest('.pill-toggle')
+    ) {
+      hasUnsavedChanges = true;
+    }
+  });
+
+  // Aviso nativo del navegador al cerrar la pestaña o recargar
+  window.addEventListener('beforeunload', (e) => {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // Interceptar navegación por enlaces internos dentro de la web
+  document.addEventListener('click', (e) => {
+    if (!hasUnsavedChanges) return;
+    const link = e.target.closest('a');
+    if (!link) return;
+
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:') || link.target === '_blank') {
+      return;
+    }
+
+    e.preventDefault();
+    openUnsavedWarningModal(link.href);
+  });
+}
+
+function openUnsavedWarningModal(targetUrl) {
+  let modalOverlay = document.getElementById('unsaved-warning-modal-overlay');
+  if (modalOverlay) modalOverlay.remove();
+
+  const html = `
+    <div id="unsaved-warning-modal-overlay" class="auth-modal-overlay" style="display: flex; z-index: 999999;">
+      <div class="auth-modal-card" style="max-width: 440px; text-align: center; padding: 28px 24px;">
+        <button type="button" class="auth-modal-close" id="btn-close-unsaved-warning" style="font-size: 1.4rem;">×</button>
+        
+        <div class="auth-modal-header" style="margin-bottom: 14px;">
+          <span class="auth-modal-brand" style="font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; color: #87553b; font-weight: 700;">Menos Ruido</span>
+          <h2 class="auth-modal-title" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.35rem; margin: 8px 0 6px; color: #1a1816;">¿Deseas salir sin guardar?</h2>
+          <p class="auth-modal-subtitle" style="font-size: 0.88rem; color: #5a524b; line-height: 1.5; margin: 0 auto; max-width: 360px;">
+            Has realizado modificaciones en tu planificador. Si abandonas la página ahora, los cambios que no hayas guardado en <strong>Mi Espacio</strong> se perderán.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 22px;">
+          <button type="button" id="btn-stay-editing" style="flex: 1; background: #2f2a26; color: #ffffff; padding: 11px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.88rem; transition: background 0.15s;">
+            Continuar editando
+          </button>
+          <button type="button" id="btn-leave-page" style="flex: 1; background: #fdf2f2; color: #991b1b; padding: 11px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: 1px solid #fecaca; font-size: 0.88rem; transition: background 0.15s;">
+            Salir sin guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+  modalOverlay = document.getElementById('unsaved-warning-modal-overlay');
+
+  const closeBtn = document.getElementById('btn-close-unsaved-warning');
+  const stayBtn = document.getElementById('btn-stay-editing');
+  const leaveBtn = document.getElementById('btn-leave-page');
+
+  const closeModal = () => modalOverlay?.remove();
+
+  closeBtn?.addEventListener('click', closeModal);
+  stayBtn?.addEventListener('click', closeModal);
+  modalOverlay?.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  leaveBtn?.addEventListener('click', () => {
+    hasUnsavedChanges = false;
+    closeModal();
+    window.location.href = targetUrl;
+  });
+}
+
 export function checkAndLoadSavedDesign(applyDataFn) {
+  initUnsavedTracking();
   const params = new URLSearchParams(window.location.search);
   const designId = params.get('load');
   if (!designId) return;
@@ -32,9 +158,11 @@ export function checkAndLoadSavedDesign(applyDataFn) {
           if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
               applyDataFn(item.data);
+              setTimeout(() => { hasUnsavedChanges = false; }, 400);
             });
           } else {
             applyDataFn(item.data);
+            setTimeout(() => { hasUnsavedChanges = false; }, 400);
           }
           notifyToast(`✓ Diseño "${item.name || 'Guardado'}" cargado`);
           const cleanUrl = window.location.pathname;
@@ -53,6 +181,7 @@ export function checkAndLoadSavedDesign(applyDataFn) {
 }
 
 export function setupGeneratorSave(btnId, getGeneratorDataFn) {
+  initUnsavedTracking();
   const btn = document.getElementById(btnId);
   if (!btn) return;
 
@@ -224,6 +353,7 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user) {
         updatedAt: serverTimestamp()
       });
 
+      hasUnsavedChanges = false;
       modalOverlay.remove();
       notifyToast(`✓ "${finalName}" guardado en Mi Espacio`);
     } catch (err) {
@@ -252,6 +382,7 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user) {
           updatedAt: serverTimestamp()
         });
 
+        hasUnsavedChanges = false;
         modalOverlay.remove();
         notifyToast(`✓ "${targetName}" sobrescrito y actualizado`);
       } catch (err) {
