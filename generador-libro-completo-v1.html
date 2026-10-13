@@ -3376,74 +3376,92 @@
                 const dedLines = doc.splitTextToSize(`«${bookConfig.dedication}»`, fieldW + 12);
                 doc.text(dedLines, W / 2, dedY + 6.5, { align: 'center' });
 
-            // 2. CALENDARIO ANUAL
+            // 2. CALENDARIO ANUAL (PANORÁMICA 12 MESES CON TARJETAS REDONDEADAS Y CABECERA AVENA)
             } else if (page.type === 'calendar') {
                 const calDesignMode = page.design.yearMode || 'auto';
                 const calIsBlank = isBlank || calDesignMode === 'blank' || (calDesignMode === 'auto' && isBlank);
                 const calYear = page.calendarYear ? page.calendarYear : (calDesignMode === '2026' ? 2026 : (calDesignMode === '2027' ? 2027 : year));
 
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text('MENOS RUIDO · PANORÁMICA DE 12 MESES', M, M + 2.5);
+
                 doc.setFont('times', 'bold');
-                doc.setFontSize(14);
-                doc.setTextColor(25, 22, 19);
-                doc.text(`Calendario Anual ${calIsBlank ? 'Atemporal' : calYear}`, M, M + 4);
+                doc.setFontSize(15.5);
+                doc.setTextColor(20, 18, 16);
+                doc.text(`Calendario Anual ${calIsBlank ? 'Atemporal' : calYear}`, M, M + 8.5);
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7);
-                doc.setTextColor(135, 85, 59);
-                doc.text('MENOS RUIDO · PANORÁMICA DE 12 MESES', W - M, M + 4, { align: 'right' });
+                doc.setFontSize(8.5);
+                doc.setTextColor(30, 26, 22);
+                doc.text(calIsBlank ? 'SIN FECHAS FIJAS' : `AÑO ${calYear}`, W - M, M + 8.2, { align: 'right' });
 
                 doc.setLineWidth(0.4);
                 doc.setDrawColor(30, 25, 20);
-                doc.line(M, M + 6, W - M, M + 6);
+                doc.line(M, M + 10.5, W - M, M + 10.5);
 
                 const gridX = M;
-                const gridY = M + 10;
+                const gridY = M + 13.5;
                 const gridW = W - (M * 2);
-                const colW = (gridW - 12) / 4;
-                const rowH = 34;
+                const gridH = H - M - 7 - gridY; // 132.9 - gridY
+                const cols = 4;
+                const rows = 3;
+                const gap = 3.0;
+                const colW = (gridW - (gap * (cols - 1))) / cols;
+                const rowH = (gridH - (gap * (rows - 1))) / rows;
+                const headerH = 4.2;
                 const months = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
 
-                for (let r = 0; r < 3; r++) {
-                    for (let c = 0; c < 4; c++) {
-                        const mIdx = (r * 4) + c;
-                        const bX = gridX + (c * (colW + 4));
-                        const bY = gridY + (r * (rowH + 4));
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const mIdx = (r * cols) + c;
+                        const bX = gridX + c * (colW + gap);
+                        const bY = gridY + r * (rowH + gap);
 
-                        doc.setDrawColor(220, 212, 200);
+                        // Marco redondeado del mes
+                        doc.setFillColor(255, 255, 255);
+                        doc.setDrawColor(220, 215, 205);
                         doc.setLineWidth(0.2);
-                        doc.rect(bX, bY, colW, rowH);
+                        doc.roundedRect(bX, bY, colW, rowH, 1.2, 1.2, 'FD');
+
+                        // Cabecera del mes
+                        doc.setFillColor(245, 241, 234);
+                        doc.rect(bX, bY, colW, headerH, 'F');
+                        doc.line(bX, bY + headerH, bX + colW, bY + headerH);
 
                         doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(6.5);
-                        doc.setTextColor(40, 35, 30);
-                        doc.text(`${months[mIdx]} ${calIsBlank ? '' : calYear}`, bX + (colW / 2), bY + 4, { align: 'center' });
-                        doc.line(bX, bY + 5.5, bX + colW, bY + 5.5);
+                        doc.setFontSize(6.2);
+                        doc.setTextColor(45, 40, 35);
+                        doc.text(`${months[mIdx]} ${calIsBlank ? '' : calYear}`, bX + (colW / 2), bY + 3.0, { align: 'center' });
 
-                        doc.setFontSize(5);
-                        doc.setTextColor(110, 100, 90);
+                        // Días de la semana
                         const daysW = colW / 7;
+                        doc.setFontSize(4.8);
+                        doc.setTextColor(130, 120, 110);
                         ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach((d, i) => {
-                            doc.text(d, bX + (i * daysW) + (daysW / 2), bY + 8, { align: 'center' });
+                            doc.text(d, bX + (i * daysW) + (daysW / 2), bY + 7.5, { align: 'center' });
                         });
 
+                        // Cuadrícula de números
                         if (calIsBlank) {
-                            doc.setTextColor(160, 150, 140);
+                            doc.setTextColor(170, 160, 150);
                             for (let wr = 0; wr < 5; wr++) {
                                 for (let wc = 0; wc < 7; wc++) {
-                                    doc.text('·', bX + (wc * daysW) + (daysW / 2), bY + 12 + (wr * 4), { align: 'center' });
+                                    doc.text('·', bX + (wc * daysW) + (daysW / 2), bY + 11.2 + (wr * 3.8), { align: 'center' });
                                 }
                             }
                         } else {
                             const firstDay = (new Date(calYear, mIdx, 1).getDay() + 6) % 7;
                             const totalDays = new Date(calYear, mIdx + 1, 0).getDate();
                             let cur = 1;
-                            doc.setTextColor(30, 25, 20);
+                            doc.setTextColor(35, 30, 25);
                             for (let wr = 0; wr < 6; wr++) {
                                 if (cur > totalDays) break;
                                 for (let wc = 0; wc < 7; wc++) {
                                     if (wr === 0 && wc < firstDay) continue;
                                     if (cur <= totalDays) {
-                                        doc.text(String(cur), bX + (wc * daysW) + (daysW / 2), bY + 12 + (wr * 3.8), { align: 'center' });
+                                        doc.text(String(cur), bX + (wc * daysW) + (daysW / 2), bY + 11.2 + (wr * 3.6), { align: 'center' });
                                         cur++;
                                     }
                                 }
@@ -3452,66 +3470,143 @@
                     }
                 }
 
-            // 3. PLANIFICADOR ANUAL
+            // 3. PLANIFICADOR ANUAL (IDÉNTICO A GENERADOR-PLANIFICADOR-ANUAL: PRIORIDADES + 12 MESES + NOTAS)
             } else if (page.type === 'annual') {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text('MENOS RUIDO · PANORÁMICA ANUAL', M, M + 2.5);
+
                 doc.setFont('times', 'bold');
-                doc.setFontSize(14);
-                doc.setTextColor(25, 22, 19);
-                doc.text('Planificador Anual Estratégico', M, M + 4);
+                doc.setFontSize(15.5);
+                doc.setTextColor(20, 18, 16);
+                doc.text('Planificación Anual', M, M + 8.5);
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7);
-                doc.setTextColor(135, 85, 59);
-                doc.text(isBlank ? 'AÑO: _____________' : `AÑO ${year}`, W - M, M + 4, { align: 'right' });
+                doc.setFontSize(8.5);
+                doc.setTextColor(30, 26, 22);
+                doc.text(isBlank ? 'AÑO: _____________' : `AÑO: ${year}`, W - M, M + 8.2, { align: 'right' });
 
                 doc.setLineWidth(0.4);
                 doc.setDrawColor(30, 25, 20);
-                doc.line(M, M + 6, W - M, M + 6);
+                doc.line(M, M + 10.5, W - M, M + 10.5);
 
                 const gridW = W - (M * 2);
                 
-                // Prioridades
+                // FRANJA SUPERIOR: PRIORIDADES ESTRATÉGICAS + LEMA O FOCO
+                const topStripY = M + 12.8;
+                const topStripH = 17.0;
+                const prioW = (gridW - 4) * 0.58;
+                const mottoX = M + prioW + 4;
+                const mottoW = gridW - prioW - 4;
+
+                // Tarjeta 1: Prioridades estratégicas del año
                 doc.setFillColor(250, 248, 245);
-                doc.rect(M, M + 9, gridW, 16, 'FD');
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.8);
-                doc.setTextColor(135, 85, 59);
-                doc.text('PRIORIDADES ESTRATÉGICAS DEL AÑO (MÁXIMO 3)', M + 4, M + 13.5);
-                doc.setDrawColor(210, 200, 190);
+                doc.setDrawColor(220, 215, 204);
                 doc.setLineWidth(0.2);
-                doc.line(M + 4, M + 21, M + (gridW / 3) - 2, M + 21);
-                doc.line(M + (gridW / 3) + 2, M + 21, M + (2 * gridW / 3) - 2, M + 21);
-                doc.line(M + (2 * gridW / 3) + 2, M + 21, M + gridW - 4, M + 21);
+                doc.roundedRect(M, topStripY, prioW, topStripH, 1.5, 1.5, 'FD');
 
-                // 4 Trimestres
-                const qW = (gridW - 6) / 2;
-                const qH = 43;
-                const startY = M + 29;
-                const quarters = ['Q1 · ENERO - MARZO', 'Q2 · ABRIL - JUNIO', 'Q3 · JULIO - SEPTIEMBRE', 'Q4 · OCTUBRE - DICIEMBRE'];
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(45, 39, 34);
+                doc.text('PRIORIDADES ESTRATÉGICAS DEL AÑO (MÁXIMO 3)', M + 3.3, topStripY + 4.0);
 
-                quarters.forEach((q, idx) => {
-                    const col = idx % 2;
-                    const row = Math.floor(idx / 2);
-                    const qX = M + (col * (qW + 6));
-                    const qY = startY + (row * (qH + 5));
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                doc.line(M + 3, topStripY + 5.2, M + prioW - 3, topStripY + 5.2);
 
-                    doc.rect(qX, qY, qW, qH);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7);
-                    doc.setTextColor(135, 85, 59);
-                    doc.text(q, qX + 4, qY + 5);
+                const prioRowH = (topStripH - 6.5) / 3;
+                for (let i = 0; i < 3; i++) {
+                    const rowY = topStripY + 6.0 + (i * prioRowH);
+                    doc.setFillColor(255, 255, 255);
+                    doc.setDrawColor(110, 105, 100);
+                    doc.setLineWidth(0.2);
+                    doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
 
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6);
-                    doc.setTextColor(100, 95, 90);
-                    doc.text('Meta del trimestre:', qX + 4, qY + 10);
+                    doc.setDrawColor(226, 218, 208);
+                    doc.setLineWidth(0.15);
+                    doc.line(M + 7.5, rowY + 2.5, M + prioW - 3, rowY + 2.5);
+                }
 
-                    doc.setDrawColor(225, 220, 212);
-                    for (let l = 0; l < 4; l++) {
-                        doc.line(qX + 4, qY + 16 + (l * 6), qX + qW - 4, qY + 16 + (l * 6));
+                // Tarjeta 2: Lema o Foco Anual
+                doc.setFillColor(250, 248, 245);
+                doc.setDrawColor(220, 215, 204);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(mottoX, topStripY, mottoW, topStripH, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(45, 39, 34);
+                doc.text('LEMA O FOCO ANUAL', mottoX + 3.3, topStripY + 4.0);
+
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                doc.line(mottoX + 3, topStripY + 5.2, mottoX + mottoW - 3, topStripY + 5.2);
+
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(6.6);
+                doc.setTextColor(80, 75, 70);
+                doc.text('«Menos ruido mental, más profundidad y constancia.»', mottoX + 3.5, topStripY + 10.5);
+
+                // CUADRÍCULA CENTRAL DE LOS 12 MESES (4 COLUMNAS × 3 FILAS)
+                const gridStartY = topStripY + topStripH + 2.5;
+                const bottomNotesH = 15.0;
+                const footerLimitY = H - 9;
+                const spaceForGrid = (footerLimitY - bottomNotesH - 2.5) - gridStartY;
+                const annualGridH = spaceForGrid;
+
+                const aCols = 4;
+                const aRows = 3;
+                const aGap = 2.4;
+                const aColW = (gridW - (aGap * (aCols - 1))) / aCols;
+                const aRowH = (annualGridH - (aGap * (aRows - 1))) / aRows;
+                const aHeaderH = 4.2;
+                const monthNamesAnnual = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+                const quarterBadges = ["Q1", "Q1", "Q1", "Q2", "Q2", "Q2", "Q3", "Q3", "Q3", "Q4", "Q4", "Q4"];
+
+                for (let r = 0; r < aRows; r++) {
+                    for (let c = 0; c < aCols; c++) {
+                        const mIdx = r * aCols + c;
+                        const cellX = M + c * (aColW + aGap);
+                        const cellY = gridStartY + r * (aRowH + aGap);
+
+                        // Marco del mes
+                        doc.setFillColor(255, 255, 255);
+                        doc.setDrawColor(220, 215, 205);
+                        doc.setLineWidth(0.2);
+                        doc.roundedRect(cellX, cellY, aColW, aRowH, 1.2, 1.2, 'FD');
+
+                        // Cabecera del mes en tono avena
+                        doc.setFillColor(245, 241, 234);
+                        doc.rect(cellX, cellY, aColW, aHeaderH, 'F');
+                        doc.line(cellX, cellY + aHeaderH, cellX + aColW, cellY + aHeaderH);
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.2);
+                        doc.setTextColor(45, 40, 35);
+                        doc.text(`${mIdx + 1}. ${monthNamesAnnual[mIdx]}`, cellX + 1.8, cellY + 3.0);
+
+                        doc.setFontSize(5.0);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(quarterBadges[mIdx], cellX + aColW - 1.8, cellY + 3.0, { align: 'right' });
                     }
-                    doc.setDrawColor(30, 25, 20);
-                });
+                }
+
+                // FRANJA INFERIOR: NOTAS Y BALANCE ANUAL
+                const botNotesY = gridStartY + annualGridH + 2.5;
+                doc.setFillColor(250, 248, 245);
+                doc.setDrawColor(220, 215, 204);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(M, botNotesY, gridW, bottomNotesH, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(45, 39, 34);
+                doc.text('NOTAS Y BALANCE ANUAL', M + 3.3, botNotesY + 4.0);
+
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                doc.line(M + 3, botNotesY + 5.2, M + gridW - 3, botNotesY + 5.2);
 
             // 4. PLANIFICADOR MENSUAL (IDÉNTICO A GENERADOR-PLANIFICADOR-MENSUAL-V1)
             } else if (page.type === 'monthly') {
@@ -3710,88 +3805,151 @@
                 doc.rect(M, calStartY, gridW, calH);
                 doc.line(M, calStartY + headerH, M + gridW, calStartY + headerH);
 
-            // 5. RASTREADOR DE HÁBITOS (IDÉNTICO AL OFICIAL)
+            // 5. RASTREADOR DE HÁBITOS (IDÉNTICO A GENERADOR-PLANIFICADOR-HABITOS-V1)
             } else if (page.type === 'habits') {
                 const monthIndex = (page.monthIndex !== undefined) ? page.monthIndex : (page.pageIndexInSection % 12);
                 const monthNames = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
                 const titleStr = isBlank ? `Planificador de Hábitos` : `Hábitos · ${monthNames[monthIndex]}`;
-                const metaStr = isBlank ? `MES: _________ · AÑO: _________` : `AÑO ${year}`;
+                const metaStr = isBlank ? `MES: _________ · AÑO: _________` : `MES: ${monthNames[monthIndex]} · AÑO: ${year}`;
                 const habitCount = page.design.habitCount || 10;
                 const isCircle = page.design.markerShape !== 'square';
                 const daysInMonth = isBlank ? 31 : new Date(year, monthIndex + 1, 0).getDate();
 
+                // Cabecera oficial
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.4);
+                doc.setTextColor(135, 85, 59);
+                doc.text('MENOS RUIDO · RASTREADOR DE HÁBITOS', M, M + 2.5);
+
                 doc.setFont('times', 'bold');
-                doc.setFontSize(14);
-                doc.setTextColor(25, 22, 19);
-                doc.text(titleStr, M, M + 4);
+                doc.setFontSize(15.5);
+                doc.setTextColor(20, 18, 16);
+                doc.text(titleStr, M, M + 8.5);
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(135, 85, 59);
-                doc.text(metaStr, W - M, M + 4, { align: 'right' });
+                doc.setFontSize(8.0);
+                doc.setTextColor(70, 65, 60);
+                doc.text(metaStr, W - M, M + 8.2, { align: 'right' });
 
-                doc.setLineWidth(0.4);
-                doc.setDrawColor(30, 25, 20);
-                doc.line(M, M + 6, W - M, M + 6);
+                // Foco / intención del mes
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(6.8);
+                doc.setTextColor(90, 85, 80);
+                doc.text('«Constancia silenciosa, progreso diario y presencia»', M, M + 12.0);
+
+                doc.setLineWidth(0.38);
+                doc.setDrawColor(40, 35, 30);
+                doc.line(M, M + 13.8, W - M, M + 13.8);
 
                 const gridW = W - (M * 2);
-                const nameColW = 52;
-                const daysTotalW = gridW - nameColW;
-                const dayColW = daysTotalW / daysInMonth;
-                const startY = M + 10;
-                const availableH = H - M - startY - 10; // Espacio total disponible hasta el pie
-                // Asignar 80% a la tabla de hábitos y 20% a observaciones (mínimo 12mm)
-                const obsBoxH = Math.max(12, availableH * (habitCount <= 8 ? 0.28 : (habitCount <= 12 ? 0.20 : 0.14)));
-                const tableH = availableH - obsBoxH - 3;
-                const headerH = 5.5;
-                const rowH = (tableH - headerH) / habitCount;
+                const habitColW = 48.0;
+                const daysGridW = gridW - habitColW;
+                const dayColW = daysGridW / daysInMonth;
+                const gridStartY = M + 16.5;
 
+                const footerLimitY = H - 9;
+                const totalAvailH = footerLimitY - gridStartY;
+
+                let tableTotalH = 0;
+                if (habitCount <= 8) tableTotalH = 50.0;
+                else if (habitCount <= 10) tableTotalH = 55.0;
+                else if (habitCount <= 12) tableTotalH = 60.0;
+                else tableTotalH = 66.0;
+
+                const headerRowH = 4.4;
+                const bodyH = tableTotalH - headerRowH;
+                const rowH = bodyH / habitCount;
+
+                // 1. Cabecera tabla de hábitos (fondo avena)
+                doc.setFillColor(245, 240, 232);
                 doc.setDrawColor(40, 35, 30);
-                doc.setLineWidth(0.25);
+                doc.setLineWidth(0.35);
+                doc.rect(M, gridStartY, gridW, headerRowH, 'FD');
 
-                doc.rect(M, startY, nameColW, headerH);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6);
-                doc.text('HÁBITO FUNDAMENTAL', M + 3, startY + 3.8);
+                doc.setFontSize(6.0);
+                doc.setTextColor(45, 40, 35);
+                doc.text('HÁBITO FUNDAMENTAL', M + 2.5, gridStartY + 3.1);
 
-                for (let d = 0; d < daysInMonth; d++) {
-                    doc.rect(M + nameColW + (d * dayColW), startY, dayColW, headerH);
-                    doc.text(String(d + 1), M + nameColW + (d * dayColW) + (dayColW / 2), startY + 3.8, { align: 'center' });
-                }
-
-                for (let h = 0; h < habitCount; h++) {
-                    const rY = startY + headerH + (h * rowH);
-                    doc.rect(M, rY, nameColW, rowH);
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6);
-                    doc.setTextColor(120, 110, 100);
-                    doc.text(`· Hábito ${h + 1}`, M + 3, rY + (rowH / 2) + 1);
-
-                    for (let d = 0; d < daysInMonth; d++) {
-                        doc.rect(M + nameColW + (d * dayColW), rY, dayColW, rowH);
-                        const cX = M + nameColW + (d * dayColW) + (dayColW / 2);
-                        const cY = rY + (rowH / 2);
-                        doc.setDrawColor(100, 90, 80);
-                        const dotR = rowH < 7 ? 1.1 : 1.4;
-                        if (isCircle) {
-                            doc.circle(cX, cY, dotR);
-                        } else {
-                            doc.rect(cX - dotR, cY - dotR, dotR * 2, dotR * 2);
-                        }
-                        doc.setDrawColor(40, 35, 30);
+                doc.setFontSize(5.2);
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dayX = M + habitColW + ((d - 1) * dayColW);
+                    doc.text(String(d), dayX + (dayColW / 2), gridStartY + 3.1, { align: 'center' });
+                    if (d > 1) {
+                        doc.setDrawColor(215, 210, 200);
+                        doc.setLineWidth(0.18);
+                        doc.line(dayX, gridStartY, dayX, gridStartY + headerRowH);
                     }
                 }
 
-                // Observaciones
-                const boxY = startY + headerH + (habitCount * rowH) + 3;
-                doc.setDrawColor(180, 170, 155);
-                doc.rect(M, boxY, gridW, obsBoxH);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.5);
-                doc.setTextColor(60, 50, 40);
-                doc.text('OBSERVACIONES Y BALANCE DEL MES:', M + 3, boxY + 4);
+                // 2. Filas de hábitos con fondos alternos suaves
+                for (let i = 0; i < habitCount; i++) {
+                    const rY = gridStartY + headerRowH + (i * rowH);
+                    if (i % 2 === 1) {
+                        doc.setFillColor(252, 250, 246);
+                        doc.rect(M, rY, gridW, rowH, 'F');
+                    }
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.18);
+                    doc.line(M, rY + rowH, M + gridW, rY + rowH);
+                }
 
-            // 6. PLANIFICADOR SEMANAL (IDÉNTICO AL OFICIAL)
+                // Líneas divisorias verticales entre días
+                doc.setDrawColor(230, 225, 218);
+                doc.setLineWidth(0.15);
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dayX = M + habitColW + ((d - 1) * dayColW);
+                    doc.line(dayX, gridStartY + headerRowH, dayX, gridStartY + tableTotalH);
+                }
+
+                // Divisor grueso entre nombre de hábito y días
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.35);
+                doc.line(M + habitColW, gridStartY, M + habitColW, gridStartY + tableTotalH);
+                doc.rect(M, gridStartY, gridW, tableTotalH, 'S');
+
+                // Nombres y Casillas de los días
+                const radius = Math.min(1.25, Math.max(0.85, rowH * 0.28));
+                const sqSize = Math.min(2.30, Math.max(1.6, rowH * 0.50));
+
+                for (let i = 0; i < habitCount; i++) {
+                    const rY = gridStartY + headerRowH + (i * rowH);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(5.6);
+                    doc.setTextColor(110, 100, 90);
+                    doc.text(`· Hábito ${i + 1}`, M + 2.5, rY + (rowH / 2) + 1.0);
+
+                    for (let d = 0; d < daysInMonth; d++) {
+                        const cX = M + habitColW + (d * dayColW) + (dayColW / 2);
+                        const cY = rY + (rowH / 2);
+                        doc.setDrawColor(165, 158, 148);
+                        doc.setLineWidth(0.18);
+                        if (isCircle) {
+                            doc.circle(cX, cY, radius, 'S');
+                        } else {
+                            doc.rect(cX - (sqSize / 2), cY - (sqSize / 2), sqSize, sqSize, 'S');
+                        }
+                    }
+                }
+
+                // 3. Recuadro inferior de reflexión y observaciones del mes
+                const notesBoxY = gridStartY + tableTotalH + 2.8;
+                const notesBoxH = footerLimitY - notesBoxY;
+                doc.setFillColor(250, 248, 244);
+                doc.setDrawColor(220, 215, 204);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(M, notesBoxY, gridW, notesBoxH, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(135, 85, 59);
+                doc.text('📝 REFLEXIÓN Y OBSERVACIONES DEL MES', M + 3.5, notesBoxY + 3.8);
+
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                doc.line(M + 3, notesBoxY + 5.0, M + gridW - 3, notesBoxY + 5.0);
+
+            // 6. PLANIFICADOR SEMANAL (IDÉNTICO A GENERADOR-PLANIFICADOR-SEMANAL)
             } else if (page.type === 'weekly') {
                 const weekNum = (page.weekNum !== undefined) ? page.weekNum : (page.pageIndexInSection + 1);
                 const monthNames = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
@@ -3805,316 +3963,453 @@
                     weekDates = getWeekDates(year, weekNum);
                 }
 
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.0);
+                doc.setTextColor(135, 85, 59);
+                doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN SEMANAL', M, M + 2.5);
+
                 doc.setFont('times', 'bold');
-                doc.setFontSize(14);
-                doc.setTextColor(25, 22, 19);
-                doc.text('Planificación Semanal', M, M + 4);
+                doc.setFontSize(16);
+                doc.setTextColor(20, 18, 16);
+                doc.text('Planificación Semanal', M, M + 8.5);
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(135, 85, 59);
-                doc.text(metaStr, W - M, M + 4, { align: 'right' });
+                doc.setFontSize(8.0);
+                doc.setTextColor(70, 65, 60);
+                doc.text(metaStr, W - M, M + 8.2, { align: 'right' });
 
-                doc.setLineWidth(0.4);
+                doc.setLineWidth(0.35);
                 doc.setDrawColor(30, 25, 20);
-                doc.line(M, M + 6, W - M, M + 6);
+                doc.line(M, M + 10.5, W - M, M + 10.5);
 
                 const gridW = W - (M * 2);
-                const colW = (gridW - 6) / 2;
-                const startY = M + 9;
+                const colGap = 6;
+                const colW = (gridW - colGap) / 2;
+                const bodyStartY = M + 13.5;
+                const col1X = M;
+                const col2X = M + colW + colGap;
 
-                // Altura según si hay bloque inferior
                 const hasBottom = page.design.bottomSection !== 'none';
-                const bodyH = hasBottom ? 73.0 : 108.0;
-                const dayH1 = bodyH / 4;
+                const normalBodyH = 73.0;
+                const bottomGap = 3.2;
+                const bottomH = 32.4;
+                const expandedBodyH = normalBodyH + bottomGap + bottomH;
+                const bodyH1 = hasBottom ? normalBodyH : expandedBodyH;
+                const bodyH2 = bodyH1;
 
-                // Columna izquierda: Lunes a Jueves
+                // Marco Columna 1 (Lunes a Jueves)
+                doc.setFillColor(255, 255, 255);
                 doc.setDrawColor(210, 205, 198);
                 doc.setLineWidth(0.25);
-                doc.rect(M, startY, colW, bodyH);
+                doc.roundedRect(col1X, bodyStartY, colW, bodyH1, 1.5, 1.5, 'FD');
 
-                ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES'].forEach((d, idx) => {
-                    const y = startY + (idx * dayH1);
+                // Marco Columna 2 (Foco + Viernes a Domingo)
+                doc.roundedRect(col2X, bodyStartY, colW, bodyH2, 1.5, 1.5, 'FD');
+
+                // --- COLUMNA 1: LUNES A JUEVES ---
+                const rowH1 = bodyH1 / 4;
+                ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES'].forEach((dName, idx) => {
+                    const rowY = bodyStartY + (idx * rowH1);
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(6.8);
                     doc.setTextColor(30, 25, 20);
-                    doc.text(d, M + 4, y + 4.5);
+                    doc.text(dName, col1X + 4, rowY + 4.5);
 
-                    // Casilla fecha (7mm)
-                    const boxX = M + colW - 7.0;
-                    const boxY = y + 4.5;
+                    // Casilla fecha
+                    const boxCenterX = col1X + colW - 6.0;
+                    const boxCenterY = rowY + 4.2;
+                    const boxRadius = 2.6;
+                    const boxSize = 5.2;
+
                     doc.setDrawColor(70, 65, 60);
+                    doc.setLineWidth(0.22);
                     if (isCircle) {
-                        doc.circle(boxX, boxY, 3.5);
+                        doc.circle(boxCenterX, boxCenterY, boxRadius, 'S');
                     } else {
-                        doc.rect(boxX - 3.5, boxY - 3.5, 7.0, 7.0);
+                        doc.roundedRect(boxCenterX - boxRadius, boxCenterY - boxRadius, boxSize, boxSize, 0.7, 0.7, 'S');
                     }
 
-                    if (!isBlank && weekDates.length > idx) {
+                    if (!isBlank && weekDates.length > idx && weekDates[idx] !== '') {
                         doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(6.2);
-                        doc.setTextColor(30, 25, 20);
-                        doc.text(String(weekDates[idx]), boxX, boxY + 1.2, { align: 'center' });
+                        doc.setFontSize(7.2);
+                        doc.setTextColor(25, 20, 15);
+                        doc.text(String(weekDates[idx]), boxCenterX, boxCenterY + 0.9, { align: 'center' });
                     }
 
                     if (idx < 3) {
-                        doc.setDrawColor(210, 205, 198);
-                        doc.line(M, y + dayH1, M + colW, y + dayH1);
+                        doc.setDrawColor(230, 225, 218);
+                        doc.setLineWidth(0.15);
+                        doc.line(col1X + 3, rowY + rowH1, col1X + colW - 3, rowY + rowH1);
                     }
                 });
 
-                // Columna derecha: Foco + Viernes a Domingo
-                const rX = M + colW + 6;
-                doc.setDrawColor(210, 205, 198);
-                doc.rect(rX, startY, colW, bodyH);
+                // --- COLUMNA 2: FOCO + VIERNES A DOMINGO ---
+                const rowH2 = bodyH2 / 4;
 
-                // Foco
-                const focoH = dayH1;
+                // Foco de la semana
                 doc.setFillColor(250, 248, 245);
-                doc.rect(rX, startY, colW, focoH, 'FD');
+                doc.roundedRect(col2X, bodyStartY, colW, rowH2, 1.5, 1.5, 'F');
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
-                doc.text('FOCO DE LA SEMANA (META CLAVE)', rX + 4, startY + 4.5);
+                doc.text('FOCO DE LA SEMANA (META CLAVE)', col2X + 4, bodyStartY + 4.5);
+
+                doc.setDrawColor(220, 215, 208);
+                doc.setLineWidth(0.2);
+                doc.line(col2X, bodyStartY + rowH2, col2X + colW, bodyStartY + rowH2);
 
                 // Viernes
-                const yViernes = startY + focoH;
+                const yViernes = bodyStartY + rowH2;
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(30, 25, 20);
-                doc.text('VIERNES', rX + 4, yViernes + 4.5);
+                doc.text('VIERNES', col2X + 4, yViernes + 4.5);
 
-                const boxX_vie = rX + colW - 7.0;
-                const boxY_vie = yViernes + 4.5;
+                const boxCenterX_vie = col2X + colW - 6.0;
+                const boxCenterY_vie = yViernes + 4.2;
                 doc.setDrawColor(70, 65, 60);
+                doc.setLineWidth(0.22);
                 if (isCircle) {
-                    doc.circle(boxX_vie, boxY_vie, 3.5);
+                    doc.circle(boxCenterX_vie, boxCenterY_vie, 2.6, 'S');
                 } else {
-                    doc.rect(boxX_vie - 3.5, boxY_vie - 3.5, 7.0, 7.0);
+                    doc.roundedRect(boxCenterX_vie - 2.6, boxCenterY_vie - 2.6, 5.2, 5.2, 0.7, 0.7, 'S');
                 }
-                if (!isBlank && weekDates.length > 4) {
+                if (!isBlank && weekDates.length > 4 && weekDates[4] !== '') {
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.2);
-                    doc.setTextColor(30, 25, 20);
-                    doc.text(String(weekDates[4]), boxX_vie, boxY_vie + 1.2, { align: 'center' });
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(25, 20, 15);
+                    doc.text(String(weekDates[4]), boxCenterX_vie, boxCenterY_vie + 0.9, { align: 'center' });
                 }
-                doc.setDrawColor(210, 205, 198);
-                doc.line(rX, yViernes + dayH1, rX + colW, yViernes + dayH1);
 
-                // Sábado & Domingo
-                const yFinSem = yViernes + dayH1;
-                const halfW = (colW) / 2;
+                doc.setDrawColor(230, 225, 218);
+                doc.setLineWidth(0.15);
+                doc.line(col2X + 3, yViernes + rowH2, col2X + colW - 3, yViernes + rowH2);
+
+                // Sábado & Domingo (compartiendo la mitad inferior)
+                const yFinSem = yViernes + rowH2;
+                const finSemH = rowH2 * 2;
+                const halfW = colW / 2;
 
                 // Sábado
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(30, 25, 20);
-                doc.text('SÁBADO', rX + 4, yFinSem + 4.5);
-                const boxX_sab = rX + halfW - 6.0;
-                const boxY_sab = yFinSem + 4.5;
+                doc.text('SÁBADO', col2X + 4, yFinSem + 4.5);
+                const boxCenterX_sab = col2X + halfW - 6.0;
+                const boxCenterY_sab = yFinSem + 4.2;
                 doc.setDrawColor(70, 65, 60);
+                doc.setLineWidth(0.22);
                 if (isCircle) {
-                    doc.circle(boxX_sab, boxY_sab, 3.5);
+                    doc.circle(boxCenterX_sab, boxCenterY_sab, 2.6, 'S');
                 } else {
-                    doc.rect(boxX_sab - 3.5, boxY_sab - 3.5, 7.0, 7.0);
+                    doc.roundedRect(boxCenterX_sab - 2.6, boxCenterY_sab - 2.6, 5.2, 5.2, 0.7, 0.7, 'S');
                 }
-                if (!isBlank && weekDates.length > 5) {
+                if (!isBlank && weekDates.length > 5 && weekDates[5] !== '') {
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.2);
-                    doc.setTextColor(30, 25, 20);
-                    doc.text(String(weekDates[5]), boxX_sab, boxY_sab + 1.2, { align: 'center' });
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(25, 20, 15);
+                    doc.text(String(weekDates[5]), boxCenterX_sab, boxCenterY_sab + 0.9, { align: 'center' });
                 }
 
                 // Domingo
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(30, 25, 20);
-                doc.text('DOMINGO', rX + halfW + 4, yFinSem + 4.5);
-                const boxX_dom = rX + colW - 7.0;
-                const boxY_dom = yFinSem + 4.5;
+                doc.text('DOMINGO', col2X + halfW + 4, yFinSem + 4.5);
+                const boxCenterX_dom = col2X + colW - 6.0;
+                const boxCenterY_dom = yFinSem + 4.2;
                 doc.setDrawColor(70, 65, 60);
+                doc.setLineWidth(0.22);
                 if (isCircle) {
-                    doc.circle(boxX_dom, boxY_dom, 3.5);
+                    doc.circle(boxCenterX_dom, boxCenterY_dom, 2.6, 'S');
                 } else {
-                    doc.rect(boxX_dom - 3.5, boxY_dom - 3.5, 7.0, 7.0);
+                    doc.roundedRect(boxCenterX_dom - 2.6, boxCenterY_dom - 2.6, 5.2, 5.2, 0.7, 0.7, 'S');
                 }
-                if (!isBlank && weekDates.length > 6) {
+                if (!isBlank && weekDates.length > 6 && weekDates[6] !== '') {
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.2);
-                    doc.setTextColor(30, 25, 20);
-                    doc.text(String(weekDates[6]), boxX_dom, boxY_dom + 1.2, { align: 'center' });
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(25, 20, 15);
+                    doc.text(String(weekDates[6]), boxCenterX_dom, boxCenterY_dom + 0.9, { align: 'center' });
                 }
-                doc.setDrawColor(210, 205, 198);
-                doc.line(rX + halfW, yFinSem, rX + halfW, startY + bodyH);
 
-                // Franja inferior
+                doc.setDrawColor(220, 215, 208);
+                doc.line(col2X + halfW, yFinSem, col2X + halfW, yFinSem + finSemH);
+
+                // --- FRANJA INFERIOR ---
                 if (hasBottom) {
-                    const botY = startY + bodyH + 3.5;
-                    const botH = 32.0;
-
+                    const botY = bodyStartY + normalBodyH + bottomGap;
                     if (hasHabits && hasNotes) {
+                        // Bloque Hábitos
+                        doc.setFillColor(255, 255, 255);
                         doc.setDrawColor(210, 205, 198);
-                        doc.rect(M, botY, colW, botH);
+                        doc.setLineWidth(0.25);
+                        doc.roundedRect(col1X, botY, colW, bottomH, 1.5, 1.5, 'FD');
+
                         doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(6.8);
-                        doc.text('HÁBITOS DE LA SEMANA', M + 4, botY + 4.5);
+                        doc.setFontSize(6.6);
+                        doc.setTextColor(40, 35, 30);
+                        doc.text('🌱 HÁBITOS DE LA SEMANA', col1X + 4, botY + 4.2);
 
                         // Cabecera L M X J V S D
+                        const habitColsX = col1X + colW - 29;
                         doc.setFontSize(5.5);
-                        doc.setTextColor(110, 100, 90);
+                        doc.setTextColor(120, 110, 100);
                         ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach((d, di) => {
-                            doc.text(d, M + colW - 27 + (di * 3.8), botY + 4.5, { align: 'center' });
+                            doc.text(d, habitColsX + (di * 4.0), botY + 4.2, { align: 'center' });
                         });
 
                         for (let hb = 0; hb < 3; hb++) {
-                            const hy = botY + 11 + (hb * 7);
+                            const hy = botY + 10.5 + (hb * 7.2);
                             doc.setFont('helvetica', 'normal');
-                            doc.setFontSize(6);
-                            doc.setTextColor(60, 55, 50);
-                            doc.text(`Hábito ${hb + 1}`, M + 4, hy);
-                            doc.setDrawColor(120, 110, 100);
+                            doc.setFontSize(5.8);
+                            doc.setTextColor(70, 65, 60);
+                            doc.text(`· Hábito ${hb + 1}`, col1X + 4, hy);
+
+                            doc.setDrawColor(150, 142, 132);
+                            doc.setLineWidth(0.18);
                             ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach((d, di) => {
-                                const dotX = M + colW - 27 + (di * 3.8);
+                                const dotX = habitColsX + (di * 4.0);
                                 if (isCircle) {
-                                    doc.circle(dotX, hy - 1, 1.3);
+                                    doc.circle(dotX, hy - 0.9, 1.35, 'S');
                                 } else {
-                                    doc.rect(dotX - 1.3, hy - 2.3, 2.6, 2.6);
+                                    doc.rect(dotX - 1.35, hy - 2.25, 2.7, 2.7, 'S');
                                 }
                             });
                         }
 
-                        doc.setDrawColor(210, 205, 198);
-                        doc.rect(rX, botY, colW, botH);
+                        // Bloque Notas
+                        doc.setFillColor(250, 248, 245);
+                        doc.roundedRect(col2X, botY, colW, bottomH, 1.5, 1.5, 'FD');
                         doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(6.8);
-                        doc.setTextColor(30, 25, 20);
-                        doc.text('TAREAS SECUNDARIAS / NOTAS', rX + 4, botY + 4.5);
+                        doc.setFontSize(6.6);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text('📝 TAREAS SECUNDARIAS / NOTAS', col2X + 4, botY + 4.2);
+
+                        doc.setDrawColor(226, 218, 208);
+                        doc.setLineWidth(0.15);
+                        doc.line(col2X + 3, botY + 5.5, col2X + colW - 3, botY + 5.5);
                     }
                 }
 
-            // 7. PLANIFICADOR HORARIO (IDÉNTICO AL OFICIAL)
+            // 7. PLANIFICADOR HORARIO (IDÉNTICO A GENERADOR-PLANIFICADOR-HORARIO-V1)
             } else if (page.type === 'hourly') {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text('MENOS RUIDO · ESTRUCTURA HORARIA SEMANAL', M, M + 2.5);
+
                 doc.setFont('times', 'bold');
-                doc.setFontSize(14);
-                doc.setTextColor(25, 22, 19);
-                doc.text('Planificador Horario Semanal', M, M + 4);
+                doc.setFontSize(15);
+                doc.setTextColor(20, 18, 16);
+                doc.text('Planificador Horario Semanal', M, M + 8.5);
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(135, 85, 59);
-                doc.text('SEMANA: _____ · AÑO: _____', W - M, M + 4, { align: 'right' });
+                doc.setFontSize(8.0);
+                doc.setTextColor(70, 65, 60);
+                doc.text('SEMANA: _____ · AÑO: _____', W - M, M + 8.2, { align: 'right' });
 
-                doc.setLineWidth(0.4);
+                doc.setLineWidth(0.35);
                 doc.setDrawColor(30, 25, 20);
-                doc.line(M, M + 6, W - M, M + 6);
+                doc.line(M, M + 10.5, W - M, M + 10.5);
 
                 const gridW = W - (M * 2);
-                const timeColW = 16;
-                const daysW = (gridW - timeColW) / 7;
-                const startY = M + 9;
+                const timeColW = 22.0;
+                const daysGridW = gridW - timeColW;
+                const dayColW = daysGridW / 7;
+                const startY = M + 13.5;
+
                 const startHourInt = parseInt(page.design.startHour || '08', 10);
                 const step = getHourlyStep(page.design.interval || '1h');
                 const rowCount = page.design.rows || 12;
-                const slotH = (H - startY - 14) / (rowCount + 1);
 
+                const headerRowH = 4.8;
+                const notesH = 16.0;
+                const footerLimitY = H - 9;
+                const availableTableH = (footerLimitY - notesH - 2.5) - startY;
+                const rowH = (availableTableH - headerRowH) / rowCount;
+
+                // 1. Cabecera tabla horaria
+                doc.setFillColor(245, 240, 232);
                 doc.setDrawColor(40, 35, 30);
-                doc.setLineWidth(0.25);
-                doc.rect(M, startY, gridW, slotH * (rowCount + 1));
+                doc.setLineWidth(0.35);
+                doc.rect(M, startY, gridW, headerRowH, 'FD');
 
-                // Eje horas con wrap de 24 horas
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6);
-                doc.text('HORA', M + (timeColW / 2), startY + 4, { align: 'center' });
-                doc.line(M + timeColW, startY, M + timeColW, startY + (slotH * (rowCount + 1)));
+                doc.setFontSize(5.8);
+                doc.setTextColor(45, 40, 35);
+                doc.text('HORA', M + (timeColW / 2), startY + 3.2, { align: 'center' });
 
-                for (let r = 0; r < rowCount; r++) {
-                    const y = startY + ((r + 1) * slotH);
-                    doc.line(M, y, M + gridW, y);
-                    const hour24 = (startHourInt + (r * step)) % 24;
-                    const hStr = hour24.toString().padStart(2, '0') + ':00';
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(5.5);
-                    doc.text(hStr, M + (timeColW / 2), y + (slotH / 2) + 1, { align: 'center' });
-                }
-
-                // Columnas de días
-                ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].forEach((d, di) => {
-                    const dX = M + timeColW + (di * daysW);
-                    doc.line(dX, startY, dX, startY + (slotH * (rowCount + 1)));
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6);
-                    doc.text(d, dX + (daysW / 2), startY + 4, { align: 'center' });
+                const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+                dayNames.forEach((dName, di) => {
+                    const dX = M + timeColW + (di * dayColW);
+                    doc.text(dName, dX + (dayColW / 2), startY + 3.2, { align: 'center' });
+                    doc.setDrawColor(215, 210, 200);
+                    doc.setLineWidth(0.18);
+                    doc.line(dX, startY, dX, startY + headerRowH);
                 });
 
-            // 8. BITÁCORA DIARIA (EL QUE LE GUSTÓ AL USUARIO)
+                // 2. Filas de horas
+                for (let r = 0; r < rowCount; r++) {
+                    const y = startY + headerRowH + (r * rowH);
+                    const hour24 = (startHourInt + (r * step)) % 24;
+                    const hStr = hour24.toString().padStart(2, '0') + ':00';
+
+                    // Columna de hora
+                    doc.setFillColor(252, 250, 246);
+                    doc.rect(M, y, timeColW, rowH, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(5.4);
+                    doc.setTextColor(50, 45, 40);
+                    doc.text(hStr, M + (timeColW / 2), y + (rowH / 2) + 0.9, { align: 'center' });
+
+                    // Líneas divisorias horizontales
+                    doc.setDrawColor(225, 220, 212);
+                    doc.setLineWidth(0.18);
+                    doc.line(M, y + rowH, M + gridW, y + rowH);
+                }
+
+                // Líneas verticales de días
+                doc.setDrawColor(225, 220, 212);
+                doc.setLineWidth(0.18);
+                for (let di = 0; di < 7; di++) {
+                    const dX = M + timeColW + (di * dayColW);
+                    doc.line(dX, startY + headerRowH, dX, startY + availableTableH);
+                }
+
+                // Divisor grueso entre hora y cuadrícula
+                doc.setDrawColor(40, 35, 30);
+                doc.setLineWidth(0.35);
+                doc.line(M + timeColW, startY, M + timeColW, startY + availableTableH);
+                doc.rect(M, startY, gridW, availableTableH, 'S');
+
+                // 3. Recuadro inferior de notas y prioridades
+                const botNotesY = startY + availableTableH + 2.5;
+                doc.setFillColor(251, 249, 245);
+                doc.setDrawColor(220, 215, 205);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(M, botNotesY, gridW, notesH, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.2);
+                doc.setTextColor(135, 85, 59);
+                doc.text('NOTAS Y PRIORIDADES DE LA SEMANA', M + 3.5, botNotesY + 3.8);
+
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                doc.line(M + 3, botNotesY + 5.0, M + gridW - 3, botNotesY + 5.0);
+
+            // 8. BITÁCORA DIARIA (ESTÁNDAR EDITORIAL MENOS RUIDO)
             } else if (page.type === 'daily') {
                 const dayInfo = getDailyDateInfo(year, page.pageIndexInSection, isBlank);
 
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(135, 85, 59);
+                doc.text(dayInfo.kicker, M, M + 2.5);
+
                 doc.setFont('times', 'bold');
-                doc.setFontSize(14);
-                doc.setTextColor(25, 22, 19);
-                doc.text(dayInfo.title, M, M + 4);
+                doc.setFontSize(15.5);
+                doc.setTextColor(20, 18, 16);
+                doc.text(dayInfo.title, M, M + 8.5);
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(135, 85, 59);
-                doc.text(dayInfo.meta, W - M, M + 4, { align: 'right' });
+                doc.setFontSize(8.0);
+                doc.setTextColor(70, 65, 60);
+                doc.text(dayInfo.meta, W - M, M + 8.2, { align: 'right' });
 
-                doc.setLineWidth(0.4);
+                doc.setLineWidth(0.35);
                 doc.setDrawColor(30, 25, 20);
-                doc.line(M, M + 6, W - M, M + 6);
+                doc.line(M, M + 10.5, W - M, M + 10.5);
 
                 const gridW = W - (M * 2);
-                const colW = (gridW - 6) / 2;
-                const startY = M + 10;
+                const colGap = 6;
+                const colW = (gridW - colGap) / 2;
+                const startY = M + 13.5;
+                const col1X = M;
+                const col2X = M + colW + colGap;
 
-                // Columna izquierda
-                doc.setLineWidth(0.3);
-                doc.setDrawColor(40, 35, 30);
-                doc.rect(M, startY, colW, 46);
+                // Columna izquierda: 1. Gran Prioridad + 2. Tareas Secundarias
+                const prioBoxH = 44.0;
+                const secBoxH = 65.0;
+                const secBoxY = startY + prioBoxH + 3.0;
+
+                // 1. La Gran Prioridad del Día
+                doc.setFillColor(255, 255, 255);
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(col1X, startY, colW, prioBoxH, 1.5, 1.5, 'FD');
+
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
+                doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
-                doc.text('1. LA GRAN PRIORIDAD DEL DÍA', M + 4, startY + 6);
+                doc.text('1. LA GRAN PRIORIDAD DEL DÍA', col1X + 4, startY + 4.5);
 
-                doc.setDrawColor(220, 215, 208);
-                doc.line(M + 4, startY + 16, M + colW - 4, startY + 16);
-                doc.line(M + 4, startY + 26, M + colW - 4, startY + 26);
-                doc.line(M + 4, startY + 36, M + colW - 4, startY + 36);
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                doc.line(col1X + 4, startY + 16, col1X + colW - 4, startY + 16);
+                doc.line(col1X + 4, startY + 27, col1X + colW - 4, startY + 27);
+                doc.line(col1X + 4, startY + 38, col1X + colW - 4, startY + 38);
 
-                doc.setDrawColor(40, 35, 30);
-                doc.rect(M, startY + 50, colW, 64);
+                // 2. Tareas Secundarias (Máximo 3)
+                doc.setFillColor(255, 255, 255);
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(col1X, secBoxY, colW, secBoxH, 1.5, 1.5, 'FD');
+
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
+                doc.setFontSize(6.8);
                 doc.setTextColor(40, 35, 30);
-                doc.text('2. TAREAS SECUNDARIAS (MÁXIMO 3)', M + 4, startY + 56);
+                doc.text('2. TAREAS SECUNDARIAS (MÁXIMO 3)', col1X + 4, secBoxY + 4.5);
+
                 for (let k = 0; k < 3; k++) {
-                    doc.rect(M + 6, startY + 66 + (k * 15), 4, 4);
-                    doc.setDrawColor(220, 215, 208);
-                    doc.line(M + 14, startY + 70 + (k * 15), M + colW - 4, startY + 70 + (k * 15));
-                    doc.setDrawColor(40, 35, 30);
+                    const rowY = secBoxY + 14.0 + (k * 16.0);
+                    doc.setDrawColor(120, 110, 100);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(col1X + 4.5, rowY - 1.6, 3.2, 3.2, 0.5, 0.5, 'S');
+
+                    doc.setDrawColor(226, 218, 208);
+                    doc.setLineWidth(0.15);
+                    doc.line(col1X + 11.0, rowY, col1X + colW - 4, rowY);
                 }
 
-                // Columna derecha
-                doc.rect(M + colW + 6, startY, colW, 66);
-                doc.text('DESCARGA MENTAL & NOTAS RÁPIDAS', M + colW + 10, startY + 6);
-                doc.setDrawColor(220, 215, 208);
-                for (let n = 0; n < 4; n++) {
-                    doc.line(M + colW + 10, startY + 18 + (n * 11), M + (colW * 2) + 2, startY + 18 + (n * 11));
-                }
+                // Columna derecha: Descarga mental & Reflexión de cierre nocturno
+                const mentalBoxH = 65.0;
+                const nightBoxH = 44.0;
+                const nightBoxY = startY + mentalBoxH + 3.0;
 
-                doc.setFillColor(252, 249, 244);
-                doc.setDrawColor(40, 35, 30);
-                doc.rect(M + colW + 6, startY + 70, colW, 44, 'FD');
+                // Descarga Mental & Notas
+                doc.setFillColor(255, 255, 255);
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(col2X, startY, colW, mentalBoxH, 1.5, 1.5, 'FD');
+
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(60, 50, 40);
-                doc.text('REFLEXIÓN DE CIERRE NOCTURNO', M + colW + 10, startY + 76);
+                doc.setFontSize(6.8);
+                doc.setTextColor(40, 35, 30);
+                doc.text('DESCARGA MENTAL & NOTAS RÁPIDAS', col2X + 4, startY + 4.5);
 
-                doc.setDrawColor(220, 215, 208);
-                doc.line(M + 10 + colW, startY + 84, M + (colW * 2) + 2, startY + 84);
-                doc.line(M + 10 + colW, startY + 93, M + (colW * 2) + 2, startY + 93);
-                doc.line(M + 10 + colW, startY + 102, M + (colW * 2) + 2, startY + 102);
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                for (let n = 0; n < 4; n++) {
+                    doc.line(col2X + 4, startY + 16.0 + (n * 12.0), col2X + colW - 4, startY + 16.0 + (n * 12.0));
+                }
+
+                // Reflexión de Cierre Nocturno
+                doc.setFillColor(250, 248, 244);
+                doc.setDrawColor(220, 215, 204);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(col2X, nightBoxY, colW, nightBoxH, 1.5, 1.5, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(135, 85, 59);
+                doc.text('REFLEXIÓN DE CIERRE NOCTURNO', col2X + 4, nightBoxY + 4.5);
+
+                doc.setDrawColor(226, 218, 208);
+                doc.setLineWidth(0.15);
+                doc.line(col2X + 4, nightBoxY + 15.0, col2X + colW - 4, nightBoxY + 15.0);
+                doc.line(col2X + 4, nightBoxY + 25.0, col2X + colW - 4, nightBoxY + 25.0);
+                doc.line(col2X + 4, nightBoxY + 35.0, col2X + colW - 4, nightBoxY + 35.0);
 
             // 9. PÁGINA DE NOTAS (PUNTOS, CUADRITOS, LÍNEAS O BLANCO)
             } else if (page.type === 'notes') {
