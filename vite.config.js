@@ -59,6 +59,7 @@ export default defineConfig({
         tutorialGeneradorSemanal: resolve(__dirname, 'tutorial-generador-planificador-semanal.html'),
         tutorialGeneradorDiario: resolve(__dirname, 'tutorial-generador-planificador-diario.html'),
         tutorialGeneradorMensual: resolve(__dirname, 'tutorial-generador-planificador-mensual.html'),
+        tutorialGeneradorAnual: resolve(__dirname, 'tutorial-generador-planificador-anual.html'),
         presentacionGeneradorSemanal: resolve(__dirname, 'presentacion-generador-planificador-semanal.html'),
         generadorLibroCompletoV1: resolve(__dirname, 'generador-libro-completo-v1.html'),
         miEspacio: resolve(__dirname, 'mi-espacio.html'),
