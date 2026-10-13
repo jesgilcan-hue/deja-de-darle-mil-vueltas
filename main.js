@@ -1,4 +1,5 @@
 import './auth-modal.js';
+import './pwa-install.js';
 
 // Set current year in footer
 const yearEl = document.getElementById('year');

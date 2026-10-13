@@ -219,23 +219,101 @@ export function setupNavbarAuth() {
   checkEmailLinkCallback();
 }
 
+// Modal elegante estilo Menos Ruido para confirmar el correo al pulsar en el enlace
+function promptEmailConfirmation(callback) {
+  let modal = document.getElementById('email-confirm-modal');
+  if (!modal) {
+    const html = `
+      <div id="email-confirm-modal" class="auth-modal-overlay" style="display: flex;">
+        <div class="auth-modal-card">
+          <div class="auth-modal-header">
+            <span class="auth-modal-brand">Menos Ruido</span>
+            <h2 class="auth-modal-title">Confirma tu correo</h2>
+            <p class="auth-modal-subtitle">Para completar el acceso con tu enlace seguro, escribe o confirma la dirección de correo a la que lo enviamos:</p>
+          </div>
+          <form id="email-confirm-form" class="auth-form" onsubmit="return false;">
+            <div class="auth-input-group">
+              <label for="email-confirm-input">Correo electrónico</label>
+              <input type="email" id="email-confirm-input" placeholder="tu@email.com" required autocomplete="email" autofocus />
+            </div>
+            <button type="submit" class="btn-auth-email" id="btn-email-confirm-submit">
+              Completar acceso
+            </button>
+            <div id="email-confirm-status" class="auth-status-msg" style="display: none;"></div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+    modal = document.getElementById('email-confirm-modal');
+  }
+
+  const form = document.getElementById('email-confirm-form');
+  const input = document.getElementById('email-confirm-input');
+  const status = document.getElementById('email-confirm-status');
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const email = input.value.trim();
+    if (!email) return;
+
+    status.textContent = 'Verificando enlace...';
+    status.className = 'auth-status-msg auth-status-info';
+    status.style.display = 'block';
+
+    callback(email, (success, errMsg) => {
+      if (success) {
+        status.textContent = '¡Acceso completado! Entrando a tu espacio...';
+        status.className = 'auth-status-msg auth-status-success';
+        setTimeout(() => {
+          modal.remove();
+          if (window.location.pathname.endsWith('mi-espacio.html')) {
+            window.location.reload();
+          } else {
+            window.location.href = '/mi-espacio.html';
+          }
+        }, 700);
+      } else {
+        status.textContent = errMsg || 'El enlace no es válido o ha expirado. Vuelve a solicitar otro.';
+        status.className = 'auth-status-msg auth-status-error';
+      }
+    });
+  };
+}
+
 // Procesa el callback si el usuario pulsó en el correo
 async function checkEmailLinkCallback() {
   if (isSignInWithEmailLink(auth, window.location.href)) {
     let email = window.localStorage.getItem('emailForSignIn');
-    if (!email) {
-      email = window.prompt('Por favor, confirma tu correo electrónico para completar el acceso:');
-    }
     if (email) {
       try {
         const result = await signInWithEmailLink(auth, email, window.location.href);
         window.localStorage.removeItem('emailForSignIn');
         await syncUserProfile(result.user);
         window.history.replaceState({}, document.title, window.location.pathname);
+        if (!window.location.pathname.endsWith('mi-espacio.html')) {
+          window.location.href = '/mi-espacio.html';
+        }
       } catch (err) {
-        console.error('Error al iniciar sesión con el enlace:', err);
+        console.error('Error auto-login email link:', err);
+        promptEmailConfirmation(performSignInWithEmail);
       }
+    } else {
+      promptEmailConfirmation(performSignInWithEmail);
     }
+  }
+}
+
+async function performSignInWithEmail(email, done) {
+  try {
+    const result = await signInWithEmailLink(auth, email, window.location.href);
+    window.localStorage.removeItem('emailForSignIn');
+    await syncUserProfile(result.user);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    done(true);
+  } catch (err) {
+    console.error('Error signInWithEmailLink:', err);
+    done(false, 'El enlace ha expirado o ya fue utilizado.');
   }
 }
 
