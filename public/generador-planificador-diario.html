@@ -923,6 +923,43 @@
             cursor: pointer;
         }
 
+        .btn-confirm-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.2);
+        }
+        .btn-confirm-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.28);
+        }
+        .btn-confirm-cancel {
+            background: #fbf8f2;
+            border: 1px solid #dfd6c7;
+            color: #4a3c31;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-confirm-cancel:hover {
+            background: #f1ebd8;
+            border-color: #cbbeae;
+            color: #2e241c;
+        }
+
         @media (max-width: 800px) {
             .paper-canvas-container,
             .canvas-toolbar,
@@ -952,11 +989,11 @@
     <!-- BARRA DE HERRAMIENTAS PRINCIPAL -->
     <div class="canvas-toolbar">
         <div class="toolbar-group">
-            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Borrar textos para escribir de cero">
+            <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Limpiar todos los textos para empezar en blanco">
                 <span>🧹</span> Limpiar texto
             </button>
-            <button type="button" class="toolbar-btn" onclick="resetDefaultOrder()" title="Volver al orden original">
-                <span>🔄</span> Restablecer orden
+            <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar ejemplo editorial">
+                <span>✨</span> Cargar ejemplo
             </button>
         </div>
 
@@ -1092,7 +1129,7 @@
 
             <!-- PIE EDITORIAL -->
             <div class="paper-footer">
-                <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN</span>
+                <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN DIARIO</span>
                 <span>editorialmenosruido.com</span>
             </div>
         </div>
@@ -1106,7 +1143,7 @@
             <p class="modal-desc">Elige si quieres tu PDF con los textos que has escrito o una plantilla en blanco para rellenar a lápiz.</p>
             
             <div class="modal-format-badge">
-                <span>📐</span> Formato Libro 6" × 9" (152 × 229 mm) · Calidad Imprenta
+                <span>📐</span> Formato Libro 6" × 9" (152 × 229 mm)
             </div>
 
             <div class="modal-actions">
@@ -1162,6 +1199,27 @@
                 <a href="/ir/amazon-resena-90-dias.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline; transition: color 0.2s;" onclick="trackVercelEvent('amazon_review_click', { libro: 'planificador_90_dias', origen: 'modal_generador_diario' })">
                     ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE CONFIRMACIÓN CON ESTILO EDITORIAL MENOS RUIDO -->
+    <div class="modal-overlay" id="confirm-modal" onclick="closeConfirmModalOnBackdrop(event)">
+        <div class="modal-card" style="max-width: 440px; padding: 26px 22px 22px; text-align: center;">
+            <button type="button" class="modal-close-btn" onclick="closeConfirmModal()" title="Cerrar modal">✕</button>
+            <span class="modal-badge" id="confirm-modal-badge" style="background:#f4efe6; color:#6e442e; border:1px solid #e2d7c5; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.4px;">Menos Ruido</span>
+            <h3 class="modal-title" id="confirm-modal-title" style="margin-top: 8px; font-size: 1.25rem;">¿Confirmar acción?</h3>
+            <p class="modal-desc" id="confirm-modal-desc" style="font-size: 0.83rem; line-height: 1.45; margin-bottom: 20px; color: #5a524b;">
+                Esta acción modificará el contenido actual.
+            </p>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                <button type="button" class="btn-confirm-cancel" onclick="closeConfirmModal()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-confirm-action" id="confirm-modal-action-btn" onclick="executeConfirmModalAction()">
+                    Confirmar
+                </button>
             </div>
         </div>
     </div>
@@ -1578,21 +1636,108 @@
             showToast('Orden original restablecido');
         }
 
-        // LIMPIAR CONTENIDOS
-        function clearAllContent() {
-            if (confirm('¿Deseas limpiar todos los textos del planificador diario para empezar en blanco?')) {
-                document.getElementById('field-day').value = '';
-                document.getElementById('field-date').value = '';
-                state.priorities = state.priorities.map(() => '');
-                state.tasks = state.tasks.map(() => '');
-                state.habits = state.habits.map(() => '');
-                document.getElementById('field-notes').value = '';
-                renderPriorities();
-                renderTasks();
-                renderHabits();
-                updateNotesPatternUI();
-                showToast('Lienzo limpio para empezar en blanco');
+        // MODAL POP-UP DE CONFIRMACIÓN EDITORIAL (ESTILO MENOS RUIDO)
+        let pendingConfirmCallback = null;
+
+        function showConfirmPopup({ badge, title, desc, actionText, actionIcon, onConfirm }) {
+            const modal = document.getElementById('confirm-modal');
+            const badgeEl = document.getElementById('confirm-modal-badge');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const descEl = document.getElementById('confirm-modal-desc');
+            const btnEl = document.getElementById('confirm-modal-action-btn');
+
+            if (badgeEl) badgeEl.textContent = badge || 'Menos Ruido';
+            if (titleEl) titleEl.textContent = title || '¿Confirmar acción?';
+            if (descEl) descEl.textContent = desc || 'Esta acción modificará el contenido actual.';
+            if (btnEl) btnEl.innerHTML = `${actionIcon ? actionIcon + ' ' : ''}${actionText || 'Confirmar'}`;
+
+            pendingConfirmCallback = onConfirm;
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            if (modal) modal.classList.remove('active');
+            pendingConfirmCallback = null;
+        }
+
+        function closeConfirmModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'confirm-modal') {
+                closeConfirmModal();
             }
+        }
+
+        function executeConfirmModalAction() {
+            const cb = pendingConfirmCallback;
+            closeConfirmModal();
+            if (typeof cb === 'function') {
+                cb();
+            }
+        }
+
+        // LIMPIAR Y CARGAR EJEMPLO
+        function clearAllContent() {
+            showConfirmPopup({
+                badge: '🧹 Limpieza del Lienzo',
+                title: '¿Empezar en blanco?',
+                desc: '¿Deseas limpiar todos los textos del planificador diario? Se vaciarán el día, la prioridad principal, las tareas secundarias, los hábitos y las notas.',
+                actionText: 'Limpiar todo',
+                actionIcon: '🧹',
+                onConfirm: () => {
+                    document.getElementById('field-day').value = '';
+                    document.getElementById('field-date').value = '';
+                    state.priorities = [''];
+                    state.tasks = ['', '', ''];
+                    state.habits = ['', '', ''];
+                    document.getElementById('field-notes').value = '';
+                    renderPriorities();
+                    renderTasks();
+                    renderHabits();
+                    updateNotesPatternUI();
+                    showToast('✓ Contenido limpiado para empezar en blanco');
+                }
+            });
+        }
+
+        function applyExampleData() {
+            document.getElementById('field-day').value = 'MARTES';
+            document.getElementById('field-date').value = '14 / 10 / 2026';
+            state.priorities = [
+                'Revisar y definir la estrategia de lanzamiento Q4'
+            ];
+            state.tasks = [
+                'Enviar presupuesto corregido a imprenta',
+                'Llamar a Javier para coordinar reunión de balance',
+                'Revisar facturas pendientes del trimestre'
+            ];
+            state.habits = [
+                '30 min de lectura profunda',
+                'Caminar al aire libre sin pantallas',
+                'Planificar el día siguiente antes de cenar'
+            ];
+            document.getElementById('field-notes').value = 'Hoy mantuve el teléfono fuera de la mesa durante la mañana y avancé con calma. Mañana quiero empezar 15 minutos antes con la prioridad principal.';
+            renderPriorities();
+            renderTasks();
+            renderHabits();
+            updateNotesPatternUI();
+        }
+
+        function loadExampleContent(isInitial = false) {
+            if (isInitial) {
+                applyExampleData();
+                return;
+            }
+            showConfirmPopup({
+                badge: '✨ Ejemplo Editorial',
+                title: '¿Cargar ejemplo oficial?',
+                desc: '¿Deseas cargar el ejemplo editorial en el planificador diario? Se sustituirá el contenido actual con la pauta de un día enfocado.',
+                actionText: 'Cargar ejemplo',
+                actionIcon: '✨',
+                onConfirm: () => {
+                    applyExampleData();
+                    showToast('✓ Ejemplo editorial cargado con éxito');
+                }
+            });
         }
 
         // CASILLAS & PAUTAS
@@ -2011,10 +2156,10 @@
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(6.5);
             doc.setTextColor(130, 125, 120);
-            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN', margin, footY);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN DIARIO', margin, footY);
             doc.text('editorialmenosruido.com', pw - margin, footY, { align: 'right' });
 
-            const filename = dayText ? `Menos_Ruido_Diario_${dayText.replace(/\s+/g, '_')}.pdf` : 'Menos_Ruido_Planificador_Diario.pdf';
+            const filename = isBlank ? 'Menos_Ruido_Planificador_Diario_En_Blanco.pdf' : (dayText ? `Menos_Ruido_Planificador_Diario_${dayText.replace(/\s+/g, '_')}.pdf` : 'Menos_Ruido_Planificador_Diario.pdf');
             doc.save(filename);
             showToast(`✓ Descargado: ${filename}`);
         }

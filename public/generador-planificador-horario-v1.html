@@ -813,6 +813,43 @@
             margin-top: 2px;
         }
 
+        .btn-confirm-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.2);
+        }
+        .btn-confirm-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.28);
+        }
+        .btn-confirm-cancel {
+            background: #fbf8f2;
+            border: 1px solid #dfd6c7;
+            color: #4a3c31;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-confirm-cancel:hover {
+            background: #f1ebd8;
+            border-color: #cbbeae;
+            color: #2e241c;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 860px) {
             .interactive-paper-schedule {
@@ -854,7 +891,7 @@
         <!-- GRUPO 1: LIMPIAR, EJEMPLO Y CAMBIO DE POSICIÓN DE NOTAS -->
         <div class="toolbar-group">
             <button type="button" class="toolbar-btn" onclick="clearAllContent()" title="Limpiar todos los textos para empezar en blanco">
-                <span>🧹</span> Limpiar
+                <span>🧹</span> Limpiar texto
             </button>
             <button type="button" class="toolbar-btn" onclick="loadExampleContent()" title="Cargar ejemplo editorial">
                 <span>✨</span> Cargar ejemplo
@@ -969,7 +1006,7 @@
 
             <!-- PIE DE PÁGINA EDITORIAL EXACTO -->
             <div class="paper-schedule-footer">
-                <span>MENOS RUIDO · SISTEMA PLANIFICADOR HORARIO</span>
+                <span>MENOS RUIDO · SISTEMA DE PLANIFICACIÓN HORARIO</span>
                 <span>editorialmenosruido.com</span>
             </div>
 
@@ -985,7 +1022,7 @@
             <p class="modal-desc">Elige si deseas tu PDF maquetado con tus bloques y notas escritas o una plantilla en blanco para rellenar a lápiz o pluma.</p>
 
             <div class="modal-format-badge">
-                📐 Formato Libro 8.25" × 6" (210 × 152 mm) · Calidad Imprenta 300 DPI
+                📐 Formato Libro 8.25" × 6" (210 × 152 mm)
             </div>
 
             <!-- ACCIONES DEL MODAL: CON DATOS O EN BLANCO -->
@@ -1026,6 +1063,27 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE CONFIRMACIÓN CON ESTILO EDITORIAL MENOS RUIDO -->
+    <div class="modal-overlay" id="confirm-modal" onclick="closeConfirmModalOnBackdrop(event)">
+        <div class="modal-card" style="max-width: 440px; padding: 26px 22px 22px; text-align: center;">
+            <button type="button" class="modal-close-btn" onclick="closeConfirmModal()" title="Cerrar modal">✕</button>
+            <span class="modal-badge" id="confirm-modal-badge" style="background:#f4efe6; color:#6e442e; border:1px solid #e2d7c5; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.4px;">Menos Ruido</span>
+            <h3 class="modal-title" id="confirm-modal-title" style="margin-top: 8px; font-size: 1.25rem;">¿Confirmar acción?</h3>
+            <p class="modal-desc" id="confirm-modal-desc" style="font-size: 0.83rem; line-height: 1.45; margin-bottom: 20px; color: #5a524b;">
+                Esta acción modificará el contenido actual.
+            </p>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                <button type="button" class="btn-confirm-cancel" onclick="closeConfirmModal()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-confirm-action" id="confirm-modal-action-btn" onclick="executeConfirmModalAction()">
+                    Confirmar
+                </button>
             </div>
         </div>
     </div>
@@ -1685,14 +1743,49 @@
             if (count) count.textContent = `${el.value.length}/720`;
         }
 
+        // MODAL POP-UP DE CONFIRMACIÓN EDITORIAL (ESTILO MENOS RUIDO)
+        let pendingConfirmCallback = null;
+
+        function showConfirmPopup({ badge, title, desc, actionText, actionIcon, onConfirm }) {
+            const modal = document.getElementById('confirm-modal');
+            const badgeEl = document.getElementById('confirm-modal-badge');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const descEl = document.getElementById('confirm-modal-desc');
+            const btnEl = document.getElementById('confirm-modal-action-btn');
+
+            if (badgeEl) badgeEl.textContent = badge || 'Menos Ruido';
+            if (titleEl) titleEl.textContent = title || '¿Confirmar acción?';
+            if (descEl) descEl.textContent = desc || 'Esta acción modificará el contenido actual.';
+            if (btnEl) btnEl.innerHTML = `${actionIcon ? actionIcon + ' ' : ''}${actionText || 'Confirmar'}`;
+
+            pendingConfirmCallback = onConfirm;
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            if (modal) modal.classList.remove('active');
+            pendingConfirmCallback = null;
+        }
+
+        function closeConfirmModalOnBackdrop(e) {
+            if (e && e.target && e.target.id === 'confirm-modal') {
+                closeConfirmModal();
+            }
+        }
+
+        function executeConfirmModalAction() {
+            const cb = pendingConfirmCallback;
+            closeConfirmModal();
+            if (typeof cb === 'function') {
+                cb();
+            }
+        }
+
         // ========================================================
         // ACCIONES RÁPIDAS (EJEMPLO EDITORIAL Y LIMPIEZA)
         // ========================================================
-        function loadExampleContent(isInitial = false) {
-            if (!isInitial) {
-                const ok = confirm('¿Deseas cargar el ejemplo editorial en el planificador horario? Se sustituirá el contenido actual.');
-                if (!ok) return;
-            }
+        function applyExampleData() {
             document.getElementById('field-week-title').value = EXAMPLE_DATA.week;
             document.getElementById('field-week-focus').value = `«${EXAMPLE_DATA.focus}»`;
             const notesEl = document.getElementById('field-week-notes');
@@ -1704,27 +1797,48 @@
             state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3', 3: 'SEM 4' };
             state.cellData = { ...EXAMPLE_DATA.cells };
             renderScheduleTable();
-            if (!isInitial) {
-                showToast('✨ Ejemplo editorial cargado en el horario');
+        }
+
+        function loadExampleContent(isInitial = false) {
+            if (isInitial) {
+                applyExampleData();
+                return;
             }
+            showConfirmPopup({
+                badge: '✨ Ejemplo Editorial',
+                title: '¿Cargar ejemplo oficial?',
+                desc: '¿Deseas cargar el ejemplo editorial en el planificador horario? Se sustituirá el contenido actual con la estructura horaria recomendada.',
+                actionText: 'Cargar ejemplo',
+                actionIcon: '✨',
+                onConfirm: () => {
+                    applyExampleData();
+                    showToast('✓ Ejemplo editorial cargado en el horario');
+                }
+            });
         }
 
         function clearAllContent() {
-            const ok = confirm('¿Deseas limpiar todos los textos del planificador horario para empezar en blanco?');
-            if (!ok) return;
+            showConfirmPopup({
+                badge: '🧹 Limpieza del Lienzo',
+                title: '¿Empezar en blanco?',
+                desc: '¿Deseas limpiar todos los textos del planificador horario? Se vaciarán el título de la semana, el foco, las notas y todos los bloques horarios.',
+                actionText: 'Limpiar todo',
+                actionIcon: '🧹',
+                onConfirm: () => {
+                    document.getElementById('field-week-title').value = '';
+                    document.getElementById('field-week-focus').value = '';
+                    const notesEl = document.getElementById('field-week-notes');
+                    if (notesEl) {
+                        notesEl.value = '';
+                        handleNotesInput(notesEl);
+                    }
 
-            document.getElementById('field-week-title').value = '';
-            document.getElementById('field-week-focus').value = '';
-            const notesEl = document.getElementById('field-week-notes');
-            if (notesEl) {
-                notesEl.value = '';
-                handleNotesInput(notesEl);
-            }
-
-            state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3', 3: 'SEM 4' };
-            state.cellData = {};
-            renderScheduleTable();
-            showToast('🧹 Lienzo limpio para empezar en blanco');
+                    state.weekLabels = { 0: 'SEM 1', 1: 'SEM 2', 2: 'SEM 3', 3: 'SEM 4' };
+                    state.cellData = {};
+                    renderScheduleTable();
+                    showToast('✓ Contenido limpiado para empezar en blanco');
+                }
+            });
         }
 
         // ========================================================
@@ -2049,13 +2163,13 @@
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(5.8);
             doc.setTextColor(140, 135, 130);
-            doc.text('MENOS RUIDO · SISTEMA PLANIFICADOR HORARIO', m, footerY);
+            doc.text('MENOS RUIDO · SISTEMA DE PLANIFICACIÓN HORARIO', m, footerY);
             doc.text('editorialmenosruido.com', pw - m, footerY, { align: 'right' });
 
             // NOMENCLATURA
             let fileName = '';
             if (isBlank) {
-                fileName = 'Menos_Ruido_Plantilla_Horario_En_Blanco.pdf';
+                fileName = 'Menos_Ruido_Planificador_Horario_En_Blanco.pdf';
             } else {
                 const cleanW = (activeWeek || 'Semanal').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
                 fileName = `Menos_Ruido_Planificador_Horario_${cleanW}.pdf`;
