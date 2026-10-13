@@ -99,8 +99,10 @@ function injectAuthModal() {
       }, 700);
     } catch (err) {
       console.error('Error Google Auth:', err);
-      if (err.code !== 'auth/popup-closed-by-user') {
-        showStatus('No se pudo completar el acceso con Google. Inténtalo de nuevo.', 'error');
+      if (err.code === 'auth/unauthorized-domain') {
+        showStatus(`El dominio "${window.location.hostname}" no está autorizado en Firebase. Añádelo en Firebase Console > Authentication > Ajustes > Dominios autorizados.`, 'error');
+      } else if (err.code !== 'auth/popup-closed-by-user') {
+        showStatus(`Error (${err.code || 'desconocido'}): No se pudo completar el acceso con Google.`, 'error');
       } else {
         hideStatus();
       }
