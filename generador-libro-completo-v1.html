@@ -956,6 +956,7 @@
             align-items: center;
             border-bottom: 1px solid #ebe4d8;
             padding-bottom: 6px;
+            gap: 10px;
         }
         .index-group-title {
             font-size: 0.78rem;
@@ -968,6 +969,43 @@
             font-size: 0.70rem;
             font-weight: 700;
             color: #8c8276;
+            white-space: nowrap;
+        }
+        .btn-group-toggle {
+            background: #ede6da;
+            border: 1px solid #dcd4c6;
+            color: #55483e;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .btn-group-toggle:hover {
+            background: #e2d8c9;
+            color: #2b241e;
+            border-color: #c9bea9;
+        }
+        .btn-index-action {
+            background: #fbf9f6;
+            border: 1px solid #d8cfc0;
+            color: #4a4037;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-index-action:hover {
+            background: #ede6da;
+            color: #1f1a16;
+            border-color: var(--accent);
         }
         .index-pages-list {
             display: grid;
@@ -1526,7 +1564,11 @@
                         <h3 class="book-index-title">📖 Índice de Estructura y Paginación del Libro</h3>
                         <p class="book-index-desc">Visualiza exactamente cómo queda ordenado tu cuaderno página a página. Haz clic en cualquier página para verla en el visor.</p>
                     </div>
-                    <span class="book-index-total-badge" id="indexTotalBadge">Total páginas</span>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <button type="button" class="btn-index-action" onclick="collapseAllIndexGroups()" title="Ocultar páginas individuales de todas las secciones">▶ Plegar todas</button>
+                        <button type="button" class="btn-index-action" onclick="expandAllIndexGroups()" title="Mostrar páginas individuales de todas las secciones">▼ Desplegar todas</button>
+                        <span class="book-index-total-badge" id="indexTotalBadge">Total páginas</span>
+                    </div>
                 </div>
                 <div class="book-index-content" id="bookIndexContent">
                     <!-- Se inyecta dinámicamente -->
@@ -1818,6 +1860,30 @@
                 }
             }
         };
+
+        // LÍMITES ESTRICTOS DE PÁGINAS POR SECCIÓN
+        const sectionLimits = {
+            calendar: { min: 1, max: 2 },
+            annual: { min: 1, max: 4 },
+            monthly: { min: 1, max: 24 },
+            habits: { min: 1, max: 24 },
+            weekly: { min: 1, max: 60 },
+            hourly: { min: 1, max: 52 },
+            daily: { min: 1, max: 365 },
+            notes: { min: 1, max: 50 }
+        };
+
+        function validateSectionPagesInput(input, id) {
+            const lim = sectionLimits[id];
+            if (!lim) return;
+            const rawVal = parseInt(input.value, 10);
+            if (!isNaN(rawVal)) {
+                if (rawVal > lim.max) {
+                    input.value = lim.max;
+                    updateSectionPages(id, lim.max);
+                }
+            }
+        }
 
         // CÁLCULO DE FECHAS DE SEMANA ISO 8601 (Lunes a Domingo)
         function getWeekDates(year, weekNum) {
@@ -2397,8 +2463,14 @@
                         <span>Páginas:</span>
                         <div style="display:flex; align-items:center; gap:6px;">
                             ${sec.id !== 'cover' && sec.id !== 'calendar' && sec.id !== 'annual' ? `
-                                <input type="number" min="1" max="400" value="${sec.pages}" style="width: 58px;" onchange="updateSectionPages('${sec.id}', this.value)">
-                                <span>${sec.countLabel || 'págs'}</span>
+                                <input type="number" 
+                                    min="${(sectionLimits[sec.id] && sectionLimits[sec.id].min) || 1}" 
+                                    max="${(sectionLimits[sec.id] && sectionLimits[sec.id].max) || 365}" 
+                                    value="${sec.pages}" 
+                                    style="width: 58px;" 
+                                    oninput="validateSectionPagesInput(this, '${sec.id}')"
+                                    onchange="updateSectionPages('${sec.id}', this.value)">
+                                <span style="font-size:0.75rem; color:#6b6257;">${sec.countLabel || 'págs'} <small style="color:#8c8276;">(máx. ${(sectionLimits[sec.id] && sectionLimits[sec.id].max) || 365})</small></span>
                             ` : `<span style="font-weight:700;">1 fija</span>`}
                             <button type="button" class="btn-preview-section ${isCurrent ? 'active' : ''}" onclick="jumpToSection('${sec.id}')">${isCurrent ? '👁️ Viendo' : '👁️ Ver'}</button>
                         </div>
@@ -2422,7 +2494,12 @@
         function updateSectionPages(id, val) {
             const sec = bookConfig.sections.find(s => s.id === id);
             if (sec) {
-                sec.pages = Math.max(1, parseInt(val, 10) || 1);
+                const lim = sectionLimits[id] || { min: 1, max: 365 };
+                let num = parseInt(val, 10);
+                if (isNaN(num)) num = lim.min;
+                if (num > lim.max) num = lim.max;
+                if (num < lim.min) num = lim.min;
+                sec.pages = num;
                 recalcPages();
                 renderPreviewPage();
             }
@@ -3151,26 +3228,24 @@
                 `;
             }
 
-            // 10. PÁGINA FINAL INSTITUCIONAL DE GRATITUD (FORMAL CON CATÁLOGO Y WEB)
+            // 10. PÁGINA FINAL INSTITUCIONAL DE GRATITUD (ESTILO OFICIAL MENOS RUIDO)
             else if (page.type === 'gratitude') {
                 pageCanvas.innerHTML = `
-                    <div style="height:100%; display:flex; flex-direction:column; justify-content:space-between; padding: 14px 34px; text-align:center;">
+                    <div style="height:100%; display:flex; flex-direction:column; justify-content:space-between; padding: 16px 42px; text-align:center;">
                         <div>
-                            <span class="page-header-kicker" style="color:var(--accent); font-weight:800; font-size:0.75rem; letter-spacing:1px; display:block; margin-bottom:6px;">EDITORIAL MENOS RUIDO · AGRADECIMIENTO Y CIERRE</span>
-                            <h2 style="font-family:'Times New Roman', serif; font-size:1.75rem; color:#222; margin-bottom:12px; font-weight:700;">Gracias por habernos elegido</h2>
+                            <span class="page-header-kicker" style="color:var(--accent); font-weight:800; font-size:0.75rem; letter-spacing:1px; display:block; margin-bottom:8px;">EDITORIAL MENOS RUIDO · CIERRE Y GRATITUD</span>
+                            <h2 style="font-family:'Times New Roman', serif; font-size:1.80rem; color:#221c17; margin-bottom:14px; font-weight:700;">Gracias por llegar hasta aquí</h2>
                             
-                            <p style="font-size:0.85rem; line-height:1.55; color:#4a4239; max-width:560px; margin:0 auto 10px auto;">En Editorial Menos Ruido diseñamos herramientas analógicas y cuadernos guiados concebidos para un propósito esencial: proteger tu atención del ruido digital, recuperar la serenidad mental y ayudarte a vivir cada jornada con intención.</p>
-                            <p style="font-size:0.83rem; line-height:1.55; color:#4a4239; max-width:560px; margin:0 auto 12px auto;">Este planificador personalizado nace de la convicción de que el papel no es una reliquia del pasado, sino la herramienta más lúcida y transformadora para pensar despacio, ordenar tus prioridades y construir tu vida con constancia silenciosa.</p>
+                            <p style="font-size:0.83rem; line-height:1.6; color:#4a4239; max-width:580px; margin:0 auto 10px auto;">Gracias por haberle dedicado tiempo a estas páginas. Un cuaderno de trabajo solo cobra sentido cuando alguien lo abre, escribe una frase honesta, se detiene un momento y se atreve a sostener un límite con templanza.</p>
                             
-                            <div style="background:#faf8f5; border:1px solid #e2dacd; border-radius:8px; padding:10px 16px; max-width:540px; margin:0 auto 12px auto; text-align:left;">
-                                <div style="font-size:0.70rem; font-weight:800; text-transform:uppercase; color:var(--accent); margin-bottom:4px; letter-spacing:0.5px;">NUESTRO CATÁLOGO EDITORIAL</div>
-                                <div style="font-size:0.77rem; color:#3a3229; line-height:1.45;">Te invitamos a descubrir el resto de nuestras publicaciones: nuestros <strong>Planificadores Guiados de 90 y 180 Días</strong>, y nuestros libros prácticos de introspección <strong>«Deja de darle mil vueltas»</strong> y <strong>«Habla claro»</strong> en librerías y Amazon.</div>
-                            </div>
+                            <p style="font-size:0.83rem; line-height:1.6; color:#4a4239; max-width:580px; margin:0 auto 10px auto;">Si este libro te ayudó a rebajar la tensión de una conversación difícil, o si conoces a alguien a quien le cuesta poner límites por miedo al conflicto, recomendarlo ayuda a que el proyecto de Menos Ruido siga creciendo y podamos continuar diseñando herramientas en papel para pensar con calma.</p>
                             
-                            <p style="font-size:0.78rem; color:#605548; font-style:italic; margin-bottom:8px;">Visita <strong>editorialmenosruido.com</strong> para acceder a nuevos recursos analógicos, lecturas y herramientas de foco.</p>
+                            <p style="font-size:0.83rem; line-height:1.6; color:#4a4239; max-width:580px; margin:0 auto 10px auto;">También puedes dejar una reseña honesta en Amazon si te nace hacerlo. No hace falta que sea larga ni perfecta: compartir qué tipo de conversación o situación te ayudó a desbloquear puede guiar a otra persona que esté pasando por lo mismo.</p>
                             
-                            <div style="border-top:1px solid #dfd7cb; width:180px; margin:0 auto 8px auto;"></div>
-                            <div style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.95rem; color:#2e2621;">«Menos ruido. Más foco. Más vida.»</div>
+                            <p style="font-size:0.83rem; line-height:1.6; color:#4a4239; max-width:580px; margin:0 auto 14px auto;">Si quieres profundizar en este método, descubrir el resto de títulos de la colección o acceder a recursos complementarios, te esperamos en <strong>www.editorialmenosruido.com</strong>.</p>
+                            
+                            <div style="border-top:1px solid #dfd7cb; width:200px; margin:0 auto 10px auto;"></div>
+                            <div style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.95rem; color:#2e2621; max-width:560px; margin:0 auto; line-height:1.5;">«Gracias por elegir pensar en papel. Ojalá salgas de aquí con menos ruido mental, una voz más firme y la tranquilidad de haber hablado claro»</div>
                         </div>
 
                         <div class="sheet-footer">
@@ -3397,6 +3472,31 @@
         // =========================================================================
         // ÍNDICE INTERACTIVO DE ESTRUCTURA Y PAGINACIÓN DEL LIBRO
         // =========================================================================
+        const collapsedIndexGroups = {};
+
+        function toggleIndexGroupCollapse(groupId) {
+            collapsedIndexGroups[groupId] = !collapsedIndexGroups[groupId];
+            renderBookIndex();
+        }
+
+        function collapseAllIndexGroups() {
+            const cards = document.querySelectorAll('.index-group-card[data-group-id]');
+            cards.forEach(card => {
+                const gid = card.getAttribute('data-group-id');
+                if (gid) collapsedIndexGroups[gid] = true;
+            });
+            renderBookIndex();
+        }
+
+        function expandAllIndexGroups() {
+            const cards = document.querySelectorAll('.index-group-card[data-group-id]');
+            cards.forEach(card => {
+                const gid = card.getAttribute('data-group-id');
+                if (gid) collapsedIndexGroups[gid] = false;
+            });
+            renderBookIndex();
+        }
+
         function jumpToPageIndex(idx) {
             if (idx < 0 || idx >= generatedPageList.length) return;
             currentPreviewPageIndex = idx;
@@ -3429,7 +3529,7 @@
 
                 generatedPageList.forEach((pg, idx) => {
                     const pageItem = { ...pg, globalPageNum: idx + 1, globalIndex: idx };
-                    if (pg.type === 'cover' || pg.type === 'calendar' || pg.type === 'annual') {
+                    if (pg.type === 'cover' || pg.type === 'editorial' || pg.type === 'index' || pg.type === 'calendar' || pg.type === 'annual') {
                         prelimPages.push(pageItem);
                     } else if (pg.type === 'monthly' || pg.type === 'habits' || pg.monthIndex !== undefined) {
                         const mIdx = pg.monthIndex !== undefined ? pg.monthIndex : 0;
@@ -3447,15 +3547,26 @@
                 });
 
                 if (prelimPages.length > 0) {
+                    const gid = 'group_prelim';
+                    if (collapsedIndexGroups[gid] === undefined) {
+                        collapsedIndexGroups[gid] = prelimPages.length > 4;
+                    }
+                    const isCollapsed = !!collapsedIndexGroups[gid];
                     const p1 = prelimPages[0].globalPageNum;
                     const p2 = prelimPages[prelimPages.length - 1].globalPageNum;
+                    const pRangeStr = p1 === p2 ? `Pág. ${p1}` : `Págs. ${p1} a ${p2}`;
                     groupsHtml += `
-                        <div class="index-group-card">
+                        <div class="index-group-card" data-group-id="${gid}">
                             <div class="index-group-header">
-                                <span class="index-group-title">🌟 Apertura & Visión Estratégica</span>
-                                <span class="index-group-count">${prelimPages.length} pág${prelimPages.length > 1 ? 's' : ''} (Págs. ${p1}-${p2})</span>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <button type="button" class="btn-group-toggle" onclick="toggleIndexGroupCollapse('${gid}')" title="${isCollapsed ? 'Desplegar páginas' : 'Ocultar páginas'}">
+                                        ${isCollapsed ? `▶ Desplegar (${prelimPages.length} págs)` : '▼ Plegar'}
+                                    </button>
+                                    <span class="index-group-title">🌟 Apertura & Visión Estratégica</span>
+                                </div>
+                                <span class="index-group-count">${pRangeStr} · (${prelimPages.length} pág${prelimPages.length > 1 ? 's' : ''})</span>
                             </div>
-                            <div class="index-pages-list">
+                            <div class="index-pages-list" style="display: ${isCollapsed ? 'none' : 'grid'};">
                                 ${prelimPages.map(p => renderIndexPageItem(p)).join('')}
                             </div>
                         </div>
@@ -3466,15 +3577,26 @@
                     const mIdx = parseInt(mKey, 10);
                     const mPages = monthGroups[mKey];
                     if (!mPages || mPages.length === 0) return;
+                    const gid = `group_month_${mIdx}`;
+                    if (collapsedIndexGroups[gid] === undefined) {
+                        collapsedIndexGroups[gid] = mPages.length > 4;
+                    }
+                    const isCollapsed = !!collapsedIndexGroups[gid];
                     const startP = mPages[0].globalPageNum;
                     const endP = mPages[mPages.length - 1].globalPageNum;
+                    const pRangeStr = startP === endP ? `Pág. ${startP}` : `Págs. ${startP} a ${endP}`;
                     groupsHtml += `
-                        <div class="index-group-card">
+                        <div class="index-group-card" data-group-id="${gid}">
                             <div class="index-group-header">
-                                <span class="index-group-title">📅 Ciclo Mensual · ${monthNames[mIdx] || 'Mes ' + (mIdx + 1)}</span>
-                                <span class="index-group-count">${mPages.length} páginas (Págs. ${startP}-${endP})</span>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <button type="button" class="btn-group-toggle" onclick="toggleIndexGroupCollapse('${gid}')" title="${isCollapsed ? 'Desplegar páginas' : 'Ocultar páginas'}">
+                                        ${isCollapsed ? `▶ Desplegar (${mPages.length} págs)` : '▼ Plegar'}
+                                    </button>
+                                    <span class="index-group-title">📅 Ciclo Mensual · ${monthNames[mIdx] || 'Mes ' + (mIdx + 1)}</span>
+                                </div>
+                                <span class="index-group-count">${pRangeStr} · (${mPages.length} pág${mPages.length > 1 ? 's' : ''})</span>
                             </div>
-                            <div class="index-pages-list">
+                            <div class="index-pages-list" style="display: ${isCollapsed ? 'none' : 'grid'};">
                                 ${mPages.map(p => renderIndexPageItem(p)).join('')}
                             </div>
                         </div>
@@ -3482,15 +3604,26 @@
                 });
 
                 if (finalPages.length > 0) {
+                    const gid = 'group_final';
+                    if (collapsedIndexGroups[gid] === undefined) {
+                        collapsedIndexGroups[gid] = finalPages.length > 4;
+                    }
+                    const isCollapsed = !!collapsedIndexGroups[gid];
                     const startP = finalPages[0].globalPageNum;
                     const endP = finalPages[finalPages.length - 1].globalPageNum;
+                    const pRangeStr = startP === endP ? `Pág. ${startP}` : `Págs. ${startP} a ${endP}`;
                     groupsHtml += `
-                        <div class="index-group-card">
+                        <div class="index-group-card" data-group-id="${gid}">
                             <div class="index-group-header">
-                                <span class="index-group-title">📌 Bloques Complementarios & Notas</span>
-                                <span class="index-group-count">${finalPages.length} páginas (Págs. ${startP}-${endP})</span>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <button type="button" class="btn-group-toggle" onclick="toggleIndexGroupCollapse('${gid}')" title="${isCollapsed ? 'Desplegar páginas' : 'Ocultar páginas'}">
+                                        ${isCollapsed ? `▶ Desplegar (${finalPages.length} págs)` : '▼ Plegar'}
+                                    </button>
+                                    <span class="index-group-title">📌 Bloques Complementarios & Notas</span>
+                                </div>
+                                <span class="index-group-count">${pRangeStr} · (${finalPages.length} pág${finalPages.length > 1 ? 's' : ''})</span>
                             </div>
-                            <div class="index-pages-list">
+                            <div class="index-pages-list" style="display: ${isCollapsed ? 'none' : 'grid'};">
                                 ${finalPages.map(p => renderIndexPageItem(p)).join('')}
                             </div>
                         </div>
@@ -3505,17 +3638,27 @@
                         .filter(pg => pg.sectionId === sec.id);
                     if (secPages.length === 0) return;
 
+                    const gid = `group_sec_${sec.id}`;
+                    if (collapsedIndexGroups[gid] === undefined) {
+                        collapsedIndexGroups[gid] = secPages.length > 4;
+                    }
+                    const isCollapsed = !!collapsedIndexGroups[gid];
                     const startP = secPages[0].globalPageNum;
                     const endP = secPages[secPages.length - 1].globalPageNum;
-                    const pRangeStr = startP === endP ? `Pág. ${startP}` : `Págs. ${startP} - ${endP}`;
+                    const pRangeStr = startP === endP ? `Pág. ${startP}` : `Págs. ${startP} a ${endP}`;
 
                     groupsHtml += `
-                        <div class="index-group-card">
+                        <div class="index-group-card" data-group-id="${gid}">
                             <div class="index-group-header">
-                                <span class="index-group-title">${sec.icon || '📄'} ${sec.name}</span>
-                                <span class="index-group-count">${secPages.length} pág${secPages.length > 1 ? 's' : ''} (${pRangeStr})</span>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <button type="button" class="btn-group-toggle" onclick="toggleIndexGroupCollapse('${gid}')" title="${isCollapsed ? 'Desplegar páginas' : 'Ocultar páginas'}">
+                                        ${isCollapsed ? `▶ Desplegar (${secPages.length} págs)` : '▼ Plegar'}
+                                    </button>
+                                    <span class="index-group-title">${sec.icon || '📄'} ${sec.name}</span>
+                                </div>
+                                <span class="index-group-count">${pRangeStr} · (${secPages.length} pág${secPages.length > 1 ? 's' : ''})</span>
                             </div>
-                            <div class="index-pages-list">
+                            <div class="index-pages-list" style="display: ${isCollapsed ? 'none' : 'grid'};">
                                 ${secPages.map(p => renderIndexPageItem(p)).join('')}
                             </div>
                         </div>
@@ -3533,7 +3676,7 @@
             if (p.type === 'cover') label = 'Portada Interior & Dedicatoria';
             else if (p.type === 'editorial') label = 'Editorial Menos Ruido · Manifiesto Analógico';
             else if (p.type === 'index') label = 'Índice de Contenidos del Libro';
-            else if (p.type === 'gratitude') label = 'Gracias por habernos elegido · Cierre';
+            else if (p.type === 'gratitude') label = 'Gracias por llegar hasta aquí · Cierre';
             else if (p.type === 'calendar') label = `Calendario Anual (${p.calendarYear || bookConfig.year})`;
             else if (p.type === 'annual') label = `Planificador Anual Estratégico · Trimestres`;
             else if (p.type === 'monthly') {
@@ -5076,64 +5219,50 @@
                 }
                 // Si gridStyle === 'blank', no dibujamos tramas para dejar el papel liso
 
-            // 10. PÁGINA FINAL INSTITUCIONAL DE GRATITUD (FORMAL CON CATÁLOGO Y WEB)
+            // 10. PÁGINA FINAL INSTITUCIONAL DE GRATITUD (ESTILO OFICIAL MENOS RUIDO)
             } else if (page.type === 'gratitude') {
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
+                doc.setFontSize(7.2);
                 doc.setTextColor(135, 85, 59);
-                doc.text('EDITORIAL MENOS RUIDO · AGRADECIMIENTO Y CIERRE', W / 2, M + 14, { align: 'center' });
+                doc.text('EDITORIAL MENOS RUIDO · CIERRE Y GRATITUD', W / 2, M + 12, { align: 'center' });
 
                 doc.setFont('times', 'bold');
-                doc.setFontSize(21);
+                doc.setFontSize(20);
                 doc.setTextColor(25, 22, 19);
-                doc.text('Gracias por habernos elegido', W / 2, M + 26, { align: 'center' });
+                doc.text('Gracias por llegar hasta aquí', W / 2, M + 23, { align: 'center' });
 
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8.6);
-                doc.setTextColor(60, 52, 45);
-                const g1 = 'En Editorial Menos Ruido diseñamos herramientas analógicas y cuadernos guiados concebidos para un propósito esencial: proteger tu atención del ruido digital, recuperar la serenidad mental y ayudarte a vivir cada jornada con intención.';
-                const g1Lines = doc.splitTextToSize(g1, 145);
-                doc.text(g1Lines, W / 2, M + 36, { align: 'center' });
+                doc.setFontSize(7.8);
+                doc.setTextColor(55, 48, 42);
+                const pWidth = 146;
 
-                const g2 = 'Este planificador personalizado nace de la convicción de que el papel no es una reliquia del pasado, sino la herramienta más lúcida y transformadora para pensar despacio, ordenar tus prioridades y construir tu vida con constancia silenciosa.';
-                const g2Lines = doc.splitTextToSize(g2, 145);
-                doc.text(g2Lines, W / 2, M + 49, { align: 'center' });
+                const p1 = 'Gracias por haberle dedicado tiempo a estas páginas. Un cuaderno de trabajo solo cobra sentido cuando alguien lo abre, escribe una frase honesta, se detiene un momento y se atreve a sostener un límite con templanza.';
+                const p1Lines = doc.splitTextToSize(p1, pWidth);
+                doc.text(p1Lines, W / 2, M + 33, { align: 'center' });
 
-                // Recuadro catálogo editorial
-                const catBoxY = M + 63;
-                const catBoxW = 145;
-                const catBoxX = (W - catBoxW) / 2;
-                doc.setFillColor(250, 248, 245);
-                doc.setDrawColor(220, 212, 200);
-                doc.setLineWidth(0.25);
-                doc.roundedRect(catBoxX, catBoxY, catBoxW, 20, 2, 2, 'FD');
+                const p2 = 'Si este libro te ayudó a rebajar la tensión de una conversación difícil, o si conoces a alguien a quien le cuesta poner límites por miedo al conflicto, recomendarlo ayuda a que el proyecto de Menos Ruido siga creciendo y podamos continuar diseñando herramientas en papel para pensar con calma.';
+                const p2Lines = doc.splitTextToSize(p2, pWidth);
+                doc.text(p2Lines, W / 2, M + 47, { align: 'center' });
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.8);
-                doc.setTextColor(135, 85, 59);
-                doc.text('NUESTRO CATÁLOGO EDITORIAL', catBoxX + 6, catBoxY + 5.5);
+                const p3 = 'También puedes dejar una reseña honesta en Amazon si te nace hacerlo. No hace falta que sea larga ni perfecta: compartir qué tipo de conversación o situación te ayudó a desbloquear puede guiar a otra persona que esté pasando por lo mismo.';
+                const p3Lines = doc.splitTextToSize(p3, pWidth);
+                doc.text(p3Lines, W / 2, M + 63, { align: 'center' });
 
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(7.6);
-                doc.setTextColor(45, 40, 35);
-                const catTxt = 'Descubre nuestros Planificadores Guiados de 90 y 180 Días, y nuestros libros prácticos de introspección «Deja de darle mil vueltas» y «Habla claro» disponibles en librerías y Amazon.';
-                const catLines = doc.splitTextToSize(catTxt, catBoxW - 12);
-                doc.text(catLines, catBoxX + 6, catBoxY + 11.5);
+                const p4 = 'Si quieres profundizar en este método, descubrir el resto de títulos de la colección o acceder a recursos complementarios, te esperamos en www.editorialmenosruido.com.';
+                const p4Lines = doc.splitTextToSize(p4, pWidth);
+                doc.text(p4Lines, W / 2, M + 79, { align: 'center' });
 
-                doc.setFont('helvetica', 'italic');
-                doc.setFontSize(7.6);
-                doc.setTextColor(100, 90, 80);
-                doc.text('Visita editorialmenosruido.com para nuevos recursos analógicos, lecturas y herramientas de foco.', W / 2, M + 90, { align: 'center' });
-
-                // Separador y firma
+                // Separador y cierre
                 doc.setDrawColor(215, 205, 190);
                 doc.setLineWidth(0.3);
-                doc.line((W / 2) - 25, M + 97, (W / 2) + 25, M + 97);
+                doc.line((W / 2) - 25, M + 88, (W / 2) + 25, M + 88);
 
                 doc.setFont('times', 'italic');
-                doc.setFontSize(9.5);
+                doc.setFontSize(9.0);
                 doc.setTextColor(35, 30, 25);
-                doc.text('«Menos ruido. Más foco. Más vida.»', W / 2, M + 104, { align: 'center' });
+                const pCierre = '«Gracias por elegir pensar en papel. Ojalá salgas de aquí con menos ruido mental, una voz más firme y la tranquilidad de haber hablado claro»';
+                const pCierreLines = doc.splitTextToSize(pCierre, 140);
+                doc.text(pCierreLines, W / 2, M + 95, { align: 'center' });
             }
         }
 
