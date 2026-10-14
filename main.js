@@ -465,6 +465,7 @@ if ('serviceWorker' in navigator) {
   const siteNav = document.createElement('div');
   siteNav.className = 'site-drawer-nav';
   siteNav.innerHTML = `
+    <div id="drawer-user-card-wrap" class="drawer-user-card-wrap"></div>
     <a href="/" class="site-drawer-link" onclick="document.body.classList.remove('nav-open')">Home</a>
     <div class="site-drawer-section-title">Cuadernos</div>
     <div class="mobile-bookshelf">

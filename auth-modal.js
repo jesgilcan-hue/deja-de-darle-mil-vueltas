@@ -204,32 +204,79 @@ export function setupNavbarAuth() {
     }
   }
 
-  // Actualizar icono de usuario en el menú drawer lateral
+  // Actualizar icono de usuario y tarjeta en el menú drawer lateral
   const updateDrawerUser = (user) => {
     const drawerBtn = document.getElementById('drawer-user-btn');
-    if (!drawerBtn) return;
+    const drawerCardWrap = document.getElementById('drawer-user-card-wrap');
+
     if (user) {
       const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
-      drawerBtn.innerHTML = user.photoURL 
-        ? `<img src="${user.photoURL}" alt="" />`
-        : `<span class="drawer-user-initial">${initial}</span>`;
-      drawerBtn.title = `Mi Espacio (${user.displayName || user.email})`;
-      drawerBtn.onclick = () => {
-        document.body.classList.remove('nav-open');
-        window.location.href = '/mi-espacio.html';
-      };
+      const name = user.displayName || user.email.split('@')[0];
+
+      if (drawerBtn) {
+        drawerBtn.innerHTML = user.photoURL 
+          ? `<img src="${user.photoURL}" alt="" />`
+          : `<span class="drawer-user-initial">${initial}</span>`;
+        drawerBtn.title = `Mi Espacio (${name})`;
+        drawerBtn.onclick = () => {
+          document.body.classList.remove('nav-open');
+          window.location.href = '/mi-espacio.html';
+        };
+      }
+
+      if (drawerCardWrap) {
+        drawerCardWrap.innerHTML = `
+          <div class="drawer-user-card">
+            <div class="drawer-user-card-header">
+              <div class="drawer-user-card-avatar">${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : initial}</div>
+              <div class="drawer-user-card-info">
+                <div class="drawer-user-card-name">${escapeHtml(name)}</div>
+                <div class="drawer-user-card-email">${escapeHtml(user.email || '')}</div>
+              </div>
+            </div>
+            <div class="drawer-user-card-links">
+              <a href="/mi-espacio.html" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
+                👤 Mi Espacio
+              </a>
+              <a href="/mi-espacio.html?tab=disenos" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
+                📐 Mis Plantillas
+              </a>
+            </div>
+          </div>
+        `;
+      }
     } else {
-      drawerBtn.innerHTML = `
+      if (drawerBtn) {
+        drawerBtn.innerHTML = `
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
       `;
-      drawerBtn.title = 'Acceder a tu cuenta';
-      drawerBtn.onclick = () => {
-        document.body.classList.remove('nav-open');
-        openAuthModal();
-      };
+        drawerBtn.title = 'Acceder a tu cuenta';
+        drawerBtn.onclick = () => {
+          document.body.classList.remove('nav-open');
+          openAuthModal();
+        };
+      }
+
+      if (drawerCardWrap) {
+        drawerCardWrap.innerHTML = `
+          <div class="drawer-unauth-box">
+            <button type="button" class="drawer-unauth-btn" id="drawer-login-action-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Acceder a Mi Espacio</span>
+            </button>
+          </div>
+        `;
+        document.getElementById('drawer-login-action-btn')?.addEventListener('click', () => {
+          document.body.classList.remove('nav-open');
+          openAuthModal();
+        });
+      }
     }
   };
 

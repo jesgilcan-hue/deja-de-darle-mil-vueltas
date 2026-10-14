@@ -135,6 +135,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       try { localStorage.removeItem('mr_cached_user'); } catch (e) {}
       renderUnauthenticatedView();
+      // Si entra directamente a Mi Espacio sin sesión iniciada, abrir el modal de acceso para facilitar el inicio
+      setTimeout(() => {
+        if (!auth.currentUser) {
+          openAuthModal();
+        }
+      }, 350);
     }
   });
 });
@@ -495,6 +501,8 @@ function unlockDevPanel() {
 }
 
 function renderAuthenticatedView(user) {
+  const cacheStyle = document.getElementById('cache-style');
+  if (cacheStyle) cacheStyle.remove();
   unauthContainer.style.display = 'none';
   authContainer.style.display = 'block';
 
@@ -527,8 +535,10 @@ function renderAuthenticatedView(user) {
 }
 
 function renderUnauthenticatedView() {
-  unauthContainer.style.display = 'block';
-  authContainer.style.display = 'none';
+  const cacheStyle = document.getElementById('cache-style');
+  if (cacheStyle) cacheStyle.remove();
+  if (unauthContainer) unauthContainer.style.display = 'block';
+  if (authContainer) authContainer.style.display = 'none';
 }
 
 async function loadUserData(user) {
