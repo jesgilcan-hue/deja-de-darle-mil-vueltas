@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Espacio | Menos Ruido</title>
-    <meta name="description" content="Tu espacio personal en Menos Ruido. Gestiona tus diseños guardados, configuraciones y datos de entrega.">
-    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="description" content="Tu espacio personal en Menos Ruido. Gestiona tus plantillas guardadas, configuraciones y datos personales.">
+    <link rel="icon" type="image/png" href="./public/logo_icono_verde.png">
     
     <!-- Fuentes Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,14 +14,6 @@
     
     <link rel="stylesheet" href="./style.css">
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        main {
-            flex: 1;
-        }
         .espacio-hero {
             padding: 50px 20px 30px;
             background: var(--color-bg);
@@ -57,6 +49,7 @@
             justify-content: center;
             overflow: hidden;
             box-shadow: 0 4px 10px rgba(135, 85, 59, 0.25);
+            flex-shrink: 0;
         }
         .espacio-avatar img {
             width: 100%;
@@ -70,6 +63,7 @@
             align-items: center;
             gap: 10px;
             font-family: var(--font-display);
+            flex-wrap: wrap;
         }
         .espacio-user-details p {
             color: var(--color-text-muted);
@@ -129,6 +123,9 @@
             transition: var(--transition);
             border-bottom: 3px solid transparent;
             margin-bottom: -2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
         }
         .tab-btn:hover {
             color: var(--color-text);
@@ -150,53 +147,212 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Mis Diseños */
+        /* Cabecera de Diseños & Dropdown Crear */
+        .disenos-header-wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .create-design-dropdown-wrap {
+            position: relative;
+        }
+        .create-design-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 280px;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            padding: 8px;
+            z-index: 100;
+            animation: dropFadeIn 0.2s ease;
+        }
+        .create-design-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--color-text);
+            transition: background 0.15s ease;
+        }
+        .create-design-option:hover {
+            background: #faf7f2;
+        }
+        .create-design-option .option-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .create-design-option .option-text strong {
+            display: block;
+            font-size: 0.92rem;
+            color: var(--color-accent);
+            margin-bottom: 2px;
+        }
+        .create-design-option .option-text span {
+            font-size: 0.78rem;
+            color: var(--color-text-muted);
+            line-height: 1.3;
+            display: block;
+        }
+
+        /* Barra de Filtros */
+        .disenos-filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .filter-pill {
+            background: white;
+            border: 1px solid #dcd5ca;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-pill:hover {
+            border-color: var(--color-accent);
+            color: var(--color-text);
+        }
+        .filter-pill.active {
+            background: var(--color-accent);
+            color: white;
+            border-color: var(--color-accent);
+        }
+        .filter-count {
+            font-size: 0.75rem;
+            opacity: 0.85;
+            background: rgba(0,0,0,0.08);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        .filter-pill.active .filter-count {
+            background: rgba(255,255,255,0.25);
+            color: white;
+        }
+
+        /* Cuadrícula y Tarjetas de Diseños */
         .designs-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 22px;
             margin-top: 20px;
         }
         .design-card {
             background: white;
             border-radius: var(--border-radius);
-            padding: 20px;
+            padding: 22px;
             box-shadow: var(--shadow-sm);
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.06);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .design-card:hover {
             transform: translateY(-3px);
             box-shadow: var(--shadow-md);
         }
-        .design-card-header h3 {
-            font-family: var(--font-display);
-            font-size: 1.2rem;
+        .design-card-header {
+            margin-bottom: 12px;
+        }
+        .design-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             margin-bottom: 6px;
         }
-        .design-card-meta {
-            font-size: 0.85rem;
+        .design-title-row h3 {
+            font-family: var(--font-display);
+            font-size: 1.22rem;
+            margin: 0;
+            color: var(--color-text);
+            line-height: 1.3;
+        }
+        .btn-rename-title {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
             color: var(--color-text-muted);
-            margin-bottom: 16px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.15s;
+        }
+        .btn-rename-title:hover {
+            color: var(--color-accent);
+        }
+        .design-card-meta {
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .badge-design-type {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #f1ede5;
+            color: #665f54;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-design-type.semanal {
+            background: rgba(135, 85, 59, 0.12);
+            color: var(--color-accent);
+        }
+        .badge-design-type.diario {
+            background: rgba(47, 42, 38, 0.1);
+            color: #2f2a26;
+        }
+        .design-card-body {
+            font-size: 0.88rem;
+            color: #555;
+            margin-bottom: 18px;
+            line-height: 1.5;
+            flex-grow: 1;
         }
         .design-card-actions {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
-            margin-top: 15px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(0,0,0,0.06);
         }
         .btn-card-action {
-            flex: 1;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             font-weight: 600;
             text-align: center;
             cursor: pointer;
             border: none;
             transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
         .btn-action-open {
             background: var(--color-accent);
@@ -204,6 +360,21 @@
         }
         .btn-action-open:hover {
             background: var(--color-accent-hover);
+        }
+        .btn-action-download {
+            background: #2f2a26;
+            color: white;
+        }
+        .btn-action-download:hover {
+            background: #191614;
+        }
+        .btn-action-duplicate {
+            background: #f1ede5;
+            color: var(--color-text);
+            border: 1px solid #dcd5ca;
+        }
+        .btn-action-duplicate:hover {
+            background: #e5dfd2;
         }
         .btn-action-delete {
             background: #fdf2f2;
@@ -231,34 +402,47 @@
             color: var(--color-text-muted);
             margin-bottom: 22px;
             font-size: 0.95rem;
+            line-height: 1.6;
         }
 
-        /* Formulario Envío */
-        .envio-form-wrap {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 32px;
-            box-shadow: var(--shadow-sm);
+        /* Pestaña Ajustes y Mis Datos */
+        .ajustes-container {
             max-width: 720px;
             margin: 0 auto;
+        }
+        .ajustes-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
             border: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 24px;
         }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
+        .ajustes-card-header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            padding-bottom: 12px;
         }
-        .form-grid .full-width {
-            grid-column: span 2;
+        .ajustes-card-header h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            margin-bottom: 4px;
         }
-        .form-group label {
+        .ajustes-card-header p {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+        .ajustes-form .form-group {
+            margin-bottom: 18px;
+        }
+        .ajustes-form label {
             display: block;
             font-size: 0.88rem;
             font-weight: 600;
             margin-bottom: 6px;
-            color: var(--color-text);
         }
-        .form-group input, .form-group textarea {
+        .ajustes-form input[type="text"],
+        .ajustes-form input[type="email"] {
             width: 100%;
             padding: 10px 14px;
             border: 1px solid #d5cec2;
@@ -266,28 +450,125 @@
             font-family: var(--font-sans);
             font-size: 0.95rem;
             background: #faf7f2;
+            box-sizing: border-box;
             transition: var(--transition);
         }
-        .form-group input:focus, .form-group textarea:focus {
+        .ajustes-form input:focus {
             outline: none;
             border-color: var(--color-accent);
             background: white;
             box-shadow: 0 0 0 3px rgba(135, 85, 59, 0.12);
         }
-        .btn-save-envio {
-            margin-top: 24px;
-            background: var(--color-accent);
-            color: white;
-            padding: 12px 28px;
-            border: none;
+        .badge-verified {
+            font-size: 0.78rem;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .form-group-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            background: #faf7f2;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.88rem;
+        }
+        .ajustes-label-meta {
+            display: block;
+            color: var(--color-text-muted);
+            font-size: 0.78rem;
+            margin-bottom: 2px;
+        }
+        .ajustes-preference-item {
+            padding: 8px 0;
+        }
+        .custom-checkbox-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .custom-checkbox-wrap input[type="checkbox"] {
+            margin-top: 4px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--color-accent);
+            cursor: pointer;
+        }
+        .checkbox-text strong {
+            display: block;
+            font-size: 0.92rem;
+            color: var(--color-text);
+        }
+        .checkbox-text small {
+            display: block;
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+        .rgpd-actions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .rgpd-action-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px;
+            background: #faf7f2;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+        }
+        .rgpd-action-box.box-danger {
+            background: #fff5f5;
+            border-color: #fed7d7;
+        }
+        .rgpd-action-box p {
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+            max-width: 440px;
+        }
+        .btn-rgpd-export {
+            background: white;
+            border: 1px solid #d5cec2;
+            color: var(--color-text);
+            padding: 9px 16px;
             border-radius: 8px;
             font-weight: 600;
+            font-size: 0.85rem;
             cursor: pointer;
-            font-size: 0.95rem;
             transition: var(--transition);
+            white-space: nowrap;
         }
-        .btn-save-envio:hover {
-            background: var(--color-accent-hover);
+        .btn-rgpd-export:hover {
+            border-color: var(--color-accent);
+            background: #fbf9f5;
+        }
+        .btn-rgpd-delete {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .btn-rgpd-delete:hover {
+            background: #b91c1c;
         }
 
         /* Panel Exclusivo Desarrollador */
@@ -379,6 +660,36 @@
         .dev-links-list a:hover {
             color: #ffffff;
         }
+
+        /* Formulario Envío dentro de Dev */
+        .dev-envio-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .dev-envio-form .full-width {
+            grid-column: span 2;
+        }
+        .dev-envio-form label {
+            display: block;
+            font-size: 0.8rem;
+            color: #baa795;
+            margin-bottom: 4px;
+        }
+        .dev-envio-form input, .dev-envio-form textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: #1e1c1a;
+            color: #f3eee5;
+            font-size: 0.88rem;
+            box-sizing: border-box;
+        }
+        .dev-envio-form input:focus, .dev-envio-form textarea:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
         
         /* Notificación Toast */
         .toast-msg {
@@ -457,15 +768,10 @@
                             </div>
                         </div>
                         <div class="tree-group">
-                            <span class="tree-branch-title">Planificación Diaria</span>
-                            <div class="tree-branch-items">
-                                <a href="/generador-planificador-diario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador Diario (Hoy)</a>
-                            </div>
-                        </div>
-                        <div class="tree-group">
-                            <span class="tree-branch-title">Planificación Semanal</span>
+                            <span class="tree-branch-title">Planificación</span>
                             <div class="tree-branch-items">
                                 <a href="/generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador Semanal Web</a>
+                                <a href="/generador-planificador-diario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador Diario Web</a>
                             </div>
                         </div>
                     </div>
@@ -486,13 +792,6 @@
                                 <a href="/guia-uso-planificador-90-180-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Guía 90 & 180 Días</a>
                             </div>
                         </div>
-                        <div class="tree-group">
-                            <span class="tree-branch-title">Tutoriales</span>
-                            <div class="tree-branch-items">
-                                <a href="/tutorial-generador-planificador-diario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador gratuito de planificación diaria</a>
-                                <a href="/tutorial-generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador gratuito de planificación semanal</a>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </nav>
@@ -506,7 +805,7 @@
             <div style="background: white; max-width: 500px; margin: 0 auto; padding: 48px 32px; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.05);">
                 <span style="font-size: 2.2rem; display: block; margin-bottom: 12px;">🌿</span>
                 <h1 style="font-size: 1.8rem; margin-bottom: 10px; font-family: var(--font-display);">Acceso a Mi Espacio</h1>
-                <p style="color: var(--color-text-muted); margin-bottom: 24px; font-size: 0.95rem;">Inicia sesión con tu cuenta de Google o enlace de correo para consultar tus diseños personalizados y datos de entrega.</p>
+                <p style="color: var(--color-text-muted); margin-bottom: 24px; font-size: 0.95rem; line-height: 1.5;">Inicia sesión con tu cuenta de Google o enlace de correo para consultar tus plantillas guardadas, exportar tus PDFs y gestionar tu perfil.</p>
                 <button type="button" class="btn-primary" id="btn-login-prompt" style="padding: 12px 28px; cursor: pointer;">Acceder a mi cuenta</button>
             </div>
         </div>
@@ -528,30 +827,63 @@
 
                     <!-- Navegación de pestañas -->
                     <div class="espacio-nav-tabs">
-                        <button type="button" class="tab-btn active" data-tab="tab-disenos">Mis Diseños Guardados</button>
-                        <button type="button" class="tab-btn" data-tab="tab-envio">Mis Datos de Envío</button>
+                        <button type="button" class="tab-btn active" data-tab="tab-disenos">📐 Mis Plantillas y Diseños</button>
+                        <button type="button" class="tab-btn" data-tab="tab-ajustes">⚙️ Ajustes y Mis Datos</button>
                         <button type="button" class="tab-btn" id="tab-btn-dev" data-tab="tab-dev" style="display: none;">⚡ Panel Desarrollador</button>
                     </div>
                 </div>
             </section>
 
             <section class="container" style="padding: 30px 20px 80px;">
-                <!-- PESTAÑA 1: MIS DISEÑOS GUARDADOS -->
+                <!-- PESTAÑA 1: MIS PLANTILLAS Y DISEÑOS -->
                 <div id="tab-disenos" class="tab-pane active">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div class="disenos-header-wrap">
                         <div>
-                            <h2 style="font-family: var(--font-display); font-size: 1.5rem;">Diseños y Plantillas Guardadas</h2>
-                            <p style="color: var(--color-text-muted); font-size: 0.95rem;">Tus configuraciones personalizadas en los generadores.</p>
+                            <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 4px;">Plantillas y Diseños Guardados</h2>
+                            <p style="color: var(--color-text-muted); font-size: 0.95rem;">Tus configuraciones personalizadas en los generadores interactivos.</p>
                         </div>
-                        <a href="/generador-planificador-semanal.html" class="btn-primary" style="font-size: 0.9rem; padding: 9px 18px;">+ Crear nuevo diseño</a>
+                        
+                        <!-- Botón + Crear nuevo con selector desplegable -->
+                        <div class="create-design-dropdown-wrap" id="create-design-dropdown-wrap">
+                            <button type="button" class="btn-primary" id="btn-create-design-toggle" style="font-size: 0.9rem; padding: 9px 18px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <span>+</span> Crear nuevo diseño
+                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
+                            </button>
+                            <div class="create-design-menu" id="create-design-menu" style="display: none;">
+                                <a href="/generador-planificador-semanal.html" class="create-design-option">
+                                    <span class="option-icon">📅</span>
+                                    <div class="option-text">
+                                        <strong>Planificador Semanal</strong>
+                                        <span>Bloques de lunes a domingo, prioridades y hábitos</span>
+                                    </div>
+                                </a>
+                                <a href="/generador-planificador-diario.html" class="create-design-option">
+                                    <span class="option-icon">☀️</span>
+                                    <div class="option-text">
+                                        <strong>Planificador Diario</strong>
+                                        <span>Estructura por horas, tareas y enfoque</span>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de Filtros -->
+                    <div class="disenos-filter-bar">
+                        <button type="button" class="filter-pill active" data-filter="all">Todas <span class="filter-count" id="count-all">0</span></button>
+                        <button type="button" class="filter-pill" data-filter="Semanal">Planificador Semanal <span class="filter-count" id="count-semanal">0</span></button>
+                        <button type="button" class="filter-pill" data-filter="Diario">Planificador Diario <span class="filter-count" id="count-diario">0</span></button>
                     </div>
 
                     <div id="designs-list-container">
                         <div class="empty-designs" id="empty-designs-view">
                             <span style="font-size: 2.2rem; display: block; margin-bottom: 10px;">📐</span>
-                            <h3>Aún no tienes diseños guardados</h3>
-                            <p>Personaliza una agenda o planificador en nuestros generadores y pulsa en el botón <strong>«Guardar en Mi Espacio»</strong> para conservarlo siempre aquí.</p>
-                            <a href="/generador-planificador-semanal.html" class="btn-primary" style="padding: 10px 20px;">Abrir generador semanal</a>
+                            <h3>Aún no tienes plantillas guardadas</h3>
+                            <p>Personaliza un planificador en nuestros generadores y pulsa en el botón <strong>«Guardar en Mi Espacio»</strong> para conservarlo siempre aquí y descargarlo cuando quieras.</p>
+                            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px;">
+                                <a href="/generador-planificador-semanal.html" class="btn-primary" style="padding: 10px 18px;">📅 Generador Semanal</a>
+                                <a href="/generador-planificador-diario.html" class="btn-primary" style="padding: 10px 18px; background: #2f2a26;">☀️ Generador Diario</a>
+                            </div>
                         </div>
                         <div class="designs-grid" id="designs-grid" style="display: none;">
                             <!-- Inyectado dinámicamente -->
@@ -559,56 +891,82 @@
                     </div>
                 </div>
 
-                <!-- PESTAÑA 2: MIS DATOS DE ENVÍO -->
-                <div id="tab-envio" class="tab-pane">
-                    <div class="envio-form-wrap">
-                        <div style="margin-bottom: 24px; text-align: center;">
-                            <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 6px;">Dirección de Entrega</h2>
-                            <p style="color: var(--color-text-muted); font-size: 0.95rem;">Guarda tus datos de envío para agilizar futuros pedidos físicos de papelería.</p>
+                <!-- PESTAÑA 2: AJUSTES Y MIS DATOS -->
+                <div id="tab-ajustes" class="tab-pane">
+                    <div class="ajustes-container">
+                        <!-- Bloque 1: Mis Datos Personales -->
+                        <div class="ajustes-card">
+                            <div class="ajustes-card-header">
+                                <h3>👤 Mis Datos Personales</h3>
+                                <p>Información básica de tu perfil en Menos Ruido.</p>
+                            </div>
+                            <form id="ajustes-perfil-form" class="ajustes-form" onsubmit="return false;">
+                                <div class="form-group">
+                                    <label for="ajustes-display-name">Nombre visible</label>
+                                    <input type="text" id="ajustes-display-name" placeholder="Tu nombre o alias" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="ajustes-email">Correo electrónico de acceso</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="email" id="ajustes-email" readonly style="background: #f1ede5; cursor: not-allowed; flex: 1;" />
+                                        <span class="badge-verified">✓ Verificado</span>
+                                    </div>
+                                </div>
+                                <div class="form-group-row">
+                                    <div>
+                                        <span class="ajustes-label-meta">Método de acceso</span>
+                                        <strong id="ajustes-provider-display">Google</strong>
+                                    </div>
+                                    <div>
+                                        <span class="ajustes-label-meta">Miembro desde</span>
+                                        <strong id="ajustes-created-display">Reciente</strong>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary" id="btn-save-perfil" style="margin-top: 18px; padding: 10px 22px;">Guardar cambios en perfil</button>
+                            </form>
                         </div>
 
-                        <form id="envio-form" onsubmit="return false;">
-                            <div class="form-grid">
-                                <div class="form-group full-width">
-                                    <label for="envio-nombre">Nombre y Apellidos completos</label>
-                                    <input type="text" id="envio-nombre" placeholder="Ej: María González Pérez" required>
+                        <!-- Bloque 2: Preferencias de Comunicación -->
+                        <div class="ajustes-card">
+                            <div class="ajustes-card-header">
+                                <h3>📬 Preferencias de Lectura</h3>
+                                <p>Gestión de reflexiones pausadas y nuevas lecturas por email.</p>
+                            </div>
+                            <div class="ajustes-preference-item">
+                                <label class="custom-checkbox-wrap">
+                                    <input type="checkbox" id="pref-newsletter" checked />
+                                    <span class="checkbox-text">
+                                        <strong>Reflexiones y nuevos ensayos editoriales</strong>
+                                        <small>Ensayos sobre sobrepensamiento, límites personales y enfoque analógico. Sin correos comerciales agresivos.</small>
+                                    </span>
+                                </label>
+                            </div>
+                            <button type="button" class="btn-secondary" id="btn-save-pref" style="margin-top: 16px; padding: 9px 20px; border: 1px solid #dcd5ca; background: #faf7f2; border-radius: 8px; font-weight: 600; cursor: pointer;">Guardar preferencias</button>
+                        </div>
+
+                        <!-- Bloque 3: Privacidad y Seguridad (RGPD) -->
+                        <div class="ajustes-card">
+                            <div class="ajustes-card-header">
+                                <h3>🛡️ Privacidad y Control de Datos (RGPD)</h3>
+                                <p>Control total sobre tu información. Puedes descargarla o borrarla cuando quieras.</p>
+                            </div>
+                            <div class="rgpd-actions-list">
+                                <div class="rgpd-action-box">
+                                    <div>
+                                        <strong>Exportar mis datos</strong>
+                                        <p>Descarga un archivo JSON con tu perfil y todas tus plantillas guardadas.</p>
+                                    </div>
+                                    <button type="button" class="btn-rgpd-export" id="btn-export-data">📥 Descargar mis datos (.json)</button>
                                 </div>
-                                <div class="form-group">
-                                    <label for="envio-telefono">Teléfono móvil</label>
-                                    <input type="tel" id="envio-telefono" placeholder="+34 600 000 000" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="envio-dni">NIF / DNI (para transporte)</label>
-                                    <input type="text" id="envio-dni" placeholder="12345678Z">
-                                </div>
-                                <div class="form-group full-width">
-                                    <label for="envio-direccion">Dirección completa (Calle, número, piso, puerta)</label>
-                                    <input type="text" id="envio-direccion" placeholder="Calle Ejemplo 12, 3º B" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="envio-cp">Código Postal</label>
-                                    <input type="text" id="envio-cp" placeholder="28001" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="envio-ciudad">Ciudad / Población</label>
-                                    <input type="text" id="envio-ciudad" placeholder="Madrid" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="envio-provincia">Provincia</label>
-                                    <input type="text" id="envio-provincia" placeholder="Madrid" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="envio-pais">País</label>
-                                    <input type="text" id="envio-pais" value="España" required>
-                                </div>
-                                <div class="form-group full-width">
-                                    <label for="envio-notas">Instrucciones de entrega (opcional)</label>
-                                    <textarea id="envio-notas" rows="2" placeholder="Dejar en conserjería si no estoy, timbre derecho..."></textarea>
+                                <div class="rgpd-action-box box-danger">
+                                    <div>
+                                        <strong style="color: #991b1b;">Eliminar mi cuenta definitivamente</strong>
+                                        <p>Se borrarán de forma irreversible tu cuenta, tu perfil y todas tus plantillas guardadas en la base de datos.</p>
+                                    </div>
+                                    <button type="button" class="btn-rgpd-delete" id="btn-delete-account-trigger">🗑️ Eliminar cuenta</button>
                                 </div>
                             </div>
-
-                            <button type="submit" class="btn-save-envio" id="btn-save-envio">Guardar datos de envío</button>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -618,7 +976,7 @@
                         <div class="dev-header">
                             <div>
                                 <h2>⚡ Panel Exclusivo de Desarrollador</h2>
-                                <p style="color: #baa795; font-size: 0.9rem;">Zona de pruebas técnicas, páginas ocultas y validación interna.</p>
+                                <p style="color: #baa795; font-size: 0.9rem;">Zona de pruebas técnicas, envíos de imprenta (Lulu) y páginas internas.</p>
                             </div>
                             <span class="role-badge dev">ADMIN LEVEL 1</span>
                         </div>
@@ -635,6 +993,65 @@
 
                         <!-- CONTENIDO DESBLOQUEADO -->
                         <div id="dev-unlocked-content" style="display: none;">
+                            <!-- Módulo de Envíos e Imprenta (Lulu API) -->
+                            <div class="dev-card" style="margin-bottom: 24px; background: #262320; border: 1px solid rgba(255,255,255,0.12);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                                    <div>
+                                        <h3 style="color: #ffffff; font-size: 1.25rem; margin: 0;">📦 Envíos e Imprenta (Lulu API) · Pruebas Técnicas</h3>
+                                        <p style="color: #aaa; font-size: 0.85rem; margin-top: 4px;">Estructura de datos para la futura conexión con la API de impresión y envío bajo demanda.</p>
+                                    </div>
+                                    <span class="role-badge dev">LULU TEST</span>
+                                </div>
+
+                                <form id="envio-form" class="dev-envio-form" onsubmit="return false;">
+                                    <div class="full-width">
+                                        <label for="envio-nombre">Nombre y Apellidos</label>
+                                        <input type="text" id="envio-nombre" placeholder="Ej: Jesús Gil">
+                                    </div>
+                                    <div>
+                                        <label for="envio-telefono">Teléfono móvil</label>
+                                        <input type="tel" id="envio-telefono" placeholder="+34 600 000 000">
+                                    </div>
+                                    <div>
+                                        <label for="envio-dni">NIF / DNI</label>
+                                        <input type="text" id="envio-dni" placeholder="12345678Z">
+                                    </div>
+                                    <div class="full-width">
+                                        <label for="envio-direccion">Dirección completa</label>
+                                        <input type="text" id="envio-direccion" placeholder="Calle Ejemplo 12, 3º B">
+                                    </div>
+                                    <div>
+                                        <label for="envio-cp">Código Postal</label>
+                                        <input type="text" id="envio-cp" placeholder="28001">
+                                    </div>
+                                    <div>
+                                        <label for="envio-ciudad">Ciudad</label>
+                                        <input type="text" id="envio-ciudad" placeholder="Madrid">
+                                    </div>
+                                    <div>
+                                        <label for="envio-provincia">Provincia</label>
+                                        <input type="text" id="envio-provincia" placeholder="Madrid">
+                                    </div>
+                                    <div>
+                                        <label for="envio-pais">País</label>
+                                        <input type="text" id="envio-pais" value="España">
+                                    </div>
+                                    <div class="full-width">
+                                        <label for="envio-notas">Instrucciones de entrega</label>
+                                        <textarea id="envio-notas" rows="2" placeholder="Dejar en conserjería..."></textarea>
+                                    </div>
+                                    <div class="full-width" style="margin-top: 8px;">
+                                        <button type="submit" class="btn-dev-unlock" id="btn-save-envio" style="background: var(--color-accent); font-size: 0.9rem;">Guardar datos de envío</button>
+                                    </div>
+                                </form>
+
+                                <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
+                                    <h4 style="color: #e5ded3; font-size: 0.95rem; margin-bottom: 8px;">Simulador de Pedidos</h4>
+                                    <button type="button" class="btn-dev-unlock" id="btn-simulate-order" style="background: #3f3b37; font-size: 0.85rem; padding: 7px 14px;">Simular Pedido de Prueba</button>
+                                    <div id="sim-order-result" style="font-size: 0.82rem; color: #4ade80; margin-top: 10px; display: none;"></div>
+                                </div>
+                            </div>
+
                             <div class="dev-sections-grid">
                                 <!-- Páginas en Borrador / Ocultas -->
                                 <div class="dev-card">
@@ -671,15 +1088,8 @@
                                         <li><a href="/generador-planificador-mensual.html" target="_blank">↗ Generador Mensual</a></li>
                                         <li><a href="/generador-planificador-habitos.html" target="_blank">↗ Generador Hábitos</a></li>
                                         <li><a href="/generador-planificador-horario.html" target="_blank">↗ Generador Horarios</a></li>
+                                        <li><a href="/generador-planificador-anual.html" target="_blank">↗ Generador Anual</a></li>
                                     </ul>
-                                </div>
-
-                                <!-- Herramientas de Prueba y Simulación -->
-                                <div class="dev-card">
-                                    <h3>🧪 Simulador de Pedidos y Pruebas</h3>
-                                    <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 12px;">Crea un registro de pedido simulado en Firestore para validar la estructura de datos:</p>
-                                    <button type="button" class="btn-dev-unlock" id="btn-simulate-order" style="background: #3f3b37; font-size: 0.85rem; padding: 7px 14px;">Simular Pedido de Prueba</button>
-                                    <div id="sim-order-result" style="font-size: 0.82rem; color: #4ade80; margin-top: 10px; display: none;"></div>
                                 </div>
                             </div>
                         </div>
@@ -689,40 +1099,23 @@
         </div>
     </main>
 
-    <!-- FOOTER CORPORATIVO -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-col">
-                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem;">Menos Ruido</h3>
-                    <p style="opacity: 0.8; font-size: 0.9rem;">Cuadernos guiados y herramientas en papel para pensar con calma.</p>
-                </div>
-                <div class="footer-col">
-                    <h4>Navegación</h4>
-                    <a href="/">Página Principal</a>
-                    <a href="/#cuadernos">Nuestros Cuadernos</a>
-                    <a href="/generador.html">Material & Generadores</a>
-                    <a href="/lecturas.html">Lecturas & Vídeos</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Comunidad</h4>
-                    <a href="https://www.youtube.com/channel/UCUD4OWhpMG5OzqVQhjpeqtw" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
-                    <a href="https://www.instagram.com/editorialmenosruido/" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
-                    <a href="/links.html">Enlaces Rápidos</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Legal</h4>
-                    <a href="mailto:contacto@editorialmenosruido.com" onclick="event.preventDefault(); navigator.clipboard.writeText('contacto@editorialmenosruido.com'); const original = this.innerText; this.innerText = '¡Copiado al portapapeles!'; setTimeout(() => this.innerText = original, 2000);" title="Haz clic para copiar el email">contacto@editorialmenosruido.com</a>
-                    <a href="./aviso-legal.html" target="_blank">Aviso Legal</a>
-                    <a href="./politica-privacidad.html" target="_blank">Política de Privacidad</a>
-                    <a href="./politica-cookies.html" target="_blank">Política de Cookies</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; <span id="year">2026</span> Menos Ruido. Todos los derechos reservados.</p>
+    <!-- MODAL CONFIRMACIÓN ELIMINAR CUENTA (RGPD) -->
+    <div id="delete-account-modal" class="auth-modal-overlay" style="display: none; z-index: 100000;">
+        <div class="auth-modal-card" style="max-width: 440px; text-align: center; padding: 28px 24px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">⚠️</div>
+            <h2 style="font-family: var(--font-display); font-size: 1.4rem; color: #991b1b; margin-bottom: 8px;">¿Eliminar tu cuenta?</h2>
+            <p style="font-size: 0.9rem; color: #555; line-height: 1.5; margin-bottom: 18px;">
+                Esta acción es <strong>permanente e irreversible</strong>. Se eliminará tu cuenta, tu perfil y todas tus plantillas guardadas de nuestra base de datos.
+            </p>
+            <p style="font-size: 0.85rem; color: #333; margin-bottom: 8px;">Escribe <strong>ELIMINAR</strong> para confirmar:</p>
+            <input type="text" id="delete-confirm-input" placeholder="ELIMINAR" style="width: 100%; padding: 10px; border: 2px solid #fecaca; border-radius: 8px; font-weight: bold; text-align: center; font-size: 1rem; margin-bottom: 18px; box-sizing: border-box;" autocomplete="off" />
+            
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="btn-cancel-delete-account" style="flex: 1; padding: 10px; border: 1px solid #dcd5ca; background: #faf7f2; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancelar</button>
+                <button type="button" id="btn-confirm-delete-account" style="flex: 1; padding: 10px; border: none; background: #dc2626; color: white; border-radius: 8px; font-weight: 600; cursor: pointer;" disabled>Eliminar todo</button>
             </div>
         </div>
-    </footer>
+    </div>
 
     <!-- TOAST DE NOTIFICACIONES -->
     <div id="toast-notification" class="toast-msg"></div>

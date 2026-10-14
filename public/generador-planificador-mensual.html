@@ -907,6 +907,86 @@
         }
         .btn-modal-secondary:hover { background: #ede7dc; }
 
+        .modal-email-box {
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-bottom: 16px;
+        }
+        .modal-email-header {
+            margin-bottom: 10px;
+        }
+        .modal-email-title {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #212121;
+        }
+        .modal-email-sub {
+            display: block;
+            font-size: 0.74rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        .modal-email-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-email-input {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            background: #ffffff;
+            color: #212121;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modal-email-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
+        }
+        .modal-btn-send {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+        .modal-btn-send:hover {
+            background: var(--accent-hover);
+        }
+        .modal-email-options {
+            margin-top: 8px;
+        }
+        .modal-email-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.76rem;
+            color: #555;
+            cursor: pointer;
+        }
+        .modal-email-feedback {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 9px 12px;
+            line-height: 1.4;
+        }
+
         .modal-books-section {
             background: #faf8f5;
             border: 1px solid #e7e2d8;
@@ -1225,6 +1305,27 @@
                 <button type="button" class="btn-modal-secondary" onclick="executeDownload(true)">
                     <span>📄</span> Descargar plantilla limpia en blanco
                 </button>
+            </div>
+
+            <!-- RECIBIR POR EMAIL -->
+            <div class="modal-email-box">
+                <div class="modal-email-header">
+                    <span class="modal-email-title">✉️ ¿Prefieres recibirlo en tu email?</span>
+                    <span class="modal-email-sub">Te enviamos el archivo PDF adjunto listo para imprimir cuando quieras.</span>
+                </div>
+                <div class="modal-email-form">
+                    <input type="email" id="modal-email-input" class="modal-email-input" placeholder="tu-correo@ejemplo.com" autocomplete="email" />
+                    <button type="button" id="btn-modal-send-email" class="modal-btn-send" onclick="sendPdfViaEmail()">
+                        <span>Enviar a mi email</span>
+                    </button>
+                </div>
+                <div class="modal-email-options">
+                    <label class="modal-email-checkbox-label">
+                        <input type="checkbox" id="modal-email-is-blank" />
+                        <span>Enviar versión limpia en blanco (sin textos escritos)</span>
+                    </label>
+                </div>
+                <div id="modal-email-feedback" class="modal-email-feedback" style="display: none;"></div>
             </div>
 
             <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN EN AMAZON -->
@@ -2422,7 +2523,30 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function applyMensualData(data) {
+            if (!data) return;
+            if (data.month !== undefined && document.getElementById('input-month-name')) document.getElementById('input-month-name').value = data.month;
+            if (data.year !== undefined && document.getElementById('input-year-name')) document.getElementById('input-year-name').value = data.year;
+            if (data.focus !== undefined && document.getElementById('input-monthly-focus')) document.getElementById('input-monthly-focus').value = data.focus;
+            if (typeof state !== 'undefined') {
+                if (data.checkboxStyle) state.checkboxStyle = data.checkboxStyle;
+                if (data.visibility) state.visibility = { ...state.visibility, ...data.visibility };
+                if (Array.isArray(data.topOrder)) state.topOrder = [...data.topOrder];
+                if (Array.isArray(data.bottomOrder)) state.bottomOrder = [...data.bottomOrder];
+                if (Array.isArray(data.habitsData)) state.habitsData = JSON.parse(JSON.stringify(data.habitsData));
+                if (Array.isArray(data.calendarNotes)) state.calendarNotes = [...data.calendarNotes];
+                if (Array.isArray(data.goalsData)) state.goalsData = JSON.parse(JSON.stringify(data.goalsData));
+                if (Array.isArray(data.milestonesData)) state.milestonesData = JSON.parse(JSON.stringify(data.milestonesData));
+                if (data.notesText !== undefined) state.notesText = data.notesText;
+            }
+
+            if (typeof renderModularStrips === 'function') renderModularStrips();
+            if (typeof renderCalendarMatrix === 'function') renderCalendarMatrix();
+            if (typeof updateCheckboxUI === 'function') updateCheckboxUI();
+            if (typeof updateSectionPillsUI === 'function') updateSectionPillsUI();
+        }
 
         setupGeneratorSave('btn-save-generator-mensual', () => {
             const monthText = (document.getElementById('input-month-name') ? document.getElementById('input-month-name').value : '').trim();
@@ -2436,10 +2560,21 @@
                 data: {
                     month: monthText,
                     year: yearText,
-                    focus: focusText
+                    focus: focusText,
+                    checkboxStyle: typeof state !== 'undefined' ? state.checkboxStyle : 'square',
+                    visibility: typeof state !== 'undefined' ? { ...state.visibility } : {},
+                    topOrder: typeof state !== 'undefined' ? [...state.topOrder] : [],
+                    bottomOrder: typeof state !== 'undefined' ? [...state.bottomOrder] : [],
+                    habitsData: typeof state !== 'undefined' ? state.habitsData : [],
+                    calendarNotes: typeof state !== 'undefined' ? [...state.calendarNotes] : [],
+                    goalsData: typeof state !== 'undefined' ? state.goalsData : [],
+                    milestonesData: typeof state !== 'undefined' ? state.milestonesData : [],
+                    notesText: typeof state !== 'undefined' ? state.notesText : ''
                 }
             };
         });
+
+        checkAndLoadSavedDesign(applyMensualData);
     </script>
 </body>
 </html>

@@ -907,6 +907,86 @@
         }
         .btn-modal-secondary:hover { background: #ede7dc; }
 
+        .modal-email-box {
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-bottom: 16px;
+        }
+        .modal-email-header {
+            margin-bottom: 10px;
+        }
+        .modal-email-title {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #212121;
+        }
+        .modal-email-sub {
+            display: block;
+            font-size: 0.74rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        .modal-email-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-email-input {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            background: #ffffff;
+            color: #212121;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modal-email-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
+        }
+        .modal-btn-send {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+        .modal-btn-send:hover {
+            background: var(--accent-hover);
+        }
+        .modal-email-options {
+            margin-top: 8px;
+        }
+        .modal-email-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.76rem;
+            color: #555;
+            cursor: pointer;
+        }
+        .modal-email-feedback {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 9px 12px;
+            line-height: 1.4;
+        }
+
         .modal-books-section {
             background: #faf8f5;
             border: 1px solid #e7e2d8;
@@ -1225,6 +1305,27 @@
                 <button type="button" class="btn-modal-secondary" onclick="executeDownload(true)">
                     <span>📄</span> Descargar plantilla limpia en blanco
                 </button>
+            </div>
+
+            <!-- RECIBIR POR EMAIL -->
+            <div class="modal-email-box">
+                <div class="modal-email-header">
+                    <span class="modal-email-title">✉️ ¿Prefieres recibirlo en tu email?</span>
+                    <span class="modal-email-sub">Te enviamos el archivo PDF adjunto listo para imprimir cuando quieras.</span>
+                </div>
+                <div class="modal-email-form">
+                    <input type="email" id="modal-email-input" class="modal-email-input" placeholder="tu-correo@ejemplo.com" autocomplete="email" />
+                    <button type="button" id="btn-modal-send-email" class="modal-btn-send" onclick="sendPdfViaEmail()">
+                        <span>Enviar a mi email</span>
+                    </button>
+                </div>
+                <div class="modal-email-options">
+                    <label class="modal-email-checkbox-label">
+                        <input type="checkbox" id="modal-email-is-blank" />
+                        <span>Enviar versión limpia en blanco (sin textos escritos)</span>
+                    </label>
+                </div>
+                <div id="modal-email-feedback" class="modal-email-feedback" style="display: none;"></div>
             </div>
 
             <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN EN AMAZON -->
@@ -1914,6 +2015,17 @@
         function openDownloadModal() {
             const modal = document.getElementById('download-modal');
             if (modal) modal.classList.add('active');
+
+            const feedback = document.getElementById('modal-email-feedback');
+            if (feedback) feedback.style.display = 'none';
+
+            const emailInput = document.getElementById('modal-email-input');
+            if (emailInput && !emailInput.value) {
+                try {
+                    const saved = localStorage.getItem('mr_user_pdf_email');
+                    if (saved) emailInput.value = saved;
+                } catch(e) {}
+            }
         }
 
         function closeDownloadModal() {
@@ -1966,9 +2078,7 @@
         // ========================================================
         // MOTOR DE EXPORTACIÓN A PDF 1:1 (jsPDF LANDSCAPE 8.25" × 6")
         // ========================================================
-        function executeDownload(isBlankTemplate) {
-            closeDownloadModal();
-
+        function buildMonthlyPdfDoc(isBlankTemplate = false) {
             if (!window.jspdf || !window.jspdf.jsPDF) {
                 alert('No se pudo cargar la librería jsPDF. Por favor, comprueba tu conexión.');
                 return;
