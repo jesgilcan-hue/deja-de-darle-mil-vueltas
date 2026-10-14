@@ -93,3 +93,5 @@ export async function syncUserProfile(user) {
 
   return { ...snap.data(), ...userData };
 }
+
+export { onAuthStateChanged, signOut, sendSignInLinkToEmail };
