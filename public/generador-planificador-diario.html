@@ -24,12 +24,9 @@
     <script src="./jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- Control de acceso PIN 1111 -->
-    <script>
-        if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
-            window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
-        }
-    </script>
+    <!-- Canonical & Favicon -->
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-planificador-diario.html" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
 
     <style>
         :root {
@@ -2193,12 +2190,40 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function applyDiarioData(data) {
+            if (!data) return;
+            if (data.day !== undefined && document.getElementById('field-day')) document.getElementById('field-day').value = data.day;
+            if (data.date !== undefined && document.getElementById('field-date')) document.getElementById('field-date').value = data.date;
+            if (data.notes !== undefined && document.getElementById('field-notes')) document.getElementById('field-notes').value = data.notes;
+            if (Array.isArray(data.priorities)) state.priorities = [...data.priorities];
+            else if (data.priority !== undefined) state.priorities = [data.priority];
+            if (Array.isArray(data.tasks)) state.tasks = [...data.tasks];
+            if (Array.isArray(data.habits)) state.habits = [...data.habits];
+            if (data.checkboxStyle) state.checkboxStyle = data.checkboxStyle;
+            if (data.notesPattern) state.notesPattern = data.notesPattern;
+            if (data.sectionsVisible) {
+                state.sectionsVisible = { ...state.sectionsVisible, ...data.sectionsVisible };
+                ['priority', 'tasks', 'habits', 'notes'].forEach(sec => {
+                    const el = document.getElementById('block-' + sec);
+                    if (el) el.style.display = state.sectionsVisible[sec] ? (sec === 'notes' ? 'flex' : 'block') : 'none';
+                });
+            }
+            if (typeof renderPriorities === 'function') renderPriorities();
+            if (typeof renderTasks === 'function') renderTasks();
+            if (typeof renderHabits === 'function') renderHabits();
+            if (typeof updatePillStates === 'function') updatePillStates();
+            if (typeof updateNotesCapacity === 'function') updateNotesCapacity();
+            if (typeof updateNotesPatternUI === 'function') updateNotesPatternUI();
+            if (typeof updateCheckboxUI === 'function') updateCheckboxUI();
+        }
 
         setupGeneratorSave('btn-save-generator-diario', () => {
-            const dayText = (document.getElementById('input-day') ? document.getElementById('input-day').value : '').trim();
-            const dateText = (document.getElementById('input-date') ? document.getElementById('input-date').value : '').trim();
-            const prioText = (document.getElementById('prio-textarea') ? document.getElementById('prio-textarea').value : '').trim();
+            const dayText = (document.getElementById('field-day') ? document.getElementById('field-day').value : '').trim();
+            const dateText = (document.getElementById('field-date') ? document.getElementById('field-date').value : '').trim();
+            const notesText = (document.getElementById('field-notes') ? document.getElementById('field-notes').value : '').trim();
+            const prioText = (typeof state !== 'undefined' && state.priorities?.[0] ? state.priorities[0] : '').trim();
 
             return {
                 name: (dayText || dateText) ? `Planificador Diario · ${dayText} ${dateText}`.trim() : 'Planificador Diario Personalizado',
@@ -2207,10 +2232,18 @@
                 data: {
                     day: dayText,
                     date: dateText,
-                    priority: prioText
+                    notes: notesText,
+                    priorities: typeof state !== 'undefined' ? [...state.priorities] : [prioText],
+                    tasks: typeof state !== 'undefined' ? [...state.tasks] : [],
+                    habits: typeof state !== 'undefined' ? [...state.habits] : [],
+                    checkboxStyle: typeof state !== 'undefined' ? state.checkboxStyle : 'square',
+                    notesPattern: typeof state !== 'undefined' ? state.notesPattern : 'blank',
+                    sectionsVisible: typeof state !== 'undefined' ? { ...state.sectionsVisible } : {}
                 }
             };
         });
+
+        checkAndLoadSavedDesign(applyDiarioData);
     </script>
 </body>
 </html>
