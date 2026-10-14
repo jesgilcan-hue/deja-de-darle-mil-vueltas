@@ -29,6 +29,21 @@ let currentUser = null;
 let allDesigns = [];
 let currentFilter = 'all';
 
+// Modal de Descarga en Mi Espacio
+const downloadModal = document.getElementById('download-modal');
+const btnCloseDlModal = document.getElementById('btn-close-dl-modal');
+const dlModalTitle = document.getElementById('dl-modal-title');
+const dlModalBadge = document.getElementById('dl-modal-badge');
+const btnDlWritten = document.getElementById('btn-dl-written');
+const btnDlBlank = document.getElementById('btn-dl-blank');
+const modalEmailInput = document.getElementById('modal-email-input');
+const btnModalSendEmail = document.getElementById('btn-modal-send-email');
+const modalEmailIsBlank = document.getElementById('modal-email-is-blank');
+const modalEmailFeedback = document.getElementById('modal-email-feedback');
+const headlessPdfFrame = document.getElementById('headless-pdf-frame');
+let activeDownloadItem = null;
+
+
 // Elementos del DOM
 const unauthContainer = document.getElementById('unauth-container');
 const authContainer = document.getElementById('auth-container');
@@ -91,6 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCreateDropdown();
   setupFilters();
   setupDeleteModal();
+  setupDownloadModal();
+  setupPostMessageListener();
+
 
   // 1. Carga instantánea (0 ms) si hay datos en caché local
   try {
@@ -656,11 +674,17 @@ function renderDesignsGrid() {
       </div>
       <div class="design-card-actions">
         <a href="${loadUrl}" class="btn-card-action btn-action-open" title="Abrir y editar en el generador">✏️ Abrir</a>
-        <a href="${downloadUrl}" class="btn-card-action btn-action-download" title="Descargar PDF directamente">📥 Descargar PDF</a>
+        <button type="button" class="btn-card-action btn-action-download" data-id="${item.id}" title="Descargar PDF directamente">📥 Descargar PDF</button>
         <button type="button" class="btn-card-action btn-action-duplicate" data-id="${item.id}" title="Crear una copia exacta">📋 Duplicar</button>
         <button type="button" class="btn-card-action btn-action-delete" data-id="${item.id}" title="Eliminar diseño">🗑️ Eliminar</button>
       </div>
     `;
+
+    // 0. Descargar PDF con Modal en la misma página
+    const dlCardBtn = card.querySelector('.btn-action-download');
+    dlCardBtn?.addEventListener('click', () => {
+      openDownloadModal(item);
+    });
 
     // 1. Renombrar plantilla
     const renameBtn = card.querySelector('.btn-rename-title');

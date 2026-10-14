@@ -2547,6 +2547,68 @@
                 }
             }
         }
+    
+        // HEADLESS CONTROLLER PARA DESCARGA DIRECTA DESDE MI ESPACIO
+        (function initHeadlessDownload() {
+            const params = new URLSearchParams(window.location.search);
+            const headless = params.get('headless');
+            if (!headless) return;
+
+            const isBlank = params.get('blank') === '1';
+
+            const runWhenReady = () => {
+                if (typeof buildDailyPdfDoc !== 'function') {
+                    setTimeout(runWhenReady, 100);
+                    return;
+                }
+
+                if (headless === 'download') {
+                    try {
+                        const res = buildDailyPdfDoc(isBlank);
+                        if (res && res.doc) {
+                            res.doc.save(res.filename);
+                            if (window.parent && window.parent !== window) {
+                                window.parent.postMessage({ type: 'MR_PDF_DONE', filename: res.filename }, '*');
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error headless daily download:', err);
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({ type: 'MR_PDF_ERROR', message: err.message }, '*');
+                        }
+                    }
+                } else if (headless === 'email') {
+                    const email = params.get('email');
+                    (async () => {
+                        try {
+                            const res = buildDailyPdfDoc(isBlank);
+                            const pdfBase64 = res.doc.output('datauristring');
+                            const resp = await fetch('/api/send-pdf', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    email: email,
+                                    pdfBase64: pdfBase64,
+                                    filename: res.filename,
+                                    plannerName: 'Planificador Diario'
+                                })
+                            });
+                            const data = await resp.json();
+                            if (window.parent && window.parent !== window) {
+                                window.parent.postMessage({ type: data.success ? 'MR_EMAIL_DONE' : 'MR_EMAIL_ERROR', message: data.message || data.error }, '*');
+                            }
+                        } catch (err) {
+                            if (window.parent && window.parent !== window) {
+                                window.parent.postMessage({ type: 'MR_EMAIL_ERROR', message: err.message }, '*');
+                            }
+                        }
+                    })();
+                }
+            };
+
+            setTimeout(runWhenReady, 450);
+        })();
+
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
