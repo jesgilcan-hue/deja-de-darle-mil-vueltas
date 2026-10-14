@@ -12,6 +12,9 @@ import {
 } from "firebase/auth";
 import { 
   getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc, 
   getDoc, 
   setDoc, 
@@ -47,19 +50,93 @@ const firebaseConfig = {
 // Inicialización de la app
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Inicializar Firestore con caché persistente offline en IndexedDB
+let dbInstance;
+try {
+  dbInstance = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  });
+} catch (e) {
+  dbInstance = getFirestore(app);
+}
+export const db = dbInstance;
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
 // Configuración de roles y seguridad
+export const DEVELOPER_EMAILS = [
+  "jesgilcan@gmail.com",
+  "editorialmenosruido@gmail.com",
+  "contacto@editorialmenosruido.com"
+];
 export const DEVELOPER_EMAIL = "jesgilcan@gmail.com";
 export const DEVELOPER_PIN = "1111";
+
+/**
+ * Obtiene el email del usuario de forma ultra-robusta revisando auth, providerData y almacenamiento local
+ */
+export function getUserEmail(user) {
+  if (!user) return '';
+  if (user.email && typeof user.email === 'string') return user.email.trim();
+  if (user.providerData && Array.isArray(user.providerData)) {
+    for (const p of user.providerData) {
+      if (p && p.email && typeof p.email === 'string') return p.email.trim();
+    }
+  }
+  try {
+    const cached = localStorage.getItem('mr_cached_user');
+    if (cached) {
+      const p = JSON.parse(cached);
+      if (p.email && typeof p.email === 'string') return p.email.trim();
+    }
+  } catch (e) {}
+  try {
+    const stored = localStorage.getItem('mr_user_pdf_email');
+    if (stored && typeof stored === 'string') return stored.trim();
+  } catch (e) {}
+  return '';
+}
+
+/**
+ * Obtiene el nombre visible del usuario de forma segura
+ */
+export function getUserDisplayName(user) {
+  if (!user) return 'Usuario';
+  if (user.displayName && typeof user.displayName === 'string' && user.displayName.trim()) {
+    return user.displayName.trim();
+  }
+  const email = getUserEmail(user);
+  if (email && email.includes('@')) {
+    return email.split('@')[0];
+  }
+  return 'Usuario';
+}
 
 /**
  * Comprueba si un usuario es el desarrollador/administrador
  */
 export function isDeveloper(user) {
-  if (!user || !user.email) return false;
-  return user.email.toLowerCase() === DEVELOPER_EMAIL.toLowerCase();
+  if (!user) return false;
+  const email = getUserEmail(user).toLowerCase().trim();
+  if (email && DEVELOPER_EMAILS.some(e => e.toLowerCase() === email)) {
+    return true;
+  }
+  // Permitir también si el panel fue desbloqueado por PIN en la sesión
+  try {
+    if (sessionStorage.getItem('mr_dev_unlocked') === 'true' || localStorage.getItem('mr_dev_unlocked') === 'true') {
+      return true;
+    }
+    const cached = localStorage.getItem('mr_cached_user');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.isDev) return true;
+    }
+  } catch (e) {}
+  return false;
 }
 
 /**
@@ -67,31 +144,37 @@ export function isDeveloper(user) {
  */
 export async function syncUserProfile(user) {
   if (!user) return null;
+  const email = getUserEmail(user);
+  const name = getUserDisplayName(user);
   const userRef = doc(db, "users", user.uid);
-  const snap = await getDoc(userRef);
   const isDev = isDeveloper(user);
   
   const userData = {
     uid: user.uid,
-    email: user.email,
-    displayName: user.displayName || user.email.split('@')[0],
+    email: email,
+    displayName: name,
     photoURL: user.photoURL || '',
     role: isDev ? 'admin' : 'client',
     lastLogin: serverTimestamp()
   };
 
-  if (!snap.exists()) {
-    userData.createdAt = serverTimestamp();
-    await setDoc(userRef, userData);
-  } else {
-    await updateDoc(userRef, {
-      lastLogin: serverTimestamp(),
-      displayName: user.displayName || snap.data().displayName || '',
-      photoURL: user.photoURL || snap.data().photoURL || ''
-    });
+  try {
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+      userData.createdAt = serverTimestamp();
+      await setDoc(userRef, userData);
+    } else {
+      const existing = snap.data() || {};
+      if (!userData.email && existing.email) {
+        userData.email = existing.email;
+      }
+      await setDoc(userRef, userData, { merge: true });
+    }
+  } catch (err) {
+    console.warn('syncUserProfile warning:', err);
   }
 
-  return { ...snap.data(), ...userData };
+  return userData;
 }
 
 export { onAuthStateChanged, signOut, sendSignInLinkToEmail };

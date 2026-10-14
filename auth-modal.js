@@ -3,7 +3,9 @@ import {
   auth, 
   googleProvider, 
   syncUserProfile, 
-  isDeveloper 
+  isDeveloper,
+  getUserEmail,
+  getUserDisplayName
 } from './firebase-config.js';
 import { 
   signInWithPopup, 
@@ -188,6 +190,9 @@ function escapeHtml(str) {
 
 // Inyectar o actualizar el botón de usuario en la barra de navegación y en el menú lateral
 export function setupNavbarAuth() {
+  if (window.__mrNavbarAuthInitialized) return;
+  window.__mrNavbarAuthInitialized = true;
+
   injectAuthModal();
 
   // Buscar el header de navegación
@@ -210,8 +215,9 @@ export function setupNavbarAuth() {
     const drawerCardWrap = document.getElementById('drawer-user-card-wrap');
 
     if (user) {
-      const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
-      const name = user.displayName || user.email.split('@')[0];
+      const email = getUserEmail(user);
+      const name = getUserDisplayName(user);
+      const initial = (name || email || 'U').charAt(0).toUpperCase();
 
       if (drawerBtn) {
         drawerBtn.innerHTML = user.photoURL 
@@ -285,38 +291,49 @@ export function setupNavbarAuth() {
     updateDrawerUser(user);
 
     if (user) {
+      const email = getUserEmail(user);
+      const name = getUserDisplayName(user);
+      const isDev = isDeveloper(user);
+      const initial = (name || email || 'U').charAt(0).toUpperCase();
+
       // Guardar en caché para carga ultrarrápida
       try {
-        if (user.email) {
-          localStorage.setItem('mr_user_pdf_email', user.email);
+        if (email) {
+          localStorage.setItem('mr_user_pdf_email', email);
         }
         localStorage.setItem('mr_cached_user', JSON.stringify({
-          displayName: user.displayName || user.email.split('@')[0],
-          email: user.email,
+          displayName: name,
+          email: email,
           photoURL: user.photoURL || '',
-          isDev: isDeveloper(user)
+          isDev: isDev
         }));
       } catch (e) {}
-      window.mrAuthUserEmail = user.email;
+      window.mrAuthUserEmail = email;
 
-      // Sincronizar en segundo plano sin bloquear renderizado
-      syncUserProfile(user).catch(err => console.warn('Sync profile bg:', err));
-      const isDev = isDeveloper(user);
-      const name = user.displayName ? user.displayName.split(' ')[0] : 'Mi Espacio';
-      const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+      // Sincronizar en segundo plano solo si hace más de 24h para no penalizar la velocidad de navegación
+      try {
+        const lastSync = parseInt(localStorage.getItem('mr_last_sync') || '0', 10);
+        const now = Date.now();
+        if (now - lastSync > 24 * 60 * 60 * 1000) {
+          localStorage.setItem('mr_last_sync', String(now));
+          syncUserProfile(user).catch(err => console.warn('Sync profile bg:', err));
+        }
+      } catch (e) {}
+
+      const firstName = name.split(' ')[0];
 
       userWrap.innerHTML = `
         <div class="nav-user-dropdown-wrap" id="nav-user-dropdown-wrap">
           <button type="button" class="nav-user-pill ${isDev ? 'is-dev' : ''}" id="nav-user-pill-toggle" aria-expanded="false" title="Mi Cuenta">
             <span class="user-pill-avatar">${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : initial}</span>
-            <span class="user-pill-name">${escapeHtml(name)}</span>
+            <span class="user-pill-name">${escapeHtml(firstName)}</span>
             ${isDev ? '<span class="dev-badge">DEV</span>' : ''}
             <svg class="user-pill-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
           </button>
           <div class="nav-user-dropdown-menu" id="nav-user-dropdown-menu">
             <div class="dropdown-user-header">
-              <div class="dropdown-user-name">${escapeHtml(user.displayName || name)}</div>
-              <div class="dropdown-user-email">${escapeHtml(user.email || '')}</div>
+              <div class="dropdown-user-name">${escapeHtml(name)}</div>
+              <div class="dropdown-user-email">${escapeHtml(email || '')}</div>
             </div>
             <div class="dropdown-user-divider"></div>
             <a href="/mi-espacio.html" class="dropdown-user-item">

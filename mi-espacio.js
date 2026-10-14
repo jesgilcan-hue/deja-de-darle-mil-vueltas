@@ -3,7 +3,10 @@ import {
   auth, 
   db, 
   isDeveloper, 
-  DEVELOPER_PIN 
+  DEVELOPER_PIN,
+  getUserEmail,
+  getUserDisplayName,
+  DEVELOPER_EMAILS
 } from './firebase-config.js';
 import { 
   signOut, 
@@ -14,6 +17,7 @@ import {
 import { 
   doc, 
   getDoc, 
+  setDoc,
   updateDoc, 
   collection, 
   getDocs, 
@@ -101,7 +105,6 @@ const simOrderResult = document.getElementById('sim-order-result');
 
 // Inicialización al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
-  setupNavbarAuth();
   setupTabs();
   setupEvents();
   setupCreateDropdown();
@@ -110,13 +113,28 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDownloadModal();
   setupPostMessageListener();
 
-
   // 1. Carga instantánea (0 ms) si hay datos en caché local
   try {
     const cachedRaw = localStorage.getItem('mr_cached_user');
     if (cachedRaw) {
       const cached = JSON.parse(cachedRaw);
       renderCachedView(cached);
+    }
+    const cachedDesignsRaw = localStorage.getItem('mr_cached_designs');
+    if (cachedDesignsRaw) {
+      allDesigns = JSON.parse(cachedDesignsRaw);
+      updateDesignCounts();
+      renderDesignsGrid();
+    }
+    const cachedExtraRaw = localStorage.getItem('mr_user_extra_data');
+    if (cachedExtraRaw) {
+      const extra = JSON.parse(cachedExtraRaw);
+      if (extra.preferences && typeof extra.preferences.newsletter !== 'undefined' && prefNewsletter) {
+        prefNewsletter.checked = !!extra.preferences.newsletter;
+      }
+      if (extra.shipping) {
+        populateShippingFields(extra.shipping);
+      }
     }
   } catch (e) {}
 
@@ -125,8 +143,9 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUser = user;
     if (user) {
       // Guardar email para prefills automáticos
-      if (user.email) {
-        try { localStorage.setItem('mr_user_pdf_email', user.email); } catch (e) {}
+      const email = getUserEmail(user);
+      if (email) {
+        try { localStorage.setItem('mr_user_pdf_email', email); } catch (e) {}
       }
       renderAuthenticatedView(user);
       checkUrlTab();
@@ -155,18 +174,29 @@ function renderCachedView(cached) {
     userAvatarDisplay.textContent = (cached.displayName || cached.email || 'U').charAt(0).toUpperCase();
   }
 
-  userNameDisplay.firstChild.textContent = (cached.displayName || 'Mi Espacio') + ' ';
-  userEmailDisplay.textContent = cached.email || '';
+  const titleText = userNameDisplay ? userNameDisplay.querySelector('.user-name-text') : null;
+  if (titleText) {
+    titleText.textContent = cached.displayName || 'Mi Espacio';
+  } else if (userNameDisplay && userNameDisplay.firstChild) {
+    userNameDisplay.firstChild.textContent = (cached.displayName || 'Mi Espacio') + ' ';
+  }
+  if (userEmailDisplay) {
+    userEmailDisplay.textContent = cached.email || '';
+  }
 
   if (cached.isDev) {
-    userRoleBadge.textContent = 'DESARROLLADOR';
-    userRoleBadge.className = 'role-badge dev';
-    tabBtnDev.style.display = 'inline-flex';
+    if (userRoleBadge) {
+      userRoleBadge.textContent = 'DESARROLLADOR';
+      userRoleBadge.className = 'role-badge dev';
+      userRoleBadge.style.display = 'inline-block';
+    }
+    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
   } else {
-    userRoleBadge.textContent = 'CLIENTE';
-    userRoleBadge.className = 'role-badge client';
-    tabBtnDev.style.display = 'none';
+    if (userRoleBadge) {
+      userRoleBadge.style.display = 'none';
+    }
+    if (tabBtnDev) tabBtnDev.style.display = 'none';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
 }
@@ -262,32 +292,60 @@ function setupEvents() {
   // Guardar cambios en el perfil (Nombre para mostrar)
   formPerfil?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!currentUser) {
+      currentUser = auth.currentUser;
+      if (!currentUser) {
+        showToast('Debes iniciar sesión para guardar cambios');
+        return;
+      }
+    }
 
     const newName = inputDisplayName.value.trim();
     if (!newName) return;
 
     const btnSubmit = document.getElementById('btn-save-perfil');
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Guardando...';
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Guardando...';
+    }
 
     try {
       // 1. Actualizar Firebase Auth
       await updateProfile(currentUser, { displayName: newName });
 
-      // 2. Actualizar Firestore
+      // 2. Actualizar Firestore de forma segura con setDoc merge: true
       const userRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userRef, { displayName: newName });
+      const email = getUserEmail(currentUser);
+      await setDoc(userRef, { 
+        displayName: newName,
+        email: email,
+        updatedAt: serverTimestamp() 
+      }, { merge: true });
 
-      // 3. Actualizar vista
-      userNameDisplay.firstChild.textContent = newName + ' ';
+      // 3. Actualizar caché local
+      try {
+        const cachedRaw = localStorage.getItem('mr_cached_user');
+        const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
+        cached.displayName = newName;
+        localStorage.setItem('mr_cached_user', JSON.stringify(cached));
+      } catch (e) {}
+
+      // 4. Actualizar vista
+      const titleText = userNameDisplay ? userNameDisplay.querySelector('.user-name-text') : null;
+      if (titleText) {
+        titleText.textContent = newName;
+      } else if (userNameDisplay && userNameDisplay.firstChild) {
+        userNameDisplay.firstChild.textContent = newName + ' ';
+      }
       showToast('✓ Nombre de perfil actualizado');
     } catch (err) {
       console.error('Error actualizando perfil:', err);
-      showToast('No se pudo actualizar el nombre');
+      showToast('No se pudo actualizar el nombre: ' + (err.message || ''));
     } finally {
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Guardar cambios en perfil';
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Guardar cambios en perfil';
+      }
     }
   });
 
@@ -489,9 +547,22 @@ function setupDeleteModal() {
 function unlockDevPanel() {
   const pin = devPinInput.value.trim();
   if (pin === DEVELOPER_PIN) {
+    try {
+      sessionStorage.setItem('mr_dev_unlocked', 'true');
+      localStorage.setItem('mr_dev_unlocked', 'true');
+    } catch (e) {}
+
     devLockedView.style.display = 'none';
     devUnlockedContent.style.display = 'block';
     devPinError.style.display = 'none';
+
+    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
+    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
+    if (userRoleBadge) {
+      userRoleBadge.textContent = 'DESARROLLADOR';
+      userRoleBadge.className = 'role-badge dev';
+      userRoleBadge.style.display = 'inline-block';
+    }
     showToast('⚡ Panel de desarrollador desbloqueado');
   } else {
     devPinError.style.display = 'block';
@@ -503,33 +574,46 @@ function unlockDevPanel() {
 function renderAuthenticatedView(user) {
   const cacheStyle = document.getElementById('cache-style');
   if (cacheStyle) cacheStyle.remove();
-  unauthContainer.style.display = 'none';
-  authContainer.style.display = 'block';
+  if (unauthContainer) unauthContainer.style.display = 'none';
+  if (authContainer) authContainer.style.display = 'block';
+
+  const email = getUserEmail(user);
+  const name = getUserDisplayName(user);
 
   // Avatar
   if (user.photoURL) {
-    userAvatarDisplay.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || 'Avatar'}" />`;
+    userAvatarDisplay.innerHTML = `<img src="${user.photoURL}" alt="${escapeHtml(name)}" />`;
   } else {
-    const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+    const initial = (name || email || 'U').charAt(0).toUpperCase();
     userAvatarDisplay.textContent = initial;
   }
 
   // Nombre y correo
-  const name = user.displayName || user.email.split('@')[0];
-  userNameDisplay.firstChild.textContent = name + ' ';
-  userEmailDisplay.textContent = user.email;
+  const titleText = userNameDisplay ? userNameDisplay.querySelector('.user-name-text') : null;
+  if (titleText) {
+    titleText.textContent = name;
+  } else if (userNameDisplay && userNameDisplay.firstChild) {
+    userNameDisplay.firstChild.textContent = name + ' ';
+  }
+  if (userEmailDisplay) {
+    userEmailDisplay.textContent = email || '';
+  }
 
   // Comprobar rol de desarrollador
   const isDev = isDeveloper(user);
   if (isDev) {
-    userRoleBadge.textContent = 'DESARROLLADOR';
-    userRoleBadge.className = 'role-badge dev';
-    tabBtnDev.style.display = 'inline-flex';
+    if (userRoleBadge) {
+      userRoleBadge.textContent = 'DESARROLLADOR';
+      userRoleBadge.className = 'role-badge dev';
+      userRoleBadge.style.display = 'inline-block';
+    }
+    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
   } else {
-    userRoleBadge.textContent = 'CLIENTE';
-    userRoleBadge.className = 'role-badge client';
-    tabBtnDev.style.display = 'none';
+    if (userRoleBadge) {
+      userRoleBadge.style.display = 'none'; // ELIMINAR TEXTO Y BADGE CLIENTE
+    }
+    if (tabBtnDev) tabBtnDev.style.display = 'none';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
 }
@@ -543,53 +627,81 @@ function renderUnauthenticatedView() {
 
 async function loadUserData(user) {
   try {
-    inputDisplayName.value = user.displayName || '';
-    inputEmail.value = user.email || '';
+    let email = getUserEmail(user);
+    let displayName = getUserDisplayName(user);
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (!email && data.email) {
+          email = data.email;
+        }
+        if (data.displayName && (!user.displayName || user.displayName === 'Usuario')) {
+          displayName = data.displayName;
+        }
+        
+        // Preferencias
+        if (data.preferences && typeof data.preferences.newsletter !== 'undefined' && prefNewsletter) {
+          prefNewsletter.checked = !!data.preferences.newsletter;
+        }
+
+        // Datos de envío en Dev
+        if (data.shipping) {
+          populateShippingFields(data.shipping);
+        }
+
+        // Guardar en caché local para próximas cargas instantáneas
+        try {
+          localStorage.setItem('mr_user_extra_data', JSON.stringify({
+            preferences: data.preferences || {},
+            shipping: data.shipping || null
+          }));
+        } catch (e) {}
+      }
+    } catch (dbErr) {
+      console.warn('Firestore loadUserData warning:', dbErr);
+    }
+
+    if (inputDisplayName) inputDisplayName.value = displayName;
+    if (inputEmail) inputEmail.value = email;
+    if (userEmailDisplay && email) userEmailDisplay.textContent = email;
     
     // Proveedor
     const isGoogle = user.providerData && user.providerData.some(p => p.providerId === 'google.com');
-    providerDisplay.textContent = isGoogle ? 'Google' : 'Enlace seguro por correo';
+    if (providerDisplay) providerDisplay.textContent = isGoogle ? 'Google' : 'Enlace seguro por correo';
 
     // Fecha de creación
-    if (user.metadata && user.metadata.creationTime) {
+    if (user.metadata && user.metadata.creationTime && createdDisplay) {
       createdDisplay.textContent = new Date(user.metadata.creationTime).toLocaleDateString('es-ES', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
       });
     }
-
-    const userRef = doc(db, 'users', user.uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      
-      // Preferencias
-      if (data.preferences && typeof data.preferences.newsletter !== 'undefined') {
-        prefNewsletter.checked = !!data.preferences.newsletter;
-      }
-
-      // Datos de envío en Dev
-      if (data.shipping) {
-        document.getElementById('envio-nombre').value = data.shipping.nombre || '';
-        document.getElementById('envio-telefono').value = data.shipping.telefono || '';
-        document.getElementById('envio-dni').value = data.shipping.dni || '';
-        document.getElementById('envio-direccion').value = data.shipping.direccion || '';
-        document.getElementById('envio-cp').value = data.shipping.cp || '';
-        document.getElementById('envio-ciudad').value = data.shipping.ciudad || '';
-        document.getElementById('envio-provincia').value = data.shipping.provincia || '';
-        document.getElementById('envio-pais').value = data.shipping.pais || 'España';
-        document.getElementById('envio-notas').value = data.shipping.notas || '';
-      }
-    }
   } catch (err) {
     console.error('Error cargando datos de usuario:', err);
   }
 }
 
+function populateShippingFields(shipping) {
+  if (!shipping) return;
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  setVal('envio-nombre', shipping.nombre);
+  setVal('envio-telefono', shipping.telefono);
+  setVal('envio-dni', shipping.dni);
+  setVal('envio-direccion', shipping.direccion);
+  setVal('envio-cp', shipping.cp);
+  setVal('envio-ciudad', shipping.ciudad);
+  setVal('envio-provincia', shipping.provincia);
+  setVal('envio-pais', shipping.pais || 'España');
+  setVal('envio-notas', shipping.notas);
+}
+
 async function loadUserDesigns(user) {
+  const designsRef = collection(db, 'users', user.uid, 'designs');
   try {
-    const designsRef = collection(db, 'users', user.uid, 'designs');
     const q = query(designsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
 
@@ -598,13 +710,38 @@ async function loadUserDesigns(user) {
       allDesigns.push({ id: docSnap.id, ...docSnap.data() });
     });
 
+    try {
+      localStorage.setItem('mr_cached_designs', JSON.stringify(allDesigns));
+    } catch (e) {}
+
     updateDesignCounts();
     renderDesignsGrid();
   } catch (err) {
-    console.warn('Colección de diseños vacía o en inicialización:', err);
-    allDesigns = [];
-    updateDesignCounts();
-    renderDesignsGrid();
+    console.warn('Query con orderBy falló, intentando getDocs directo:', err);
+    try {
+      const snapshot = await getDocs(designsRef);
+      allDesigns = [];
+      snapshot.forEach(docSnap => {
+        allDesigns.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      allDesigns.sort((a, b) => {
+        const tA = a.createdAt?.seconds || 0;
+        const tB = b.createdAt?.seconds || 0;
+        return tB - tA;
+      });
+      try {
+        localStorage.setItem('mr_cached_designs', JSON.stringify(allDesigns));
+      } catch (e) {}
+      updateDesignCounts();
+      renderDesignsGrid();
+    } catch (fallbackErr) {
+      console.warn('Fallback designs error:', fallbackErr);
+      if (!allDesigns.length) {
+        allDesigns = [];
+        updateDesignCounts();
+        renderDesignsGrid();
+      }
+    }
   }
 }
 
