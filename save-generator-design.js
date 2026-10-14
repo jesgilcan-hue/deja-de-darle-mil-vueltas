@@ -377,6 +377,29 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
           data: currentDesign.data || {},
           updatedAt: serverTimestamp()
         });
+
+        // Guardar copia local de seguridad en el navegador
+        try {
+          let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+          const idx = localDesigns.findIndex(d => d.id === currentActiveDesign.id);
+          const updatedItem = {
+            id: currentActiveDesign.id,
+            name: currentActiveDesign.name,
+            type: currentDesign.type || 'Planificador',
+            summary: currentDesign.summary || '',
+            editUrl: window.location.pathname,
+            data: currentDesign.data || {},
+            updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+          };
+          if (idx >= 0) {
+            localDesigns[idx] = { ...localDesigns[idx], ...updatedItem };
+          } else {
+            localDesigns.unshift(updatedItem);
+          }
+          localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+          localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+        } catch (e) {}
+
         hasUnsavedChanges = false;
         notifyToast(`✓ Cambios guardados en "${currentActiveDesign.name}"`);
       } catch (err) {
@@ -536,6 +559,24 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
         updatedAt: serverTimestamp()
       });
 
+      // Guardar copia local de seguridad en el navegador
+      try {
+        let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+        localDesigns = localDesigns.filter(d => d.id !== docRef.id);
+        localDesigns.unshift({
+          id: docRef.id,
+          name: finalName,
+          type: currentDesign.type || 'Planificador',
+          summary: currentDesign.summary || '',
+          editUrl: window.location.pathname,
+          data: currentDesign.data || {},
+          createdAt: { seconds: Math.floor(Date.now() / 1000) },
+          updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+        });
+        localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+        localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+      } catch (e) {}
+
       currentActiveDesign = {
         id: docRef.id,
         name: finalName,
@@ -576,6 +617,28 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
           data: currentDesign.data || {},
           updatedAt: serverTimestamp()
         });
+
+        // Actualizar copia local de seguridad en el navegador
+        try {
+          let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+          const idx = localDesigns.findIndex(d => d.id === docId);
+          const updatedItem = {
+            id: docId,
+            name: targetName,
+            type: currentDesign.type || 'Planificador',
+            summary: currentDesign.summary || '',
+            editUrl: window.location.pathname,
+            data: currentDesign.data || {},
+            updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+          };
+          if (idx >= 0) {
+            localDesigns[idx] = { ...localDesigns[idx], ...updatedItem };
+          } else {
+            localDesigns.unshift(updatedItem);
+          }
+          localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+          localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+        } catch (e) {}
 
         currentActiveDesign = {
           id: docId,

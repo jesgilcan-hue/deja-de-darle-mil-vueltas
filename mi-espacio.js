@@ -190,15 +190,13 @@ function renderCachedView(cached) {
       userRoleBadge.className = 'role-badge dev';
       userRoleBadge.style.display = 'inline-block';
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
   } else {
     if (userRoleBadge) {
       userRoleBadge.style.display = 'none';
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'none';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
+  if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
+  if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
 }
 
 // Soporte de navegación por pestañas y lectura de query params (?tab=disenos, ?tab=ajustes, ?tab=dev)
@@ -607,15 +605,14 @@ function renderAuthenticatedView(user) {
       userRoleBadge.className = 'role-badge dev';
       userRoleBadge.style.display = 'inline-block';
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
   } else {
     if (userRoleBadge) {
       userRoleBadge.style.display = 'none'; // ELIMINAR TEXTO Y BADGE CLIENTE
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'none';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
+  // Pestañas siempre accesibles para que el creador las encuentre en cualquier cuenta
+  if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
+  if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
 }
 
 function renderUnauthenticatedView() {
@@ -701,48 +698,70 @@ function populateShippingFields(shipping) {
 
 async function loadUserDesigns(user) {
   const designsRef = collection(db, 'users', user.uid, 'designs');
+  let firestoreList = [];
+
   try {
     const q = query(designsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-
-    allDesigns = [];
     snapshot.forEach(docSnap => {
-      allDesigns.push({ id: docSnap.id, ...docSnap.data() });
+      firestoreList.push({ id: docSnap.id, ...docSnap.data() });
     });
-
-    try {
-      localStorage.setItem('mr_cached_designs', JSON.stringify(allDesigns));
-    } catch (e) {}
-
-    updateDesignCounts();
-    renderDesignsGrid();
   } catch (err) {
     console.warn('Query con orderBy falló, intentando getDocs directo:', err);
     try {
       const snapshot = await getDocs(designsRef);
-      allDesigns = [];
       snapshot.forEach(docSnap => {
-        allDesigns.push({ id: docSnap.id, ...docSnap.data() });
+        firestoreList.push({ id: docSnap.id, ...docSnap.data() });
       });
-      allDesigns.sort((a, b) => {
-        const tA = a.createdAt?.seconds || 0;
-        const tB = b.createdAt?.seconds || 0;
-        return tB - tA;
-      });
-      try {
-        localStorage.setItem('mr_cached_designs', JSON.stringify(allDesigns));
-      } catch (e) {}
-      updateDesignCounts();
-      renderDesignsGrid();
     } catch (fallbackErr) {
       console.warn('Fallback designs error:', fallbackErr);
-      if (!allDesigns.length) {
-        allDesigns = [];
-        updateDesignCounts();
-        renderDesignsGrid();
-      }
     }
   }
+
+  // Leer diseños guardados localmente en este navegador para que nunca se pierda nada
+  let localList = [];
+  try {
+    const rawLocal = localStorage.getItem('mr_local_designs');
+    if (rawLocal) localList = JSON.parse(rawLocal);
+  } catch (e) {}
+  try {
+    const rawCached = localStorage.getItem('mr_cached_designs');
+    if (rawCached) {
+      const cachedList = JSON.parse(rawCached);
+      cachedList.forEach(c => {
+        if (!localList.some(l => l.id === c.id || (l.name === c.name && l.type === c.type))) {
+          localList.push(c);
+        }
+      });
+    }
+  } catch (e) {}
+
+  // Combinar Firestore y Local sin duplicados
+  const mergedMap = new Map();
+  localList.forEach(item => {
+    if (item && item.id) mergedMap.set(item.id, item);
+    else if (item && item.name) mergedMap.set(item.name + '_' + item.type, item);
+  });
+  firestoreList.forEach(item => {
+    if (item && item.id) mergedMap.set(item.id, item);
+  });
+
+  allDesigns = Array.from(mergedMap.values());
+
+  // Ordenar por fecha descendente
+  allDesigns.sort((a, b) => {
+    const tA = a.updatedAt?.seconds || a.createdAt?.seconds || a.updatedAt || a.createdAt || 0;
+    const tB = b.updatedAt?.seconds || b.createdAt?.seconds || b.updatedAt || b.createdAt || 0;
+    return tB - tA;
+  });
+
+  try {
+    localStorage.setItem('mr_cached_designs', JSON.stringify(allDesigns));
+    localStorage.setItem('mr_local_designs', JSON.stringify(allDesigns));
+  } catch (e) {}
+
+  updateDesignCounts();
+  renderDesignsGrid();
 }
 
 function updateDesignCounts() {
