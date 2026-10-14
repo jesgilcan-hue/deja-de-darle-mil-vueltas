@@ -1,5 +1,6 @@
 // Serverless Function para Vercel: /api/send-pdf
 // Envío seguro de PDF de planificadores por correo mediante Resend API
+// Remitente oficial de materiales: recursos@editorialmenosruido.com
 
 export default async function handler(req, res) {
   // Configuración de CORS y cabeceras
@@ -40,7 +41,38 @@ export default async function handler(req, res) {
     const cleanPlannerName = plannerName || 'Planificador Menos Ruido';
     const cleanFilename = filename || 'Menos_Ruido_Planificador.pdf';
 
-    // Plantilla HTML de email con diseño editorial Menos Ruido (cuidando no usar la palabra vetada)
+    // Determinar la recomendación del cuaderno físico según el planificador enviado
+    const nameLower = cleanPlannerName.toLowerCase();
+    let bookRecommendation = {
+      title: 'Planificador Semanal Atemporal',
+      tag: 'Formato Apaisado · 53 Semanas',
+      desc: 'Si te gusta planificar tu semana en papel y prefieres tenerlo todo encuadernado sobre tu mesa en lugar de acumular folios sueltos, aquí tienes el cuaderno físico listo en Amazon.',
+      webUrl: 'https://www.editorialmenosruido.com/planificador-semanal-simple.html',
+      amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-semanal-simple.html',
+      coverUrl: 'https://www.editorialmenosruido.com/cover_semanal_simple.jpg'
+    };
+
+    if (nameLower.includes('diario') || nameLower.includes('90') || nameLower.includes('anual')) {
+      bookRecommendation = {
+        title: 'Planificador de 90 Días',
+        tag: 'Una sola prioridad diaria · Trimestral',
+        desc: 'Si buscas una estructura diaria para enfocarte en una sola prioridad y no dispersarte con listas interminables, este es el cuaderno físico encuadernado para acompañarte cada día.',
+        webUrl: 'https://www.editorialmenosruido.com/planificador-90-dias.html',
+        amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-90-dias.html',
+        coverUrl: 'https://www.editorialmenosruido.com/cover_90.jpg'
+      };
+    } else if (nameLower.includes('horario') || nameLower.includes('reversible')) {
+      bookRecommendation = {
+        title: 'Planificador Semanal Reversible',
+        tag: 'Doble Portada · Franjas Horarias',
+        desc: 'Si necesitas organizar tu tiempo por horas y prefieres tener todas las semanas reunidas en un solo cuaderno en lugar de hojas sueltas, puedes ver el formato físico aquí.',
+        webUrl: 'https://www.editorialmenosruido.com/planificador-semanal-reversible.html',
+        amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-semanal-reversible.html',
+        coverUrl: 'https://www.editorialmenosruido.com/cover_semanal_reversible.jpg'
+      };
+    }
+
+    // Plantilla HTML editorial limpia y conforme a normativa de protección de datos
     const emailHtml = `
 <!DOCTYPE html>
 <html lang="es">
@@ -48,51 +80,82 @@ export default async function handler(req, res) {
   <meta charset="UTF-8">
   <title>Tu planificador en PDF</title>
 </head>
-<body style="margin: 0; padding: 30px 15px; background-color: #f7f4ee; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #212121; line-height: 1.6;">
-  <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #e8e2d8; padding: 36px 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+<body style="margin: 0; padding: 28px 12px; background-color: #f7f4ee; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #212121; line-height: 1.6;">
+  <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; border: 1px solid #e8e2d8; padding: 32px 28px; box-shadow: 0 4px 18px rgba(0,0,0,0.03);">
     
-    <div style="text-align: center; margin-bottom: 24px;">
-      <span style="display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #87553b; margin-bottom: 8px;">Editorial Menos Ruido</span>
-      <h1 style="font-family: Georgia, serif; font-size: 24px; color: #212121; margin: 0 0 10px 0; font-weight: 600;">
+    <!-- CABECERA EDITORIAL -->
+    <div style="text-align: center; margin-bottom: 22px;">
+      <span style="display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #87553b; margin-bottom: 8px;">Editorial Menos Ruido</span>
+      <h1 style="font-family: Georgia, serif; font-size: 23px; color: #212121; margin: 0 0 8px 0; font-weight: 600;">
         Aquí tienes tu ${cleanPlannerName}
       </h1>
-      <p style="font-size: 15px; color: #666059; margin: 0;">
-        Listo en el archivo adjunto para imprimir y usar sobre tu mesa.
+      <p style="font-size: 14px; color: #666059; margin: 0;">
+        Encontrarás tu archivo listo para imprimir adjunto a este correo.
       </p>
     </div>
 
-    <div style="background-color: #faf6f0; border-left: 3px solid #87553b; border-radius: 6px; padding: 18px 20px; margin-bottom: 24px;">
-      <p style="margin: 0; font-size: 14px; color: #4a3f35; line-height: 1.5;">
-        <strong>Tu PDF adjunto:</strong> <code>${cleanFilename}</code><br>
-        Optimizado para imprimir en tamaño real y trabajar en papel con máxima claridad y foco.
+    <!-- CAJA DEL ARCHIVO ADJUNTO -->
+    <div style="background-color: #faf6f0; border-left: 3px solid #87553b; border-radius: 6px; padding: 14px 18px; margin-bottom: 22px;">
+      <p style="margin: 0; font-size: 14px; color: #4a3f35; line-height: 1.45;">
+        <strong>Archivo adjunto:</strong> <code>${cleanFilename}</code>
       </p>
     </div>
 
-    <div style="font-size: 14px; color: #444; line-height: 1.6; margin-bottom: 28px;">
-      <p style="margin: 0 0 12px 0;">
-        Planificar en papel no es nostalgia, es una barrera física frente al exceso de pestañas, notificaciones y urgencias ficticias.
-      </p>
-      <p style="margin: 0;">
-        Si en cualquier momento quieres modificarlo o crear una versión nueva, puedes volver a generarlo gratis en nuestra web.
+    <!-- CONSEJO SENCILLO DE IMPRESIÓN (SIN TECNICISMOS) -->
+    <div style="font-size: 14px; color: #444; line-height: 1.6; margin-bottom: 24px;">
+      <p style="margin: 0 0 10px 0;">
+        <strong>Un consejo al imprimir:</strong> te recomendamos imprimirlo a <em>tamaño real</em> (al 100% en las opciones de tu impresora, sin reducir a página) para que los renglones y casillas queden con espacio cómodo para escribir a mano.
       </p>
     </div>
 
-    <div style="text-align: center; padding-top: 20px; border-top: 1px solid #f0ebe1;">
-      <a href="https://editorialmenosruido.com" style="display: inline-block; background-color: #87553b; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 24px; border-radius: 6px;">
-        Visitar Editorial Menos Ruido
+    <!-- RECOMENDACIÓN DEL CUADERNO FÍSICO (SIN TECNICISMOS) -->
+    <div style="background-color: #fdfbf7; border: 1px solid #ebe4d8; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <span style="display: inline-block; font-size: 11px; font-weight: 700; color: #87553b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+        ${bookRecommendation.tag}
+      </span>
+      <h3 style="font-family: Georgia, serif; font-size: 18px; margin: 0 0 8px 0; color: #212121;">
+        ${bookRecommendation.title}
+      </h3>
+      <p style="font-size: 13.5px; color: #555; line-height: 1.5; margin: 0 0 16px 0;">
+        ${bookRecommendation.desc}
+      </p>
+      <div>
+        <a href="${bookRecommendation.amazonUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #87553b; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 6px; margin-right: 10px; margin-bottom: 6px;">
+          Ver en Amazon ↗
+        </a>
+        <a href="${bookRecommendation.webUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; font-size: 13px; color: #666; text-decoration: underline; padding: 10px 0;">
+          Conocer detalles en la web →
+        </a>
+      </div>
+    </div>
+
+    <!-- ENLACE A LA WEB RAÍZ -->
+    <div style="text-align: center; padding-top: 14px; border-top: 1px solid #f0ebe1;">
+      <a href="https://www.editorialmenosruido.com" style="color: #666059; text-decoration: underline; font-size: 13px;">
+        Volver a Editorial Menos Ruido (editorialmenosruido.com)
       </a>
     </div>
 
-    <div style="text-align: center; margin-top: 28px; font-size: 12px; color: #9c9489;">
-      <p style="margin: 0 0 4px 0;">Menos Ruido · Herramientas en papel para pensar con claridad</p>
-      <p style="margin: 0;">Enviado desde acceso@editorialmenosruido.com</p>
+    <!-- PIE LEGAL Y OPCIÓN DE BAJA (GDPR / LOPD) -->
+    <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f4f0e8; font-size: 11.5px; color: #9c9489; line-height: 1.5;">
+      <p style="margin: 0 0 6px 0;">
+        Recibes este correo porque has solicitado la plantilla <strong>${cleanPlannerName}</strong> en editorialmenosruido.com.
+      </p>
+      <p style="margin: 0 0 6px 0;">
+        Si no deseas recibir más recursos de la editorial, puedes darte de baja en cualquier momento respondiendo a este mensaje con la palabra «Baja» o consultando nuestra <a href="https://www.editorialmenosruido.com/politica-privacidad.html" style="color: #87553b; text-decoration: underline;">Política de Privacidad</a>.
+      </p>
+      <p style="margin: 0;">
+        Editorial Menos Ruido · Herramientas en papel para pensar con claridad<br>
+        Enviado desde recursos@editorialmenosruido.com
+      </p>
     </div>
+
   </div>
 </body>
 </html>
     `;
 
-    // Enviar a través de la API oficial de Resend
+    // Enviar a través de la API oficial de Resend desde recursos@editorialmenosruido.com
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -100,8 +163,9 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Editorial Menos Ruido <acceso@editorialmenosruido.com>',
+        from: 'Editorial Menos Ruido <recursos@editorialmenosruido.com>',
         to: [email],
+        reply_to: 'recursos@editorialmenosruido.com',
         subject: `Tu ${cleanPlannerName} en PDF | Menos Ruido`,
         html: emailHtml,
         attachments: [
