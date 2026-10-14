@@ -271,16 +271,33 @@ export function checkAndLoadSavedDesign(applyDataFn) {
         updateActiveDesignUI();
 
         if (item.data && typeof applyDataFn === 'function') {
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-              applyDataFn(item.data);
-              setTimeout(() => { hasUnsavedChanges = false; }, 400);
-            });
-          } else {
+          const isAutoDownload = params.get('autodownload') === '1' || params.get('autodownload') === 'true';
+
+          const doApply = () => {
             applyDataFn(item.data);
             setTimeout(() => { hasUnsavedChanges = false; }, 400);
+
+            if (isAutoDownload) {
+              setTimeout(() => {
+                if (typeof window.openDownloadModal === 'function') {
+                  window.openDownloadModal();
+                } else {
+                  const dlBtn = document.querySelector('.btn-download-primary, #btn-download, [onclick*="openDownloadModal"]');
+                  if (dlBtn) dlBtn.click();
+                }
+              }, 600);
+            }
+          };
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', doApply);
+          } else {
+            doApply();
           }
-          notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
+
+          if (!isAutoDownload) {
+            notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
+          }
           const cleanUrl = window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
         }

@@ -176,12 +176,21 @@ export function closeAuthModal() {
   }
 }
 
-// Inyectar o actualizar el botón de usuario en la barra de navegación
+// Función auxiliar para escapar texto en HTML
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Inyectar o actualizar el botón de usuario en la barra de navegación y en el menú lateral
 export function setupNavbarAuth() {
   injectAuthModal();
 
   // Buscar el header de navegación
-  const nav = document.querySelector('header .container, header nav, .nav-inner, header');
   let userWrap = document.getElementById('header-user-btn-wrap');
 
   if (!userWrap) {
@@ -189,15 +198,45 @@ export function setupNavbarAuth() {
     userWrap.id = 'header-user-btn-wrap';
     userWrap.className = 'header-user-btn-wrap';
 
-    // Insertar en la barra superior junto al nav o al final del contenedor
     const container = document.querySelector('header .container') || document.querySelector('header');
     if (container) {
       container.appendChild(userWrap);
     }
   }
 
+  // Actualizar icono de usuario en el menú drawer lateral
+  const updateDrawerUser = (user) => {
+    const drawerBtn = document.getElementById('drawer-user-btn');
+    if (!drawerBtn) return;
+    if (user) {
+      const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+      drawerBtn.innerHTML = user.photoURL 
+        ? `<img src="${user.photoURL}" alt="" />`
+        : `<span class="drawer-user-initial">${initial}</span>`;
+      drawerBtn.title = `Mi Espacio (${user.displayName || user.email})`;
+      drawerBtn.onclick = () => {
+        document.body.classList.remove('nav-open');
+        window.location.href = '/mi-espacio.html';
+      };
+    } else {
+      drawerBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      `;
+      drawerBtn.title = 'Acceder a tu cuenta';
+      drawerBtn.onclick = () => {
+        document.body.classList.remove('nav-open');
+        openAuthModal();
+      };
+    }
+  };
+
   // Escuchar cambios de autenticación en tiempo real
   onAuthStateChanged(auth, async (user) => {
+    updateDrawerUser(user);
+
     if (user) {
       // Usuario autenticado
       await syncUserProfile(user);
@@ -206,12 +245,76 @@ export function setupNavbarAuth() {
       const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
 
       userWrap.innerHTML = `
-        <a href="/mi-espacio.html" class="nav-user-pill ${isDev ? 'is-dev' : ''}" title="Ir a Mi Espacio">
-          <span class="user-pill-avatar">${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : initial}</span>
-          <span class="user-pill-name">${name}</span>
-          ${isDev ? '<span class="dev-badge">DEV</span>' : ''}
-        </a>
+        <div class="nav-user-dropdown-wrap" id="nav-user-dropdown-wrap">
+          <button type="button" class="nav-user-pill ${isDev ? 'is-dev' : ''}" id="nav-user-pill-toggle" aria-expanded="false" title="Mi Cuenta">
+            <span class="user-pill-avatar">${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : initial}</span>
+            <span class="user-pill-name">${escapeHtml(name)}</span>
+            ${isDev ? '<span class="dev-badge">DEV</span>' : ''}
+            <svg class="user-pill-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
+          </button>
+          <div class="nav-user-dropdown-menu" id="nav-user-dropdown-menu">
+            <div class="dropdown-user-header">
+              <div class="dropdown-user-name">${escapeHtml(user.displayName || name)}</div>
+              <div class="dropdown-user-email">${escapeHtml(user.email || '')}</div>
+            </div>
+            <div class="dropdown-user-divider"></div>
+            <a href="/mi-espacio.html" class="dropdown-user-item">
+              <span class="item-icon">👤</span>
+              <span>Mi Espacio</span>
+            </a>
+            <a href="/mi-espacio.html?tab=disenos" class="dropdown-user-item">
+              <span class="item-icon">📐</span>
+              <span>Mis Plantillas y Diseños</span>
+            </a>
+            <a href="/mi-espacio.html?tab=ajustes" class="dropdown-user-item">
+              <span class="item-icon">⚙️</span>
+              <span>Ajustes de cuenta</span>
+            </a>
+            ${isDev ? `
+            <a href="/mi-espacio.html?tab=dev" class="dropdown-user-item item-dev">
+              <span class="item-icon">⚡</span>
+              <span>Panel Desarrollador</span>
+              <span class="dev-badge">DEV</span>
+            </a>
+            ` : ''}
+            <div class="dropdown-user-divider"></div>
+            <button type="button" class="dropdown-user-item item-logout" id="dropdown-logout-btn">
+              <span class="item-icon">🚪</span>
+              <span>Cerrar sesión</span>
+            </button>
+          </div>
+        </div>
       `;
+
+      // Interacción Dropdown
+      const dropdownWrap = document.getElementById('nav-user-dropdown-wrap');
+      const toggleBtn = document.getElementById('nav-user-pill-toggle');
+      const logoutBtn = document.getElementById('dropdown-logout-btn');
+
+      toggleBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = dropdownWrap.classList.toggle('is-open');
+        toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      logoutBtn?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await signOut(auth);
+          window.location.href = '/';
+        } catch (err) {
+          console.error('Error al cerrar sesión:', err);
+        }
+      });
+
+      // Cerrar dropdown al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        if (dropdownWrap && !dropdownWrap.contains(e.target)) {
+          dropdownWrap.classList.remove('is-open');
+          toggleBtn?.setAttribute('aria-expanded', 'false');
+        }
+      });
+
     } else {
       // Usuario no autenticado
       userWrap.innerHTML = `
@@ -227,6 +330,11 @@ export function setupNavbarAuth() {
       document.getElementById('header-login-btn')?.addEventListener('click', openAuthModal);
     }
   });
+
+  // Re-chequear el botón del drawer tras montar el DOM
+  setTimeout(() => {
+    updateDrawerUser(auth.currentUser);
+  }, 350);
 
   // Verificar si venimos de un enlace de email sin contraseña
   checkEmailLinkCallback();

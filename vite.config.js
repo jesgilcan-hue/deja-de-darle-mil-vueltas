@@ -34,6 +34,8 @@ export default defineConfig({
         papelPantalla: resolve(__dirname, 'por-que-el-papel-ordena-lo-que-la-pantalla-satura.html'),
         ensayoBandejaEntrada: resolve(__dirname, 'el-sindrome-de-la-bandeja-de-entrada-vacia.html'),
         ensayoCalendarios: resolve(__dirname, 'por-que-los-calendarios-milimetrados-te-generan-ansiedad.html'),
+        comprarNocturno: resolve(__dirname, 'comprar-cosas-a-las-once-de-la-noche.html'),
+        noHacerNada: resolve(__dirname, 'aprender-a-no-hacer-nada-sin-sentirte-culpable.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
