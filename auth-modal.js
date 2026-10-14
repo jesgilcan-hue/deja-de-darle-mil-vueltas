@@ -238,8 +238,22 @@ export function setupNavbarAuth() {
     updateDrawerUser(user);
 
     if (user) {
-      // Usuario autenticado
-      await syncUserProfile(user);
+      // Guardar en caché para carga ultrarrápida
+      try {
+        if (user.email) {
+          localStorage.setItem('mr_user_pdf_email', user.email);
+        }
+        localStorage.setItem('mr_cached_user', JSON.stringify({
+          displayName: user.displayName || user.email.split('@')[0],
+          email: user.email,
+          photoURL: user.photoURL || '',
+          isDev: isDeveloper(user)
+        }));
+      } catch (e) {}
+      window.mrAuthUserEmail = user.email;
+
+      // Sincronizar en segundo plano sin bloquear renderizado
+      syncUserProfile(user).catch(err => console.warn('Sync profile bg:', err));
       const isDev = isDeveloper(user);
       const name = user.displayName ? user.displayName.split(' ')[0] : 'Mi Espacio';
       const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();

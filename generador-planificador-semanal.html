@@ -2063,8 +2063,14 @@
             const emailInput = document.getElementById('modal-email-input');
             if (emailInput && !emailInput.value) {
                 try {
-                    const saved = localStorage.getItem('mr_user_pdf_email');
-                    if (saved) emailInput.value = saved;
+                    let prefill = '';
+                    if (window.mrAuthUserEmail) prefill = window.mrAuthUserEmail;
+                    if (!prefill) prefill = localStorage.getItem('mr_user_pdf_email') || localStorage.getItem('emailForSignIn') || '';
+                    if (!prefill) {
+                        const cached = localStorage.getItem('mr_cached_user');
+                        if (cached) prefill = JSON.parse(cached).email || '';
+                    }
+                    if (prefill) emailInput.value = prefill;
                 } catch(e) {}
             }
         }

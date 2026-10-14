@@ -92,18 +92,57 @@ document.addEventListener('DOMContentLoaded', () => {
   setupFilters();
   setupDeleteModal();
 
+  // 1. Carga instantánea (0 ms) si hay datos en caché local
+  try {
+    const cachedRaw = localStorage.getItem('mr_cached_user');
+    if (cachedRaw) {
+      const cached = JSON.parse(cachedRaw);
+      renderCachedView(cached);
+    }
+  } catch (e) {}
+
+  // 2. Comprobación en segundo plano con Firebase
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     if (user) {
+      // Guardar email para prefills automáticos
+      if (user.email) {
+        try { localStorage.setItem('mr_user_pdf_email', user.email); } catch (e) {}
+      }
       renderAuthenticatedView(user);
-      await loadUserData(user);
-      await loadUserDesigns(user);
       checkUrlTab();
+      // Cargar datos de usuario y plantillas EN PARALELO para máxima velocidad
+      await Promise.all([loadUserData(user), loadUserDesigns(user)]);
     } else {
+      try { localStorage.removeItem('mr_cached_user'); } catch (e) {}
       renderUnauthenticatedView();
     }
   });
 });
+
+function renderCachedView(cached) {
+  unauthContainer.style.display = 'none';
+  authContainer.style.display = 'block';
+
+  if (cached.photoURL) {
+    userAvatarDisplay.innerHTML = `<img src="${cached.photoURL}" alt="" />`;
+  } else {
+    userAvatarDisplay.textContent = (cached.displayName || cached.email || 'U').charAt(0).toUpperCase();
+  }
+
+  userNameDisplay.firstChild.textContent = (cached.displayName || 'Mi Espacio') + ' ';
+  userEmailDisplay.textContent = cached.email || '';
+
+  if (cached.isDev) {
+    userRoleBadge.textContent = 'DESARROLLADOR';
+    userRoleBadge.className = 'role-badge dev';
+    tabBtnDev.style.display = 'inline-flex';
+  } else {
+    userRoleBadge.textContent = 'CLIENTE';
+    userRoleBadge.className = 'role-badge client';
+    tabBtnDev.style.display = 'none';
+  }
+}
 
 // Soporte de navegación por pestañas y lectura de query params (?tab=disenos, ?tab=ajustes, ?tab=dev)
 function setupTabs() {
