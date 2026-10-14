@@ -2189,8 +2189,104 @@
                 fileName = `Menos_Ruido_Planificador_Mensual_${cleanMonth}_${yearVal}.pdf`;
             }
 
-            doc.save(fileName);
-            showToast(`PDF descargado: ${fileName}`);
+            return { doc, fileName };
+        }
+
+        function executeDownload(isBlankTemplate = false) {
+            closeDownloadModal();
+            const res = buildMonthlyPdfDoc(isBlankTemplate);
+            if (!res) return;
+            res.doc.save(res.fileName);
+            showToast(`PDF descargado: ${res.fileName}`);
+        }
+
+        async function sendPdfViaEmail() {
+            const isBlank = document.getElementById('modal-email-is-blank') ? document.getElementById('modal-email-is-blank').checked : false;
+            const emailInput = document.getElementById('modal-email-input');
+            const feedback = document.getElementById('modal-email-feedback');
+            const btn = document.getElementById('btn-modal-send-email');
+            
+            const email = (emailInput ? emailInput.value : '').trim();
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'Por favor, escribe un correo electrónico válido.';
+                }
+                if (emailInput) emailInput.focus();
+                return;
+            }
+
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#eff6ff';
+                feedback.style.color = '#1e40af';
+                feedback.style.border = '1px solid #bfdbfe';
+                feedback.textContent = '⏳ Generando documento y enviando por correo...';
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.textContent = 'Enviando...';
+            }
+
+            try {
+                const res = buildMonthlyPdfDoc(isBlank);
+                if (!res) throw new Error('No se pudo generar el documento PDF.');
+                
+                const pdfBase64 = res.doc.output('datauristring');
+
+                const response = await fetch('/api/send-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        pdfBase64: pdfBase64,
+                        filename: res.fileName,
+                        plannerName: 'Planificador Mensual'
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error al procesar el envío del correo.');
+                }
+
+                try { localStorage.setItem('mr_user_pdf_email', email); } catch(e) {}
+
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#f0fdf4';
+                    feedback.style.color = '#166534';
+                    feedback.style.border = '1px solid #bbf7d0';
+                    feedback.innerHTML = `✓ <strong>¡Enviado con éxito!</strong><br>Revisa tu bandeja de entrada en <em>${email}</em> (y la carpeta de spam o correo no deseado por si acaso).`;
+                }
+
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.textContent = '✓ Enviado';
+                }
+
+                showToast(`✓ PDF enviado a ${email}`);
+
+            } catch (err) {
+                console.error('Error enviando PDF por email:', err);
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = `❌ ${err.message || 'Error al enviar el PDF.'}`;
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.textContent = 'Reintentar envío';
+                }
+            }
         }
 
         // ========================================================
