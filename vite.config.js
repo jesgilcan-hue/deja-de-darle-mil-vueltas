@@ -52,8 +52,6 @@ export default defineConfig({
         generadorPlanificadorHabitos: resolve(__dirname, 'generador-planificador-habitos.html'),
         generadorPlanificadorAnual: resolve(__dirname, 'generador-planificador-anual.html'),
         generadorPlanificadorHorario: resolve(__dirname, 'generador-planificador-horario.html'),
-        generadorDiario: resolve(__dirname, 'demo_generador_pdf_planificador.html'),
-        generadorSemanal: resolve(__dirname, 'demo_generador_pdf_planificador_semanal.html'),
         guiaUsoSemanal: resolve(__dirname, 'guia-uso-planificador-semanal.html'),
         guiaUso90180: resolve(__dirname, 'guia-uso-planificador-90-180-dias.html'),
         guiaUsoDeja: resolve(__dirname, 'guia-uso-deja-de-darle-mil-vueltas.html'),

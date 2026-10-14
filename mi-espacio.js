@@ -55,6 +55,7 @@ const userNameDisplay = document.getElementById('user-name-display');
 const userEmailDisplay = document.getElementById('user-email-display');
 const userRoleBadge = document.getElementById('user-role-badge');
 const tabBtnDev = document.getElementById('tab-btn-dev');
+const tabBtnFuturas = document.getElementById('tab-btn-futuras');
 
 // Pestañas
 const tabButtons = document.querySelectorAll('.tab-btn');
@@ -155,10 +156,12 @@ function renderCachedView(cached) {
     userRoleBadge.textContent = 'DESARROLLADOR';
     userRoleBadge.className = 'role-badge dev';
     tabBtnDev.style.display = 'inline-flex';
+    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
   } else {
     userRoleBadge.textContent = 'CLIENTE';
     userRoleBadge.className = 'role-badge client';
     tabBtnDev.style.display = 'none';
+    if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
 }
 
@@ -204,6 +207,8 @@ function checkUrlTab() {
     activateTab('tab-dev');
   } else if (tab === 'disenos') {
     activateTab('tab-disenos');
+  } else if (tab === 'futuras') {
+    activateTab('tab-futuras');
   }
 }
 
@@ -512,10 +517,12 @@ function renderAuthenticatedView(user) {
     userRoleBadge.textContent = 'DESARROLLADOR';
     userRoleBadge.className = 'role-badge dev';
     tabBtnDev.style.display = 'inline-flex';
+    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
   } else {
     userRoleBadge.textContent = 'CLIENTE';
     userRoleBadge.className = 'role-badge client';
     tabBtnDev.style.display = 'none';
+    if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
 }
 
