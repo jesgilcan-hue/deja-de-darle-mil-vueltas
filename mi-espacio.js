@@ -188,8 +188,8 @@ function renderCachedView(cached) {
     userEmailDisplay.textContent = cached.email || '';
   }
 
-  const hasDevParam = window.location.search.includes('dev') || window.location.hash.includes('dev');
-  if (cached.isDev) {
+  const isDevCached = cached.isDev || isDeveloper(null);
+  if (isDevCached) {
     if (userRoleBadge) {
       userRoleBadge.textContent = 'DESARROLLADOR';
       userRoleBadge.className = 'role-badge dev';
@@ -197,11 +197,13 @@ function renderCachedView(cached) {
     }
     if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
+    if (devLockedView) devLockedView.style.display = 'none';
+    if (devUnlockedContent) devUnlockedContent.style.display = 'block';
   } else {
     if (userRoleBadge) {
       userRoleBadge.style.display = 'none';
     }
-    if (tabBtnDev) tabBtnDev.style.display = hasDevParam ? 'inline-flex' : 'none';
+    if (tabBtnDev) tabBtnDev.style.display = 'none';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
 }
@@ -244,12 +246,11 @@ function checkUrlTab() {
   const tab = params.get('tab');
   const user = auth.currentUser;
   const isDev = isDeveloper(user);
-  const hasDevParam = window.location.search.includes('dev') || window.location.hash.includes('dev');
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
   } else if (tab === 'dev') {
-    if (isDev || hasDevParam) {
+    if (isDev) {
       if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
       activateTab('tab-dev');
     } else {
@@ -569,6 +570,12 @@ function unlockDevPanel() {
     try {
       sessionStorage.setItem('mr_dev_unlocked', 'true');
       localStorage.setItem('mr_dev_unlocked', 'true');
+      const cachedRaw = localStorage.getItem('mr_cached_user');
+      if (cachedRaw) {
+        const c = JSON.parse(cachedRaw);
+        c.isDev = true;
+        localStorage.setItem('mr_cached_user', JSON.stringify(c));
+      }
     } catch (e) {}
 
     devLockedView.style.display = 'none';
@@ -620,7 +627,6 @@ function renderAuthenticatedView(user) {
 
   // Comprobar rol de desarrollador
   const isDev = isDeveloper(user);
-  const hasDevParam = window.location.search.includes('dev') || window.location.hash.includes('dev');
   if (isDev) {
     if (userRoleBadge) {
       userRoleBadge.textContent = 'DESARROLLADOR';
@@ -629,19 +635,31 @@ function renderAuthenticatedView(user) {
     }
     if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
+    if (devLockedView) devLockedView.style.display = 'none';
+    if (devUnlockedContent) devUnlockedContent.style.display = 'block';
   } else {
     if (userRoleBadge) {
       userRoleBadge.style.display = 'none'; // ELIMINAR TEXTO Y BADGE CLIENTE
     }
-    if (tabBtnDev) tabBtnDev.style.display = hasDevParam ? 'inline-flex' : 'none';
+    if (tabBtnDev) tabBtnDev.style.display = 'none';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
 
     // Si por alguna razón estaba en la pestaña de futuras o dev y no tiene permisos, volver a disenos
     const activeBtn = document.querySelector('.tab-btn.active');
-    if (activeBtn && (activeBtn.id === 'tab-btn-futuras' || (!hasDevParam && activeBtn.id === 'tab-btn-dev'))) {
+    if (activeBtn && (activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-dev')) {
       activateTab('tab-disenos');
     }
   }
+
+  // Guardar datos en caché local incluyendo isDev
+  try {
+    localStorage.setItem('mr_cached_user', JSON.stringify({
+      displayName: name,
+      email: email,
+      photoURL: user.photoURL || '',
+      isDev: isDev
+    }));
+  } catch (e) {}
 }
 
 function renderUnauthenticatedView() {

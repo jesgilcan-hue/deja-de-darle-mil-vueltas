@@ -120,22 +120,36 @@ export function getUserDisplayName(user) {
  * Comprueba si un usuario es el desarrollador/administrador
  */
 export function isDeveloper(user) {
-  if (!user) return false;
-  const email = getUserEmail(user).toLowerCase().trim();
-  if (email && DEVELOPER_EMAILS.some(e => e.toLowerCase() === email)) {
-    return true;
-  }
-  // Permitir también si el panel fue desbloqueado por PIN en la sesión
   try {
+    // 1. Desbloqueo por parámetro URL ?dev=1 o #dev
+    if (typeof window !== 'undefined' && (window.location.search.includes('dev') || window.location.hash.includes('dev'))) {
+      localStorage.setItem('mr_dev_unlocked', 'true');
+      sessionStorage.setItem('mr_dev_unlocked', 'true');
+      return true;
+    }
+    // 2. Desbloqueo persistente previo por PIN
     if (sessionStorage.getItem('mr_dev_unlocked') === 'true' || localStorage.getItem('mr_dev_unlocked') === 'true') {
       return true;
     }
+    // 3. Usuario en caché con flag isDev
     const cached = localStorage.getItem('mr_cached_user');
     if (cached) {
       const parsed = JSON.parse(cached);
       if (parsed.isDev) return true;
     }
   } catch (e) {}
+
+  if (!user) return false;
+
+  // 4. Verificación por lista blanca de correos de desarrollador
+  const email = getUserEmail(user).toLowerCase().trim();
+  if (email && DEVELOPER_EMAILS.some(e => e.toLowerCase() === email)) {
+    try {
+      localStorage.setItem('mr_dev_unlocked', 'true');
+      sessionStorage.setItem('mr_dev_unlocked', 'true');
+    } catch (e) {}
+    return true;
+  }
   return false;
 }
 
