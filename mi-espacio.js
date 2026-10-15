@@ -71,6 +71,10 @@ const designsGrid = document.getElementById('designs-grid');
 const countAll = document.getElementById('count-all');
 const countSemanal = document.getElementById('count-semanal');
 const countDiario = document.getElementById('count-diario');
+const countMensual = document.getElementById('count-mensual');
+const countHabitos = document.getElementById('count-habitos');
+const countHorario = document.getElementById('count-horario');
+const countAnual = document.getElementById('count-anual');
 const filterPills = document.querySelectorAll('.filter-pill');
 const btnCreateDesignToggle = document.getElementById('btn-create-design-toggle');
 const createDesignMenu = document.getElementById('create-design-menu');
@@ -768,10 +772,18 @@ function updateDesignCounts() {
   const total = allDesigns.length;
   const semanal = allDesigns.filter(d => (d.type || '').toLowerCase().includes('semanal')).length;
   const diario = allDesigns.filter(d => (d.type || '').toLowerCase().includes('diario')).length;
+  const mensual = allDesigns.filter(d => (d.type || '').toLowerCase().includes('mensual')).length;
+  const habitos = allDesigns.filter(d => (d.type || '').toLowerCase().includes('habito')).length;
+  const horario = allDesigns.filter(d => (d.type || '').toLowerCase().includes('horario')).length;
+  const anual = allDesigns.filter(d => (d.type || '').toLowerCase().includes('anual')).length;
 
   if (countAll) countAll.textContent = total;
   if (countSemanal) countSemanal.textContent = semanal;
   if (countDiario) countDiario.textContent = diario;
+  if (countMensual) countMensual.textContent = mensual;
+  if (countHabitos) countHabitos.textContent = habitos;
+  if (countHorario) countHorario.textContent = horario;
+  if (countAnual) countAnual.textContent = anual;
 }
 
 function renderDesignsGrid() {
@@ -787,6 +799,14 @@ function renderDesignsGrid() {
     filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('semanal'));
   } else if (currentFilter === 'Diario') {
     filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('diario'));
+  } else if (currentFilter === 'Mensual') {
+    filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('mensual'));
+  } else if (currentFilter === 'Habitos') {
+    filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('habito'));
+  } else if (currentFilter === 'Horario') {
+    filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('horario'));
+  } else if (currentFilter === 'Anual') {
+    filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('anual'));
   }
 
   if (filtered.length === 0) {
@@ -811,10 +831,14 @@ function renderDesignsGrid() {
     
     // Determinar URL de edición
     let rawTargetUrl = item.editUrl;
+    const typeLow = (item.type || '').toLowerCase();
     if (!rawTargetUrl) {
-      rawTargetUrl = (item.type || '').toLowerCase().includes('diario')
-        ? '/generador-planificador-diario.html'
-        : '/generador-planificador-semanal.html';
+      if (typeLow.includes('diario')) rawTargetUrl = '/generador-planificador-diario.html';
+      else if (typeLow.includes('mensual')) rawTargetUrl = '/generador-planificador-mensual.html';
+      else if (typeLow.includes('habito')) rawTargetUrl = '/generador-planificador-habitos.html';
+      else if (typeLow.includes('horario')) rawTargetUrl = '/generador-planificador-horario.html';
+      else if (typeLow.includes('anual')) rawTargetUrl = '/generador-planificador-anual.html';
+      else rawTargetUrl = '/generador-planificador-semanal.html';
     }
 
     const loadUrl = rawTargetUrl.includes('?') 
@@ -823,9 +847,13 @@ function renderDesignsGrid() {
 
     const downloadUrl = `${loadUrl}&autodownload=1`;
 
-    const isDiario = (item.type || '').toLowerCase().includes('diario');
-    const badgeClass = isDiario ? 'diario' : 'semanal';
-    const typeLabel = isDiario ? 'Planificador Diario' : 'Planificador Semanal';
+    let badgeClass = 'semanal';
+    let typeLabel = 'Planificador Semanal';
+    if (typeLow.includes('diario')) { badgeClass = 'diario'; typeLabel = 'Planificador Diario'; }
+    else if (typeLow.includes('mensual')) { badgeClass = 'mensual'; typeLabel = 'Planificador Mensual'; }
+    else if (typeLow.includes('habito')) { badgeClass = 'habitos'; typeLabel = 'Planificador de Hábitos'; }
+    else if (typeLow.includes('horario')) { badgeClass = 'horario'; typeLabel = 'Planificador Horario'; }
+    else if (typeLow.includes('anual')) { badgeClass = 'anual'; typeLabel = 'Planificador Anual'; }
 
     const fechaStr = item.updatedAt 
       ? formatDate(item.updatedAt) 
