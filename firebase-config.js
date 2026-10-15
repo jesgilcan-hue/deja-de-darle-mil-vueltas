@@ -77,7 +77,7 @@ export const DEVELOPER_EMAIL = "jesgilcan@gmail.com";
 export const DEVELOPER_PIN = "1111";
 
 /**
- * Obtiene el email del usuario de forma ultra-robusta revisando auth, providerData y almacenamiento local
+ * Obtiene el email auténtico del usuario directamente de Firebase Auth
  */
 export function getUserEmail(user) {
   if (!user) return '';
@@ -87,17 +87,6 @@ export function getUserEmail(user) {
       if (p && p.email && typeof p.email === 'string') return p.email.trim();
     }
   }
-  try {
-    const cached = localStorage.getItem('mr_cached_user');
-    if (cached) {
-      const p = JSON.parse(cached);
-      if (p.email && typeof p.email === 'string') return p.email.trim();
-    }
-  } catch (e) {}
-  try {
-    const stored = localStorage.getItem('mr_user_pdf_email');
-    if (stored && typeof stored === 'string') return stored.trim();
-  } catch (e) {}
   return '';
 }
 
@@ -117,40 +106,29 @@ export function getUserDisplayName(user) {
 }
 
 /**
- * Comprueba si un usuario es el desarrollador/administrador
+ * Comprueba de forma ESTRICTA si un usuario es desarrollador/administrador.
+ * EXCLUSIVAMENTE mediante coincidencia con la lista blanca DEVELOPER_EMAILS.
+ * Cualquier otro correo (incluido Outlook) devuelve false de forma rotunda.
  */
 export function isDeveloper(user) {
-  try {
-    // 1. Desbloqueo por parámetro URL ?dev=1 o #dev
-    if (typeof window !== 'undefined' && (window.location.search.includes('dev') || window.location.hash.includes('dev'))) {
-      localStorage.setItem('mr_dev_unlocked', 'true');
-      sessionStorage.setItem('mr_dev_unlocked', 'true');
-      return true;
-    }
-    // 2. Desbloqueo persistente previo por PIN
-    if (sessionStorage.getItem('mr_dev_unlocked') === 'true' || localStorage.getItem('mr_dev_unlocked') === 'true') {
-      return true;
-    }
-    // 3. Usuario en caché con flag isDev
-    const cached = localStorage.getItem('mr_cached_user');
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed.isDev) return true;
-    }
-  } catch (e) {}
-
   if (!user) return false;
-
-  // 4. Verificación por lista blanca de correos de desarrollador
   const email = getUserEmail(user).toLowerCase().trim();
-  if (email && DEVELOPER_EMAILS.some(e => e.toLowerCase() === email)) {
-    try {
-      localStorage.setItem('mr_dev_unlocked', 'true');
-      sessionStorage.setItem('mr_dev_unlocked', 'true');
-    } catch (e) {}
-    return true;
-  }
-  return false;
+  if (!email) return false;
+  return DEVELOPER_EMAILS.some(e => e.toLowerCase() === email);
+}
+
+/**
+ * Limpia todas las cachés locales de sesión y usuario
+ */
+export function clearUserLocalCache() {
+  try {
+    localStorage.removeItem('mr_cached_user');
+    localStorage.removeItem('mr_cached_designs');
+    localStorage.removeItem('mr_dev_unlocked');
+    localStorage.removeItem('mr_user_pdf_email');
+    localStorage.removeItem('mr_user_extra_data');
+    sessionStorage.clear();
+  } catch (e) {}
 }
 
 /**

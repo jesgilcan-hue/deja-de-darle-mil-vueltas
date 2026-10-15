@@ -6,7 +6,8 @@ import {
   DEVELOPER_PIN,
   getUserEmail,
   getUserDisplayName,
-  DEVELOPER_EMAILS
+  DEVELOPER_EMAILS,
+  clearUserLocalCache
 } from './firebase-config.js';
 import { 
   signOut, 
@@ -188,7 +189,7 @@ function renderCachedView(cached) {
     userEmailDisplay.textContent = cached.email || '';
   }
 
-  const isDevCached = cached.isDev || isDeveloper(null);
+  const isDevCached = isDeveloper(cached);
   if (isDevCached) {
     if (userRoleBadge) {
       userRoleBadge.textContent = 'DESARROLLADOR';
@@ -203,8 +204,10 @@ function renderCachedView(cached) {
     if (userRoleBadge) {
       userRoleBadge.style.display = 'none';
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
+    if (tabBtnDev) tabBtnDev.style.display = 'none';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
+    if (devLockedView) devLockedView.style.display = 'none';
+    if (devUnlockedContent) devUnlockedContent.style.display = 'none';
   }
 }
 
@@ -301,6 +304,7 @@ function setupEvents() {
 
   btnSignout?.addEventListener('click', async () => {
     try {
+      clearUserLocalCache();
       await signOut(auth);
       showToast('Sesión cerrada correctamente');
       setTimeout(() => window.location.href = '/', 500);
@@ -545,6 +549,7 @@ function setupDeleteModal() {
 
       // 3. Borrar usuario en Firebase Auth
       await deleteUser(currentUser);
+      clearUserLocalCache();
 
       deleteAccountModal.style.display = 'none';
       document.body.style.overflow = '';
@@ -639,16 +644,16 @@ function renderAuthenticatedView(user) {
     if (devUnlockedContent) devUnlockedContent.style.display = 'block';
   } else {
     if (userRoleBadge) {
-      userRoleBadge.style.display = 'none'; // ELIMINAR TEXTO Y BADGE CLIENTE
+      userRoleBadge.style.display = 'none';
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
+    if (tabBtnDev) tabBtnDev.style.display = 'none';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
-    if (devLockedView) devLockedView.style.display = 'block';
+    if (devLockedView) devLockedView.style.display = 'none';
     if (devUnlockedContent) devUnlockedContent.style.display = 'none';
 
-    // Si por alguna razón estaba en la pestaña de futuras y no tiene permisos, volver a disenos
+    // Si por alguna razón estaba en la pestaña de dev o futuras y no tiene permisos, volver a disenos
     const activeBtn = document.querySelector('.tab-btn.active');
-    if (activeBtn && activeBtn.id === 'tab-btn-futuras') {
+    if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras')) {
       activateTab('tab-disenos');
     }
   }
