@@ -1859,9 +1859,14 @@
                 </div>
             </div>
 
-            <button type="button" class="btn-compile-pdf" onclick="openCompileModal()">
-                <span>📥</span> Descargar / Enviar PDF
-            </button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button type="button" class="btn-compile-pdf" id="btn-save-generator-design" style="background:#f4eee4; color:#5c4838; border:1px solid #dcd2c2;" title="Guardar este diseño en Mi Espacio">
+                    <span>💾</span> Guardar en Mi Espacio
+                </button>
+                <button type="button" class="btn-compile-pdf" onclick="openCompileModal()">
+                    <span>📥</span> Descargar / Enviar PDF
+                </button>
+            </div>
         </div>
     </section>
 
@@ -2092,7 +2097,7 @@
                     active: true, 
                     pages: 12, 
                     countLabel: "meses",
-                    design: { habitCount: 10, markerShape: "circle" } // 6, 8, 10, 12 | circle, square
+                    design: { habitCount: 10, markerShape: "circle", showNotes: true } // 6, 8, 10, 12, 15, 18 | circle, square | showNotes
                 },
                 { 
                     id: "weekly", 
@@ -2345,11 +2350,58 @@
             };
         }
 
-        // ESTADO DE VISTA PREVIA
-        let currentPreviewPageIndex = 0;
-        let generatedPageList = [];
+        function saveCompleteBookConfigLocally() {
+            try {
+                localStorage.setItem('mr_complete_book_config', JSON.stringify({
+                    title: bookConfig.title,
+                    subtitle: bookConfig.subtitle,
+                    owner: bookConfig.owner,
+                    dedication: bookConfig.dedication,
+                    layoutMode: bookConfig.layoutMode,
+                    dateMode: bookConfig.dateMode,
+                    year: bookConfig.year,
+                    sections: bookConfig.sections
+                }));
+            } catch(e) {
+                console.warn('No se pudo guardar en localStorage:', e);
+            }
+        }
+
+        function loadSavedCompleteBookConfig() {
+            try {
+                const saved = localStorage.getItem('mr_complete_book_config');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.title) bookConfig.title = parsed.title;
+                    if (parsed.subtitle) bookConfig.subtitle = parsed.subtitle;
+                    if (parsed.owner !== undefined) bookConfig.owner = parsed.owner;
+                    if (parsed.dedication !== undefined) bookConfig.dedication = parsed.dedication;
+                    if (parsed.layoutMode) bookConfig.layoutMode = parsed.layoutMode;
+                    if (parsed.dateMode) bookConfig.dateMode = parsed.dateMode;
+                    if (parsed.year) bookConfig.year = parsed.year;
+                    if (Array.isArray(parsed.sections)) {
+                        parsed.sections.forEach(savedSec => {
+                            const sec = bookConfig.sections.find(s => s.id === savedSec.id);
+                            if (sec) {
+                                if (savedSec.active !== undefined) sec.active = savedSec.active;
+                                if (savedSec.pages !== undefined) sec.pages = savedSec.pages;
+                                if (savedSec.design) sec.design = { ...sec.design, ...savedSec.design };
+                            }
+                        });
+                    }
+                }
+            } catch(e) {
+                console.warn('Error cargando configuración guardada:', e);
+            }
+        }
 
         function init() {
+            loadSavedCompleteBookConfig();
+            const dateSel = document.getElementById('dateModeSelect');
+            if (dateSel && bookConfig.dateMode) dateSel.value = bookConfig.dateMode;
+            const layoutSel = document.getElementById('layoutModeSelect');
+            if (layoutSel && bookConfig.layoutMode) layoutSel.value = bookConfig.layoutMode;
+
             renderSectionsList();
             recalcPages();
             renderPreviewPage();
@@ -2376,6 +2428,7 @@
                 }
             });
 
+            saveCompleteBookConfigLocally();
             renderSectionsList();
             recalcPages();
             currentPreviewPageIndex = 0;
@@ -2387,6 +2440,7 @@
             bookConfig.dateMode = val;
             if (val === 'auto2026') bookConfig.year = 2026;
             else if (val === 'auto2027') bookConfig.year = 2027;
+            saveCompleteBookConfigLocally();
             renderPreviewPage();
         }
 
@@ -2806,17 +2860,44 @@
                         </div>
                     `;
                 } else if (sec.type === 'habits') {
+                    const showNotes = sec.design.showNotes !== false;
+                    let habitCount = sec.design.habitCount || 10;
+                    if (showNotes && habitCount > 10) {
+                        habitCount = 10;
+                        sec.design.habitCount = 10;
+                    }
+                    const habitOptions = showNotes
+                        ? [
+                            { val: 6, label: '6 Hábitos (filas altas y amplias)' },
+                            { val: 8, label: '8 Hábitos (filas cómodas)' },
+                            { val: 10, label: '10 Hábitos (máximo con notas)' }
+                          ]
+                        : [
+                            { val: 6, label: '6 Hábitos (filas muy altas)' },
+                            { val: 8, label: '8 Hábitos' },
+                            { val: 10, label: '10 Hábitos' },
+                            { val: 12, label: '12 Hábitos (pantalla completa)' },
+                            { val: 15, label: '15 Hábitos (pantalla completa)' },
+                            { val: 18, label: '18 Hábitos (máximo sin notas)' }
+                          ];
+
+                    const habitOptionsHtml = habitOptions.map(opt => `
+                        <option value="${opt.val}" ${habitCount === opt.val ? 'selected' : ''}>${opt.label}</option>
+                    `).join('');
+
                     designControlsHtml = `
                         <div class="section-design-box">
                             <div class="design-opt-row">
+                                <label>Caja de notas/reflexión:</label>
+                                <select onchange="handleHabitsNotesToggle('${sec.id}', this.value === 'true')">
+                                    <option value="true" ${showNotes ? 'selected' : ''}>📝 Con caja de reflexión</option>
+                                    <option value="false" ${!showNotes ? 'selected' : ''}>❌ Sin caja (más hábitos)</option>
+                                </select>
+                            </div>
+                            <div class="design-opt-row">
                                 <label>Número de hábitos:</label>
                                 <select onchange="updateSectionDesign('${sec.id}', 'habitCount', parseInt(this.value, 10))">
-                                    <option value="6" ${sec.design.habitCount === 6 ? 'selected' : ''}>6 Hábitos (filas altas)</option>
-                                    <option value="8" ${sec.design.habitCount === 8 ? 'selected' : ''}>8 Hábitos</option>
-                                    <option value="10" ${sec.design.habitCount === 10 ? 'selected' : ''}>10 Hábitos (estándar)</option>
-                                    <option value="12" ${sec.design.habitCount === 12 ? 'selected' : ''}>12 Hábitos</option>
-                                    <option value="15" ${sec.design.habitCount === 15 ? 'selected' : ''}>15 Hábitos</option>
-                                    <option value="18" ${sec.design.habitCount === 18 ? 'selected' : ''}>18 Hábitos</option>
+                                    ${habitOptionsHtml}
                                 </select>
                             </div>
                             <div class="design-opt-row">
@@ -2919,6 +3000,19 @@
             });
         }
 
+        function handleHabitsNotesToggle(secId, showNotes) {
+            const sec = bookConfig.sections.find(s => s.id === secId);
+            if (sec && sec.design) {
+                sec.design.showNotes = showNotes;
+                if (showNotes && sec.design.habitCount > 10) {
+                    sec.design.habitCount = 10;
+                }
+                saveCompleteBookConfigLocally();
+                renderSectionsList();
+                renderPreviewPage();
+            }
+        }
+
         function toggleSection(id) {
             const sec = bookConfig.sections.find(s => s.id === id);
             if (sec) {
@@ -2930,6 +3024,7 @@
                         currentPreviewPageIndex = idx;
                     }
                 }
+                saveCompleteBookConfigLocally();
                 renderSectionsList();
                 renderPreviewPage();
             }
@@ -2949,6 +3044,7 @@
                 if (idx !== -1) {
                     currentPreviewPageIndex = idx;
                 }
+                saveCompleteBookConfigLocally();
                 renderSectionsList();
                 renderPreviewPage();
             }
@@ -2963,6 +3059,7 @@
                 if (idx !== -1) {
                     currentPreviewPageIndex = idx;
                 }
+                saveCompleteBookConfigLocally();
                 renderSectionsList();
                 renderPreviewPage();
             }
@@ -2979,6 +3076,7 @@
             if (idx !== -1) {
                 currentPreviewPageIndex = idx;
             }
+            saveCompleteBookConfigLocally();
             renderSectionsList();
             renderPreviewPage();
         }
@@ -3063,12 +3161,12 @@
                             <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
                                 <div class="cover-divider-rule"><span>◆</span></div>
                                 <div class="page-cover-title" contenteditable="true" 
-                                     oninput="if(this.innerText.length > 50) this.innerText = this.innerText.substring(0, 50); bookConfig.title = this.innerText;" 
-                                     onblur="bookConfig.title = this.innerText.trim()" 
+                                     oninput="if(this.innerText.length > 50) this.innerText = this.innerText.substring(0, 50); bookConfig.title = this.innerText; saveCompleteBookConfigLocally();" 
+                                     onblur="bookConfig.title = this.innerText.trim(); saveCompleteBookConfigLocally();" 
                                      title="Haz clic para editar el título (máx. 50 caracteres)">${bookConfig.title}</div>
                                 <div class="page-cover-sub" contenteditable="true" 
-                                     oninput="if(this.innerText.length > 85) this.innerText = this.innerText.substring(0, 85); bookConfig.subtitle = this.innerText;" 
-                                     onblur="bookConfig.subtitle = this.innerText.trim()" 
+                                     oninput="if(this.innerText.length > 85) this.innerText = this.innerText.substring(0, 85); bookConfig.subtitle = this.innerText; saveCompleteBookConfigLocally();" 
+                                     onblur="bookConfig.subtitle = this.innerText.trim(); saveCompleteBookConfigLocally();" 
                                      title="Haz clic para editar el subtítulo (máx. 85 caracteres)">${bookConfig.subtitle}</div>
                                 <div class="cover-divider-rule"><span>◆</span></div>
                             </div>
@@ -3077,7 +3175,7 @@
                                 <div class="cover-cartouche-title">❖ &nbsp; EX LIBRIS &nbsp; ❖</div>
                                 <div class="cover-field-line">
                                     <span class="cover-field-label">ESTE CUADERNO PERTENECE A:</span>
-                                    <input type="text" class="cover-field-input" maxlength="35" value="${bookConfig.owner}" oninput="bookConfig.owner = this.value">
+                                    <input type="text" class="cover-field-input" maxlength="35" value="${bookConfig.owner}" oninput="bookConfig.owner = this.value; saveCompleteBookConfigLocally();">
                                 </div>
                                 <div class="cover-field-line">
                                     <span class="cover-field-label">PERÍODO / AÑO:</span>
@@ -3086,8 +3184,8 @@
                             </div>
 
                             <div class="page-cover-dedication-box" contenteditable="true" 
-                                 oninput="if(this.innerText.length > 140) this.innerText = this.innerText.substring(0, 140); bookConfig.dedication = this.innerText;" 
-                                 onblur="bookConfig.dedication = this.innerText.trim()" 
+                                 oninput="if(this.innerText.length > 140) this.innerText = this.innerText.substring(0, 140); bookConfig.dedication = this.innerText; saveCompleteBookConfigLocally();" 
+                                 onblur="bookConfig.dedication = this.innerText.trim(); saveCompleteBookConfigLocally();" 
                                  title="Haz clic para escribir tu dedicatoria o lema (máx. 140 caracteres)">
                                 «${bookConfig.dedication}»
                             </div>
@@ -3370,6 +3468,7 @@
                 const monthNames = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
                 const titleStr = isBlank ? `Planificador de Hábitos` : `Hábitos · ${monthNames[monthIndex]}`;
                 const metaStr = isBlank ? `MES: _________ · AÑO: _________` : `AÑO ${year}`;
+                const showNotes = page.design.showNotes !== false;
                 const habitCount = page.design.habitCount || 10;
                 const isCircle = page.design.markerShape !== 'square';
                 const daysInMonth = isBlank ? 31 : new Date(year, monthIndex + 1, 0).getDate();
@@ -3390,6 +3489,18 @@
                     </div>
                 `).join('');
 
+                const notesBoxHtml = showNotes ? `
+                    <!-- BLOQUE DE REFLEXIÓN PERMANENTE AL PIE -->
+                    <div style="width:100%; background:#faf8f4; border:1px solid #dfd8cd; border-radius:4px; padding:6px 12px; display:flex; flex-direction:column; box-sizing:border-box; margin-top:4px; margin-bottom:2px; flex:${habitCount <= 6 ? '0.34' : (habitCount <= 8 ? '0.28' : '0.22')}; min-height:45px; overflow:hidden;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                            <span style="font-size:0.64rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--accent);">
+                                📝 REFLEXIÓN Y OBSERVACIONES DEL MES
+                            </span>
+                        </div>
+                        <div style="flex:1;"></div>
+                    </div>
+                ` : '';
+
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
                         <div class="page-header-row">
@@ -3401,7 +3512,7 @@
                         </div>
 
                         <!-- TABLA OFICIAL MENOS RUIDO (CABECERA + CUERPO) -->
-                        <div style="width:100%; border:1.8px solid #222; border-radius:3px; background:#fff; display:flex; flex-direction:column; overflow:hidden; margin-top:4px; flex:${habitCount <= 8 ? '0.75' : (habitCount <= 12 ? '0.82' : '0.88')}; min-height:0;">
+                        <div style="width:100%; border:1.8px solid #222; border-radius:3px; background:#fff; display:flex; flex-direction:column; overflow:hidden; margin-top:4px; flex:${showNotes ? (habitCount <= 6 ? '0.66' : (habitCount <= 8 ? '0.72' : '0.78')) : '1'}; min-height:0;">
                             <div style="display:flex; background:#f5f0e8; border-bottom:1.8px solid #222; height:20px; align-items:stretch; flex-shrink:0;">
                                 <div style="width:26%; min-width:160px; padding:0 8px; display:flex; align-items:center; font-size:0.62rem; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:#2b241e; border-right:1.6px solid #222; box-sizing:border-box;">
                                     HÁBITO FUNDAMENTAL
@@ -3419,14 +3530,7 @@
                             </div>
                         </div>
 
-                        <!-- BLOQUE DE REFLEXIÓN PERMANENTE AL PIE -->
-                        <div style="width:100%; background:#faf8f4; border:1px solid #dfd8cd; border-radius:4px; padding:6px 12px; display:flex; flex-direction:column; box-sizing:border-box; margin-top:4px; margin-bottom:2px; flex:${habitCount <= 8 ? '0.25' : (habitCount <= 12 ? '0.18' : '0.12')}; min-height:36px; overflow:hidden;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                                <span style="font-size:0.64rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--accent);">
-                                    📝 REFLEXIÓN Y OBSERVACIONES DEL MES
-                                </span>
-                            </div>
-                        </div>
+                        ${notesBoxHtml}
 
                         <div class="sheet-footer">
                             <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
@@ -4332,13 +4436,24 @@
             recalcPages();
             const total = generatedPageList.length;
             const isBlank = bookConfig.dateMode === 'blank';
+            const estMb = ((total * 28) / 1024).toFixed(1);
 
             const summaryHtml = `
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px;">
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:#f4eee4; border:1px solid #dfd3c3; border-radius:16px; padding:3px 10px; font-size:0.75rem; font-weight:700; color:#5c4838;">
+                        📖 ${total} páginas continuas
+                    </span>
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:#f4eee4; border:1px solid #dfd3c3; border-radius:16px; padding:3px 10px; font-size:0.75rem; font-weight:700; color:#5c4838;">
+                        💾 ~${estMb} MB estimados
+                    </span>
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:#f4eee4; border:1px solid #dfd3c3; border-radius:16px; padding:3px 10px; font-size:0.75rem; font-weight:700; color:#5c4838;">
+                        🖨️ A5 Apaisado (300 DPI)
+                    </span>
+                </div>
                 <strong>Resumen del Cuaderno a compilar:</strong>
-                <ul>
+                <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.55; color: #443c35; font-size: 0.84rem;">
                     <li><strong>Formato del libro:</strong> Libro Apaisado 8.25" × 6" (209.55 × 152.4 mm).</li>
                     <li><strong>Estructura:</strong> ${bookConfig.layoutMode === 'alterno' ? 'Intercalado Cronológico (Mes + Hábitos + Semanas/Días)' : 'Por bloques de secciones continuas'}.</li>
-                    <li><strong>Total de páginas:</strong> ${total} páginas continuas.</li>
                     <li><strong>Modalidad seleccionada:</strong> ${isBlank ? 'Plantilla limpia en blanco (Atemporal para rellenar a mano con lápiz/pluma)' : 'Con Fechas y Calendarios Automáticos (Año ' + bookConfig.year + ')'}.</li>
                     <li><strong>Portada:</strong> Personalizada a nombre de <em>${escapeHtml(bookConfig.owner)}</em>.</li>
                     <li><strong>Páginas interiores:</strong> Plantillas limpias sin líneas innecesarias listas para escritura cómoda.</li>
@@ -4543,6 +4658,12 @@
             }
         }
 
+        function drawPdfDiamond(doc, cx, cy, r, color) {
+            doc.setFillColor(color[0], color[1], color[2]);
+            doc.setDrawColor(color[0], color[1], color[2]);
+            doc.lines([[r, r], [-r, r], [-r, -r], [r, -r]], cx, cy - r, [1, 1], 'FD', true);
+        }
+
         function drawPdfPageExact(doc, page, pageNum, total, W, H, M, forceBlank = false) {
             const isBlank = forceBlank || bookConfig.dateMode === 'blank';
             const year = bookConfig.year;
@@ -4570,29 +4691,30 @@
                 doc.setLineWidth(0.25);
                 doc.rect(M + 2.5, 11, W - (M * 2) - 5, 128);
 
-                // Insignia superior
+                // Insignia superior con diamantes vectoriales limpios
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7.5);
                 doc.setTextColor(140, 95, 65);
-                doc.text('✦   EDITORIAL MENOS RUIDO   ✦', W / 2, 18, { align: 'center' });
+                doc.text('EDITORIAL MENOS RUIDO', W / 2, 18, { align: 'center' });
+                drawPdfDiamond(doc, (W / 2) - 34, 17.2, 0.9, [140, 95, 65]);
+                drawPdfDiamond(doc, (W / 2) + 34, 17.2, 0.9, [140, 95, 65]);
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.5);
                 doc.setTextColor(150, 140, 130);
                 doc.text('EDICIÓN ANALÓGICA · CUADERNO PERSONALIZADO', W / 2, 22.5, { align: 'center' });
 
-                // Línea divisoria con diamante superior
+                // Línea divisoria con diamante superior vectorial
                 const divW = 90;
                 const divX = (W - divW) / 2;
                 const div1Y = 27.5;
                 doc.setDrawColor(220, 212, 200);
                 doc.setLineWidth(0.25);
-                doc.line(divX, div1Y, divX + 38, div1Y);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(160, 120, 85);
-                doc.text('◆', W / 2, div1Y + 1, { align: 'center' });
-                doc.line(divX + 52, div1Y, divX + divW, div1Y);
+                doc.line(divX, div1Y, (W / 2) - 4, div1Y);
+                drawPdfDiamond(doc, W / 2, div1Y, 1.3, [160, 120, 85]);
+                doc.setDrawColor(220, 212, 200);
+                doc.setLineWidth(0.25);
+                doc.line((W / 2) + 4, div1Y, divX + divW, div1Y);
 
                 // Título
                 doc.setFont('times', 'bold');
@@ -4608,16 +4730,15 @@
                 const subtitleText = (bookConfig.subtitle || 'Edición Analógica · Enfoque Diario y Claridad Mental').substring(0, 85);
                 doc.text(subtitleText, W / 2, 42.5, { align: 'center' });
 
-                // Línea divisoria con diamante inferior
+                // Línea divisoria con diamante inferior vectorial
                 const div2Y = 48;
                 doc.setDrawColor(220, 212, 200);
                 doc.setLineWidth(0.25);
-                doc.line(divX, div2Y, divX + 38, div2Y);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(160, 120, 85);
-                doc.text('◆', W / 2, div2Y + 1, { align: 'center' });
-                doc.line(divX + 52, div2Y, divX + divW, div2Y);
+                doc.line(divX, div2Y, (W / 2) - 4, div2Y);
+                drawPdfDiamond(doc, W / 2, div2Y, 1.3, [160, 120, 85]);
+                doc.setDrawColor(220, 212, 200);
+                doc.setLineWidth(0.25);
+                doc.line((W / 2) + 4, div2Y, divX + divW, div2Y);
 
                 // Cartela Ex Libris
                 const cartW = 104;
@@ -4633,7 +4754,9 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7);
                 doc.setTextColor(140, 95, 65);
-                doc.text('❖   EX LIBRIS   ❖', W / 2, cartY + 5.5, { align: 'center' });
+                doc.text('EX LIBRIS', W / 2, cartY + 5.5, { align: 'center' });
+                drawPdfDiamond(doc, (W / 2) - 15, cartY + 4.8, 0.8, [140, 95, 65]);
+                drawPdfDiamond(doc, (W / 2) + 15, cartY + 4.8, 0.8, [140, 95, 65]);
 
                 // Campo Propietario
                 doc.setFont('helvetica', 'bold');
@@ -4681,7 +4804,7 @@
                 doc.setFont('times', 'italic');
                 doc.setFontSize(8.0);
                 doc.setTextColor(90, 80, 70);
-                const dedText = `«${(bookConfig.dedication || '').substring(0, 140)}»`;
+                const dedText = `"${(bookConfig.dedication || '').substring(0, 140)}"`;
                 const dedLines = doc.splitTextToSize(dedText, dedW - 12);
                 doc.text(dedLines, W / 2, dedY + 6.5, { align: 'center' });
 
@@ -4788,44 +4911,14 @@
                 const availableH = H - M - 20 - startY;
                 const lineH = Math.min(7.2, Math.max(5.2, availableH / (maxRows + 0.5)));
 
-                // Columna 1
-                col1.forEach((e, i) => {
-                    const y = startY + (i * lineH);
+                // Helper para renderizar cada fila del sumario editorial con línea de puntos
+                const renderIndexRow = (e, x, y) => {
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(6.8);
                     doc.setTextColor(40, 35, 30);
                     
                     let label = e.label;
-                    const maxLabelW = colW - 25;
-                    if (doc.getTextWidth(label) > maxLabelW) {
-                        while (label.length > 5 && doc.getTextWidth(label + '...') > maxLabelW) {
-                            label = label.slice(0, -1);
-                        }
-                        label += '...';
-                    }
-                    doc.text(label, M, y);
-
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.8);
-                    doc.setTextColor(135, 85, 59);
-                    const pRange = e.startPage === e.endPage ? `Pág. ${e.startPage}` : `Págs. ${e.startPage}-${e.endPage}`;
-                    doc.text(pRange, M + colW, y, { align: 'right' });
-
-                    doc.setDrawColor(230, 225, 218);
-                    doc.setLineWidth(0.12);
-                    doc.line(M, y + 1.5, M + colW, y + 1.5);
-                });
-
-                // Columna 2
-                col2.forEach((e, i) => {
-                    const y = startY + (i * lineH);
-                    const x = M + colW + colGap;
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(6.8);
-                    doc.setTextColor(40, 35, 30);
-                    
-                    let label = e.label;
-                    const maxLabelW = colW - 25;
+                    const maxLabelW = colW - 28;
                     if (doc.getTextWidth(label) > maxLabelW) {
                         while (label.length > 5 && doc.getTextWidth(label + '...') > maxLabelW) {
                             label = label.slice(0, -1);
@@ -4833,17 +4926,29 @@
                         label += '...';
                     }
                     doc.text(label, x, y);
+                    const labelW = doc.getTextWidth(label);
 
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(6.8);
                     doc.setTextColor(135, 85, 59);
                     const pRange = e.startPage === e.endPage ? `Pág. ${e.startPage}` : `Págs. ${e.startPage}-${e.endPage}`;
                     doc.text(pRange, x + colW, y, { align: 'right' });
+                    const pRangeW = doc.getTextWidth(pRange);
 
-                    doc.setDrawColor(230, 225, 218);
-                    doc.setLineWidth(0.12);
-                    doc.line(x, y + 1.5, x + colW, y + 1.5);
-                });
+                    // Pauta de puntos editorial limpia entre el nombre y el número
+                    const dotStartX = x + labelW + 2.5;
+                    const dotEndX = x + colW - pRangeW - 2.5;
+                    if (dotEndX > dotStartX + 4) {
+                        doc.setDrawColor(210, 202, 192);
+                        doc.setLineWidth(0.18);
+                        doc.setLineDashPattern([0.5, 1.2], 0);
+                        doc.line(dotStartX, y - 0.5, dotEndX, y - 0.5);
+                        doc.setLineDashPattern([], 0);
+                    }
+                };
+
+                col1.forEach((e, i) => renderIndexRow(e, M, startY + (i * lineH)));
+                col2.forEach((e, i) => renderIndexRow(e, M + colW + colGap, startY + (i * lineH)));
 
                 doc.setFont('helvetica', 'italic');
                 doc.setFontSize(6.0);
@@ -5349,7 +5454,7 @@
                 doc.setFont('helvetica', 'italic');
                 doc.setFontSize(6.8);
                 doc.setTextColor(90, 85, 80);
-                doc.text('«Constancia silenciosa, progreso diario y presencia»', M, M + 12.0);
+                doc.text('"Constancia silenciosa, progreso diario y presencia"', M, M + 12.0);
 
                 doc.setLineWidth(0.38);
                 doc.setDrawColor(40, 35, 30);
@@ -5364,11 +5469,13 @@
                 const footerLimitY = H - 9;
                 const totalAvailH = footerLimitY - gridStartY;
 
-                let tableTotalH = 0;
-                if (habitCount <= 8) tableTotalH = 50.0;
-                else if (habitCount <= 10) tableTotalH = 55.0;
-                else if (habitCount <= 12) tableTotalH = 60.0;
-                else tableTotalH = 66.0;
+                const showNotes = page.design.showNotes !== false;
+                let tableTotalH = totalAvailH;
+                if (showNotes) {
+                    if (habitCount <= 6) tableTotalH = 50.0;
+                    else if (habitCount <= 8) tableTotalH = 56.0;
+                    else tableTotalH = 62.0;
+                }
 
                 const headerRowH = 4.4;
                 const bodyH = tableTotalH - headerRowH;
@@ -5442,22 +5549,24 @@
                     }
                 }
 
-                // 3. Recuadro inferior de reflexión y observaciones del mes
-                const notesBoxY = gridStartY + tableTotalH + 2.8;
-                const notesBoxH = footerLimitY - notesBoxY;
-                doc.setFillColor(250, 248, 244);
-                doc.setDrawColor(220, 215, 204);
-                doc.setLineWidth(0.2);
-                doc.roundedRect(M, notesBoxY, gridW, notesBoxH, 1.5, 1.5, 'FD');
+                // 3. Recuadro inferior de reflexión y observaciones del mes (si está activo)
+                if (showNotes) {
+                    const notesBoxY = gridStartY + tableTotalH + 2.8;
+                    const notesBoxH = footerLimitY - notesBoxY;
+                    doc.setFillColor(250, 248, 244);
+                    doc.setDrawColor(220, 215, 204);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(M, notesBoxY, gridW, notesBoxH, 1.5, 1.5, 'FD');
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.2);
-                doc.setTextColor(135, 85, 59);
-                doc.text('REFLEXIÓN Y OBSERVACIONES DEL MES', M + 3.5, notesBoxY + 3.8);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(6.2);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text('REFLEXIÓN Y OBSERVACIONES DEL MES', M + 3.5, notesBoxY + 3.8);
 
-                doc.setDrawColor(226, 218, 208);
-                doc.setLineWidth(0.15);
-                doc.line(M + 3, notesBoxY + 5.0, M + gridW - 3, notesBoxY + 5.0);
+                    doc.setDrawColor(226, 218, 208);
+                    doc.setLineWidth(0.15);
+                    doc.line(M + 3, notesBoxY + 5.0, M + gridW - 3, notesBoxY + 5.0);
+                }
 
             // 6. PLANIFICADOR SEMANAL (IDÉNTICO A GENERADOR-PLANIFICADOR-SEMANAL)
             } else if (page.type === 'weekly') {
@@ -5936,11 +6045,11 @@
 
                             if (markerShape === 'circle') {
                                 doc.setDrawColor(35, 30, 25);
-                                doc.setLineWidth(0.3);
+                                doc.setLineWidth(0.35);
                                 doc.circle(col1X + colW - 6.5, curY + 4.5, 2.2, 'S');
                             } else if (markerShape === 'square') {
                                 doc.setDrawColor(35, 30, 25);
-                                doc.setLineWidth(0.3);
+                                doc.setLineWidth(0.35);
                                 doc.roundedRect(col1X + colW - 8.5, curY + 2.5, 4.2, 4.2, 0.6, 0.6, 'S');
                             }
                         } else if (item.id === 'secondary') {
@@ -5967,12 +6076,12 @@
                             for (let k = 0; k < 3; k++) {
                                 const rowY = curY + 8.5 + (k * secStep) + (secStep / 2);
                                 if (markerShape === 'circle') {
-                                    doc.setDrawColor(120, 110, 100);
-                                    doc.setLineWidth(0.22);
+                                    doc.setDrawColor(80, 72, 65);
+                                    doc.setLineWidth(0.32);
                                     doc.circle(col1X + 6.5, rowY, 1.9, 'S');
                                 } else if (markerShape === 'square') {
-                                    doc.setDrawColor(120, 110, 100);
-                                    doc.setLineWidth(0.22);
+                                    doc.setDrawColor(80, 72, 65);
+                                    doc.setLineWidth(0.32);
                                     doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
                                 }
                             }
@@ -6000,12 +6109,12 @@
                             for (let k = 0; k < 3; k++) {
                                 const rowY = curY + 8.5 + (k * habStep) + (habStep / 2);
                                 if (markerShape === 'circle') {
-                                    doc.setDrawColor(120, 110, 100);
-                                    doc.setLineWidth(0.22);
+                                    doc.setDrawColor(80, 72, 65);
+                                    doc.setLineWidth(0.32);
                                     doc.circle(col1X + 6.5, rowY, 1.9, 'S');
                                 } else if (markerShape === 'square') {
-                                    doc.setDrawColor(120, 110, 100);
-                                    doc.setLineWidth(0.22);
+                                    doc.setDrawColor(80, 72, 65);
+                                    doc.setLineWidth(0.32);
                                     doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
                                 }
                             }
@@ -6165,13 +6274,25 @@
                 doc.setFont('times', 'italic');
                 doc.setFontSize(9.0);
                 doc.setTextColor(35, 30, 25);
-                const pCierre = '«Gracias por elegir pensar en papel. Ojalá salgas de aquí con menos ruido mental, una voz más firme y la tranquilidad de haber hablado claro»';
+                const pCierre = '"Gracias por elegir pensar en papel. Ojalá salgas de aquí con menos ruido mental, una voz más firme y la tranquilidad de haber hablado claro"';
                 const pCierreLines = doc.splitTextToSize(pCierre, 140);
                 doc.text(pCierreLines, W / 2, M + 95, { align: 'center' });
             }
         }
 
         window.addEventListener('DOMContentLoaded', init);
+    </script>
+    <script type="module">
+        import { setupGeneratorSave } from './save-generator-design.js';
+
+        setupGeneratorSave('btn-save-generator-design', () => {
+            return {
+                name: (typeof bookConfig !== 'undefined' && bookConfig.title) ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado',
+                type: 'Cuaderno Completo',
+                summary: `${(typeof generatedPageList !== 'undefined' ? generatedPageList.length : 86)} págs · ${(typeof bookConfig !== 'undefined' && bookConfig.owner) ? 'Para ' + bookConfig.owner : ((typeof bookConfig !== 'undefined' && bookConfig.subtitle) ? bookConfig.subtitle : 'Personalizado')}`,
+                data: (typeof bookConfig !== 'undefined') ? JSON.parse(JSON.stringify(bookConfig)) : {}
+            };
+        });
     </script>
 </body>
 </html>
