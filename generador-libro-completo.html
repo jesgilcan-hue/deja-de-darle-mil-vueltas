@@ -2294,7 +2294,7 @@
                                 generatedPageList.push({
                                     type: 'daily',
                                     sectionId: 'daily',
-                                    sectionName: `Planificador Diario (Día ${globalDayCount})`,
+                                    sectionName: `Bitácora Diaria (Día ${globalDayCount})`,
                                     pageIndexInSection: globalDayCount - 1,
                                     dayNum: globalDayCount,
                                     totalPagesInSection: 365,
@@ -2464,37 +2464,6 @@
                             </div>
                         </div>
                     `;
-                } else if (sec.type === 'monthly') {
-                    const hasGoals = sec.design.showGoals !== false;
-                    const hasMilestones = sec.design.showMilestones !== false;
-                    let currentCardsVal = 'both';
-                    if (hasGoals && hasMilestones) currentCardsVal = 'both';
-                    else if (hasGoals && !hasMilestones) currentCardsVal = 'goals';
-                    else if (!hasGoals && hasMilestones) currentCardsVal = 'milestones';
-                    else currentCardsVal = 'none';
-
-                    designControlsHtml = `
-                        <div class="section-design-box">
-                            <div class="design-opt-row">
-                                <label>Tarjetas adicionales:</label>
-                                <select onchange="handleMonthlyCardsChange('${sec.id}', this.value)">
-                                    <option value="both" ${currentCardsVal === 'both' ? 'selected' : ''}>🎯 Metas + 📅 Hitos</option>
-                                    <option value="goals" ${currentCardsVal === 'goals' ? 'selected' : ''}>Solo Metas</option>
-                                    <option value="milestones" ${currentCardsVal === 'milestones' ? 'selected' : ''}>Solo Hitos</option>
-                                    <option value="none" ${currentCardsVal === 'none' ? 'selected' : ''}>Solo Calendario (Ampliado)</option>
-                                </select>
-                            </div>
-                            ${(hasGoals || hasMilestones) ? `
-                                <div class="design-opt-row">
-                                    <label>Ubicación de tarjetas:</label>
-                                    <select onchange="updateSectionDesign('${sec.id}', 'panelPosition', this.value)">
-                                        <option value="top" ${sec.design.panelPosition !== 'bottom' ? 'selected' : ''}>⬆️ Arriba del calendario</option>
-                                        <option value="bottom" ${sec.design.panelPosition === 'bottom' ? 'selected' : ''}>⬇️ Abajo del calendario</option>
-                                    </select>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
                 } else if (sec.type === 'weekly') {
                     designControlsHtml = `
                         <div class="section-design-box">
@@ -2511,7 +2480,7 @@
                                     <option value="both" ${sec.design.bottomSection === 'both' ? 'selected' : ''}>🌱 Hábitos + 📝 Notas</option>
                                     <option value="habits" ${sec.design.bottomSection === 'habits' ? 'selected' : ''}>Solo Hábitos</option>
                                     <option value="notes" ${sec.design.bottomSection === 'notes' ? 'selected' : ''}>Solo Notas</option>
-                                    <option value="none" ${sec.design.bottomSection === 'none' ? 'selected' : ''}>Sin hábitos ni notas</option>
+                                    <option value="none" ${sec.design.bottomSection === 'none' ? 'selected' : ''}>Sin franja (Días de 7 líneas)</option>
                                 </select>
                             </div>
                         </div>
@@ -2578,40 +2547,6 @@
                                 <select onchange="updateSectionDesign('${sec.id}', 'rows', parseInt(this.value, 10))">
                                     ${rowsOptionsHtml}
                                 </select>
-                            </div>
-                        </div>
-                    `;
-                } else if (sec.type === 'daily') {
-                    const mShape = sec.design.markerShape || 'circle';
-                    designControlsHtml = `
-                        <div class="section-design-box">
-                            <div class="design-opt-row">
-                                <label>Forma casillas:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)">
-                                    <option value="circle" ${mShape === 'circle' ? 'selected' : ''}>⚪ Círculos</option>
-                                    <option value="square" ${mShape === 'square' ? 'selected' : ''}>◻️ Cuadrados</option>
-                                    <option value="none" ${mShape === 'none' ? 'selected' : ''}>Sin casillas (Limpio)</option>
-                                </select>
-                            </div>
-                            <div class="design-opt-row" style="flex-direction:column; align-items:flex-start; gap:6px;">
-                                <label style="font-weight:700;">Bloques visibles:</label>
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; font-size:0.75rem;">
-                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                        <input type="checkbox" ${sec.design.showPriority !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showPriority', this.checked)"> Gran Prioridad
-                                    </label>
-                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                        <input type="checkbox" ${sec.design.showSecondary !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showSecondary', this.checked)"> Tareas Secundarias
-                                    </label>
-                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                        <input type="checkbox" ${sec.design.showHabits !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showHabits', this.checked)"> Hábitos
-                                    </label>
-                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                        <input type="checkbox" ${sec.design.showNotes !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showNotes', this.checked)"> Descarga Mental
-                                    </label>
-                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer; grid-column:span 2;">
-                                        <input type="checkbox" ${sec.design.showReflection !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showReflection', this.checked)"> Reflexión Cierre Nocturno
-                                    </label>
-                                </div>
                             </div>
                         </div>
                     `;
@@ -2698,28 +2633,6 @@
             }
         }
 
-        function handleMonthlyCardsChange(id, val) {
-            const sec = bookConfig.sections.find(s => s.id === id);
-            if (sec && sec.design) {
-                if (val === 'both') {
-                    sec.design.showGoals = true;
-                    sec.design.showMilestones = true;
-                } else if (val === 'goals') {
-                    sec.design.showGoals = true;
-                    sec.design.showMilestones = false;
-                } else if (val === 'milestones') {
-                    sec.design.showGoals = false;
-                    sec.design.showMilestones = true;
-                } else if (val === 'none') {
-                    sec.design.showGoals = false;
-                    sec.design.showMilestones = false;
-                }
-                recalcPages();
-                renderSectionsList();
-                renderPreviewPage();
-            }
-        }
-
         function moveSection(index, delta) {
             const newIndex = index + delta;
             if (newIndex < 0 || newIndex >= bookConfig.sections.length) return;
@@ -2732,12 +2645,6 @@
         }
 
         function jumpToSection(sectionId) {
-            const sec = bookConfig.sections.find(s => s.id === sectionId);
-            if (sec && !sec.active) {
-                sec.active = true;
-                recalcPages();
-                renderSectionsList();
-            }
             const idx = generatedPageList.findIndex(p => p.sectionId === sectionId);
             if (idx !== -1) {
                 currentPreviewPageIndex = idx;
@@ -3012,80 +2919,53 @@
                             <span class="page-header-meta">${metaStr}</span>
                         </div>
 
-                        <!-- CONTENIDO DINÁMICO DEL MES: TARJETAS (METAS/HITOS) Y CALENDARIO -->
-                        ${(() => {
-                            const hasGoals = page.design.showGoals !== false;
-                            const hasMilestones = page.design.showMilestones !== false;
-                            const panelPos = page.design.panelPosition || 'top';
-
-                            let cardsHtml = '';
-                            if (hasGoals || hasMilestones) {
-                                const gridCols = (hasGoals && hasMilestones) ? '1.1fr 0.9fr' : '1fr';
-                                const styleAttr = `display:grid; grid-template-columns:${gridCols}; gap:8px; min-height:48px; ${panelPos === 'bottom' ? 'margin-top:6px; margin-bottom:0;' : 'margin-bottom:6px;'}`;
-
-                                cardsHtml = `
-                                    <div class="monthly-strip-top" style="${styleAttr}">
-                                        ${hasGoals ? `
-                                            <div class="monthly-card-official">
-                                                <span class="monthly-card-title-official">🎯 METAS DEL MES (MÁXIMO 3)</span>
-                                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                                    <div style="display:flex; align-items:center; gap:6px;">
-                                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                                    </div>
-                                                    <div style="display:flex; align-items:center; gap:6px;">
-                                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                                    </div>
-                                                    <div style="display:flex; align-items:center; gap:6px;">
-                                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ` : ''}
-                                        ${hasMilestones ? `
-                                            <div class="monthly-card-official">
-                                                <span class="monthly-card-title-official">📅 HITOS Y FECHAS CLAVE</span>
-                                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                                    <div style="display:flex; align-items:center; gap:6px;">
-                                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                                    </div>
-                                                    <div style="display:flex; align-items:center; gap:6px;">
-                                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                                    </div>
-                                                    <div style="display:flex; align-items:center; gap:6px;">
-                                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ` : ''}
+                        <!-- FRANJA SUPERIOR OFICIAL: METAS (MÁX 3) + HITOS Y FECHAS CLAVE -->
+                        <div class="monthly-strip-top">
+                            <div class="monthly-card-official">
+                                <span class="monthly-card-title-official">🎯 METAS DEL MES (MÁXIMO 3)</span>
+                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
                                     </div>
-                                `;
-                            }
-
-                            const calWrapHtml = `
-                                <div class="monthly-cal-table-wrap">
-                                    <div class="monthly-cal-table-head">
-                                        <span>LUNES</span><span>MARTES</span><span>MIÉRCOLES</span><span>JUEVES</span><span>VIERNES</span><span>SÁBADO</span><span>DOMINGO</span>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
                                     </div>
-                                    <div class="monthly-cal-table-grid">
-                                        ${cellsHtml}
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
                                     </div>
                                 </div>
-                            `;
+                            </div>
+                            <div class="monthly-card-official">
+                                <span class="monthly-card-title-official">📅 HITOS Y FECHAS CLAVE</span>
+                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                            if (!hasGoals && !hasMilestones) {
-                                return calWrapHtml;
-                            }
-                            if (panelPos === 'bottom') {
-                                return calWrapHtml + cardsHtml;
-                            }
-                            return cardsHtml + calWrapHtml;
-                        })()}
+                        <!-- CUADRÍCULA CENTRAL DE 7 COLUMNAS × 5 FILAS (ANCHO COMPLETO EDITORIAL) -->
+                        <div class="monthly-cal-table-wrap">
+                            <div class="monthly-cal-table-head">
+                                <span>LUNES</span><span>MARTES</span><span>MIÉRCOLES</span><span>JUEVES</span><span>VIERNES</span><span>SÁBADO</span><span>DOMINGO</span>
+                            </div>
+                            <div class="monthly-cal-table-grid">
+                                ${cellsHtml}
+                            </div>
+                        </div>
 
                         <div class="sheet-footer">
                             <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
@@ -3199,47 +3079,47 @@
                                 `).join('')}
                             </div>
 
-                            <!-- COLUMNA DERECHA: FOCO + VIERNES A DOMINGO (1:1 CON EL PDF) -->
-                            <div class="weekly-card-frame">
-                                <!-- FOCO DE LA SEMANA (META CLAVE) -->
-                                <div style="background:#faf8f5; border-bottom:1px solid #d5cfc5; padding:6px 8px; flex:1; display:flex; flex-direction:column; justify-content:flex-start;">
-                                    <strong style="font-size:0.68rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.4px;">FOCO DE LA SEMANA (META CLAVE)</strong>
+                            <!-- COLUMNA DERECHA: FOCO + VIERNES A DOMINGO -->
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                <!-- FOCO -->
+                                <div class="weekly-card-frame" style="background:#faf8f5; border-color:#d5cdbf; padding:8px 10px;">
+                                    <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent);">FOCO DE LA SEMANA (META CLAVE)</strong>
                                 </div>
 
-                                <!-- VIERNES -->
-                                <div class="weekly-day-row" style="flex:1; border-bottom:1px dashed #e4ded4;">
-                                    <div class="weekly-day-meta">
-                                        <strong style="font-size:0.72rem; color:#222;">VIERNES</strong>
-                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[4] !== '' ? weekDates[4] : ''}</span>
-                                    </div>
-                                </div>
-
-                                <!-- SÁBADO & DOMINGO -->
-                                <div style="display:flex; flex:2;">
-                                    <div class="weekly-day-row" style="flex:1; border-right:1px solid #e4ded4; border-bottom:none;">
+                                <!-- VIERNES, SÁBADO, DOMINGO -->
+                                <div class="weekly-card-frame" style="flex:1;">
+                                    <div class="weekly-day-row" style="flex:1;">
                                         <div class="weekly-day-meta">
-                                            <strong style="font-size:0.72rem; color:#222;">SÁBADO</strong>
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[5] !== '' ? weekDates[5] : ''}</span>
+                                            <strong style="font-size:0.72rem;">VIERNES</strong>
+                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[4] !== '' ? weekDates[4] : ''}</span>
                                         </div>
                                     </div>
-                                    <div class="weekly-day-row" style="flex:1; border-bottom:none;">
-                                        <div class="weekly-day-meta">
-                                            <strong style="font-size:0.72rem; color:#222;">DOMINGO</strong>
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[6] !== '' ? weekDates[6] : ''}</span>
+                                    <div style="display:flex; border-top:1px dashed #e4ded4; flex:1;">
+                                        <div class="weekly-day-row" style="flex:1; border-right:1px dashed #e4ded4; border-bottom:none;">
+                                            <div class="weekly-day-meta">
+                                                <strong style="font-size:0.72rem;">SÁBADO</strong>
+                                                <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[5] !== '' ? weekDates[5] : ''}</span>
+                                            </div>
+                                        </div>
+                                        <div class="weekly-day-row" style="flex:1; border-bottom:none;">
+                                            <div class="weekly-day-meta">
+                                                <strong style="font-size:0.72rem;">DOMINGO</strong>
+                                                <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[6] !== '' ? weekDates[6] : ''}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- FRANJA INFERIOR (HÁBITOS / NOTAS CON ALTURA IDÉNTICA Y 3 HÁBITOS COMPLETOS) -->
+                        <!-- FRANJA INFERIOR (HÁBITOS / NOTAS CON ALTURA COMPLETA) -->
                         ${page.design.bottomSection !== 'none' ? `
-                            <div style="display:grid; grid-template-columns:${hasHabits && hasNotes ? '1fr 1fr' : '1fr'}; gap:8px; margin-top:8px;">
+                            <div style="display:grid; grid-template-columns:${hasHabits && hasNotes ? '1fr 1fr' : '1fr'}; gap:10px; margin-top:8px;">
                                 ${hasHabits ? `
-                                    <div class="weekly-card-frame" style="padding:6px 10px; height:82px; min-height:82px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:2px;">
-                                            <strong style="font-size:0.65rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">HÁBITOS DE LA SEMANA</strong>
-                                            <div style="display:flex; gap:6px; font-size:0.58rem; font-weight:800; color:#777;">
+                                    <div class="weekly-card-frame" style="padding:6px 10px; height:64px; min-height:64px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:4px;">
+                                            <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">HÁBITOS DE LA SEMANA</strong>
+                                            <div style="display:flex; gap:6px; font-size:0.60rem; font-weight:800; color:#777;">
                                                 <span style="width:13px; text-align:center;">L</span>
                                                 <span style="width:13px; text-align:center;">M</span>
                                                 <span style="width:13px; text-align:center;">X</span>
@@ -3250,11 +3130,11 @@
                                             </div>
                                         </div>
                                         ${[1, 2, 3].map(hNum => `
-                                            <div style="display:flex; justify-content:space-between; align-items:center; padding:1px 0; border-bottom:${hNum < 3 ? '1px dashed #eee8de' : 'none'};">
-                                                <span style="font-size:0.64rem; color:#555;">Hábito ${hNum}</span>
+                                            <div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:${hNum < 3 ? '1px dashed #eee8de' : 'none'};">
+                                                <span style="font-size:0.66rem; color:#555;">Hábito ${hNum}</span>
                                                 <div style="display:flex; gap:6px;">
                                                     ${['L','M','X','J','V','S','D'].map(() => `
-                                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:12px; height:12px; border-width:1px; border-color:#999;"></span>
+                                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:13px; height:13px; border-width:1px; border-color:#999;"></span>
                                                     `).join('')}
                                                 </div>
                                             </div>
@@ -3262,16 +3142,12 @@
                                     </div>
                                 ` : ''}
                                 ${hasNotes ? `
-                                    <div class="weekly-card-frame" style="padding:6px 10px; height:82px; min-height:82px; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box; background:#faf8f5;">
+                                    <div class="weekly-card-frame" style="padding:8px 12px; height:64px; min-height:64px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
                                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:4px;">
-                                            <strong style="font-size:0.65rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">TAREAS SECUNDARIAS / NOTAS</strong>
+                                            <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">TAREAS SECUNDARIAS / NOTAS</strong>
                                             <span style="font-size:0.58rem; color:#888; font-style:italic;">Registro libre</span>
                                         </div>
-                                        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                            <div style="border-bottom:1px dashed #e4ded4; height:12px;"></div>
-                                            <div style="border-bottom:1px dashed #e4ded4; height:12px;"></div>
-                                            <div style="border-bottom:1px dashed #e4ded4; height:12px;"></div>
-                                        </div>
+                                        <div style="flex:1;"></div>
                                     </div>
                                 ` : ''}
                             </div>
@@ -3328,19 +3204,10 @@
                 `;
             }
 
-            // 8. PLANIFICADOR DIARIO (ESTÁNDAR EDITORIAL FORMAL MENOS RUIDO)
+            // 8. BITÁCORA DIARIA (ESTÁNDAR EDITORIAL FORMAL MENOS RUIDO)
             else if (page.type === 'daily') {
                 const dayInfo = getDailyDateInfo(year, page.pageIndexInSection, isBlank);
-                const markerShape = page.design.markerShape || 'circle';
-                const showPriority = page.design.showPriority !== false;
-                const showSecondary = page.design.showSecondary !== false;
-                const showHabits = page.design.showHabits !== false;
-                const showNotes = page.design.showNotes !== false;
-                const showReflection = page.design.showReflection !== false;
-
-                const hasCol1 = showPriority || showSecondary || showHabits;
-                const hasCol2 = showNotes || showReflection;
-                const gridTemplate = (hasCol1 && hasCol2) ? '1fr 1fr' : '1fr';
+                const isCircle = page.design.markerShape !== 'square';
 
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
@@ -3352,85 +3219,83 @@
                             <span class="page-header-meta">${dayInfo.meta}</span>
                         </div>
 
-                        <div class="daily-sheet-split" style="display:grid; grid-template-columns: ${gridTemplate}; gap:12px; flex:1; min-height:0; margin-top:2px;">
+                        <div class="daily-sheet-split" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; flex:1; min-height:0; margin-top:2px;">
                             <!-- COLUMNA IZQUIERDA: PRIORIDAD + SECUNDARIAS + HÁBITOS CLAVE -->
-                            ${hasCol1 ? `
-                                <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
-                                    <!-- La Gran Prioridad del Día -->
-                                    ${showPriority ? `
-                                        <div style="border: 1.6px solid #222; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1; display:flex; flex-direction:column; justify-content:space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                <div style="display:flex; align-items:baseline; gap:6px;">
-                                                    <strong style="font-size:0.72rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">LA GRAN PRIORIDAD DEL DÍA</strong>
-                                                    <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.72rem; color:#777;">(Innegociable)</span>
-                                                </div>
-                                                ${markerShape !== 'none' ? `<span class="${markerShape === 'circle' ? 'box-marker-circle' : 'box-marker-square'}" style="width:16px; height:16px; border-width:1.8px; border-color:#222;"></span>` : ''}
-                                            </div>
+                            <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
+                                <!-- 1. La Gran Prioridad del Día -->
+                                <div style="border: 1.6px solid #222; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 0.95; display:flex; flex-direction:column; justify-content:space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; align-items:baseline; gap:6px;">
+                                            <strong style="font-size:0.72rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">1. LA GRAN PRIORIDAD DEL DÍA</strong>
+                                            <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.72rem; color:#777;">(Innegociable)</span>
+                                        </div>
+                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:16px; height:16px; border-width:1.8px; border-color:#222;"></span>
+                                    </div>
+                                    <div style="flex:1;"></div>
+                                </div>
+
+                                <!-- 2. Tareas Secundarias (Máximo 3) -->
+                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.35; display:flex; flex-direction:column; justify-content:space-between;">
+                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:4px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">2. TAREAS SECUNDARIAS</strong>
+                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Máximo 3 tareas de soporte)</span>
+                                    </div>
+                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
+                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
                                             <div style="flex:1;"></div>
                                         </div>
-                                    ` : ''}
-
-                                    <!-- Tareas Secundarias (Máximo 3) -->
-                                    ${showSecondary ? `
-                                        <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.35; display:flex; flex-direction:column; justify-content:space-between;">
-                                            <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:4px;">
-                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">TAREAS SECUNDARIAS</strong>
-                                                <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Máximo 3 tareas de soporte)</span>
-                                            </div>
-                                            <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                                ${[1, 2, 3].map(() => `
-                                                    <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                                        ${markerShape !== 'none' ? `<span class="${markerShape === 'circle' ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>` : ''}
-                                                        <div style="flex:1; border-bottom:1px solid #eee8dd; height:10px;"></div>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
+                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
+                                            <div style="flex:1;"></div>
                                         </div>
-                                    ` : ''}
-
-                                    <!-- Hábitos Clave del Día -->
-                                    ${showHabits ? `
-                                        <div style="border: 1px solid #d8d0c2; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1.15; display:flex; flex-direction:column; justify-content:space-between;">
-                                            <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #ede5d8; padding-bottom:4px; margin-bottom:4px;">
-                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:#3a3228; letter-spacing:0.5px;">HÁBITOS CLAVE DEL DÍA</strong>
-                                                <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Constancia diaria)</span>
-                                            </div>
-                                            <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                                ${[1, 2, 3].map(() => `
-                                                    <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                                        ${markerShape !== 'none' ? `<span class="${markerShape === 'circle' ? 'box-marker-circle' : 'box-marker-square'}" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>` : ''}
-                                                        <div style="flex:1; border-bottom:1px solid #ede5d8; height:10px;"></div>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
+                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
+                                            <div style="flex:1;"></div>
                                         </div>
-                                    ` : ''}
+                                    </div>
                                 </div>
-                            ` : ''}
+
+                                <!-- 3. Hábitos Clave del Día -->
+                                <div style="border: 1px solid #d8d0c2; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1.15; display:flex; flex-direction:column; justify-content:space-between;">
+                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #ede5d8; padding-bottom:4px; margin-bottom:4px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#3a3228; letter-spacing:0.5px;">3. HÁBITOS CLAVE DEL DÍA</strong>
+                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Constancia diaria)</span>
+                                    </div>
+                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- COLUMNA DERECHA: DESCARGA MENTAL + REFLEXIÓN DE CIERRE NOCTURNO -->
-                            ${hasCol2 ? `
-                                <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
-                                    ${showNotes ? `
-                                        <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 12px 14px; background: #fff; flex: ${showReflection ? 1.45 : 1}; display:flex; flex-direction:column;">
-                                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
-                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">DESCARGA MENTAL & NOTAS RÁPIDAS</strong>
-                                                <span style="font-size:0.58rem; color:#888; font-style:italic;">Captura libre sin filtros</span>
-                                            </div>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                    ` : ''}
-                                    ${showReflection ? `
-                                        <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:12px 14px; flex: ${showNotes ? 1.0 : 1}; display:flex; flex-direction:column;">
-                                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
-                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
-                                                <span style="font-size:0.58rem; color:#888; font-style:italic;">Balance y calma</span>
-                                            </div>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                    ` : ''}
+                            <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
+                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 12px 14px; background: #fff; flex: 1.45; display:flex; flex-direction:column;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">DESCARGA MENTAL & NOTAS RÁPIDAS</strong>
+                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Captura libre sin filtros</span>
+                                    </div>
+                                    <div style="flex:1;"></div>
                                 </div>
-                            ` : ''}
+                                <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:12px 14px; flex: 1.0; display:flex; flex-direction:column;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
+                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Balance y calma</span>
+                                    </div>
+                                    <div style="flex:1;"></div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="sheet-footer">
@@ -3941,7 +3806,7 @@
             } else if (p.type === 'weekly') {
                 label = `Planificador Semanal · Semana ${p.weekNum || (p.pageIndexInSection + 1)}`;
             } else if (p.type === 'daily') {
-                label = `Planificador Diario · Día ${p.dayNum || (p.pageIndexInSection + 1)}`;
+                label = `Bitácora Diaria · Día ${p.dayNum || (p.pageIndexInSection + 1)}`;
             } else if (p.type === 'hourly') {
                 label = `Planificador Horario Semanal · Plantilla ${p.pageIndexInSection + 1}`;
             } else if (p.type === 'notes') {
