@@ -130,7 +130,7 @@
         /* BARRA DE PREAJUSTES Y ACCIONES PRINCIPALES */
         .main-control-bar {
             width: 100%;
-            max-width: 1460px;
+            max-width: 1720px;
             background: #ffffff;
             border: 1px solid var(--border-line);
             border-radius: 12px;
@@ -246,19 +246,33 @@
             transform: translateY(-1px);
         }
 
-        /* LAYOUT PRINCIPAL DE 2 COLUMNAS (CONFIGURADOR IZQ + VISOR DER) */
+        /* LAYOUT PRINCIPAL DE 3 COLUMNAS (CONFIGURADOR IZQ + VISOR CENTRO STICKY + ÍNDICE DER STICKY) */
         .workspace-grid {
             width: 100%;
-            max-width: 1460px;
+            max-width: 1720px;
             display: grid;
-            grid-template-columns: 390px 1fr;
+            grid-template-columns: 360px minmax(680px, 1fr) 290px;
             gap: 22px;
             align-items: start;
         }
 
-        @media (max-width: 1040px) {
+        @media (max-width: 1400px) {
+            .workspace-grid {
+                grid-template-columns: 350px 1fr;
+            }
+            .index-sidebar-panel {
+                grid-column: 1 / -1;
+                position: static;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 980px) {
             .workspace-grid {
                 grid-template-columns: 1fr;
+            }
+            .preview-panel {
+                position: static;
             }
         }
 
@@ -422,12 +436,26 @@
             color: var(--accent-hover);
         }
 
-        /* COLUMNA DERECHA: VISOR INTERACTIVO DE PÁGINA (8.25" × 6") */
+        /* COLUMNA CENTRAL: VISOR INTERACTIVO STICKY (8.25" × 6") */
         .preview-panel {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
+            position: sticky;
+            top: 20px;
+            z-index: 10;
+            align-self: start;
+        }
+
+        /* COLUMNA DERECHA: ÍNDICE DE PÁGINAS STICKY */
+        .index-sidebar-panel {
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            width: 100%;
+            align-self: start;
         }
 
         .viewer-nav-bar {
@@ -520,7 +548,7 @@
             color: #8c8378;
         }
 
-        /* PLANTILLA 1: PORTADA INTERIOR (ÚNICA EDITABLE) */
+        /* PLANTILLA 1: PORTADA INTERIOR (EDICIÓN ANALÓGICA DE ALTA GAMA) */
         .page-cover-layout {
             height: 100%;
             display: flex;
@@ -528,62 +556,121 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            border: 1.5px solid #d0c8b8;
-            padding: 26px 36px;
+            border: 2px solid #8c8273;
+            padding: 5px;
             background: #fffdfa;
+            box-sizing: border-box;
         }
-        .page-cover-kicker {
+        .page-cover-frame-inner {
+            border: 1px solid #d0c8b8;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 28px 12px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .cover-insignia {
             font-size: 0.72rem;
             font-weight: 800;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
+            letter-spacing: 2.2px;
             color: var(--accent);
-            margin-bottom: 10px;
+            margin-bottom: 2px;
+        }
+        .cover-kicker {
+            font-size: 0.60rem;
+            font-weight: 700;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: #8c8275;
+        }
+        .cover-divider-rule {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 160px;
+            margin: 4px auto;
+            position: relative;
+        }
+        .cover-divider-rule::before, .cover-divider-rule::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #c9c0b1;
+        }
+        .cover-divider-rule span {
+            padding: 0 8px;
+            font-size: 0.60rem;
+            color: var(--accent);
         }
         .page-cover-title {
-            font-family: var(--font-serif);
-            font-size: 2.1rem;
+            font-family: 'Times New Roman', Georgia, serif;
+            font-size: 1.95rem;
             font-weight: 700;
-            color: #1d1916;
-            margin-bottom: 6px;
-            line-height: 1.2;
+            color: #1a1614;
+            line-height: 1.15;
+            max-width: 580px;
             outline: none;
+            padding: 2px 8px;
+            border-radius: 4px;
             border-bottom: 1px dashed transparent;
+            transition: all 0.2s;
         }
         .page-cover-title:hover, .page-cover-title:focus {
+            background: #faf6ef;
             border-bottom-color: var(--accent);
         }
         .page-cover-sub {
-            font-size: 0.90rem;
-            color: #635b52;
-            max-width: 480px;
-            margin-bottom: 22px;
+            font-family: 'Times New Roman', Georgia, serif;
+            font-style: italic;
+            font-size: 0.88rem;
+            color: #5f574d;
+            max-width: 520px;
             outline: none;
+            padding: 2px 8px;
+            border-radius: 4px;
             border-bottom: 1px dashed transparent;
+            transition: all 0.2s;
         }
         .page-cover-sub:hover, .page-cover-sub:focus {
+            background: #faf6ef;
             border-bottom-color: var(--accent);
         }
-        .page-cover-fields {
+        .cover-cartouche {
             width: 100%;
             max-width: 380px;
+            background: #fbf9f5;
+            border: 1px solid #ded6c8;
+            border-radius: 6px;
+            padding: 8px 16px 8px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-            font-size: 0.82rem;
+            gap: 6px;
+            box-sizing: border-box;
             text-align: left;
+        }
+        .cover-cartouche-title {
+            font-size: 0.60rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            text-align: center;
+            border-bottom: 1px dashed #ded6c8;
+            padding-bottom: 3px;
         }
         .cover-field-line {
             display: flex;
             align-items: baseline;
             gap: 8px;
-            border-bottom: 1px solid #222;
+            border-bottom: 1px solid #332e29;
             padding-bottom: 2px;
         }
         .cover-field-label {
             font-weight: 800;
-            font-size: 0.68rem;
+            font-size: 0.64rem;
             letter-spacing: 1px;
             text-transform: uppercase;
             color: #443c34;
@@ -594,7 +681,7 @@
             border: none;
             background: transparent;
             font-family: var(--font-sans);
-            font-size: 0.86rem;
+            font-size: 0.82rem;
             font-weight: 600;
             color: #1a1614;
             outline: none;
@@ -602,16 +689,29 @@
         .page-cover-dedication-box {
             width: 100%;
             max-width: 440px;
-            background: #faf6ef;
-            border: 1px dashed #d5ccbe;
+            background: #ffffff;
+            border: 1px solid #dcd4c7;
             border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.80rem;
+            padding: 7px 14px;
+            font-size: 0.78rem;
             color: #554a3f;
             text-align: center;
             outline: none;
-            margin-bottom: 16px;
             font-style: italic;
+            font-family: 'Times New Roman', Georgia, serif;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+        }
+        .page-cover-dedication-box:hover, .page-cover-dedication-box:focus {
+            background: #faf6ef;
+            border-color: var(--accent);
+        }
+        .cover-colophon {
+            font-size: 0.58rem;
+            color: #9c9285;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-family: var(--font-sans);
         }
 
         /* LÍNEAS DE GUÍA PARA ESCRIBIR A MANO */
@@ -887,12 +987,12 @@
            ÍNDICE DE ESTRUCTURA Y PAGINACIÓN DEL LIBRO
            ------------------------------------------------------------- */
         .book-index-card {
-            margin-top: 24px;
+            margin-top: 0;
             background: #ffffff;
             border: 1px solid #e0d8cb;
-            border-radius: 10px;
-            padding: 18px 22px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: var(--shadow-subtle);
             box-sizing: border-box;
             width: 100%;
         }
@@ -901,31 +1001,31 @@
             justify-content: space-between;
             align-items: flex-start;
             border-bottom: 1.5px solid #eae2d5;
-            padding-bottom: 12px;
-            margin-bottom: 16px;
-            gap: 12px;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            gap: 10px;
             flex-wrap: wrap;
         }
         .book-index-title {
             font-family: var(--font-serif);
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             color: #221c17;
-            margin: 0 0 3px 0;
+            margin: 0 0 2px 0;
             font-weight: 700;
         }
         .book-index-desc {
-            font-size: 0.78rem;
+            font-size: 0.74rem;
             color: #736b62;
             margin: 0;
-            line-height: 1.4;
+            line-height: 1.35;
         }
         .book-index-total-badge {
             background: #f4eee3;
             color: #6e442e;
             border: 1px solid #e2d7c5;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 800;
             letter-spacing: 0.4px;
             white-space: nowrap;
@@ -933,10 +1033,10 @@
         .book-index-content {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            max-height: 520px;
+            gap: 10px;
+            max-height: calc(100vh - 160px);
             overflow-y: auto;
-            padding-right: 6px;
+            padding-right: 4px;
         }
         .index-group-card {
             background: #faf8f5;
@@ -1013,8 +1113,8 @@
         }
         .index-pages-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 6px;
+            grid-template-columns: 1fr;
+            gap: 5px;
         }
         .index-page-item {
             background: #ffffff;
@@ -1653,25 +1753,27 @@
             <div class="interactive-book-page" id="interactiveBookPage">
                 <!-- El contenido de la página actual se inyecta por JS -->
             </div>
+        </main>
 
-            <!-- CUADRO DE ÍNDICE DE ESTRUCTURA Y PAGINACIÓN DEL LIBRO -->
+        <!-- COLUMNA DERECHA: ÍNDICE DE ESTRUCTURA Y PAGINACIÓN STICKY -->
+        <aside class="index-sidebar-panel">
             <div class="book-index-card" id="bookIndexCard">
                 <div class="book-index-header">
                     <div>
-                        <h3 class="book-index-title">📖 Índice de Estructura y Paginación del Libro</h3>
-                        <p class="book-index-desc">Visualiza exactamente cómo queda ordenado tu cuaderno página a página. Haz clic en cualquier página para verla en el visor.</p>
+                        <h3 class="book-index-title">📖 Índice del Libro</h3>
+                        <p class="book-index-desc">Estructura página a página en tiempo real. Clic para ver.</p>
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                         <button type="button" class="btn-index-action" onclick="collapseAllIndexGroups()" title="Plegar todas las secciones">▶</button>
                         <button type="button" class="btn-index-action" onclick="expandAllIndexGroups()" title="Desplegar todas las secciones">▼</button>
-                        <span class="book-index-total-badge" id="indexTotalBadge">Total páginas</span>
+                        <span class="book-index-total-badge" id="indexTotalBadge">Total</span>
                     </div>
                 </div>
                 <div class="book-index-content" id="bookIndexContent">
                     <!-- Se inyecta dinámicamente -->
                 </div>
             </div>
-        </main>
+        </aside>
 
     </div>
 
@@ -2054,6 +2156,10 @@
                     sec.design.rows = matching.length > 0 ? matching[matching.length - 1] : validOptions[validOptions.length - 1];
                 }
                 recalcPages();
+                const idx = generatedPageList.findIndex(p => p.sectionId === 'hourly');
+                if (idx !== -1) {
+                    currentPreviewPageIndex = idx;
+                }
                 renderSectionsList();
                 renderPreviewPage();
             }
@@ -2464,6 +2570,32 @@
                             </div>
                         </div>
                     `;
+                } else if (sec.type === 'monthly') {
+                    designControlsHtml = `
+                        <div class="section-design-box">
+                            <div class="design-opt-row">
+                                <label>Metas del mes:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'showGoals', this.value === 'true')">
+                                    <option value="true" ${sec.design.showGoals !== false ? 'selected' : ''}>🎯 Mostrar Metas</option>
+                                    <option value="false" ${sec.design.showGoals === false ? 'selected' : ''}>❌ Sin Metas</option>
+                                </select>
+                            </div>
+                            <div class="design-opt-row">
+                                <label>Hitos y fechas:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'showMilestones', this.value === 'true')">
+                                    <option value="true" ${sec.design.showMilestones !== false ? 'selected' : ''}>📅 Mostrar Hitos</option>
+                                    <option value="false" ${sec.design.showMilestones === false ? 'selected' : ''}>❌ Sin Hitos</option>
+                                </select>
+                            </div>
+                            <div class="design-opt-row">
+                                <label>Posición franja:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'panelPosition', this.value)">
+                                    <option value="top" ${sec.design.panelPosition !== 'bottom' ? 'selected' : ''}>⬆️ Arriba del calendario</option>
+                                    <option value="bottom" ${sec.design.panelPosition === 'bottom' ? 'selected' : ''}>⬇️ Abajo del calendario</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
                 } else if (sec.type === 'weekly') {
                     designControlsHtml = `
                         <div class="section-design-box">
@@ -2480,8 +2612,44 @@
                                     <option value="both" ${sec.design.bottomSection === 'both' ? 'selected' : ''}>🌱 Hábitos + 📝 Notas</option>
                                     <option value="habits" ${sec.design.bottomSection === 'habits' ? 'selected' : ''}>Solo Hábitos</option>
                                     <option value="notes" ${sec.design.bottomSection === 'notes' ? 'selected' : ''}>Solo Notas</option>
-                                    <option value="none" ${sec.design.bottomSection === 'none' ? 'selected' : ''}>Sin franja (Días de 7 líneas)</option>
+                                    <option value="none" ${sec.design.bottomSection === 'none' ? 'selected' : ''}>Sin hábitos ni notas</option>
                                 </select>
+                            </div>
+                        </div>
+                    `;
+                } else if (sec.type === 'daily') {
+                    designControlsHtml = `
+                        <div class="section-design-box">
+                            <div class="design-opt-row">
+                                <label>Forma casillas:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)">
+                                    <option value="circle" ${sec.design.markerShape === 'circle' ? 'selected' : ''}>⚪ Círculos</option>
+                                    <option value="square" ${sec.design.markerShape === 'square' ? 'selected' : ''}>◻️ Cuadrados</option>
+                                    <option value="none" ${sec.design.markerShape === 'none' ? 'selected' : ''}>⚪ Sin casillas (Espacio limpio)</option>
+                                </select>
+                            </div>
+                            <div style="font-size:0.68rem; font-weight:800; color:#6d645b; margin-top:3px; text-transform:uppercase; letter-spacing:0.5px;">Secciones del día:</div>
+                            <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
+                                <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
+                                    <input type="checkbox" ${sec.design.showPriority !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showPriority', this.checked)">
+                                    Gran Prioridad del Día
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
+                                    <input type="checkbox" ${sec.design.showSecondary !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showSecondary', this.checked)">
+                                    Tareas Secundarias
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
+                                    <input type="checkbox" ${sec.design.showHabits !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showHabits', this.checked)">
+                                    Hábitos Clave
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
+                                    <input type="checkbox" ${sec.design.showNotes !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showNotes', this.checked)">
+                                    Descarga Mental & Notas
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
+                                    <input type="checkbox" ${sec.design.showReflection !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showReflection', this.checked)">
+                                    Reflexión Cierre Nocturno
+                                </label>
                             </div>
                         </div>
                     `;
@@ -2604,6 +2772,12 @@
             if (sec) {
                 sec.active = !sec.active;
                 recalcPages();
+                if (sec.active) {
+                    const idx = generatedPageList.findIndex(p => p.sectionId === id);
+                    if (idx !== -1) {
+                        currentPreviewPageIndex = idx;
+                    }
+                }
                 renderSectionsList();
                 renderPreviewPage();
             }
@@ -2619,6 +2793,11 @@
                 if (num < lim.min) num = lim.min;
                 sec.pages = num;
                 recalcPages();
+                const idx = generatedPageList.findIndex(p => p.sectionId === id);
+                if (idx !== -1) {
+                    currentPreviewPageIndex = idx;
+                }
+                renderSectionsList();
                 renderPreviewPage();
             }
         }
@@ -2628,6 +2807,10 @@
             if (sec && sec.design) {
                 sec.design[key] = val;
                 recalcPages();
+                const idx = generatedPageList.findIndex(p => p.sectionId === id);
+                if (idx !== -1) {
+                    currentPreviewPageIndex = idx;
+                }
                 renderSectionsList();
                 renderPreviewPage();
             }
@@ -2640,11 +2823,21 @@
             bookConfig.sections[index] = bookConfig.sections[newIndex];
             bookConfig.sections[newIndex] = temp;
             recalcPages();
+            const idx = generatedPageList.findIndex(p => p.sectionId === temp.id);
+            if (idx !== -1) {
+                currentPreviewPageIndex = idx;
+            }
             renderSectionsList();
             renderPreviewPage();
         }
 
         function jumpToSection(sectionId) {
+            const sec = bookConfig.sections.find(s => s.id === sectionId);
+            if (sec && !sec.active) {
+                sec.active = true;
+                recalcPages();
+                renderSectionsList();
+            }
             const idx = generatedPageList.findIndex(p => p.sectionId === sectionId);
             if (idx !== -1) {
                 currentPreviewPageIndex = idx;
@@ -2703,27 +2896,51 @@
             const isBlank = bookConfig.dateMode === 'blank';
             const year = bookConfig.year;
 
-            // 1. PORTADA INTERIOR (ÚNICA CON CAMPOS EDITABLES POR TECLADO)
+            // 1. PORTADA INTERIOR (EDICIÓN ANALÓGICA CON CAMPOS EDITABLES CON LÍMITES)
             if (page.type === 'cover') {
                 pageCanvas.innerHTML = `
                     <div class="page-cover-layout">
-                        <span class="page-cover-kicker">EDITORIAL MENOS RUIDO · LIBRO PERSONALIZADO</span>
-                        <div class="page-cover-title" contenteditable="true" onblur="bookConfig.title = this.innerText">${bookConfig.title}</div>
-                        <div class="page-cover-sub" contenteditable="true" onblur="bookConfig.subtitle = this.innerText">${bookConfig.subtitle}</div>
-                        
-                        <div class="page-cover-fields">
-                            <div class="cover-field-line">
-                                <span class="cover-field-label">ESTE CUADERNO PERTENECE A:</span>
-                                <input type="text" class="cover-field-input" value="${bookConfig.owner}" onchange="bookConfig.owner = this.value">
+                        <div class="page-cover-frame-inner">
+                            <div>
+                                <div class="cover-insignia">✦ &nbsp; EDITORIAL MENOS RUIDO &nbsp; ✦</div>
+                                <div class="cover-kicker">EDICIÓN ANALÓGICA · CUADERNO PERSONALIZADO</div>
                             </div>
-                            <div class="cover-field-line">
-                                <span class="cover-field-label">PERÍODO / AÑO:</span>
-                                <input type="text" class="cover-field-input" value="${isBlank ? 'ATEMPORAL (INICIO LIBRE)' : 'AÑO ' + year}">
+                            
+                            <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                                <div class="cover-divider-rule"><span>◆</span></div>
+                                <div class="page-cover-title" contenteditable="true" 
+                                     oninput="if(this.innerText.length > 50) this.innerText = this.innerText.substring(0, 50); bookConfig.title = this.innerText;" 
+                                     onblur="bookConfig.title = this.innerText.trim()" 
+                                     title="Haz clic para editar el título (máx. 50 caracteres)">${bookConfig.title}</div>
+                                <div class="page-cover-sub" contenteditable="true" 
+                                     oninput="if(this.innerText.length > 85) this.innerText = this.innerText.substring(0, 85); bookConfig.subtitle = this.innerText;" 
+                                     onblur="bookConfig.subtitle = this.innerText.trim()" 
+                                     title="Haz clic para editar el subtítulo (máx. 85 caracteres)">${bookConfig.subtitle}</div>
+                                <div class="cover-divider-rule"><span>◆</span></div>
                             </div>
-                        </div>
 
-                        <div class="page-cover-dedication-box" contenteditable="true" onblur="bookConfig.dedication = this.innerText" title="Haz clic para escribir tu dedicatoria o lema">
-                            «${bookConfig.dedication}»
+                            <div class="cover-cartouche">
+                                <div class="cover-cartouche-title">❖ &nbsp; EX LIBRIS &nbsp; ❖</div>
+                                <div class="cover-field-line">
+                                    <span class="cover-field-label">ESTE CUADERNO PERTENECE A:</span>
+                                    <input type="text" class="cover-field-input" maxlength="35" value="${bookConfig.owner}" oninput="bookConfig.owner = this.value">
+                                </div>
+                                <div class="cover-field-line">
+                                    <span class="cover-field-label">PERÍODO / AÑO:</span>
+                                    <input type="text" class="cover-field-input" maxlength="30" value="${isBlank ? 'ATEMPORAL (INICIO LIBRE)' : 'AÑO ' + year}">
+                                </div>
+                            </div>
+
+                            <div class="page-cover-dedication-box" contenteditable="true" 
+                                 oninput="if(this.innerText.length > 140) this.innerText = this.innerText.substring(0, 140); bookConfig.dedication = this.innerText;" 
+                                 onblur="bookConfig.dedication = this.innerText.trim()" 
+                                 title="Haz clic para escribir tu dedicatoria o lema (máx. 140 caracteres)">
+                                «${bookConfig.dedication}»
+                            </div>
+
+                            <div class="cover-colophon">
+                                <span>Impreso en papel libre de distracciones · Pensado para escribir despacio y pensar con claridad</span>
+                            </div>
                         </div>
                     </div>
                     <div class="sheet-footer">
@@ -2909,6 +3126,70 @@
                     }
                 }
 
+                const hasGoals = page.design.showGoals !== false;
+                const hasMilestones = page.design.showMilestones !== false;
+                const panelPos = page.design.panelPosition || 'top';
+                const hasStrip = hasGoals || hasMilestones;
+
+                let stripHtml = '';
+                if (hasStrip) {
+                    const goalsHtml = `
+                        <div class="monthly-card-official" style="${!hasMilestones ? 'grid-column: 1 / -1;' : ''}">
+                            <span class="monthly-card-title-official">🎯 METAS DEL MES (MÁXIMO 3)</span>
+                            <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    const milestonesHtml = `
+                        <div class="monthly-card-official" style="${!hasGoals ? 'grid-column: 1 / -1;' : ''}">
+                            <span class="monthly-card-title-official">📅 HITOS Y FECHAS CLAVE</span>
+                            <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    stripHtml = `
+                        <div class="monthly-strip-top" style="grid-template-columns: ${hasGoals && hasMilestones ? '1.1fr 0.9fr' : '1fr'}; margin-top:${panelPos === 'bottom' ? '6px' : '0'}; margin-bottom:${panelPos === 'top' ? '6px' : '0'};">
+                            ${hasGoals ? goalsHtml : ''}
+                            ${hasMilestones ? milestonesHtml : ''}
+                        </div>
+                    `;
+                }
+
+                const calHtml = `
+                    <div class="monthly-cal-table-wrap">
+                        <div class="monthly-cal-table-head">
+                            <span>LUNES</span><span>MARTES</span><span>MIÉRCOLES</span><span>JUEVES</span><span>VIERNES</span><span>SÁBADO</span><span>DOMINGO</span>
+                        </div>
+                        <div class="monthly-cal-table-grid">
+                            ${cellsHtml}
+                        </div>
+                    </div>
+                `;
+
                 pageCanvas.innerHTML = `
                     <div class="monthly-layout-full">
                         <div class="page-header-row">
@@ -2919,53 +3200,7 @@
                             <span class="page-header-meta">${metaStr}</span>
                         </div>
 
-                        <!-- FRANJA SUPERIOR OFICIAL: METAS (MÁX 3) + HITOS Y FECHAS CLAVE -->
-                        <div class="monthly-strip-top">
-                            <div class="monthly-card-official">
-                                <span class="monthly-card-title-official">🎯 METAS DEL MES (MÁXIMO 3)</span>
-                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="monthly-card-official">
-                                <span class="monthly-card-title-official">📅 HITOS Y FECHAS CLAVE</span>
-                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- CUADRÍCULA CENTRAL DE 7 COLUMNAS × 5 FILAS (ANCHO COMPLETO EDITORIAL) -->
-                        <div class="monthly-cal-table-wrap">
-                            <div class="monthly-cal-table-head">
-                                <span>LUNES</span><span>MARTES</span><span>MIÉRCOLES</span><span>JUEVES</span><span>VIERNES</span><span>SÁBADO</span><span>DOMINGO</span>
-                            </div>
-                            <div class="monthly-cal-table-grid">
-                                ${cellsHtml}
-                            </div>
-                        </div>
+                        ${panelPos === 'top' ? stripHtml + calHtml : calHtml + stripHtml}
 
                         <div class="sheet-footer">
                             <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
@@ -3116,8 +3351,8 @@
                         ${page.design.bottomSection !== 'none' ? `
                             <div style="display:grid; grid-template-columns:${hasHabits && hasNotes ? '1fr 1fr' : '1fr'}; gap:10px; margin-top:8px;">
                                 ${hasHabits ? `
-                                    <div class="weekly-card-frame" style="padding:6px 10px; height:64px; min-height:64px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:4px;">
+                                    <div class="weekly-card-frame" style="padding:6px 10px 8px; height:84px; min-height:84px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:2px;">
                                             <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">HÁBITOS DE LA SEMANA</strong>
                                             <div style="display:flex; gap:6px; font-size:0.60rem; font-weight:800; color:#777;">
                                                 <span style="width:13px; text-align:center;">L</span>
@@ -3131,10 +3366,10 @@
                                         </div>
                                         ${[1, 2, 3].map(hNum => `
                                             <div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:${hNum < 3 ? '1px dashed #eee8de' : 'none'};">
-                                                <span style="font-size:0.66rem; color:#555;">Hábito ${hNum}</span>
+                                                <span style="font-size:0.65rem; color:#555;">Hábito ${hNum}</span>
                                                 <div style="display:flex; gap:6px;">
                                                     ${['L','M','X','J','V','S','D'].map(() => `
-                                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:13px; height:13px; border-width:1px; border-color:#999;"></span>
+                                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:12px; height:12px; border-width:1px; border-color:#999;"></span>
                                                     `).join('')}
                                                 </div>
                                             </div>
@@ -3142,10 +3377,10 @@
                                     </div>
                                 ` : ''}
                                 ${hasNotes ? `
-                                    <div class="weekly-card-frame" style="padding:8px 12px; height:64px; min-height:64px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:4px;">
+                                    <div class="weekly-card-frame" style="padding:6px 10px 8px; height:84px; min-height:84px; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:2px;">
                                             <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">TAREAS SECUNDARIAS / NOTAS</strong>
-                                            <span style="font-size:0.58rem; color:#888; font-style:italic;">Registro libre</span>
+                                            <span style="font-size:0.58rem; color:#888; font-style:italic;">Espacio en blanco</span>
                                         </div>
                                         <div style="flex:1;"></div>
                                     </div>
@@ -3204,10 +3439,117 @@
                 `;
             }
 
-            // 8. BITÁCORA DIARIA (ESTÁNDAR EDITORIAL FORMAL MENOS RUIDO)
+            // 8. PLANIFICADOR DIARIO (ESTÁNDAR EDITORIAL FORMAL MENOS RUIDO)
             else if (page.type === 'daily') {
                 const dayInfo = getDailyDateInfo(year, page.pageIndexInSection, isBlank);
-                const isCircle = page.design.markerShape !== 'square';
+                const markerShape = page.design.markerShape || 'circle';
+                const showPriority = page.design.showPriority !== false;
+                const showSecondary = page.design.showSecondary !== false;
+                const showHabits = page.design.showHabits !== false;
+                const showNotes = page.design.showNotes !== false;
+                const showReflection = page.design.showReflection !== false;
+
+                const hasCol1 = showPriority || showSecondary || showHabits;
+                const hasCol2 = showNotes || showReflection;
+
+                const getMarkerHtml = (size = 15) => {
+                    if (markerShape === 'none') return '';
+                    if (markerShape === 'square') return `<span class="box-marker-square" style="width:${size}px; height:${size}px; border-width:1.5px; border-color:#555; flex-shrink:0;"></span>`;
+                    return `<span class="box-marker-circle" style="width:${size}px; height:${size}px; border-width:1.5px; border-color:#555; flex-shrink:0;"></span>`;
+                };
+
+                let col1Html = '';
+                if (hasCol1) {
+                    col1Html = `
+                        <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
+                            ${showPriority ? `
+                                <div style="border: 1.6px solid #222; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 0.95; display:flex; flex-direction:column; justify-content:space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; align-items:baseline; gap:6px;">
+                                            <strong style="font-size:0.72rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">LA GRAN PRIORIDAD DEL DÍA</strong>
+                                            <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.72rem; color:#777;">(Innegociable)</span>
+                                        </div>
+                                        ${getMarkerHtml(16)}
+                                    </div>
+                                    <div style="flex:1;"></div>
+                                </div>
+                            ` : ''}
+
+                            ${showSecondary ? `
+                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.35; display:flex; flex-direction:column; justify-content:space-between;">
+                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:4px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">TAREAS SECUNDARIAS</strong>
+                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Máximo 3 tareas de soporte)</span>
+                                    </div>
+                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
+                                            ${getMarkerHtml(14)}
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
+                                            ${getMarkerHtml(14)}
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
+                                            ${getMarkerHtml(14)}
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${showHabits ? `
+                                <div style="border: 1px solid #d8d0c2; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1.15; display:flex; flex-direction:column; justify-content:space-between;">
+                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #ede5d8; padding-bottom:4px; margin-bottom:4px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#3a3228; letter-spacing:0.5px;">HÁBITOS CLAVE DEL DÍA</strong>
+                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Constancia diaria)</span>
+                                    </div>
+                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+                                            ${getMarkerHtml(13)}
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+                                            ${getMarkerHtml(13)}
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+                                            ${getMarkerHtml(13)}
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+
+                let col2Html = '';
+                if (hasCol2) {
+                    col2Html = `
+                        <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
+                            ${showNotes ? `
+                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 12px 14px; background: #fff; flex: ${showReflection ? '1.45' : '1'}; display:flex; flex-direction:column;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">DESCARGA MENTAL & NOTAS RÁPIDAS</strong>
+                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Captura libre sin filtros</span>
+                                    </div>
+                                    <div style="flex:1;"></div>
+                                </div>
+                            ` : ''}
+
+                            ${showReflection ? `
+                                <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:12px 14px; flex: ${showNotes ? '1.0' : '1'}; display:flex; flex-direction:column;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
+                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
+                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Balance y calma</span>
+                                    </div>
+                                    <div style="flex:1;"></div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
 
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
@@ -3219,83 +3561,9 @@
                             <span class="page-header-meta">${dayInfo.meta}</span>
                         </div>
 
-                        <div class="daily-sheet-split" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; flex:1; min-height:0; margin-top:2px;">
-                            <!-- COLUMNA IZQUIERDA: PRIORIDAD + SECUNDARIAS + HÁBITOS CLAVE -->
-                            <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
-                                <!-- 1. La Gran Prioridad del Día -->
-                                <div style="border: 1.6px solid #222; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 0.95; display:flex; flex-direction:column; justify-content:space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <div style="display:flex; align-items:baseline; gap:6px;">
-                                            <strong style="font-size:0.72rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">1. LA GRAN PRIORIDAD DEL DÍA</strong>
-                                            <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.72rem; color:#777;">(Innegociable)</span>
-                                        </div>
-                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:16px; height:16px; border-width:1.8px; border-color:#222;"></span>
-                                    </div>
-                                    <div style="flex:1;"></div>
-                                </div>
-
-                                <!-- 2. Tareas Secundarias (Máximo 3) -->
-                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.35; display:flex; flex-direction:column; justify-content:space-between;">
-                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:4px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">2. TAREAS SECUNDARIAS</strong>
-                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Máximo 3 tareas de soporte)</span>
-                                    </div>
-                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- 3. Hábitos Clave del Día -->
-                                <div style="border: 1px solid #d8d0c2; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1.15; display:flex; flex-direction:column; justify-content:space-between;">
-                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #ede5d8; padding-bottom:4px; margin-bottom:4px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#3a3228; letter-spacing:0.5px;">3. HÁBITOS CLAVE DEL DÍA</strong>
-                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Constancia diaria)</span>
-                                    </div>
-                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- COLUMNA DERECHA: DESCARGA MENTAL + REFLEXIÓN DE CIERRE NOCTURNO -->
-                            <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
-                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 12px 14px; background: #fff; flex: 1.45; display:flex; flex-direction:column;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">DESCARGA MENTAL & NOTAS RÁPIDAS</strong>
-                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Captura libre sin filtros</span>
-                                    </div>
-                                    <div style="flex:1;"></div>
-                                </div>
-                                <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:12px 14px; flex: 1.0; display:flex; flex-direction:column;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
-                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Balance y calma</span>
-                                    </div>
-                                    <div style="flex:1;"></div>
-                                </div>
-                            </div>
+                        <div class="daily-sheet-split" style="display:grid; grid-template-columns: ${hasCol1 && hasCol2 ? '1fr 1fr' : '1fr'}; gap:12px; flex:1; min-height:0; margin-top:2px;">
+                            ${col1Html}
+                            ${col2Html}
                         </div>
 
                         <div class="sheet-footer">
@@ -4086,65 +4354,137 @@
             doc.text('MENOS RUIDO · PLANIFICADOR PERSONALIZADO', M, H - 7);
             doc.text(`editorialmenosruido.com · Pág. ${pageNum}`, W - M, H - 7, { align: 'right' });
 
-            // 1. PORTADA INTERIOR
+            // 1. PORTADA INTERIOR (EDICIÓN CLÁSICA DE LUJO CON DOBLE MARCO)
             if (page.type === 'cover') {
-                doc.setDrawColor(200, 190, 175);
+                // Marco exterior
+                doc.setDrawColor(210, 200, 185);
                 doc.setLineWidth(0.6);
-                doc.rect(M + 6, M + 6, W - (M * 2) - 12, H - (M * 2) - 16);
+                doc.rect(M + 5, M + 5, W - (M * 2) - 10, H - (M * 2) - 14);
+
+                // Marco interior fino
+                doc.setDrawColor(230, 222, 210);
+                doc.setLineWidth(0.25);
+                doc.rect(M + 7, M + 7, W - (M * 2) - 14, H - (M * 2) - 18);
+
+                // Insignia superior
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(140, 95, 65);
+                doc.text('✦   EDITORIAL MENOS RUIDO   ✦', W / 2, M + 20, { align: 'center' });
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8);
-                doc.setTextColor(135, 85, 59);
-                doc.text('EDITORIAL MENOS RUIDO · CUADERNO PERSONALIZADO', W / 2, M + 22, { align: 'center' });
+                doc.setFontSize(6.5);
+                doc.setTextColor(150, 140, 130);
+                doc.text('EDICIÓN ANALÓGICA · CUADERNO PERSONALIZADO', W / 2, M + 25, { align: 'center' });
 
+                // Línea divisoria con diamante superior
+                const divW = 90;
+                const divX = (W - divW) / 2;
+                const div1Y = M + 34;
+                doc.setDrawColor(220, 212, 200);
+                doc.setLineWidth(0.25);
+                doc.line(divX, div1Y, divX + 38, div1Y);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(160, 120, 85);
+                doc.text('◆', W / 2, div1Y + 1, { align: 'center' });
+                doc.line(divX + 52, div1Y, divX + divW, div1Y);
+
+                // Título
                 doc.setFont('times', 'bold');
                 doc.setFontSize(22);
                 doc.setTextColor(25, 22, 19);
-                doc.text(bookConfig.title, W / 2, M + 36, { align: 'center' });
+                const titleText = (bookConfig.title || 'MI PLANIFICADOR PERSONAL').substring(0, 50);
+                doc.text(titleText, W / 2, M + 45, { align: 'center' });
 
+                // Subtítulo
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9.5);
-                doc.setTextColor(80, 75, 68);
-                doc.text(bookConfig.subtitle, W / 2, M + 44, { align: 'center' });
+                doc.setTextColor(95, 88, 80);
+                const subtitleText = (bookConfig.subtitle || 'Edición Analógica · Enfoque Diario y Claridad Mental').substring(0, 85);
+                doc.text(subtitleText, W / 2, M + 53, { align: 'center' });
 
-                const startY = M + 58;
-                const fieldW = 110;
-                const fieldX = (W - fieldW) / 2;
-
+                // Línea divisoria con diamante inferior
+                const div2Y = M + 62;
+                doc.setDrawColor(220, 212, 200);
+                doc.setLineWidth(0.25);
+                doc.line(divX, div2Y, divX + 38, div2Y);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7);
-                doc.setTextColor(60, 52, 45);
-                doc.text('ESTE CUADERNO PERTENECE A:', fieldX, startY);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.setTextColor(20, 17, 15);
-                if (!isBlank) {
-                    doc.text(bookConfig.owner, fieldX + 46, startY);
-                }
+                doc.setFontSize(7.5);
+                doc.setTextColor(160, 120, 85);
+                doc.text('◆', W / 2, div2Y + 1, { align: 'center' });
+                doc.line(divX + 52, div2Y, divX + divW, div2Y);
+
+                // Cartela Ex Libris
+                const cartW = 100;
+                const cartH = 34;
+                const cartX = (W - cartW) / 2;
+                const cartY = M + 72;
+
+                doc.setFillColor(252, 250, 246);
+                doc.setDrawColor(218, 208, 195);
                 doc.setLineWidth(0.3);
-                doc.setDrawColor(40, 35, 30);
-                doc.line(fieldX + 45, startY + 1.5, fieldX + fieldW, startY + 1.5);
+                doc.roundedRect(cartX, cartY, cartW, cartH, 2, 2, 'FD');
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7);
-                doc.setTextColor(60, 52, 45);
-                doc.text('PERÍODO / AÑO:', fieldX, startY + 12);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.text(isBlank ? 'ATEMPORAL (INICIO LIBRE)' : `AÑO ${year}`, fieldX + 46, startY + 12);
-                doc.line(fieldX + 45, startY + 13.5, fieldX + fieldW, startY + 13.5);
+                doc.setTextColor(140, 95, 65);
+                doc.text('❖   EX LIBRIS   ❖', W / 2, cartY + 7, { align: 'center' });
+
+                // Campo Propietario
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(80, 72, 64);
+                doc.text('ESTE CUADERNO PERTENECE A:', cartX + 6, cartY + 17);
+
+                const ownerVal = (bookConfig.owner || '').substring(0, 35);
+                if (!isBlank && ownerVal) {
+                    doc.setFont('times', 'italic');
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(20, 17, 15);
+                    doc.text(ownerVal, cartX + 52, cartY + 16.5);
+                }
+                doc.setDrawColor(180, 170, 160);
+                doc.setLineWidth(0.2);
+                doc.line(cartX + 50, cartY + 18, cartX + cartW - 6, cartY + 18);
+
+                // Campo Período
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.8);
+                doc.setTextColor(80, 72, 64);
+                doc.text('PERÍODO / AÑO:', cartX + 6, cartY + 27);
+
+                doc.setFont('times', 'italic');
+                doc.setFontSize(9.0);
+                doc.setTextColor(50, 45, 40);
+                const periodText = isBlank ? 'Atemporal (Inicio libre)' : `Año ${year}`;
+                doc.text(periodText, cartX + 52, cartY + 26.5);
+                doc.setDrawColor(180, 170, 160);
+                doc.setLineWidth(0.2);
+                doc.line(cartX + 50, cartY + 28, cartX + cartW - 6, cartY + 28);
 
                 // Caja dedicatoria
-                const dedY = startY + 22;
-                doc.setFillColor(250, 246, 239);
-                doc.setDrawColor(215, 205, 190);
-                doc.roundedRect(fieldX - 10, dedY, fieldW + 20, 18, 1.5, 1.5, 'FD');
+                const dedW = 100;
+                const dedX = (W - dedW) / 2;
+                const dedY = cartY + cartH + 12;
+
+                doc.setFillColor(250, 247, 242);
+                doc.setDrawColor(225, 218, 208);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(dedX, dedY, dedW, 20, 2, 2, 'FD');
 
                 doc.setFont('times', 'italic');
                 doc.setFontSize(8.5);
                 doc.setTextColor(90, 80, 70);
-                const dedLines = doc.splitTextToSize(`«${bookConfig.dedication}»`, fieldW + 12);
-                doc.text(dedLines, W / 2, dedY + 6.5, { align: 'center' });
+                const dedText = `«${(bookConfig.dedication || '').substring(0, 140)}»`;
+                const dedLines = doc.splitTextToSize(dedText, dedW - 14);
+                doc.text(dedLines, W / 2, dedY + 7.5, { align: 'center' });
+
+                // Colofón inferior
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.0);
+                doc.setTextColor(150, 142, 132);
+                doc.text('Impreso en papel libre de distracciones · Pensado para escribir despacio y pensar con claridad', W / 2, H - M - 12, { align: 'center' });
 
             // PÁGINA 2: EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO (FORMAL, SIN PIE DUPLICADO)
             } else if (page.type === 'editorial') {
@@ -5430,10 +5770,6 @@
                                     doc.setLineWidth(0.22);
                                     doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
                                 }
-                                doc.setDrawColor(235, 230, 222);
-                                doc.setLineWidth(0.12);
-                                const lineStartX = markerShape === 'none' ? col1X + 6 : col1X + 12;
-                                doc.line(lineStartX, rowY + 1.2, col1X + colW - 5, rowY + 1.2);
                             }
                         } else if (item.id === 'habits') {
                             doc.setFillColor(250, 248, 245);
@@ -5467,10 +5803,6 @@
                                     doc.setLineWidth(0.22);
                                     doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
                                 }
-                                doc.setDrawColor(235, 230, 222);
-                                doc.setLineWidth(0.12);
-                                const lineStartX = markerShape === 'none' ? col1X + 6 : col1X + 12;
-                                doc.line(lineStartX, rowY + 1.2, col1X + colW - 5, rowY + 1.2);
                             }
                         }
 
