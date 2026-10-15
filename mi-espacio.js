@@ -203,7 +203,7 @@ function renderCachedView(cached) {
     if (userRoleBadge) {
       userRoleBadge.style.display = 'none';
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'none';
+    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   }
 }
@@ -641,12 +641,14 @@ function renderAuthenticatedView(user) {
     if (userRoleBadge) {
       userRoleBadge.style.display = 'none'; // ELIMINAR TEXTO Y BADGE CLIENTE
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'none';
+    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
     if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
+    if (devLockedView) devLockedView.style.display = 'block';
+    if (devUnlockedContent) devUnlockedContent.style.display = 'none';
 
-    // Si por alguna razón estaba en la pestaña de futuras o dev y no tiene permisos, volver a disenos
+    // Si por alguna razón estaba en la pestaña de futuras y no tiene permisos, volver a disenos
     const activeBtn = document.querySelector('.tab-btn.active');
-    if (activeBtn && (activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-dev')) {
+    if (activeBtn && activeBtn.id === 'tab-btn-futuras') {
       activateTab('tab-disenos');
     }
   }
