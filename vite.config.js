@@ -64,6 +64,7 @@ export default defineConfig({
         tutorialGeneradorHabitos: resolve(__dirname, 'tutorial-generador-planificador-habitos.html'),
         generadorLibroCompletoV1: resolve(__dirname, 'generador-libro-completo-v1.html'),
         miEspacio: resolve(__dirname, 'mi-espacio.html'),
+        baja: resolve(__dirname, 'baja.html'),
         notFound: resolve(__dirname, '404.html')
       }
     }
