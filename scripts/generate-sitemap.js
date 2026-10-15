@@ -29,6 +29,8 @@ function getPageMeta(filename) {
     return { priority: '1.0', changefreq: 'daily', loc: `${BASE_URL}/` };
   }
 
+  const cleanSlug = filename.replace(/\.html$/, '');
+
   // Páginas principales de libros
   if ([
     'habla-claro.html',
@@ -38,12 +40,12 @@ function getPageMeta(filename) {
     'planificador-90-dias.html',
     'planificador-180-dias.html'
   ].includes(filename)) {
-    return { priority: '0.95', changefreq: 'weekly', loc: `${BASE_URL}/${filename}` };
+    return { priority: '0.95', changefreq: 'weekly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
   // Generadores interactivos
   if (filename.startsWith('generador-planificador-') || filename === 'generador.html') {
-    return { priority: '0.90', changefreq: 'weekly', loc: `${BASE_URL}/${filename}` };
+    return { priority: '0.90', changefreq: 'weekly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
   // Lecturas, ensayos y archivo de lecturas
@@ -57,31 +59,31 @@ function getPageMeta(filename) {
     filename.startsWith('aprender-') ||
     filename.startsWith('planificacion-')
   ) {
-    return { priority: '0.85', changefreq: 'weekly', loc: `${BASE_URL}/${filename}` };
+    return { priority: '0.85', changefreq: 'weekly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
   // Tutoriales de generadores y guías de uso
   if (filename.startsWith('tutorial-') || filename.startsWith('guia-uso-')) {
-    return { priority: '0.75', changefreq: 'monthly', loc: `${BASE_URL}/${filename}` };
+    return { priority: '0.75', changefreq: 'monthly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
   // Simuladores y visores 3D
   if (filename.startsWith('simulador-') || filename.startsWith('visor-')) {
-    return { priority: '0.70', changefreq: 'monthly', loc: `${BASE_URL}/${filename}` };
+    return { priority: '0.70', changefreq: 'monthly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
   // Enlaces / Bio
   if (filename === 'links.html') {
-    return { priority: '0.50', changefreq: 'monthly', loc: `${BASE_URL}/${filename}` };
+    return { priority: '0.50', changefreq: 'monthly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
   // Páginas legales
   if (['aviso-legal.html', 'politica-privacidad.html', 'politica-cookies.html'].includes(filename)) {
-    return { priority: '0.30', changefreq: 'yearly', loc: `${BASE_URL}/${filename}` };
+    return { priority: '0.30', changefreq: 'yearly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
   // Por defecto para cualquier otra página pública
-  return { priority: '0.60', changefreq: 'monthly', loc: `${BASE_URL}/${filename}` };
+  return { priority: '0.60', changefreq: 'monthly', loc: `${BASE_URL}/${cleanSlug}` };
 }
 
 export function generateSitemap() {
