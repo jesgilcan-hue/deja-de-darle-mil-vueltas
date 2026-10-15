@@ -189,26 +189,13 @@ function renderCachedView(cached) {
     userEmailDisplay.textContent = cached.email || '';
   }
 
-  const isDevCached = isDeveloper(cached);
-  if (isDevCached) {
-    if (userRoleBadge) {
-      userRoleBadge.textContent = 'DESARROLLADOR';
-      userRoleBadge.className = 'role-badge dev';
-      userRoleBadge.style.display = 'inline-block';
-    }
-    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
-    if (devLockedView) devLockedView.style.display = 'none';
-    if (devUnlockedContent) devUnlockedContent.style.display = 'block';
-  } else {
-    if (userRoleBadge) {
-      userRoleBadge.style.display = 'none';
-    }
-    if (tabBtnDev) tabBtnDev.style.display = 'none';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
-    if (devLockedView) devLockedView.style.display = 'none';
-    if (devUnlockedContent) devUnlockedContent.style.display = 'none';
-  }
+  // En vista previa de caché NUNCA se activa el panel dev por seguridad.
+  // Solo la autenticación real en tiempo real de Firebase evalúa permisos.
+  if (userRoleBadge) userRoleBadge.style.display = 'none';
+  if (tabBtnDev) tabBtnDev.style.display = 'none';
+  if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
+  if (devLockedView) devLockedView.style.display = 'none';
+  if (devUnlockedContent) devUnlockedContent.style.display = 'none';
 }
 
 // Soporte de navegación por pestañas y lectura de query params (?tab=disenos, ?tab=ajustes, ?tab=dev)
@@ -572,17 +559,6 @@ function setupDeleteModal() {
 function unlockDevPanel() {
   const pin = devPinInput.value.trim();
   if (pin === DEVELOPER_PIN) {
-    try {
-      sessionStorage.setItem('mr_dev_unlocked', 'true');
-      localStorage.setItem('mr_dev_unlocked', 'true');
-      const cachedRaw = localStorage.getItem('mr_cached_user');
-      if (cachedRaw) {
-        const c = JSON.parse(cachedRaw);
-        c.isDev = true;
-        localStorage.setItem('mr_cached_user', JSON.stringify(c));
-      }
-    } catch (e) {}
-
     devLockedView.style.display = 'none';
     devUnlockedContent.style.display = 'block';
     devPinError.style.display = 'none';
@@ -630,41 +606,49 @@ function renderAuthenticatedView(user) {
     userEmailDisplay.textContent = email || '';
   }
 
-  // Comprobar rol de desarrollador
+  // Comprobar rol de desarrollador ESTRICTO (EXCLUSIVAMENTE jesgilcan@gmail.com)
   const isDev = isDeveloper(user);
+  const tabDevPane = document.getElementById('tab-dev');
+  const tabFuturasPane = document.getElementById('tab-futuras');
+
   if (isDev) {
     if (userRoleBadge) {
       userRoleBadge.textContent = 'DESARROLLADOR';
       userRoleBadge.className = 'role-badge dev';
       userRoleBadge.style.display = 'inline-block';
     }
-    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
+    if (tabBtnDev) {
+      tabBtnDev.style.removeProperty('display');
+      tabBtnDev.style.display = 'inline-flex';
+    }
+    if (tabDevPane) {
+      tabDevPane.style.removeProperty('display');
+    }
+    if (tabBtnFuturas) {
+      tabBtnFuturas.style.removeProperty('display');
+      tabBtnFuturas.style.display = 'inline-flex';
+    }
     if (devLockedView) devLockedView.style.display = 'none';
     if (devUnlockedContent) devUnlockedContent.style.display = 'block';
   } else {
-    if (userRoleBadge) {
-      userRoleBadge.style.display = 'none';
-    }
-    if (tabBtnDev) tabBtnDev.style.display = 'none';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
-    if (devLockedView) devLockedView.style.display = 'none';
-    if (devUnlockedContent) devUnlockedContent.style.display = 'none';
+    // USUARIO CLIENTE (CUALQUIER CORREO DISTINTO DE jesgilcan@gmail.com):
+    // ELIMINACIÓN FÍSICA RADICAL DEL DOM. NO EXISTE EN SU PANTALLA NI EN SU CÓDIGO.
+    if (userRoleBadge) userRoleBadge.remove();
+    if (tabBtnDev) tabBtnDev.remove();
+    if (tabDevPane) tabDevPane.remove();
+    if (tabBtnFuturas) tabBtnFuturas.remove();
+    if (tabFuturasPane) tabFuturasPane.remove();
 
-    // Si por alguna razón estaba en la pestaña de dev o futuras y no tiene permisos, volver a disenos
-    const activeBtn = document.querySelector('.tab-btn.active');
-    if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras')) {
-      activateTab('tab-disenos');
-    }
+    // Si por alguna razón estaba en la pestaña de dev, forzar a disenos
+    activateTab('tab-disenos');
   }
 
-  // Guardar datos en caché local incluyendo isDev
+  // Guardar datos básicos en caché local (NUNCA guardar flags de desarrollador)
   try {
     localStorage.setItem('mr_cached_user', JSON.stringify({
       displayName: name,
       email: email,
-      photoURL: user.photoURL || '',
-      isDev: isDev
+      photoURL: user.photoURL || ''
     }));
   } catch (e) {}
 }

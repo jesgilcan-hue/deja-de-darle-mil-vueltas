@@ -67,13 +67,11 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-// Configuración de roles y seguridad
-export const DEVELOPER_EMAILS = [
-  "jesgilcan@gmail.com",
-  "editorialmenosruido@gmail.com",
-  "contacto@editorialmenosruido.com"
-];
+// Configuración de roles y seguridad: ÚNICA cuenta autorizada
 export const DEVELOPER_EMAIL = "jesgilcan@gmail.com";
+export const DEVELOPER_EMAILS = [
+  "jesgilcan@gmail.com"
+];
 export const DEVELOPER_PIN = "1111";
 
 /**

@@ -160,30 +160,10 @@
     </footer>
 
     <script type="module">
-        import { auth, db, clearUserLocalCache } from './firebase-config.js';
-        import { onAuthStateChanged, signOut, deleteUser } from 'firebase/auth';
-        import { doc, deleteDoc } from 'firebase/firestore';
-
-        // 1. Limpiar inmediatamente toda la caché local del navegador
-        clearUserLocalCache();
-
-        // 2. Si el usuario está logueado en este navegador, dar de baja su cuenta y cerrar sesión
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const email = (user.email || '').toLowerCase().trim();
-                    const isDev = ['jesgilcan@gmail.com', 'editorialmenosruido@gmail.com', 'contacto@editorialmenosruido.com'].includes(email);
-                    if (!isDev) {
-                        try { await deleteDoc(doc(db, 'users', user.uid)); } catch(e) {}
-                        try { await deleteUser(user); } catch(e) {}
-                    }
-                    await signOut(auth);
-                } catch (err) {
-                    try { await signOut(auth); } catch(e) {}
-                }
-                clearUserLocalCache();
-            }
-        });
+        // Baja exclusiva de lista de correos / descargas
+        try {
+            localStorage.removeItem('mr_user_pdf_email');
+        } catch(e) {}
     </script>
 </body>
 </html>
