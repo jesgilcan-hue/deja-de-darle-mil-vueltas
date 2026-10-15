@@ -130,7 +130,7 @@
         /* BARRA DE PREAJUSTES Y ACCIONES PRINCIPALES */
         .main-control-bar {
             width: 100%;
-            max-width: 1220px;
+            max-width: 1460px;
             background: #ffffff;
             border: 1px solid var(--border-line);
             border-radius: 12px;
@@ -249,7 +249,7 @@
         /* LAYOUT PRINCIPAL DE 2 COLUMNAS (CONFIGURADOR IZQ + VISOR DER) */
         .workspace-grid {
             width: 100%;
-            max-width: 1220px;
+            max-width: 1460px;
             display: grid;
             grid-template-columns: 390px 1fr;
             gap: 22px;
@@ -675,8 +675,8 @@
            ------------------------------------------------------------- */
         .weekly-body-grid {
             display: grid;
-            grid-template-columns: 1.15fr 0.85fr;
-            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
             flex: 1;
             margin-top: 4px;
         }
@@ -1584,8 +1584,8 @@
                 <button type="button" class="btn-preset" data-preset="semanal" onclick="applyPreset('semanal')" title="52 semanas completas para todo el año">
                     🗓️ Solo Semanal
                 </button>
-                <button type="button" class="btn-preset" data-preset="bitacora30" onclick="applyPreset('bitacora30')" title="Páginas de registro y diario personal">
-                    📖 Bitácora Diaria
+                <button type="button" class="btn-preset" data-preset="bitacora30" onclick="applyPreset('bitacora30')" title="Páginas de planificación diaria">
+                    📖 Planificador Diario
                 </button>
                 <button type="button" class="btn-preset" data-preset="libre" onclick="applyPreset('libre')" title="Personaliza cada sección libremente">
                     🛠️ Personalizado
@@ -1829,7 +1829,7 @@
                     active: true, 
                     pages: 12, 
                     countLabel: "meses",
-                    design: { sidePanel: "both" } // "both", "goals", "notes"
+                    design: { showGoals: true, showMilestones: true, panelPosition: "top" }
                 },
                 { 
                     id: "habits", 
@@ -1860,12 +1860,12 @@
                 },
                 { 
                     id: "daily", 
-                    name: "Bitácora Diaria (Prioridad & Cierre)", 
+                    name: "Planificador diario", 
                     type: "daily", 
                     active: false, 
                     pages: 30, 
                     countLabel: "días",
-                    design: { reflectionBox: true }
+                    design: { markerShape: "circle", showPriority: true, showSecondary: true, showHabits: true, showNotes: true, showReflection: true }
                 },
                 { 
                     id: "notes", 
@@ -2059,12 +2059,12 @@
             }
         }
 
-        // DATOS EXACTOS DE FECHA PARA BITÁCORA DIARIA
+        // DATOS EXACTOS DE FECHA PARA PLANIFICADOR DIARIO
         function getDailyDateInfo(year, pageIndex, isBlank) {
             if (isBlank) {
                 return {
-                    title: "Día",
-                    kicker: "MENOS RUIDO · REGISTRO Y BITÁCORA DIARIA",
+                    title: "Planificador Diario",
+                    kicker: "MENOS RUIDO · PLANIFICADOR DIARIO",
                     meta: "FECHA: ________________",
                     dayDisplay: ""
                 };
@@ -2080,8 +2080,8 @@
             const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
             const dateStr = `Día ${dayNumInMonth}, ${capWeekday} de ${capMonth}`;
             return {
-                title: "Bitácora Diaria",
-                kicker: "MENOS RUIDO · REGISTRO Y BITÁCORA DIARIA",
+                title: "Planificador Diario",
+                kicker: "MENOS RUIDO · PLANIFICADOR DIARIO",
                 meta: dateStr,
                 dayDisplay: dateStr
             };
@@ -2294,7 +2294,7 @@
                                 generatedPageList.push({
                                     type: 'daily',
                                     sectionId: 'daily',
-                                    sectionName: `Bitácora Diaria (Día ${globalDayCount})`,
+                                    sectionName: `Planificador Diario (Día ${globalDayCount})`,
                                     pageIndexInSection: globalDayCount - 1,
                                     dayNum: globalDayCount,
                                     totalPagesInSection: 365,
@@ -2464,6 +2464,37 @@
                             </div>
                         </div>
                     `;
+                } else if (sec.type === 'monthly') {
+                    const hasGoals = sec.design.showGoals !== false;
+                    const hasMilestones = sec.design.showMilestones !== false;
+                    let currentCardsVal = 'both';
+                    if (hasGoals && hasMilestones) currentCardsVal = 'both';
+                    else if (hasGoals && !hasMilestones) currentCardsVal = 'goals';
+                    else if (!hasGoals && hasMilestones) currentCardsVal = 'milestones';
+                    else currentCardsVal = 'none';
+
+                    designControlsHtml = `
+                        <div class="section-design-box">
+                            <div class="design-opt-row">
+                                <label>Tarjetas adicionales:</label>
+                                <select onchange="handleMonthlyCardsChange('${sec.id}', this.value)">
+                                    <option value="both" ${currentCardsVal === 'both' ? 'selected' : ''}>🎯 Metas + 📅 Hitos</option>
+                                    <option value="goals" ${currentCardsVal === 'goals' ? 'selected' : ''}>Solo Metas</option>
+                                    <option value="milestones" ${currentCardsVal === 'milestones' ? 'selected' : ''}>Solo Hitos</option>
+                                    <option value="none" ${currentCardsVal === 'none' ? 'selected' : ''}>Solo Calendario (Ampliado)</option>
+                                </select>
+                            </div>
+                            ${(hasGoals || hasMilestones) ? `
+                                <div class="design-opt-row">
+                                    <label>Ubicación de tarjetas:</label>
+                                    <select onchange="updateSectionDesign('${sec.id}', 'panelPosition', this.value)">
+                                        <option value="top" ${sec.design.panelPosition !== 'bottom' ? 'selected' : ''}>⬆️ Arriba del calendario</option>
+                                        <option value="bottom" ${sec.design.panelPosition === 'bottom' ? 'selected' : ''}>⬇️ Abajo del calendario</option>
+                                    </select>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
                 } else if (sec.type === 'weekly') {
                     designControlsHtml = `
                         <div class="section-design-box">
@@ -2480,7 +2511,7 @@
                                     <option value="both" ${sec.design.bottomSection === 'both' ? 'selected' : ''}>🌱 Hábitos + 📝 Notas</option>
                                     <option value="habits" ${sec.design.bottomSection === 'habits' ? 'selected' : ''}>Solo Hábitos</option>
                                     <option value="notes" ${sec.design.bottomSection === 'notes' ? 'selected' : ''}>Solo Notas</option>
-                                    <option value="none" ${sec.design.bottomSection === 'none' ? 'selected' : ''}>Sin franja (Días de 7 líneas)</option>
+                                    <option value="none" ${sec.design.bottomSection === 'none' ? 'selected' : ''}>Sin hábitos ni notas</option>
                                 </select>
                             </div>
                         </div>
@@ -2547,6 +2578,40 @@
                                 <select onchange="updateSectionDesign('${sec.id}', 'rows', parseInt(this.value, 10))">
                                     ${rowsOptionsHtml}
                                 </select>
+                            </div>
+                        </div>
+                    `;
+                } else if (sec.type === 'daily') {
+                    const mShape = sec.design.markerShape || 'circle';
+                    designControlsHtml = `
+                        <div class="section-design-box">
+                            <div class="design-opt-row">
+                                <label>Forma casillas:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)">
+                                    <option value="circle" ${mShape === 'circle' ? 'selected' : ''}>⚪ Círculos</option>
+                                    <option value="square" ${mShape === 'square' ? 'selected' : ''}>◻️ Cuadrados</option>
+                                    <option value="none" ${mShape === 'none' ? 'selected' : ''}>Sin casillas (Limpio)</option>
+                                </select>
+                            </div>
+                            <div class="design-opt-row" style="flex-direction:column; align-items:flex-start; gap:6px;">
+                                <label style="font-weight:700;">Bloques visibles:</label>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; font-size:0.75rem;">
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                        <input type="checkbox" ${sec.design.showPriority !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showPriority', this.checked)"> Gran Prioridad
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                        <input type="checkbox" ${sec.design.showSecondary !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showSecondary', this.checked)"> Tareas Secundarias
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                        <input type="checkbox" ${sec.design.showHabits !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showHabits', this.checked)"> Hábitos
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                        <input type="checkbox" ${sec.design.showNotes !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showNotes', this.checked)"> Descarga Mental
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer; grid-column:span 2;">
+                                        <input type="checkbox" ${sec.design.showReflection !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showReflection', this.checked)"> Reflexión Cierre Nocturno
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -2633,6 +2698,28 @@
             }
         }
 
+        function handleMonthlyCardsChange(id, val) {
+            const sec = bookConfig.sections.find(s => s.id === id);
+            if (sec && sec.design) {
+                if (val === 'both') {
+                    sec.design.showGoals = true;
+                    sec.design.showMilestones = true;
+                } else if (val === 'goals') {
+                    sec.design.showGoals = true;
+                    sec.design.showMilestones = false;
+                } else if (val === 'milestones') {
+                    sec.design.showGoals = false;
+                    sec.design.showMilestones = true;
+                } else if (val === 'none') {
+                    sec.design.showGoals = false;
+                    sec.design.showMilestones = false;
+                }
+                recalcPages();
+                renderSectionsList();
+                renderPreviewPage();
+            }
+        }
+
         function moveSection(index, delta) {
             const newIndex = index + delta;
             if (newIndex < 0 || newIndex >= bookConfig.sections.length) return;
@@ -2645,6 +2732,12 @@
         }
 
         function jumpToSection(sectionId) {
+            const sec = bookConfig.sections.find(s => s.id === sectionId);
+            if (sec && !sec.active) {
+                sec.active = true;
+                recalcPages();
+                renderSectionsList();
+            }
             const idx = generatedPageList.findIndex(p => p.sectionId === sectionId);
             if (idx !== -1) {
                 currentPreviewPageIndex = idx;
@@ -2919,53 +3012,80 @@
                             <span class="page-header-meta">${metaStr}</span>
                         </div>
 
-                        <!-- FRANJA SUPERIOR OFICIAL: METAS (MÁX 3) + HITOS Y FECHAS CLAVE -->
-                        <div class="monthly-strip-top">
-                            <div class="monthly-card-official">
-                                <span class="monthly-card-title-official">🎯 METAS DEL MES (MÁXIMO 3)</span>
-                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="monthly-card-official">
-                                <span class="monthly-card-title-official">📅 HITOS Y FECHAS CLAVE</span>
-                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- CONTENIDO DINÁMICO DEL MES: TARJETAS (METAS/HITOS) Y CALENDARIO -->
+                        ${(() => {
+                            const hasGoals = page.design.showGoals !== false;
+                            const hasMilestones = page.design.showMilestones !== false;
+                            const panelPos = page.design.panelPosition || 'top';
 
-                        <!-- CUADRÍCULA CENTRAL DE 7 COLUMNAS × 5 FILAS (ANCHO COMPLETO EDITORIAL) -->
-                        <div class="monthly-cal-table-wrap">
-                            <div class="monthly-cal-table-head">
-                                <span>LUNES</span><span>MARTES</span><span>MIÉRCOLES</span><span>JUEVES</span><span>VIERNES</span><span>SÁBADO</span><span>DOMINGO</span>
-                            </div>
-                            <div class="monthly-cal-table-grid">
-                                ${cellsHtml}
-                            </div>
-                        </div>
+                            let cardsHtml = '';
+                            if (hasGoals || hasMilestones) {
+                                const gridCols = (hasGoals && hasMilestones) ? '1.1fr 0.9fr' : '1fr';
+                                const styleAttr = `display:grid; grid-template-columns:${gridCols}; gap:8px; min-height:48px; ${panelPos === 'bottom' ? 'margin-top:6px; margin-bottom:0;' : 'margin-bottom:6px;'}`;
+
+                                cardsHtml = `
+                                    <div class="monthly-strip-top" style="${styleAttr}">
+                                        ${hasGoals ? `
+                                            <div class="monthly-card-official">
+                                                <span class="monthly-card-title-official">🎯 METAS DEL MES (MÁXIMO 3)</span>
+                                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
+                                                    <div style="display:flex; align-items:center; gap:6px;">
+                                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                                    </div>
+                                                    <div style="display:flex; align-items:center; gap:6px;">
+                                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                                    </div>
+                                                    <div style="display:flex; align-items:center; gap:6px;">
+                                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${hasMilestones ? `
+                                            <div class="monthly-card-official">
+                                                <span class="monthly-card-title-official">📅 HITOS Y FECHAS CLAVE</span>
+                                                <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
+                                                    <div style="display:flex; align-items:center; gap:6px;">
+                                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                                    </div>
+                                                    <div style="display:flex; align-items:center; gap:6px;">
+                                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                                    </div>
+                                                    <div style="display:flex; align-items:center; gap:6px;">
+                                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }
+
+                            const calWrapHtml = `
+                                <div class="monthly-cal-table-wrap">
+                                    <div class="monthly-cal-table-head">
+                                        <span>LUNES</span><span>MARTES</span><span>MIÉRCOLES</span><span>JUEVES</span><span>VIERNES</span><span>SÁBADO</span><span>DOMINGO</span>
+                                    </div>
+                                    <div class="monthly-cal-table-grid">
+                                        ${cellsHtml}
+                                    </div>
+                                </div>
+                            `;
+
+                            if (!hasGoals && !hasMilestones) {
+                                return calWrapHtml;
+                            }
+                            if (panelPos === 'bottom') {
+                                return calWrapHtml + cardsHtml;
+                            }
+                            return cardsHtml + calWrapHtml;
+                        })()}
 
                         <div class="sheet-footer">
                             <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
@@ -3079,47 +3199,47 @@
                                 `).join('')}
                             </div>
 
-                            <!-- COLUMNA DERECHA: FOCO + VIERNES A DOMINGO -->
-                            <div style="display:flex; flex-direction:column; gap:6px;">
-                                <!-- FOCO -->
-                                <div class="weekly-card-frame" style="background:#faf8f5; border-color:#d5cdbf; padding:8px 10px;">
-                                    <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent);">FOCO DE LA SEMANA (META CLAVE)</strong>
+                            <!-- COLUMNA DERECHA: FOCO + VIERNES A DOMINGO (1:1 CON EL PDF) -->
+                            <div class="weekly-card-frame">
+                                <!-- FOCO DE LA SEMANA (META CLAVE) -->
+                                <div style="background:#faf8f5; border-bottom:1px solid #d5cfc5; padding:6px 8px; flex:1; display:flex; flex-direction:column; justify-content:flex-start;">
+                                    <strong style="font-size:0.68rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.4px;">FOCO DE LA SEMANA (META CLAVE)</strong>
                                 </div>
 
-                                <!-- VIERNES, SÁBADO, DOMINGO -->
-                                <div class="weekly-card-frame" style="flex:1;">
-                                    <div class="weekly-day-row" style="flex:1;">
+                                <!-- VIERNES -->
+                                <div class="weekly-day-row" style="flex:1; border-bottom:1px dashed #e4ded4;">
+                                    <div class="weekly-day-meta">
+                                        <strong style="font-size:0.72rem; color:#222;">VIERNES</strong>
+                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[4] !== '' ? weekDates[4] : ''}</span>
+                                    </div>
+                                </div>
+
+                                <!-- SÁBADO & DOMINGO -->
+                                <div style="display:flex; flex:2;">
+                                    <div class="weekly-day-row" style="flex:1; border-right:1px solid #e4ded4; border-bottom:none;">
                                         <div class="weekly-day-meta">
-                                            <strong style="font-size:0.72rem;">VIERNES</strong>
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[4] !== '' ? weekDates[4] : ''}</span>
+                                            <strong style="font-size:0.72rem; color:#222;">SÁBADO</strong>
+                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[5] !== '' ? weekDates[5] : ''}</span>
                                         </div>
                                     </div>
-                                    <div style="display:flex; border-top:1px dashed #e4ded4; flex:1;">
-                                        <div class="weekly-day-row" style="flex:1; border-right:1px dashed #e4ded4; border-bottom:none;">
-                                            <div class="weekly-day-meta">
-                                                <strong style="font-size:0.72rem;">SÁBADO</strong>
-                                                <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[5] !== '' ? weekDates[5] : ''}</span>
-                                            </div>
-                                        </div>
-                                        <div class="weekly-day-row" style="flex:1; border-bottom:none;">
-                                            <div class="weekly-day-meta">
-                                                <strong style="font-size:0.72rem;">DOMINGO</strong>
-                                                <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[6] !== '' ? weekDates[6] : ''}</span>
-                                            </div>
+                                    <div class="weekly-day-row" style="flex:1; border-bottom:none;">
+                                        <div class="weekly-day-meta">
+                                            <strong style="font-size:0.72rem; color:#222;">DOMINGO</strong>
+                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.70rem; font-weight:700; color:#222;">${weekDates[6] !== '' ? weekDates[6] : ''}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- FRANJA INFERIOR (HÁBITOS / NOTAS CON ALTURA COMPLETA) -->
+                        <!-- FRANJA INFERIOR (HÁBITOS / NOTAS CON ALTURA IDÉNTICA Y 3 HÁBITOS COMPLETOS) -->
                         ${page.design.bottomSection !== 'none' ? `
-                            <div style="display:grid; grid-template-columns:${hasHabits && hasNotes ? '1fr 1fr' : '1fr'}; gap:10px; margin-top:8px;">
+                            <div style="display:grid; grid-template-columns:${hasHabits && hasNotes ? '1fr 1fr' : '1fr'}; gap:8px; margin-top:8px;">
                                 ${hasHabits ? `
-                                    <div class="weekly-card-frame" style="padding:6px 10px; height:64px; min-height:64px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:4px;">
-                                            <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">HÁBITOS DE LA SEMANA</strong>
-                                            <div style="display:flex; gap:6px; font-size:0.60rem; font-weight:800; color:#777;">
+                                    <div class="weekly-card-frame" style="padding:6px 10px; height:82px; min-height:82px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:2px;">
+                                            <strong style="font-size:0.65rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">HÁBITOS DE LA SEMANA</strong>
+                                            <div style="display:flex; gap:6px; font-size:0.58rem; font-weight:800; color:#777;">
                                                 <span style="width:13px; text-align:center;">L</span>
                                                 <span style="width:13px; text-align:center;">M</span>
                                                 <span style="width:13px; text-align:center;">X</span>
@@ -3130,11 +3250,11 @@
                                             </div>
                                         </div>
                                         ${[1, 2, 3].map(hNum => `
-                                            <div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:${hNum < 3 ? '1px dashed #eee8de' : 'none'};">
-                                                <span style="font-size:0.66rem; color:#555;">Hábito ${hNum}</span>
+                                            <div style="display:flex; justify-content:space-between; align-items:center; padding:1px 0; border-bottom:${hNum < 3 ? '1px dashed #eee8de' : 'none'};">
+                                                <span style="font-size:0.64rem; color:#555;">Hábito ${hNum}</span>
                                                 <div style="display:flex; gap:6px;">
                                                     ${['L','M','X','J','V','S','D'].map(() => `
-                                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:13px; height:13px; border-width:1px; border-color:#999;"></span>
+                                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:12px; height:12px; border-width:1px; border-color:#999;"></span>
                                                     `).join('')}
                                                 </div>
                                             </div>
@@ -3142,12 +3262,16 @@
                                     </div>
                                 ` : ''}
                                 ${hasNotes ? `
-                                    <div class="weekly-card-frame" style="padding:8px 12px; height:64px; min-height:64px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+                                    <div class="weekly-card-frame" style="padding:6px 10px; height:82px; min-height:82px; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box; background:#faf8f5;">
                                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e6dfd3; padding-bottom:3px; margin-bottom:4px;">
-                                            <strong style="font-size:0.66rem; text-transform:uppercase; color:#333; letter-spacing:0.5px;">TAREAS SECUNDARIAS / NOTAS</strong>
+                                            <strong style="font-size:0.65rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">TAREAS SECUNDARIAS / NOTAS</strong>
                                             <span style="font-size:0.58rem; color:#888; font-style:italic;">Registro libre</span>
                                         </div>
-                                        <div style="flex:1;"></div>
+                                        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                            <div style="border-bottom:1px dashed #e4ded4; height:12px;"></div>
+                                            <div style="border-bottom:1px dashed #e4ded4; height:12px;"></div>
+                                            <div style="border-bottom:1px dashed #e4ded4; height:12px;"></div>
+                                        </div>
                                     </div>
                                 ` : ''}
                             </div>
@@ -3204,10 +3328,19 @@
                 `;
             }
 
-            // 8. BITÁCORA DIARIA (ESTÁNDAR EDITORIAL FORMAL MENOS RUIDO)
+            // 8. PLANIFICADOR DIARIO (ESTÁNDAR EDITORIAL FORMAL MENOS RUIDO)
             else if (page.type === 'daily') {
                 const dayInfo = getDailyDateInfo(year, page.pageIndexInSection, isBlank);
-                const isCircle = page.design.markerShape !== 'square';
+                const markerShape = page.design.markerShape || 'circle';
+                const showPriority = page.design.showPriority !== false;
+                const showSecondary = page.design.showSecondary !== false;
+                const showHabits = page.design.showHabits !== false;
+                const showNotes = page.design.showNotes !== false;
+                const showReflection = page.design.showReflection !== false;
+
+                const hasCol1 = showPriority || showSecondary || showHabits;
+                const hasCol2 = showNotes || showReflection;
+                const gridTemplate = (hasCol1 && hasCol2) ? '1fr 1fr' : '1fr';
 
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column;">
@@ -3219,83 +3352,85 @@
                             <span class="page-header-meta">${dayInfo.meta}</span>
                         </div>
 
-                        <div class="daily-sheet-split" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; flex:1; min-height:0; margin-top:2px;">
+                        <div class="daily-sheet-split" style="display:grid; grid-template-columns: ${gridTemplate}; gap:12px; flex:1; min-height:0; margin-top:2px;">
                             <!-- COLUMNA IZQUIERDA: PRIORIDAD + SECUNDARIAS + HÁBITOS CLAVE -->
-                            <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
-                                <!-- 1. La Gran Prioridad del Día -->
-                                <div style="border: 1.6px solid #222; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 0.95; display:flex; flex-direction:column; justify-content:space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <div style="display:flex; align-items:baseline; gap:6px;">
-                                            <strong style="font-size:0.72rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">1. LA GRAN PRIORIDAD DEL DÍA</strong>
-                                            <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.72rem; color:#777;">(Innegociable)</span>
+                            ${hasCol1 ? `
+                                <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
+                                    <!-- La Gran Prioridad del Día -->
+                                    ${showPriority ? `
+                                        <div style="border: 1.6px solid #222; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1; display:flex; flex-direction:column; justify-content:space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                <div style="display:flex; align-items:baseline; gap:6px;">
+                                                    <strong style="font-size:0.72rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">LA GRAN PRIORIDAD DEL DÍA</strong>
+                                                    <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.72rem; color:#777;">(Innegociable)</span>
+                                                </div>
+                                                ${markerShape !== 'none' ? `<span class="${markerShape === 'circle' ? 'box-marker-circle' : 'box-marker-square'}" style="width:16px; height:16px; border-width:1.8px; border-color:#222;"></span>` : ''}
+                                            </div>
+                                            <div style="flex:1;"></div>
                                         </div>
-                                        <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:16px; height:16px; border-width:1.8px; border-color:#222;"></span>
-                                    </div>
-                                    <div style="flex:1;"></div>
-                                </div>
+                                    ` : ''}
 
-                                <!-- 2. Tareas Secundarias (Máximo 3) -->
-                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.35; display:flex; flex-direction:column; justify-content:space-between;">
-                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:4px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">2. TAREAS SECUNDARIAS</strong>
-                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Máximo 3 tareas de soporte)</span>
-                                    </div>
-                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
-                                            <div style="flex:1;"></div>
+                                    <!-- Tareas Secundarias (Máximo 3) -->
+                                    ${showSecondary ? `
+                                        <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 10px 12px; background: #fff; flex: 1.35; display:flex; flex-direction:column; justify-content:space-between;">
+                                            <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:4px;">
+                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">TAREAS SECUNDARIAS</strong>
+                                                <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Máximo 3 tareas de soporte)</span>
+                                            </div>
+                                            <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                                ${[1, 2, 3].map(() => `
+                                                    <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
+                                                        ${markerShape !== 'none' ? `<span class="${markerShape === 'circle' ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>` : ''}
+                                                        <div style="flex:1; border-bottom:1px solid #eee8dd; height:10px;"></div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
                                         </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            <span class="${isCircle ? 'box-marker-circle' : 'box-marker-square'}" style="width:15px; height:15px; border-width:1.5px; border-color:#555;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                    </div>
-                                </div>
+                                    ` : ''}
 
-                                <!-- 3. Hábitos Clave del Día -->
-                                <div style="border: 1px solid #d8d0c2; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1.15; display:flex; flex-direction:column; justify-content:space-between;">
-                                    <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #ede5d8; padding-bottom:4px; margin-bottom:4px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#3a3228; letter-spacing:0.5px;">3. HÁBITOS CLAVE DEL DÍA</strong>
-                                        <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Constancia diaria)</span>
-                                    </div>
-                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
-                                            <div style="flex:1;"></div>
+                                    <!-- Hábitos Clave del Día -->
+                                    ${showHabits ? `
+                                        <div style="border: 1px solid #d8d0c2; border-radius: 6px; padding: 10px 12px; background: #faf8f5; flex: 1.15; display:flex; flex-direction:column; justify-content:space-between;">
+                                            <div style="display:flex; align-items:baseline; gap:6px; border-bottom:1px solid #ede5d8; padding-bottom:4px; margin-bottom:4px;">
+                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:#3a3228; letter-spacing:0.5px;">HÁBITOS CLAVE DEL DÍA</strong>
+                                                <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Constancia diaria)</span>
+                                            </div>
+                                            <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                                                ${[1, 2, 3].map(() => `
+                                                    <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+                                                        ${markerShape !== 'none' ? `<span class="${markerShape === 'circle' ? 'box-marker-circle' : 'box-marker-square'}" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>` : ''}
+                                                        <div style="flex:1; border-bottom:1px solid #ede5d8; height:10px;"></div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
                                         </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            <span class="box-marker-circle" style="width:14px; height:14px; border-width:1.4px; border-color:#666;"></span>
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                    </div>
+                                    ` : ''}
                                 </div>
-                            </div>
+                            ` : ''}
 
                             <!-- COLUMNA DERECHA: DESCARGA MENTAL + REFLEXIÓN DE CIERRE NOCTURNO -->
-                            <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
-                                <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 12px 14px; background: #fff; flex: 1.45; display:flex; flex-direction:column;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">DESCARGA MENTAL & NOTAS RÁPIDAS</strong>
-                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Captura libre sin filtros</span>
-                                    </div>
-                                    <div style="flex:1;"></div>
+                            ${hasCol2 ? `
+                                <div style="display:flex; flex-direction:column; gap:8px; height:100%;">
+                                    ${showNotes ? `
+                                        <div style="border: 1px solid #d5cebf; border-radius: 6px; padding: 12px 14px; background: #fff; flex: ${showReflection ? 1.45 : 1}; display:flex; flex-direction:column;">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
+                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:#2c2520; letter-spacing:0.5px;">DESCARGA MENTAL & NOTAS RÁPIDAS</strong>
+                                                <span style="font-size:0.58rem; color:#888; font-style:italic;">Captura libre sin filtros</span>
+                                            </div>
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                    ` : ''}
+                                    ${showReflection ? `
+                                        <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:12px 14px; flex: ${showNotes ? 1.0 : 1}; display:flex; flex-direction:column;">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
+                                                <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
+                                                <span style="font-size:0.58rem; color:#888; font-style:italic;">Balance y calma</span>
+                                            </div>
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                    ` : ''}
                                 </div>
-                                <div style="background:#faf8f4; border:1px solid #d7cebf; border-radius:6px; padding:12px 14px; flex: 1.0; display:flex; flex-direction:column;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee8dd; padding-bottom:4px; margin-bottom:6px;">
-                                        <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">REFLEXIÓN DE CIERRE NOCTURNO</strong>
-                                        <span style="font-size:0.58rem; color:#888; font-style:italic;">Balance y calma</span>
-                                    </div>
-                                    <div style="flex:1;"></div>
-                                </div>
-                            </div>
+                            ` : ''}
                         </div>
 
                         <div class="sheet-footer">
@@ -3806,7 +3941,7 @@
             } else if (p.type === 'weekly') {
                 label = `Planificador Semanal · Semana ${p.weekNum || (p.pageIndexInSection + 1)}`;
             } else if (p.type === 'daily') {
-                label = `Bitácora Diaria · Día ${p.dayNum || (p.pageIndexInSection + 1)}`;
+                label = `Planificador Diario · Día ${p.dayNum || (p.pageIndexInSection + 1)}`;
             } else if (p.type === 'hourly') {
                 label = `Planificador Horario Semanal · Plantilla ${p.pageIndexInSection + 1}`;
             } else if (p.type === 'notes') {
@@ -4550,65 +4685,134 @@
 
                 const gridW = W - (M * 2);
 
-                // FRANJA SUPERIOR OFICIAL (METAS + HITOS)
-                const stripY = M + 12.8;
+                const hasGoals = page.design.showGoals !== false;
+                const hasMilestones = page.design.showMilestones !== false;
+                const panelPos = page.design.panelPosition || 'top';
+                const hasStrip = hasGoals || hasMilestones;
                 const stripH = 16.5;
-                const w1 = (gridW - 4) * 0.52;
-                const x2 = M + w1 + 4;
-                const w2 = gridW - w1 - 4;
+                const gap = 2.5;
+                const footerLimitY = H - 9;
+                const topContentY = M + 12.8;
 
-                // Tarjeta 1: Metas del Mes
-                doc.setFillColor(250, 248, 245);
-                doc.setDrawColor(220, 215, 204);
-                doc.setLineWidth(0.2);
-                doc.roundedRect(M, stripY, w1, stripH, 1.5, 1.5, 'FD');
+                let stripY = topContentY;
+                let calStartY = topContentY;
+                let calH = footerLimitY - calStartY;
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.2);
-                doc.setTextColor(45, 39, 34);
-                doc.text('METAS DEL MES (MÁXIMO 3)', M + 3, stripY + 4.0);
+                if (hasStrip) {
+                    if (panelPos === 'bottom') {
+                        calStartY = topContentY;
+                        calH = footerLimitY - stripH - gap - calStartY;
+                        stripY = calStartY + calH + gap;
+                    } else {
+                        stripY = topContentY;
+                        calStartY = stripY + stripH + gap;
+                        calH = footerLimitY - calStartY;
+                    }
 
-                doc.setDrawColor(230, 223, 211);
-                doc.setLineWidth(0.15);
-                doc.line(M + 3, stripY + 5.2, M + w1 - 3, stripY + 5.2);
+                    if (hasGoals && hasMilestones) {
+                        const w1 = (gridW - 4) * 0.52;
+                        const x2 = M + w1 + 4;
+                        const w2 = gridW - w1 - 4;
 
-                const rowH_goals = (stripH - 6.5) / 3;
-                for (let k = 0; k < 3; k++) {
-                    const rowY = stripY + 6.0 + (k * rowH_goals);
-                    doc.setFillColor(255, 255, 255);
-                    doc.setDrawColor(100, 100, 100);
-                    doc.setLineWidth(0.18);
-                    doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
-                }
+                        // Tarjeta 1: Metas del Mes
+                        doc.setFillColor(250, 248, 245);
+                        doc.setDrawColor(220, 215, 204);
+                        doc.setLineWidth(0.2);
+                        doc.roundedRect(M, stripY, w1, stripH, 1.5, 1.5, 'FD');
 
-                // Tarjeta 2: Hitos y Fechas Clave
-                doc.setFillColor(250, 248, 245);
-                doc.setDrawColor(220, 215, 204);
-                doc.setLineWidth(0.2);
-                doc.roundedRect(x2, stripY, w2, stripH, 1.5, 1.5, 'FD');
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.2);
+                        doc.setTextColor(45, 39, 34);
+                        doc.text('METAS DEL MES (MÁXIMO 3)', M + 3, stripY + 4.0);
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.2);
-                doc.setTextColor(45, 39, 34);
-                doc.text('HITOS Y FECHAS CLAVE', x2 + 3, stripY + 4.0);
+                        doc.setDrawColor(230, 223, 211);
+                        doc.setLineWidth(0.15);
+                        doc.line(M + 3, stripY + 5.2, M + w1 - 3, stripY + 5.2);
 
-                doc.setDrawColor(230, 223, 211);
-                doc.setLineWidth(0.15);
-                doc.line(x2 + 3, stripY + 5.2, x2 + w2 - 3, stripY + 5.2);
+                        const rowH_goals = (stripH - 6.5) / 3;
+                        for (let k = 0; k < 3; k++) {
+                            const rowY = stripY + 6.0 + (k * rowH_goals);
+                            doc.setFillColor(255, 255, 255);
+                            doc.setDrawColor(100, 100, 100);
+                            doc.setLineWidth(0.18);
+                            doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
+                        }
 
-                const rowH_m = (stripH - 6.5) / 3;
-                for (let k = 0; k < 3; k++) {
-                    const rowY = stripY + 6.0 + (k * rowH_m);
-                    doc.setDrawColor(210, 205, 196);
-                    doc.setLineWidth(0.18);
-                    doc.setFillColor(255, 255, 255);
-                    doc.roundedRect(x2 + 3.3, rowY, 8.5, 2.8, 0.4, 0.4, 'FD');
+                        // Tarjeta 2: Hitos y Fechas Clave
+                        doc.setFillColor(250, 248, 245);
+                        doc.setDrawColor(220, 215, 204);
+                        doc.setLineWidth(0.2);
+                        doc.roundedRect(x2, stripY, w2, stripH, 1.5, 1.5, 'FD');
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.2);
+                        doc.setTextColor(45, 39, 34);
+                        doc.text('HITOS Y FECHAS CLAVE', x2 + 3, stripY + 4.0);
+
+                        doc.setDrawColor(230, 223, 211);
+                        doc.setLineWidth(0.15);
+                        doc.line(x2 + 3, stripY + 5.2, x2 + w2 - 3, stripY + 5.2);
+
+                        const rowH_m = (stripH - 6.5) / 3;
+                        for (let k = 0; k < 3; k++) {
+                            const rowY = stripY + 6.0 + (k * rowH_m);
+                            doc.setDrawColor(210, 205, 196);
+                            doc.setLineWidth(0.18);
+                            doc.setFillColor(255, 255, 255);
+                            doc.roundedRect(x2 + 3.3, rowY, 8.5, 2.8, 0.4, 0.4, 'FD');
+                        }
+                    } else if (hasGoals) {
+                        // Tarjeta 1: Metas del Mes a ancho completo
+                        doc.setFillColor(250, 248, 245);
+                        doc.setDrawColor(220, 215, 204);
+                        doc.setLineWidth(0.2);
+                        doc.roundedRect(M, stripY, gridW, stripH, 1.5, 1.5, 'FD');
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.2);
+                        doc.setTextColor(45, 39, 34);
+                        doc.text('METAS DEL MES (MÁXIMO 3)', M + 3, stripY + 4.0);
+
+                        doc.setDrawColor(230, 223, 211);
+                        doc.setLineWidth(0.15);
+                        doc.line(M + 3, stripY + 5.2, M + gridW - 3, stripY + 5.2);
+
+                        const rowH_goals = (stripH - 6.5) / 3;
+                        for (let k = 0; k < 3; k++) {
+                            const rowY = stripY + 6.0 + (k * rowH_goals);
+                            doc.setFillColor(255, 255, 255);
+                            doc.setDrawColor(100, 100, 100);
+                            doc.setLineWidth(0.18);
+                            doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
+                        }
+                    } else if (hasMilestones) {
+                        // Tarjeta 2: Hitos y Fechas Clave a ancho completo
+                        doc.setFillColor(250, 248, 245);
+                        doc.setDrawColor(220, 215, 204);
+                        doc.setLineWidth(0.2);
+                        doc.roundedRect(M, stripY, gridW, stripH, 1.5, 1.5, 'FD');
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.2);
+                        doc.setTextColor(45, 39, 34);
+                        doc.text('HITOS Y FECHAS CLAVE', M + 3, stripY + 4.0);
+
+                        doc.setDrawColor(230, 223, 211);
+                        doc.setLineWidth(0.15);
+                        doc.line(M + 3, stripY + 5.2, M + gridW - 3, stripY + 5.2);
+
+                        const rowH_m = (stripH - 6.5) / 3;
+                        for (let k = 0; k < 3; k++) {
+                            const rowY = stripY + 6.0 + (k * rowH_m);
+                            doc.setDrawColor(210, 205, 196);
+                            doc.setLineWidth(0.18);
+                            doc.setFillColor(255, 255, 255);
+                            doc.roundedRect(M + 3.3, rowY, 8.5, 2.8, 0.4, 0.4, 'FD');
+                        }
+                    }
                 }
 
                 // CUADRÍCULA DE CALENDARIO DE ANCHO COMPLETO (7 COLUMNAS × 5 FILAS)
-                const calStartY = stripY + stripH + 2.5;
-                const footerLimitY = H - 9;
-                const calH = footerLimitY - calStartY;
                 const headerH = 4.2;
                 const matrixH = calH - headerH;
                 const rowH_cal = matrixH / 5;
@@ -5267,151 +5471,202 @@
 
                 const gridW = W - (M * 2);
                 const colGap = 6.5;
-                const colW = (gridW - colGap) / 2;
                 const startY = M + 13.5;
-                const col1X = M;
-                const col2X = M + colW + colGap;
-
-                // COLUMNA IZQUIERDA: 1. Gran Prioridad + 2. Tareas Secundarias + 3. Hábitos Clave
-                const b1H = 29.0;
-                const b2H = 43.0;
-                const b3H = 39.5;
                 const gapY = 2.5;
+                const totalH = (H - 9) - startY;
 
-                const b1Y = startY;
-                const b2Y = b1Y + b1H + gapY;
-                const b3Y = b2Y + b2H + gapY;
+                const markerShape = page.design.markerShape || 'circle';
+                const showPriority = page.design.showPriority !== false;
+                const showSecondary = page.design.showSecondary !== false;
+                const showHabits = page.design.showHabits !== false;
+                const showNotes = page.design.showNotes !== false;
+                const showReflection = page.design.showReflection !== false;
 
-                // 1. La Gran Prioridad del Día
-                doc.setFillColor(250, 248, 245);
-                doc.setDrawColor(35, 30, 25);
-                doc.setLineWidth(0.35);
-                doc.roundedRect(col1X, b1Y, colW, b1H, 1.5, 1.5, 'FD');
+                const hasCol1 = showPriority || showSecondary || showHabits;
+                const hasCol2 = showNotes || showReflection;
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.8);
-                doc.setTextColor(135, 85, 59);
-                doc.text('1. LA GRAN PRIORIDAD DEL DÍA', col1X + 4, b1Y + 4.8);
-
-                doc.setFont('times', 'italic');
-                doc.setFontSize(6.2);
-                doc.setTextColor(110, 100, 90);
-                doc.text('(Innegociable)', col1X + 46, b1Y + 4.8);
-
-                // Casilla de verificación destacada
-                doc.setDrawColor(35, 30, 25);
-                doc.setLineWidth(0.3);
-                if (isCircle) {
-                    doc.circle(col1X + colW - 6.5, b1Y + 4.5, 2.2, 'S');
-                } else {
-                    doc.roundedRect(col1X + colW - 8.5, b1Y + 2.5, 4.2, 4.2, 0.6, 0.6, 'S');
+                let colW = gridW;
+                let col1X = M;
+                let col2X = M;
+                if (hasCol1 && hasCol2) {
+                    colW = (gridW - colGap) / 2;
+                    col1X = M;
+                    col2X = M + colW + colGap;
                 }
 
-                // 2. Tareas Secundarias (Máximo 3)
-                doc.setFillColor(255, 255, 255);
-                doc.setDrawColor(210, 204, 195);
-                doc.setLineWidth(0.22);
-                doc.roundedRect(col1X, b2Y, colW, b2H, 1.5, 1.5, 'FD');
+                // --- COLUMNA 1: PRIORIDAD, SECUNDARIAS, HÁBITOS ---
+                if (hasCol1) {
+                    const col1Items = [];
+                    if (showPriority) col1Items.push({ id: 'priority', baseH: 29.0 });
+                    if (showSecondary) col1Items.push({ id: 'secondary', baseH: 43.0 });
+                    if (showHabits) col1Items.push({ id: 'habits', baseH: 39.5 });
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.6);
-                doc.setTextColor(40, 35, 30);
-                doc.text('2. TAREAS SECUNDARIAS', col1X + 4, b2Y + 4.6);
+                    const totalBaseH = col1Items.reduce((acc, it) => acc + it.baseH, 0);
+                    const availH1 = totalH - (gapY * (col1Items.length - 1));
 
-                doc.setFont('times', 'italic');
-                doc.setFontSize(6.0);
-                doc.setTextColor(120, 110, 100);
-                doc.text('(Máximo 3 tareas de soporte)', col1X + 40, b2Y + 4.6);
+                    let curY = startY;
+                    col1Items.forEach(item => {
+                        const h = (item.baseH / totalBaseH) * availH1;
 
-                doc.setDrawColor(230, 224, 216);
-                doc.setLineWidth(0.15);
-                doc.line(col1X + 3.5, b2Y + 6.2, col1X + colW - 3.5, b2Y + 6.2);
+                        if (item.id === 'priority') {
+                            doc.setFillColor(250, 248, 245);
+                            doc.setDrawColor(35, 30, 25);
+                            doc.setLineWidth(0.35);
+                            doc.roundedRect(col1X, curY, colW, h, 1.5, 1.5, 'FD');
 
-                const secStep = (b2H - 8.5) / 3;
-                for (let k = 0; k < 3; k++) {
-                    const rowY = b2Y + 8.5 + (k * secStep) + (secStep / 2);
-                    doc.setDrawColor(120, 110, 100);
-                    doc.setLineWidth(0.22);
-                    if (isCircle) {
-                        doc.circle(col1X + 6.5, rowY, 1.9, 'S');
-                    } else {
-                        doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6.8);
+                            doc.setTextColor(135, 85, 59);
+                            doc.text('LA GRAN PRIORIDAD DEL DÍA', col1X + 4, curY + 4.8);
+
+                            doc.setFont('times', 'italic');
+                            doc.setFontSize(6.2);
+                            doc.setTextColor(110, 100, 90);
+                            doc.text('(Innegociable)', col1X + 44, curY + 4.8);
+
+                            if (markerShape === 'circle') {
+                                doc.setDrawColor(35, 30, 25);
+                                doc.setLineWidth(0.3);
+                                doc.circle(col1X + colW - 6.5, curY + 4.5, 2.2, 'S');
+                            } else if (markerShape === 'square') {
+                                doc.setDrawColor(35, 30, 25);
+                                doc.setLineWidth(0.3);
+                                doc.roundedRect(col1X + colW - 8.5, curY + 2.5, 4.2, 4.2, 0.6, 0.6, 'S');
+                            }
+                        } else if (item.id === 'secondary') {
+                            doc.setFillColor(255, 255, 255);
+                            doc.setDrawColor(210, 204, 195);
+                            doc.setLineWidth(0.22);
+                            doc.roundedRect(col1X, curY, colW, h, 1.5, 1.5, 'FD');
+
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6.6);
+                            doc.setTextColor(40, 35, 30);
+                            doc.text('TAREAS SECUNDARIAS', col1X + 4, curY + 4.6);
+
+                            doc.setFont('times', 'italic');
+                            doc.setFontSize(6.0);
+                            doc.setTextColor(120, 110, 100);
+                            doc.text('(Máximo 3 tareas de soporte)', col1X + 37, curY + 4.6);
+
+                            doc.setDrawColor(230, 224, 216);
+                            doc.setLineWidth(0.15);
+                            doc.line(col1X + 3.5, curY + 6.2, col1X + colW - 3.5, curY + 6.2);
+
+                            const secStep = (h - 8.5) / 3;
+                            for (let k = 0; k < 3; k++) {
+                                const rowY = curY + 8.5 + (k * secStep) + (secStep / 2);
+                                if (markerShape === 'circle') {
+                                    doc.setDrawColor(120, 110, 100);
+                                    doc.setLineWidth(0.22);
+                                    doc.circle(col1X + 6.5, rowY, 1.9, 'S');
+                                } else if (markerShape === 'square') {
+                                    doc.setDrawColor(120, 110, 100);
+                                    doc.setLineWidth(0.22);
+                                    doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
+                                }
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.12);
+                                const lineStartX = markerShape === 'none' ? col1X + 6 : col1X + 12;
+                                doc.line(lineStartX, rowY + 1.2, col1X + colW - 5, rowY + 1.2);
+                            }
+                        } else if (item.id === 'habits') {
+                            doc.setFillColor(250, 248, 245);
+                            doc.setDrawColor(215, 208, 198);
+                            doc.setLineWidth(0.22);
+                            doc.roundedRect(col1X, curY, colW, h, 1.5, 1.5, 'FD');
+
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6.6);
+                            doc.setTextColor(40, 35, 30);
+                            doc.text('HÁBITOS CLAVE DEL DÍA', col1X + 4, curY + 4.6);
+
+                            doc.setFont('times', 'italic');
+                            doc.setFontSize(6.0);
+                            doc.setTextColor(120, 110, 100);
+                            doc.text('(Constancia diaria)', col1X + 41, curY + 4.6);
+
+                            doc.setDrawColor(230, 224, 216);
+                            doc.setLineWidth(0.15);
+                            doc.line(col1X + 3.5, curY + 6.2, col1X + colW - 3.5, curY + 6.2);
+
+                            const habStep = (h - 8.5) / 3;
+                            for (let k = 0; k < 3; k++) {
+                                const rowY = curY + 8.5 + (k * habStep) + (habStep / 2);
+                                if (markerShape === 'circle') {
+                                    doc.setDrawColor(120, 110, 100);
+                                    doc.setLineWidth(0.22);
+                                    doc.circle(col1X + 6.5, rowY, 1.9, 'S');
+                                } else if (markerShape === 'square') {
+                                    doc.setDrawColor(120, 110, 100);
+                                    doc.setLineWidth(0.22);
+                                    doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
+                                }
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.12);
+                                const lineStartX = markerShape === 'none' ? col1X + 6 : col1X + 12;
+                                doc.line(lineStartX, rowY + 1.2, col1X + colW - 5, rowY + 1.2);
+                            }
+                        }
+
+                        curY += h + gapY;
+                    });
+                }
+
+                // --- COLUMNA 2: DESCARGA MENTAL Y REFLEXIÓN NOCTURNA ---
+                if (hasCol2) {
+                    let mentalBoxH = totalH;
+                    let nightBoxH = totalH;
+                    let nightBoxY = startY;
+
+                    if (showNotes && showReflection) {
+                        mentalBoxH = (totalH - gapY) * 0.62;
+                        nightBoxH = totalH - mentalBoxH - gapY;
+                        nightBoxY = startY + mentalBoxH + gapY;
+                    }
+
+                    if (showNotes) {
+                        doc.setFillColor(255, 255, 255);
+                        doc.setDrawColor(210, 204, 195);
+                        doc.setLineWidth(0.22);
+                        doc.roundedRect(col2X, startY, colW, mentalBoxH, 1.5, 1.5, 'FD');
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.6);
+                        doc.setTextColor(40, 35, 30);
+                        doc.text('DESCARGA MENTAL & NOTAS RÁPIDAS', col2X + 4, startY + 4.6);
+
+                        doc.setFont('helvetica', 'italic');
+                        doc.setFontSize(5.6);
+                        doc.setTextColor(130, 120, 110);
+                        doc.text('Captura libre sin filtros', col2X + colW - 4, startY + 4.6, { align: 'right' });
+
+                        doc.setDrawColor(230, 224, 216);
+                        doc.setLineWidth(0.15);
+                        doc.line(col2X + 3.5, startY + 6.2, col2X + colW - 3.5, startY + 6.2);
+                    }
+
+                    if (showReflection) {
+                        doc.setFillColor(250, 248, 244);
+                        doc.setDrawColor(218, 210, 198);
+                        doc.setLineWidth(0.22);
+                        doc.roundedRect(col2X, nightBoxY, colW, nightBoxH, 1.5, 1.5, 'FD');
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.6);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text('REFLEXIÓN DE CIERRE NOCTURNO', col2X + 4, nightBoxY + 4.6);
+
+                        doc.setFont('helvetica', 'italic');
+                        doc.setFontSize(5.6);
+                        doc.setTextColor(130, 120, 110);
+                        doc.text('Balance y calma', col2X + colW - 4, nightBoxY + 4.6, { align: 'right' });
+
+                        doc.setDrawColor(230, 224, 216);
+                        doc.setLineWidth(0.15);
+                        doc.line(col2X + 3.5, nightBoxY + 6.2, col2X + colW - 3.5, nightBoxY + 6.2);
                     }
                 }
-
-                // 3. Hábitos Clave del Día (3 casillas limpias)
-                doc.setFillColor(250, 248, 245);
-                doc.setDrawColor(215, 208, 198);
-                doc.setLineWidth(0.22);
-                doc.roundedRect(col1X, b3Y, colW, b3H, 1.5, 1.5, 'FD');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.6);
-                doc.setTextColor(40, 35, 30);
-                doc.text('3. HÁBITOS CLAVE DEL DÍA', col1X + 4, b3Y + 4.6);
-
-                doc.setFont('times', 'italic');
-                doc.setFontSize(6.0);
-                doc.setTextColor(120, 110, 100);
-                doc.text('(Constancia diaria)', col1X + 44, b3Y + 4.6);
-
-                doc.setDrawColor(230, 224, 216);
-                doc.setLineWidth(0.15);
-                doc.line(col1X + 3.5, b3Y + 6.2, col1X + colW - 3.5, b3Y + 6.2);
-
-                const habStep = (b3H - 8.5) / 3;
-                for (let k = 0; k < 3; k++) {
-                    const rowY = b3Y + 8.5 + (k * habStep) + (habStep / 2);
-                    doc.setDrawColor(120, 110, 100);
-                    doc.setLineWidth(0.22);
-                    doc.circle(col1X + 6.5, rowY, 1.9, 'S');
-                }
-
-                // COLUMNA DERECHA: Descarga mental & Reflexión de cierre nocturno
-                const totalRightH = b1H + b2H + b3H + (gapY * 2);
-                const mentalBoxH = 67.0;
-                const nightBoxH = totalRightH - mentalBoxH - gapY;
-                const nightBoxY = startY + mentalBoxH + gapY;
-
-                // Descarga Mental & Notas Rápidas
-                doc.setFillColor(255, 255, 255);
-                doc.setDrawColor(210, 204, 195);
-                doc.setLineWidth(0.22);
-                doc.roundedRect(col2X, startY, colW, mentalBoxH, 1.5, 1.5, 'FD');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.6);
-                doc.setTextColor(40, 35, 30);
-                doc.text('DESCARGA MENTAL & NOTAS RÁPIDAS', col2X + 4, startY + 4.6);
-
-                doc.setFont('helvetica', 'italic');
-                doc.setFontSize(5.6);
-                doc.setTextColor(130, 120, 110);
-                doc.text('Captura libre sin filtros', col2X + colW - 4, startY + 4.6, { align: 'right' });
-
-                doc.setDrawColor(230, 224, 216);
-                doc.setLineWidth(0.15);
-                doc.line(col2X + 3.5, startY + 6.2, col2X + colW - 3.5, startY + 6.2);
-
-                // Reflexión de Cierre Nocturno
-                doc.setFillColor(250, 248, 244);
-                doc.setDrawColor(218, 210, 198);
-                doc.setLineWidth(0.22);
-                doc.roundedRect(col2X, nightBoxY, colW, nightBoxH, 1.5, 1.5, 'FD');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.6);
-                doc.setTextColor(135, 85, 59);
-                doc.text('REFLEXIÓN DE CIERRE NOCTURNO', col2X + 4, nightBoxY + 4.6);
-
-                doc.setFont('helvetica', 'italic');
-                doc.setFontSize(5.6);
-                doc.setTextColor(130, 120, 110);
-                doc.text('Balance y calma', col2X + colW - 4, nightBoxY + 4.6, { align: 'right' });
-
-                doc.setDrawColor(230, 224, 216);
-                doc.setLineWidth(0.15);
-                doc.line(col2X + 3.5, nightBoxY + 6.2, col2X + colW - 3.5, nightBoxY + 6.2);
 
             // 9. PÁGINA DE NOTAS (PUNTOS, CUADRITOS, LÍNEAS O BLANCO)
             } else if (page.type === 'notes') {
