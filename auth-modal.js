@@ -353,7 +353,7 @@ export function setupNavbarAuth() {
               <span>Ajustes de cuenta</span>
             </a>
             ${isDev ? `
-            <a href="/mi-espacio.html?tab=dev" class="dropdown-user-item item-dev">
+            <a href="/mi-espacio.html?tab=dev" class="dropdown-user-item item-dev" id="nav-dropdown-dev-link">
               <span class="item-icon">⚡</span>
               <span>Panel Desarrollador</span>
               <span class="dev-badge">DEV</span>
@@ -372,6 +372,14 @@ export function setupNavbarAuth() {
       const dropdownWrap = document.getElementById('nav-user-dropdown-wrap');
       const toggleBtn = document.getElementById('nav-user-pill-toggle');
       const logoutBtn = document.getElementById('dropdown-logout-btn');
+      const devLink = document.getElementById('nav-dropdown-dev-link');
+
+      devLink?.addEventListener('click', (e) => {
+        if (window.location.pathname.toLowerCase().includes('mi-espacio')) {
+          e.preventDefault();
+          window.location.search = '?tab=dev';
+        }
+      });
 
       toggleBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
