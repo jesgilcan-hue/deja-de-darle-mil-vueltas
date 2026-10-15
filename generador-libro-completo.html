@@ -4558,33 +4558,33 @@
             doc.text('MENOS RUIDO · PLANIFICADOR PERSONALIZADO', M, H - 7);
             doc.text(`editorialmenosruido.com · Pág. ${pageNum}`, W - M, H - 7, { align: 'right' });
 
-            // 1. PORTADA INTERIOR (EDICIÓN CLÁSICA DE LUJO CON DOBLE MARCO)
+            // 1. PORTADA INTERIOR (EDICIÓN CLÁSICA DE LUJO CON DOBLE MARCO CALIBRADO)
             if (page.type === 'cover') {
-                // Marco exterior
+                // Marco exterior calibrado (Y: 9mm a 141mm -> alto 132mm)
                 doc.setDrawColor(210, 200, 185);
                 doc.setLineWidth(0.6);
-                doc.rect(M + 5, M + 5, W - (M * 2) - 10, H - (M * 2) - 14);
+                doc.rect(M, 9, W - (M * 2), 132);
 
-                // Marco interior fino
+                // Marco interior fino (Y: 11mm a 139mm -> alto 128mm)
                 doc.setDrawColor(230, 222, 210);
                 doc.setLineWidth(0.25);
-                doc.rect(M + 7, M + 7, W - (M * 2) - 14, H - (M * 2) - 18);
+                doc.rect(M + 2.5, 11, W - (M * 2) - 5, 128);
 
                 // Insignia superior
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7.5);
                 doc.setTextColor(140, 95, 65);
-                doc.text('✦   EDITORIAL MENOS RUIDO   ✦', W / 2, M + 20, { align: 'center' });
+                doc.text('✦   EDITORIAL MENOS RUIDO   ✦', W / 2, 18, { align: 'center' });
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.5);
                 doc.setTextColor(150, 140, 130);
-                doc.text('EDICIÓN ANALÓGICA · CUADERNO PERSONALIZADO', W / 2, M + 25, { align: 'center' });
+                doc.text('EDICIÓN ANALÓGICA · CUADERNO PERSONALIZADO', W / 2, 22.5, { align: 'center' });
 
                 // Línea divisoria con diamante superior
                 const divW = 90;
                 const divX = (W - divW) / 2;
-                const div1Y = M + 34;
+                const div1Y = 27.5;
                 doc.setDrawColor(220, 212, 200);
                 doc.setLineWidth(0.25);
                 doc.line(divX, div1Y, divX + 38, div1Y);
@@ -4596,20 +4596,20 @@
 
                 // Título
                 doc.setFont('times', 'bold');
-                doc.setFontSize(22);
+                doc.setFontSize(18);
                 doc.setTextColor(25, 22, 19);
                 const titleText = (bookConfig.title || 'MI PLANIFICADOR PERSONAL').substring(0, 50);
-                doc.text(titleText, W / 2, M + 45, { align: 'center' });
+                doc.text(titleText, W / 2, 36, { align: 'center' });
 
                 // Subtítulo
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9.5);
+                doc.setFontSize(8.5);
                 doc.setTextColor(95, 88, 80);
                 const subtitleText = (bookConfig.subtitle || 'Edición Analógica · Enfoque Diario y Claridad Mental').substring(0, 85);
-                doc.text(subtitleText, W / 2, M + 53, { align: 'center' });
+                doc.text(subtitleText, W / 2, 42.5, { align: 'center' });
 
                 // Línea divisoria con diamante inferior
-                const div2Y = M + 62;
+                const div2Y = 48;
                 doc.setDrawColor(220, 212, 200);
                 doc.setLineWidth(0.25);
                 doc.line(divX, div2Y, divX + 38, div2Y);
@@ -4620,10 +4620,10 @@
                 doc.line(divX + 52, div2Y, divX + divW, div2Y);
 
                 // Cartela Ex Libris
-                const cartW = 100;
-                const cartH = 34;
+                const cartW = 104;
+                const cartH = 26;
                 const cartX = (W - cartW) / 2;
-                const cartY = M + 72;
+                const cartY = 54;
 
                 doc.setFillColor(252, 250, 246);
                 doc.setDrawColor(218, 208, 195);
@@ -4633,62 +4633,63 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7);
                 doc.setTextColor(140, 95, 65);
-                doc.text('❖   EX LIBRIS   ❖', W / 2, cartY + 7, { align: 'center' });
+                doc.text('❖   EX LIBRIS   ❖', W / 2, cartY + 5.5, { align: 'center' });
 
                 // Campo Propietario
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.8);
+                doc.setFontSize(6.5);
                 doc.setTextColor(80, 72, 64);
-                doc.text('ESTE CUADERNO PERTENECE A:', cartX + 6, cartY + 17);
+                doc.text('ESTE CUADERNO PERTENECE A:', cartX + 6, cartY + 13.5);
 
                 const ownerVal = (bookConfig.owner || '').substring(0, 35);
                 if (!isBlank && ownerVal) {
                     doc.setFont('times', 'italic');
-                    doc.setFontSize(9.5);
+                    doc.setFontSize(9.0);
                     doc.setTextColor(20, 17, 15);
-                    doc.text(ownerVal, cartX + 52, cartY + 16.5);
+                    doc.text(ownerVal, cartX + 52, cartY + 13);
                 }
                 doc.setDrawColor(180, 170, 160);
                 doc.setLineWidth(0.2);
-                doc.line(cartX + 50, cartY + 18, cartX + cartW - 6, cartY + 18);
+                doc.line(cartX + 50, cartY + 14.5, cartX + cartW - 6, cartY + 14.5);
 
                 // Campo Período
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(6.8);
+                doc.setFontSize(6.5);
                 doc.setTextColor(80, 72, 64);
-                doc.text('PERÍODO / AÑO:', cartX + 6, cartY + 27);
+                doc.text('PERÍODO / AÑO:', cartX + 6, cartY + 21);
 
                 doc.setFont('times', 'italic');
-                doc.setFontSize(9.0);
+                doc.setFontSize(8.5);
                 doc.setTextColor(50, 45, 40);
                 const periodText = isBlank ? 'Atemporal (Inicio libre)' : `Año ${year}`;
-                doc.text(periodText, cartX + 52, cartY + 26.5);
+                doc.text(periodText, cartX + 52, cartY + 20.5);
                 doc.setDrawColor(180, 170, 160);
                 doc.setLineWidth(0.2);
-                doc.line(cartX + 50, cartY + 28, cartX + cartW - 6, cartY + 28);
+                doc.line(cartX + 50, cartY + 22, cartX + cartW - 6, cartY + 22);
 
                 // Caja dedicatoria
-                const dedW = 100;
+                const dedW = 104;
                 const dedX = (W - dedW) / 2;
-                const dedY = cartY + cartH + 12;
+                const dedY = 86;
+                const dedH = 19;
 
                 doc.setFillColor(250, 247, 242);
                 doc.setDrawColor(225, 218, 208);
                 doc.setLineWidth(0.25);
-                doc.roundedRect(dedX, dedY, dedW, 20, 2, 2, 'FD');
+                doc.roundedRect(dedX, dedY, dedW, dedH, 2, 2, 'FD');
 
                 doc.setFont('times', 'italic');
-                doc.setFontSize(8.5);
+                doc.setFontSize(8.0);
                 doc.setTextColor(90, 80, 70);
                 const dedText = `«${(bookConfig.dedication || '').substring(0, 140)}»`;
-                const dedLines = doc.splitTextToSize(dedText, dedW - 14);
-                doc.text(dedLines, W / 2, dedY + 7.5, { align: 'center' });
+                const dedLines = doc.splitTextToSize(dedText, dedW - 12);
+                doc.text(dedLines, W / 2, dedY + 6.5, { align: 'center' });
 
-                // Colofón inferior
+                // Colofón inferior (centrado elegantemente entre caja dedicatoria y marco inferior)
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(6.0);
                 doc.setTextColor(150, 142, 132);
-                doc.text('Impreso en papel libre de distracciones · Pensado para escribir despacio y pensar con claridad', W / 2, H - M - 12, { align: 'center' });
+                doc.text('Impreso en papel libre de distracciones · Pensado para escribir despacio y pensar con claridad', W / 2, 124, { align: 'center' });
 
             // PÁGINA 2: EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO (FORMAL, SIN PIE DUPLICADO)
             } else if (page.type === 'editorial') {
