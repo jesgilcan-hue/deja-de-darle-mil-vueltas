@@ -220,8 +220,15 @@ function activateTab(tabId) {
   tabPanes.forEach(p => {
     if (p.id === tabId) {
       p.classList.add('active');
+      if (tabId === 'tab-dev' || tabId === 'tab-futuras') {
+        p.style.removeProperty('display');
+        p.style.setProperty('display', 'block', 'important');
+      }
     } else {
       p.classList.remove('active');
+      if (p.id === 'tab-dev' || p.id === 'tab-futuras') {
+        p.style.setProperty('display', 'none', 'important');
+      }
     }
   });
 
@@ -235,13 +242,13 @@ function checkUrlTab() {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab');
   const user = auth.currentUser;
-  const isDev = isDeveloper(user);
+  const isDev = isDeveloper(user) || (sessionStorage.getItem('mr_dev_pin_verified') === 'true');
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
   } else if (tab === 'dev') {
     if (isDev) {
-      if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
+      if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-dev');
     } else {
       activateTab('tab-disenos');
@@ -250,7 +257,7 @@ function checkUrlTab() {
     activateTab('tab-disenos');
   } else if (tab === 'futuras') {
     if (isDev) {
-      if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
+      if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-futuras');
     } else {
       activateTab('tab-disenos');
@@ -297,6 +304,46 @@ function setupEvents() {
       setTimeout(() => window.location.href = '/', 500);
     } catch (err) {
       console.error('Error al cerrar sesión:', err);
+    }
+  });
+
+  // Atajos de emergencia para el propietario con PIN 1111
+  const triggerMasterPinUnlock = () => {
+    const pin = prompt('Introduce el PIN maestro de desarrollador (4 dígitos):');
+    if (pin === DEVELOPER_PIN) {
+      try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
+      showToast('⚡ Modo desarrollador activado');
+      if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
+      if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
+      if (userRoleBadge) {
+        userRoleBadge.textContent = 'DESARROLLADOR';
+        userRoleBadge.className = 'role-badge dev';
+        userRoleBadge.style.setProperty('display', 'inline-block', 'important');
+      }
+      if (devLockedView) devLockedView.style.display = 'none';
+      if (devUnlockedContent) devUnlockedContent.style.display = 'block';
+      activateTab('tab-dev');
+    } else if (pin !== null) {
+      alert('PIN incorrecto.');
+    }
+  };
+
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.altKey && (e.key === 'd' || e.key === 'D')) {
+      triggerMasterPinUnlock();
+    }
+  });
+
+  let secretClicks = 0;
+  let secretTimer = null;
+  userNameDisplay?.addEventListener('click', () => {
+    secretClicks++;
+    clearTimeout(secretTimer);
+    if (secretClicks >= 5) {
+      secretClicks = 0;
+      triggerMasterPinUnlock();
+    } else {
+      secretTimer = setTimeout(() => { secretClicks = 0; }, 1500);
     }
   });
 
@@ -559,16 +606,17 @@ function setupDeleteModal() {
 function unlockDevPanel() {
   const pin = devPinInput.value.trim();
   if (pin === DEVELOPER_PIN) {
+    try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
     devLockedView.style.display = 'none';
     devUnlockedContent.style.display = 'block';
     devPinError.style.display = 'none';
 
-    if (tabBtnDev) tabBtnDev.style.display = 'inline-flex';
-    if (tabBtnFuturas) tabBtnFuturas.style.display = 'inline-flex';
+    if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
+    if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
     if (userRoleBadge) {
       userRoleBadge.textContent = 'DESARROLLADOR';
       userRoleBadge.className = 'role-badge dev';
-      userRoleBadge.style.display = 'inline-block';
+      userRoleBadge.style.setProperty('display', 'inline-block', 'important');
     }
     showToast('⚡ Panel de desarrollador desbloqueado');
   } else {
@@ -606,41 +654,45 @@ function renderAuthenticatedView(user) {
     userEmailDisplay.textContent = email || '';
   }
 
-  // Comprobar rol de desarrollador ESTRICTO (EXCLUSIVAMENTE jesgilcan@gmail.com)
-  const isDev = isDeveloper(user);
+  // Comprobar rol de desarrollador ESTRICTO (jesgilcan@gmail.com o PIN maestro verificado)
+  const isDev = isDeveloper(user) || (sessionStorage.getItem('mr_dev_pin_verified') === 'true');
   const tabDevPane = document.getElementById('tab-dev');
   const tabFuturasPane = document.getElementById('tab-futuras');
 
   if (isDev) {
+    try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
     if (userRoleBadge) {
       userRoleBadge.textContent = 'DESARROLLADOR';
       userRoleBadge.className = 'role-badge dev';
-      userRoleBadge.style.display = 'inline-block';
+      userRoleBadge.style.setProperty('display', 'inline-block', 'important');
     }
     if (tabBtnDev) {
       tabBtnDev.style.removeProperty('display');
-      tabBtnDev.style.display = 'inline-flex';
+      tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
     }
     if (tabDevPane) {
       tabDevPane.style.removeProperty('display');
     }
     if (tabBtnFuturas) {
       tabBtnFuturas.style.removeProperty('display');
-      tabBtnFuturas.style.display = 'inline-flex';
+      tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
     }
     if (devLockedView) devLockedView.style.display = 'none';
     if (devUnlockedContent) devUnlockedContent.style.display = 'block';
   } else {
     // USUARIO CLIENTE (CUALQUIER CORREO DISTINTO DE jesgilcan@gmail.com):
-    // ELIMINACIÓN FÍSICA RADICAL DEL DOM. NO EXISTE EN SU PANTALLA NI EN SU CÓDIGO.
-    if (userRoleBadge) userRoleBadge.remove();
-    if (tabBtnDev) tabBtnDev.remove();
-    if (tabDevPane) tabDevPane.remove();
-    if (tabBtnFuturas) tabBtnFuturas.remove();
-    if (tabFuturasPane) tabFuturasPane.remove();
+    // Se oculta tajantemente con display: none !important sin romper el DOM con .remove()
+    if (userRoleBadge) userRoleBadge.style.setProperty('display', 'none', 'important');
+    if (tabBtnDev) tabBtnDev.style.setProperty('display', 'none', 'important');
+    if (tabDevPane) tabDevPane.style.setProperty('display', 'none', 'important');
+    if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
+    if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
 
     // Si por alguna razón estaba en la pestaña de dev, forzar a disenos
-    activateTab('tab-disenos');
+    const activeBtn = document.querySelector('.tab-btn.active');
+    if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras')) {
+      activateTab('tab-disenos');
+    }
   }
 
   // Guardar datos básicos en caché local (NUNCA guardar flags de desarrollador)

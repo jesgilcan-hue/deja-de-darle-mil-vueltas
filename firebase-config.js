@@ -167,4 +167,4 @@ export async function syncUserProfile(user) {
   return userData;
 }
 
-export { onAuthStateChanged, signOut, sendSignInLinkToEmail };
+export { onAuthStateChanged, signOut, sendSignInLinkToEmail, signInWithPopup };

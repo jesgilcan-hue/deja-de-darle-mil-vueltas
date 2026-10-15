@@ -90,6 +90,9 @@ function injectAuthModal() {
       showStatus('Conectando con Google...', 'info');
       const result = await signInWithPopup(auth, googleProvider);
       await syncUserProfile(result.user);
+      if (isDeveloper(result.user)) {
+        try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
+      }
       showStatus('¡Acceso concedido!', 'success');
       setTimeout(() => {
         closeAuthModal();
@@ -102,12 +105,13 @@ function injectAuthModal() {
             return;
           }
         }
-        // Si ya estamos en la página del generador o cualquier otra página, simplemente recargar o cerrar
-        if (!window.location.pathname.endsWith('mi-espacio.html')) {
-          // Si estamos en un generador, un evento o cierre basta sin expulsar al usuario
-          window.dispatchEvent(new CustomEvent('mr-auth-success', { detail: result.user }));
-        } else {
+        // Si estamos en Mi Espacio (soporta /mi-espacio y /mi-espacio.html por cleanUrls), recargar la página
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath.includes('mi-espacio')) {
           window.location.reload();
+        } else {
+          // Si estamos en un generador o página de libro, emitir evento para actualizar navbar sin parpadeo
+          window.dispatchEvent(new CustomEvent('mr-auth-success', { detail: result.user }));
         }
       }, 500);
     } catch (err) {
