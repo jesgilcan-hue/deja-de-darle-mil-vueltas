@@ -2047,6 +2047,10 @@
 
     <!-- SCRIPT DEL MOTOR DEL CONSTRUCTOR DE LIBROS -->
     <script>
+        // ESTADO GLOBAL DEL PLANIFICADOR
+        let currentPreviewPageIndex = 0;
+        let generatedPageList = [];
+
         // CONFIGURACIÓN GLOBAL Y PARÁMETROS DE DISEÑO POR SECCIÓN
         let bookConfig = {
             title: "PLANIFICADOR Y BITÁCORA ANUAL",
@@ -2062,7 +2066,8 @@
                     name: "Portada Interior & Dedicatoria", 
                     type: "cover", 
                     active: true, 
-                    pages: 1 
+                    pages: 1,
+                    design: {}
                 },
                 { 
                     id: "calendar", 
@@ -2385,7 +2390,9 @@
                             if (sec) {
                                 if (savedSec.active !== undefined) sec.active = savedSec.active;
                                 if (savedSec.pages !== undefined) sec.pages = savedSec.pages;
-                                if (savedSec.design) sec.design = { ...sec.design, ...savedSec.design };
+                                if (savedSec.design && typeof savedSec.design === 'object') {
+                                    sec.design = { ...(sec.design || {}), ...savedSec.design };
+                                }
                             }
                         });
                     }
@@ -2402,8 +2409,8 @@
             const layoutSel = document.getElementById('layoutModeSelect');
             if (layoutSel && bookConfig.layoutMode) layoutSel.value = bookConfig.layoutMode;
 
-            renderSectionsList();
             recalcPages();
+            renderSectionsList();
             renderPreviewPage();
         }
 
@@ -2753,9 +2760,11 @@
         // RENDERIZAR LISTA DE SECCIONES CON AJUSTES ESPECÍFICOS DE DISEÑO
         function renderSectionsList() {
             const container = document.getElementById('sectionsListContainer');
+            if (!container) return;
             container.innerHTML = '';
 
             bookConfig.sections.forEach((sec, idx) => {
+                sec.design = sec.design || {};
                 const card = document.createElement('div');
                 card.setAttribute('data-section-id', sec.id);
                 const isCurrent = currentPreviewPageIndex < generatedPageList.length && generatedPageList[currentPreviewPageIndex].sectionId === sec.id;
@@ -3052,7 +3061,8 @@
 
         function updateSectionDesign(id, key, val) {
             const sec = bookConfig.sections.find(s => s.id === id);
-            if (sec && sec.design) {
+            if (sec) {
+                sec.design = sec.design || {};
                 sec.design[key] = val;
                 recalcPages();
                 const idx = generatedPageList.findIndex(p => p.sectionId === id);
