@@ -328,10 +328,9 @@ export function setupNavbarAuth() {
 
       userWrap.innerHTML = `
         <div class="nav-user-dropdown-wrap" id="nav-user-dropdown-wrap">
-          <button type="button" class="nav-user-pill ${isDev ? 'is-dev' : ''}" id="nav-user-pill-toggle" aria-expanded="false" title="Mi Cuenta">
+          <button type="button" class="nav-user-pill" id="nav-user-pill-toggle" aria-expanded="false" title="Mi Cuenta">
             <span class="user-pill-avatar">${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : initial}</span>
             <span class="user-pill-name">${escapeHtml(firstName)}</span>
-            ${isDev ? '<span class="dev-badge">DEV</span>' : ''}
             <svg class="user-pill-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
           </button>
           <div class="nav-user-dropdown-menu" id="nav-user-dropdown-menu">
@@ -352,13 +351,6 @@ export function setupNavbarAuth() {
               <span class="item-icon">⚙️</span>
               <span>Ajustes de cuenta</span>
             </a>
-            ${isDev ? `
-            <a href="/mi-espacio.html?tab=dev" class="dropdown-user-item item-dev">
-              <span class="item-icon">⚡</span>
-              <span>Panel Desarrollador</span>
-              <span class="dev-badge">DEV</span>
-            </a>
-            ` : ''}
             <div class="dropdown-user-divider"></div>
             <button type="button" class="dropdown-user-item item-logout" id="dropdown-logout-btn">
               <span class="item-icon">🚪</span>
