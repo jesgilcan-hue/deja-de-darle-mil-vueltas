@@ -879,7 +879,8 @@ function renderDesignsGrid() {
     let rawTargetUrl = item.editUrl;
     const typeLow = (item.type || '').toLowerCase();
     if (!rawTargetUrl) {
-      if (typeLow.includes('diario')) rawTargetUrl = '/generador-planificador-diario.html';
+      if (typeLow.includes('libro') || typeLow.includes('cuaderno')) rawTargetUrl = '/generador-libro-completo.html';
+      else if (typeLow.includes('diario')) rawTargetUrl = '/generador-planificador-diario.html';
       else if (typeLow.includes('mensual')) rawTargetUrl = '/generador-planificador-mensual.html';
       else if (typeLow.includes('habito')) rawTargetUrl = '/generador-planificador-habitos.html';
       else if (typeLow.includes('horario')) rawTargetUrl = '/generador-planificador-horario.html';
@@ -895,7 +896,8 @@ function renderDesignsGrid() {
 
     let badgeClass = 'semanal';
     let typeLabel = 'Planificador Semanal';
-    if (typeLow.includes('diario')) { badgeClass = 'diario'; typeLabel = 'Planificador Diario'; }
+    if (typeLow.includes('libro') || typeLow.includes('cuaderno')) { badgeClass = 'anual'; typeLabel = 'Cuaderno Completo'; }
+    else if (typeLow.includes('diario')) { badgeClass = 'diario'; typeLabel = 'Planificador Diario'; }
     else if (typeLow.includes('mensual')) { badgeClass = 'mensual'; typeLabel = 'Planificador Mensual'; }
     else if (typeLow.includes('habito')) { badgeClass = 'habitos'; typeLabel = 'Planificador de Hábitos'; }
     else if (typeLow.includes('horario')) { badgeClass = 'horario'; typeLabel = 'Planificador Horario'; }

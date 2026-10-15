@@ -3,6 +3,14 @@
 // Remitente oficial de materiales: recursos@editorialmenosruido.com
 // Formato humano personal (como un email normal escrito por una persona)
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb'
+    }
+  }
+};
+
 export default async function handler(req, res) {
   // Configuración de CORS y cabeceras
   res.setHeader('Access-Control-Allow-Credentials', 'true');

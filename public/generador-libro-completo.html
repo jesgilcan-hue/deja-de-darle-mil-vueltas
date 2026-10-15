@@ -38,6 +38,9 @@
         }
     </script>
 
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="./style.css" />
+
     <style>
         :root {
             --bg-color: #f7f5f0;
@@ -1899,7 +1902,7 @@
                 <div class="viewer-nav-buttons" style="display: flex; align-items: center; gap: 8px;">
                     <div style="display: inline-flex; align-items: center; gap: 4px; border-right: 1px solid #dcd4c7; padding-right: 8px; margin-right: 4px;">
                         <button type="button" class="btn-page-nav" onclick="zoomViewer(-0.1)" title="Reducir zoom">− Zoom</button>
-                        <button type="button" class="btn-page-nav" onclick="zoomViewer(0)" title="Tamaño 100%">100%</button>
+                        <button type="button" class="btn-page-nav" id="btnZoomPercent" onclick="zoomViewer(0)" title="Restablecer tamaño 100%">100%</button>
                         <button type="button" class="btn-page-nav" onclick="zoomViewer(0.1)" title="Aumentar zoom">+ Zoom</button>
                     </div>
                     <button class="btn-page-nav" id="btnPrevPage" onclick="prevPreviewPage()">← Anterior</button>
@@ -1937,7 +1940,7 @@
     <!-- BLOQUE CORPORATIVO INFERIOR -->
     <footer class="hub-footer-block">
         <p>
-            <strong>Menos Ruido · Editorial de Foco Analógico</strong><br />
+            <strong>Editorial Menos Ruido</strong><br />
             Todas las páginas se generan en formato apaisado libro 8.25" × 6" (209.55 × 152.4 mm).<br />
             ¿Prefieres el cuaderno encuadernado de imprenta? Descubre nuestras ediciones oficiales en Amazon.
         </p>
@@ -2075,7 +2078,7 @@
                     type: "calendar", 
                     active: true, 
                     pages: 1, 
-                    design: { yearMode: "2026" } // "2026", "2027", "both"
+                    design: { yearMode: "2026", showWeekNumbers: true } // "2026", "2027", "both" | showWeekNumbers
                 },
                 { 
                     id: "annual", 
@@ -2093,7 +2096,7 @@
                     active: true, 
                     pages: 12, 
                     countLabel: "meses",
-                    design: { showGoals: true, showMilestones: true, panelPosition: "top" }
+                    design: { showGoals: true, showMilestones: true, panelPosition: "top", showWeekNumbers: true }
                 },
                 { 
                     id: "habits", 
@@ -2281,6 +2284,23 @@
             });
         }
 
+        // CÁLCULO DE NÚMERO DE SEMANA ISO 8601 (Semana 1..52/53)
+        function getISOWeek(year, month, day) {
+            const date = new Date(year, month, day);
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        // DESELECCIONAR PREAJUSTE Y MARCAR PERSONALIZADO
+        function markCustomPresetActive() {
+            document.querySelectorAll('.btn-preset').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-preset') === 'libre');
+            });
+        }
+
         // FUNCIÓN AUXILIAR DE ESCAPADO SEGURO HTML
         function escapeHtml(str) {
             if (!str) return '';
@@ -2310,7 +2330,12 @@
 
         function handleHourlyIntervalChange(val) {
             const sec = bookConfig.sections.find(s => s.id === 'hourly');
-            if (sec && sec.design) {
+            if (sec) {
+                if (!sec.active) {
+                    sec.active = true;
+                    markCustomPresetActive();
+                }
+                sec.design = sec.design || {};
                 sec.design.interval = val;
                 const validOptions = hourlyRowOptions[val] || hourlyRowOptions["1h"];
                 if (!validOptions.includes(sec.design.rows)) {
@@ -2322,6 +2347,7 @@
                 if (idx !== -1) {
                     currentPreviewPageIndex = idx;
                 }
+                saveCompleteBookConfigLocally();
                 renderSectionsList();
                 renderPreviewPage();
             }
@@ -2725,14 +2751,32 @@
                     }
 
                     const count = parseInt(sec.pages, 10) || 1;
+                    const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
                     for (let i = 0; i < count; i++) {
+                        let secName = sec.name;
+                        let extra = {};
+                        if (sec.type === 'monthly') {
+                            secName = isBlank ? `Planificador Mensual (Mes ${i + 1})` : `Planificador Mensual · ${mNames[i % 12]}`;
+                            extra = { monthIndex: i };
+                        } else if (sec.type === 'habits') {
+                            secName = isBlank ? `Rastreador de Hábitos (Mes ${i + 1})` : `Rastreador Hábitos · ${mNames[i % 12]}`;
+                            extra = { monthIndex: i };
+                        } else if (sec.type === 'weekly') {
+                            secName = `Planificador Semanal · Semana ${i + 1}`;
+                            extra = { weekNum: i + 1 };
+                        } else if (sec.type === 'daily') {
+                            secName = `Bitácora Diaria · Día ${i + 1}`;
+                            extra = { dayNum: i + 1 };
+                        }
+
                         generatedPageList.push({
                             type: sec.type,
                             sectionId: sec.id,
-                            sectionName: sec.name,
+                            sectionName: secName,
                             pageIndexInSection: i,
                             totalPagesInSection: count,
-                            design: sec.design || {}
+                            design: sec.design || {},
+                            ...extra
                         });
                     }
                 });
@@ -2777,10 +2821,17 @@
                         <div class="section-design-box">
                             <div class="design-opt-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
                                 <label style="font-size:0.75rem; font-weight:700; color:#443c35;">Año del calendario:</label>
-                                <select style="width:100%; box-sizing:border-box;" onchange="updateSectionDesign('${sec.id}', 'yearMode', this.value)">
+                                <select style="width:100%; box-sizing:border-box;" onchange="updateSectionDesign('${sec.id}', 'yearMode', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="2026" ${sec.design.yearMode === '2026' ? 'selected' : ''}>📅 Año 2026 (1 página)</option>
                                     <option value="2027" ${sec.design.yearMode === '2027' ? 'selected' : ''}>📅 Año 2027 (1 página)</option>
                                     <option value="both" ${sec.design.yearMode === 'both' ? 'selected' : ''}>📅 Año 2026 y 2027 (2 páginas)</option>
+                                </select>
+                            </div>
+                            <div class="design-opt-row" style="flex-direction:column; align-items:flex-start; gap:4px; margin-top:4px;">
+                                <label style="font-size:0.75rem; font-weight:700; color:#443c35;">Número de semana:</label>
+                                <select style="width:100%; box-sizing:border-box;" onchange="updateSectionDesign('${sec.id}', 'showWeekNumbers', this.value === 'true')" onfocus="jumpToSection('${sec.id}')">
+                                    <option value="true" ${sec.design.showWeekNumbers !== false ? 'selected' : ''}>📅 Mostrar número de semana (S1–S52)</option>
+                                    <option value="false" ${sec.design.showWeekNumbers === false ? 'selected' : ''}>❌ Sin número de semana</option>
                                 </select>
                             </div>
                         </div>
@@ -2789,22 +2840,29 @@
                     designControlsHtml = `
                         <div class="section-design-box">
                             <div class="design-opt-row">
+                                <label>Número de semana:</label>
+                                <select onchange="updateSectionDesign('${sec.id}', 'showWeekNumbers', this.value === 'true')" onfocus="jumpToSection('${sec.id}')">
+                                    <option value="true" ${sec.design.showWeekNumbers !== false ? 'selected' : ''}>📅 Mostrar semana (S1–S5)</option>
+                                    <option value="false" ${sec.design.showWeekNumbers === false ? 'selected' : ''}>❌ Sin número de semana</option>
+                                </select>
+                            </div>
+                            <div class="design-opt-row">
                                 <label>Metas del mes:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'showGoals', this.value === 'true')">
+                                <select onchange="updateSectionDesign('${sec.id}', 'showGoals', this.value === 'true')" onfocus="jumpToSection('${sec.id}')">
                                     <option value="true" ${sec.design.showGoals !== false ? 'selected' : ''}>🎯 Mostrar Metas</option>
                                     <option value="false" ${sec.design.showGoals === false ? 'selected' : ''}>❌ Sin Metas</option>
                                 </select>
                             </div>
                             <div class="design-opt-row">
                                 <label>Hitos y fechas:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'showMilestones', this.value === 'true')">
+                                <select onchange="updateSectionDesign('${sec.id}', 'showMilestones', this.value === 'true')" onfocus="jumpToSection('${sec.id}')">
                                     <option value="true" ${sec.design.showMilestones !== false ? 'selected' : ''}>📅 Mostrar Hitos</option>
                                     <option value="false" ${sec.design.showMilestones === false ? 'selected' : ''}>❌ Sin Hitos</option>
                                 </select>
                             </div>
                             <div class="design-opt-row">
                                 <label>Posición franja:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'panelPosition', this.value)">
+                                <select onchange="updateSectionDesign('${sec.id}', 'panelPosition', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="top" ${sec.design.panelPosition !== 'bottom' ? 'selected' : ''}>⬆️ Arriba del calendario</option>
                                     <option value="bottom" ${sec.design.panelPosition === 'bottom' ? 'selected' : ''}>⬇️ Abajo del calendario</option>
                                 </select>
@@ -2816,14 +2874,14 @@
                         <div class="section-design-box">
                             <div class="design-opt-row">
                                 <label>Forma casillas:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)">
+                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="circle" ${sec.design.markerShape === 'circle' ? 'selected' : ''}>⚪ Círculos</option>
                                     <option value="square" ${sec.design.markerShape === 'square' ? 'selected' : ''}>◻️ Cuadrados</option>
                                 </select>
                             </div>
                             <div class="design-opt-row">
                                 <label>Franja inferior:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'bottomSection', this.value)">
+                                <select onchange="updateSectionDesign('${sec.id}', 'bottomSection', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="both" ${sec.design.bottomSection === 'both' ? 'selected' : ''}>🌱 Hábitos + 📝 Notas</option>
                                     <option value="habits" ${sec.design.bottomSection === 'habits' ? 'selected' : ''}>Solo Hábitos</option>
                                     <option value="notes" ${sec.design.bottomSection === 'notes' ? 'selected' : ''}>Solo Notas</option>
@@ -2837,7 +2895,7 @@
                         <div class="section-design-box">
                             <div class="design-opt-row">
                                 <label>Forma casillas:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)">
+                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="circle" ${sec.design.markerShape === 'circle' ? 'selected' : ''}>⚪ Círculos</option>
                                     <option value="square" ${sec.design.markerShape === 'square' ? 'selected' : ''}>◻️ Cuadrados</option>
                                     <option value="none" ${sec.design.markerShape === 'none' ? 'selected' : ''}>⚪ Sin casillas (Espacio limpio)</option>
@@ -2846,23 +2904,23 @@
                             <div style="font-size:0.68rem; font-weight:800; color:#6d645b; margin-top:3px; text-transform:uppercase; letter-spacing:0.5px;">Secciones del día:</div>
                             <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
                                 <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
-                                    <input type="checkbox" ${sec.design.showPriority !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showPriority', this.checked)">
+                                    <input type="checkbox" ${sec.design.showPriority !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showPriority', this.checked)" onfocus="jumpToSection('${sec.id}')">
                                     Gran Prioridad del Día
                                 </label>
                                 <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
-                                    <input type="checkbox" ${sec.design.showSecondary !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showSecondary', this.checked)">
+                                    <input type="checkbox" ${sec.design.showSecondary !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showSecondary', this.checked)" onfocus="jumpToSection('${sec.id}')">
                                     Tareas Secundarias
                                 </label>
                                 <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
-                                    <input type="checkbox" ${sec.design.showHabits !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showHabits', this.checked)">
+                                    <input type="checkbox" ${sec.design.showHabits !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showHabits', this.checked)" onfocus="jumpToSection('${sec.id}')">
                                     Hábitos Clave
                                 </label>
                                 <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
-                                    <input type="checkbox" ${sec.design.showNotes !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showNotes', this.checked)">
+                                    <input type="checkbox" ${sec.design.showNotes !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showNotes', this.checked)" onfocus="jumpToSection('${sec.id}')">
                                     Descarga Mental & Notas
                                 </label>
                                 <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
-                                    <input type="checkbox" ${sec.design.showReflection !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showReflection', this.checked)">
+                                    <input type="checkbox" ${sec.design.showReflection !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showReflection', this.checked)" onfocus="jumpToSection('${sec.id}')">
                                     Reflexión Cierre Nocturno
                                 </label>
                             </div>
@@ -2898,20 +2956,20 @@
                         <div class="section-design-box">
                             <div class="design-opt-row">
                                 <label>Caja de notas/reflexión:</label>
-                                <select onchange="handleHabitsNotesToggle('${sec.id}', this.value === 'true')">
+                                <select onchange="handleHabitsNotesToggle('${sec.id}', this.value === 'true')" onfocus="jumpToSection('${sec.id}')">
                                     <option value="true" ${showNotes ? 'selected' : ''}>📝 Con caja de reflexión</option>
                                     <option value="false" ${!showNotes ? 'selected' : ''}>❌ Sin caja (más hábitos)</option>
                                 </select>
                             </div>
                             <div class="design-opt-row">
                                 <label>Número de hábitos:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'habitCount', parseInt(this.value, 10))">
+                                <select onchange="updateSectionDesign('${sec.id}', 'habitCount', parseInt(this.value, 10))" onfocus="jumpToSection('${sec.id}')">
                                     ${habitOptionsHtml}
                                 </select>
                             </div>
                             <div class="design-opt-row">
                                 <label>Casillas de días:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)">
+                                <select onchange="updateSectionDesign('${sec.id}', 'markerShape', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="circle" ${sec.design.markerShape === 'circle' ? 'selected' : ''}>⚪ Círculos</option>
                                     <option value="square" ${sec.design.markerShape === 'square' ? 'selected' : ''}>◻️ Cuadrados</option>
                                 </select>
@@ -2935,7 +2993,7 @@
                         <div class="section-design-box">
                             <div class="design-opt-row">
                                 <label>Hora inicio:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'startHour', this.value)">
+                                <select onchange="updateSectionDesign('${sec.id}', 'startHour', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="06:00" ${sec.design.startHour === '06:00' ? 'selected' : ''}>06:00</option>
                                     <option value="07:00" ${sec.design.startHour === '07:00' ? 'selected' : ''}>07:00</option>
                                     <option value="08:00" ${sec.design.startHour === '08:00' ? 'selected' : ''}>08:00</option>
@@ -2944,7 +3002,7 @@
                             </div>
                             <div class="design-opt-row">
                                 <label>Intervalo:</label>
-                                <select onchange="handleHourlyIntervalChange(this.value)">
+                                <select onchange="handleHourlyIntervalChange(this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="1h" ${sec.design.interval === '1h' ? 'selected' : ''}>1 hora</option>
                                     <option value="2h" ${sec.design.interval === '2h' ? 'selected' : ''}>2 horas</option>
                                     <option value="3h" ${sec.design.interval === '3h' ? 'selected' : ''}>3 horas</option>
@@ -2954,7 +3012,7 @@
                             </div>
                             <div class="design-opt-row">
                                 <label>Filas (Horas):</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'rows', parseInt(this.value, 10))">
+                                <select onchange="updateSectionDesign('${sec.id}', 'rows', parseInt(this.value, 10))" onfocus="jumpToSection('${sec.id}')">
                                     ${rowsOptionsHtml}
                                 </select>
                             </div>
@@ -2965,7 +3023,7 @@
                         <div class="section-design-box">
                             <div class="design-opt-row">
                                 <label>Tipo de papel:</label>
-                                <select onchange="updateSectionDesign('${sec.id}', 'gridStyle', this.value)">
+                                <select onchange="updateSectionDesign('${sec.id}', 'gridStyle', this.value)" onfocus="jumpToSection('${sec.id}')">
                                     <option value="dots" ${sec.design.gridStyle === 'dots' ? 'selected' : ''}>• Cuadrícula de Puntos (5 mm)</option>
                                     <option value="squares" ${sec.design.gridStyle === 'squares' ? 'selected' : ''}>◻️ Cuadritos / Grid (5 mm)</option>
                                     <option value="lines" ${sec.design.gridStyle === 'lines' ? 'selected' : ''}>— Renglones / Líneas (7 mm)</option>
@@ -2996,6 +3054,7 @@
                                     max="${(sectionLimits[sec.id] && sectionLimits[sec.id].max) || 365}" 
                                     value="${sec.pages}" 
                                     style="width: 58px;" 
+                                    onfocus="jumpToSection('${sec.id}')"
                                     oninput="validateSectionPagesInput(this, '${sec.id}')"
                                     onchange="updateSectionPages('${sec.id}', this.value)">
                                 <span style="font-size:0.75rem; color:#6b6257;">${sec.countLabel || 'págs'} <small style="color:#8c8276;">(máx. ${(sectionLimits[sec.id] && sectionLimits[sec.id].max) || 365})</small></span>
@@ -3005,6 +3064,12 @@
                     </div>
                     ${designControlsHtml}
                 `;
+
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-order') || e.target.closest('input[type="checkbox"]')) return;
+                    jumpToSection(sec.id);
+                });
+
                 container.appendChild(card);
             });
         }
@@ -3012,6 +3077,10 @@
         function handleHabitsNotesToggle(secId, showNotes) {
             const sec = bookConfig.sections.find(s => s.id === secId);
             if (sec && sec.design) {
+                if (!sec.active) {
+                    sec.active = true;
+                    markCustomPresetActive();
+                }
                 sec.design.showNotes = showNotes;
                 if (showNotes && sec.design.habitCount > 10) {
                     sec.design.habitCount = 10;
@@ -3026,6 +3095,7 @@
             const sec = bookConfig.sections.find(s => s.id === id);
             if (sec) {
                 sec.active = !sec.active;
+                markCustomPresetActive();
                 recalcPages();
                 if (sec.active) {
                     const idx = generatedPageList.findIndex(p => p.sectionId === id);
@@ -3048,6 +3118,9 @@
                 if (num > lim.max) num = lim.max;
                 if (num < lim.min) num = lim.min;
                 sec.pages = num;
+                if (id !== 'notes') {
+                    markCustomPresetActive();
+                }
                 recalcPages();
                 const idx = generatedPageList.findIndex(p => p.sectionId === id);
                 if (idx !== -1) {
@@ -3062,6 +3135,10 @@
         function updateSectionDesign(id, key, val) {
             const sec = bookConfig.sections.find(s => s.id === id);
             if (sec) {
+                if (!sec.active) {
+                    sec.active = true;
+                    markCustomPresetActive();
+                }
                 sec.design = sec.design || {};
                 sec.design[key] = val;
                 recalcPages();
@@ -3081,6 +3158,7 @@
             const temp = bookConfig.sections[index];
             bookConfig.sections[index] = bookConfig.sections[newIndex];
             bookConfig.sections[newIndex] = temp;
+            markCustomPresetActive();
             recalcPages();
             const idx = generatedPageList.findIndex(p => p.sectionId === temp.id);
             if (idx !== -1) {
@@ -3095,6 +3173,7 @@
             const sec = bookConfig.sections.find(s => s.id === sectionId);
             if (sec && !sec.active) {
                 sec.active = true;
+                markCustomPresetActive();
                 recalcPages();
                 renderSectionsList();
             }
@@ -3298,7 +3377,7 @@
                             <span class="page-header-meta">${calIsBlank ? 'SIN FECHAS FIJAS' : 'AÑO ' + calYear}</span>
                         </div>
                         <div class="calendar-months-grid" style="display:grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap:8px 12px; flex:1;">
-                            ${renderCalendarMonthsHtml(calYear, calIsBlank)}
+                            ${renderCalendarMonthsHtml(calYear, calIsBlank, page.design ? page.design.showWeekNumbers !== false : true)}
                         </div>
                         <div class="sheet-footer">
                             <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
@@ -3363,24 +3442,41 @@
                     const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
 
                     for (let i = 0; i < 35; i++) {
+                        let weekBadgeHtml = '';
+                        if (i % 7 === 0 && page.design && page.design.showWeekNumbers !== false && !isBlank) {
+                            let wDate;
+                            if (i < startCol) {
+                                wDate = new Date(year, monthIndex - 1, daysInPrevMonth - startCol + 1 + i);
+                            } else if (i < startCol + daysInMonth) {
+                                wDate = new Date(year, monthIndex, i - startCol + 1);
+                            } else {
+                                wDate = new Date(year, monthIndex + 1, i - (startCol + daysInMonth) + 1);
+                            }
+                            const wNum = getISOWeek(wDate);
+                            weekBadgeHtml = `<span style="position:absolute; top:2px; left:3px; font-size:0.50rem; font-weight:700; color:#8c8276; background:#f4efe8; padding:1px 3px; border-radius:2px; line-height:1;">S${wNum}</span>`;
+                        }
+
                         if (i < startCol) {
                             const dNum = daysInPrevMonth - startCol + 1 + i;
                             cellsHtml += `
-                                <div class="monthly-cal-table-cell faded">
+                                <div class="monthly-cal-table-cell faded" style="position:relative;">
+                                    ${weekBadgeHtml}
                                     <span class="monthly-cal-cell-num">${dNum}</span>
                                 </div>
                             `;
                         } else if (i < startCol + daysInMonth) {
                             const dNum = i - startCol + 1;
                             cellsHtml += `
-                                <div class="monthly-cal-table-cell">
+                                <div class="monthly-cal-table-cell" style="position:relative;">
+                                    ${weekBadgeHtml}
                                     <span class="monthly-cal-cell-num">${dNum}</span>
                                 </div>
                             `;
                         } else {
                             const dNum = i - (startCol + daysInMonth) + 1;
                             cellsHtml += `
-                                <div class="monthly-cal-table-cell faded">
+                                <div class="monthly-cal-table-cell faded" style="position:relative;">
+                                    ${weekBadgeHtml}
                                     <span class="monthly-cal-cell-num">${dNum}</span>
                                 </div>
                             `;
@@ -3913,7 +4009,7 @@
         }
 
         // RENDERIZADO MATEMÁTICO DEL CALENDARIO DE 12 MESES
-        function renderCalendarMonthsHtml(year, isBlank) {
+        function renderCalendarMonthsHtml(year, isBlank, showWeekNumbers = true) {
             const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
             let html = '';
 
@@ -3924,13 +4020,16 @@
                     </div>
                     <table style="width:100%; border-collapse:collapse; font-size:0.56rem; text-align:center; line-height:1.25;">
                         <thead>
-                            <tr style="color:#8c8276;"><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th></tr>
+                            <tr style="color:#8c8276;">
+                                ${showWeekNumbers ? '<th style="background:#f4efe8; color:#8c8276; font-size:0.50rem; font-weight:700; width:12%; border-radius:2px 0 0 2px;">S</th>' : ''}
+                                <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
+                            </tr>
                         </thead>
                         <tbody>`;
 
                 if (isBlank) {
                     for (let r = 0; r < 5; r++) {
-                        html += `<tr><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>`;
+                        html += `<tr>${showWeekNumbers ? '<td style="background:#f7f3ee; color:#8c8276; font-size:0.50rem;">·</td>' : ''}<td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>`;
                     }
                 } else {
                     const firstDayIndex = (new Date(year, m, 1).getDay() + 6) % 7;
@@ -3939,18 +4038,24 @@
 
                     for (let row = 0; row < 6; row++) {
                         if (currentDay > totalDays) break;
-                        html += `<tr>`;
+                        let rowHtml = `<tr>`;
+                        if (showWeekNumbers) {
+                            const wMonday = new Date(year, m, 1 + (row * 7) - firstDayIndex);
+                            const wNum = getISOWeek(wMonday);
+                            rowHtml += `<td style="background:#f7f3ee; color:#8c8276; font-size:0.50rem; font-weight:700; border-radius:2px 0 0 2px;">${wNum}</td>`;
+                        }
                         for (let col = 0; col < 7; col++) {
                             if (row === 0 && col < firstDayIndex) {
-                                html += `<td style="color:transparent;"></td>`;
+                                rowHtml += `<td style="color:transparent;"></td>`;
                             } else if (currentDay <= totalDays) {
-                                html += `<td>${currentDay}</td>`;
+                                rowHtml += `<td>${currentDay}</td>`;
                                 currentDay++;
                             } else {
-                                html += `<td style="color:transparent;"></td>`;
+                                rowHtml += `<td style="color:transparent;"></td>`;
                             }
                         }
-                        html += `</tr>`;
+                        rowHtml += `</tr>`;
+                        html += rowHtml;
                     }
                 }
 
@@ -4331,20 +4436,69 @@
                 }
 
             } else {
+                const prelimPages = [];
+                const finalPages = [];
+                const sectionGroups = [];
+
                 bookConfig.sections.forEach(sec => {
                     if (!sec.active) return;
-                    const secPages = generatedPageList
-                        .map((pg, idx) => ({ ...pg, globalPageNum: idx + 1, globalIndex: idx }))
-                        .filter(pg => pg.sectionId === sec.id);
-                    if (secPages.length === 0) return;
+                    if (sec.id === 'cover') {
+                        generatedPageList.forEach((pg, idx) => {
+                            if (pg.type === 'cover' || pg.type === 'editorial' || pg.type === 'index') {
+                                prelimPages.push({ ...pg, globalPageNum: idx + 1, globalIndex: idx });
+                            }
+                        });
+                    } else {
+                        const secPages = generatedPageList
+                            .map((pg, idx) => ({ ...pg, globalPageNum: idx + 1, globalIndex: idx }))
+                            .filter(pg => pg.sectionId === sec.id);
+                        if (secPages.length > 0) {
+                            sectionGroups.push({ sec, pages: secPages });
+                        }
+                    }
+                });
 
-                    const gid = `group_sec_${sec.id}`;
+                generatedPageList.forEach((pg, idx) => {
+                    if (pg.type === 'gratitude') {
+                        finalPages.push({ ...pg, globalPageNum: idx + 1, globalIndex: idx });
+                    }
+                });
+
+                if (prelimPages.length > 0) {
+                    const gid = 'group_prelim_blocks';
                     if (collapsedIndexGroups[gid] === undefined) {
-                        collapsedIndexGroups[gid] = secPages.length > 4;
+                        collapsedIndexGroups[gid] = prelimPages.length > 4;
                     }
                     const isCollapsed = !!collapsedIndexGroups[gid];
-                    const startP = secPages[0].globalPageNum;
-                    const endP = secPages[secPages.length - 1].globalPageNum;
+                    const p1 = prelimPages[0].globalPageNum;
+                    const p2 = prelimPages[prelimPages.length - 1].globalPageNum;
+                    const pRangeStr = p1 === p2 ? `Pág. ${p1}` : `Págs. ${p1}–${p2}`;
+                    groupsHtml += `
+                        <div class="index-group-card" data-group-id="${gid}">
+                            <div class="index-group-header">
+                                <div class="index-group-header-left">
+                                    <button type="button" class="btn-group-toggle" onclick="toggleIndexGroupCollapse('${gid}')" title="${isCollapsed ? 'Desplegar páginas' : 'Ocultar páginas'}">
+                                        ${isCollapsed ? '▶' : '▼'}
+                                    </button>
+                                    <span class="index-group-title" title="Apertura & Editorial">🌟 Apertura & Editorial</span>
+                                </div>
+                                <span class="index-group-count">${pRangeStr}</span>
+                            </div>
+                            <div class="index-pages-list" style="display: ${isCollapsed ? 'none' : 'grid'};">
+                                ${prelimPages.map(p => renderIndexPageItem(p)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                sectionGroups.forEach(({ sec, pages }) => {
+                    const gid = `group_sec_${sec.id}`;
+                    if (collapsedIndexGroups[gid] === undefined) {
+                        collapsedIndexGroups[gid] = pages.length > 4;
+                    }
+                    const isCollapsed = !!collapsedIndexGroups[gid];
+                    const startP = pages[0].globalPageNum;
+                    const endP = pages[pages.length - 1].globalPageNum;
                     const pRangeStr = startP === endP ? `Pág. ${startP}` : `Págs. ${startP}–${endP}`;
 
                     groupsHtml += `
@@ -4359,11 +4513,38 @@
                                 <span class="index-group-count">${pRangeStr}</span>
                             </div>
                             <div class="index-pages-list" style="display: ${isCollapsed ? 'none' : 'grid'};">
-                                ${secPages.map(p => renderIndexPageItem(p)).join('')}
+                                ${pages.map(p => renderIndexPageItem(p)).join('')}
                             </div>
                         </div>
                     `;
                 });
+
+                if (finalPages.length > 0) {
+                    const gid = 'group_gratitude_blocks';
+                    if (collapsedIndexGroups[gid] === undefined) {
+                        collapsedIndexGroups[gid] = false;
+                    }
+                    const isCollapsed = !!collapsedIndexGroups[gid];
+                    const startP = finalPages[0].globalPageNum;
+                    const endP = finalPages[finalPages.length - 1].globalPageNum;
+                    const pRangeStr = startP === endP ? `Pág. ${startP}` : `Págs. ${startP}–${endP}`;
+                    groupsHtml += `
+                        <div class="index-group-card" data-group-id="${gid}">
+                            <div class="index-group-header">
+                                <div class="index-group-header-left">
+                                    <button type="button" class="btn-group-toggle" onclick="toggleIndexGroupCollapse('${gid}')" title="${isCollapsed ? 'Desplegar páginas' : 'Ocultar páginas'}">
+                                        ${isCollapsed ? '▶' : '▼'}
+                                    </button>
+                                    <span class="index-group-title" title="Cierre & Gratitud">✨ Cierre & Gratitud</span>
+                                </div>
+                                <span class="index-group-count">${pRangeStr}</span>
+                            </div>
+                            <div class="index-pages-list" style="display: ${isCollapsed ? 'none' : 'grid'};">
+                                ${finalPages.map(p => renderIndexPageItem(p)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
             }
 
             container.innerHTML = groupsHtml;
@@ -4380,11 +4561,11 @@
             else if (p.type === 'calendar') label = `Calendario Anual (${p.calendarYear || bookConfig.year})`;
             else if (p.type === 'annual') label = `Planificador Anual Estratégico`;
             else if (p.type === 'monthly') {
-                const mIdx = p.monthIndex !== undefined ? (p.monthIndex % 12) : 0;
-                label = bookConfig.dateMode === 'blank' ? `Planificador Mensual (Mes ${p.pageIndexInSection + 1})` : `Planificador Mensual · ${monthNames[mIdx]}`;
+                const mIdx = p.monthIndex !== undefined ? (p.monthIndex % 12) : (p.pageIndexInSection !== undefined ? (p.pageIndexInSection % 12) : 0);
+                label = bookConfig.dateMode === 'blank' ? `Planificador Mensual (Mes ${(p.pageIndexInSection || 0) + 1})` : `Planificador Mensual · ${monthNames[mIdx]}`;
             } else if (p.type === 'habits') {
-                const mIdx = p.monthIndex !== undefined ? (p.monthIndex % 12) : 0;
-                label = bookConfig.dateMode === 'blank' ? `Rastreador Hábitos (Mes ${p.pageIndexInSection + 1})` : `Rastreador Hábitos · ${monthNames[mIdx]}`;
+                const mIdx = p.monthIndex !== undefined ? (p.monthIndex % 12) : (p.pageIndexInSection !== undefined ? (p.pageIndexInSection % 12) : 0);
+                label = bookConfig.dateMode === 'blank' ? `Rastreador Hábitos (Mes ${(p.pageIndexInSection || 0) + 1})` : `Rastreador Hábitos · ${monthNames[mIdx]}`;
             } else if (p.type === 'weekly') {
                 label = `Planificador Semanal · Sem. ${p.weekNum || (p.pageIndexInSection + 1)}`;
             } else if (p.type === 'daily') {
@@ -4396,7 +4577,7 @@
             }
 
             return `
-                <div class="index-page-item ${isCurrent ? 'active-viewing' : ''}" onclick="jumpToPageIndex(${p.globalIndex})">
+                <div class="index-page-item ${isCurrent ? 'active-viewing' : ''}" data-global-index="${p.globalIndex}" onclick="jumpToPageIndex(${p.globalIndex})">
                     <span class="index-page-num">${String(p.globalPageNum).padStart(2, '0')}</span>
                     <span class="index-page-name" title="${escapeHtml(label)}">${escapeHtml(label)}</span>
                     ${isCurrent ? '<span class="index-badge-viewing">👁️</span>' : ''}
@@ -4408,8 +4589,9 @@
             if (indexViewMode === 'sections') {
                 renderBookIndex();
             } else {
-                document.querySelectorAll('.index-page-item').forEach((item, idx) => {
-                    const isThis = idx === currentPreviewPageIndex;
+                document.querySelectorAll('.index-page-item').forEach(item => {
+                    const gIdx = parseInt(item.getAttribute('data-global-index'), 10);
+                    const isThis = gIdx === currentPreviewPageIndex;
                     item.classList.toggle('active-viewing', isThis);
                     let badge = item.querySelector('.index-badge-viewing');
                     if (isThis && !badge) {
@@ -4430,6 +4612,10 @@
                 currentViewerZoom = 1.0;
             } else {
                 currentViewerZoom = Math.min(Math.max(0.6, Math.round((currentViewerZoom + delta) * 10) / 10), 1.5);
+            }
+            const zoomBtn = document.getElementById('btnZoomPercent');
+            if (zoomBtn) {
+                zoomBtn.textContent = `${Math.round(currentViewerZoom * 100)}%`;
             }
             const pageEl = document.getElementById('interactiveBookPage');
             if (pageEl) {
@@ -4530,7 +4716,8 @@
             const doc = new jsPDFLib({
                 orientation: 'landscape',
                 unit: 'mm',
-                format: [209.55, 152.4]
+                format: [209.55, 152.4],
+                compress: true
             });
 
             const W = 209.55;
@@ -4625,6 +4812,10 @@
 
                 const pdfBase64 = res.doc.output('datauristring');
 
+                if (pdfBase64.length > 5.8 * 1024 * 1024) {
+                    throw new Error('El PDF generado supera el límite permitido para envío por correo (~4.5MB). Puedes descargarlo directamente en tu ordenador con el botón de descarga.');
+                }
+
                 const response = await fetch('/api/send-pdf', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -4636,7 +4827,16 @@
                     })
                 });
 
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (jsonErr) {
+                    if (response.status === 413) {
+                        throw new Error('El archivo PDF es demasiado grande para enviarse por correo (límite del servidor excedido). Por favor, descárgalo directamente usando el botón de descarga.');
+                    }
+                    throw new Error(`Error en el servidor (${response.status}): no se pudo procesar la respuesta.`);
+                }
+
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || 'Error al procesar el envío del correo.');
                 }
@@ -5025,11 +5225,26 @@
                         doc.text(`${months[mIdx]} ${calIsBlank ? '' : calYear}`, bX + (colW / 2), bY + 3.0, { align: 'center' });
 
                         // Días de la semana
-                        const daysW = colW / 7;
+                        const hasWeeks = page.design && page.design.showWeekNumbers !== false;
+                        const numCols = hasWeeks ? 8 : 7;
+                        const daysW = colW / numCols;
+                        const weekColW = hasWeeks ? daysW : 0;
+
+                        if (hasWeeks) {
+                            doc.setFillColor(245, 241, 234);
+                            doc.rect(bX, bY + headerH, weekColW, rowH - headerH, 'F');
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(4.4);
+                            doc.setTextColor(140, 130, 120);
+                            doc.text('S', bX + (weekColW / 2), bY + 7.5, { align: 'center' });
+                        }
+
+                        doc.setFont('helvetica', 'bold');
                         doc.setFontSize(4.8);
                         doc.setTextColor(130, 120, 110);
                         ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach((d, i) => {
-                            doc.text(d, bX + (i * daysW) + (daysW / 2), bY + 7.5, { align: 'center' });
+                            const dX = bX + weekColW + (i * daysW) + (daysW / 2);
+                            doc.text(d, dX, bY + 7.5, { align: 'center' });
                         });
 
                         // Cuadrícula de números
@@ -5037,13 +5252,26 @@
                             const firstDay = (new Date(calYear, mIdx, 1).getDay() + 6) % 7;
                             const totalDays = new Date(calYear, mIdx + 1, 0).getDate();
                             let cur = 1;
-                            doc.setTextColor(35, 30, 25);
+
                             for (let wr = 0; wr < 6; wr++) {
                                 if (cur > totalDays) break;
+
+                                if (hasWeeks) {
+                                    const wMonday = new Date(calYear, mIdx, 1 + (wr * 7) - firstDay);
+                                    const wNum = getISOWeek(wMonday);
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setFontSize(4.4);
+                                    doc.setTextColor(140, 130, 120);
+                                    doc.text(String(wNum), bX + (weekColW / 2), bY + 11.2 + (wr * 3.6), { align: 'center' });
+                                }
+
+                                doc.setTextColor(35, 30, 25);
                                 for (let wc = 0; wc < 7; wc++) {
                                     if (wr === 0 && wc < firstDay) continue;
                                     if (cur <= totalDays) {
-                                        doc.text(String(cur), bX + (wc * daysW) + (daysW / 2), bY + 11.2 + (wr * 3.6), { align: 'center' });
+                                        doc.setFont('helvetica', 'normal');
+                                        doc.setFontSize(4.8);
+                                        doc.text(String(cur), bX + weekColW + (wc * daysW) + (daysW / 2), bY + 11.2 + (wr * 3.6), { align: 'center' });
                                         cur++;
                                     }
                                 }
@@ -5388,13 +5616,28 @@
 
                             let dayNumber = 0;
                             let isCur = false;
+                            let cellDate = null;
                             if (cellIdx < startCol) {
                                 dayNumber = daysInPrevMonth - startCol + 1 + cellIdx;
+                                cellDate = new Date(year, monthIndex - 1, dayNumber);
                             } else if (cellIdx < startCol + daysInMonth) {
                                 dayNumber = cellIdx - startCol + 1;
                                 isCur = true;
+                                cellDate = new Date(year, monthIndex, dayNumber);
                             } else {
                                 dayNumber = cellIdx - (startCol + daysInMonth) + 1;
+                                cellDate = new Date(year, monthIndex + 1, dayNumber);
+                            }
+
+                            // Badge de semana en la primera columna (Lunes)
+                            if (c === 0 && page.design && page.design.showWeekNumbers !== false && cellDate) {
+                                const wNum = getISOWeek(cellDate);
+                                doc.setFillColor(245, 240, 233);
+                                doc.roundedRect(cellX + 1.2, cellY + 0.9, 5.8, 2.7, 0.4, 0.4, 'F');
+                                doc.setFont('helvetica', 'bold');
+                                doc.setFontSize(4.6);
+                                doc.setTextColor(140, 130, 118);
+                                doc.text(`S${wNum}`, cellX + 4.1, cellY + 2.8, { align: 'center' });
                             }
 
                             doc.setFont('helvetica', isCur ? 'bold' : 'normal');
@@ -6290,10 +6533,48 @@
             }
         }
 
+        function applyCompleteBookData(data) {
+            if (!data) return;
+            if (data.title) bookConfig.title = data.title;
+            if (data.subtitle) bookConfig.subtitle = data.subtitle;
+            if (data.owner !== undefined) bookConfig.owner = data.owner;
+            if (data.dedication !== undefined) bookConfig.dedication = data.dedication;
+            if (data.layoutMode) bookConfig.layoutMode = data.layoutMode;
+            if (data.dateMode) bookConfig.dateMode = data.dateMode;
+            if (data.year) bookConfig.year = data.year;
+            if (Array.isArray(data.sections)) {
+                data.sections.forEach(savedSec => {
+                    const sec = bookConfig.sections.find(s => s.id === savedSec.id);
+                    if (sec) {
+                        if (savedSec.active !== undefined) sec.active = savedSec.active;
+                        if (savedSec.pages !== undefined) sec.pages = savedSec.pages;
+                        if (savedSec.design && typeof savedSec.design === 'object') {
+                            sec.design = { ...(sec.design || {}), ...savedSec.design };
+                        }
+                    }
+                });
+            }
+            const dateSel = document.getElementById('dateModeSelect');
+            if (dateSel && bookConfig.dateMode) dateSel.value = bookConfig.dateMode;
+            const layoutSel = document.getElementById('layoutModeSelect');
+            if (layoutSel && bookConfig.layoutMode) layoutSel.value = bookConfig.layoutMode;
+            recalcPages();
+            renderSectionsList();
+            renderPreviewPage();
+        }
+        window.applyCompleteBookData = applyCompleteBookData;
+
         window.addEventListener('DOMContentLoaded', init);
     </script>
+    <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave } from './save-generator-design.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        checkAndLoadSavedDesign((data) => {
+            if (typeof applyCompleteBookData === 'function') {
+                applyCompleteBookData(data);
+            }
+        });
 
         setupGeneratorSave('btn-save-generator-design', () => {
             return {
