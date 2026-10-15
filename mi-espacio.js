@@ -307,46 +307,6 @@ function setupEvents() {
     }
   });
 
-  // Atajos de emergencia para el propietario con PIN 1111
-  const triggerMasterPinUnlock = () => {
-    const pin = prompt('Introduce el PIN maestro de desarrollador (4 dígitos):');
-    if (pin === DEVELOPER_PIN) {
-      try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
-      showToast('⚡ Modo desarrollador activado');
-      if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
-      if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
-      if (userRoleBadge) {
-        userRoleBadge.textContent = 'DESARROLLADOR';
-        userRoleBadge.className = 'role-badge dev';
-        userRoleBadge.style.setProperty('display', 'inline-block', 'important');
-      }
-      if (devLockedView) devLockedView.style.display = 'none';
-      if (devUnlockedContent) devUnlockedContent.style.display = 'block';
-      activateTab('tab-dev');
-    } else if (pin !== null) {
-      alert('PIN incorrecto.');
-    }
-  };
-
-  window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.altKey && (e.key === 'd' || e.key === 'D')) {
-      triggerMasterPinUnlock();
-    }
-  });
-
-  let secretClicks = 0;
-  let secretTimer = null;
-  userNameDisplay?.addEventListener('click', () => {
-    secretClicks++;
-    clearTimeout(secretTimer);
-    if (secretClicks >= 5) {
-      secretClicks = 0;
-      triggerMasterPinUnlock();
-    } else {
-      secretTimer = setTimeout(() => { secretClicks = 0; }, 1500);
-    }
-  });
-
   // Guardar cambios en el perfil (Nombre para mostrar)
   formPerfil?.addEventListener('submit', async (e) => {
     e.preventDefault();
