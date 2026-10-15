@@ -1167,6 +1167,7 @@
             padding: 2px 2px 6px;
             border-bottom: 1px dashed #e6ded3;
             margin-bottom: 4px;
+            flex-shrink: 0;
         }
         .index-group-card {
             background: #faf8f5;
@@ -1178,7 +1179,7 @@
             gap: 6px;
             width: 100%;
             box-sizing: border-box;
-            overflow: hidden;
+            flex-shrink: 0;
         }
         .index-group-header {
             display: flex;
@@ -2285,8 +2286,15 @@
         }
 
         // CÁLCULO DE NÚMERO DE SEMANA ISO 8601 (Semana 1..52/53)
-        function getISOWeek(year, month, day) {
-            const date = new Date(year, month, day);
+        function getISOWeek(yearOrDate, month, day) {
+            let date;
+            if (yearOrDate instanceof Date) {
+                date = yearOrDate;
+            } else if (typeof yearOrDate === 'number') {
+                date = new Date(yearOrDate, month !== undefined ? month : 0, day !== undefined ? day : 1);
+            } else {
+                date = new Date();
+            }
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
             const dayNum = d.getUTCDay() || 7;
             d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -3453,31 +3461,37 @@
                                 wDate = new Date(year, monthIndex + 1, i - (startCol + daysInMonth) + 1);
                             }
                             const wNum = getISOWeek(wDate);
-                            weekBadgeHtml = `<span style="position:absolute; top:2px; left:3px; font-size:0.50rem; font-weight:700; color:#8c8276; background:#f4efe8; padding:1px 3px; border-radius:2px; line-height:1;">S${wNum}</span>`;
+                            weekBadgeHtml = `<span style="display:inline-flex; align-items:center; justify-content:center; background:#ebe5db; color:#7d7367; font-size:0.46rem; font-weight:700; border-radius:50%; min-width:14px; height:14px; line-height:1; padding:1px; flex-shrink:0;" title="Semana ${wNum}">S${wNum}</span>`;
                         }
 
                         if (i < startCol) {
                             const dNum = daysInPrevMonth - startCol + 1 + i;
                             cellsHtml += `
-                                <div class="monthly-cal-table-cell faded" style="position:relative;">
-                                    ${weekBadgeHtml}
-                                    <span class="monthly-cal-cell-num">${dNum}</span>
+                                <div class="monthly-cal-table-cell faded">
+                                    <div style="display:flex; align-items:center; gap:4px; line-height:1; min-height:14px;">
+                                        <span class="monthly-cal-cell-num">${dNum}</span>
+                                        ${weekBadgeHtml}
+                                    </div>
                                 </div>
                             `;
                         } else if (i < startCol + daysInMonth) {
                             const dNum = i - startCol + 1;
                             cellsHtml += `
-                                <div class="monthly-cal-table-cell" style="position:relative;">
-                                    ${weekBadgeHtml}
-                                    <span class="monthly-cal-cell-num">${dNum}</span>
+                                <div class="monthly-cal-table-cell">
+                                    <div style="display:flex; align-items:center; gap:4px; line-height:1; min-height:14px;">
+                                        <span class="monthly-cal-cell-num">${dNum}</span>
+                                        ${weekBadgeHtml}
+                                    </div>
                                 </div>
                             `;
                         } else {
                             const dNum = i - (startCol + daysInMonth) + 1;
                             cellsHtml += `
-                                <div class="monthly-cal-table-cell faded" style="position:relative;">
-                                    ${weekBadgeHtml}
-                                    <span class="monthly-cal-cell-num">${dNum}</span>
+                                <div class="monthly-cal-table-cell faded">
+                                    <div style="display:flex; align-items:center; gap:4px; line-height:1; min-height:14px;">
+                                        <span class="monthly-cal-cell-num">${dNum}</span>
+                                        ${weekBadgeHtml}
+                                    </div>
                                 </div>
                             `;
                         }
@@ -5629,17 +5643,6 @@
                                 cellDate = new Date(year, monthIndex + 1, dayNumber);
                             }
 
-                            // Badge de semana en la primera columna (Lunes)
-                            if (c === 0 && page.design && page.design.showWeekNumbers !== false && cellDate) {
-                                const wNum = getISOWeek(cellDate);
-                                doc.setFillColor(245, 240, 233);
-                                doc.roundedRect(cellX + 1.2, cellY + 0.9, 5.8, 2.7, 0.4, 0.4, 'F');
-                                doc.setFont('helvetica', 'bold');
-                                doc.setFontSize(4.6);
-                                doc.setTextColor(140, 130, 118);
-                                doc.text(`S${wNum}`, cellX + 4.1, cellY + 2.8, { align: 'center' });
-                            }
-
                             doc.setFont('helvetica', isCur ? 'bold' : 'normal');
                             doc.setFontSize(6.2);
                             if (isCur) {
@@ -5647,7 +5650,22 @@
                             } else {
                                 doc.setTextColor(181, 174, 159);
                             }
-                            doc.text(String(dayNumber), cellX + colW_cal - 1.8, cellY + 3.0, { align: 'right' });
+                            const dayStr = String(dayNumber);
+                            doc.text(dayStr, cellX + 1.8, cellY + 3.0);
+                            const numW = doc.getTextWidth(dayStr);
+
+                            // Badge de semana en la primera columna (Lunes) a continuación del día (ej. 29 S7)
+                            if (c === 0 && page.design && page.design.showWeekNumbers !== false && cellDate) {
+                                const wNum = getISOWeek(cellDate);
+                                const badgeX = cellX + 1.8 + numW + 1.2;
+                                const badgeY = cellY + 0.9;
+                                doc.setFillColor(242, 237, 228);
+                                doc.roundedRect(badgeX, badgeY, 5.4, 2.7, 1.35, 1.35, 'F');
+                                doc.setFont('helvetica', 'bold');
+                                doc.setFontSize(4.4);
+                                doc.setTextColor(130, 120, 108);
+                                doc.text(`S${wNum}`, badgeX + 2.7, badgeY + 1.9, { align: 'center' });
+                            }
                         }
                     }
                 }
