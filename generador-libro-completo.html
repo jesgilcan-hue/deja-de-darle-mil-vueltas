@@ -916,6 +916,7 @@
            ------------------------------------------------------------- */
         .hourly-grid-container {
             display: flex;
+            flex-direction: column;
             border: 1px solid #222;
             border-radius: 4px;
             overflow: hidden;
@@ -923,49 +924,65 @@
             margin-top: 4px;
             background: #fff;
         }
-        .hourly-time-axis {
-            width: 52px;
-            border-right: 1px solid #222;
-            background: #f7f3ec;
-            display: flex;
-            flex-direction: column;
-            font-size: 0.62rem;
-            font-weight: 700;
-            color: #554e46;
-            text-align: center;
-        }
-        .hourly-time-cell {
-            border-bottom: 1px dashed #ded8cc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-        }
-        .hourly-days-columns {
+        .hourly-header-row {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            flex: 1;
-        }
-        .hourly-day-col {
-            border-right: 1px solid #e4ded4;
-            display: flex;
-            flex-direction: column;
-        }
-        .hourly-day-col:last-child {
-            border-right: none;
-        }
-        .hourly-day-col-header {
+            grid-template-columns: 54px repeat(7, 1fr);
             background: #fdfbf7;
-            border-bottom: 1px solid #222;
+            border-bottom: 1.5px solid #222;
+            box-sizing: border-box;
+        }
+        .hourly-header-cell {
             padding: 3px 0;
             text-align: center;
             font-size: 0.65rem;
             font-weight: 800;
             color: #332d27;
+            border-right: 1px solid #e4ded4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .hourly-header-cell:last-child {
+            border-right: none;
+        }
+        .hourly-header-cell.time-header {
+            background: #ede6dc;
+            border-right: 1.5px solid #222;
+            font-size: 0.62rem;
+            color: #332d27;
+        }
+        .hourly-data-row {
+            display: grid;
+            grid-template-columns: 54px repeat(7, 1fr);
+            flex: 1;
+            border-bottom: 1px dashed #ded8cc;
+            min-height: 0;
+            box-sizing: border-box;
+        }
+        .hourly-data-row:last-child {
+            border-bottom: none;
+        }
+        .hourly-data-row:nth-child(even) {
+            background: #faf8f5;
+        }
+        .hourly-time-cell {
+            background: #f7f3ec;
+            border-right: 1.5px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #554e46;
+            box-sizing: border-box;
         }
         .hourly-slot-cell {
-            border-bottom: 1px dashed #ded8cc;
-            flex: 1;
+            border-right: 1px solid #e4ded4;
+            box-sizing: border-box;
+        }
+        .hourly-slot-cell:last-child {
+            border-right: none;
         }
 
         /* -------------------------------------------------------------
@@ -3566,18 +3583,12 @@
                         <div class="monthly-card-official" style="${!hasMilestones ? 'grid-column: 1 / -1;' : ''}">
                             <span class="monthly-card-title-official">🎯 METAS DEL MES (MÁXIMO 3)</span>
                             <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
-                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                </div>
+                                ${[1, 2, 3].map((_, idx) => `
+                                    <div style="display:flex; align-items:center; gap:6px; padding:2px 0; border-bottom:${idx < 2 ? '1px dashed #eee8de' : 'none'};">
+                                        <span class="box-marker-circle" style="width:10px; height:10px; border-color:#8c8276;"></span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     `;
@@ -3842,22 +3853,28 @@
                         </div>
 
                         <div class="hourly-grid-container">
-                            <div class="hourly-time-axis">
-                                <div style="height:21px; border-bottom:1px solid #222; background:#ede6dc; display:flex; align-items:center; justify-content:center; font-size:0.60rem; font-weight:800;">HORA</div>
-                                ${Array.from({length: rowCount}).map((_, r) => {
-                                    const hour24 = (startHourInt + (r * step)) % 24;
-                                    const hStr = hour24.toString().padStart(2, '0') + ':00';
-                                    return `<div class="hourly-time-cell">${hStr}</div>`;
-                                }).join('')}
-                            </div>
-                            <div class="hourly-days-columns">
+                            <div class="hourly-header-row">
+                                <div class="hourly-header-cell time-header">HORA</div>
                                 ${['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'].map(day => `
-                                    <div class="hourly-day-col">
-                                        <div class="hourly-day-col-header">${day}</div>
-                                        ${Array.from({length: rowCount}).map(() => `<div class="hourly-slot-cell"></div>`).join('')}
-                                    </div>
+                                    <div class="hourly-header-cell">${day}</div>
                                 `).join('')}
                             </div>
+                            ${Array.from({length: rowCount}).map((_, r) => {
+                                const hour24 = (startHourInt + (r * step)) % 24;
+                                const hStr = hour24.toString().padStart(2, '0') + ':00';
+                                return `
+                                    <div class="hourly-data-row">
+                                        <div class="hourly-time-cell">${hStr}</div>
+                                        <div class="hourly-slot-cell"></div>
+                                        <div class="hourly-slot-cell"></div>
+                                        <div class="hourly-slot-cell"></div>
+                                        <div class="hourly-slot-cell"></div>
+                                        <div class="hourly-slot-cell"></div>
+                                        <div class="hourly-slot-cell"></div>
+                                        <div class="hourly-slot-cell"></div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
 
                         <div class="sheet-footer">
@@ -5550,6 +5567,13 @@
                             doc.setDrawColor(100, 100, 100);
                             doc.setLineWidth(0.18);
                             doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
+                            if (k < 2) {
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.15);
+                                doc.setLineDashPattern([1.0, 1.0], 0);
+                                doc.line(M + 3, rowY + rowH_goals - 0.4, M + w1 - 3, rowY + rowH_goals - 0.4);
+                                doc.setLineDashPattern([], 0);
+                            }
                         }
 
                         // Tarjeta 2: Hitos y Fechas Clave
@@ -5605,6 +5629,13 @@
                             doc.setDrawColor(100, 100, 100);
                             doc.setLineWidth(0.18);
                             doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
+                            if (k < 2) {
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.15);
+                                doc.setLineDashPattern([1.0, 1.0], 0);
+                                doc.line(M + 3, rowY + rowH_goals - 0.4, M + gridW - 3, rowY + rowH_goals - 0.4);
+                                doc.setLineDashPattern([], 0);
+                            }
                         }
                     } else if (hasMilestones) {
                         // Tarjeta 2: Hitos y Fechas Clave a ancho completo
@@ -6261,22 +6292,26 @@
                 });
 
                 // 2. Filas de horas
+                // Pintar fondo de la columna de horas antes de trazar líneas para no sobreimprimir ni reducir su grosor
+                doc.setFillColor(252, 250, 246);
+                doc.rect(M, startY + headerRowH, timeColW, availableTableH - headerRowH, 'F');
+
                 for (let r = 0; r < rowCount; r++) {
                     const y = startY + headerRowH + (r * rowH);
                     const hour24 = (startHourInt + (r * step)) % 24;
                     const hStr = hour24.toString().padStart(2, '0') + ':00';
 
-                    // Columna de hora
-                    doc.setFillColor(252, 250, 246);
-                    doc.rect(M, y, timeColW, rowH, 'F');
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(5.4);
                     doc.setTextColor(50, 45, 40);
                     doc.text(hStr, M + (timeColW / 2), y + (rowH / 2) + 0.9, { align: 'center' });
+                }
 
-                    // Líneas divisorias horizontales
-                    doc.setDrawColor(225, 220, 212);
-                    doc.setLineWidth(0.18);
+                // Líneas divisorias horizontales trazadas de forma continua con grosor 100% idéntico en toda la fila
+                doc.setDrawColor(225, 220, 212);
+                doc.setLineWidth(0.18);
+                for (let r = 0; r < rowCount; r++) {
+                    const y = startY + headerRowH + (r * rowH);
                     doc.line(M, y + rowH, M + gridW, y + rowH);
                 }
 
