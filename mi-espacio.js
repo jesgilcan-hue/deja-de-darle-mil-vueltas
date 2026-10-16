@@ -70,6 +70,8 @@ const tabPanes = document.querySelectorAll('.tab-pane');
 const emptyDesignsView = document.getElementById('empty-designs-view');
 const designsGrid = document.getElementById('designs-grid');
 const countAll = document.getElementById('count-all');
+const countCompleto = document.getElementById('count-completo');
+const countPortada = document.getElementById('count-portada');
 const countSemanal = document.getElementById('count-semanal');
 const countDiario = document.getElementById('count-diario');
 const countMensual = document.getElementById('count-mensual');
@@ -816,6 +818,8 @@ async function loadUserDesigns(user) {
 
 function updateDesignCounts() {
   const total = allDesigns.length;
+  const completo = allDesigns.filter(d => (d.type || '').toLowerCase().includes('completo') || (d.type || '').toLowerCase().includes('libro')).length;
+  const portada = allDesigns.filter(d => (d.type || '').toLowerCase().includes('portada')).length;
   const semanal = allDesigns.filter(d => (d.type || '').toLowerCase().includes('semanal')).length;
   const diario = allDesigns.filter(d => (d.type || '').toLowerCase().includes('diario')).length;
   const mensual = allDesigns.filter(d => (d.type || '').toLowerCase().includes('mensual')).length;
@@ -824,6 +828,8 @@ function updateDesignCounts() {
   const anual = allDesigns.filter(d => (d.type || '').toLowerCase().includes('anual')).length;
 
   if (countAll) countAll.textContent = total;
+  if (countCompleto) countCompleto.textContent = completo;
+  if (countPortada) countPortada.textContent = portada;
   if (countSemanal) countSemanal.textContent = semanal;
   if (countDiario) countDiario.textContent = diario;
   if (countMensual) countMensual.textContent = mensual;
@@ -841,7 +847,11 @@ function renderDesignsGrid() {
 
   // Filtrar según píldora activa
   let filtered = allDesigns;
-  if (currentFilter === 'Semanal') {
+  if (currentFilter === 'Completo') {
+    filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('completo') || (d.type || '').toLowerCase().includes('libro'));
+  } else if (currentFilter === 'Portada') {
+    filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('portada'));
+  } else if (currentFilter === 'Semanal') {
     filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('semanal'));
   } else if (currentFilter === 'Diario') {
     filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('diario'));

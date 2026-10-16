@@ -40,6 +40,8 @@ export default defineConfig({
         ensayoCalendarios: resolve(__dirname, 'por-que-los-calendarios-milimetrados-te-generan-ansiedad.html'),
         comprarNocturno: resolve(__dirname, 'comprar-cosas-a-las-once-de-la-noche.html'),
         noHacerNada: resolve(__dirname, 'aprender-a-no-hacer-nada-sin-sentirte-culpable.html'),
+        ensayoCallar: resolve(__dirname, 'por-que-callar-para-no-crear-conflicto-sale-mas-caro.html'),
+        ensayoGeneradores: resolve(__dirname, 'como-generar-tu-planificador-facil-y-rapido.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
