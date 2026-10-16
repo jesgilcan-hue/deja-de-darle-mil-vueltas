@@ -975,7 +975,7 @@ window.onSelectMailTemplateChange = function() {
   }
 };
 
-window.executeSendCustomerEmail = function() {
+window.executeSendCustomerEmail = async function() {
   if (!assertAuthorized()) return;
   const orderId = document.getElementById('mailOrderId').value;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
@@ -990,21 +990,58 @@ window.executeSendCustomerEmail = function() {
     return;
   }
 
-  // Registrar en la auditoría de comunicaciones del pedido
-  if (!order.comms) order.comms = {};
-  const commId = 're_' + Math.random().toString(36).substring(2, 9);
-  
-  if (tplKey !== 'custom') {
-    order.comms[tplKey] = { sent: true, date: new Date().toISOString(), id: commId };
-  } else {
-    order.comms['manual_' + Date.now()] = { sent: true, date: new Date().toISOString(), subject, id: commId };
+  const recipientEmail = order.customer?.email;
+  if (!recipientEmail || !recipientEmail.includes('@')) {
+    alert('El pedido no tiene un email de cliente válido.');
+    return;
   }
 
-  addTimelineEvent(order, `Email enviado al cliente vía Resend desde contacto@: «${subject}» (ID: ${commId})`);
-  saveOrdersState();
-  sortAndRenderOrders();
-  closeSendEmailModal();
-  showToast(`✉️ Email enviado con éxito a ${order.customer?.email}`);
+  showToast(`⏳ Enviando correo a ${recipientEmail}...`);
+
+  try {
+    const res = await fetch('/api/send-admin-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: recipientEmail,
+        subject: subject,
+        bodyText: body,
+        senderType: 'contacto',
+        replyTo: 'contacto@editorialmenosruido.com',
+        highlightDetails: {
+          orderNumber: order.orderNumber,
+          bookTitle: order.book?.title,
+          address: `${order.customer?.address || ''}, ${order.customer?.postalCode || ''} ${order.customer?.city || ''}`
+        }
+      })
+    });
+
+    const data = await res.json();
+    const commId = data.id || ('re_' + Math.random().toString(36).substring(2, 9));
+
+    // Registrar en la auditoría de comunicaciones del pedido
+    if (!order.comms) order.comms = {};
+    if (tplKey !== 'custom') {
+      order.comms[tplKey] = { sent: true, date: new Date().toISOString(), id: commId };
+    } else {
+      order.comms['manual_' + Date.now()] = { sent: true, date: new Date().toISOString(), subject, id: commId };
+    }
+
+    addTimelineEvent(order, `Email enviado al cliente vía Resend desde contacto@: «${subject}» (ID: ${commId})`);
+    saveOrdersState();
+    sortAndRenderOrders();
+    closeSendEmailModal();
+
+    if (res.ok && data.success) {
+      showToast(`✉️ Email enviado con éxito a ${recipientEmail}`);
+    } else {
+      showToast(`⚠️ Registrado en timeline, pero Resend devolvió: ${data.error || 'Aviso'}`);
+      alert(`Resend reportó una incidencia:\n${data.error || 'Error desconocido'}`);
+    }
+  } catch (err) {
+    console.error('Error al enviar correo vía API:', err);
+    showToast(`⚠️ Error de red al contactar con el servidor de envío`);
+  }
 };
 
 // =========================================================================

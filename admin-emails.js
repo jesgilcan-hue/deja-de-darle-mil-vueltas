@@ -548,7 +548,7 @@ function resetCurrentTemplate() {
   showToast(`↺ Plantilla «${def.name}» restaurada a su original`);
 }
 
-function testSendSimulation() {
+async function testSendSimulation() {
   if (!assertAuthorized()) return;
 
   const tpl = emailTemplates[currentTemplateKey];
@@ -556,14 +556,58 @@ function testSendSimulation() {
 
   const destination = auth.currentUser ? getUserEmail(auth.currentUser) : 'jesgilcan@gmail.com';
   const sub = replaceVariables(tplSubject.value || tpl.subject);
+  const bodyText = replaceVariables(tplBody.value || tpl.body);
+  const btnTxt = replaceVariables(tplButtonText.value || tpl.buttonText);
 
-  showToast(`🚀 Prueba enviada con éxito a ${destination}`);
-  console.log(`[Resend Simulator] Email enviado:
-- Remitente: ${tpl.sender}
-- Reply-To: ${tpl.replyTo}
-- Para: ${destination}
-- Asunto: ${sub}
-- ID Simulado: re_${Date.now()}`);
+  showToast(`⏳ Enviando correo de prueba a ${destination}...`);
+  if (btnTestSendMail) {
+    btnTestSendMail.disabled = true;
+    btnTestSendMail.style.opacity = '0.6';
+  }
+
+  try {
+    const res = await fetch('/api/send-admin-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: destination,
+        subject: sub,
+        bodyText: bodyText,
+        preheader: tpl.preheader || '',
+        buttonText: btnTxt || '',
+        buttonUrl: 'https://www.editorialmenosruido.com',
+        senderType: tpl.sender && tpl.sender.includes('contacto@') ? 'contacto' : 'pedidos',
+        replyTo: tpl.replyTo || 'contacto@editorialmenosruido.com',
+        highlightDetails: tpl.showHighlightBox ? {
+          orderNumber: 'MR-2026-TEST',
+          bookTitle: 'Planificador Anual 2026',
+          address: 'Calle Serrano 42, 4º D · Madrid'
+        } : null,
+        showSecondaryLinks: tpl.showSecondaryLinks !== false,
+        showUnsubscribe: tpl.showUnsubscribe === true
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(`🚀 ¡Correo real recibido en Resend! Enviado a ${destination}`);
+      console.log('✓ Correo enviado con éxito. ID Resend:', data.id);
+    } else {
+      console.error('Error al enviar correo:', data);
+      showToast(`⚠️ Error Resend: ${data.error || 'No se pudo enviar'}`);
+      alert(`Resend no pudo enviar el correo:\n${data.error || 'Error desconocido'}`);
+    }
+  } catch (err) {
+    console.error('Error de red al conectar con /api/send-admin-email:', err);
+    showToast('⚠️ Error de conexión con el servidor de envío');
+  } finally {
+    if (btnTestSendMail) {
+      btnTestSendMail.disabled = false;
+      btnTestSendMail.style.opacity = '';
+    }
+  }
 }
 
 // Inserción de variables al pulsar en los chips
