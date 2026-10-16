@@ -55,6 +55,7 @@ export const auth = getAuth(app);
 let dbInstance;
 try {
   dbInstance = initializeFirestore(app, {
+    ignoreUndefinedProperties: true,
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     })
@@ -67,17 +68,15 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-// Configuración de roles y seguridad
-export const DEVELOPER_EMAILS = [
-  "jesgilcan@gmail.com",
-  "editorialmenosruido@gmail.com",
-  "contacto@editorialmenosruido.com"
-];
+// Configuración de roles y seguridad: ÚNICA cuenta autorizada
 export const DEVELOPER_EMAIL = "jesgilcan@gmail.com";
+export const DEVELOPER_EMAILS = [
+  "jesgilcan@gmail.com"
+];
 export const DEVELOPER_PIN = "1111";
 
 /**
- * Obtiene el email del usuario de forma ultra-robusta revisando auth, providerData y almacenamiento local
+ * Obtiene el email auténtico del usuario directamente de Firebase Auth
  */
 export function getUserEmail(user) {
   if (!user) return '';
@@ -87,17 +86,6 @@ export function getUserEmail(user) {
       if (p && p.email && typeof p.email === 'string') return p.email.trim();
     }
   }
-  try {
-    const cached = localStorage.getItem('mr_cached_user');
-    if (cached) {
-      const p = JSON.parse(cached);
-      if (p.email && typeof p.email === 'string') return p.email.trim();
-    }
-  } catch (e) {}
-  try {
-    const stored = localStorage.getItem('mr_user_pdf_email');
-    if (stored && typeof stored === 'string') return stored.trim();
-  } catch (e) {}
   return '';
 }
 
@@ -117,26 +105,29 @@ export function getUserDisplayName(user) {
 }
 
 /**
- * Comprueba si un usuario es el desarrollador/administrador
+ * Comprueba de forma ESTRICTA si un usuario es desarrollador/administrador.
+ * EXCLUSIVAMENTE mediante coincidencia con la lista blanca DEVELOPER_EMAILS.
+ * Cualquier otro correo (incluido Outlook) devuelve false de forma rotunda.
  */
 export function isDeveloper(user) {
   if (!user) return false;
   const email = getUserEmail(user).toLowerCase().trim();
-  if (email && DEVELOPER_EMAILS.some(e => e.toLowerCase() === email)) {
-    return true;
-  }
-  // Permitir también si el panel fue desbloqueado por PIN en la sesión
+  if (!email) return false;
+  return DEVELOPER_EMAILS.some(e => e.toLowerCase() === email);
+}
+
+/**
+ * Limpia todas las cachés locales de sesión y usuario
+ */
+export function clearUserLocalCache() {
   try {
-    if (sessionStorage.getItem('mr_dev_unlocked') === 'true' || localStorage.getItem('mr_dev_unlocked') === 'true') {
-      return true;
-    }
-    const cached = localStorage.getItem('mr_cached_user');
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed.isDev) return true;
-    }
+    localStorage.removeItem('mr_cached_user');
+    localStorage.removeItem('mr_cached_designs');
+    localStorage.removeItem('mr_dev_unlocked');
+    localStorage.removeItem('mr_user_pdf_email');
+    localStorage.removeItem('mr_user_extra_data');
+    sessionStorage.clear();
   } catch (e) {}
-  return false;
 }
 
 /**
@@ -177,4 +168,4 @@ export async function syncUserProfile(user) {
   return userData;
 }
 
-export { onAuthStateChanged, signOut, sendSignInLinkToEmail };
+export { onAuthStateChanged, signOut, sendSignInLinkToEmail, signInWithPopup };

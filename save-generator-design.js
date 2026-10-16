@@ -30,6 +30,21 @@ export function getActiveDesign() {
   return currentActiveDesign;
 }
 
+export function cleanDataForFirestore(obj) {
+  if (obj === undefined) return null;
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(item => cleanDataForFirestore(item));
+  }
+  const cleaned = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (val !== undefined) {
+      cleaned[key] = cleanDataForFirestore(val);
+    }
+  }
+  return cleaned;
+}
+
 function initUnsavedTracking() {
   if (trackingInitialized) return;
   trackingInitialized = true;
@@ -371,10 +386,11 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
       btn.innerHTML = '<span>⏳</span> Guardando...';
       try {
         const designDocRef = doc(db, 'users', user.uid, 'designs', currentActiveDesign.id);
+        const cleanData = cleanDataForFirestore(currentDesign.data || {});
         await updateDoc(designDocRef, {
           summary: currentDesign.summary || '',
           editUrl: window.location.pathname,
-          data: currentDesign.data || {},
+          data: cleanData,
           updatedAt: serverTimestamp()
         });
 
@@ -549,12 +565,13 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
 
     try {
       const designsRef = collection(db, 'users', user.uid, 'designs');
+      const cleanData = cleanDataForFirestore(currentDesign.data || {});
       const docRef = await addDoc(designsRef, {
         name: finalName,
         type: currentDesign.type || 'Planificador',
         summary: currentDesign.summary || '',
         editUrl: window.location.pathname,
-        data: currentDesign.data || {},
+        data: cleanData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -569,7 +586,7 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
           type: currentDesign.type || 'Planificador',
           summary: currentDesign.summary || '',
           editUrl: window.location.pathname,
-          data: currentDesign.data || {},
+          data: cleanData,
           createdAt: { seconds: Math.floor(Date.now() / 1000) },
           updatedAt: { seconds: Math.floor(Date.now() / 1000) }
         });
@@ -611,10 +628,11 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
 
       try {
         const designDocRef = doc(db, 'users', user.uid, 'designs', docId);
+        const cleanData = cleanDataForFirestore(currentDesign.data || {});
         await updateDoc(designDocRef, {
           summary: currentDesign.summary || '',
           editUrl: window.location.pathname,
-          data: currentDesign.data || {},
+          data: cleanData,
           updatedAt: serverTimestamp()
         });
 

@@ -753,21 +753,12 @@ async function loadUserDesigns(user) {
   let firestoreList = [];
 
   try {
-    const q = query(designsRef, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(designsRef);
     snapshot.forEach(docSnap => {
       firestoreList.push({ id: docSnap.id, ...docSnap.data() });
     });
   } catch (err) {
-    console.warn('Query con orderBy falló, intentando getDocs directo:', err);
-    try {
-      const snapshot = await getDocs(designsRef);
-      snapshot.forEach(docSnap => {
-        firestoreList.push({ id: docSnap.id, ...docSnap.data() });
-      });
-    } catch (fallbackErr) {
-      console.warn('Fallback designs error:', fallbackErr);
-    }
+    console.warn('Error al consultar diseños en Firestore:', err);
   }
 
   // Leer diseños guardados localmente en este navegador para que nunca se pierda nada
@@ -818,7 +809,10 @@ async function loadUserDesigns(user) {
 
 function updateDesignCounts() {
   const total = allDesigns.length;
-  const completo = allDesigns.filter(d => (d.type || '').toLowerCase().includes('completo') || (d.type || '').toLowerCase().includes('libro')).length;
+  const completo = allDesigns.filter(d => {
+    const t = (d.type || '').toLowerCase();
+    return (t.includes('completo') || t.includes('libro')) && !t.includes('portada');
+  }).length;
   const portada = allDesigns.filter(d => (d.type || '').toLowerCase().includes('portada')).length;
   const semanal = allDesigns.filter(d => (d.type || '').toLowerCase().includes('semanal')).length;
   const diario = allDesigns.filter(d => (d.type || '').toLowerCase().includes('diario')).length;
@@ -848,7 +842,10 @@ function renderDesignsGrid() {
   // Filtrar según píldora activa
   let filtered = allDesigns;
   if (currentFilter === 'Completo') {
-    filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('completo') || (d.type || '').toLowerCase().includes('libro'));
+    filtered = allDesigns.filter(d => {
+      const t = (d.type || '').toLowerCase();
+      return (t.includes('completo') || t.includes('libro')) && !t.includes('portada');
+    });
   } else if (currentFilter === 'Portada') {
     filtered = allDesigns.filter(d => (d.type || '').toLowerCase().includes('portada'));
   } else if (currentFilter === 'Semanal') {
@@ -889,7 +886,8 @@ function renderDesignsGrid() {
     let rawTargetUrl = item.editUrl;
     const typeLow = (item.type || '').toLowerCase();
     if (!rawTargetUrl) {
-      if (typeLow.includes('libro') || typeLow.includes('cuaderno')) rawTargetUrl = '/generador-libro-completo.html';
+      if (typeLow.includes('portada')) rawTargetUrl = '/generador-portadas.html';
+      else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) rawTargetUrl = '/generador-libro-completo.html';
       else if (typeLow.includes('diario')) rawTargetUrl = '/generador-planificador-diario.html';
       else if (typeLow.includes('mensual')) rawTargetUrl = '/generador-planificador-mensual.html';
       else if (typeLow.includes('habito')) rawTargetUrl = '/generador-planificador-habitos.html';
@@ -906,7 +904,8 @@ function renderDesignsGrid() {
 
     let badgeClass = 'semanal';
     let typeLabel = 'Planificador Semanal';
-    if (typeLow.includes('libro') || typeLow.includes('cuaderno')) { badgeClass = 'anual'; typeLabel = 'Cuaderno Completo'; }
+    if (typeLow.includes('portada')) { badgeClass = 'portada'; typeLabel = 'Portada de Cuaderno'; }
+    else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) { badgeClass = 'completo'; typeLabel = 'Cuaderno Completo'; }
     else if (typeLow.includes('diario')) { badgeClass = 'diario'; typeLabel = 'Planificador Diario'; }
     else if (typeLow.includes('mensual')) { badgeClass = 'mensual'; typeLabel = 'Planificador Mensual'; }
     else if (typeLow.includes('habito')) { badgeClass = 'habitos'; typeLabel = 'Planificador de Hábitos'; }

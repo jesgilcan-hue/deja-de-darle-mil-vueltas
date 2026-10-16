@@ -55,6 +55,7 @@ export const auth = getAuth(app);
 let dbInstance;
 try {
   dbInstance = initializeFirestore(app, {
+    ignoreUndefinedProperties: true,
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     })
