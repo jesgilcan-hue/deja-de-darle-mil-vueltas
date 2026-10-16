@@ -3,6 +3,17 @@
 import { auth, isDeveloper, onAuthStateChanged, DEVELOPER_PIN } from './firebase-config.js';
 
 export function protectDevPage() {
+  // 0. Si estamos en desarrollo local (localhost / 127.0.0.1) o ya se desbloqueó con PIN en /apps
+  if (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    localStorage.getItem('mr_apps_unlocked') === '1' ||
+    sessionStorage.getItem('mr_apps_unlocked') === '1'
+  ) {
+    revealPage();
+    return;
+  }
+
   // 1. Si se accede con la clave maestra en la URL (?pin=1111 o ?key=1111), autorizar
   const urlParams = new URLSearchParams(window.location.search);
   const pinParam = urlParams.get('pin') || urlParams.get('key');

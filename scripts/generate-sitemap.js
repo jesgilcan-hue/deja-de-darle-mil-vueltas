@@ -15,7 +15,9 @@ const TODAY = new Date().toISOString().split('T')[0];
 // Páginas privadas / internas que NUNCA deben indexarse en Google
 const EXCLUDED_FILES = new Set([
   'apps.html',
+  'generador-libro-completo.html',
   'generador-libro-completo-v1.html',
+  'generador-portadas.html',
   'pre-lecturas.html',
   'presentacion-generador-planificador-semanal.html',
   'mi-espacio.html',

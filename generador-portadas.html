@@ -1,0 +1,2661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Portadas · Menos Ruido (Dev)</title>
+    <meta name="description" content="Diseñador de portadas exteriores a 300 DPI con soporte para anillas (Wire-O), tapa blanda y tapa dura con lomo dinámico, subida de fotografía personal y preparación de pedido.">
+    <!-- Invisible para Google y buscadores -->
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="googlebot" content="noindex, nofollow">
+
+    <!-- Control de acceso privado (PIN 1111 en producción / Acceso directo en localhost) -->
+    <script>
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            if (localStorage.getItem('mr_apps_unlocked') !== '1' && sessionStorage.getItem('mr_apps_unlocked') !== '1') {
+                window.location.replace('/apps.html?return=' + encodeURIComponent(window.location.pathname));
+            }
+        }
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- jsPDF UMD local y CDN de respaldo -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+        }
+    </script>
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="./style.css" />
+
+    <style>
+        :root {
+            --bg-color: #f4efe6;
+            --paper-color: #fffefb;
+            --text-main: #211c18;
+            --text-muted: #66615b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.1);
+            --border-line: #dcd7ce;
+            --border-strong: #28231e;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --shadow-subtle: 0 4px 20px rgba(0,0,0,0.05);
+            --shadow-paper: 0 18px 50px rgba(0,0,0,0.16);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            padding: 20px 16px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* NAVEGACIÓN SUPERIOR */
+        .top-nav {
+            width: 100%;
+            max-width: 1620px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .back-link {
+            font-size: 0.84rem;
+            color: #665f57;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .badge-dev {
+            background: #22382c;
+            color: #f5f0e6;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* CABECERA */
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 18px;
+            max-width: 860px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: clamp(1.8rem, 3.2vw, 2.35rem);
+            font-weight: 700;
+            color: #1a1816;
+            margin-bottom: 6px;
+            line-height: 1.22;
+        }
+        .header-title-box p {
+            font-size: 0.94rem;
+            color: var(--text-muted);
+        }
+
+        /* BARRA SUPERIOR DE MODO DE ENCUADERNACIÓN Y ACCIONES */
+        .top-action-bar {
+            width: 100%;
+            max-width: 1620px;
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .binding-selector-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .binding-label {
+            font-size: 0.76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #5c5349;
+        }
+
+        .binding-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 14px;
+            border-radius: 8px;
+            border: 1.5px solid #dcd4c6;
+            background: #faf8f4;
+            color: #3b342d;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .binding-pill-btn:hover {
+            border-color: var(--accent);
+            background: #f5efe6;
+        }
+        .binding-pill-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 3px 10px rgba(135, 85, 59, 0.25);
+        }
+
+        .top-cta-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Botones idénticos a la captura del usuario para Flujo A */
+        .btn-save-space {
+            background: #f4eee4;
+            color: #6b4c35;
+            border: 1px solid #e2d7c5;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-save-space:hover {
+            background: #ebe1d1;
+            border-color: #d2c3ac;
+        }
+
+        .btn-download-send {
+            background: #87553b;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+            transition: all 0.2s;
+        }
+        .btn-download-send:hover {
+            background: #70442e;
+            transform: translateY(-1px);
+        }
+
+        .btn-action-secondary {
+            background: #f5f0e6;
+            color: #4a3f35;
+            border: 1px solid #d8cfc0;
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-action-secondary:hover {
+            background: #ebe3d4;
+            color: #1a1614;
+        }
+
+        .btn-action-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.25);
+            transition: all 0.2s;
+        }
+        .btn-action-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-action-order {
+            background: #22382c;
+            color: #f5f0e6;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(34, 56, 44, 0.25);
+            transition: all 0.2s;
+        }
+        .btn-action-order:hover {
+            background: #182920;
+            transform: translateY(-1px);
+        }
+
+        /* GRID DE TRABAJO PRINCIPAL (PANEL IZQ + VISOR DER) */
+        .workspace-layout {
+            width: 100%;
+            max-width: 1620px;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 1120px) {
+            .workspace-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* PANEL IZQUIERDO DE CONTROLES */
+        .controls-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            background: #f2ede4;
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .panel-tab-btn {
+            border: none;
+            background: transparent;
+            padding: 7px 4px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #665e54;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .panel-tab-btn.active {
+            background: #ffffff;
+            color: var(--accent);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .tab-section {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .tab-section.active {
+            display: flex;
+        }
+
+        .control-card {
+            background: #fbf9f6;
+            border: 1px solid #e6dfd3;
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .control-card-title {
+            font-size: 0.76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: var(--accent);
+            border-bottom: 1px solid #ece5d8;
+            padding-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .field-group label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #443c35;
+            display: flex;
+            justify-content: space-between;
+        }
+        .field-group input[type="text"],
+        .field-group input[type="number"],
+        .field-group select,
+        .field-group textarea {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 0.84rem;
+            border: 1.5px solid #dcd4c6;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #221d19;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .field-group textarea {
+            resize: vertical;
+            min-height: 64px;
+            line-height: 1.4;
+        }
+        .field-group input:focus,
+        .field-group select:focus,
+        .field-group textarea:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        .field-group input:disabled,
+        .field-group input[readonly],
+        .field-group select:disabled,
+        .field-group textarea:disabled,
+        .field-group textarea[readonly] {
+            background: #f2ede4;
+            color: #6b6359;
+            border-color: #dcd4c6;
+            cursor: not-allowed;
+            opacity: 0.88;
+        }
+        .badge-readonly {
+            font-size: 0.66rem;
+            font-weight: 700;
+            color: #7a7066;
+            background: #e9e2d6;
+            padding: 1px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* SELECTOR DE PLANTILLAS / ESTILOS */
+        .style-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .style-card-btn {
+            border: 1.5px solid #dfd7c8;
+            border-radius: 8px;
+            padding: 10px;
+            background: #ffffff;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .style-card-btn:hover {
+            border-color: var(--accent);
+        }
+        .style-card-btn.active {
+            border-color: var(--accent);
+            background: #faf4ec;
+            box-shadow: 0 2px 8px rgba(135,85,59,0.14);
+        }
+        .style-swatch-bar {
+            height: 22px;
+            border-radius: 4px;
+            display: flex;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .style-card-name {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #221d18;
+        }
+        .style-card-desc {
+            font-size: 0.68rem;
+            color: #776f65;
+            line-height: 1.3;
+        }
+
+        /* PALETAS DE COLOR */
+        .palette-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .palette-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1.5px #ccc;
+            cursor: pointer;
+            transition: transform 0.15s;
+            position: relative;
+        }
+        .palette-circle:hover {
+            transform: scale(1.08);
+        }
+        .palette-circle.active {
+            box-shadow: 0 0 0 2.5px var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* SUBIDA DE FOTO */
+        .photo-upload-zone {
+            border: 2px dashed #cbbba8;
+            background: #fdfbf7;
+            border-radius: 8px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .photo-upload-zone:hover {
+            border-color: var(--accent);
+            background: #f9f4eb;
+        }
+        .photo-upload-zone input[type="file"] {
+            display: none;
+        }
+
+        .range-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .range-slider-row input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        /* COLUMNA DERECHA: VISOR DE ALTA PRECISIÓN */
+        .preview-stage-panel {
+            position: sticky;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 12px;
+        }
+
+        .stage-toolbar {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 10px;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .stage-view-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .stage-pill {
+            padding: 5px 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border-radius: 6px;
+            border: 1px solid #dcd4c6;
+            background: #f7f4ed;
+            color: #4b433b;
+            cursor: pointer;
+        }
+        .stage-pill.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .tech-specs-banner {
+            width: 100%;
+            background: #fdfbf7;
+            border: 1px solid #e3dacb;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.76rem;
+            color: #5a5147;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .canvas-container-outer {
+            width: 100%;
+            background: #e6e0d4;
+            border: 1px solid #d5ccb9;
+            border-radius: 12px;
+            padding: 28px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        #coverPreviewCanvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 3px;
+            box-shadow: var(--shadow-paper);
+            background: #ffffff;
+        }
+
+        /* MODALES (FLUJO A: DESCARGA/EMAIL | FLUJO B: PEDIDO DIRECTO LULU TRANSPARENTE) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(25, 21, 18, 0.68);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 580px;
+            width: 100%;
+            padding: 26px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+            position: relative;
+            max-height: 92vh;
+            overflow-y: auto;
+            border: 1px solid #e5ded2;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: #777;
+            cursor: pointer;
+        }
+
+        .order-step-box {
+            background: #fbf9f5;
+            border: 1px solid #e6dfd3;
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 12px;
+            text-align: left;
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 520px) {
+            .form-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .dev-json-box {
+            background: #1a1d1a;
+            color: #a8e6cf;
+            font-family: monospace;
+            font-size: 0.72rem;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            max-height: 220px;
+            overflow-y: auto;
+            text-align: left;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVEGACIÓN SUPERIOR PRIVADA -->
+    <nav class="top-nav">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <a href="/apps.html" class="back-link">← Volver a /apps (Hub Privado)</a>
+            <a href="/generador-libro-completo.html" class="back-link">📖 Ir al Constructor de Interiores</a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge-dev">🔒 Solo Desarrollador · NoIndex</span>
+            <span style="font-size: 0.76rem; font-weight: 700; color: var(--accent); background: #ede5d8; padding: 4px 10px; border-radius: 6px;">300 DPI · Lulu Print Ready</span>
+        </div>
+    </nav>
+
+    <!-- CABECERA -->
+    <header class="header-title-box">
+        <h1>Generador de Portadas</h1>
+        <p>Diseña la cubierta exterior de tu cuaderno completo en <strong>Anillas (Wire-O)</strong>, <strong>Tapa Blanda</strong> o <strong>Tapa Dura con Lomo</strong>, sube tu propia fotografía y descarga o encarga tu ejemplar impreso.</p>
+    </header>
+
+    <!-- BARRA DE MODO DE ENCUADERNACIÓN Y ACCIONES PRINCIPALES -->
+    <section class="top-action-bar">
+        <div class="binding-selector-group">
+            <span class="binding-label">1. Encuadernación:</span>
+            <button type="button" class="binding-pill-btn active" id="btnBindCoil" onclick="setBindingType('coil')">
+                <span>🌀</span> Portada con Anillas
+            </button>
+            <button type="button" class="binding-pill-btn" id="btnBindPerfect" onclick="setBindingType('perfect')">
+                <span>📕</span> Tapa Blanda con Lomo
+            </button>
+            <button type="button" class="binding-pill-btn" id="btnBindHardcover" onclick="setBindingType('hardcover')">
+                <span>📘</span> Tapa Dura (Casewrap)
+            </button>
+        </div>
+
+        <div class="top-cta-group">
+            <!-- Botones de Flujo A idénticos a la imagen del usuario -->
+            <button type="button" class="btn-save-space" id="btn-save-generator-design">
+                <span>💾</span> Guardar en Mi Espacio
+            </button>
+            <button type="button" class="btn-download-send" onclick="openDownloadModal()">
+                <span>📥</span> Descargar / Enviar PDF
+            </button>
+            <!-- Botón de Flujo B (Cesta / Pedido de Cuaderno Impreso) -->
+            <button type="button" class="btn-action-order" onclick="openOrderModal()">
+                <span>🛒</span> Encargar Cuaderno Impreso
+            </button>
+        </div>
+    </section>
+
+    <!-- ÁREA DE TRABAJO -->
+    <div class="workspace-layout">
+
+        <!-- COLUMNA IZQUIERDA: CONFIGURADOR -->
+        <aside class="controls-panel">
+            <div class="panel-tabs">
+                <button type="button" class="panel-tab-btn active" onclick="switchTab('style')" id="tabBtn-style">🎨 Estilo</button>
+                <button type="button" class="panel-tab-btn" onclick="switchTab('photo')" id="tabBtn-photo">📷 Tu Foto</button>
+                <button type="button" class="panel-tab-btn" onclick="switchTab('texts')" id="tabBtn-texts">✏️ Textos</button>
+                <button type="button" class="panel-tab-btn" onclick="switchTab('specs')" id="tabBtn-specs">📐 Medidas</button>
+            </div>
+
+            <!-- PESTAÑA 1: ESTILO Y COLECCIÓN -->
+            <div class="tab-section active" id="tabSec-style">
+                <div class="control-card">
+                    <div class="control-card-title">
+                        <span>Plantilla de Diseño</span>
+                        <span style="font-size:0.68rem; color:#777; font-weight:600;">4 Colecciones</span>
+                    </div>
+                    <div class="style-cards-grid">
+                        <button type="button" class="style-card-btn active" data-template="bosque" onclick="setTemplate('bosque')">
+                            <div class="style-swatch-bar">
+                                <div style="flex:1; background:#1f2421;"></div>
+                                <div style="width:18%; background:#d98a6c;"></div>
+                                <div style="width:25%; background:#f5f0e6;"></div>
+                            </div>
+                            <span class="style-card-name">Clásico Sobrio</span>
+                            <span class="style-card-desc">Elegancia editorial con acento cálido y tipografía limpia.</span>
+                        </button>
+
+                        <button type="button" class="style-card-btn" data-template="organico" onclick="setTemplate('organico')">
+                            <div class="style-swatch-bar">
+                                <div style="flex:1; background:#f6efe4;"></div>
+                                <div style="width:20%; background:#7c8773;"></div>
+                                <div style="width:20%; background:#bd6340;"></div>
+                            </div>
+                            <span class="style-card-name">Orgánico & Botánico</span>
+                            <span class="style-card-desc">Formas suaves en tonos tierra e ilustración de rama a línea.</span>
+                        </button>
+
+                        <button type="button" class="style-card-btn" data-template="bicolor" onclick="setTemplate('bicolor')">
+                            <div class="style-swatch-bar">
+                                <div style="flex:1; background:#1f2421;"></div>
+                                <div style="flex:1; background:#f5f0e6;"></div>
+                            </div>
+                            <span class="style-card-name">Doble Contraste</span>
+                            <span class="style-card-desc">Portada luminosa en crema y contraportada en tono profundo.</span>
+                        </button>
+
+                        <button type="button" class="style-card-btn" data-template="marco" onclick="setTemplate('marco')">
+                            <div class="style-swatch-bar">
+                                <div style="flex:1; background:#fffdfa;"></div>
+                                <div style="width:15%; background:#87553b;"></div>
+                                <div style="width:25%; background:#e6dfd3;"></div>
+                            </div>
+                            <span class="style-card-name">Marco Arquitectónico</span>
+                            <span class="style-card-desc">Doble filete clásico ideal para lucir fotografía o texto limpio.</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-card-title">
+                        <span>Paleta de Color Principal</span>
+                    </div>
+                    <div class="palette-row">
+                        <button type="button" class="palette-circle active" style="background: #1f2421;" title="Verde Bosque Menos Ruido" data-palette="forest" onclick="setPalette('forest')"></button>
+                        <button type="button" class="palette-circle" style="background: #23201e;" title="Carbón Noche" data-palette="charcoal" onclick="setPalette('charcoal')"></button>
+                        <button type="button" class="palette-circle" style="background: #6e3d28;" title="Terracota Profundo" data-palette="terracotta" onclick="setPalette('terracotta')"></button>
+                        <button type="button" class="palette-circle" style="background: #1e3240;" title="Azul Petróleo Silencioso" data-palette="navy" onclick="setPalette('navy')"></button>
+                        <button type="button" class="palette-circle" style="background: #464f41;" title="Salvia Oscuro" data-palette="sage" onclick="setPalette('sage')"></button>
+                        <button type="button" class="palette-circle" style="background: #f5f0e6;" title="Crema Editorial Puro" data-palette="cream" onclick="setPalette('cream')"></button>
+                    </div>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-card-title">
+                        <span>Opciones Gráficas</span>
+                    </div>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer;">
+                        <input type="checkbox" id="chkBotanical" checked onchange="updateConfigFromUI()">
+                        <span>Mostrar ilustración botánica / ornamento editorial</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer;">
+                        <input type="checkbox" id="chkBarcode" onchange="updateConfigFromUI()">
+                        <span>Reservar espacio blanco ISBN en contraportada</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer;">
+                        <input type="checkbox" id="chkShowGuides" checked onchange="renderCoverPreview()">
+                        <span>Mostrar guías de corte, sangría y anillas en vista previa</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 2: SUBIDA Y AJUSTE DE FOTOGRAFÍA -->
+            <div class="tab-section" id="tabSec-photo">
+                <div class="control-card">
+                    <div class="control-card-title">
+                        <span>Fotografía Personal en Portada</span>
+                        <span id="photoStatusBadge" style="font-size:0.68rem; color:#777;">Sin foto</span>
+                    </div>
+
+                    <label class="photo-upload-zone" for="photoFileInput">
+                        <input type="file" id="photoFileInput" accept="image/*" onchange="handlePhotoUpload(event)">
+                        <div style="font-size: 1.5rem; margin-bottom: 4px;">📷</div>
+                        <div style="font-size: 0.84rem; font-weight: 700; color: #2b2520;">Haz clic para subir una foto</div>
+                        <div style="font-size: 0.72rem; color: #776f65; margin-top: 2px;">JPG, PNG o WebP · Se procesa en tu navegador a 300 DPI</div>
+                    </label>
+
+                    <div id="photoControlsWrap" style="display: none; flex-direction: column; gap: 10px; margin-top: 4px;">
+                        <div class="field-group">
+                            <label for="photoLayoutSelect">Disposición de la Foto en Portada:</label>
+                            <select id="photoLayoutSelect" onchange="updateConfigFromUI()">
+                                <option value="window">🖼️ Ventana Editorial Derecha/Inferior</option>
+                                <option value="center_card">🎴 Recuadro Central Enmarcado</option>
+                                <option value="circle">⭕ Medallón Circular Clásico</option>
+                                <option value="full_front">🌅 Portada Delantera Completa (Con velo de lectura)</option>
+                            </select>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="photoFilterSelect">Filtro Estético Menos Ruido:</label>
+                            <select id="photoFilterSelect" onchange="applyPhotoFilterAndRender()">
+                                <option value="none">🎨 Color Original</option>
+                                <option value="bw">🖤 Blanco y Negro Editorial (Alto Contraste)</option>
+                                <option value="sepia">📜 Sepia Cálido Analógico</option>
+                                <option value="soft">🌿 Mate Suave Desaturado</option>
+                            </select>
+                        </div>
+
+                        <div class="field-group">
+                            <label><span>Zoom de la imagen</span> <span id="lblPhotoZoom">100%</span></label>
+                            <div class="range-slider-row">
+                                <input type="range" id="rngPhotoZoom" min="100" max="260" value="100" oninput="updatePhotoTransform()">
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label><span>Encuadre Horizontal (X)</span> <span id="lblPhotoX">0%</span></label>
+                            <div class="range-slider-row">
+                                <input type="range" id="rngPhotoX" min="-100" max="100" value="0" oninput="updatePhotoTransform()">
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label><span>Encuadre Vertical (Y)</span> <span id="lblPhotoY">0%</span></label>
+                            <div class="range-slider-row">
+                                <input type="range" id="rngPhotoY" min="-100" max="100" value="0" oninput="updatePhotoTransform()">
+                            </div>
+                        </div>
+
+                        <div class="field-group" id="fullBleedOverlayGroup" style="display:none;">
+                            <label><span>Oscurecer fondo para leer texto</span> <span id="lblOverlayAlpha">45%</span></label>
+                            <div class="range-slider-row">
+                                <input type="range" id="rngOverlayAlpha" min="10" max="85" value="45" oninput="updatePhotoTransform()">
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-action-secondary" style="width:100%; justify-content:center; color:#991b1b; border-color:#fecaca; background:#fef2f2;" onclick="removeUploadedPhoto()">
+                            🗑️ Quitar fotografía de la portada
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: TEXTOS DE PORTADA, LOMO Y CONTRAPORTADA -->
+            <div class="tab-section" id="tabSec-texts">
+                <div class="control-card" style="background:#f6f1e7; border-color:#dfd4c2;">
+                    <div class="control-card-title">
+                        <span>Planificador del Interior</span>
+                        <button type="button" style="border:none; background:none; color:var(--accent); font-size:0.7rem; font-weight:700; cursor:pointer; text-decoration:underline;" onclick="syncFromBookBuilder(true)">🔄 Sincronizar con Interior</button>
+                    </div>
+                    <div class="field-group">
+                        <label for="selPlannerPreset">Modelo de Planificador (Preescribe textos y contenidos):</label>
+                        <select id="selPlannerPreset" onchange="applyPlannerPreset(this.value, true)">
+                            <option value="anual">Planificador anual (Clásico 12 meses + 52 semanas)</option>
+                            <option value="alterno">Planificador anual Intercalado (Por ciclos)</option>
+                            <option value="trimestre">Planificador 90 días (Enfoque Trimestral)</option>
+                            <option value="semestre">Planificador 180 días (Enfoque Semestral)</option>
+                            <option value="semanal">Planificador semanal (52 semanas)</option>
+                            <option value="bitacora30">Planificador diario (Bitácora 30 días)</option>
+                            <option value="libre">Planificador personalizado (Estructura libre)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-card-title">
+                        <span>Portada Delantera</span>
+                    </div>
+                    <div class="field-group">
+                        <label for="inpKicker">
+                            <span>Sello Superior / Colección:</span>
+                            <span class="badge-readonly">Fijo</span>
+                        </label>
+                        <input type="text" id="inpKicker" value="MENOS RUIDO" readonly disabled>
+                    </div>
+                    <div class="field-group">
+                        <label for="inpTitle">Título Principal (Según planificador · Modificable):</label>
+                        <input type="text" id="inpTitle" value="Planificador anual" oninput="updateConfigFromUI()">
+                    </div>
+                    <div class="field-group">
+                        <label for="inpBadge">Cintillo en Acento (Según planificador · Modificable):</label>
+                        <input type="text" id="inpBadge" value="52 SEMANAS, 12 MESES Y HABIT TRACKER" oninput="updateConfigFromUI()">
+                    </div>
+                    <div class="field-group">
+                        <label for="inpSubtitle">Subtítulo (Según planificador · Modificable):</label>
+                        <input type="text" id="inpSubtitle" value="52 semanas, 12 meses y hábitos de perseverancia silenciosa" oninput="updateConfigFromUI()">
+                    </div>
+                    <div class="field-group">
+                        <label for="inpFrontDesc">Descripción delantera (Según planificador · Modificable):</label>
+                        <textarea id="inpFrontDesc" rows="2" oninput="updateConfigFromUI()">Saca las ideas de la cabeza. Estructura tus meses, diseña tus hábitos y organiza tus semanas con claridad y enfoque.</textarea>
+                    </div>
+                    <div class="field-group">
+                        <label for="inpAuthor">Propietario / Pie de portada (Modificable):</label>
+                        <input type="text" id="inpAuthor" value="Edición Personalizada · Planificador anual" oninput="updateConfigFromUI()">
+                    </div>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-card-title">
+                        <span>Contraportada y Lomo</span>
+                    </div>
+                    <div class="field-group">
+                        <label for="inpSpineText">
+                            <span>Texto del Lomo (Solo Portada con Lomo):</span>
+                            <span id="badgeSpineStatus" class="badge-readonly">Solo con lomo</span>
+                        </label>
+                        <input type="text" id="inpSpineText" value="MENOS RUIDO  •  PLANIFICADOR ANUAL" disabled oninput="updateConfigFromUI()">
+                    </div>
+                    <div class="field-group">
+                        <label for="inpBackTitle">Título de Contraportada (Modificable):</label>
+                        <input type="text" id="inpBackTitle" value="Pensar en Papel" oninput="updateConfigFromUI()">
+                    </div>
+                    <div class="field-group">
+                        <label for="inpBackIntro">Párrafo de Contraportada (Preescrito · Modificable):</label>
+                        <textarea id="inpBackIntro" rows="3" oninput="updateConfigFromUI()">Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.</textarea>
+                    </div>
+                    <div class="field-group">
+                        <label for="inpBackBullets">
+                            <span>Lista de Contenidos (Según planificador):</span>
+                            <span class="badge-readonly">No modificable</span>
+                        </label>
+                        <textarea id="inpBackBullets" rows="5" readonly disabled>Calendario panorámico de 12 meses
+Planificador anual por trimestres (1 pág.)
+Planificador mensual estructurado (12 meses)
+Rastreador de hábitos de 31 días (12 meses)
+Planificador semanal de foco (52 semanas)
+Sección de notas libres (10 páginas)</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 4: MEDIDAS TÉCNICAS Y CALIBRACIÓN LULU -->
+            <div class="tab-section" id="tabSec-specs">
+                <div class="control-card">
+                    <div class="control-card-title">
+                        <span>Formato y Calibración de Imprenta</span>
+                    </div>
+                    <div class="field-group">
+                        <label for="selTrimFormat">
+                            <span>Formato del Cuaderno Completo:</span>
+                            <span class="badge-readonly">Fijo 8.25" × 6"</span>
+                        </label>
+                        <select id="selTrimFormat" disabled>
+                            <option value="landscape_825_6" selected>📐 Apaisado 8.25" × 6" (209.55 × 152.4 mm)</option>
+                        </select>
+                        <span style="font-size:0.7rem; color:#776f65;">Medida oficial sincronizada con el interior del Cuaderno Completo.</span>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="inpPageCount">
+                            <span>Número Total de Páginas Interiores:</span>
+                            <span class="badge-readonly">Automático del Interior</span>
+                        </label>
+                        <input type="number" id="inpPageCount" value="143" readonly disabled>
+                        <span style="font-size:0.7rem; color:#776f65;">Viene dado automáticamente por las secciones de tu Cuaderno Completo.</span>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="selPaperWeight">Grosor de Papel (Lo ajustaremos según catálogo Lulu):</label>
+                        <select id="selPaperWeight" onchange="updateConfigFromUI()">
+                            <option value="0.0635">Crema / Blanco Estándar 90g (0.0635 mm/pág)</option>
+                            <option value="0.0572">Blanco Estándar 80g (0.0572 mm/pág)</option>
+                            <option value="0.0750">Papel Premium Grueso 105g (0.0750 mm/pág)</option>
+                        </select>
+                    </div>
+
+                    <div style="background:#f3ede2; border-radius:6px; padding:10px; font-size:0.75rem; color:#3d352e; display:flex; flex-direction:column; gap:4px;">
+                        <div id="specBleedRow"><strong>Sangría perimetral (Bleed):</strong> <span id="lblCalculatedBleed">3.175 mm (0.125")</span></div>
+                        <div id="specSpineRow"><strong>Ancho de Lomo Calculado:</strong> <span id="lblCalculatedSpine">0 mm (Sin lomo · Anillas)</span></div>
+                        <div><strong>Dimensiones Totales PDF:</strong> <span id="lblTotalPdfSize">215.9 × 158.8 mm (2 págs)</span></div>
+                        <div><strong>Margen Perforación Anillas:</strong> 10.0 mm en lomo interior</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- COLUMNA DERECHA: VISOR EN TIEMPO REAL 1:1 -->
+        <main class="preview-stage-panel">
+            <div class="stage-toolbar">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:0.82rem; font-weight:800; color:#2b2520;">👁️ Vista Previa 1:1 de Imprenta</span>
+                    <span id="bindingBadgePreview" style="background:#ede5d8; color:var(--accent); font-size:0.72rem; font-weight:800; padding:3px 9px; border-radius:12px;">MODO ANILLAS (WIRE-O)</span>
+                </div>
+
+                <!-- Selector de vista cuando está en modo Anillas -->
+                <div class="stage-view-pills" id="coilViewSelector">
+                    <button type="button" class="stage-pill active" data-view="spread" onclick="setCoilPreviewMode('spread')">Vista Doble con Anillas</button>
+                    <button type="button" class="stage-pill" data-view="front" onclick="setCoilPreviewMode('front')">Solo Portada (Pág 1)</button>
+                    <button type="button" class="stage-pill" data-view="back" onclick="setCoilPreviewMode('back')">Solo Contraportada (Pág 2)</button>
+                </div>
+            </div>
+
+            <div class="tech-specs-banner">
+                <span id="techBannerLeft">✨ <strong>Anillas (Wire-O):</strong> Se exportan 2 páginas separadas con sangría de 3.175 mm y margen de perforación libre de textos.</span>
+                <span id="techBannerRight" style="font-weight:700; color:var(--accent);">Sincronizado: 86 páginas</span>
+            </div>
+
+            <div class="canvas-container-outer">
+                <canvas id="coverPreviewCanvas" width="1600" height="900"></canvas>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- =========================================================================
+         MODAL FLUJO A: DESCARGAR PDF O ENVIAR POR EMAIL
+         ========================================================================= -->
+    <div class="modal-overlay" id="downloadModal" onclick="if(event.target.id==='downloadModal') closeDownloadModal()">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 style="font-family:var(--font-serif); font-size:1.4rem; margin-bottom:6px;">Descargar o Enviar Portada PDF</h3>
+            <p style="font-size:0.84rem; color:#666; margin-bottom:14px;">
+                Tu portada se compila a <strong>300 DPI reales con sangría de imprenta</strong> en tu propio navegador (0 MB ocupados en el servidor).
+            </p>
+
+            <div style="background:#fbf9f5; border:1px solid #e6dfd3; border-radius:8px; padding:12px 14px; font-size:0.8rem; color:#3d352e; margin-bottom:16px; display:flex; flex-direction:column; gap:4px;">
+                <div id="modalDownloadSummaryType"><strong>Formato:</strong> Portada con Anillas (2 páginas separadas con sangría)</div>
+                <div id="modalDownloadSummarySize"><strong>Tamaño PDF:</strong> 215.9 × 158.75 mm (8.5" × 6.25" con sangría)</div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+                <button type="button" class="btn-action-primary" style="width:100%; justify-content:center; padding:12px;" onclick="downloadCoverPdf()">
+                    <span>📥</span> Descargar PDF de Portada (300 DPI)
+                </button>
+            </div>
+
+            <!-- Envío por Email igual que en el interior -->
+            <div style="background:#fbf9f5; border:1px solid #e8e2d8; border-radius:10px; padding:14px;">
+                <div style="font-size:0.84rem; font-weight:700; color:#212121; margin-bottom:2px;">✉️ Enviar Portada PDF por correo electrónico</div>
+                <div style="font-size:0.74rem; color:#666; margin-bottom:10px;">Recibe el archivo listo para imprenta directamente en tu bandeja de entrada.</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <input type="email" id="inpCoverEmail" placeholder="tu-correo@ejemplo.com" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid #d0c8be; border-radius:6px; font-size:0.84rem;">
+                    <button type="button" class="btn-action-primary" id="btnSendCoverEmail" onclick="sendCoverViaEmail()">Enviar PDF</button>
+                </div>
+                <div id="coverEmailFeedback" style="display:none; margin-top:10px; font-size:0.8rem; padding:8px 10px; border-radius:6px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL FLUJO B: PEDIDO TRANSPARENTE PARA EL USUARIO (CONEXIÓN LULU API)
+         ========================================================================= -->
+    <div class="modal-overlay" id="orderModal" onclick="if(event.target.id==='orderModal') closeOrderModal()">
+        <div class="modal-card" style="max-width: 640px;">
+            <button type="button" class="modal-close-btn" onclick="closeOrderModal()">✕</button>
+            <span style="background:#eaf5ee; color:#2b7a4b; font-size:0.7rem; font-weight:800; padding:3px 10px; border-radius:12px; text-transform:uppercase;">Servicio de Imprenta Editorial Menos Ruido</span>
+            <h3 style="font-family:var(--font-serif); font-size:1.45rem; margin-top:6px; margin-bottom:4px;">Recibe tu Cuaderno Impreso en Casa</h3>
+            <p style="font-size:0.83rem; color:#666;">
+                Nosotros nos encargamos de todo: imprimimos tu interior y tu portada personalizada en papel crema de alta gama, lo encuadernamos y te lo enviamos directamente a tu puerta.
+            </p>
+
+            <!-- Resumen del producto para el usuario (100% marca Menos Ruido, transparente) -->
+            <div class="order-step-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ece5d8; padding-bottom:8px; margin-bottom:8px;">
+                    <div>
+                        <div style="font-size:0.88rem; font-weight:800; color:#1e1916;" id="orderBookTitle">Planificador Personalizado Menos Ruido</div>
+                        <div style="font-size:0.76rem; color:#665e54;" id="orderBookSpecs">Encuadernación con Anillas Metálicas · 86 páginas</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:1.15rem; font-weight:800; color:var(--accent);" id="orderPriceDisplay">24,90 €</div>
+                        <div style="font-size:0.68rem; color:#777;">Imprenta + Envío incluido</div>
+                    </div>
+                </div>
+
+                <div class="form-grid-2" style="margin-top:10px;">
+                    <div class="field-group">
+                        <label>Nombre completo</label>
+                        <input type="text" id="ordName" placeholder="Ej. Clara Beltrán">
+                    </div>
+                    <div class="field-group">
+                        <label>Correo electrónico (Seguimiento)</label>
+                        <input type="email" id="ordEmail" placeholder="clara@ejemplo.com" style="padding:8px 10px; border:1.5px solid #dcd4c6; border-radius:6px;">
+                    </div>
+                    <div class="field-group" style="grid-column: 1 / -1;">
+                        <label>Dirección de entrega (Calle, número, piso)</label>
+                        <input type="text" id="ordStreet" placeholder="Calle Mayor 14, 3º B">
+                    </div>
+                    <div class="field-group">
+                        <label>Ciudad</label>
+                        <input type="text" id="ordCity" placeholder="Madrid">
+                    </div>
+                    <div class="field-group">
+                        <label>Código Postal y País</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" id="ordZip" placeholder="28013" style="width:45%;">
+                            <select id="ordCountry" style="width:55%;">
+                                <option value="ES">España (ES)</option>
+                                <option value="MX">México (MX)</option>
+                                <option value="AR">Argentina (AR)</option>
+                                <option value="CO">Colombia (CO)</option>
+                                <option value="US">Estados Unidos (US)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-action-order" style="width:100%; justify-content:center; padding:12px; margin-top:14px;" onclick="simulateTransparentOrder()">
+                    <span>💳</span> Pagar y Enviar mi Cuaderno a Imprenta →
+                </button>
+            </div>
+
+            <!-- PANEL EXCLUSIVO PARA DESARROLLADOR: PAYLOAD API DE LULU -->
+            <div style="margin-top:14px; border-top:1px dashed #dcd4c6; padding-top:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.74rem; font-weight:800; color:#22382c; text-transform:uppercase;">🛠️ Vista Desarrollador: Payload Automático hacia Lulu Print API</span>
+                    <button type="button" style="font-size:0.72rem; color:var(--accent); background:none; border:none; font-weight:700; cursor:pointer; text-decoration:underline;" onclick="refreshLuluPayloadPreview()">Actualizar JSON</button>
+                </div>
+                <p style="font-size:0.72rem; color:#666; margin-top:2px;">
+                    El usuario solo ve la pasarela de pago de Menos Ruido. Cuando el pago se confirma, nuestro backend envía este JSON a <code>https://api.lulu.com/print-jobs/</code> con el <code>pod_package_id</code> exacto:
+                </p>
+                <pre class="dev-json-box" id="luluApiPayloadBox"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================================
+        // ESTADO GLOBAL DEL GENERADOR DE PORTADAS
+        // =====================================================================
+        const PALETTES = {
+            forest: {
+                darkBg: '#1f2421',
+                lightBg: '#f5f0e6',
+                accent: '#d98a6c',
+                secondaryBlob: '#7c8773',
+                sandBlob: '#dfd0bc',
+                textOnDark: '#f5f0e6',
+                mutedOnDark: '#a0b0a8',
+                textOnLight: '#1a1715',
+                mutedOnLight: '#5a534a'
+            },
+            charcoal: {
+                darkBg: '#23201e',
+                lightBg: '#f7f4ee',
+                accent: '#c87d55',
+                secondaryBlob: '#8c8275',
+                sandBlob: '#e2d9c8',
+                textOnDark: '#f7f4ee',
+                mutedOnDark: '#b5ada4',
+                textOnLight: '#1c1917',
+                mutedOnLight: '#5c554e'
+            },
+            terracotta: {
+                darkBg: '#6e3d28',
+                lightBg: '#fbf7f2',
+                accent: '#e6b89c',
+                secondaryBlob: '#87553b',
+                sandBlob: '#e8d8c8',
+                textOnDark: '#fbf7f2',
+                mutedOnDark: '#e2c5b5',
+                textOnLight: '#291c16',
+                mutedOnLight: '#6b564c'
+            },
+            navy: {
+                darkBg: '#1e3240',
+                lightBg: '#f4f6f7',
+                accent: '#d4956a',
+                secondaryBlob: '#647d8c',
+                sandBlob: '#d5dfe3',
+                textOnDark: '#f4f6f7',
+                mutedOnDark: '#9eb2bd',
+                textOnLight: '#18242c',
+                mutedOnLight: '#526069'
+            },
+            sage: {
+                darkBg: '#464f41',
+                lightBg: '#f6f5f0',
+                accent: '#d98a6c',
+                secondaryBlob: '#7c8773',
+                sandBlob: '#dfe0d5',
+                textOnDark: '#f6f5f0',
+                mutedOnDark: '#c2c9bd',
+                textOnLight: '#21261f',
+                mutedOnLight: '#575e54'
+            },
+            cream: {
+                darkBg: '#ece5d8',
+                lightBg: '#fffefb',
+                accent: '#87553b',
+                secondaryBlob: '#7c8773',
+                sandBlob: '#dfd0bc',
+                textOnDark: '#211c18',
+                mutedOnDark: '#5c534a',
+                textOnLight: '#1a1715',
+                mutedOnLight: '#5c534a'
+            }
+        };
+
+        const TRIM_FORMATS = {
+            landscape_825_6: { name: '8.25" × 6" Apaisado', wMm: 209.55, hMm: 152.4, luluSkuPrefix: '0825X0600' }
+        };
+
+        // Pre-escritos automáticos según el Planificador elegido en el Cuaderno Completo
+        const PLANNER_COVER_PRESETS = {
+            anual: {
+                title: 'Planificador anual',
+                badge: '52 SEMANAS, 12 MESES Y HABIT TRACKER',
+                subtitle: '52 semanas, 12 meses y hábitos de perseverancia silenciosa',
+                frontDesc: 'Saca las ideas de la cabeza. Estructura tus meses, diseña tus hábitos y organiza tus semanas con claridad y enfoque.',
+                author: 'Edición Personalizada · Planificador anual',
+                spineText: 'MENOS RUIDO  •  PLANIFICADOR ANUAL',
+                backTitle: 'Pensar en Papel',
+                backIntro: 'Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.',
+                defaultPages: 143,
+                backBullets: [
+                    'Calendario panorámico de 12 meses',
+                    'Planificador anual por trimestres (1 pág.)',
+                    'Planificador mensual estructurado (12 meses)',
+                    'Rastreador de hábitos de 31 días (12 meses)',
+                    'Planificador semanal de foco (52 semanas)',
+                    'Sección de notas libres (10 páginas)'
+                ]
+            },
+            alterno: {
+                title: 'Planificador anual Intercalado',
+                badge: 'ORGANIZADO POR CICLOS MENSUALES',
+                subtitle: 'Estructura intercalada: Mes, hábitos, semanas y días organizados por ciclos',
+                frontDesc: 'Todo tu mes agrupado en un mismo bloque continuo: visión mensual, seguimiento de hábitos y semanas consecutivas sin saltar de sección.',
+                author: 'Edición Personalizada · Planificador anual Intercalado',
+                spineText: 'MENOS RUIDO  •  PLANIFICADOR ANUAL INTERCALADO',
+                backTitle: 'Un Ciclo tras Otro',
+                backIntro: 'Diseñado con arquitectura intercalada para que encuentres cada mes, sus hábitos y sus semanas en orden cronológico natural. Claridad absoluta página tras página.',
+                defaultPages: 136,
+                backBullets: [
+                    'Calendario panorámico de 12 meses',
+                    'Planificador anual por trimestres (1 pág.)',
+                    '12 bloques intercalados (Mes + Hábitos + Semanas)',
+                    'Seguimiento de energía y balance mensual',
+                    'Sección de notas libres con malla de puntos'
+                ]
+            },
+            trimestre: {
+                title: 'Planificador 90 días',
+                badge: 'ENFOQUE INTENSIVO TRIMESTRAL',
+                subtitle: 'La regla de una prioridad diaria sin listas infinitas',
+                frontDesc: 'Noventa jornadas para ejecutar un gran proyecto sin dispersión. Define tus metas trimestrales, bloquea tu tiempo y avanza cada día.',
+                author: 'Edición Personalizada · Planificador 90 días',
+                spineText: 'MENOS RUIDO  •  PLANIFICADOR 90 DÍAS',
+                backTitle: '90 Días de Claridad',
+                backIntro: 'Tres meses es el horizonte perfecto para transformar una meta ambiciosa en resultados tangibles. Este cuaderno elimina el ruido diario y te centra en tu única prioridad.',
+                defaultPages: 128,
+                backBullets: [
+                    'Calendario panorámico de referencia',
+                    'Hoja de ruta trimestral y metas clave',
+                    'Planificador mensual (3 meses) + Habit Tracker',
+                    'Planificador semanal de foco (13 semanas)',
+                    'Bitácora de enfoque diario (90 días)',
+                    'Sección de notas libres (10 páginas)'
+                ]
+            },
+            semestre: {
+                title: 'Planificador 180 días',
+                badge: '6 MESES, 26 SEMANAS Y 180 JORNADAS',
+                subtitle: 'Enfoque semestral con 6 meses, 26 semanas y 180 jornadas de claridad',
+                frontDesc: 'Medio año de planificación profunda combinando visión mensual, estructura semanal y bitácora diaria de intención y cierre.',
+                author: 'Edición Personalizada · Planificador 180 días',
+                spineText: 'MENOS RUIDO  •  PLANIFICADOR 180 DÍAS',
+                backTitle: 'Medio Año sin Prisa',
+                backIntro: 'Seis meses de equilibrio entre estrategia y acción diaria. Espacio suficiente para planificar tus semanas y bajar al detalle de cada jornada en papel.',
+                defaultPages: 238,
+                backBullets: [
+                    'Calendario panorámico de 12 meses',
+                    'Planificador mensual estructurado (6 meses)',
+                    'Rastreador de hábitos de 31 días (6 meses)',
+                    'Planificador semanal de foco (26 semanas)',
+                    'Bitácora de enfoque diario (180 días)',
+                    'Sección de notas libres (12 páginas)'
+                ]
+            },
+            semanal: {
+                title: 'Planificador semanal',
+                badge: '52 SEMANAS DE FOCO Y EQUILIBRIO',
+                subtitle: '52 semanas completas de lunes a domingo con foco clave',
+                frontDesc: 'La vista panorámica de tu semana en una sola página. Prioridades claras, seguimiento de hábitos y espacio limpio de lunes a domingo.',
+                author: 'Edición Personalizada · Planificador semanal',
+                spineText: 'MENOS RUIDO  •  PLANIFICADOR SEMANAL',
+                backTitle: 'Semana a Semana',
+                backIntro: 'Para quienes piensan y se organizan en bloques de siete días. Ligero, directo al grano y diseñado para mantener tu semana bajo control de un solo vistazo.',
+                defaultPages: 76,
+                backBullets: [
+                    'Calendario panorámico de 12 meses',
+                    'Planificador anual por trimestres (1 pág.)',
+                    'Planificador semanal de foco (52 semanas)',
+                    'Sección de notas libres (18 páginas)'
+                ]
+            },
+            bitacora30: {
+                title: 'Planificador diario',
+                badge: 'BITÁCORA DE INTENCIÓN Y PRESENCIA',
+                subtitle: 'Un mes de descarga mental, introspección y presencia',
+                frontDesc: 'Dedica diez minutos cada mañana a elegir tu prioridad del día, organizar tu agenda por bloques horarios y vaciar la mente en papel.',
+                author: 'Edición Personalizada · Planificador diario',
+                spineText: 'MENOS RUIDO  •  PLANIFICADOR DIARIO',
+                backTitle: 'Un Día a la Vez',
+                backIntro: 'Un cuaderno íntimo de ritmo diario para frenar la aceleración, ordenar tus pensamientos y cerrar cada jornada con gratitud y calma mental.',
+                defaultPages: 84,
+                backBullets: [
+                    'Calendario panorámico y mes de enfoque',
+                    'Rastreador de hábitos de 31 días',
+                    'Planificador horario time-boxing (30 días)',
+                    'Bitácora de enfoque diario (30 días)',
+                    'Sección de notas libres (15 páginas)'
+                ]
+            },
+            libre: {
+                title: 'Planificador personalizado',
+                badge: 'ARQUITECTURA EDITORIAL A MEDIDA',
+                subtitle: 'Estructura libre a medida diseñada para pensar con calma',
+                frontDesc: 'Un cuaderno configurado pieza a pieza según tu propio método de organización, escritura y seguimiento personal.',
+                author: 'Edición Personalizada · Planificador personalizado',
+                spineText: 'MENOS RUIDO  •  PLANIFICADOR PERSONALIZADO',
+                backTitle: 'Tu Propio Ritmo',
+                backIntro: 'Ningún método estándar se adapta mejor a ti que el que construyes a tu medida. Este cuaderno reúne exactamente las herramientas que necesitas en tu día a día.',
+                defaultPages: 96,
+                backBullets: [
+                    'Portada interior y manifiesto personal',
+                    'Selección de plantillas configuradas a medida',
+                    'Espacios de planificación y seguimiento',
+                    'Sección de notas libres para ideas y bocetos'
+                ]
+            }
+        };
+
+        let coverState = {
+            plannerKey: 'anual',
+            bindingType: 'coil',       // 'coil' (anillas 2 págs) | 'perfect' (tapa blanda pliego con lomo) | 'hardcover' (tapa dura casewrap)
+            coilPreviewMode: 'spread', // 'spread' | 'front' | 'back'
+            template: 'bosque',        // 'bosque' | 'organico' | 'bicolor' | 'marco'
+            palette: 'forest',
+            trimFormat: 'landscape_825_6',
+            pageCount: 143,
+            paperThicknessMm: 0.0635,
+            bleedMm: 3.175,            // 3.175mm (0.125") en Anillas/Tapa Blanda; 19.05mm (0.75") en Tapa Dura Casewrap Lulu
+            coilMarginMm: 10.0,        // Margen interior libre para perforación de anillas
+            showBotanical: true,
+            showBarcode: false,
+            kicker: 'MENOS RUIDO',
+            title: 'Planificador anual',
+            badge: '52 SEMANAS, 12 MESES Y HABIT TRACKER',
+            subtitle: '52 semanas, 12 meses y hábitos de perseverancia silenciosa',
+            frontDesc: 'Saca las ideas de la cabeza. Estructura tus meses, diseña tus hábitos y organiza tus semanas con claridad y enfoque.',
+            author: 'Edición Personalizada · Planificador anual',
+            spineText: 'MENOS RUIDO  •  PLANIFICADOR ANUAL',
+            backTitle: 'Pensar en Papel',
+            backIntro: 'Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.',
+            backBullets: [...PLANNER_COVER_PRESETS.anual.backBullets],
+            photo: {
+                originalImage: null,
+                processedImage: null,
+                filteredDataUrl: null,
+                layout: 'window',      // 'window' | 'center_card' | 'circle' | 'full_front'
+                filter: 'none',        // 'none' | 'bw' | 'sepia' | 'soft'
+                zoom: 100,
+                offsetX: 0,
+                offsetY: 0,
+                overlayAlpha: 45
+            }
+        };
+
+        // =====================================================================
+        // INICIALIZACIÓN Y SINCRONIZACIÓN CON EL CONSTRUCTOR DE LIBROS
+        // =====================================================================
+        function initCoverGenerator() {
+            applyPlannerPreset('anual', false);
+            syncFromBookBuilder(false);
+            setBindingType(coverState.bindingType);
+            renderCoverPreview();
+            refreshLuluPayloadPreview();
+        }
+
+        function detectPlannerKeyFromTitle(titleStr) {
+            const t = (titleStr || '').toLowerCase();
+            if (t.includes('intercalado')) return 'alterno';
+            if (t.includes('90')) return 'trimestre';
+            if (t.includes('180')) return 'semestre';
+            if (t.includes('semanal')) return 'semanal';
+            if (t.includes('diario') || t.includes('bitácora') || t.includes('bitacora')) return 'bitacora30';
+            if (t.includes('personalizado') || t.includes('libre')) return 'libre';
+            return 'anual';
+        }
+
+        function applyPlannerPreset(presetKey, shouldRender = true) {
+            const pKey = PLANNER_COVER_PRESETS[presetKey] ? presetKey : 'anual';
+            const preset = PLANNER_COVER_PRESETS[pKey];
+            coverState.plannerKey = pKey;
+
+            const selPreset = document.getElementById('selPlannerPreset');
+            if (selPreset) selPreset.value = pKey;
+
+            // Sello superior fijo (no modificable)
+            coverState.kicker = 'MENOS RUIDO';
+            document.getElementById('inpKicker').value = 'MENOS RUIDO';
+
+            // Campos dados por el nombre del planificador (modificables)
+            coverState.title = preset.title;
+            document.getElementById('inpTitle').value = preset.title;
+
+            coverState.badge = preset.badge;
+            document.getElementById('inpBadge').value = preset.badge;
+
+            coverState.subtitle = preset.subtitle;
+            document.getElementById('inpSubtitle').value = preset.subtitle;
+
+            coverState.frontDesc = preset.frontDesc;
+            document.getElementById('inpFrontDesc').value = preset.frontDesc;
+
+            coverState.author = preset.author;
+            document.getElementById('inpAuthor').value = preset.author;
+
+            coverState.spineText = preset.spineText;
+            document.getElementById('inpSpineText').value = preset.spineText;
+
+            coverState.backTitle = preset.backTitle;
+            document.getElementById('inpBackTitle').value = preset.backTitle;
+
+            coverState.backIntro = preset.backIntro;
+            document.getElementById('inpBackIntro').value = preset.backIntro;
+
+            // Lista de contenidos y número de páginas (no modificables, vienen del planificador)
+            coverState.backBullets = [...preset.backBullets];
+            document.getElementById('inpBackBullets').value = coverState.backBullets.join('\n');
+
+            coverState.pageCount = preset.defaultPages;
+            document.getElementById('inpPageCount').value = preset.defaultPages;
+
+            if (shouldRender) {
+                updateConfigFromUI();
+            }
+        }
+
+        function syncFromBookBuilder(showNotification = false) {
+            try {
+                const raw = localStorage.getItem('mr_complete_book_config');
+                if (!raw) {
+                    if (showNotification) alert('No se encontró ninguna configuración guardada en el Constructor de Cuaderno Completo. Puedes elegir el modelo de planificador directamente en el desplegable superior.');
+                    return;
+                }
+                const saved = JSON.parse(raw);
+
+                // 1. Detectar qué planificador se eligió en el Constructor y cargar su preset base
+                const detectedKey = saved.presetKey || detectPlannerKeyFromTitle(saved.title);
+                applyPlannerPreset(detectedKey, false);
+
+                // 2. Sobrescribir con los textos personalizados si el usuario los editó en el Constructor
+                if (saved.title) {
+                    coverState.title = saved.title;
+                    document.getElementById('inpTitle').value = saved.title;
+                }
+                if (saved.subtitle) {
+                    coverState.subtitle = saved.subtitle;
+                    document.getElementById('inpSubtitle').value = saved.subtitle;
+                }
+                if (saved.owner && saved.owner.trim()) {
+                    coverState.author = `${saved.title || coverState.title} · ${saved.owner.trim()}`;
+                    document.getElementById('inpAuthor').value = coverState.author;
+                } else {
+                    coverState.author = `Edición Personalizada · ${coverState.title}`;
+                    document.getElementById('inpAuthor').value = coverState.author;
+                }
+                if (saved.dedication && saved.dedication.trim()) {
+                    coverState.frontDesc = saved.dedication.trim();
+                    document.getElementById('inpFrontDesc').value = coverState.frontDesc;
+                }
+
+                // 3. Calcular número exacto de páginas y lista de contenidos real (no modificables)
+                if (Array.isArray(saved.sections)) {
+                    let totalPages = 0;
+                    const bullets = [];
+                    saved.sections.forEach(sec => {
+                        if (!sec.active) return;
+                        if (sec.id === 'cover') {
+                            totalPages += 3; // Portada interior + Manifiesto + Índice
+                        } else if (sec.id === 'calendar') {
+                            const calP = (sec.design && sec.design.yearMode === 'both') ? 2 : 1;
+                            totalPages += calP;
+                            bullets.push('Calendario panorámico de 12 meses');
+                        } else {
+                            const count = parseInt(sec.pages, 10) || 1;
+                            totalPages += count;
+                            if (sec.id === 'annual') bullets.push(`Planificador anual por trimestres (${count} pág.)`);
+                            if (sec.id === 'monthly') bullets.push(`Planificador mensual estructurado (${count} meses)`);
+                            if (sec.id === 'habits') bullets.push(`Rastreador de hábitos de 31 días (${count} meses)`);
+                            if (sec.id === 'weekly') bullets.push(`Planificador semanal de foco (${count} semanas)`);
+                            if (sec.id === 'hourly') bullets.push(`Planificador horario time-boxing (${count} págs.)`);
+                            if (sec.id === 'daily') bullets.push(`Bitácora de enfoque diario (${count} días)`);
+                            if (sec.id === 'notes') bullets.push(`Sección de notas libres (${count} páginas)`);
+                        }
+                    });
+                    totalPages += 1; // Página de cierre y gratitud
+
+                    if (totalPages >= 24) {
+                        coverState.pageCount = totalPages;
+                        document.getElementById('inpPageCount').value = totalPages;
+                    }
+                    if (bullets.length > 0) {
+                        coverState.backBullets = bullets;
+                        document.getElementById('inpBackBullets').value = bullets.join('\n');
+                    }
+                }
+
+                coverState.spineText = `MENOS RUIDO  •  ${(coverState.title || 'PLANIFICADOR').toUpperCase()}`;
+                document.getElementById('inpSpineText').value = coverState.spineText;
+
+                updateConfigFromUI();
+                if (showNotification) {
+                    const rightBanner = document.getElementById('techBannerRight');
+                    if (rightBanner) {
+                        rightBanner.textContent = `✓ ¡Sincronizado con Interior! (${coverState.pageCount} págs)`;
+                    }
+                }
+            } catch (e) {
+                console.warn('Error sincronizando con mr_complete_book_config:', e);
+            }
+        }
+
+        // =====================================================================
+        // CONTROLES DE INTERFAZ Y PESTAÑAS
+        // =====================================================================
+        function switchTab(tabId) {
+            ['style', 'photo', 'texts', 'specs'].forEach(id => {
+                document.getElementById('tabBtn-' + id).classList.toggle('active', id === tabId);
+                document.getElementById('tabSec-' + id).classList.toggle('active', id === tabId);
+            });
+        }
+
+        function setBindingType(type) {
+            coverState.bindingType = type;
+            document.getElementById('btnBindCoil').classList.toggle('active', type === 'coil');
+            document.getElementById('btnBindPerfect').classList.toggle('active', type === 'perfect');
+            const btnHard = document.getElementById('btnBindHardcover');
+            if (btnHard) btnHard.classList.toggle('active', type === 'hardcover');
+
+            // Ajustar sangría/envoltura según encuadernación (Tapa dura Casewrap en Lulu usa más margen de doblado)
+            coverState.bleedMm = (type === 'hardcover') ? 15.875 : 3.175;
+
+            // Habilitar o deshabilitar el input de "Texto del Lomo" (solo modificable cuando hay lomo)
+            const spineInput = document.getElementById('inpSpineText');
+            const spineBadge = document.getElementById('badgeSpineStatus');
+            if (spineInput) {
+                if (type === 'coil') {
+                    spineInput.disabled = true;
+                    if (spineBadge) {
+                        spineBadge.textContent = 'Desactivado en Anillas';
+                        spineBadge.style.background = '#e9e2d6';
+                        spineBadge.style.color = '#7a7066';
+                    }
+                } else {
+                    spineInput.disabled = false;
+                    if (spineBadge) {
+                        spineBadge.textContent = 'Modificable';
+                        spineBadge.style.background = '#eaf5ee';
+                        spineBadge.style.color = '#2b7a4b';
+                    }
+                }
+            }
+
+            const coilSelector = document.getElementById('coilViewSelector');
+            const badge = document.getElementById('bindingBadgePreview');
+            const bannerLeft = document.getElementById('techBannerLeft');
+
+            if (type === 'coil') {
+                coilSelector.style.display = 'flex';
+                badge.textContent = 'MODO ANILLAS (WIRE-O)';
+                bannerLeft.innerHTML = '✨ <strong>Anillas (Wire-O):</strong> Se exportan 2 páginas separadas con sangría de 3.175 mm y margen de perforación libre de textos.';
+            } else if (type === 'hardcover') {
+                coilSelector.style.display = 'none';
+                badge.textContent = 'TAPA DURA CASEWRAP (PLIEGO CON LOMO)';
+                bannerLeft.innerHTML = '📘 <strong>Tapa Dura (Casewrap):</strong> Pliego continuo con lomo rígido y margen perimetral de envoltura sobre cartón (15.88 mm).';
+            } else {
+                coilSelector.style.display = 'none';
+                badge.textContent = 'TAPA BLANDA CON LOMO (PLIEGO COMPLETO)';
+                bannerLeft.innerHTML = '📕 <strong>Tapa Blanda Clásica:</strong> Pliego continuo [Contraportada + Lomo dinámico + Portada] con sangría perimetral de 3.175 mm.';
+            }
+
+            updateSpecsLabels();
+            renderCoverPreview();
+            refreshLuluPayloadPreview();
+        }
+
+        function setCoilPreviewMode(mode) {
+            coverState.coilPreviewMode = mode;
+            document.querySelectorAll('#coilViewSelector .stage-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-view') === mode);
+            });
+            renderCoverPreview();
+        }
+
+        function setTemplate(tpl) {
+            coverState.template = tpl;
+            document.querySelectorAll('.style-card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-template') === tpl);
+            });
+            renderCoverPreview();
+        }
+
+        function setPalette(pal) {
+            coverState.palette = pal;
+            document.querySelectorAll('.palette-circle').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-palette') === pal);
+            });
+            renderCoverPreview();
+        }
+
+        function updateConfigFromUI() {
+            coverState.showBotanical = document.getElementById('chkBotanical').checked;
+            coverState.showBarcode = document.getElementById('chkBarcode').checked;
+            // Sello superior siempre fijo en MENOS RUIDO
+            coverState.kicker = 'MENOS RUIDO';
+            coverState.title = document.getElementById('inpTitle').value;
+            coverState.badge = document.getElementById('inpBadge').value;
+            coverState.subtitle = document.getElementById('inpSubtitle').value;
+            coverState.frontDesc = document.getElementById('inpFrontDesc').value;
+            coverState.author = document.getElementById('inpAuthor').value;
+            coverState.spineText = document.getElementById('inpSpineText').value;
+            coverState.backTitle = document.getElementById('inpBackTitle').value;
+            coverState.backIntro = document.getElementById('inpBackIntro').value;
+
+            // Formato fijo a 8.25" x 6" del Cuaderno Completo
+            coverState.trimFormat = 'landscape_825_6';
+            coverState.paperThicknessMm = parseFloat(document.getElementById('selPaperWeight').value) || 0.0635;
+
+            const photoLayout = document.getElementById('photoLayoutSelect').value;
+            coverState.photo.layout = photoLayout;
+            document.getElementById('fullBleedOverlayGroup').style.display = (photoLayout === 'full_front') ? 'flex' : 'none';
+
+            updateSpecsLabels();
+            renderCoverPreview();
+            refreshLuluPayloadPreview();
+        }
+
+        function getCalculatedSpineMm() {
+            if (coverState.bindingType === 'coil') return 0;
+            const baseSpine = coverState.pageCount * coverState.paperThicknessMm;
+            // En Tapa Dura (Casewrap), el cartón del lomo añade ~2.5 mm adicionales respecto a Tapa Blanda
+            if (coverState.bindingType === 'hardcover') {
+                return +(baseSpine + 2.5).toFixed(2);
+            }
+            return +baseSpine.toFixed(2);
+        }
+
+        function updateSpecsLabels() {
+            const fmt = TRIM_FORMATS.landscape_825_6;
+            const B = coverState.bleedMm;
+            const spineMm = getCalculatedSpineMm();
+
+            const bleedLbl = document.getElementById('lblCalculatedBleed');
+            if (bleedLbl) {
+                bleedLbl.textContent = coverState.bindingType === 'hardcover'
+                    ? '15.88 mm (0.625" Envoltura Tapa Dura)'
+                    : '3.175 mm (0.125" Sangría estándar)';
+            }
+
+            document.getElementById('lblCalculatedSpine').textContent = coverState.bindingType === 'coil'
+                ? '0 mm (Sin lomo · Anillas)'
+                : `${spineMm.toFixed(2)} mm (${coverState.pageCount} págs)`;
+
+            if (coverState.bindingType === 'coil') {
+                const w = (fmt.wMm + B * 2).toFixed(1);
+                const h = (fmt.hMm + B * 2).toFixed(1);
+                document.getElementById('lblTotalPdfSize').textContent = `${w} × ${h} mm (2 páginas separadas)`;
+            } else {
+                const w = (fmt.wMm * 2 + spineMm + B * 2).toFixed(1);
+                const h = (fmt.hMm + B * 2).toFixed(1);
+                document.getElementById('lblTotalPdfSize').textContent = `${w} × ${h} mm (1 pliego continuo)`;
+            }
+
+            document.getElementById('techBannerRight').textContent = `${fmt.name} · ${coverState.pageCount} páginas`;
+        }
+
+        // =====================================================================
+        // GESTIÓN DE FOTOGRAFÍA DEL USUARIO Y FILTROS EN MEMORIA
+        // =====================================================================
+        function handlePhotoUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    coverState.photo.originalImage = img;
+                    document.getElementById('photoControlsWrap').style.display = 'flex';
+                    document.getElementById('photoStatusBadge').textContent = '✓ Foto activa';
+                    document.getElementById('photoStatusBadge').style.color = '#2b7a4b';
+                    applyPhotoFilterAndRender();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeUploadedPhoto() {
+            coverState.photo.originalImage = null;
+            coverState.photo.processedImage = null;
+            coverState.photo.filteredDataUrl = null;
+            document.getElementById('photoFileInput').value = '';
+            document.getElementById('photoControlsWrap').style.display = 'none';
+            document.getElementById('photoStatusBadge').textContent = 'Sin foto';
+            document.getElementById('photoStatusBadge').style.color = '#777';
+            renderCoverPreview();
+        }
+
+        function updatePhotoTransform() {
+            const zoom = parseInt(document.getElementById('rngPhotoZoom').value, 10) || 100;
+            const ox = parseInt(document.getElementById('rngPhotoX').value, 10) || 0;
+            const oy = parseInt(document.getElementById('rngPhotoY').value, 10) || 0;
+            const alpha = parseInt(document.getElementById('rngOverlayAlpha').value, 10) || 45;
+
+            coverState.photo.zoom = zoom;
+            coverState.photo.offsetX = ox;
+            coverState.photo.offsetY = oy;
+            coverState.photo.overlayAlpha = alpha;
+
+            document.getElementById('lblPhotoZoom').textContent = zoom + '%';
+            document.getElementById('lblPhotoX').textContent = ox + '%';
+            document.getElementById('lblPhotoY').textContent = oy + '%';
+            document.getElementById('lblOverlayAlpha').textContent = alpha + '%';
+
+            renderCoverPreview();
+        }
+
+        function applyPhotoFilterAndRender() {
+            const filter = document.getElementById('photoFilterSelect').value;
+            coverState.photo.filter = filter;
+
+            const img = coverState.photo.originalImage;
+            if (!img) {
+                coverState.photo.processedImage = null;
+                renderCoverPreview();
+                return;
+            }
+
+            // Procesar imagen en canvas auxiliar para filtros (garantiza paridad 100% entre vista previa y PDF)
+            const offCanvas = document.createElement('canvas');
+            const maxDim = 1800; // Alta resolución para 300 DPI sin saturar RAM
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+                if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+                else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+            }
+            offCanvas.width = w;
+            offCanvas.height = h;
+            const ctx = offCanvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            if (filter !== 'none') {
+                const imgData = ctx.getImageData(0, 0, w, h);
+                const d = imgData.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const r = d[i], g = d[i + 1], b = d[i + 2];
+                    if (filter === 'bw') {
+                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                        const c = Math.min(255, Math.max(0, (lum - 128) * 1.08 + 128));
+                        d[i] = d[i + 1] = d[i + 2] = c;
+                    } else if (filter === 'sepia') {
+                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                        d[i]     = Math.min(255, lum * 1.08 + 22);
+                        d[i + 1] = Math.min(255, lum * 0.96 + 10);
+                        d[i + 2] = Math.min(255, lum * 0.82);
+                    } else if (filter === 'soft') {
+                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                        d[i]     = Math.round(r * 0.65 + lum * 0.35 + 8);
+                        d[i + 1] = Math.round(g * 0.65 + lum * 0.35 + 6);
+                        d[i + 2] = Math.round(b * 0.65 + lum * 0.35 + 4);
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            const processedImg = new Image();
+            processedImg.onload = function() {
+                // Verificar que no se haya borrado la foto mientras cargaba
+                if (!coverState.photo.originalImage) {
+                    coverState.photo.processedImage = null;
+                    return;
+                }
+                coverState.photo.processedImage = processedImg;
+                renderCoverPreview();
+            };
+            processedImg.src = offCanvas.toDataURL('image/jpeg', 0.92);
+        }
+
+        // =====================================================================
+        // MOTOR DE RENDERIZADO VISUAL 1:1 (CANVAS DE ALTA RESOLUCIÓN -> VISTA Y PDF)
+        // =====================================================================
+        function drawSingleCoverSide(ctx, side, xMm, yMm, wMm, hMm, pxPerMm, includeGuides) {
+            // side: 'front' | 'back'
+            const pal = PALETTES[coverState.palette] || PALETTES.forest;
+            const tpl = coverState.template;
+            const B = coverState.bleedMm;
+
+            ctx.save();
+            ctx.translate(xMm * pxPerMm, yMm * pxPerMm);
+            ctx.scale(pxPerMm, pxPerMm);
+
+            // Recorte al rectángulo total de esta cara (incluyendo sangría correspondiente)
+            ctx.beginPath();
+            ctx.rect(0, 0, wMm, hMm);
+            ctx.clip();
+
+            // Determinar colores de fondo y texto según plantilla y cara
+            let bgCol = pal.darkBg;
+            let txtMain = pal.textOnDark;
+            let txtMuted = pal.mutedOnDark;
+            let accentCol = pal.accent;
+
+            if (tpl === 'organico' || tpl === 'marco') {
+                bgCol = pal.lightBg;
+                txtMain = pal.textOnLight;
+                txtMuted = pal.mutedOnLight;
+            } else if (tpl === 'bicolor') {
+                if (side === 'front') {
+                    bgCol = pal.lightBg;
+                    txtMain = pal.textOnLight;
+                    txtMuted = pal.mutedOnLight;
+                } else {
+                    bgCol = pal.darkBg;
+                    txtMain = pal.textOnDark;
+                    txtMuted = pal.mutedOnDark;
+                }
+            }
+
+            // 1. Fondo base
+            ctx.fillStyle = bgCol;
+            ctx.fillRect(0, 0, wMm, hMm);
+
+            // 2. Elementos decorativos de plantilla (Formas orgánicas o Marcos)
+            if (tpl === 'organico') {
+                drawOrganicBlobs(ctx, side, wMm, hMm, pal);
+            } else if (tpl === 'marco') {
+                const mOut = B + 9;
+                const mIn = B + 11.2;
+                ctx.strokeStyle = accentCol;
+                ctx.lineWidth = 0.55;
+                ctx.strokeRect(mOut, mOut, wMm - mOut * 2, hMm - mOut * 2);
+                ctx.strokeStyle = txtMuted;
+                ctx.globalAlpha = 0.45;
+                ctx.lineWidth = 0.25;
+                ctx.strokeRect(mIn, mIn, wMm - mIn * 2, hMm - mIn * 2);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // 3. Si es la PORTADA DELANTERA ('front')
+            if (side === 'front') {
+                const imgToDraw = coverState.photo.processedImage || coverState.photo.originalImage;
+                const pLayout = coverState.photo.layout;
+
+                // Si la foto ocupa toda la portada delantera (full_front)
+                if (imgToDraw && pLayout === 'full_front') {
+                    drawCroppedPhotoInBox(ctx, imgToDraw, 0, 0, wMm, hMm, 'rect');
+                    // Velo de contraste para lectura nítida
+                    ctx.fillStyle = `rgba(20, 18, 16, ${coverState.photo.overlayAlpha / 100})`;
+                    ctx.fillRect(0, 0, wMm, hMm);
+                    txtMain = '#f7f4ee';
+                    txtMuted = '#dfd8ce';
+                }
+
+                // Margen izquierdo seguro (si es anillas, dejamos más margen a la izquierda para los agujeros)
+                const safeLeft = B + (coverState.bindingType === 'coil' ? 18 : 16);
+                const safeRight = wMm - B - 15;
+                const contentW = safeRight - safeLeft;
+
+                // Sello superior (Kicker)
+                ctx.fillStyle = txtMain;
+                ctx.font = `700 3.3px "Inter", Arial, sans-serif`;
+                ctx.textAlign = 'left';
+                ctx.fillText('MENOS RUIDO', safeLeft, B + 18);
+
+                // Título Principal (Soporta salto automático en 1 o 2 líneas grandes)
+                ctx.fillStyle = txtMain;
+                ctx.font = `400 13.5px "Playfair Display", Georgia, serif`;
+                const titleMaxW = (imgToDraw && (pLayout === 'window' || pLayout === 'circle')) ? contentW * 0.58 : contentW * 0.9;
+                const titleLines = wrapCanvasText(ctx, coverState.title || 'Planificador anual', titleMaxW);
+                let curY = B + 33;
+                titleLines.slice(0, 3).forEach(line => {
+                    ctx.fillText(line, safeLeft, curY);
+                    curY += 14.2;
+                });
+
+                // Cintillo en acento (Badge)
+                curY -= 4.5;
+                ctx.fillStyle = accentCol;
+                ctx.font = `800 3.6px "Inter", Arial, sans-serif`;
+                ctx.fillText((coverState.badge || '').toUpperCase(), safeLeft, curY);
+
+                // Subtítulo en serif
+                curY += 9.5;
+                ctx.fillStyle = txtMain;
+                ctx.font = `400 5.4px "Playfair Display", Georgia, serif`;
+                ctx.fillText(coverState.subtitle || '', safeLeft, curY);
+
+                // Descripción corta delantera
+                curY += 8.5;
+                ctx.fillStyle = txtMuted;
+                ctx.font = `400 3.5px "Inter", Arial, sans-serif`;
+                const descMaxW = (imgToDraw && (pLayout === 'window' || pLayout === 'circle')) ? contentW * 0.54 : contentW * 0.78;
+                const descLines = wrapCanvasText(ctx, coverState.frontDesc || '', descMaxW);
+                descLines.slice(0, 4).forEach(line => {
+                    ctx.fillText(line, safeLeft, curY);
+                    curY += 5.0;
+                });
+
+                // Dibujar Fotografía si está en modo ventana, tarjeta central o círculo
+                if (imgToDraw && pLayout !== 'full_front') {
+                    const trimW = wMm - B * 2;
+                    const trimH = hMm - B * 2;
+                    if (pLayout === 'window') {
+                        const pw = trimW * 0.34;
+                        const ph = trimH * 0.58;
+                        const px = wMm - B - 16 - pw;
+                        const py = B + 20;
+                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, pw, ph, 'rounded');
+                    } else if (pLayout === 'circle') {
+                        const diam = Math.min(trimW, trimH) * 0.44;
+                        const px = wMm - B - 16 - diam;
+                        const py = B + (trimH - diam) / 2 - 2;
+                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, diam, diam, 'circle');
+                    } else if (pLayout === 'center_card') {
+                        const pw = trimW * 0.37;
+                        const ph = trimH * 0.36;
+                        const px = wMm - B - 16 - pw;
+                        const py = hMm - B - 16 - ph;
+                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, pw, ph, 'rounded');
+                    }
+                } else if (!imgToDraw && coverState.showBotanical) {
+                    // Ilustración botánica minimalista a línea en la esquina inferior derecha
+                    drawBotanicalIllustration(ctx, wMm - B - 38, hMm - B - 36, 26, accentCol);
+                }
+
+                // Pie de portada delantera (Editorial + Autor/Propietario)
+                const footY = hMm - B - 22;
+                ctx.fillStyle = txtMain;
+                ctx.font = `700 3.1px "Inter", Arial, sans-serif`;
+                ctx.fillText('MENOS RUIDO', safeLeft, footY);
+
+                ctx.fillStyle = txtMuted;
+                ctx.font = `400 3.2px "Inter", Arial, sans-serif`;
+                ctx.fillText('La calma de tener tu tiempo bajo control.', safeLeft, footY + 4.8);
+
+                ctx.font = `italic 3.2px "Playfair Display", Georgia, serif`;
+                ctx.fillText(coverState.author || 'Un cuaderno de escritura para pensar en papel.', safeLeft, footY + 9.4);
+            }
+
+            // 4. Si es la CONTRAPORTADA ('back')
+            if (side === 'back') {
+                const safeLeft = B + 16;
+                // Si es anillas, el borde derecho de la contraportada lleva las perforaciones
+                const safeRight = wMm - B - (coverState.bindingType === 'coil' ? 18 : 16);
+                const contentW = safeRight - safeLeft;
+
+                ctx.fillStyle = txtMain;
+                ctx.font = `700 3.3px "Inter", Arial, sans-serif`;
+                ctx.textAlign = 'left';
+                ctx.fillText('MENOS RUIDO', safeLeft, B + 18);
+
+                ctx.font = `400 10.2px "Playfair Display", Georgia, serif`;
+                ctx.fillText(coverState.backTitle || 'Pensar en Papel', safeLeft, B + 32);
+
+                ctx.fillStyle = txtMuted;
+                ctx.font = `400 3.7px "Inter", Arial, sans-serif`;
+                let curY = B + 41;
+                const introLines = wrapCanvasText(ctx, coverState.backIntro || '', contentW * 0.88);
+                introLines.slice(0, 4).forEach(line => {
+                    ctx.fillText(line, safeLeft, curY);
+                    curY += 5.2;
+                });
+
+                curY += 6.5;
+                ctx.fillStyle = accentCol;
+                ctx.font = `700 3.5px "Inter", Arial, sans-serif`;
+                ctx.fillText(`Estructura del cuaderno (${coverState.pageCount} páginas):`, safeLeft, curY);
+
+                curY += 6.2;
+                ctx.fillStyle = txtMuted;
+                ctx.font = `400 3.4px "Inter", Arial, sans-serif`;
+                (coverState.backBullets || []).slice(0, 8).forEach(b => {
+                    ctx.fillText(`•  ${b}`, safeLeft + 1, curY);
+                    curY += 5.0;
+                });
+
+                // Pie web
+                const footY = hMm - B - 16;
+                ctx.fillStyle = txtMain;
+                ctx.font = `700 3.2px "Inter", Arial, sans-serif`;
+                ctx.fillText('www.editorialmenosruido.com', safeLeft, footY);
+                ctx.fillStyle = txtMuted;
+                ctx.font = `italic 3.1px "Playfair Display", Georgia, serif`;
+                ctx.fillText('Un cuaderno diseñado para pensar despacio.', safeLeft, footY + 4.8);
+
+                // Reserva opcional de código de barras ISBN
+                if (coverState.showBarcode) {
+                    const bw = 50.8; // 2 inches
+                    const bh = 30.5; // 1.2 inches
+                    const bx = safeRight - bw;
+                    const by = hMm - B - 14 - bh;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(bx, by, bw, bh);
+                    ctx.strokeStyle = '#cccccc';
+                    ctx.lineWidth = 0.25;
+                    ctx.strokeRect(bx, by, bw, bh);
+                    ctx.fillStyle = '#777777';
+                    ctx.font = `600 2.6px "Inter", Arial, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('ZONA ISBN / CÓDIGO DE BARRAS', bx + bw / 2, by + bh / 2 + 1);
+                    ctx.textAlign = 'left';
+                }
+            }
+
+            // 5. Guías técnicas de corte y anillas (solo en vista previa si el checkbox está activo)
+            if (includeGuides) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(220, 60, 60, 0.55)';
+                ctx.lineWidth = 0.35;
+                ctx.setLineDash([2, 2]);
+                ctx.strokeRect(B, B, wMm - B * 2, hMm - B * 2);
+
+                if (coverState.bindingType === 'coil') {
+                    ctx.strokeStyle = 'rgba(59, 130, 246, 0.55)';
+                    const coilX = (side === 'front') ? (B + coverState.coilMarginMm) : (wMm - B - coverState.coilMarginMm);
+                    ctx.beginPath();
+                    ctx.moveTo(coilX, B);
+                    ctx.lineTo(coilX, hMm - B);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        function drawOrganicBlobs(ctx, side, wMm, hMm, pal) {
+            ctx.save();
+            if (side === 'front') {
+                ctx.fillStyle = pal.secondaryBlob;
+                ctx.globalAlpha = 0.85;
+                ctx.beginPath();
+                ctx.arc(wMm * 0.86, hMm * 0.12, wMm * 0.22, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = pal.accent;
+                ctx.globalAlpha = 0.78;
+                ctx.beginPath();
+                ctx.ellipse(wMm * 0.75, hMm * 0.82, wMm * 0.22, hMm * 0.16, -0.25, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = pal.sandBlob;
+                ctx.globalAlpha = 0.65;
+                ctx.beginPath();
+                ctx.ellipse(wMm * 0.05, hMm * 0.52, wMm * 0.12, hMm * 0.28, 0.1, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = pal.sandBlob;
+                ctx.globalAlpha = 0.7;
+                ctx.beginPath();
+                ctx.ellipse(wMm * 0.12, hMm * 0.45, wMm * 0.16, hMm * 0.28, -0.15, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = pal.secondaryBlob;
+                ctx.globalAlpha = 0.75;
+                ctx.beginPath();
+                ctx.arc(wMm * 0.28, hMm * 0.94, wMm * 0.16, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function drawBotanicalIllustration(ctx, x, y, size, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            const s = size / 100;
+            ctx.scale(s, s);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(15, 95);
+            ctx.bezierCurveTo(32, 65, 55, 40, 88, 10);
+            ctx.stroke();
+
+            const leaves = [
+                [32, 74, 12, 58, 25, 48],
+                [32, 74, 54, 72, 62, 58],
+                [52, 52, 32, 34, 44, 24],
+                [52, 52, 74, 48, 82, 34],
+                [70, 30, 56, 16, 68, 10]
+            ];
+            leaves.forEach(([sx, sy, cx, cy, ex, ey]) => {
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.quadraticCurveTo(cx, cy, ex, ey);
+                ctx.quadraticCurveTo(sx + (ex - sx) * 0.6, sy + (ey - sy) * 0.2, sx, sy);
+                ctx.stroke();
+            });
+            ctx.restore();
+        }
+
+        function drawCroppedPhotoInBox(ctx, img, x, y, w, h, shape) {
+            ctx.save();
+            ctx.beginPath();
+            if (shape === 'circle') {
+                ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
+            } else if (shape === 'rounded') {
+                const r = 3.5;
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+            } else {
+                ctx.rect(x, y, w, h);
+            }
+            ctx.clip();
+
+            const zoom = (coverState.photo.zoom || 100) / 100;
+            const imgAspect = img.width / img.height;
+            const boxAspect = w / h;
+
+            let drawW, drawH;
+            if (imgAspect > boxAspect) {
+                drawH = h * zoom;
+                drawW = drawH * imgAspect;
+            } else {
+                drawW = w * zoom;
+                drawH = drawW / imgAspect;
+            }
+
+            const maxPanX = Math.max(10, (drawW - w) / 2 + w * 0.25);
+            const maxPanY = Math.max(10, (drawH - h) / 2 + h * 0.25);
+            const dx = x + (w - drawW) / 2 + (coverState.photo.offsetX / 100) * maxPanX;
+            const dy = y + (h - drawH) / 2 + (coverState.photo.offsetY / 100) * maxPanY;
+
+            ctx.drawImage(img, dx, dy, drawW, drawH);
+            ctx.restore();
+
+            if (shape !== 'rect') {
+                ctx.save();
+                ctx.strokeStyle = PALETTES[coverState.palette].accent;
+                ctx.lineWidth = 0.45;
+                ctx.beginPath();
+                if (shape === 'circle') {
+                    ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
+                } else {
+                    ctx.strokeRect(x, y, w, h);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function wrapCanvasText(ctx, text, maxWidth) {
+            if (!text) return [];
+            const words = String(text).split(/\s+/);
+            const lines = [];
+            let currentLine = words[0] || '';
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = ctx.measureText(currentLine + ' ' + word).width;
+                if (width < maxWidth) {
+                    currentLine += ' ' + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            if (currentLine) lines.push(currentLine);
+            return lines;
+        }
+
+        // Renderizado del Lienzo Principal de Vista Previa
+        function renderCoverPreview() {
+            const canvas = document.getElementById('coverPreviewCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const fmt = TRIM_FORMATS.landscape_825_6;
+            const B = coverState.bleedMm;
+            const includeGuides = document.getElementById('chkShowGuides').checked;
+            const pal = PALETTES[coverState.palette] || PALETTES.forest;
+
+            const singleW = fmt.wMm + B * 2;
+            const singleH = fmt.hMm + B * 2;
+            const pxPerMm = 3.6; // Escala nítida en pantalla
+
+            if (coverState.bindingType === 'coil') {
+                if (coverState.coilPreviewMode === 'front' || coverState.coilPreviewMode === 'back') {
+                    canvas.width = Math.round(singleW * pxPerMm);
+                    canvas.height = Math.round(singleH * pxPerMm);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    drawSingleCoverSide(ctx, coverState.coilPreviewMode, 0, 0, singleW, singleH, pxPerMm, includeGuides);
+                } else {
+                    const gapMm = 8;
+                    const totalW = singleW * 2 + gapMm;
+                    canvas.width = Math.round(totalW * pxPerMm);
+                    canvas.height = Math.round(singleH * pxPerMm);
+
+                    ctx.fillStyle = '#dcd4c6';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    drawSingleCoverSide(ctx, 'back', 0, 0, singleW, singleH, pxPerMm, includeGuides);
+                    drawSingleCoverSide(ctx, 'front', singleW + gapMm, 0, singleW, singleH, pxPerMm, includeGuides);
+
+                    ctx.save();
+                    ctx.scale(pxPerMm, pxPerMm);
+                    const ringsCount = 16;
+                    const stepY = (singleH - 24) / (ringsCount - 1);
+                    for (let i = 0; i < ringsCount; i++) {
+                        const ry = 12 + i * stepY;
+                        ctx.fillStyle = '#332e2a';
+                        ctx.beginPath();
+                        ctx.arc(singleW - 4.5, ry, 1.4, 0, Math.PI * 2);
+                        ctx.arc(singleW + gapMm + 4.5, ry, 1.4, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.strokeStyle = '#4a4642';
+                        ctx.lineWidth = 0.85;
+                        ctx.beginPath();
+                        ctx.moveTo(singleW - 4.5, ry - 0.6);
+                        ctx.lineTo(singleW + gapMm + 4.5, ry - 0.6);
+                        ctx.moveTo(singleW - 4.5, ry + 0.6);
+                        ctx.lineTo(singleW + gapMm + 4.5, ry + 0.6);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+            } else {
+                // TAPA BLANDA O TAPA DURA CON LOMO: PLIEGO CONTINUO
+                const spineMm = getCalculatedSpineMm();
+                const spreadW = fmt.wMm * 2 + spineMm + B * 2;
+                const spreadH = fmt.hMm + B * 2;
+
+                canvas.width = Math.round(spreadW * pxPerMm);
+                canvas.height = Math.round(spreadH * pxPerMm);
+
+                drawFullSpreadPerfectBound(ctx, fmt, spineMm, B, pxPerMm, includeGuides, pal);
+            }
+        }
+
+        function drawFullSpreadPerfectBound(ctx, fmt, spineMm, B, pxPerMm, includeGuides, pal) {
+            const sideW = fmt.wMm + B;
+            const totalH = fmt.hMm + B * 2;
+
+            drawSingleCoverSide(ctx, 'back', 0, 0, sideW + B, totalH, pxPerMm, false);
+            drawSingleCoverSide(ctx, 'front', sideW + spineMm - B, 0, sideW + B, totalH, pxPerMm, false);
+
+            // Dibujar Franja del Lomo Central
+            ctx.save();
+            ctx.scale(pxPerMm, pxPerMm);
+
+            const spineX = B + fmt.wMm;
+            ctx.fillStyle = pal.darkBg;
+            ctx.fillRect(spineX, 0, spineMm, totalH);
+
+            // Texto vertical del lomo centrado
+            if (spineMm >= 3.5 && coverState.spineText) {
+                ctx.save();
+                ctx.translate(spineX + spineMm / 2, totalH / 2);
+                ctx.rotate(Math.PI / 2);
+                ctx.fillStyle = pal.textOnDark;
+                const fontSize = Math.min(3.2, spineMm * 0.55);
+                ctx.font = `700 ${fontSize}px "Inter", Arial, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(coverState.spineText.toUpperCase(), 0, 0);
+                ctx.restore();
+            }
+
+            // Guías de corte/envoltura y pliegue de lomo
+            if (includeGuides) {
+                const spreadW = fmt.wMm * 2 + spineMm + B * 2;
+                ctx.strokeStyle = 'rgba(220, 60, 60, 0.6)';
+                ctx.lineWidth = 0.35;
+                ctx.setLineDash([2, 2]);
+                ctx.strokeRect(B, B, spreadW - B * 2, totalH - B * 2);
+
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.7)';
+                ctx.beginPath();
+                ctx.moveTo(spineX, 0);
+                ctx.lineTo(spineX, totalH);
+                ctx.moveTo(spineX + spineMm, 0);
+                ctx.lineTo(spineX + spineMm, totalH);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // =====================================================================
+        // COMPILACIÓN PDF A 300 DPI CON JSPDF (FLUJO A: DESCARGA Y EMAIL)
+        // =====================================================================
+        function compileHighResCoverPdf() {
+            const jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+            if (!jsPDFLib) {
+                throw new Error('No se ha podido cargar el motor jsPDF.');
+            }
+
+            const fmt = TRIM_FORMATS.landscape_825_6;
+            const B = coverState.bleedMm;
+            const pal = PALETTES[coverState.palette] || PALETTES.forest;
+            const dpiScale = 8.0;
+
+            if (coverState.bindingType === 'coil') {
+                const pageW = +(fmt.wMm + B * 2).toFixed(2);
+                const pageH = +(fmt.hMm + B * 2).toFixed(2);
+                const orientation = pageW >= pageH ? 'landscape' : 'portrait';
+
+                const doc = new jsPDFLib({
+                    orientation,
+                    unit: 'mm',
+                    format: [pageW, pageH],
+                    compress: true
+                });
+
+                const cFront = document.createElement('canvas');
+                cFront.width = Math.round(pageW * dpiScale);
+                cFront.height = Math.round(pageH * dpiScale);
+                drawSingleCoverSide(cFront.getContext('2d'), 'front', 0, 0, pageW, pageH, dpiScale, false);
+                doc.addImage(cFront.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageW, pageH);
+
+                doc.addPage([pageW, pageH], orientation);
+                const cBack = document.createElement('canvas');
+                cBack.width = Math.round(pageW * dpiScale);
+                cBack.height = Math.round(pageH * dpiScale);
+                drawSingleCoverSide(cBack.getContext('2d'), 'back', 0, 0, pageW, pageH, dpiScale, false);
+                doc.addImage(cBack.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageW, pageH);
+
+                const filename = `Menos_Ruido_Portada_Anillas_${coverState.pageCount}pags.pdf`;
+                return { doc, filename };
+            } else {
+                const spineMm = getCalculatedSpineMm();
+                const spreadW = +(fmt.wMm * 2 + spineMm + B * 2).toFixed(2);
+                const spreadH = +(fmt.hMm + B * 2).toFixed(2);
+
+                const doc = new jsPDFLib({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: [spreadW, spreadH],
+                    compress: true
+                });
+
+                const cSpread = document.createElement('canvas');
+                cSpread.width = Math.round(spreadW * dpiScale);
+                cSpread.height = Math.round(spreadH * dpiScale);
+                drawFullSpreadPerfectBound(cSpread.getContext('2d'), fmt, spineMm, B, dpiScale, false, pal);
+                doc.addImage(cSpread.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, spreadW, spreadH);
+
+                const tipoStr = coverState.bindingType === 'hardcover' ? 'TapaDura' : 'TapaBlanda';
+                const filename = `Menos_Ruido_Portada_${tipoStr}_${coverState.pageCount}pags.pdf`;
+                return { doc, filename };
+            }
+        }
+
+        function openDownloadModal() {
+            const fmt = TRIM_FORMATS.landscape_825_6;
+            const B = coverState.bleedMm;
+            const spineMm = getCalculatedSpineMm();
+
+            if (coverState.bindingType === 'coil') {
+                document.getElementById('modalDownloadSummaryType').innerHTML = '<strong>Encuadernación:</strong> Portada con Anillas (PDF de 2 páginas separadas con sangría)';
+            } else if (coverState.bindingType === 'hardcover') {
+                document.getElementById('modalDownloadSummaryType').innerHTML = `<strong>Encuadernación:</strong> Tapa Dura Casewrap (Pliego continuo con lomo de ${spineMm} mm)`;
+            } else {
+                document.getElementById('modalDownloadSummaryType').innerHTML = `<strong>Encuadernación:</strong> Tapa Blanda con Lomo (Pliego continuo con lomo de ${spineMm} mm)`;
+            }
+
+            const w = coverState.bindingType === 'coil' ? (fmt.wMm + B * 2).toFixed(1) : (fmt.wMm * 2 + spineMm + B * 2).toFixed(1);
+            const h = (fmt.hMm + B * 2).toFixed(1);
+            document.getElementById('modalDownloadSummarySize').innerHTML = `<strong>Dimensiones con sangría:</strong> ${w} × ${h} mm (${coverState.pageCount} págs interiores)`;
+
+            const savedEmail = localStorage.getItem('mr_user_pdf_email');
+            if (savedEmail && !document.getElementById('inpCoverEmail').value) {
+                document.getElementById('inpCoverEmail').value = savedEmail;
+            }
+            document.getElementById('coverEmailFeedback').style.display = 'none';
+            document.getElementById('downloadModal').classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('downloadModal').classList.remove('active');
+        }
+
+        function downloadCoverPdf() {
+            try {
+                const { doc, filename } = compileHighResCoverPdf();
+                doc.save(filename);
+                closeDownloadModal();
+            } catch (err) {
+                alert('Error al generar el PDF de portada: ' + (err.message || err));
+            }
+        }
+
+        async function sendCoverViaEmail() {
+            const emailInput = document.getElementById('inpCoverEmail');
+            const feedback = document.getElementById('coverEmailFeedback');
+            const btn = document.getElementById('btnSendCoverEmail');
+            const email = (emailInput.value || '').trim();
+
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#fef2f2';
+                feedback.style.color = '#991b1b';
+                feedback.textContent = 'Por favor, introduce un correo electrónico válido.';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            feedback.style.display = 'block';
+            feedback.style.background = '#eff6ff';
+            feedback.style.color = '#1e40af';
+            feedback.textContent = '⏳ Compilando portada a 300 DPI y enviando por correo...';
+
+            try {
+                const { doc, filename } = compileHighResCoverPdf();
+                const pdfBase64 = doc.output('datauristring');
+
+                const response = await fetch('/api/send-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        pdfBase64,
+                        filename,
+                        plannerName: 'Portada Personalizada Menos Ruido'
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'No se pudo enviar el correo.');
+                }
+
+                try { localStorage.setItem('mr_user_pdf_email', email); } catch (e) {}
+                feedback.style.background = '#f0fdf4';
+                feedback.style.color = '#166534';
+                feedback.textContent = '✅ ¡Portada enviada con éxito! Revisa tu bandeja de entrada.';
+            } catch (err) {
+                feedback.style.background = '#fef2f2';
+                feedback.style.color = '#991b1b';
+                feedback.textContent = '❌ ' + (err.message || 'Error al enviar el correo. Puedes descargar el PDF directamente.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Enviar PDF';
+            }
+        }
+
+        // =====================================================================
+        // FLUJO B: PEDIDO TRANSPARENTE AL USUARIO CON PAYLOAD LULU PRINT API
+        // =====================================================================
+        function getLuluPodPackageId() {
+            const fmt = TRIM_FORMATS.landscape_825_6;
+            // En Lulu Print API: CO = Coil Bound (Anillas), PB = Perfect Bound (Tapa Blanda), CW = Casewrap Hardcover (Tapa Dura)
+            let bindCode = 'CO';
+            if (coverState.bindingType === 'perfect') bindCode = 'PB';
+            if (coverState.bindingType === 'hardcover') bindCode = 'CW';
+            return `${fmt.luluSkuPrefix}BWSTDC${bindCode}060UC444MXX`;
+        }
+
+        function refreshLuluPayloadPreview() {
+            const box = document.getElementById('luluApiPayloadBox');
+            if (!box) return;
+
+            const name = (document.getElementById('ordName')?.value || coverState.author || 'Clara Beltrán').replace('Edición Personalizada · ', '');
+            const email = document.getElementById('ordEmail')?.value || 'cliente@ejemplo.com';
+            const street = document.getElementById('ordStreet')?.value || 'Calle Mayor 14, 3B';
+            const city = document.getElementById('ordCity')?.value || 'Madrid';
+            const zip = document.getElementById('ordZip')?.value || '28013';
+            const country = document.getElementById('ordCountry')?.value || 'ES';
+
+            const payload = {
+                contact_email: "pedidos@editorialmenosruido.com",
+                external_id: `MR-ORDER-${Date.now()}`,
+                shipping_level: "MAIL",
+                shipping_address: {
+                    name: name,
+                    street1: street,
+                    city: city,
+                    postcode: zip,
+                    country_code: country,
+                    email: email
+                },
+                line_items: [
+                    {
+                        external_id: "ITEM-CUADERNO-1",
+                        title: coverState.title || "Cuaderno Personalizado Menos Ruido",
+                        quantity: 1,
+                        printable_normalization: {
+                            pod_package_id: getLuluPodPackageId(),
+                            cover: {
+                                source_url: `https://www.editorialmenosruido.com/api/temp-files/cover_${coverState.bindingType}_${coverState.pageCount}p.pdf`
+                            },
+                            interior: {
+                                source_url: `https://www.editorialmenosruido.com/api/temp-files/interior_${coverState.pageCount}p.pdf`
+                            }
+                        }
+                    }
+                ]
+            };
+
+            box.textContent = JSON.stringify(payload, null, 2);
+        }
+
+        function openOrderModal() {
+            document.getElementById('orderBookTitle').textContent = coverState.title || 'Planificador Personalizado Menos Ruido';
+            let bindName = 'Encuadernación con Anillas Metálicas (Wire-O)';
+            let priceText = '24,90 €';
+            if (coverState.bindingType === 'perfect') {
+                bindName = 'Encuadernación Tapa Blanda con Lomo';
+                priceText = '22,90 €';
+            } else if (coverState.bindingType === 'hardcover') {
+                bindName = 'Encuadernación Tapa Dura Rígida (Casewrap)';
+                priceText = '29,90 €';
+            }
+            document.getElementById('orderBookSpecs').textContent = `${bindName} · ${coverState.pageCount} páginas interiores`;
+            document.getElementById('orderPriceDisplay').textContent = priceText;
+
+            refreshLuluPayloadPreview();
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        function simulateTransparentOrder() {
+            refreshLuluPayloadPreview();
+            alert('Vista Previa Dev: En producción, este botón abre Stripe Checkout. Al confirmarse el pago del cliente, nuestro webhook envía automáticamente el PDF Interior + PDF Portada y el JSON inferior a la API de Lulu (https://api.lulu.com/print-jobs/) sin que el usuario tenga que hacer nada más.');
+        }
+
+        // Escuchar cambios en el formulario de dirección para actualizar el JSON en tiempo real
+        ['ordName', 'ordEmail', 'ordStreet', 'ordCity', 'ordZip', 'ordCountry'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', refreshLuluPayloadPreview);
+        });
+
+        window.addEventListener('DOMContentLoaded', initCoverGenerator);
+    </script>
+
+    <!-- Integración con "Guardar en Mi Espacio" (Firestore + Copia Local) -->
+    <script type="module">
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        function getCoverGeneratorData() {
+            const bindLabel = coverState.bindingType === 'coil'
+                ? 'Anillas'
+                : (coverState.bindingType === 'hardcover' ? 'Tapa Dura' : 'Tapa Blanda');
+            return {
+                type: 'Portada de Cuaderno',
+                summary: `${coverState.title || 'Portada'} · ${bindLabel} (${coverState.pageCount} págs)`,
+                data: {
+                    plannerKey: coverState.plannerKey,
+                    bindingType: coverState.bindingType,
+                    template: coverState.template,
+                    palette: coverState.palette,
+                    pageCount: coverState.pageCount,
+                    paperThicknessMm: coverState.paperThicknessMm,
+                    showBotanical: coverState.showBotanical,
+                    showBarcode: coverState.showBarcode,
+                    title: coverState.title,
+                    badge: coverState.badge,
+                    subtitle: coverState.subtitle,
+                    frontDesc: coverState.frontDesc,
+                    author: coverState.author,
+                    spineText: coverState.spineText,
+                    backTitle: coverState.backTitle,
+                    backIntro: coverState.backIntro,
+                    backBullets: coverState.backBullets
+                }
+            };
+        }
+
+        function applySavedCoverDesign(savedData) {
+            if (!savedData) return;
+            if (savedData.plannerKey) applyPlannerPreset(savedData.plannerKey, false);
+            if (savedData.bindingType) setBindingType(savedData.bindingType);
+            if (savedData.template) setTemplate(savedData.template);
+            if (savedData.palette) setPalette(savedData.palette);
+
+            if (savedData.title !== undefined) document.getElementById('inpTitle').value = savedData.title;
+            if (savedData.badge !== undefined) document.getElementById('inpBadge').value = savedData.badge;
+            if (savedData.subtitle !== undefined) document.getElementById('inpSubtitle').value = savedData.subtitle;
+            if (savedData.frontDesc !== undefined) document.getElementById('inpFrontDesc').value = savedData.frontDesc;
+            if (savedData.author !== undefined) document.getElementById('inpAuthor').value = savedData.author;
+            if (savedData.spineText !== undefined) document.getElementById('inpSpineText').value = savedData.spineText;
+            if (savedData.backTitle !== undefined) document.getElementById('inpBackTitle').value = savedData.backTitle;
+            if (savedData.backIntro !== undefined) document.getElementById('inpBackIntro').value = savedData.backIntro;
+
+            updateConfigFromUI();
+        }
+
+        setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData);
+        checkAndLoadSavedDesign(applySavedCoverDesign);
+    </script>
+</body>
+</html>
