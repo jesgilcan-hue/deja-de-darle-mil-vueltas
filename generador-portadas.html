@@ -562,6 +562,7 @@
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .stage-pill {
             padding: 5px 12px;
@@ -576,6 +577,22 @@
         .stage-pill.active {
             background: var(--accent);
             color: #fff;
+            border-color: var(--accent);
+        }
+
+        .btn-page-nav {
+            background: #f5f0e6;
+            border: 1px solid #d5ccb9;
+            color: #3d352e;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-page-nav:hover {
+            background: #eae1d0;
             border-color: var(--accent);
         }
 
@@ -603,7 +620,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow-x: auto;
+            overflow: auto;
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.06);
         }
 
@@ -613,9 +630,98 @@
             border-radius: 3px;
             box-shadow: var(--shadow-paper);
             background: #ffffff;
+            transition: width 0.15s ease;
         }
 
-        /* MODALES (FLUJO A: DESCARGA/EMAIL | FLUJO B: PEDIDO DIRECTO LULU TRANSPARENTE) */
+        /* BOTÓN SINCRONIZAR CON EL INTERIOR PRESELECCIONADO */
+        .btn-sync-locked {
+            background: #eaf5ee;
+            color: #215c38;
+            border: 1.5px solid #a7d7b8;
+            padding: 8px 13px;
+            border-radius: 8px;
+            font-size: 0.81rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.18s ease;
+        }
+        .btn-sync-locked:hover {
+            background: #dcf0e4;
+            border-color: #2b7a4b;
+        }
+        .sync-book-pill {
+            background: #ffffff;
+            color: #1b4d2e;
+            border: 1px solid #b7dfc5;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            max-width: 210px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-action-order.added-to-cart {
+            background: #2b7a4b;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(43, 122, 75, 0.3);
+            cursor: default;
+        }
+        .btn-action-order.overwrite-cart-mode {
+            background: #87553b;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.32);
+        }
+        .cart-overwrite-hint {
+            font-size: 0.71rem;
+            font-weight: 700;
+            color: #87553b;
+            background: #fdf6ef;
+            border: 1px solid #ebd5c3;
+            padding: 3px 9px;
+            border-radius: 6px;
+            display: none;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sync-book-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 260px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .sync-book-item {
+            background: #fbf9f5;
+            border: 1.5px solid #e2d9c8;
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .sync-book-item:hover {
+            border-color: var(--accent);
+            background: #f5efe4;
+        }
+        .sync-book-item.active {
+            border-color: #2b7a4b;
+            background: #eaf5ee;
+        }
+
+        /* ESTILO DEL MODAL DE DESCARGA/EMAIL IDÉNTICO AL GENERADOR DE LIBRO COMPLETO */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -634,10 +740,11 @@
         .modal-card {
             background: #ffffff;
             border-radius: 14px;
-            max-width: 580px;
+            max-width: 520px;
             width: 100%;
-            padding: 26px;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
             position: relative;
             max-height: 92vh;
             overflow-y: auto;
@@ -647,13 +754,225 @@
         .modal-close-btn {
             position: absolute;
             top: 14px;
-            right: 16px;
+            right: 14px;
             background: none;
             border: none;
-            font-size: 1.25rem;
-            color: #777;
+            font-size: 1.2rem;
+            color: #888;
             cursor: pointer;
         }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
+        }
+
+        .compile-summary-box {
+            background: #fbf9f5;
+            border: 1px solid #e7dfd2;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 0.82rem;
+            color: #4b4239;
+            text-align: left;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(135,85,59,0.25);
+        }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+
+        .modal-email-box {
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-top: 14px;
+            margin-bottom: 14px;
+        }
+        .modal-email-header {
+            margin-bottom: 10px;
+        }
+        .modal-email-title {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #212121;
+        }
+        .modal-email-sub {
+            display: block;
+            font-size: 0.74rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        .modal-email-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-email-input {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            background: #ffffff;
+            color: #212121;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modal-email-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
+        }
+        .modal-btn-send {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .modal-btn-send:hover {
+            background: var(--accent-hover);
+        }
+        .modal-email-feedback {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 9px 12px;
+            line-height: 1.4;
+        }
+
+        .modal-books-section {
+            background: #faf8f5;
+            border: 1px solid #e7e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-top: 6px;
+        }
+        .modal-books-header {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .modal-books-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        @media (max-width: 500px) {
+            .modal-books-grid { grid-template-columns: 1fr; }
+        }
+        .modal-book-card {
+            background: #ffffff;
+            border: 1px solid #e0d9cc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .modal-book-thumb {
+            width: 48px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            background: #eee;
+            flex-shrink: 0;
+        }
+        .modal-book-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .modal-book-badge {
+            font-size: 0.60rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+        .modal-book-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #1a1614;
+            line-height: 1.2;
+        }
+        .btn-book-amazon {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: 4px;
+        }
+        .btn-book-amazon:hover { text-decoration: underline; }
 
         .order-step-box {
             background: #fbf9f5;
@@ -706,7 +1025,7 @@
     <!-- CABECERA -->
     <header class="header-title-box">
         <h1>Generador de Portadas</h1>
-        <p>Diseña la cubierta exterior de tu cuaderno completo en <strong>Anillas (Wire-O)</strong>, <strong>Tapa Blanda</strong> o <strong>Tapa Dura con Lomo</strong>, sube tu propia fotografía y descarga o encarga tu ejemplar impreso.</p>
+        <p>Diseña la cubierta exterior de tu cuaderno completo en <strong>Anillas (Wire-O)</strong>, <strong>Tapa Blanda</strong> o <strong>Tapa Dura</strong>, sube tu propia fotografía y descarga o añade tu ejemplar al carrito.</p>
     </header>
 
     <!-- BARRA DE MODO DE ENCUADERNACIÓN Y ACCIONES PRINCIPALES -->
@@ -717,25 +1036,36 @@
                 <span>🌀</span> Portada con Anillas
             </button>
             <button type="button" class="binding-pill-btn" id="btnBindPerfect" onclick="setBindingType('perfect')">
-                <span>📕</span> Tapa Blanda con Lomo
+                <span>📕</span> Tapa Blanda
             </button>
             <button type="button" class="binding-pill-btn" id="btnBindHardcover" onclick="setBindingType('hardcover')">
-                <span>📘</span> Tapa Dura (Casewrap)
+                <span>📘</span> Tapa Dura
             </button>
         </div>
 
         <div class="top-cta-group">
-            <!-- Botones de Flujo A idénticos a la imagen del usuario -->
+            <!-- Botón Sincronizar con el interior preseleccionado: al pulsar indica con qué libro creado está sincronizado -->
+            <button type="button" class="btn-sync-locked" id="btnSyncInterior" onclick="openSyncInteriorModal()" title="Haz clic para ver con qué libro creado está sincronizado">
+                <input type="checkbox" checked disabled style="accent-color:#215c38; pointer-events:none;">
+                <span>🔄 Sincronizar con el interior</span>
+                <span class="sync-book-pill" id="topSyncedBookPill">Planificador anual</span>
+            </button>
+            <!-- Botones de Flujo A -->
             <button type="button" class="btn-save-space" id="btn-save-generator-design">
                 <span>💾</span> Guardar en Mi Espacio
             </button>
             <button type="button" class="btn-download-send" onclick="openDownloadModal()">
                 <span>📥</span> Descargar / Enviar PDF
             </button>
-            <!-- Botón de Flujo B (Cesta / Pedido de Cuaderno Impreso) -->
-            <button type="button" class="btn-action-order" onclick="openOrderModal()">
-                <span>🛒</span> Encargar Cuaderno Impreso
-            </button>
+            <!-- Botón de Flujo B (Añadir al carrito) -->
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                <button type="button" class="btn-action-order" id="btnAddToCart" onclick="handleAddToCart()">
+                    <span>🛒</span> Añadir al carrito
+                </button>
+                <div class="cart-overwrite-hint" id="cartOverwriteHint">
+                    <span>ℹ️</span> <span id="cartOverwriteHintText">Se guardará encima del anterior</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -822,6 +1152,13 @@
                         <input type="checkbox" id="chkBotanical" checked onchange="updateConfigFromUI()">
                         <span>Mostrar ilustración botánica / ornamento editorial</span>
                     </label>
+                    <div class="field-group" id="botanicalSelectWrap" style="margin-left: 22px; margin-bottom: 4px;">
+                        <label for="selBotanicalType">Elegir ilustración:</label>
+                        <select id="selBotanicalType" onchange="updateConfigFromUI()">
+                            <option value="olivo">🌿 Rama de Olivo</option>
+                            <option value="loto">🪷 Flor de Loto</option>
+                        </select>
+                    </div>
                     <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer;">
                         <input type="checkbox" id="chkBarcode" onchange="updateConfigFromUI()">
                         <span>Reservar espacio blanco ISBN en contraportada</span>
@@ -908,12 +1245,21 @@
             <div class="tab-section" id="tabSec-texts">
                 <div class="control-card" style="background:#f6f1e7; border-color:#dfd4c2;">
                     <div class="control-card-title">
-                        <span>Planificador del Interior</span>
-                        <button type="button" style="border:none; background:none; color:var(--accent); font-size:0.7rem; font-weight:700; cursor:pointer; text-decoration:underline;" onclick="syncFromBookBuilder(true)">🔄 Sincronizar con Interior</button>
+                        <span>Sincronización con el Interior</span>
+                    </div>
+                    <button type="button" class="btn-sync-locked" style="width:100%; justify-content:space-between;" onclick="openSyncInteriorModal()">
+                        <span style="display:inline-flex; align-items:center; gap:7px;">
+                            <input type="checkbox" checked disabled style="accent-color:#215c38; pointer-events:none;">
+                            <span>Sincronizar con el interior</span>
+                        </span>
+                        <span style="font-size:0.72rem; text-decoration:underline;">Ver libro ↗</span>
+                    </button>
+                    <div id="syncedBookDetailBox" style="background:#ffffff; border:1px solid #cce5d5; border-radius:6px; padding:8px 10px; font-size:0.76rem; color:#1e462d; line-height:1.35;">
+                        <strong>✓ Libro sincronizado:</strong> <span id="lblSyncedBookName">Libro Completo · Planificador anual (143 págs)</span>
                     </div>
                     <div class="field-group">
-                        <label for="selPlannerPreset">Modelo de Planificador (Preescribe textos y contenidos):</label>
-                        <select id="selPlannerPreset" onchange="applyPlannerPreset(this.value, true)">
+                        <label for="selPlannerPreset">Modelo de Planificador:</label>
+                        <select id="selPlannerPreset" disabled>
                             <option value="anual">Planificador anual (Clásico 12 meses + 52 semanas)</option>
                             <option value="alterno">Planificador anual Intercalado (Por ciclos)</option>
                             <option value="trimestre">Planificador 90 días (Enfoque Trimestral)</option>
@@ -930,30 +1276,27 @@
                         <span>Portada Delantera</span>
                     </div>
                     <div class="field-group">
-                        <label for="inpKicker">
-                            <span>Sello Superior / Colección:</span>
-                            <span class="badge-readonly">Fijo</span>
-                        </label>
+                        <label for="inpKicker">Sello Superior / Colección:</label>
                         <input type="text" id="inpKicker" value="MENOS RUIDO" readonly disabled>
                     </div>
                     <div class="field-group">
-                        <label for="inpTitle">Título Principal (Según planificador · Modificable):</label>
+                        <label for="inpTitle">Título Principal:</label>
                         <input type="text" id="inpTitle" value="Planificador anual" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBadge">Cintillo en Acento (Según planificador · Modificable):</label>
+                        <label for="inpBadge">Cintillo en Acento:</label>
                         <input type="text" id="inpBadge" value="52 SEMANAS, 12 MESES Y HABIT TRACKER" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpSubtitle">Subtítulo (Según planificador · Modificable):</label>
+                        <label for="inpSubtitle">Subtítulo:</label>
                         <input type="text" id="inpSubtitle" value="52 semanas, 12 meses y hábitos de perseverancia silenciosa" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpFrontDesc">Descripción delantera (Según planificador · Modificable):</label>
+                        <label for="inpFrontDesc">Descripción delantera:</label>
                         <textarea id="inpFrontDesc" rows="2" oninput="updateConfigFromUI()">Saca las ideas de la cabeza. Estructura tus meses, diseña tus hábitos y organiza tus semanas con claridad y enfoque.</textarea>
                     </div>
                     <div class="field-group">
-                        <label for="inpAuthor">Propietario / Pie de portada (Modificable):</label>
+                        <label for="inpAuthor">Propietario / Pie de portada:</label>
                         <input type="text" id="inpAuthor" value="Edición Personalizada · Planificador anual" oninput="updateConfigFromUI()">
                     </div>
                 </div>
@@ -963,25 +1306,19 @@
                         <span>Contraportada y Lomo</span>
                     </div>
                     <div class="field-group">
-                        <label for="inpSpineText">
-                            <span>Texto del Lomo (Solo Portada con Lomo):</span>
-                            <span id="badgeSpineStatus" class="badge-readonly">Solo con lomo</span>
-                        </label>
+                        <label for="inpSpineText">Texto del Lomo:</label>
                         <input type="text" id="inpSpineText" value="MENOS RUIDO  •  PLANIFICADOR ANUAL" disabled oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBackTitle">Título de Contraportada (Modificable):</label>
+                        <label for="inpBackTitle">Título de Contraportada:</label>
                         <input type="text" id="inpBackTitle" value="Pensar en Papel" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBackIntro">Párrafo de Contraportada (Preescrito · Modificable):</label>
+                        <label for="inpBackIntro">Párrafo de Contraportada:</label>
                         <textarea id="inpBackIntro" rows="3" oninput="updateConfigFromUI()">Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.</textarea>
                     </div>
                     <div class="field-group">
-                        <label for="inpBackBullets">
-                            <span>Lista de Contenidos (Según planificador):</span>
-                            <span class="badge-readonly">No modificable</span>
-                        </label>
+                        <label for="inpBackBullets">Lista de Contenidos:</label>
                         <textarea id="inpBackBullets" rows="5" readonly disabled>Calendario panorámico de 12 meses
 Planificador anual por trimestres (1 pág.)
 Planificador mensual estructurado (12 meses)
@@ -999,10 +1336,7 @@ Sección de notas libres (10 páginas)</textarea>
                         <span>Formato y Calibración de Imprenta</span>
                     </div>
                     <div class="field-group">
-                        <label for="selTrimFormat">
-                            <span>Formato del Cuaderno Completo:</span>
-                            <span class="badge-readonly">Fijo 8.25" × 6"</span>
-                        </label>
+                        <label for="selTrimFormat">Formato del Cuaderno Completo:</label>
                         <select id="selTrimFormat" disabled>
                             <option value="landscape_825_6" selected>📐 Apaisado 8.25" × 6" (209.55 × 152.4 mm)</option>
                         </select>
@@ -1010,10 +1344,7 @@ Sección de notas libres (10 páginas)</textarea>
                     </div>
 
                     <div class="field-group">
-                        <label for="inpPageCount">
-                            <span>Número Total de Páginas Interiores:</span>
-                            <span class="badge-readonly">Automático del Interior</span>
-                        </label>
+                        <label for="inpPageCount">Número Total de Páginas Interiores:</label>
                         <input type="number" id="inpPageCount" value="143" readonly disabled>
                         <span style="font-size:0.7rem; color:#776f65;">Viene dado automáticamente por las secciones de tu Cuaderno Completo.</span>
                     </div>
@@ -1045,17 +1376,26 @@ Sección de notas libres (10 páginas)</textarea>
                     <span id="bindingBadgePreview" style="background:#ede5d8; color:var(--accent); font-size:0.72rem; font-weight:800; padding:3px 9px; border-radius:12px;">MODO ANILLAS (WIRE-O)</span>
                 </div>
 
-                <!-- Selector de vista cuando está en modo Anillas -->
-                <div class="stage-view-pills" id="coilViewSelector">
-                    <button type="button" class="stage-pill active" data-view="spread" onclick="setCoilPreviewMode('spread')">Vista Doble con Anillas</button>
-                    <button type="button" class="stage-pill" data-view="front" onclick="setCoilPreviewMode('front')">Solo Portada (Pág 1)</button>
-                    <button type="button" class="stage-pill" data-view="back" onclick="setCoilPreviewMode('back')">Solo Contraportada (Pág 2)</button>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <!-- Controles de Zoom en Vista Previa -->
+                    <div style="display: inline-flex; align-items: center; gap: 4px;">
+                        <button type="button" class="btn-page-nav" onclick="zoomCoverPreview(-0.1)" title="Reducir zoom">− Zoom</button>
+                        <button type="button" class="btn-page-nav" id="btnZoomPercent" onclick="zoomCoverPreview(0)" title="Restablecer tamaño 100%">100%</button>
+                        <button type="button" class="btn-page-nav" onclick="zoomCoverPreview(0.1)" title="Aumentar zoom">+ Zoom</button>
+                    </div>
+
+                    <!-- Selector de vista cuando está en modo Anillas -->
+                    <div class="stage-view-pills" id="coilViewSelector">
+                        <button type="button" class="stage-pill active" data-view="spread" onclick="setCoilPreviewMode('spread')">Vista Doble con Anillas</button>
+                        <button type="button" class="stage-pill" data-view="front" onclick="setCoilPreviewMode('front')">Solo Portada (Pág 1)</button>
+                        <button type="button" class="stage-pill" data-view="back" onclick="setCoilPreviewMode('back')">Solo Contraportada (Pág 2)</button>
+                    </div>
                 </div>
             </div>
 
             <div class="tech-specs-banner">
                 <span id="techBannerLeft">✨ <strong>Anillas (Wire-O):</strong> Se exportan 2 páginas separadas con sangría de 3.175 mm y margen de perforación libre de textos.</span>
-                <span id="techBannerRight" style="font-weight:700; color:var(--accent);">Sincronizado: 86 páginas</span>
+                <span id="techBannerRight" style="font-weight:700; color:var(--accent);">Sincronizado: 143 páginas</span>
             </div>
 
             <div class="canvas-container-outer">
@@ -1066,36 +1406,89 @@ Sección de notas libres (10 páginas)</textarea>
     </div>
 
     <!-- =========================================================================
-         MODAL FLUJO A: DESCARGAR PDF O ENVIAR POR EMAIL
+         MODAL FLUJO A: POP-UP DE DESCARGA Y EMAIL (ESTILO GENERADOR DE LIBRO COMPLETO)
          ========================================================================= -->
     <div class="modal-overlay" id="downloadModal" onclick="if(event.target.id==='downloadModal') closeDownloadModal()">
         <div class="modal-card">
             <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
-            <h3 style="font-family:var(--font-serif); font-size:1.4rem; margin-bottom:6px;">Descargar o Enviar Portada PDF</h3>
-            <p style="font-size:0.84rem; color:#666; margin-bottom:14px;">
-                Tu portada se compila a <strong>300 DPI reales con sangría de imprenta</strong> en tu propio navegador (0 MB ocupados en el servidor).
-            </p>
+            <h3 class="modal-title">Descargar Portada Completa PDF</h3>
+            <p class="modal-desc">Tu portada exterior personalizada se compila a 300 DPI reales con sangría de imprenta lista para encuadernar con tu interior.</p>
 
-            <div style="background:#fbf9f5; border:1px solid #e6dfd3; border-radius:8px; padding:12px 14px; font-size:0.8rem; color:#3d352e; margin-bottom:16px; display:flex; flex-direction:column; gap:4px;">
-                <div id="modalDownloadSummaryType"><strong>Formato:</strong> Portada con Anillas (2 páginas separadas con sangría)</div>
-                <div id="modalDownloadSummarySize"><strong>Tamaño PDF:</strong> 215.9 × 158.75 mm (8.5" × 6.25" con sangría)</div>
+            <div class="modal-format-badge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm)
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
-                <button type="button" class="btn-action-primary" style="width:100%; justify-content:center; padding:12px;" onclick="downloadCoverPdf()">
-                    <span>📥</span> Descargar PDF de Portada (300 DPI)
+            <div class="compile-summary-box">
+                <div id="modalDownloadSummaryType" style="margin-bottom:4px;"><strong>Encuadernación:</strong> Portada con Anillas (2 páginas separadas con sangría)</div>
+                <div id="modalDownloadSummarySize"><strong>Dimensiones con sangría:</strong> 215.9 × 158.8 mm (143 págs interiores)</div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" onclick="downloadCoverPdf()">
+                    <span>📥</span> Descargar mi portada personalizada
                 </button>
             </div>
 
-            <!-- Envío por Email igual que en el interior -->
-            <div style="background:#fbf9f5; border:1px solid #e8e2d8; border-radius:10px; padding:14px;">
-                <div style="font-size:0.84rem; font-weight:700; color:#212121; margin-bottom:2px;">✉️ Enviar Portada PDF por correo electrónico</div>
-                <div style="font-size:0.74rem; color:#666; margin-bottom:10px;">Recibe el archivo listo para imprenta directamente en tu bandeja de entrada.</div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <input type="email" id="inpCoverEmail" placeholder="tu-correo@ejemplo.com" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid #d0c8be; border-radius:6px; font-size:0.84rem;">
-                    <button type="button" class="btn-action-primary" id="btnSendCoverEmail" onclick="sendCoverViaEmail()">Enviar PDF</button>
+            <!-- CAJA DE ENVÍO POR EMAIL CON EL MISMO ESTILO DEL LIBRO COMPLETO -->
+            <div class="modal-email-box">
+                <div class="modal-email-header">
+                    <span class="modal-email-title">✉️ ¿Prefieres recibirlo en tu email?</span>
+                    <span class="modal-email-sub">Te enviamos el archivo PDF de tu portada adjunto listo para imprimir o encuadernar.</span>
                 </div>
-                <div id="coverEmailFeedback" style="display:none; margin-top:10px; font-size:0.8rem; padding:8px 10px; border-radius:6px;"></div>
+                <div class="modal-email-form">
+                    <input type="email" id="inpCoverEmail" class="modal-email-input" placeholder="tu-correo@ejemplo.com" autocomplete="email" />
+                    <button type="button" id="btnSendCoverEmail" class="modal-btn-send" onclick="sendCoverViaEmail()">
+                        <span>Enviar PDF</span>
+                    </button>
+                </div>
+                <div id="coverEmailFeedback" class="modal-email-feedback" style="display: none;"></div>
+            </div>
+
+            <!-- CUADERNOS FÍSICOS DE PLANIFICACIÓN EN AMAZON -->
+            <div class="modal-books-section">
+                <div class="modal-books-header">El Método Completo en Nuestros Libros</div>
+                <p style="font-size: 0.76rem; color: #777; line-height: 1.4; text-align: center; margin: 0 0 12px 0;">
+                    El método completo está en nuestros libros de Editorial Menos Ruido. Toda la metodología y estructura estratégica está explicada en ellos, ideales para tener tus meses reunidos en un solo lugar y evitar hojas sueltas. Si te gusta la sensación de planificar en papel con claridad y sin ruido, el cuaderno físico te dará la experiencia completa y duradera.
+                </p>
+
+                <div class="modal-books-grid">
+                    <!-- 1. Planificador 90 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_90_dias.jpg" alt="Planificador 90 Días" class="modal-book-thumb" onerror="this.src='/cover_semanal_simple.jpg'">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Trimestral</span>
+                            <h4 class="modal-book-title">Planificador 90 Días</h4>
+                            <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-90-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 2. Planificador 180 Días -->
+                    <div class="modal-book-card">
+                        <img src="/cover_180_dias.jpg" alt="Planificador 180 Días" class="modal-book-thumb" onerror="this.src='/cover_semanal_reversible.jpg'">
+                        <div class="modal-book-details">
+                            <span class="modal-book-badge">Semestral</span>
+                            <h4 class="modal-book-title">Planificador 180 Días</h4>
+                            <a href="/ir/amazon-180-dias.html" target="_blank" rel="noopener noreferrer" class="btn-book-amazon">
+                                Comprar en Amazon ↗
+                            </a>
+                            <a href="/planificador-180-dias.html" target="_blank" style="font-size: 0.68rem; color: #666; text-decoration: underline; margin-top: 3px; display: inline-block;">
+                                Ver en la web →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENLACE RESEÑA -->
+            <div style="text-align: center; margin-top: 14px;">
+                <a href="/ir/amazon-90-dias.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #888; text-decoration: underline;">
+                    ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
+                </a>
             </div>
         </div>
     </div>
@@ -1172,6 +1565,48 @@ Sección de notas libres (10 páginas)</textarea>
                     El usuario solo ve la pasarela de pago de Menos Ruido. Cuando el pago se confirma, nuestro backend envía este JSON a <code>https://api.lulu.com/print-jobs/</code> con el <code>pod_package_id</code> exacto:
                 </p>
                 <pre class="dev-json-box" id="luluApiPayloadBox"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE SINCRONIZACIÓN CON EL LIBRO INTERIOR CREADO
+         ========================================================================= -->
+    <div class="modal-overlay" id="syncInteriorModal" onclick="if(event.target.id==='syncInteriorModal') closeSyncInteriorModal()">
+        <div class="modal-card" style="max-width: 520px;">
+            <button type="button" class="modal-close-btn" onclick="closeSyncInteriorModal()">✕</button>
+            <div style="display:inline-flex; align-items:center; gap:6px; background:#eaf5ee; color:#215c38; font-size:0.72rem; font-weight:800; padding:4px 10px; border-radius:12px; margin-bottom:6px;">
+                <span>🔄</span> Sincronización Automática Activa
+            </div>
+            <h3 class="modal-title" style="margin-bottom:4px;">Libro Interior Sincronizado</h3>
+            <p class="modal-desc" style="margin-bottom:12px;">
+                Tu portada está vinculada con las páginas, medidas y estructura de tu cuaderno interior creado:
+            </p>
+
+            <!-- Caja destacada con el libro actualmente sincronizado -->
+            <div style="background:#eaf5ee; border:1.5px solid #9fd4b2; border-radius:10px; padding:12px 14px; text-align:left; margin-bottom:14px;">
+                <div style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:#215c38; letter-spacing:0.4px;">✓ Sincronizado actualmente con:</div>
+                <div style="font-size:0.95rem; font-weight:800; color:#163d25; margin-top:3px;" id="modalCurrentSyncedBookTitle">Libro Completo · Planificador anual</div>
+                <div style="font-size:0.78rem; color:#2a5c3d; margin-top:2px;" id="modalCurrentSyncedBookMeta">143 páginas interiores · Formato 8.25" × 6"</div>
+            </div>
+
+            <!-- Lista de libros creados por el usuario (Mi Espacio + Constructor) -->
+            <div style="text-align:left;">
+                <div style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:#5a5248; letter-spacing:0.4px; margin-bottom:6px;">
+                    📚 Tus libros interiores creados:
+                </div>
+                <div class="sync-book-list" id="syncCreatedBooksListContainer">
+                    <!-- Se rellena dinámicamente con los libros creados por el usuario -->
+                </div>
+            </div>
+
+            <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                <a href="/generador-libro-completo.html" style="font-size:0.78rem; font-weight:700; color:var(--accent); text-decoration:underline;">
+                    📖 Ir al Constructor de Libro Completo ↗
+                </a>
+                <button type="button" class="btn-modal-primary" style="width:auto; padding:9px 20px;" onclick="closeSyncInteriorModal()">
+                    Listo
+                </button>
             </div>
         </div>
     </div>
@@ -1384,18 +1819,28 @@ Sección de notas libres (10 páginas)</textarea>
             }
         };
 
+        let isInitializing = true;
+        window.firestoreInteriorBooks = [];
+        window.availableInteriorBooks = [];
+
         let coverState = {
             plannerKey: 'anual',
-            bindingType: 'coil',       // 'coil' (anillas 2 págs) | 'perfect' (tapa blanda pliego con lomo) | 'hardcover' (tapa dura casewrap)
+            syncedBookId: 'active_draft',
+            syncedBookName: 'Libro Completo · Planificador anual',
+            cartAddedOnce: false,
+            cartIsSynced: false,
+            bindingType: 'coil',       // 'coil' (anillas 2 págs) | 'perfect' (tapa blanda) | 'hardcover' (tapa dura)
             coilPreviewMode: 'spread', // 'spread' | 'front' | 'back'
+            previewZoom: 1.0,
             template: 'bosque',        // 'bosque' | 'organico' | 'bicolor' | 'marco'
             palette: 'forest',
             trimFormat: 'landscape_825_6',
             pageCount: 143,
             paperThicknessMm: 0.0635,
-            bleedMm: 3.175,            // 3.175mm (0.125") en Anillas/Tapa Blanda; 19.05mm (0.75") en Tapa Dura Casewrap Lulu
+            bleedMm: 3.175,            // 3.175mm (0.125") en Anillas/Tapa Blanda; 15.875mm (0.625") en Tapa Dura Lulu
             coilMarginMm: 10.0,        // Margen interior libre para perforación de anillas
             showBotanical: true,
+            botanicalType: 'olivo',    // 'olivo' | 'loto'
             showBarcode: false,
             kicker: 'MENOS RUIDO',
             title: 'Planificador anual',
@@ -1421,14 +1866,22 @@ Sección de notas libres (10 páginas)</textarea>
         };
 
         // =====================================================================
-        // INICIALIZACIÓN Y SINCRONIZACIÓN CON EL CONSTRUCTOR DE LIBROS
+        // INICIALIZACIÓN Y SINCRONIZACIÓN CON LIBROS CREADOS DEL USUARIO
         // =====================================================================
         function initCoverGenerator() {
+            isInitializing = true;
             applyPlannerPreset('anual', false);
-            syncFromBookBuilder(false);
+            refreshAvailableInteriorBooks();
+            if (window.availableInteriorBooks.length > 0) {
+                applyInteriorBookObject(window.availableInteriorBooks[0], false);
+            } else {
+                syncFromBookBuilder(false);
+            }
             setBindingType(coverState.bindingType);
             renderCoverPreview();
             refreshLuluPayloadPreview();
+            updateSyncedBookLabels();
+            isInitializing = false;
         }
 
         function detectPlannerKeyFromTitle(titleStr) {
@@ -1440,6 +1893,224 @@ Sección de notas libres (10 páginas)</textarea>
             if (t.includes('diario') || t.includes('bitácora') || t.includes('bitacora')) return 'bitacora30';
             if (t.includes('personalizado') || t.includes('libre')) return 'libre';
             return 'anual';
+        }
+
+        function calculatePagesFromSections(sections) {
+            if (!Array.isArray(sections)) return null;
+            let totalPages = 0;
+            const bullets = [];
+            sections.forEach(sec => {
+                if (!sec.active) return;
+                if (sec.id === 'cover') {
+                    totalPages += 3;
+                } else if (sec.id === 'calendar') {
+                    const calP = (sec.design && sec.design.yearMode === 'both') ? 2 : 1;
+                    totalPages += calP;
+                    bullets.push('Calendario panorámico de 12 meses');
+                } else {
+                    const count = parseInt(sec.pages, 10) || 1;
+                    totalPages += count;
+                    if (sec.id === 'annual') bullets.push(`Planificador anual por trimestres (${count} pág.)`);
+                    if (sec.id === 'monthly') bullets.push(`Planificador mensual estructurado (${count} meses)`);
+                    if (sec.id === 'habits') bullets.push(`Rastreador de hábitos de 31 días (${count} meses)`);
+                    if (sec.id === 'weekly') bullets.push(`Planificador semanal de foco (${count} semanas)`);
+                    if (sec.id === 'hourly') bullets.push(`Planificador horario time-boxing (${count} págs.)`);
+                    if (sec.id === 'daily') bullets.push(`Bitácora de enfoque diario (${count} días)`);
+                    if (sec.id === 'notes') bullets.push(`Sección de notas libres (${count} páginas)`);
+                }
+            });
+            totalPages += 1; // Página de cierre y gratitud
+            return { totalPages: totalPages >= 24 ? totalPages : 143, bullets };
+        }
+
+        function refreshAvailableInteriorBooks() {
+            const list = [];
+            const seenIds = new Set();
+
+            // 1. Borrador activo en el Constructor de Cuaderno Completo (mr_complete_book_config)
+            try {
+                const rawDraft = localStorage.getItem('mr_complete_book_config');
+                if (rawDraft) {
+                    const parsed = JSON.parse(rawDraft);
+                    if (parsed && typeof parsed === 'object') {
+                        const calc = calculatePagesFromSections(parsed.sections);
+                        const pages = calc ? calc.totalPages : 143;
+                        const bookTitle = parsed.title || 'Planificador anual';
+                        const ownerTag = (parsed.owner && parsed.owner.trim()) ? ` · ${parsed.owner.trim()}` : '';
+                        list.push({
+                            id: 'active_draft',
+                            name: `${bookTitle}${ownerTag} (Último creado en Constructor)`,
+                            shortName: `${bookTitle}${ownerTag}`,
+                            pages: pages,
+                            sourceLabel: 'Constructor de Libro Completo',
+                            data: parsed
+                        });
+                        seenIds.add('active_draft');
+                    }
+                }
+            } catch (e) {}
+
+            // 2. Libros guardados en Mi Espacio (Firestore + LocalStorage)
+            const mergeDesignList = (arr, sourceTag) => {
+                if (!Array.isArray(arr)) return;
+                arr.forEach(item => {
+                    if (!item || !item.id || seenIds.has(item.id)) return;
+                    const isCompleteBook = item.type === 'Cuaderno Completo' ||
+                        (item.editUrl && item.editUrl.includes('generador-libro-completo')) ||
+                        (item.data && Array.isArray(item.data.sections));
+                    if (!isCompleteBook) return;
+                    seenIds.add(item.id);
+                    const calc = calculatePagesFromSections(item.data?.sections);
+                    const pages = calc ? calc.totalPages : 143;
+                    const displayName = item.name || item.data?.title || 'Cuaderno Completo Guardado';
+                    list.push({
+                        id: item.id,
+                        name: displayName,
+                        shortName: displayName,
+                        pages: pages,
+                        sourceLabel: sourceTag,
+                        data: item.data || {}
+                    });
+                });
+            };
+
+            try {
+                const localRaw = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+                mergeDesignList(localRaw, 'Guardado en Mi Espacio');
+            } catch (e) {}
+
+            try {
+                const cachedRaw = JSON.parse(localStorage.getItem('mr_cached_designs') || '[]');
+                mergeDesignList(cachedRaw, 'Guardado en Mi Espacio');
+            } catch (e) {}
+
+            if (Array.isArray(window.firestoreInteriorBooks) && window.firestoreInteriorBooks.length > 0) {
+                mergeDesignList(window.firestoreInteriorBooks, 'Mi Espacio (Nube)');
+            }
+
+            window.availableInteriorBooks = list;
+            return list;
+        }
+        window.refreshAvailableInteriorBooks = refreshAvailableInteriorBooks;
+
+        function applyInteriorBookObject(bookObj, markDirty = false) {
+            if (!bookObj || !bookObj.data) return;
+            const saved = bookObj.data;
+            coverState.syncedBookId = bookObj.id;
+            coverState.syncedBookName = `${bookObj.shortName || bookObj.name} (${bookObj.pages} págs)`;
+
+            const detectedKey = saved.presetKey || detectPlannerKeyFromTitle(saved.title || bookObj.name);
+            applyPlannerPreset(detectedKey, false);
+
+            if (saved.title) {
+                coverState.title = saved.title;
+                document.getElementById('inpTitle').value = saved.title;
+            }
+            if (saved.subtitle) {
+                coverState.subtitle = saved.subtitle;
+                document.getElementById('inpSubtitle').value = saved.subtitle;
+            }
+            if (saved.owner && saved.owner.trim()) {
+                coverState.author = `${saved.title || coverState.title} · ${saved.owner.trim()}`;
+                document.getElementById('inpAuthor').value = coverState.author;
+            } else {
+                coverState.author = `Edición Personalizada · ${coverState.title}`;
+                document.getElementById('inpAuthor').value = coverState.author;
+            }
+            if (saved.dedication && saved.dedication.trim()) {
+                coverState.frontDesc = saved.dedication.trim();
+                document.getElementById('inpFrontDesc').value = coverState.frontDesc;
+            }
+
+            const calc = calculatePagesFromSections(saved.sections);
+            if (calc) {
+                coverState.pageCount = calc.totalPages;
+                document.getElementById('inpPageCount').value = calc.totalPages;
+                if (calc.bullets.length > 0) {
+                    coverState.backBullets = calc.bullets;
+                    document.getElementById('inpBackBullets').value = calc.bullets.join('\n');
+                }
+            }
+
+            coverState.spineText = `MENOS RUIDO  •  ${(coverState.title || 'PLANIFICADOR').toUpperCase()}`;
+            document.getElementById('inpSpineText').value = coverState.spineText;
+
+            updateConfigFromUI(markDirty);
+            updateSyncedBookLabels();
+        }
+        window.applyInteriorBookObject = applyInteriorBookObject;
+
+        function updateSyncedBookLabels() {
+            const nameText = coverState.syncedBookName || `${coverState.title} (${coverState.pageCount} págs)`;
+            const pill = document.getElementById('topSyncedBookPill');
+            if (pill) {
+                pill.textContent = nameText;
+                pill.title = `Sincronizado con: ${nameText}`;
+            }
+            const lblTexts = document.getElementById('lblSyncedBookName');
+            if (lblTexts) {
+                lblTexts.textContent = nameText;
+            }
+            const modalTitle = document.getElementById('modalCurrentSyncedBookTitle');
+            if (modalTitle) {
+                modalTitle.textContent = nameText;
+            }
+            const modalMeta = document.getElementById('modalCurrentSyncedBookMeta');
+            if (modalMeta) {
+                modalMeta.textContent = `${coverState.pageCount} páginas interiores · Formato 8.25" × 6" (209.55 × 152.4 mm)`;
+            }
+        }
+        window.updateSyncedBookLabels = updateSyncedBookLabels;
+
+        function openSyncInteriorModal() {
+            refreshAvailableInteriorBooks();
+            updateSyncedBookLabels();
+
+            const container = document.getElementById('syncCreatedBooksListContainer');
+            if (container) {
+                const books = window.availableInteriorBooks || [];
+                if (books.length === 0) {
+                    container.innerHTML = `
+                        <div class="sync-book-item active" style="cursor:default;">
+                            <div>
+                                <div style="font-size:0.84rem; font-weight:800; color:#1a1715;">📘 ${coverState.title} (Configuración Base)</div>
+                                <div style="font-size:0.74rem; color:#665e54;">${coverState.pageCount} páginas · Modelo sincronizado por defecto</div>
+                            </div>
+                            <span style="background:#2b7a4b; color:#fff; font-size:0.7rem; font-weight:800; padding:4px 9px; border-radius:6px;">✓ Sincronizado</span>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = books.map((b, idx) => {
+                        const isCurrent = (b.id === coverState.syncedBookId) || (idx === 0 && !books.some(x => x.id === coverState.syncedBookId));
+                        return `
+                            <div class="sync-book-item ${isCurrent ? 'active' : ''}" onclick="selectCreatedInteriorBook('${b.id}')">
+                                <div>
+                                    <div style="font-size:0.84rem; font-weight:800; color:#1a1715;">📘 ${b.name}</div>
+                                    <div style="font-size:0.73rem; color:#5a5248;">${b.pages} páginas interiores · ${b.sourceLabel}</div>
+                                </div>
+                                <span style="background:${isCurrent ? '#2b7a4b' : '#ece5d8'}; color:${isCurrent ? '#fff' : '#3d352e'}; font-size:0.72rem; font-weight:800; padding:5px 10px; border-radius:6px; white-space:nowrap;">
+                                    ${isCurrent ? '✓ Sincronizado' : 'Sincronizar este'}
+                                </span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            document.getElementById('syncInteriorModal').classList.add('active');
+        }
+
+        function closeSyncInteriorModal() {
+            document.getElementById('syncInteriorModal').classList.remove('active');
+        }
+
+        function selectCreatedInteriorBook(bookId) {
+            const books = window.availableInteriorBooks || [];
+            const found = books.find(b => b.id === bookId);
+            if (found) {
+                applyInteriorBookObject(found, true);
+                openSyncInteriorModal(); // Refresca el estado visual del modal
+            }
         }
 
         function applyPlannerPreset(presetKey, shouldRender = true) {
@@ -1486,6 +2157,8 @@ Sección de notas libres (10 páginas)</textarea>
             coverState.pageCount = preset.defaultPages;
             document.getElementById('inpPageCount').value = preset.defaultPages;
 
+            coverState.syncedBookName = `Libro Completo · ${preset.title} (${preset.defaultPages} págs)`;
+
             if (shouldRender) {
                 updateConfigFromUI();
             }
@@ -1495,7 +2168,7 @@ Sección de notas libres (10 páginas)</textarea>
             try {
                 const raw = localStorage.getItem('mr_complete_book_config');
                 if (!raw) {
-                    if (showNotification) alert('No se encontró ninguna configuración guardada en el Constructor de Cuaderno Completo. Puedes elegir el modelo de planificador directamente en el desplegable superior.');
+                    updateSyncedBookLabels();
                     return;
                 }
                 const saved = JSON.parse(raw);
@@ -1525,54 +2198,96 @@ Sección de notas libres (10 páginas)</textarea>
                     document.getElementById('inpFrontDesc').value = coverState.frontDesc;
                 }
 
-                // 3. Calcular número exacto de páginas y lista de contenidos real (no modificables)
-                if (Array.isArray(saved.sections)) {
-                    let totalPages = 0;
-                    const bullets = [];
-                    saved.sections.forEach(sec => {
-                        if (!sec.active) return;
-                        if (sec.id === 'cover') {
-                            totalPages += 3; // Portada interior + Manifiesto + Índice
-                        } else if (sec.id === 'calendar') {
-                            const calP = (sec.design && sec.design.yearMode === 'both') ? 2 : 1;
-                            totalPages += calP;
-                            bullets.push('Calendario panorámico de 12 meses');
-                        } else {
-                            const count = parseInt(sec.pages, 10) || 1;
-                            totalPages += count;
-                            if (sec.id === 'annual') bullets.push(`Planificador anual por trimestres (${count} pág.)`);
-                            if (sec.id === 'monthly') bullets.push(`Planificador mensual estructurado (${count} meses)`);
-                            if (sec.id === 'habits') bullets.push(`Rastreador de hábitos de 31 días (${count} meses)`);
-                            if (sec.id === 'weekly') bullets.push(`Planificador semanal de foco (${count} semanas)`);
-                            if (sec.id === 'hourly') bullets.push(`Planificador horario time-boxing (${count} págs.)`);
-                            if (sec.id === 'daily') bullets.push(`Bitácora de enfoque diario (${count} días)`);
-                            if (sec.id === 'notes') bullets.push(`Sección de notas libres (${count} páginas)`);
-                        }
-                    });
-                    totalPages += 1; // Página de cierre y gratitud
-
-                    if (totalPages >= 24) {
-                        coverState.pageCount = totalPages;
-                        document.getElementById('inpPageCount').value = totalPages;
-                    }
-                    if (bullets.length > 0) {
-                        coverState.backBullets = bullets;
-                        document.getElementById('inpBackBullets').value = bullets.join('\n');
+                // 3. Calcular número exacto de páginas y lista de contenidos real
+                const calc = calculatePagesFromSections(saved.sections);
+                if (calc) {
+                    coverState.pageCount = calc.totalPages;
+                    document.getElementById('inpPageCount').value = calc.totalPages;
+                    if (calc.bullets.length > 0) {
+                        coverState.backBullets = calc.bullets;
+                        document.getElementById('inpBackBullets').value = calc.bullets.join('\n');
                     }
                 }
 
                 coverState.spineText = `MENOS RUIDO  •  ${(coverState.title || 'PLANIFICADOR').toUpperCase()}`;
                 document.getElementById('inpSpineText').value = coverState.spineText;
 
-                updateConfigFromUI();
-                if (showNotification) {
-                    const rightBanner = document.getElementById('techBannerRight');
-                    if (rightBanner) {
-                        rightBanner.textContent = `✓ ¡Sincronizado con Interior! (${coverState.pageCount} págs)`;
-                    }
-                }
+                const ownerSuffix = (saved.owner && saved.owner.trim()) ? ` · ${saved.owner.trim()}` : '';
+                coverState.syncedBookName = `${coverState.title}${ownerSuffix} (${coverState.pageCount} págs)`;
+
+                updateConfigFromUI(false);
+                updateSyncedBookLabels();
             } catch (e) {
                 console.warn('Error sincronizando con mr_complete_book_config:', e);
+            }
+        }
+
+        // =====================================================================
+        // GESTIÓN DEL CARRITO: REACTIVAR AL MODIFICAR E INDICAR QUE SE GUARDA ENCIMA DEL ANTERIOR
+        // =====================================================================
+        function handleAddToCart() {
+            const btn = document.getElementById('btnAddToCart');
+            const hint = document.getElementById('cartOverwriteHint');
+            const hintText = document.getElementById('cartOverwriteHintText');
+            if (!btn) return;
+            if (coverState.cartIsSynced) return;
+
+            const wasOverwrite = coverState.cartAddedOnce;
+            coverState.cartAddedOnce = true;
+            coverState.cartIsSynced = true;
+
+            btn.classList.remove('overwrite-cart-mode');
+            btn.classList.add('added-to-cart');
+            btn.disabled = true;
+
+            if (wasOverwrite) {
+                btn.innerHTML = '<span>✓</span> Añadido al carrito';
+                if (hint && hintText) {
+                    hint.style.display = 'inline-flex';
+                    hint.style.background = '#eaf5ee';
+                    hint.style.borderColor = '#a7d7b8';
+                    hint.style.color = '#215c38';
+                    hintText.textContent = 'Guardado encima del anterior en el carrito';
+                }
+            } else {
+                btn.innerHTML = '<span>✓</span> Añadido al carrito';
+                if (hint) {
+                    hint.style.display = 'none';
+                }
+            }
+
+            try {
+                localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+                    title: coverState.title,
+                    bindingType: coverState.bindingType,
+                    pageCount: coverState.pageCount,
+                    syncedBookName: coverState.syncedBookName,
+                    updatedAt: Date.now()
+                }));
+            } catch (e) {}
+        }
+
+        function markCartModified() {
+            if (isInitializing) return;
+            if (!coverState.cartAddedOnce) return;
+
+            coverState.cartIsSynced = false;
+            const btn = document.getElementById('btnAddToCart');
+            const hint = document.getElementById('cartOverwriteHint');
+            const hintText = document.getElementById('cartOverwriteHintText');
+
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('added-to-cart');
+                btn.classList.add('overwrite-cart-mode');
+                btn.innerHTML = '<span>🛒</span> Añadir al carrito';
+            }
+            if (hint && hintText) {
+                hint.style.display = 'inline-flex';
+                hint.style.background = '#fdf6ef';
+                hint.style.borderColor = '#ebd5c3';
+                hint.style.color = '#87553b';
+                hintText.textContent = 'Se guarda encima del anterior en el carrito';
             }
         }
 
@@ -1587,34 +2302,20 @@ Sección de notas libres (10 páginas)</textarea>
         }
 
         function setBindingType(type) {
+            const changed = coverState.bindingType !== type;
             coverState.bindingType = type;
             document.getElementById('btnBindCoil').classList.toggle('active', type === 'coil');
             document.getElementById('btnBindPerfect').classList.toggle('active', type === 'perfect');
             const btnHard = document.getElementById('btnBindHardcover');
             if (btnHard) btnHard.classList.toggle('active', type === 'hardcover');
 
-            // Ajustar sangría/envoltura según encuadernación (Tapa dura Casewrap en Lulu usa más margen de doblado)
+            // Ajustar sangría/envoltura según encuadernación
             coverState.bleedMm = (type === 'hardcover') ? 15.875 : 3.175;
 
             // Habilitar o deshabilitar el input de "Texto del Lomo" (solo modificable cuando hay lomo)
             const spineInput = document.getElementById('inpSpineText');
-            const spineBadge = document.getElementById('badgeSpineStatus');
             if (spineInput) {
-                if (type === 'coil') {
-                    spineInput.disabled = true;
-                    if (spineBadge) {
-                        spineBadge.textContent = 'Desactivado en Anillas';
-                        spineBadge.style.background = '#e9e2d6';
-                        spineBadge.style.color = '#7a7066';
-                    }
-                } else {
-                    spineInput.disabled = false;
-                    if (spineBadge) {
-                        spineBadge.textContent = 'Modificable';
-                        spineBadge.style.background = '#eaf5ee';
-                        spineBadge.style.color = '#2b7a4b';
-                    }
-                }
+                spineInput.disabled = (type === 'coil');
             }
 
             const coilSelector = document.getElementById('coilViewSelector');
@@ -1627,14 +2328,15 @@ Sección de notas libres (10 páginas)</textarea>
                 bannerLeft.innerHTML = '✨ <strong>Anillas (Wire-O):</strong> Se exportan 2 páginas separadas con sangría de 3.175 mm y margen de perforación libre de textos.';
             } else if (type === 'hardcover') {
                 coilSelector.style.display = 'none';
-                badge.textContent = 'TAPA DURA CASEWRAP (PLIEGO CON LOMO)';
-                bannerLeft.innerHTML = '📘 <strong>Tapa Dura (Casewrap):</strong> Pliego continuo con lomo rígido y margen perimetral de envoltura sobre cartón (15.88 mm).';
+                badge.textContent = 'TAPA DURA (PLIEGO COMPLETO)';
+                bannerLeft.innerHTML = '📘 <strong>Tapa Dura:</strong> Pliego continuo con lomo rígido y margen perimetral de envoltura sobre cartón (15.88 mm).';
             } else {
                 coilSelector.style.display = 'none';
-                badge.textContent = 'TAPA BLANDA CON LOMO (PLIEGO COMPLETO)';
-                bannerLeft.innerHTML = '📕 <strong>Tapa Blanda Clásica:</strong> Pliego continuo [Contraportada + Lomo dinámico + Portada] con sangría perimetral de 3.175 mm.';
+                badge.textContent = 'TAPA BLANDA (PLIEGO COMPLETO)';
+                bannerLeft.innerHTML = '📕 <strong>Tapa Blanda:</strong> Pliego continuo [Contraportada + Lomo dinámico + Portada] con sangría perimetral de 3.175 mm.';
             }
 
+            if (changed) markCartModified();
             updateSpecsLabels();
             renderCoverPreview();
             refreshLuluPayloadPreview();
@@ -1648,11 +2350,38 @@ Sección de notas libres (10 páginas)</textarea>
             renderCoverPreview();
         }
 
+        function zoomCoverPreview(delta) {
+            if (delta === 0) {
+                coverState.previewZoom = 1.0;
+            } else {
+                coverState.previewZoom = Math.min(1.8, Math.max(0.5, +(coverState.previewZoom + delta).toFixed(2)));
+            }
+            const btnZoom = document.getElementById('btnZoomPercent');
+            if (btnZoom) {
+                btnZoom.textContent = Math.round(coverState.previewZoom * 100) + '%';
+            }
+            applyCanvasZoomStyle();
+        }
+
+        function applyCanvasZoomStyle() {
+            const canvas = document.getElementById('coverPreviewCanvas');
+            if (!canvas) return;
+            if (Math.abs(coverState.previewZoom - 1.0) < 0.01) {
+                canvas.style.maxWidth = '100%';
+                canvas.style.width = '';
+            } else {
+                const baseWidth = Math.min(canvas.width, 920);
+                canvas.style.maxWidth = 'none';
+                canvas.style.width = Math.round(baseWidth * coverState.previewZoom) + 'px';
+            }
+        }
+
         function setTemplate(tpl) {
             coverState.template = tpl;
             document.querySelectorAll('.style-card-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-template') === tpl);
             });
+            markCartModified();
             renderCoverPreview();
         }
 
@@ -1661,11 +2390,21 @@ Sección de notas libres (10 páginas)</textarea>
             document.querySelectorAll('.palette-circle').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-palette') === pal);
             });
+            markCartModified();
             renderCoverPreview();
         }
 
-        function updateConfigFromUI() {
+        function updateConfigFromUI(triggerCartDirty = true) {
             coverState.showBotanical = document.getElementById('chkBotanical').checked;
+            const botWrap = document.getElementById('botanicalSelectWrap');
+            if (botWrap) {
+                botWrap.style.display = coverState.showBotanical ? 'flex' : 'none';
+            }
+            const selBot = document.getElementById('selBotanicalType');
+            if (selBot) {
+                coverState.botanicalType = selBot.value || 'olivo';
+            }
+
             coverState.showBarcode = document.getElementById('chkBarcode').checked;
             // Sello superior siempre fijo en MENOS RUIDO
             coverState.kicker = 'MENOS RUIDO';
@@ -1686,6 +2425,7 @@ Sección de notas libres (10 páginas)</textarea>
             coverState.photo.layout = photoLayout;
             document.getElementById('fullBleedOverlayGroup').style.display = (photoLayout === 'full_front') ? 'flex' : 'none';
 
+            if (triggerCartDirty) markCartModified();
             updateSpecsLabels();
             renderCoverPreview();
             refreshLuluPayloadPreview();
@@ -1694,7 +2434,7 @@ Sección de notas libres (10 páginas)</textarea>
         function getCalculatedSpineMm() {
             if (coverState.bindingType === 'coil') return 0;
             const baseSpine = coverState.pageCount * coverState.paperThicknessMm;
-            // En Tapa Dura (Casewrap), el cartón del lomo añade ~2.5 mm adicionales respecto a Tapa Blanda
+            // En Tapa Dura, el cartón del lomo añade ~2.5 mm adicionales respecto a Tapa Blanda
             if (coverState.bindingType === 'hardcover') {
                 return +(baseSpine + 2.5).toFixed(2);
             }
@@ -1727,7 +2467,7 @@ Sección de notas libres (10 páginas)</textarea>
                 document.getElementById('lblTotalPdfSize').textContent = `${w} × ${h} mm (1 pliego continuo)`;
             }
 
-            document.getElementById('techBannerRight').textContent = `${fmt.name} · ${coverState.pageCount} páginas`;
+            document.getElementById('techBannerRight').textContent = `Sincronizado: ${coverState.syncedBookName || (fmt.name + ' · ' + coverState.pageCount + ' págs')}`;
         }
 
         // =====================================================================
@@ -1745,6 +2485,7 @@ Sección de notas libres (10 páginas)</textarea>
                     document.getElementById('photoControlsWrap').style.display = 'flex';
                     document.getElementById('photoStatusBadge').textContent = '✓ Foto activa';
                     document.getElementById('photoStatusBadge').style.color = '#2b7a4b';
+                    markCartModified();
                     applyPhotoFilterAndRender();
                 };
                 img.src = e.target.result;
@@ -1760,6 +2501,7 @@ Sección de notas libres (10 páginas)</textarea>
             document.getElementById('photoControlsWrap').style.display = 'none';
             document.getElementById('photoStatusBadge').textContent = 'Sin foto';
             document.getElementById('photoStatusBadge').style.color = '#777';
+            markCartModified();
             renderCoverPreview();
         }
 
@@ -1779,12 +2521,14 @@ Sección de notas libres (10 páginas)</textarea>
             document.getElementById('lblPhotoY').textContent = oy + '%';
             document.getElementById('lblOverlayAlpha').textContent = alpha + '%';
 
+            markCartModified();
             renderCoverPreview();
         }
 
         function applyPhotoFilterAndRender() {
             const filter = document.getElementById('photoFilterSelect').value;
             coverState.photo.filter = filter;
+            markCartModified();
 
             const img = coverState.photo.originalImage;
             if (!img) {
@@ -2134,29 +2878,74 @@ Sección de notas libres (10 páginas)</textarea>
             const s = size / 100;
             ctx.scale(s, s);
             ctx.strokeStyle = color;
+            ctx.fillStyle = color;
             ctx.lineWidth = 2.6;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
-            ctx.beginPath();
-            ctx.moveTo(15, 95);
-            ctx.bezierCurveTo(32, 65, 55, 40, 88, 10);
-            ctx.stroke();
+            const type = coverState.botanicalType || 'olivo';
 
-            const leaves = [
-                [32, 74, 12, 58, 25, 48],
-                [32, 74, 54, 72, 62, 58],
-                [52, 52, 32, 34, 44, 24],
-                [52, 52, 74, 48, 82, 34],
-                [70, 30, 56, 16, 68, 10]
-            ];
-            leaves.forEach(([sx, sy, cx, cy, ex, ey]) => {
+            if (type === 'loto') {
+                // Flor de Loto
                 ctx.beginPath();
-                ctx.moveTo(sx, sy);
-                ctx.quadraticCurveTo(cx, cy, ex, ey);
-                ctx.quadraticCurveTo(sx + (ex - sx) * 0.6, sy + (ey - sy) * 0.2, sx, sy);
+                ctx.moveTo(50, 78);
+                ctx.bezierCurveTo(30, 56, 34, 28, 50, 14);
+                ctx.bezierCurveTo(66, 28, 70, 56, 50, 78);
                 ctx.stroke();
-            });
+
+                ctx.beginPath();
+                ctx.moveTo(48, 78);
+                ctx.bezierCurveTo(22, 68, 12, 42, 24, 24);
+                ctx.bezierCurveTo(34, 34, 38, 56, 48, 78);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(52, 78);
+                ctx.bezierCurveTo(78, 68, 88, 42, 76, 24);
+                ctx.bezierCurveTo(66, 34, 62, 56, 52, 78);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(46, 79);
+                ctx.bezierCurveTo(18, 78, 4, 62, 8, 46);
+                ctx.bezierCurveTo(22, 52, 32, 66, 46, 79);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(54, 79);
+                ctx.bezierCurveTo(82, 78, 96, 62, 92, 46);
+                ctx.bezierCurveTo(78, 52, 68, 66, 54, 79);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(16, 88);
+                ctx.lineTo(84, 88);
+                ctx.moveTo(28, 94);
+                ctx.lineTo(72, 94);
+                ctx.stroke();
+            } else {
+                // Rama de Olivo (anterior)
+                ctx.beginPath();
+                ctx.moveTo(15, 95);
+                ctx.bezierCurveTo(32, 65, 55, 40, 88, 10);
+                ctx.stroke();
+
+                const leaves = [
+                    [32, 74, 12, 58, 25, 48],
+                    [32, 74, 54, 72, 62, 58],
+                    [52, 52, 32, 34, 44, 24],
+                    [52, 52, 74, 48, 82, 34],
+                    [70, 30, 56, 16, 68, 10]
+                ];
+                leaves.forEach(([sx, sy, cx, cy, ex, ey]) => {
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    ctx.quadraticCurveTo(cx, cy, ex, ey);
+                    ctx.quadraticCurveTo(sx + (ex - sx) * 0.6, sy + (ey - sy) * 0.2, sx, sy);
+                    ctx.stroke();
+                });
+            }
+
             ctx.restore();
         }
 
@@ -2290,7 +3079,7 @@ Sección de notas libres (10 páginas)</textarea>
                     ctx.restore();
                 }
             } else {
-                // TAPA BLANDA O TAPA DURA CON LOMO: PLIEGO CONTINUO
+                // TAPA BLANDA O TAPA DURA: PLIEGO CONTINUO
                 const spineMm = getCalculatedSpineMm();
                 const spreadW = fmt.wMm * 2 + spineMm + B * 2;
                 const spreadH = fmt.hMm + B * 2;
@@ -2300,6 +3089,8 @@ Sección de notas libres (10 páginas)</textarea>
 
                 drawFullSpreadPerfectBound(ctx, fmt, spineMm, B, pxPerMm, includeGuides, pal);
             }
+
+            applyCanvasZoomStyle();
         }
 
         function drawFullSpreadPerfectBound(ctx, fmt, spineMm, B, pxPerMm, includeGuides, pal) {
@@ -2424,9 +3215,9 @@ Sección de notas libres (10 páginas)</textarea>
             if (coverState.bindingType === 'coil') {
                 document.getElementById('modalDownloadSummaryType').innerHTML = '<strong>Encuadernación:</strong> Portada con Anillas (PDF de 2 páginas separadas con sangría)';
             } else if (coverState.bindingType === 'hardcover') {
-                document.getElementById('modalDownloadSummaryType').innerHTML = `<strong>Encuadernación:</strong> Tapa Dura Casewrap (Pliego continuo con lomo de ${spineMm} mm)`;
+                document.getElementById('modalDownloadSummaryType').innerHTML = `<strong>Encuadernación:</strong> Tapa Dura (Pliego continuo con lomo de ${spineMm} mm)`;
             } else {
-                document.getElementById('modalDownloadSummaryType').innerHTML = `<strong>Encuadernación:</strong> Tapa Blanda con Lomo (Pliego continuo con lomo de ${spineMm} mm)`;
+                document.getElementById('modalDownloadSummaryType').innerHTML = `<strong>Encuadernación:</strong> Tapa Blanda (Pliego continuo con lomo de ${spineMm} mm)`;
             }
 
             const w = coverState.bindingType === 'coil' ? (fmt.wMm + B * 2).toFixed(1) : (fmt.wMm * 2 + spineMm + B * 2).toFixed(1);
@@ -2515,7 +3306,7 @@ Sección de notas libres (10 páginas)</textarea>
         // =====================================================================
         function getLuluPodPackageId() {
             const fmt = TRIM_FORMATS.landscape_825_6;
-            // En Lulu Print API: CO = Coil Bound (Anillas), PB = Perfect Bound (Tapa Blanda), CW = Casewrap Hardcover (Tapa Dura)
+            // En Lulu Print API: CO = Coil Bound (Anillas), PB = Perfect Bound (Tapa Blanda), CW = Hardcover (Tapa Dura)
             let bindCode = 'CO';
             if (coverState.bindingType === 'perfect') bindCode = 'PB';
             if (coverState.bindingType === 'hardcover') bindCode = 'CW';
@@ -2571,10 +3362,10 @@ Sección de notas libres (10 páginas)</textarea>
             let bindName = 'Encuadernación con Anillas Metálicas (Wire-O)';
             let priceText = '24,90 €';
             if (coverState.bindingType === 'perfect') {
-                bindName = 'Encuadernación Tapa Blanda con Lomo';
+                bindName = 'Encuadernación Tapa Blanda';
                 priceText = '22,90 €';
             } else if (coverState.bindingType === 'hardcover') {
-                bindName = 'Encuadernación Tapa Dura Rígida (Casewrap)';
+                bindName = 'Encuadernación Tapa Dura';
                 priceText = '29,90 €';
             }
             document.getElementById('orderBookSpecs').textContent = `${bindName} · ${coverState.pageCount} páginas interiores`;
@@ -2602,9 +3393,38 @@ Sección de notas libres (10 páginas)</textarea>
         window.addEventListener('DOMContentLoaded', initCoverGenerator);
     </script>
 
-    <!-- Integración con "Guardar en Mi Espacio" (Firestore + Copia Local) -->
+    <!-- Integración con "Guardar en Mi Espacio" y carga de libros creados en Firestore -->
     <script type="module">
         import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+        import { auth, db } from './firebase-config.js';
+        import { collection, getDocs } from 'firebase/firestore';
+        import { onAuthStateChanged } from 'firebase/auth';
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return;
+            try {
+                const snap = await getDocs(collection(db, 'users', user.uid, 'designs'));
+                const books = [];
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.type === 'Cuaderno Completo' || (data.editUrl && data.editUrl.includes('generador-libro-completo'))) {
+                        books.push({ id: d.id, ...data });
+                    }
+                });
+                window.firestoreInteriorBooks = books;
+                if (typeof window.refreshAvailableInteriorBooks === 'function') {
+                    const all = window.refreshAvailableInteriorBooks();
+                    // Si aún no había borrador local y hay un libro en la nube, sincronizar con el primero
+                    if (all.length > 0 && !localStorage.getItem('mr_complete_book_config') && typeof window.applyInteriorBookObject === 'function') {
+                        window.applyInteriorBookObject(all[0], false);
+                    } else if (typeof window.updateSyncedBookLabels === 'function') {
+                        window.updateSyncedBookLabels();
+                    }
+                }
+            } catch (err) {
+                console.warn('Error consultando libros interiores en Firestore:', err);
+            }
+        });
 
         function getCoverGeneratorData() {
             const bindLabel = coverState.bindingType === 'coil'
@@ -2615,12 +3435,15 @@ Sección de notas libres (10 páginas)</textarea>
                 summary: `${coverState.title || 'Portada'} · ${bindLabel} (${coverState.pageCount} págs)`,
                 data: {
                     plannerKey: coverState.plannerKey,
+                    syncedBookId: coverState.syncedBookId,
+                    syncedBookName: coverState.syncedBookName,
                     bindingType: coverState.bindingType,
                     template: coverState.template,
                     palette: coverState.palette,
                     pageCount: coverState.pageCount,
                     paperThicknessMm: coverState.paperThicknessMm,
                     showBotanical: coverState.showBotanical,
+                    botanicalType: coverState.botanicalType === 'loto' ? 'loto' : 'olivo',
                     showBarcode: coverState.showBarcode,
                     title: coverState.title,
                     badge: coverState.badge,
@@ -2641,6 +3464,9 @@ Sección de notas libres (10 páginas)</textarea>
             if (savedData.bindingType) setBindingType(savedData.bindingType);
             if (savedData.template) setTemplate(savedData.template);
             if (savedData.palette) setPalette(savedData.palette);
+            if (savedData.botanicalType && document.getElementById('selBotanicalType')) {
+                document.getElementById('selBotanicalType').value = (savedData.botanicalType === 'loto') ? 'loto' : 'olivo';
+            }
 
             if (savedData.title !== undefined) document.getElementById('inpTitle').value = savedData.title;
             if (savedData.badge !== undefined) document.getElementById('inpBadge').value = savedData.badge;
@@ -2651,7 +3477,7 @@ Sección de notas libres (10 páginas)</textarea>
             if (savedData.backTitle !== undefined) document.getElementById('inpBackTitle').value = savedData.backTitle;
             if (savedData.backIntro !== undefined) document.getElementById('inpBackIntro').value = savedData.backIntro;
 
-            updateConfigFromUI();
+            updateConfigFromUI(false);
         }
 
         setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData);
