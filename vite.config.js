@@ -73,6 +73,7 @@ export default defineConfig({
         generadorLibroCompleto: resolve(__dirname, 'generador-libro-completo.html'),
         generadorPortadas: resolve(__dirname, 'generador-portadas.html'),
         adminPedidos: resolve(__dirname, 'admin-pedidos.html'),
+        adminEmails: resolve(__dirname, 'admin-emails.html'),
         miEspacio: resolve(__dirname, 'mi-espacio.html'),
         baja: resolve(__dirname, 'baja.html'),
         notFound: resolve(__dirname, '404.html')

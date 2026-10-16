@@ -376,6 +376,89 @@ function renderOrdersGrid() {
   });
 }
 
+// -------------------------------------------------------------------------
+// VALIDACIÓN DE DATOS DEL CLIENTE Y REGISTRO PREVIO
+// -------------------------------------------------------------------------
+function validateCustomerData(customer) {
+  const result = {
+    isValid: true,
+    isRegistered: customer?.isRegistered !== false,
+    emailStatus: 'correct',
+    phoneStatus: 'mobile_ok',
+    postalStatus: 'correct'
+  };
+
+  if (!customer) {
+    result.isValid = false;
+    return result;
+  }
+
+  // 1. Email
+  const email = (customer.email || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    result.emailStatus = 'invalid';
+    result.isValid = false;
+  } else if (email.includes('@gmial.') || email.includes('@outlok.') || email.includes('@hotmial.')) {
+    result.emailStatus = 'typo';
+    result.isValid = false;
+  }
+
+  // 2. Teléfono (Móvil nacional para SMS)
+  const phone = (customer.phone || '').replace(/[\s\-\(\)\.]/g, '');
+  const isMobileSp = /^((\+34|0034)?)?[67]\d{8}$/.test(phone);
+  const isLandlineSp = /^((\+34|0034)?)?[89]\d{8}$/.test(phone);
+  if (!phone) {
+    result.phoneStatus = 'missing';
+    result.isValid = false;
+  } else if (isMobileSp) {
+    result.phoneStatus = 'mobile_ok';
+  } else if (isLandlineSp) {
+    result.phoneStatus = 'landline';
+  } else {
+    result.phoneStatus = 'other';
+  }
+
+  // 3. Código Postal español (5 dígitos)
+  const cp = (customer.postalCode || '').trim();
+  if (!/^\d{5}$/.test(cp)) {
+    result.postalStatus = 'invalid';
+    result.isValid = false;
+  }
+
+  return result;
+}
+
+// -------------------------------------------------------------------------
+// RENDERIZADO DE BADGES DE COMUNICACIONES (RESEND AUDIT TRAIL)
+// -------------------------------------------------------------------------
+function renderCommsBadges(order) {
+  const comms = order.comms || {
+    compra: { sent: true, date: order.createdAt },
+    imprenta: { sent: order.status === 'printing' || order.status === 'shipped' },
+    tracking: { sent: order.status === 'shipped' },
+    entregado: { sent: false },
+    checkin: { sent: false }
+  };
+
+  const badges = [
+    { key: 'compra', label: 'Compra', info: comms.compra },
+    { key: 'imprenta', label: 'Imprenta', info: comms.imprenta },
+    { key: 'tracking', label: 'Tracking', info: comms.tracking },
+    { key: 'entregado', label: 'Entrega', info: comms.entregado },
+    { key: 'checkin', label: '7 días', info: comms.checkin }
+  ];
+
+  return badges.map(b => {
+    if (b.info?.bounced) {
+      return `<span class="comm-pill bounced" title="Rebotado: no entregado al cliente">⚠️ ${b.label} Rebotó</span>`;
+    }
+    if (b.info?.sent) {
+      return `<span class="comm-pill sent" title="Enviado correctamente">✅ ${b.label}</span>`;
+    }
+    return `<span class="comm-pill pending" title="Pendiente de enviar">⏳ ${b.label}</span>`;
+  }).join('');
+}
+
 function createOrderCardElement(order) {
   const card = document.createElement('div');
   card.className = 'order-card-box';
@@ -388,6 +471,9 @@ function createOrderCardElement(order) {
   const totalPaid = parseFloat(order.pricing?.totalPaid || 24.90).toFixed(2);
   const luluCost = parseFloat(order.pricing?.luluCostEstimate || 10.50).toFixed(2);
   const margin = (totalPaid - luluCost - (totalPaid * 0.02)).toFixed(2);
+
+  // Validación de datos del cliente
+  const custVal = validateCustomerData(order.customer);
 
   card.innerHTML = `
     <!-- HEADER DE LA TARJETA -->
@@ -409,7 +495,7 @@ function createOrderCardElement(order) {
     <!-- CUERPO DE LA TARJETA (3 COLUMNAS) -->
     <div class="order-card-body">
 
-      <!-- COLUMNA 1: DATOS DEL CLIENTE Y ENVÍO (RGPD PROTEGIDO) -->
+      <!-- COLUMNA 1: DATOS DEL CLIENTE, VALIDACIÓN Y COMUNICACIONES -->
       <div class="order-client-box">
         <div class="order-section-title">
           <span>👤</span> Cliente & Entrega Postal
@@ -418,12 +504,35 @@ function createOrderCardElement(order) {
         <p>✉️ <a href="mailto:${escapeHtml(order.customer?.email)}" style="color:#665548; text-decoration:underline;">${escapeHtml(order.customer?.email || 'email@ejemplo.com')}</a></p>
         <p>📞 ${escapeHtml(order.customer?.phone || 'Sin teléfono')}</p>
 
+        <!-- VALIDACIÓN DE IDENTIDAD Y DATOS DEL CLIENTE -->
+        <div class="customer-validation-status ${custVal.isValid ? 'verified' : 'warning'}">
+          <div>• Cuenta de usuario: <strong>${custVal.isRegistered ? '✅ Alta activa en Menos Ruido' : '⚠️ Sin registro previo'}</strong></div>
+          <div>• Email de contacto: <strong>${custVal.emailStatus === 'correct' ? '✅ Verificado' : custVal.emailStatus === 'typo' ? '⚠️ Posible errata en dominio' : '❌ Inválido'}</strong></div>
+          <div>• Móvil para mensajería: <strong>${custVal.phoneStatus === 'mobile_ok' ? '✅ Móvil nacional OK (SMS)' : custVal.phoneStatus === 'landline' ? '☎️ Fijo (sin SMS)' : '⚠️ Revisar formato'}</strong></div>
+          <div>• Código Postal: <strong>${custVal.postalStatus === 'correct' ? `✅ CP ${escapeHtml(order.customer?.postalCode || '')} España` : '⚠️ Código postal inválido'}</strong></div>
+        </div>
+
         <div class="order-address-box">
           <strong>Dirección de entrega:</strong><br>
           ${escapeHtml(order.customer?.address || '')}<br>
           ${escapeHtml(order.customer?.postalCode || '')} ${escapeHtml(order.customer?.city || '')} (${escapeHtml(order.customer?.province || '')})<br>
           <em>${escapeHtml(order.customer?.country || 'España')}</em>
           ${order.customer?.notes ? `<div style="margin-top:4px; font-size:0.76rem; color:#87553b;"><strong>Nota:</strong> ${escapeHtml(order.customer.notes)}</div>` : ''}
+        </div>
+
+        <!-- AUDITORÍA DE COMUNICACIONES RESEND -->
+        <div class="order-comms-audit">
+          <div style="font-weight:700; font-size:0.72rem; text-transform:uppercase; color:#6b6257;">
+            📬 Comunicaciones al cliente (Resend):
+          </div>
+          <div class="comms-badges-list">
+            ${renderCommsBadges(order)}
+          </div>
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            <button type="button" class="btn-order-secondary" style="font-size:0.75rem; padding:4px 8px; flex:1;" onclick="openSendEmailModal('${order.id || order.orderNumber}')">
+              <span>✉️</span> Enviar Email Manual
+            </button>
+          </div>
         </div>
       </div>
 
@@ -776,6 +885,124 @@ window.saveEditedAddress = function() {
 };
 
 // =========================================================================
+// MODAL DE COMUNICACIÓN MANUAL AL CLIENTE (RESEND)
+// =========================================================================
+const sendEmailModal = document.getElementById('sendEmailModal');
+
+window.openSendEmailModal = function(orderId) {
+  if (!assertAuthorized()) return;
+  const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
+  if (!order) return;
+
+  document.getElementById('mailOrderId').value = orderId;
+  document.getElementById('mailRecipient').value = `${order.customer?.name} <${order.customer?.email}>`;
+  
+  // Plantilla por defecto: mensaje personalizado libre
+  document.getElementById('mailTemplateSelect').value = 'custom';
+  document.getElementById('mailSubject').value = `Mensaje sobre tu pedido #${order.orderNumber} · Editorial Menos Ruido`;
+  document.getElementById('mailBody').value = `Hola ${order.customer?.name || ''},\n\nTe escribo personalmente desde Editorial Menos Ruido en relación a tu pedido #${order.orderNumber}.\n\n`;
+
+  if (sendEmailModal) sendEmailModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeSendEmailModal = function() {
+  if (sendEmailModal) sendEmailModal.style.display = 'none';
+  document.body.style.overflow = '';
+};
+
+window.onSelectMailTemplateChange = function() {
+  const tplKey = document.getElementById('mailTemplateSelect').value;
+  const orderId = document.getElementById('mailOrderId').value;
+  const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
+  if (!order) return;
+
+  let templates = {};
+  try {
+    const raw = localStorage.getItem('mr_email_templates');
+    if (raw) templates = JSON.parse(raw);
+  } catch (e) {}
+
+  const clientName = order.customer?.name || 'Cliente';
+  const orderNum = order.orderNumber || 'MR-2026';
+  const bookTitle = order.book?.title || 'Cuaderno Menos Ruido';
+  const address = `${order.customer?.address || ''}, ${order.customer?.postalCode || ''} ${order.customer?.city || ''}`;
+  const tracking = order.luluJob?.trackingCode || 'ES' + Math.floor(10000000000 + Math.random() * 90000000000);
+
+  if (tplKey === 'custom') {
+    document.getElementById('mailSubject').value = `Mensaje sobre tu pedido #${orderNum} · Editorial Menos Ruido`;
+    document.getElementById('mailBody').value = `Hola ${clientName},\n\nTe escribo personalmente desde Editorial Menos Ruido en relación a tu pedido #${orderNum}.\n\n`;
+    return;
+  }
+
+  const tpl = templates[tplKey] || null;
+
+  if (tpl) {
+    let sub = tpl.subject || '';
+    let body = tpl.body || '';
+
+    sub = sub.replace(/\{nombre_cliente\}/g, clientName)
+             .replace(/\{numero_pedido\}/g, orderNum)
+             .replace(/\{titulo_cuaderno\}/g, bookTitle);
+
+    body = body.replace(/\{nombre_cliente\}/g, clientName)
+               .replace(/\{numero_pedido\}/g, orderNum)
+               .replace(/\{titulo_cuaderno\}/g, bookTitle)
+               .replace(/\{direccion_entrega\}/g, address)
+               .replace(/\{tracking_code\}/g, tracking);
+
+    document.getElementById('mailSubject').value = sub;
+    document.getElementById('mailBody').value = body;
+  } else {
+    if (tplKey === 'ausente') {
+      document.getElementById('mailSubject').value = `Aviso de entrega: No hemos podido localizarte (Pedido #${orderNum})`;
+      document.getElementById('mailBody').value = `Hola ${clientName},\n\nEl transportista de Correos nos ha informado de que ha intentado entregar tu paquete hoy en ${address}, pero no ha sido posible localizar a nadie en el domicilio.\n\nTu paquete está seguro y puedes solicitar un segundo intento de entrega o retirarlo en la oficina de Correos más cercana.\n\nQuedamos a tu disposición para ayudarte.`;
+    } else if (tplKey === 'cancelado') {
+      document.getElementById('mailSubject').value = `Pedido #${orderNum} cancelado · Reembolso confirmado`;
+      document.getElementById('mailBody').value = `Hola ${clientName},\n\nTe confirmamos la cancelación de tu pedido #${orderNum} y el reembolso automático a tu tarjeta a través de Stripe.\n\nEl importe se reflejará en tu cuenta en un plazo de 2 a 4 días laborables según tu entidad.`;
+    } else if (tplKey === 'tracking') {
+      document.getElementById('mailSubject').value = `Tu cuaderno #${orderNum} está en camino (Tracking Correos) 🚚`;
+      document.getElementById('mailBody').value = `Hola ${clientName},\n\n¡Buenas noticias! Tu cuaderno ha salido de la imprenta y viaja con Correos Express hacia tu dirección: ${address}.\n\nPuedes seguir el paquete en tiempo real con el código de seguimiento: ${tracking}.`;
+    } else {
+      document.getElementById('mailSubject').value = `Actualización de tu pedido #${orderNum} · Editorial Menos Ruido`;
+      document.getElementById('mailBody').value = `Hola ${clientName},\n\nTe enviamos esta notificación oficial sobre tu pedido #${orderNum}.\n\n`;
+    }
+  }
+};
+
+window.executeSendCustomerEmail = function() {
+  if (!assertAuthorized()) return;
+  const orderId = document.getElementById('mailOrderId').value;
+  const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
+  if (!order) return;
+
+  const tplKey = document.getElementById('mailTemplateSelect').value;
+  const subject = document.getElementById('mailSubject').value.trim();
+  const body = document.getElementById('mailBody').value.trim();
+
+  if (!subject || !body) {
+    alert('Por favor, indica un asunto y un mensaje antes de enviar.');
+    return;
+  }
+
+  // Registrar en la auditoría de comunicaciones del pedido
+  if (!order.comms) order.comms = {};
+  const commId = 're_' + Math.random().toString(36).substring(2, 9);
+  
+  if (tplKey !== 'custom' && order.comms[tplKey] !== undefined) {
+    order.comms[tplKey] = { sent: true, date: new Date().toISOString(), id: commId };
+  } else {
+    order.comms['manual_' + Date.now()] = { sent: true, date: new Date().toISOString(), subject, id: commId };
+  }
+
+  addTimelineEvent(order, `Email enviado al cliente vía Resend desde contacto@: «${subject}» (ID: ${commId})`);
+  saveOrdersState();
+  sortAndRenderOrders();
+  closeSendEmailModal();
+  showToast(`✉️ Email enviado con éxito a ${order.customer?.email}`);
+};
+
+// =========================================================================
 // 7. SIMULADOR DE PEDIDOS DEMO / TEST (SANDBOX)
 // =========================================================================
 window.createDemoOrder = function() {
@@ -794,7 +1021,8 @@ window.createDemoOrder = function() {
       subtitle: "52 semanas, 12 meses y perseverancia en calma",
       bindingType: "coil",
       pageCount: 144,
-      price: 24.90
+      price: 24.90,
+      isRegistered: true
     },
     {
       name: "Javier Mendoza",
@@ -809,7 +1037,8 @@ window.createDemoOrder = function() {
       subtitle: "Dos trimestres de foco profundo y límites claros",
       bindingType: "perfect",
       pageCount: 186,
-      price: 27.90
+      price: 27.90,
+      isRegistered: true
     },
     {
       name: "Lucía Aranda",
@@ -824,7 +1053,24 @@ window.createDemoOrder = function() {
       subtitle: "Edición especial tapa dura con lomo dorado",
       bindingType: "hardcover",
       pageCount: 144,
-      price: 32.90
+      price: 32.90,
+      isRegistered: true
+    },
+    {
+      name: "Pedro Valdés",
+      email: "pedro.valdes@gmial.com", // Errata voluntaria de prueba para verificar alertas
+      phone: "912345678", // Teléfono fijo sin SMS para probar avisos
+      address: "Gran Vía 15, 3º Izquierda",
+      postalCode: "28013",
+      city: "Madrid",
+      province: "Madrid",
+      notes: "Horario comercial",
+      bookTitle: "Planificador Semanal Atemporal",
+      subtitle: "Organización abierta sin fechas prefijadas",
+      bindingType: "coil",
+      pageCount: 144,
+      price: 24.90,
+      isRegistered: false // Sin cuenta previa para probar alerta
     }
   ];
 
@@ -845,7 +1091,15 @@ window.createDemoOrder = function() {
       city: pick.city,
       province: pick.province,
       country: "España",
-      notes: pick.notes
+      notes: pick.notes,
+      isRegistered: pick.isRegistered
+    },
+    comms: {
+      compra: { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) },
+      imprenta: { sent: false },
+      tracking: { sent: false },
+      entregado: { sent: false },
+      checkin: { sent: false }
     },
     book: {
       title: pick.bookTitle,

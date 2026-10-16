@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Comunicaciones & Plantillas · Editorial Menos Ruido</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- Fuentes Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Hoja de estilos general -->
+    <link rel="stylesheet" href="./style.css">
+
+    <!-- Blindaje de Seguridad: Invisible al 100% hasta verificar identidad como jesgilcan@gmail.com -->
+    <style id="mr-admin-guard-style">html, body { display: none !important; }</style>
+
+    <style>
+        :root {
+            --admin-bg: #f4efe6;
+            --admin-surface: #ffffff;
+            --admin-card-border: #e2ddd3;
+            --admin-text-main: #1f1b17;
+            --admin-text-muted: #6b6359;
+            --admin-accent: #87553b;
+            --admin-accent-hover: #70442e;
+            --admin-dark: #1f1c19;
+            --admin-success: #15803d;
+            --admin-warning: #b45309;
+            --admin-danger: #b91c1c;
+            --admin-info: #0369a1;
+        }
+
+        body {
+            background-color: var(--admin-bg);
+            color: var(--admin-text-main);
+            font-family: var(--font-sans);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* CABECERA ADMIN */
+        .admin-topbar {
+            background: var(--admin-dark);
+            color: #ffffff;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-brand h1 {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .admin-badge-role {
+            background: #332d27;
+            border: 1px solid #574c42;
+            color: #d8cbbe;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.8px;
+        }
+        .admin-env-pill {
+            background: #254030;
+            color: #79d29b;
+            border: 1px solid #366046;
+            font-size: 0.70rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .admin-env-pill::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+        }
+
+        .admin-top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-admin-action {
+            background: #332d27;
+            color: #ffffff;
+            border: 1px solid #574c42;
+            padding: 7px 14px;
+            border-radius: 7px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-admin-action:hover {
+            background: #453c34;
+            border-color: #706356;
+        }
+        .btn-admin-primary {
+            background: var(--admin-accent);
+            border-color: var(--admin-accent);
+        }
+        .btn-admin-primary:hover {
+            background: var(--admin-accent-hover);
+        }
+
+        /* PANTALLA DE BLOQUEO / 2FA */
+        .auth-gate-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .auth-gate-card {
+            background: #ffffff;
+            border: 1px solid var(--admin-card-border);
+            border-radius: 16px;
+            padding: 44px 36px;
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        }
+        .auth-gate-card h2 {
+            font-family: var(--font-serif);
+            font-size: 1.55rem;
+            margin-bottom: 8px;
+            color: var(--admin-dark);
+        }
+        .pin-gate-input {
+            width: 160px;
+            font-size: 1.8rem;
+            text-align: center;
+            letter-spacing: 12px;
+            padding: 10px;
+            border: 2px solid #d5cebf;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            background: #faf7f2;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .pin-gate-input:focus {
+            border-color: var(--admin-accent);
+            background: #ffffff;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .emails-main-container {
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px 24px 60px;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        /* BANNER INFORMATIVO REMITENTES & PRIVACIDAD */
+        .email-config-banner {
+            background: #ffffff;
+            border: 1px solid var(--admin-card-border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .config-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4a423a;
+        }
+        .config-badge strong {
+            color: var(--admin-dark);
+        }
+
+        /* GRID PRINCIPAL: SELECTOR + EDITOR + PREVIEW */
+        .emails-workspace-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 1280px) {
+            .emails-workspace-grid {
+                grid-template-columns: 280px 1fr;
+            }
+            .preview-column {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .emails-workspace-grid {
+                grid-template-columns: 1fr;
+            }
+            .preview-column {
+                grid-column: span 1;
+            }
+        }
+
+        /* COLUMNA 1: LISTADO DE PLANTILLAS */
+        .templates-nav-card {
+            background: #ffffff;
+            border: 1px solid var(--admin-card-border);
+            border-radius: 12px;
+            padding: 18px 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .templates-nav-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--admin-text-muted);
+            margin: 0 0 12px 8px;
+        }
+        .template-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            border: 1px solid transparent;
+            transition: all 0.18s;
+            text-align: left;
+            width: 100%;
+            background: none;
+            box-sizing: border-box;
+        }
+        .template-nav-item:hover {
+            background: #f7f4ee;
+        }
+        .template-nav-item.active {
+            background: #faf6f0;
+            border-color: #d8cebe;
+            font-weight: 700;
+        }
+        .template-nav-item.active .nav-icon {
+            transform: scale(1.1);
+        }
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-icon {
+            font-size: 1.15rem;
+            transition: transform 0.2s;
+        }
+        .nav-text-block {
+            display: flex;
+            flex-direction: column;
+        }
+        .nav-name {
+            font-size: 0.88rem;
+            color: var(--admin-dark);
+            line-height: 1.25;
+        }
+        .nav-sub {
+            font-size: 0.72rem;
+            color: var(--admin-text-muted);
+            margin-top: 2px;
+        }
+
+        /* COLUMNA 2: EDITOR DE PLANTILLA */
+        .editor-card {
+            background: #ffffff;
+            border: 1px solid var(--admin-card-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .editor-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ebe4d8;
+            padding-bottom: 14px;
+        }
+        .editor-title {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            margin: 0;
+            color: var(--admin-dark);
+        }
+        .editor-sender-tag {
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #f4efe6;
+            color: #63584c;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--admin-text-main);
+        }
+        .form-input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #d5cebf;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            background: #faf8f5;
+            color: var(--admin-dark);
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .form-input:focus {
+            border-color: var(--admin-accent);
+            background: #ffffff;
+        }
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d5cebf;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            box-sizing: border-box;
+            background: #faf8f5;
+            color: var(--admin-dark);
+            outline: none;
+            min-height: 220px;
+            font-family: var(--font-sans);
+            resize: vertical;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .form-textarea:focus {
+            border-color: var(--admin-accent);
+            background: #ffffff;
+        }
+
+        /* VARIABLES DINÁMICAS (CHIPS) */
+        .variables-box {
+            background: #faf8f5;
+            border: 1px dashed #d5cebf;
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+        .variables-box-title {
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--admin-text-muted);
+            margin-bottom: 6px;
+        }
+        .variables-chips-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .var-chip {
+            background: #ffffff;
+            border: 1px solid #d2c8b8;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.74rem;
+            font-family: monospace;
+            cursor: pointer;
+            color: var(--admin-accent);
+            transition: all 0.15s;
+        }
+        .var-chip:hover {
+            background: var(--admin-accent);
+            color: #ffffff;
+            border-color: var(--admin-accent);
+        }
+
+        .editor-actions-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ebe4d8;
+        }
+
+        /* COLUMNA 3: VISTA PREVIA 1:1 */
+        .preview-card {
+            background: #ffffff;
+            border: 1px solid var(--admin-card-border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .preview-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ebe4d8;
+            padding-bottom: 12px;
+        }
+        .preview-device-toggle {
+            display: inline-flex;
+            background: #f4efe6;
+            border-radius: 8px;
+            padding: 3px;
+            gap: 4px;
+        }
+        .device-btn {
+            background: none;
+            border: none;
+            padding: 5px 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #665b50;
+            transition: all 0.18s;
+        }
+        .device-btn.active {
+            background: #ffffff;
+            color: var(--admin-dark);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .email-canvas-wrapper {
+            background: #e9e4db;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 540px;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+        .email-canvas {
+            background: #faf8f5;
+            width: 100%;
+            max-width: 580px;
+            border-radius: 8px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+            overflow: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #212121;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            transition: max-width 0.3s;
+        }
+        .email-canvas.mobile-view {
+            max-width: 360px;
+        }
+
+        /* COMPONENTES DEL EMAIL MENOS RUIDO */
+        .em-header {
+            background: #1f1c19;
+            color: #ffffff;
+            padding: 22px 28px;
+            text-align: center;
+        }
+        .em-header-logo {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .em-header-sub {
+            font-size: 0.75rem;
+            color: #c4b8aa;
+            margin-top: 3px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .em-body {
+            padding: 32px 30px 24px;
+            background: #faf8f5;
+            flex: 1;
+        }
+        .em-subject-banner {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1f1c19;
+            margin-bottom: 18px;
+            line-height: 1.3;
+        }
+        .em-text-content {
+            font-size: 0.94rem;
+            color: #38332e;
+            white-space: pre-wrap;
+            line-height: 1.65;
+            margin-bottom: 24px;
+        }
+        .em-highlight-box {
+            background: #ffffff;
+            border: 1px solid #eae3d7;
+            border-left: 4px solid var(--admin-accent);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 20px 0;
+            font-size: 0.88rem;
+        }
+        .em-btn-action {
+            display: inline-block;
+            background: #87553b;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            text-align: center;
+            margin: 12px 0 20px;
+            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
+        }
+        .em-footer {
+            background: #f2ece1;
+            border-top: 1px solid #e5ded2;
+            padding: 20px 24px;
+            font-size: 0.78rem;
+            color: #756a5e;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .em-footer a {
+            color: #87553b;
+            text-decoration: underline;
+        }
+
+        /* TOAST */
+        .admin-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1f1c19;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.25);
+            font-size: 0.86rem;
+            font-weight: 600;
+            z-index: 1000000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid var(--admin-accent);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOPBAR PRIVADA -->
+    <header class="admin-topbar">
+        <div class="admin-brand">
+            <a href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:1.4rem;">🌿</span>
+                <h1>Menos Ruido Backoffice</h1>
+            </a>
+            <span class="admin-badge-role">Comunicaciones & Plantillas</span>
+            <span class="admin-env-pill" id="envBadge">Resend Verified</span>
+        </div>
+
+        <div class="admin-top-actions">
+            <a href="/admin-pedidos.html" class="btn-admin-action" title="Ir al Gestor de Pedidos">
+                <span>📦</span> Gestor de Pedidos
+            </a>
+            <a href="/mi-espacio.html" class="btn-admin-action" title="Volver a Mi Espacio">
+                <span>👤</span> Mi Espacio
+            </a>
+            <button type="button" class="btn-admin-action" id="btnAdminLogout" style="background:#4a2323; border-color:#6e3333;" title="Cerrar sesión de administrador">
+                <span>🚪</span> Salir
+            </button>
+        </div>
+    </header>
+
+    <!-- PANTALLA DE CONFIRMACIÓN 2FA (SOLO VISIBLE PARA JESÚS TRAS AUTENTICARSE CON GOOGLE) -->
+    <div id="authGate" class="auth-gate-wrapper" style="display: none;">
+        <div class="auth-gate-card">
+            <span style="font-size: 2.8rem; display: block; margin-bottom: 12px;">🛡️</span>
+            <h2>Gestor de Comunicaciones</h2>
+            <p style="margin-bottom: 12px;">Identidad verificada: <strong id="gateUserEmail" style="color:var(--admin-dark);">jesgilcan@gmail.com</strong></p>
+            <p style="font-size:0.86rem; color:var(--admin-text-muted); margin-bottom:18px;">
+                Introduce tu PIN maestro para gestionar las plantillas oficiales de correo y notificaciones a clientes.
+            </p>
+            
+            <div style="margin-bottom: 16px;">
+                <input type="password" id="gatePinInput" class="pin-gate-input" maxlength="4" placeholder="••••" autocomplete="off" />
+            </div>
+            
+            <button type="button" class="btn-admin-action btn-admin-primary" id="btnGateUnlock" style="padding:12px 28px; width:100%; max-width:240px;">
+                Desbloquear Plantillas
+            </button>
+            <p id="gateErrorMsg" style="color:var(--admin-danger); font-size:0.85rem; margin-top:12px; display:none; font-weight:600;">
+                PIN de seguridad no válido.
+            </p>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main id="adminMain" class="emails-main-container" style="display: none;">
+
+        <!-- BANNER DE ENRUTAMIENTO Y PRIVACIDAD -->
+        <section class="email-config-banner">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:1.6rem;">🛡️</span>
+                <div>
+                    <strong style="font-size:0.95rem; display:block;">Enrutamiento Oficial & Privacidad Blindada</strong>
+                    <span style="font-size:0.82rem; color:var(--admin-text-muted);">
+                        Tu cuenta personal de Gmail nunca se expone al cliente. Toda la comunicación sale con identidad corporativa Menos Ruido.
+                    </span>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div class="config-badge">
+                    <span>Automáticos:</span> <strong>pedidos@editorialmenosruido.com</strong>
+                </div>
+                <div class="config-badge">
+                    <span>Respuestas (Reply-To):</span> <strong>contacto@editorialmenosruido.com</strong>
+                </div>
+                <div class="config-badge">
+                    <span>Soporte / Manual:</span> <strong>contacto@editorialmenosruido.com</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESPACIO DE TRABAJO EN 3 COLUMNAS -->
+        <div class="emails-workspace-grid">
+
+            <!-- COLUMNA 1: LISTADO DE PLANTILLAS -->
+            <aside class="templates-nav-card">
+                <div class="templates-nav-title">Ciclo del Pedido (8 Estados)</div>
+                <div id="templatesList">
+                    <!-- Se inyecta dinámicamente con JS -->
+                </div>
+            </aside>
+
+            <!-- COLUMNA 2: FORMULARIO EDITOR -->
+            <section class="editor-card">
+                <div class="editor-header-row">
+                    <div>
+                        <h2 class="editor-title" id="editTemplateTitle">Compra Confirmada</h2>
+                        <span style="font-size:0.8rem; color:var(--admin-text-muted);" id="editTemplateTrigger">
+                            Disparador: Inmediato tras pago Stripe
+                        </span>
+                    </div>
+                    <span class="editor-sender-tag" id="editTemplateSender">
+                        Desde: pedidos@editorialmenosruido.com
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="tplSubject">Asunto del correo (Subject)</label>
+                    <input type="text" id="tplSubject" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="tplPreheader">Texto de previsualización (Pre-header)</label>
+                    <input type="text" id="tplPreheader" class="form-input" placeholder="Texto corto visible en la bandeja de entrada antes de abrir">
+                </div>
+
+                <!-- SELECTOR DE VARIABLES DINÁMICAS -->
+                <div class="variables-box">
+                    <div class="variables-box-title">Variables disponibles (haz clic para insertar en el texto):</div>
+                    <div class="variables-chips-row">
+                        <span class="var-chip" onclick="insertVariable('{nombre_cliente}')">{nombre_cliente}</span>
+                        <span class="var-chip" onclick="insertVariable('{numero_pedido}')">{numero_pedido}</span>
+                        <span class="var-chip" onclick="insertVariable('{titulo_cuaderno}')">{titulo_cuaderno}</span>
+                        <span class="var-chip" onclick="insertVariable('{formato}')">{formato}</span>
+                        <span class="var-chip" onclick="insertVariable('{enlace_diseno}')">{enlace_diseno}</span>
+                        <span class="var-chip" onclick="insertVariable('{enlace_recibo}')">{enlace_recibo}</span>
+                        <span class="var-chip" onclick="insertVariable('{tracking_code}')">{tracking_code}</span>
+                        <span class="var-chip" onclick="insertVariable('{tracking_url}')">{tracking_url}</span>
+                        <span class="var-chip" onclick="insertVariable('{direccion_entrega}')">{direccion_entrega}</span>
+                        <span class="var-chip" onclick="insertVariable('{telefono_contacto}')">{telefono_contacto}</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="tplBody">Cuerpo del mensaje</label>
+                    <textarea id="tplBody" class="form-textarea"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="tplButtonText">Texto del botón principal de acción</label>
+                    <input type="text" id="tplButtonText" class="form-input" placeholder="Ej: Ver mi cuaderno personalizado">
+                </div>
+
+                <div class="editor-actions-row">
+                    <button type="button" class="btn-admin-action" id="btnResetTemplate" style="background:#52473c;" title="Restaurar el texto corporativo predeterminado">
+                        <span>↺</span> Restaurar Original
+                    </button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn-admin-action" id="btnTestSendMail" style="background:#2d4a36; border-color:#3d694c;" title="Enviar un correo de prueba a jesgilcan@gmail.com">
+                            <span>🚀</span> Probar Envío
+                        </button>
+                        <button type="button" class="btn-admin-action btn-admin-primary" id="btnSaveTemplate">
+                            <span>💾</span> Guardar Plantilla
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COLUMNA 3: VISTA PREVIA 1:1 EN TIEMPO REAL -->
+            <section class="preview-card preview-column">
+                <div class="preview-topbar">
+                    <strong style="font-size:0.88rem;">Vista Previa en Vivo (Estilo Menos Ruido)</strong>
+                    <div class="preview-device-toggle">
+                        <button type="button" class="device-btn active" id="btnDevDesktop" onclick="setPreviewDevice('desktop')">🖥️ Ordenador</button>
+                        <button type="button" class="device-btn" id="btnDevMobile" onclick="setPreviewDevice('mobile')">📱 Móvil</button>
+                    </div>
+                </div>
+
+                <div class="email-canvas-wrapper">
+                    <div class="email-canvas" id="emailCanvas">
+                        <!-- CABECERA CORPORATIVA -->
+                        <div class="em-header">
+                            <div class="em-header-logo">
+                                <span>🌿</span>
+                                <span>EDITORIAL MENOS RUIDO</span>
+                            </div>
+                            <div class="em-header-sub">Papelería analógica · En calma y con intención</div>
+                        </div>
+
+                        <!-- CUERPO DEL CORREO -->
+                        <div class="em-body">
+                            <div class="em-subject-banner" id="prevSubject">Asunto del correo</div>
+                            <div class="em-text-content" id="prevBody">Cuerpo del correo...</div>
+                            
+                            <!-- CAJA DESTACADA DE DATOS (SI CORRESPONDE) -->
+                            <div class="em-highlight-box" id="prevHighlightBox">
+                                <div style="font-weight:700; margin-bottom:4px;">Detalles del pedido:</div>
+                                <div>• Pedido: <strong>#MR-2026-4821</strong></div>
+                                <div>• Ejemplar: <strong>Planificador Anual 2026</strong> (Anillas Wire-O)</div>
+                                <div>• Envío a: <strong>Calle Serrano 42, 4º D · Madrid</strong></div>
+                            </div>
+
+                            <!-- BOTÓN DE ACCIÓN PRINCIPAL -->
+                            <div style="text-align: center;">
+                                <a href="#" class="em-btn-action" id="prevActionBtn" onclick="return false;">Ver mi diseño guardado ↗</a>
+                            </div>
+
+                            <!-- ENLACES SECUNDARIOS (RECIBO / CONTACTO) -->
+                            <div style="text-align:center; font-size:0.82rem; color:#786e63; margin-top:10px;" id="prevSecondaryLinks">
+                                <a href="#" style="color:#87553b; text-decoration:underline;">Descargar Recibo / Factura simplificada</a> · 
+                                <a href="mailto:contacto@editorialmenosruido.com" style="color:#87553b; text-decoration:underline;">Escribir a contacto@editorialmenosruido.com</a>
+                            </div>
+
+                            <!-- FIRMA EDITORIAL -->
+                            <div style="margin-top:28px; padding-top:18px; border-top:1px dashed #e2dbce; font-size:0.86rem; color:#5e5347;">
+                                Un saludo en calma,<br>
+                                <strong>Jesús Gil · Editorial Menos Ruido</strong>
+                            </div>
+                        </div>
+
+                        <!-- PIE DE PÁGINA (LEGAL RGPD & PREFERENCIAS) -->
+                        <div class="em-footer">
+                            <p style="margin:0 0 6px 0;">Editorial Menos Ruido · www.editorialmenosruido.com</p>
+                            <p style="margin:0 0 8px 0; font-size:0.72rem; color:#8a7f72;">
+                                Has recibido este correo en relación a tu pedido o consulta personalizada.
+                            </p>
+                            <div id="prevUnsubscribeNote" style="font-size:0.70rem; color:#9c9184;">
+                                Si prefieres no recibir más correos de seguimiento sobre tu cuaderno, puedes <a href="/baja.html">desactivarlos aquí</a>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- NOTIFICACIÓN TOAST -->
+    <div id="adminToast" class="admin-toast">
+        <span id="toastIcon">✓</span>
+        <span id="toastMsg">Mensaje de notificación</span>
+    </div>
+
+    <script type="module" src="./admin-emails.js"></script>
+</body>
+</html>
