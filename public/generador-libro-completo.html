@@ -1833,10 +1833,13 @@
                     🌟 Anual Completo
                 </button>
                 <button type="button" class="btn-preset" data-preset="alterno" onclick="applyPreset('alterno')" title="Estructura cronológica: Mes seguido de sus hábitos y semanas">
-                    🔄 Mes a Mes (Intercalado)
+                    🔄 Mes a Mes
                 </button>
                 <button type="button" class="btn-preset" data-preset="trimestre" onclick="applyPreset('trimestre')" title="Trimestral con 3 meses y 13 semanas">
-                    🎯 90 Días (Trimestral)
+                    🎯 90 Días
+                </button>
+                <button type="button" class="btn-preset" data-preset="semestre" onclick="applyPreset('semestre')" title="Semestral con 6 meses, 26 semanas y 180 días">
+                    🌿 180 Días
                 </button>
                 <button type="button" class="btn-preset" data-preset="semanal" onclick="applyPreset('semanal')" title="52 semanas completas para todo el año">
                     🗓️ Solo Semanal
@@ -2057,8 +2060,9 @@
 
         // CONFIGURACIÓN GLOBAL Y PARÁMETROS DE DISEÑO POR SECCIÓN
         let bookConfig = {
-            title: "PLANIFICADOR Y BITÁCORA ANUAL",
-            subtitle: "Registro silencioso y perseverancia analógica",
+            title: "Planificador anual",
+            subtitle: "52 semanas, 12 meses y hábitos de perseverancia silenciosa",
+            colophon: "Herramientas en papel para pensar con claridad",
             owner: "Clara Beltrán",
             dedication: "Dedica cada jornada a una sola prioridad que de verdad importe. El resto es ruido.",
             year: 2026,
@@ -2150,8 +2154,9 @@
         // PREAJUSTES (PRESETS)
         const presets = {
             anual: {
-                title: "CUADERNO ANUAL MENOS RUIDO",
+                title: "Planificador anual",
                 subtitle: "52 semanas, 12 meses y hábitos de perseverancia silenciosa",
+                pdfBase: "Menos_Ruido_Planificador_Anual",
                 layoutMode: "blocks",
                 sectionsState: {
                     cover: { active: true, pages: 1 },
@@ -2166,8 +2171,9 @@
                 }
             },
             alterno: {
-                title: "PLANIFICADOR CRONOLÓGICO INTEGRAL",
+                title: "Planificador anual Intercalado",
                 subtitle: "Estructura intercalada: Mes, hábitos, semanas y días organizados por ciclos",
+                pdfBase: "Menos_Ruido_Planificador_Anual_Intercalado",
                 layoutMode: "alterno",
                 sectionsState: {
                     cover: { active: true, pages: 1 },
@@ -2182,8 +2188,9 @@
                 }
             },
             trimestre: {
-                title: "PLANIFICADOR 90 DÍAS · ENFOQUE TRIMESTRAL",
+                title: "Planificador 90 días",
                 subtitle: "La regla de una prioridad diaria sin listas infinitas",
+                pdfBase: "Menos_Ruido_Planificador_90_Dias",
                 layoutMode: "blocks",
                 sectionsState: {
                     cover: { active: true, pages: 1 },
@@ -2197,9 +2204,27 @@
                     notes: { active: true, pages: 10 }
                 }
             },
+            semestre: {
+                title: "Planificador 180 días",
+                subtitle: "Enfoque semestral con 6 meses, 26 semanas y 180 jornadas de claridad",
+                pdfBase: "Menos_Ruido_Planificador_180_Dias",
+                layoutMode: "blocks",
+                sectionsState: {
+                    cover: { active: true, pages: 1 },
+                    calendar: { active: true, pages: 1 },
+                    annual: { active: false, pages: 1 },
+                    monthly: { active: true, pages: 6 },
+                    habits: { active: true, pages: 6 },
+                    weekly: { active: true, pages: 26 },
+                    hourly: { active: false, pages: 4 },
+                    daily: { active: true, pages: 180 },
+                    notes: { active: true, pages: 10 }
+                }
+            },
             semanal: {
-                title: "PLANIFICADOR SEMANAL ATEMPORAL",
+                title: "Planificador semanal",
                 subtitle: "52 semanas completas de lunes a domingo con foco clave",
+                pdfBase: "Menos_Ruido_Planificador_Semanal",
                 layoutMode: "blocks",
                 sectionsState: {
                     cover: { active: true, pages: 1 },
@@ -2214,8 +2239,9 @@
                 }
             },
             bitacora30: {
-                title: "BITÁCORA DE ENFOQUE · 30 DÍAS",
+                title: "Planificador diario",
                 subtitle: "Un mes de descarga mental, introspección y presencia",
+                pdfBase: "Menos_Ruido_Planificador_Diario",
                 layoutMode: "blocks",
                 sectionsState: {
                     cover: { active: true, pages: 1 },
@@ -2230,8 +2256,9 @@
                 }
             },
             libre: {
-                title: "MI CUADERNO PERSONALIZADO",
+                title: "Planificador personalizado",
                 subtitle: "Estructura libre a medida diseñada para pensar con calma",
+                pdfBase: "Menos_Ruido_Planificador_Personalizado",
                 layoutMode: "blocks",
                 sectionsState: {
                     cover: { active: true, pages: 1 },
@@ -2304,9 +2331,26 @@
 
         // DESELECCIONAR PREAJUSTE Y MARCAR PERSONALIZADO
         function markCustomPresetActive() {
+            const currentActive = document.querySelector('.btn-preset.active');
+            const wasPreset = currentActive ? currentActive.getAttribute('data-preset') : null;
             document.querySelectorAll('.btn-preset').forEach(b => {
                 b.classList.toggle('active', b.getAttribute('data-preset') === 'libre');
             });
+            if (wasPreset && wasPreset !== 'libre' && presets[wasPreset] && bookConfig.title === presets[wasPreset].title) {
+                bookConfig.title = presets.libre.title;
+            }
+        }
+
+        // GENERACIÓN DINÁMICA DEL NOMBRE DE ARCHIVO PDF
+        function getPdfFilename(forceBlank = false) {
+            const isBlankFinal = forceBlank || bookConfig.dateMode === 'blank';
+            const dateSuffix = isBlankFinal ? 'Atemporal' : String(bookConfig.year || 2026);
+            const activeBtn = document.querySelector('.btn-preset.active');
+            const presetKey = activeBtn ? activeBtn.getAttribute('data-preset') : 'libre';
+            const base = (presets[presetKey] && presets[presetKey].pdfBase) 
+                ? presets[presetKey].pdfBase 
+                : 'Menos_Ruido_Planificador_Personalizado';
+            return `${base}_${dateSuffix}.pdf`;
         }
 
         // FUNCIÓN AUXILIAR DE ESCAPADO SEGURO HTML
@@ -2394,6 +2438,7 @@
                 localStorage.setItem('mr_complete_book_config', JSON.stringify({
                     title: bookConfig.title,
                     subtitle: bookConfig.subtitle,
+                    colophon: bookConfig.colophon,
                     owner: bookConfig.owner,
                     dedication: bookConfig.dedication,
                     layoutMode: bookConfig.layoutMode,
@@ -2413,6 +2458,7 @@
                     const parsed = JSON.parse(saved);
                     if (parsed.title) bookConfig.title = parsed.title;
                     if (parsed.subtitle) bookConfig.subtitle = parsed.subtitle;
+                    if (parsed.colophon !== undefined) bookConfig.colophon = parsed.colophon;
                     if (parsed.owner !== undefined) bookConfig.owner = parsed.owner;
                     if (parsed.dedication !== undefined) bookConfig.dedication = parsed.dedication;
                     if (parsed.layoutMode) bookConfig.layoutMode = parsed.layoutMode;
@@ -3287,8 +3333,11 @@
                                 «${bookConfig.dedication}»
                             </div>
 
-                            <div class="cover-colophon">
-                                <span>Impreso en papel libre de distracciones · Pensado para escribir despacio y pensar con claridad</span>
+                            <div class="cover-colophon" contenteditable="true" 
+                                 oninput="if(this.innerText.length > 100) this.innerText = this.innerText.substring(0, 100); bookConfig.colophon = this.innerText; saveCompleteBookConfigLocally();" 
+                                 onblur="bookConfig.colophon = this.innerText.trim(); saveCompleteBookConfigLocally();" 
+                                 title="Haz clic para editar la frase inferior (máx. 100 caracteres)">
+                                <span>${escapeHtml(bookConfig.colophon || 'Herramientas en papel para pensar con claridad')}</span>
                             </div>
                         </div>
                     </div>
@@ -3407,8 +3456,16 @@
                             <span class="page-header-meta">${isBlank ? 'AÑO: _________' : 'AÑO ' + year}</span>
                         </div>
 
-                        <div style="border: 1.5px solid #222; border-radius: 4px; padding: 8px 12px; background: #faf8f5; margin-bottom: 8px;">
-                            <strong style="font-size:0.70rem; text-transform:uppercase; color:var(--accent);">PRIORIDADES ESTRATÉGICAS DEL AÑO (MÁXIMO 3)</strong>
+                        <div style="border: 1px solid #dcd5ca; border-radius: 4px; padding: 6px 12px; background: #faf8f5; margin-bottom: 8px;">
+                            <div style="border-bottom: 1px solid #e6dfd3; padding-bottom: 3px; margin-bottom: 3px;">
+                                <strong style="font-size:0.68rem; text-transform:uppercase; color:var(--accent); letter-spacing:0.5px;">PRIORIDADES ESTRATÉGICAS DEL AÑO (MÁXIMO 3)</strong>
+                            </div>
+                            ${[1, 2, 3].map(num => `
+                                <div style="display:flex; align-items:center; gap:8px; padding:3px 0; border-bottom:${num < 3 ? '1px dashed #eee8de' : 'none'};">
+                                    <span style="display:inline-block; width:9px; height:9px; border-radius:50%; border:1.2px solid #999; background:#fff; flex-shrink:0;"></span>
+                                    <span style="font-size:0.65rem; color:#666;">Prioridad ${num}</span>
+                                </div>
+                            `).join('')}
                         </div>
 
                         <div class="annual-quarters-grid">
@@ -3528,18 +3585,12 @@
                         <div class="monthly-card-official" style="${!hasGoals ? 'grid-column: 1 / -1;' : ''}">
                             <span class="monthly-card-title-official">📅 HITOS Y FECHAS CLAVE</span>
                             <div style="display:flex; flex-direction:column; gap:4px; flex:1; justify-content:center;">
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
-                                    <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
-                                </div>
+                                ${[1, 2, 3].map((_, idx) => `
+                                    <div style="display:flex; align-items:center; gap:6px; padding:2px 0; border-bottom:${idx < 2 ? '1px dashed #eee8de' : 'none'};">
+                                        <span style="font-size:0.55rem; font-weight:700; color:#87553b; border:1px solid #ded6c9; border-radius:3px; padding:0 3px; background:#fff; min-width:20px; text-align:center;">---</span>
+                                        <div style="flex:1; border-bottom:1px solid #e2dad0; height:8px;"></div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     `;
@@ -3860,18 +3911,12 @@
                                         <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Máximo 3 tareas de soporte)</span>
                                     </div>
                                     <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            ${getMarkerHtml(14)}
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            ${getMarkerHtml(14)}
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:3px 0;">
-                                            ${getMarkerHtml(14)}
-                                            <div style="flex:1;"></div>
-                                        </div>
+                                        ${[1, 2, 3].map(num => `
+                                            <div style="display:flex; align-items:center; gap:10px; padding:3px 0; border-bottom:${num < 3 ? '1px dashed #eee8dd' : 'none'};">
+                                                ${getMarkerHtml(14)}
+                                                <div style="flex:1;"></div>
+                                            </div>
+                                        `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
@@ -3883,18 +3928,12 @@
                                         <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.70rem; color:#888;">(Constancia diaria)</span>
                                     </div>
                                     <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            ${getMarkerHtml(13)}
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            ${getMarkerHtml(13)}
-                                            <div style="flex:1;"></div>
-                                        </div>
-                                        <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
-                                            ${getMarkerHtml(13)}
-                                            <div style="flex:1;"></div>
-                                        </div>
+                                        ${[1, 2, 3].map(num => `
+                                            <div style="display:flex; align-items:center; gap:10px; padding:2px 0; border-bottom:${num < 3 ? '1px dashed #eee8de' : 'none'};">
+                                                ${getMarkerHtml(13)}
+                                                <div style="flex:1;"></div>
+                                            </div>
+                                        `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
@@ -4665,7 +4704,8 @@
                     <li><strong>Formato del libro:</strong> Libro Apaisado 8.25" × 6" (209.55 × 152.4 mm).</li>
                     <li><strong>Estructura:</strong> ${bookConfig.layoutMode === 'alterno' ? 'Intercalado Cronológico (Mes + Hábitos + Semanas/Días)' : 'Por bloques de secciones continuas'}.</li>
                     <li><strong>Modalidad seleccionada:</strong> ${isBlank ? 'Plantilla limpia en blanco (Atemporal para rellenar a mano con lápiz/pluma)' : 'Con Fechas y Calendarios Automáticos (Año ' + bookConfig.year + ')'}.</li>
-                    <li><strong>Portada:</strong> Personalizada a nombre de <em>${escapeHtml(bookConfig.owner)}</em>.</li>
+                    <li><strong>Portada:</strong> <em>«${escapeHtml(bookConfig.title)}»</em> · Propiedad de <em>${escapeHtml(bookConfig.owner)}</em>.</li>
+                    <li><strong>Archivo PDF:</strong> <code>${escapeHtml(getPdfFilename(isBlank))}</code></li>
                     <li><strong>Páginas interiores:</strong> Plantillas limpias sin líneas innecesarias listas para escritura cómoda.</li>
                 </ul>
             `;
@@ -4755,7 +4795,7 @@
             }
 
             const isBlankFinal = forceBlank || bookConfig.dateMode === 'blank';
-            const filename = isBlankFinal ? `Menos_Ruido_Libro_Completo_En_Blanco.pdf` : `Menos_Ruido_Libro_Completo_${bookConfig.year}.pdf`;
+            const filename = getPdfFilename(isBlankFinal);
 
             return { doc, filename };
         }
@@ -5036,7 +5076,7 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(6.0);
                 doc.setTextColor(150, 142, 132);
-                doc.text('Impreso en papel libre de distracciones · Pensado para escribir despacio y pensar con claridad', W / 2, 124, { align: 'center' });
+                doc.text(bookConfig.colophon || 'Herramientas en papel para pensar con claridad', W / 2, 124, { align: 'center' });
 
             // PÁGINA 2: EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO (FORMAL, SIN PIE DUPLICADO)
             } else if (page.type === 'editorial') {
@@ -5346,6 +5386,13 @@
                     doc.setDrawColor(110, 105, 100);
                     doc.setLineWidth(0.2);
                     doc.circle(M + 4.5, rowY + 1.2, 1.25, 'FD');
+                    if (i < 2) {
+                        doc.setDrawColor(235, 230, 222);
+                        doc.setLineWidth(0.15);
+                        doc.setLineDashPattern([1.0, 1.0], 0);
+                        doc.line(M + 3, rowY + prioRowH - 0.4, M + prioW - 3, rowY + prioRowH - 0.4);
+                        doc.setLineDashPattern([], 0);
+                    }
                 }
 
                 // Tarjeta 2: Lema o Foco Anual
@@ -5527,6 +5574,13 @@
                             doc.setLineWidth(0.18);
                             doc.setFillColor(255, 255, 255);
                             doc.roundedRect(x2 + 3.3, rowY, 8.5, 2.8, 0.4, 0.4, 'FD');
+                            if (k < 2) {
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.15);
+                                doc.setLineDashPattern([1.0, 1.0], 0);
+                                doc.line(x2 + 3, rowY + rowH_m - 0.4, x2 + w2 - 3, rowY + rowH_m - 0.4);
+                                doc.setLineDashPattern([], 0);
+                            }
                         }
                     } else if (hasGoals) {
                         // Tarjeta 1: Metas del Mes a ancho completo
@@ -5575,6 +5629,13 @@
                             doc.setLineWidth(0.18);
                             doc.setFillColor(255, 255, 255);
                             doc.roundedRect(M + 3.3, rowY, 8.5, 2.8, 0.4, 0.4, 'FD');
+                            if (k < 2) {
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.15);
+                                doc.setLineDashPattern([1.0, 1.0], 0);
+                                doc.line(M + 3, rowY + rowH_m - 0.4, M + gridW - 3, rowY + rowH_m - 0.4);
+                                doc.setLineDashPattern([], 0);
+                            }
                         }
                     }
                 }
@@ -6060,6 +6121,13 @@
                                     doc.rect(dotX - 1.35, hy - 2.25, 2.7, 2.7, 'S');
                                 }
                             });
+                            if (hb < 2) {
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.15);
+                                doc.setLineDashPattern([1.0, 1.0], 0);
+                                doc.line(col1X + 3, hy + 2.7, col1X + colW - 3, hy + 2.7);
+                                doc.setLineDashPattern([], 0);
+                            }
                         }
 
                         // Bloque Notas (Mitad derecha)
@@ -6104,6 +6172,13 @@
                                     doc.rect(dotX - 1.35, hy - 2.25, 2.7, 2.7, 'S');
                                 }
                             });
+                            if (hb < 2) {
+                                doc.setDrawColor(235, 230, 222);
+                                doc.setLineWidth(0.15);
+                                doc.setLineDashPattern([1.0, 1.0], 0);
+                                doc.line(col1X + 3, hy + 2.7, col1X + gridW - 3, hy + 2.7);
+                                doc.setLineDashPattern([], 0);
+                            }
                         }
                     } else if (hasNotes && !hasHabits) {
                         // Bloque Notas a ancho completo (gridW)
@@ -6355,6 +6430,14 @@
                                     doc.setLineWidth(0.32);
                                     doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
                                 }
+                                if (k < 2) {
+                                    doc.setDrawColor(235, 230, 222);
+                                    doc.setLineWidth(0.15);
+                                    doc.setLineDashPattern([1.0, 1.0], 0);
+                                    const divY = curY + 8.5 + ((k + 1) * secStep);
+                                    doc.line(col1X + 3.5, divY, col1X + colW - 3.5, divY);
+                                    doc.setLineDashPattern([], 0);
+                                }
                             }
                         } else if (item.id === 'habits') {
                             doc.setFillColor(250, 248, 245);
@@ -6387,6 +6470,14 @@
                                     doc.setDrawColor(80, 72, 65);
                                     doc.setLineWidth(0.32);
                                     doc.roundedRect(col1X + 4.8, rowY - 1.9, 3.8, 3.8, 0.6, 0.6, 'S');
+                                }
+                                if (k < 2) {
+                                    doc.setDrawColor(235, 230, 222);
+                                    doc.setLineWidth(0.15);
+                                    doc.setLineDashPattern([1.0, 1.0], 0);
+                                    const divY = curY + 8.5 + ((k + 1) * habStep);
+                                    doc.line(col1X + 3.5, divY, col1X + colW - 3.5, divY);
+                                    doc.setLineDashPattern([], 0);
                                 }
                             }
                         }
