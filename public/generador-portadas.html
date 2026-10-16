@@ -1258,7 +1258,7 @@
                         <strong>✓ Libro sincronizado:</strong> <span id="lblSyncedBookName">Libro Completo · Planificador anual (143 págs)</span>
                     </div>
                     <div class="field-group">
-                        <label for="selPlannerPreset">Modelo de Planificador:</label>
+                        <label for="selPlannerPreset"><span>Modelo de Planificador:</span> <span class="badge-readonly">FIJO</span></label>
                         <select id="selPlannerPreset" disabled>
                             <option value="anual">Planificador anual (Clásico 12 meses + 52 semanas)</option>
                             <option value="alterno">Planificador anual Intercalado (Por ciclos)</option>
@@ -1276,7 +1276,7 @@
                         <span>Portada Delantera</span>
                     </div>
                     <div class="field-group">
-                        <label for="inpKicker">Sello Superior / Colección:</label>
+                        <label for="inpKicker"><span>Sello Superior / Colección:</span> <span class="badge-readonly">NO MODIFICABLE</span></label>
                         <input type="text" id="inpKicker" value="MENOS RUIDO" readonly disabled>
                     </div>
                     <div class="field-group">
@@ -1306,7 +1306,7 @@
                         <span>Contraportada y Lomo</span>
                     </div>
                     <div class="field-group">
-                        <label for="inpSpineText">Texto del Lomo:</label>
+                        <label for="inpSpineText"><span>Texto del Lomo (Solo Tapa Blanda / Tapa Dura):</span> <span class="badge-readonly" id="badgeSpineStatus">MODIFICABLE</span></label>
                         <input type="text" id="inpSpineText" value="MENOS RUIDO  •  PLANIFICADOR ANUAL" disabled oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
@@ -1318,7 +1318,7 @@
                         <textarea id="inpBackIntro" rows="3" oninput="updateConfigFromUI()">Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.</textarea>
                     </div>
                     <div class="field-group">
-                        <label for="inpBackBullets">Lista de Contenidos:</label>
+                        <label for="inpBackBullets"><span>Lista de Contenidos:</span> <span class="badge-readonly">NO MODIFICABLE</span></label>
                         <textarea id="inpBackBullets" rows="5" readonly disabled>Calendario panorámico de 12 meses
 Planificador anual por trimestres (1 pág.)
 Planificador mensual estructurado (12 meses)
@@ -1336,7 +1336,7 @@ Sección de notas libres (10 páginas)</textarea>
                         <span>Formato y Calibración de Imprenta</span>
                     </div>
                     <div class="field-group">
-                        <label for="selTrimFormat">Formato del Cuaderno Completo:</label>
+                        <label for="selTrimFormat"><span>Formato del Cuaderno Completo:</span> <span class="badge-readonly">FIJO 8.25" × 6"</span></label>
                         <select id="selTrimFormat" disabled>
                             <option value="landscape_825_6" selected>📐 Apaisado 8.25" × 6" (209.55 × 152.4 mm)</option>
                         </select>
@@ -1344,7 +1344,7 @@ Sección de notas libres (10 páginas)</textarea>
                     </div>
 
                     <div class="field-group">
-                        <label for="inpPageCount">Número Total de Páginas Interiores:</label>
+                        <label for="inpPageCount"><span>Número Total de Páginas Interiores:</span> <span class="badge-readonly">AUTOMÁTICO DEL INTERIOR</span></label>
                         <input type="number" id="inpPageCount" value="143" readonly disabled>
                         <span style="font-size:0.7rem; color:#776f65;">Viene dado automáticamente por las secciones de tu Cuaderno Completo.</span>
                     </div>
@@ -2314,8 +2314,20 @@ Sección de notas libres (10 páginas)</textarea>
 
             // Habilitar o deshabilitar el input de "Texto del Lomo" (solo modificable cuando hay lomo)
             const spineInput = document.getElementById('inpSpineText');
+            const spineBadge = document.getElementById('badgeSpineStatus');
             if (spineInput) {
                 spineInput.disabled = (type === 'coil');
+            }
+            if (spineBadge) {
+                if (type === 'coil') {
+                    spineBadge.textContent = 'NO APLICA (ANILLAS)';
+                    spineBadge.style.background = '#e9e2d6';
+                    spineBadge.style.color = '#7a7066';
+                } else {
+                    spineBadge.textContent = 'MODIFICABLE';
+                    spineBadge.style.background = '#eaf5ee';
+                    spineBadge.style.color = '#2b7a4b';
+                }
             }
 
             const coilSelector = document.getElementById('coilViewSelector');
