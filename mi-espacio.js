@@ -693,6 +693,16 @@ function setupPostMessageListener() {
 }
 
 function unlockDevPanel() {
+  const isLocalhost = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  if (!isLocalhost && (!currentUser || !isDeveloper(currentUser))) {
+    showToast('Acceso denegado: solo disponible para jesgilcan@gmail.com');
+    if (devPinError) {
+      devPinError.textContent = 'Acceso denegado. Exclusivo para jesgilcan@gmail.com';
+      devPinError.style.display = 'block';
+    }
+    return;
+  }
+
   const pin = devPinInput.value.trim();
   if (pin === DEVELOPER_PIN) {
     try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
@@ -743,8 +753,8 @@ function renderAuthenticatedView(user) {
     userEmailDisplay.textContent = email || '';
   }
 
-  // Comprobar rol de desarrollador ESTRICTO (jesgilcan@gmail.com o PIN maestro verificado)
-  const isDev = isDeveloper(user) || (sessionStorage.getItem('mr_dev_pin_verified') === 'true');
+  // Comprobar rol de desarrollador ESTRICTO (jesgilcan@gmail.com)
+  const isDev = isDeveloper(user);
   const tabDevPane = document.getElementById('tab-dev');
   const tabFuturasPane = document.getElementById('tab-futuras');
 

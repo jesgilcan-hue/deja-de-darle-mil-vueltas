@@ -54,8 +54,42 @@ const pdfPreviewModal = document.getElementById('pdfPreviewModal');
 const editAddressModal = document.getElementById('editAddressModal');
 
 // =========================================================================
-// 1. INICIALIZACIÓN Y SEGURIDAD ESTRICTA
+// 1. BLINDAJE DE SEGURIDAD ABSOLUTO (EXPULSIÓN A 404 SI NO ES JESÚS GIL)
 // =========================================================================
+
+function kickOut(reason = 'Acceso no autorizado') {
+  console.warn('⛔ Blindaje activado:', reason);
+  try {
+    sessionStorage.removeItem('mr_admin_pin_verified');
+    sessionStorage.removeItem('mr_admin_authorized');
+    sessionStorage.removeItem('mr_dev_pin_verified');
+  } catch (e) {}
+  // Expulsión fulminante a 404: para cualquier tercero la página no existe
+  window.location.replace('/404.html');
+}
+
+function revealPage() {
+  const guardStyle = document.getElementById('mr-admin-guard-style');
+  if (guardStyle) guardStyle.remove();
+  document.documentElement.style.display = '';
+  if (document.body) document.body.style.display = '';
+}
+
+function isLocalDev() {
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+}
+
+function assertAuthorized() {
+  if (isLocalDev()) return true;
+  if (!auth.currentUser || !isDeveloper(auth.currentUser)) {
+    kickOut('Intento de acción sin autenticación de jesgilcan@gmail.com');
+    return false;
+  }
+  return true;
+}
+
+let authResolved = false;
+
 document.addEventListener('DOMContentLoaded', () => {
   setupSecurityGate();
   setupFilterEvents();
@@ -63,13 +97,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Escucha de sesión Firebase Auth
   onAuthStateChanged(auth, (user) => {
-    if (isDeveloper(user) || sessionStorage.getItem('mr_admin_authorized') === 'true') {
-      unlockBackoffice();
-    } else {
-      lockBackoffice();
-    }
+    authResolved = true;
+    handleAuthVerification(user);
   });
+
+  // Temporizador de expulsión inmediata (1200 ms):
+  // Si en 1.2 segundos no se ha certificado que es jesgilcan@gmail.com, se expulsa sin piedad a 404
+  setTimeout(() => {
+    if (!authResolved) {
+      if (isLocalDev()) {
+        revealPage();
+        unlockBackoffice();
+      } else if (auth.currentUser && isDeveloper(auth.currentUser)) {
+        handleAuthVerification(auth.currentUser);
+      } else {
+        kickOut('Tiempo de espera agotado sin sesión de jesgilcan@gmail.com');
+      }
+    }
+  }, 1200);
 });
+
+function handleAuthVerification(user) {
+  // REGLA SUPREMA: Si NO es jesgilcan@gmail.com (y no es localhost), EXPULSIÓN INMEDIATA A 404
+  if (!isLocalDev()) {
+    if (!user || !isDeveloper(user)) {
+      kickOut(user ? `Usuario ajeno bloqueado: ${getUserEmail(user)}` : 'Visitante no autenticado');
+      return;
+    }
+  }
+
+  // Identidad certificada al 100% por Google OAuth como jesgilcan@gmail.com
+  revealPage();
+
+  // Doble factor PIN (1111):
+  // Si ya lo validó en mi-espacio o en esta sesión, entra directo al centro de mando
+  const pinAlreadyVerified = (
+    sessionStorage.getItem('mr_admin_pin_verified') === 'true' ||
+    sessionStorage.getItem('mr_dev_pin_verified') === 'true'
+  );
+
+  if (pinAlreadyVerified || isLocalDev()) {
+    unlockBackoffice();
+  } else {
+    showPinGate(user);
+  }
+}
+
+function showPinGate(user) {
+  if (authGate) authGate.style.display = 'flex';
+  if (adminMain) adminMain.style.display = 'none';
+  const emailEl = document.getElementById('gateUserEmail');
+  if (emailEl) {
+    emailEl.textContent = getUserEmail(user) || 'jesgilcan@gmail.com';
+  }
+  if (gatePinInput) {
+    gatePinInput.value = '';
+    gatePinInput.focus();
+  }
+}
 
 function setupSecurityGate() {
   btnGateUnlock?.addEventListener('click', handlePinUnlock);
@@ -78,51 +163,57 @@ function setupSecurityGate() {
   });
 
   btnAdminLogout?.addEventListener('click', async () => {
-    sessionStorage.removeItem('mr_admin_authorized');
+    sessionStorage.removeItem('mr_admin_pin_verified');
+    sessionStorage.removeItem('mr_dev_pin_verified');
     try { await signOut(auth); } catch (e) {}
-    showToast('Sesión de administrador cerrada');
-    setTimeout(() => window.location.href = '/', 600);
+    window.location.replace('/');
   });
 
   btnRefreshOrders?.addEventListener('click', () => {
+    if (!assertAuthorized()) return;
     loadAllOrders();
     showToast('✓ Pedidos actualizados');
   });
 
-  btnSimulateOrder?.addEventListener('click', createDemoOrder);
+  btnSimulateOrder?.addEventListener('click', () => {
+    if (!assertAuthorized()) return;
+    createDemoOrder();
+  });
 }
 
 function handlePinUnlock() {
-  const pin = gatePinInput.value.trim();
+  // Re-certificar que el usuario sigue siendo jesgilcan@gmail.com antes de procesar el PIN
+  if (!assertAuthorized()) return;
+
+  const pin = gatePinInput ? gatePinInput.value.trim() : '';
   if (pin === DEVELOPER_PIN) {
-    sessionStorage.setItem('mr_admin_authorized', 'true');
-    gateErrorMsg.style.display = 'none';
+    sessionStorage.setItem('mr_admin_pin_verified', 'true');
+    if (gateErrorMsg) gateErrorMsg.style.display = 'none';
     unlockBackoffice();
-    showToast('✓ Backoffice desbloqueado');
+    showToast('✓ Identidad confirmada · Centro de Mando');
   } else {
-    gateErrorMsg.style.display = 'block';
-    gatePinInput.value = '';
-    gatePinInput.focus();
+    if (gateErrorMsg) gateErrorMsg.style.display = 'block';
+    if (gatePinInput) {
+      gatePinInput.value = '';
+      gatePinInput.focus();
+    }
   }
 }
 
 function unlockBackoffice() {
-  isAuthorized = true;
-  authGate.style.display = 'none';
-  adminMain.style.display = 'block';
-  loadAllOrders();
-}
+  if (!assertAuthorized()) return;
 
-function lockBackoffice() {
-  isAuthorized = false;
-  authGate.style.display = 'flex';
-  adminMain.style.display = 'none';
+  isAuthorized = true;
+  if (authGate) authGate.style.display = 'none';
+  if (adminMain) adminMain.style.display = 'block';
+  loadAllOrders();
 }
 
 // =========================================================================
 // 2. CARGA Y SINCRONIZACIÓN DE PEDIDOS (FIRESTORE + CACHÉ LOCAL)
 // =========================================================================
 async function loadAllOrders() {
+  if (!assertAuthorized()) return;
   let loaded = [];
 
   // 1. Intentar cargar desde Firestore (colección central 'orders')
@@ -481,6 +572,7 @@ function renderActionButtonsForOrder(order) {
 
 // Aprobar y enviar a Lulu
 window.approveAndSendToLulu = async function(orderId) {
+  if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
@@ -512,6 +604,7 @@ window.approveAndSendToLulu = async function(orderId) {
 
 // Simular progreso de Lulu
 window.simulateLuluProgress = function(orderId, newStatus) {
+  if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
@@ -536,6 +629,7 @@ window.simulateLuluProgress = function(orderId, newStatus) {
 
 // Pausar / Reanudar pedido
 window.togglePauseOrder = function(orderId) {
+  if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
@@ -563,6 +657,7 @@ window.toggleTimeline = function(orderId) {
 
 // Reenviar email
 window.resendCustomerEmail = function(orderId, type) {
+  if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
   const email = order.customer?.email || 'cliente';
@@ -574,6 +669,7 @@ window.resendCustomerEmail = function(orderId, type) {
 
 // Anonimización RGPD
 window.anonymizeOrderRgpd = function(orderId) {
+  if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
@@ -595,6 +691,7 @@ window.anonymizeOrderRgpd = function(orderId) {
 // 6. MODALES: PREVISUALIZACIÓN DE PDFS Y EDICIÓN DE DIRECCIÓN
 // =========================================================================
 window.openPdfPreviewModal = function(orderId) {
+  if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
@@ -633,6 +730,7 @@ window.closePdfPreviewModal = function() {
 };
 
 window.openEditAddressModal = function(orderId) {
+  if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
@@ -656,6 +754,7 @@ window.closeEditAddressModal = function() {
 };
 
 window.saveEditedAddress = function() {
+  if (!assertAuthorized()) return;
   const orderId = document.getElementById('editOrderId').value;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
@@ -680,6 +779,7 @@ window.saveEditedAddress = function() {
 // 7. SIMULADOR DE PEDIDOS DEMO / TEST (SANDBOX)
 // =========================================================================
 window.createDemoOrder = function() {
+  if (!assertAuthorized()) return;
   const demoSeed = [
     {
       name: "Clara Beltrán",

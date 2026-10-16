@@ -21,6 +21,7 @@ const EXCLUDED_FILES = new Set([
   'pre-lecturas.html',
   'presentacion-generador-planificador-semanal.html',
   'mi-espacio.html',
+  'admin-pedidos.html',
   'baja.html',
   '404.html',
   'generador-bitacora-enfoque.html'
