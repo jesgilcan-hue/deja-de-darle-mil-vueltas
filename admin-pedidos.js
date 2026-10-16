@@ -705,7 +705,10 @@ window.approveAndSendToLulu = async function(orderId) {
   // Simulación: tras 2.5 segundos, pasa a "En Imprenta"
   setTimeout(() => {
     order.status = 'printing';
+    if (!order.comms) order.comms = {};
+    order.comms.imprenta = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
     addTimelineEvent(order, 'Lulu confirma recepción y comienza encuadernación en fábrica');
+    addTimelineEvent(order, `Email de diseño aprobado enviado a ${order.customer?.email}`);
     saveOrdersState();
     sortAndRenderOrders();
   }, 2500);
@@ -723,6 +726,8 @@ window.simulateLuluProgress = function(orderId, newStatus) {
     order.luluJob.carrier = 'Correos Express';
     order.luluJob.trackingCode = tracking;
     order.luluJob.shippedAt = new Date().toISOString();
+    if (!order.comms) order.comms = {};
+    order.comms.tracking = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
     addTimelineEvent(order, `Lulu despacha el paquete con Correos Express (Tracking: ${tracking})`);
     addTimelineEvent(order, `Email automático con número de seguimiento enviado a ${order.customer?.email}`);
     showToast(`✓ Pedido #${order.orderNumber} marcado como enviado con tracking`);
@@ -989,7 +994,7 @@ window.executeSendCustomerEmail = function() {
   if (!order.comms) order.comms = {};
   const commId = 're_' + Math.random().toString(36).substring(2, 9);
   
-  if (tplKey !== 'custom' && order.comms[tplKey] !== undefined) {
+  if (tplKey !== 'custom') {
     order.comms[tplKey] = { sent: true, date: new Date().toISOString(), id: commId };
   } else {
     order.comms['manual_' + Date.now()] = { sent: true, date: new Date().toISOString(), subject, id: commId };

@@ -569,9 +569,9 @@ function testSendSimulation() {
 // Inserción de variables al pulsar en los chips
 window.insertVariable = function(varName) {
   if (!tplBody) return;
-  const start = tplBody.selectionStart;
-  const end = tplBody.selectionEnd;
-  const text = tplBody.value;
+  const start = (typeof tplBody.selectionStart === 'number') ? tplBody.selectionStart : (tplBody.value || '').length;
+  const end = (typeof tplBody.selectionEnd === 'number') ? tplBody.selectionEnd : start;
+  const text = tplBody.value || '';
   
   tplBody.value = text.substring(0, start) + varName + text.substring(end);
   tplBody.focus();
