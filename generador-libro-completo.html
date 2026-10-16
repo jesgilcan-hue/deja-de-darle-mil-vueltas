@@ -657,11 +657,11 @@
         }
         .cover-cartouche {
             width: 100%;
-            max-width: 380px;
+            max-width: 500px;
             background: #fbf9f5;
             border: 1px solid #ded6c8;
             border-radius: 6px;
-            padding: 8px 16px 8px;
+            padding: 8px 18px 8px;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -684,6 +684,7 @@
             gap: 8px;
             border-bottom: 1px solid #332e29;
             padding-bottom: 2px;
+            width: 100%;
         }
         .cover-field-label {
             font-weight: 800;
@@ -692,9 +693,11 @@
             text-transform: uppercase;
             color: #443c34;
             flex-shrink: 0;
+            white-space: nowrap;
         }
         .cover-field-input {
             flex: 1;
+            min-width: 0;
             border: none;
             background: transparent;
             font-family: var(--font-sans);
@@ -2358,12 +2361,120 @@
             }
         }
 
+        function getActivePresetKey() {
+            const activeBtn = document.querySelector('.btn-preset.active');
+            if (activeBtn) return activeBtn.getAttribute('data-preset') || 'libre';
+            for (const [key, p] of Object.entries(presets)) {
+                if (p.title === bookConfig.title) return key;
+            }
+            if (bookConfig.layoutMode === 'alterno') return 'alterno';
+            return 'libre';
+        }
+
+        // TEXTOS EDITORIALES PERSONALIZADOS PARA CADA UNO DE LOS 7 LIBROS
+        const editorialPageData = {
+            anual: {
+                title: 'La arquitectura de un año deliberado',
+                quote: '«No conquistamos el año en un solo día, sino cada jornada con serenidad y propósito.»',
+                p1: 'Un año entero por delante puede parecer un abismo de compromisos o un lienzo fértil. Vivimos abrumados por la inmediatez digital, saltando de urgencia en urgencia sin perspectiva de largo plazo. Este planificador anual nace para devolverte la visión panorámica: ver las 52 semanas y los 12 meses como un camino continuo y comprensible.',
+                p2: 'Al plasmar tus metas y hábitos en papel, transformas las intenciones abstractas en un ritmo tangible. No se trata de sobrecargar cada jornada con tareas infinitas, sino de construir un rumbo claro donde cada semana sume en la misma dirección sin perder la calma.',
+                boxTitle: 'LOS TRES PRINCIPIOS DEL PLANIFICADOR ANUAL',
+                principles: [
+                    { bold: '1. Perspectiva panorámica:', text: 'Mirar el año en su conjunto te enseña a dosificar energías y decir que no a lo intrascendente.' },
+                    { bold: '2. Hábitos como ancla:', text: 'Los grandes logros anuales no son fruto de arrebatos, sino de pequeñas rutinas diarias sostenidas en el tiempo.' },
+                    { bold: '3. Flexibilidad compasiva:', text: 'El año tendrá imprevistos; planificar en papel no busca la rigidez, sino darte un eje al que regresar.' }
+                ],
+                footer: 'Este cuaderno es tu mapa anual: un año entero vivido con menos ruido y más intención.'
+            },
+            alterno: {
+                title: 'El ritmo natural de los ciclos mensuales',
+                quote: '«Dividir el viaje en etapas alcanzables convierte la incertidumbre en progreso constante.»',
+                p1: 'Afrontar un año entero en un solo bloque a menudo genera saturación mental. El método intercalado está concebido para trabajar en ciclos naturales: cerrar un mes con su evaluación y hábitos, y abrir el siguiente con la mente despejada y las prioridades ordenadas.',
+                p2: 'Tener el mes, su rastreador de hábitos, sus semanas y sus días encadenados en una misma secuencia elimina el vaivén de hojas sueltas. Te acompaña paso a paso en el presente, permitiéndote reflexionar al final de cada ciclo antes de iniciar el siguiente.',
+                boxTitle: 'LOS TRES PRINCIPIOS DEL MÉTODO INTERCALADO',
+                principles: [
+                    { bold: '1. Secuencia cronológica continua:', text: 'Todo lo que necesitas para tu ciclo mensual vive en orden correlativo, facilitando el enfoque día a día.' },
+                    { bold: '2. Cierre y apertura deliberados:', text: 'Cada fin de mes es una pausa para agradecer, aprender y calibrar los hábitos del mes entrante.' },
+                    { bold: '3. Una mente sin saturación:', text: 'Al concentrarte solo en el ciclo activo, liberas espacio mental y reduces la ansiedad del futuro.' }
+                ],
+                footer: 'Un ciclo a la vez, una página a la vez: tu año organizado con armonía y claridad.'
+            },
+            trimestre: {
+                title: 'El poder de un trimestre de enfoque absoluto',
+                quote: '«Noventa días son suficientes para transformar un proyecto; un solo día basta para perder el foco.»',
+                p1: 'Doce meses es un horizonte demasiado lejano para sostener la urgencia y la motivación. En 90 días, en cambio, la meta es nítida, la energía se concentra y cada semana cuenta de forma visible. Este cuaderno de 90 días está diseñado para ejecutar con precisión lo verdaderamente esencial.',
+                p2: 'Aquí la regla de oro es la renuncia inteligente: elegir una única prioridad estratégica para el trimestre y desgranarla en pequeñas victorias diarias. Al eliminar el ruido de las listas interminables, tu atención converge en lo que genera impacto real.',
+                boxTitle: 'LOS TRES PRINCIPIOS DE LOS 90 DÍAS',
+                principles: [
+                    { bold: '1. Una sola prioridad clave:', text: 'El trimestre fracasa cuando intentas abarcarlo todo. Elige una meta maestra y protégela a diario.' },
+                    { bold: '2. La regla del 1% diario:', text: '90 días de avance disciplinado producen un salto compuesto extraordinario sin agotarte.' },
+                    { bold: '3. Revisión semanal honesta:', text: 'Trece semanas para medir lo aprendido, ajustar desvíos y celebrar los avances tangibles.' }
+                ],
+                footer: 'Noventa días para materializar lo importante: menos dispersión, máxima profundidad.'
+            },
+            semestre: {
+                title: 'El equilibrio entre visión semestral y presencia diaria',
+                quote: '«Seis meses proporcionan la distancia justa para ver madurar las decisiones profundas.»',
+                p1: 'Medio año es el período óptimo para proyectos que requieren tiempo de maduración, aprendizaje y consolidación de hábitos. Seis meses ofrecen la calma necesaria para no apresurarse, junto con la estructura para no postergar lo relevante.',
+                p2: 'Con 26 semanas y 180 jornadas de atención plena, este planificador semestral crea un puente entre la ambición estratégica y la serenidad cotidiana. Escribir a mano cada mañana te devuelve el mando de tu tiempo antes de que empiece la inercia del día.',
+                boxTitle: 'LOS TRES PRINCIPIOS DEL PLANIFICADOR SEMESTRAL',
+                principles: [
+                    { bold: '1. Tiempo para madurar:', text: 'Proyectos profundos, hábitos de fondo o giros personales florecen en un ciclo de 180 días.' },
+                    { bold: '2. Ritmo sostenible:', text: 'Evita el desgaste de las prisas. La constancia calmada rinde más que la urgencia caótica.' },
+                    { bold: '3. Claridad acumulada:', text: 'Documentar tus progresos a lo largo de 26 semanas deja un testimonio vivo de tu evolución.' }
+                ],
+                footer: 'Seis meses de dedicación consciente: el espacio idóneo para transformar tus ideas en realidad.'
+            },
+            semanal: {
+                title: 'La semana como unidad fundamental de vida',
+                quote: '«Quien sabe gobernar su semana, aprende a adueñarse de su destino.»',
+                p1: 'El día es demasiado breve para proyectos de calado y el mes resulta demasiado amplio para el día a día. La semana es la medida perfecta de la vida: siete días con ritmo propio, desde el arranque del lunes hasta el descanso del domingo.',
+                p2: 'Este planificador semanal te permite observar tus compromisos con perspectiva sin caer en el microdetalle asfixiante. Distribuir las tareas a lo largo de los días te enseña a ser realista con tu energía, protegiendo bloques de silencio y tiempo de calidad.',
+                boxTitle: 'LOS TRES PRINCIPIOS DE LA PLANIFICACIÓN SEMANAL',
+                principles: [
+                    { bold: '1. Carga realista:', text: 'Si un día está lleno, no cargues el siguiente; aprende a espaciar tus compromisos con cordura.' },
+                    { bold: '2. Hábitos transversales:', text: 'Seguir tus hábitos día a día durante la semana te mantiene conectado con tu bienestar integral.' },
+                    { bold: '3. El domingo de perspectiva:', text: 'Mirar la semana entrante con lápiz en mano disuelve la ansiedad de los lunes.' }
+                ],
+                footer: 'Cincuenta y dos semanas deliberadas: sencillez, espacio libre y serenidad mental.'
+            },
+            bitacora30: {
+                title: 'La verdad de un solo día vivido con presencia',
+                quote: '«La vida no sucede en los planes futuros, sino en el espacio exacto de hoy.»',
+                p1: 'Cuando la mente se siente saturada por exceso de ruido digital, lo más sabio es reducir la escala. Este cuaderno diario te invita a prescindir de la ansiedad por el largo plazo y enfocar toda tu presencia en las horas que tienes por delante hoy.',
+                p2: 'Cada página diaria es un ritual de inicio y de cierre: definir la tarea que hará que el día valga la pena, gestionar las secundarias con sobriedad y dedicar un espacio al final a la introspección y la gratitud sincera.',
+                boxTitle: 'LOS TRES PRINCIPIOS DEL ENFOQUE DIARIO',
+                principles: [
+                    { bold: '1. La tarea innegociable:', text: 'Identifica la acción nuclear del día. Todo lo demás es accesorio o postergable.' },
+                    { bold: '2. Descarga sobre el papel:', text: 'Vaciar las preocupaciones de la mente a la hoja reduce el estrés y agiliza tus decisiones.' },
+                    { bold: '3. Reflexión de cierre:', text: 'Terminar la jornada anotando qué funcionó y qué soltar te permite descansar en paz.' }
+                ],
+                footer: 'Un día a la vez: recuperar la soberanía de tu tiempo desde la primera hora de la mañana.'
+            },
+            libre: {
+                title: 'Escribir a mano para pensar con calma',
+                quote: '«El silencio no es la ausencia de sonido, sino la presencia de claridad.»',
+                p1: 'Vivimos inmersos en una sobreestimulación permanente. Avisos constantes, listas infinitas y una velocidad artificial que fragmenta nuestra atención y agota la serenidad. En Menos Ruido creamos papelería analógica para quienes necesitan detener la inercia, tomar distancia y reconectar con su propio criterio.',
+                p2: 'El papel impone un ritmo humano. Al escribir a mano en un cuaderno diseñado a tu medida, no puedes abrir otra pestaña ni acelerar el tiempo; la fricción natural del lápiz sobre la página te obliga a ordenar las ideas, jerarquizar lo valioso y soltar lo superfluo.',
+                boxTitle: 'LOS TRES PRINCIPIOS DE MENOS RUIDO',
+                principles: [
+                    { bold: '1. Un solo foco cada vez:', text: 'Si persigues más de tres prioridades a la vez, no tienes ninguna. El foco verdadero exige renuncia consciente.' },
+                    { bold: '2. La fricción analógica:', text: 'Escribir a mano frena la impulsividad y convierte el pensamiento difuso en compromiso visible.' },
+                    { bold: '3. Constancia sobre velocidad:', text: 'Un pequeño paso deliberado cada día construye una vida con sentido y serenidad.' }
+                ],
+                footer: 'Este cuaderno es tu territorio soberano: menos ruido exterior, más presencia interior.'
+            }
+        };
+
+        function getEditorialPageData(presetKey) {
+            return editorialPageData[presetKey] || editorialPageData.libre;
+        }
+
         // GENERACIÓN DINÁMICA DEL NOMBRE DE ARCHIVO PDF
         function getPdfFilename(forceBlank = false) {
             const isBlankFinal = forceBlank || bookConfig.dateMode === 'blank';
             const dateSuffix = isBlankFinal ? 'Atemporal' : String(bookConfig.year || 2026);
-            const activeBtn = document.querySelector('.btn-preset.active');
-            const presetKey = activeBtn ? activeBtn.getAttribute('data-preset') : 'libre';
+            const presetKey = getActivePresetKey();
             const base = (presets[presetKey] && presets[presetKey].pdfBase) 
                 ? presets[presetKey].pdfBase 
                 : 'Menos_Ruido_Planificador_Personalizado';
@@ -2581,7 +2692,7 @@
                     generatedPageList.push({
                         type: 'editorial',
                         sectionId: 'editorial',
-                        sectionName: 'Editorial Menos Ruido · Manifiesto',
+                        sectionName: 'Editorial Menos Ruido',
                         pageIndexInSection: 0,
                         totalPagesInSection: 1,
                         design: {}
@@ -2783,7 +2894,7 @@
                         generatedPageList.push({
                             type: 'editorial',
                             sectionId: 'editorial',
-                            sectionName: 'Editorial Menos Ruido · Manifiesto',
+                            sectionName: 'Editorial Menos Ruido',
                             pageIndexInSection: 0,
                             totalPagesInSection: 1,
                             design: {}
@@ -3335,11 +3446,11 @@
                                 <div class="cover-cartouche-title">❖ &nbsp; EX LIBRIS &nbsp; ❖</div>
                                 <div class="cover-field-line">
                                     <span class="cover-field-label">ESTE CUADERNO PERTENECE A:</span>
-                                    <input type="text" class="cover-field-input" maxlength="35" value="${bookConfig.owner}" oninput="bookConfig.owner = this.value; saveCompleteBookConfigLocally();">
+                                    <input type="text" class="cover-field-input" maxlength="65" value="${escapeHtml(bookConfig.owner || '')}" oninput="bookConfig.owner = this.value; saveCompleteBookConfigLocally();" placeholder="Nombre y dos apellidos">
                                 </div>
                                 <div class="cover-field-line">
                                     <span class="cover-field-label">PERÍODO / AÑO:</span>
-                                    <input type="text" class="cover-field-input" maxlength="30" value="${isBlank ? 'ATEMPORAL (INICIO LIBRE)' : 'AÑO ' + year}">
+                                    <input type="text" class="cover-field-input" maxlength="35" value="${isBlank ? 'ATEMPORAL (INICIO LIBRE)' : 'AÑO ' + year}">
                                 </div>
                             </div>
 
@@ -3365,28 +3476,28 @@
                 `;
             }
 
-            // PÁGINA 2: EDITORIAL MENOS RUIDO · MANIFIESTO FORMAL (SIN PIE DOBLE)
+            // PÁGINA 2: EDITORIAL MENOS RUIDO (PÁGINA EDITORIAL ADAPTADA AL LIBRO)
             else if (page.type === 'editorial') {
+                const edKey = getActivePresetKey();
+                const edData = getEditorialPageData(edKey);
                 pageCanvas.innerHTML = `
                     <div style="height:100%; display:flex; flex-direction:column; justify-content:space-between; padding: 12px 26px;">
                         <div>
-                            <span class="page-header-kicker" style="color:var(--accent); font-weight:800; font-size:0.75rem; letter-spacing:1px; display:block; margin-bottom:6px;">EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO</span>
-                            <h2 style="font-family:'Times New Roman', serif; font-size:1.6rem; color:#222; margin-bottom:4px; font-weight:700;">Escribir a mano para pensar con calma</h2>
-                            <div style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.86rem; color:#7a6d5f; margin-bottom:12px;">«El silencio no es la ausencia de sonido, sino la presencia de claridad.»</div>
+                            <span class="page-header-kicker" style="color:var(--accent); font-weight:800; font-size:0.75rem; letter-spacing:1px; display:block; margin-bottom:6px;">EDITORIAL MENOS RUIDO</span>
+                            <h2 style="font-family:'Times New Roman', serif; font-size:1.6rem; color:#222; margin-bottom:4px; font-weight:700;">${escapeHtml(edData.title)}</h2>
+                            <div style="font-family:'Times New Roman', serif; font-style:italic; font-size:0.86rem; color:#7a6d5f; margin-bottom:12px;">${escapeHtml(edData.quote)}</div>
 
-                            <p style="font-size:0.84rem; line-height:1.55; color:#4a4239; margin-bottom:8px;">Vivimos inmersos en una sobreestimulación permanente. Avisos constantes, listas infinitas y una velocidad artificial que fragmenta nuestra atención y agota la serenidad. En Menos Ruido creamos papelería analógica para quienes necesitan detener la inercia, tomar distancia y reconectar con su propio criterio.</p>
-                            <p style="font-size:0.84rem; line-height:1.55; color:#4a4239; margin-bottom:12px;">El papel impone un ritmo humano. Al escribir a mano, no puedes abrir otra pestaña ni acelerar el tiempo; la fricción natural del lápiz o la tinta sobre la página te obliga a ordenar las ideas, jerarquizar lo valioso y soltar lo superfluo antes de que colonice tu día.</p>
+                            <p style="font-size:0.84rem; line-height:1.55; color:#4a4239; margin-bottom:8px;">${escapeHtml(edData.p1)}</p>
+                            <p style="font-size:0.84rem; line-height:1.55; color:#4a4239; margin-bottom:12px;">${escapeHtml(edData.p2)}</p>
                             
                             <div style="background:#faf8f5; border:1px solid #e2dacd; border-radius:8px; padding:10px 16px; margin-bottom:12px;">
-                                <div style="font-size:0.70rem; font-weight:800; text-transform:uppercase; color:var(--accent); margin-bottom:6px; letter-spacing:0.5px;">LOS TRES PRINCIPIOS DE MENOS RUIDO</div>
+                                <div style="font-size:0.70rem; font-weight:800; text-transform:uppercase; color:var(--accent); margin-bottom:6px; letter-spacing:0.5px;">${escapeHtml(edData.boxTitle)}</div>
                                 <div style="font-size:0.78rem; color:#3a3229; line-height:1.45; display:flex; flex-direction:column; gap:5px;">
-                                    <div><strong>1. Un solo foco cada vez:</strong> Si persigues más de tres prioridades a la vez, no tienes ninguna. El foco verdadero exige renuncia consciente.</div>
-                                    <div><strong>2. La fricción analógica:</strong> Escribir a mano frena la impulsividad y convierte el pensamiento difuso en compromiso visible.</div>
-                                    <div><strong>3. Constancia sobre velocidad:</strong> Un pequeño paso deliberado cada día construye una vida con sentido y serenidad.</div>
+                                    ${edData.principles.map(p => `<div><strong>${escapeHtml(p.bold)}</strong> ${escapeHtml(p.text)}</div>`).join('')}
                                 </div>
                             </div>
 
-                            <div style="font-size:0.80rem; color:#5c5246; font-style:italic; text-align:center;">Este cuaderno es tu territorio soberano: menos ruido exterior, más presencia interior.</div>
+                            <div style="font-size:0.80rem; color:#5c5246; font-style:italic; text-align:center;">${escapeHtml(edData.footer)}</div>
                         </div>
 
                         <div class="sheet-footer">
@@ -4155,7 +4266,7 @@
                 generatedPageList.forEach((pg, idx) => {
                     const pageNum = idx + 1;
                     if (pg.type === 'cover' || pg.type === 'editorial' || pg.type === 'index') {
-                        if (!curOpening) curOpening = { label: 'Apertura & Manifiesto Editorial', startPage: pageNum, endPage: pageNum };
+                        if (!curOpening) curOpening = { label: 'Apertura Editorial', startPage: pageNum, endPage: pageNum };
                         else curOpening.endPage = pageNum;
                     } else if (pg.type === 'calendar') {
                         if (!curCal) curCal = { label: `Calendario Anual (${pg.calendarYear || bookConfig.year})`, startPage: pageNum, endPage: pageNum };
@@ -4228,7 +4339,7 @@
 
                     if (pg.type === 'cover' || pg.type === 'editorial' || pg.type === 'index') {
                         typeKey = 'opening';
-                        label = 'Apertura & Manifiesto Editorial';
+                        label = 'Apertura Editorial';
                     } else if (pg.type === 'calendar') {
                         typeKey = 'calendar';
                         label = `Calendarios Anuales (${bookConfig.year})`;
@@ -4625,7 +4736,7 @@
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             let label = p.sectionName;
             if (p.type === 'cover') label = 'Portada Interior & Dedicatoria';
-            else if (p.type === 'editorial') label = 'Editorial Menos Ruido · Manifiesto';
+            else if (p.type === 'editorial') label = 'Editorial Menos Ruido';
             else if (p.type === 'index') label = 'Índice de Contenidos del Libro';
             else if (p.type === 'gratitude') label = 'Cierre & Gratitud Editorial';
             else if (p.type === 'calendar') label = `Calendario Anual (${p.calendarYear || bookConfig.year})`;
@@ -4756,7 +4867,56 @@
                 emailInput.value = savedEmail;
             }
             const feedback = document.getElementById('modal-email-feedback');
-            if (feedback) feedback.style.display = 'none';
+            const emailBtn = document.getElementById('btn-modal-send-email');
+            const emailBlankCheck = document.getElementById('modal-email-is-blank');
+
+            // CONTROL ESTRICTO: Desactivar envío por correo si pesa 5 MB o más
+            const estMbNum = parseFloat(estMb);
+            const isOverEmailLimit = estMbNum >= 5.0 || total >= 170;
+
+            if (isOverEmailLimit) {
+                if (emailInput) {
+                    emailInput.disabled = true;
+                    emailInput.style.opacity = '0.6';
+                    emailInput.style.cursor = 'not-allowed';
+                    emailInput.placeholder = 'Envío por email desactivado (+5 MB)';
+                }
+                if (emailBtn) {
+                    emailBtn.disabled = true;
+                    emailBtn.style.opacity = '0.5';
+                    emailBtn.style.cursor = 'not-allowed';
+                    emailBtn.title = 'Desactivado porque el cuaderno supera los 5 MB';
+                }
+                if (emailBlankCheck) {
+                    emailBlankCheck.disabled = true;
+                }
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fffbeb';
+                    feedback.style.color = '#92400e';
+                    feedback.style.border = '1px solid #fde68a';
+                    feedback.innerHTML = `⚠️ <strong>Envío por email desactivado (+5 MB):</strong> Este cuaderno contiene ${total} páginas (~${estMb} MB estimados). El límite de los servidores de correo impide adjuntar archivos de 5 MB o más. Por favor, <strong>descárgalo directamente a tu dispositivo</strong> con el botón superior.`;
+                }
+            } else {
+                if (emailInput) {
+                    emailInput.disabled = false;
+                    emailInput.style.opacity = '1';
+                    emailInput.style.cursor = 'text';
+                    emailInput.placeholder = 'tu-correo@ejemplo.com';
+                }
+                if (emailBtn) {
+                    emailBtn.disabled = false;
+                    emailBtn.style.opacity = '1';
+                    emailBtn.style.cursor = 'pointer';
+                    emailBtn.title = '';
+                }
+                if (emailBlankCheck) {
+                    emailBlankCheck.disabled = false;
+                }
+                if (feedback) {
+                    feedback.style.display = 'none';
+                }
+            }
 
             document.getElementById('compileModal').classList.add('active');
         }
@@ -4845,6 +5005,20 @@
             const emailInput = document.getElementById('modal-email-input');
             const feedback = document.getElementById('modal-email-feedback');
             const btn = document.getElementById('btn-modal-send-email');
+
+            // Guardia estricta: 5 MB
+            const total = generatedPageList.length;
+            const estMbNum = (total * 28) / 1024;
+            if (estMbNum >= 5.0 || total >= 170) {
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fffbeb';
+                    feedback.style.color = '#92400e';
+                    feedback.style.border = '1px solid #fde68a';
+                    feedback.innerHTML = `⚠️ <strong>Archivo superior a 5 MB:</strong> Este cuaderno contiene ${total} páginas y supera el límite de 5 MB de los servidores de correo. Por favor, descárgalo directamente con el botón superior.`;
+                }
+                return;
+            }
             
             const email = (emailInput ? emailInput.value : '').trim();
             if (!email || !email.includes('@') || !email.includes('.')) {
@@ -4882,9 +5056,10 @@
                 if (btn) btn.textContent = 'Enviando...';
 
                 const pdfBase64 = res.doc.output('datauristring');
+                const pdfSizeBytes = Math.round((pdfBase64.length * 3) / 4);
 
-                if (pdfBase64.length > 5.8 * 1024 * 1024) {
-                    throw new Error('El PDF generado supera el límite permitido para envío por correo (~4.5MB). Puedes descargarlo directamente en tu ordenador con el botón de descarga.');
+                if (pdfSizeBytes >= 5.0 * 1024 * 1024) {
+                    throw new Error('El PDF generado pesa ' + (pdfSizeBytes / (1024 * 1024)).toFixed(1) + ' MB y supera el límite de 5 MB para envío por correo. Por favor, descárgalo directamente en tu dispositivo con el botón superior.');
                 }
 
                 const response = await fetch('/api/send-pdf', {
@@ -5021,8 +5196,8 @@
                 doc.setLineWidth(0.25);
                 doc.line((W / 2) + 4, div2Y, divX + divW, div2Y);
 
-                // Cartela Ex Libris
-                const cartW = 104;
+                // Cartela Ex Libris (Ampliada para nombres largos con dos apellidos)
+                const cartW = 140;
                 const cartH = 26;
                 const cartX = (W - cartW) / 2;
                 const cartY = 54;
@@ -5036,25 +5211,25 @@
                 doc.setFontSize(7);
                 doc.setTextColor(140, 95, 65);
                 doc.text('EX LIBRIS', W / 2, cartY + 5.5, { align: 'center' });
-                drawPdfDiamond(doc, (W / 2) - 15, cartY + 4.8, 0.8, [140, 95, 65]);
-                drawPdfDiamond(doc, (W / 2) + 15, cartY + 4.8, 0.8, [140, 95, 65]);
+                drawPdfDiamond(doc, (W / 2) - 16, cartY + 4.8, 0.8, [140, 95, 65]);
+                drawPdfDiamond(doc, (W / 2) + 16, cartY + 4.8, 0.8, [140, 95, 65]);
 
-                // Campo Propietario
+                // Campo Propietario (Amplio para caber nombre y dos apellidos)
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.5);
                 doc.setTextColor(80, 72, 64);
                 doc.text('ESTE CUADERNO PERTENECE A:', cartX + 6, cartY + 13.5);
 
-                const ownerVal = (bookConfig.owner || '').substring(0, 35);
+                const ownerVal = (bookConfig.owner || '').substring(0, 65);
                 if (!isBlank && ownerVal) {
                     doc.setFont('times', 'italic');
-                    doc.setFontSize(9.0);
+                    doc.setFontSize(ownerVal.length > 32 ? 7.6 : 8.8);
                     doc.setTextColor(20, 17, 15);
-                    doc.text(ownerVal, cartX + 52, cartY + 13);
+                    doc.text(ownerVal, cartX + 53, cartY + 13);
                 }
                 doc.setDrawColor(180, 170, 160);
                 doc.setLineWidth(0.2);
-                doc.line(cartX + 50, cartY + 14.5, cartX + cartW - 6, cartY + 14.5);
+                doc.line(cartX + 52, cartY + 14.5, cartX + cartW - 6, cartY + 14.5);
 
                 // Campo Período
                 doc.setFont('helvetica', 'bold');
@@ -5066,10 +5241,10 @@
                 doc.setFontSize(8.5);
                 doc.setTextColor(50, 45, 40);
                 const periodText = isBlank ? 'Atemporal (Inicio libre)' : `Año ${year}`;
-                doc.text(periodText, cartX + 52, cartY + 20.5);
+                doc.text(periodText, cartX + 53, cartY + 20.5);
                 doc.setDrawColor(180, 170, 160);
                 doc.setLineWidth(0.2);
-                doc.line(cartX + 50, cartY + 22, cartX + cartW - 6, cartY + 22);
+                doc.line(cartX + 52, cartY + 22, cartX + cartW - 6, cartY + 22);
 
                 // Caja dedicatoria
                 const dedW = 104;
@@ -5095,35 +5270,36 @@
                 doc.setTextColor(150, 142, 132);
                 doc.text(bookConfig.colophon || 'Herramientas en papel para pensar con claridad', W / 2, 124, { align: 'center' });
 
-            // PÁGINA 2: EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO (FORMAL, SIN PIE DUPLICADO)
+            // PÁGINA 2: EDITORIAL MENOS RUIDO (PÁGINA EDITORIAL ADAPTADA A LOS 7 LIBROS)
             } else if (page.type === 'editorial') {
+                const edKey = getActivePresetKey();
+                const edData = getEditorialPageData(edKey);
+
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7.0);
                 doc.setTextColor(135, 85, 59);
-                doc.text('EDITORIAL MENOS RUIDO · MANIFIESTO ANALÓGICO', M + 5, M + 9);
+                doc.text('EDITORIAL MENOS RUIDO', M + 5, M + 9);
 
                 doc.setFont('times', 'bold');
                 doc.setFontSize(17.5);
                 doc.setTextColor(25, 22, 19);
-                doc.text('Escribir a mano para pensar con calma', M + 5, M + 18);
+                doc.text(edData.title, M + 5, M + 18);
 
                 doc.setFont('times', 'italic');
                 doc.setFontSize(8.8);
                 doc.setTextColor(110, 100, 90);
-                doc.text('«El silencio no es la ausencia de sonido, sino la presencia de claridad.»', M + 5, M + 24);
+                doc.text(edData.quote, M + 5, M + 24);
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8.5);
                 doc.setTextColor(60, 52, 45);
-                const p1 = 'Vivimos inmersos en una sobreestimulación permanente. Avisos constantes, listas infinitas y una velocidad artificial que fragmenta nuestra atención y agota la serenidad. En Menos Ruido creamos papelería analógica para quienes necesitan detener la inercia, tomar distancia y reconectar con su propio criterio.';
-                const p1Lines = doc.splitTextToSize(p1, W - (M * 2) - 10);
+                const p1Lines = doc.splitTextToSize(edData.p1, W - (M * 2) - 10);
                 doc.text(p1Lines, M + 5, M + 32);
 
-                const p2 = 'El papel impone un ritmo humano. Al escribir a mano, no puedes abrir otra pestaña ni acelerar el tiempo; la fricción natural del lápiz o la tinta sobre la página te obliga a ordenar las ideas, jerarquizar lo valioso y soltar lo superfluo antes de que colonice tu día.';
-                const p2Lines = doc.splitTextToSize(p2, W - (M * 2) - 10);
+                const p2Lines = doc.splitTextToSize(edData.p2, W - (M * 2) - 10);
                 doc.text(p2Lines, M + 5, M + 46);
 
-                // Recuadro de los 3 principios
+                // Recuadro de principios del método específico
                 const boxY = M + 61;
                 const boxW = W - (M * 2) - 10;
                 doc.setFillColor(250, 248, 244);
@@ -5134,29 +5310,26 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.8);
                 doc.setTextColor(135, 85, 59);
-                doc.text('LOS TRES PRINCIPIOS DE MENOS RUIDO', M + 10, boxY + 6.5);
+                doc.text(edData.boxTitle, M + 10, boxY + 6.5);
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.6);
-                doc.setTextColor(40, 35, 30);
-                doc.text('1. Un solo foco cada vez:', M + 10, boxY + 14);
-                doc.setFont('helvetica', 'normal');
-                doc.text('Si persigues más de tres prioridades a la vez, no tienes ninguna. El foco verdadero exige renuncia.', M + 47, boxY + 14);
+                let princY = boxY + 14;
+                edData.principles.forEach((princ) => {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.6);
+                    doc.setTextColor(40, 35, 30);
+                    doc.text(princ.bold, M + 10, princY);
 
-                doc.setFont('helvetica', 'bold');
-                doc.text('2. La fricción analógica:', M + 10, boxY + 22.5);
-                doc.setFont('helvetica', 'normal');
-                doc.text('Escribir a mano frena la impulsividad y convierte el pensamiento difuso en compromiso visible.', M + 46, boxY + 22.5);
-
-                doc.setFont('helvetica', 'bold');
-                doc.text('3. Constancia sobre velocidad:', M + 10, boxY + 31);
-                doc.setFont('helvetica', 'normal');
-                doc.text('Un pequeño paso deliberado cada día construye una vida con sentido y serenidad.', M + 52, boxY + 31);
+                    const boldWidth = doc.getTextWidth(princ.bold);
+                    doc.setFont('helvetica', 'normal');
+                    const textLines = doc.splitTextToSize(princ.text, boxW - boldWidth - 14);
+                    doc.text(textLines, M + 10 + boldWidth + 2, princY);
+                    princY += 8.5;
+                });
 
                 doc.setFont('times', 'italic');
                 doc.setFontSize(8.2);
                 doc.setTextColor(100, 90, 80);
-                doc.text('Este cuaderno es tu territorio soberano: menos ruido exterior, más presencia interior.', W / 2, boxY + 47, { align: 'center' });
+                doc.text(edData.footer, W / 2, boxY + 47, { align: 'center' });
 
             // PÁGINA 3: ÍNDICE DE CONTENIDOS DEL CUADERNO (SUMARIO RESUMIDO SIN DESBORDE)
             } else if (page.type === 'index') {
