@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDownloadModal();
   setupPostMessageListener();
 
-  // 1. Carga instantánea (0 ms) si hay datos en caché local
+  // 1. Carga instantánea (0 ms) si hay datos en caché local o localStorage
   try {
     const cachedRaw = localStorage.getItem('mr_cached_user');
     if (cachedRaw) {
@@ -128,10 +128,25 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCachedView(cached);
     }
     const cachedDesignsRaw = localStorage.getItem('mr_cached_designs');
+    const localDesignsRaw = localStorage.getItem('mr_local_designs');
+    let mergedLocal = [];
+    if (localDesignsRaw) {
+      try { mergedLocal = JSON.parse(localDesignsRaw); } catch (e) {}
+    }
     if (cachedDesignsRaw) {
-      allDesigns = JSON.parse(cachedDesignsRaw);
+      try {
+        const cachedList = JSON.parse(cachedDesignsRaw);
+        cachedList.forEach(c => {
+          if (!mergedLocal.some(l => l.id === c.id)) mergedLocal.push(c);
+        });
+      } catch (e) {}
+    }
+    if (mergedLocal.length > 0) {
+      allDesigns = mergedLocal;
       updateDesignCounts();
       renderDesignsGrid();
+      if (unauthContainer) unauthContainer.style.display = 'none';
+      if (authContainer) authContainer.style.display = 'block';
     }
     const cachedExtraRaw = localStorage.getItem('mr_user_extra_data');
     if (cachedExtraRaw) {
@@ -160,13 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
       await Promise.all([loadUserData(user), loadUserDesigns(user)]);
     } else {
       try { localStorage.removeItem('mr_cached_user'); } catch (e) {}
-      renderUnauthenticatedView();
-      // Si entra directamente a Mi Espacio sin sesión iniciada, abrir el modal de acceso para facilitar el inicio
-      setTimeout(() => {
-        if (!auth.currentUser) {
-          openAuthModal();
-        }
-      }, 350);
+      // Si el usuario no ha iniciado sesión pero tiene diseños guardados localmente, mostrarlos
+      if (allDesigns.length > 0) {
+        renderGuestLocalView();
+      } else {
+        renderUnauthenticatedView();
+      }
     }
   });
 });
@@ -670,8 +684,35 @@ function renderAuthenticatedView(user) {
 function renderUnauthenticatedView() {
   const cacheStyle = document.getElementById('cache-style');
   if (cacheStyle) cacheStyle.remove();
-  if (unauthContainer) unauthContainer.style.display = 'block';
-  if (authContainer) authContainer.style.display = 'none';
+  if (allDesigns.length > 0) {
+    renderGuestLocalView();
+  } else {
+    if (unauthContainer) unauthContainer.style.display = 'block';
+    if (authContainer) authContainer.style.display = 'none';
+  }
+}
+
+function renderGuestLocalView() {
+  const cacheStyle = document.getElementById('cache-style');
+  if (cacheStyle) cacheStyle.remove();
+  if (unauthContainer) unauthContainer.style.display = 'none';
+  if (authContainer) authContainer.style.display = 'block';
+
+  if (userNameDisplay) {
+    const titleText = userNameDisplay.querySelector('.user-name-text');
+    if (titleText) titleText.textContent = 'Mi Espacio (Local)';
+    else if (userNameDisplay.firstChild) userNameDisplay.firstChild.textContent = 'Mi Espacio (Local) ';
+  }
+  if (userEmailDisplay) {
+    userEmailDisplay.textContent = 'Diseños guardados en este navegador';
+  }
+  if (userRoleBadge) userRoleBadge.style.setProperty('display', 'none', 'important');
+  if (tabBtnDev) tabBtnDev.style.setProperty('display', 'none', 'important');
+  if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
+
+  activateTab('tab-disenos');
+  updateDesignCounts();
+  renderDesignsGrid();
 }
 
 async function loadUserData(user) {
@@ -779,6 +820,26 @@ async function loadUserDesigns(user) {
     }
   } catch (e) {}
 
+  // Sincronizar hacia Firestore cualquier diseño local que no esté aún en la nube
+  for (const item of localList) {
+    if (item && item.id && !firestoreList.some(f => f.id === item.id)) {
+      try {
+        const docRef = doc(db, 'users', user.uid, 'designs', item.id);
+        await setDoc(docRef, {
+          name: item.name || 'Mi Planificador',
+          type: item.type || 'Planificador',
+          summary: item.summary || '',
+          editUrl: item.editUrl || '',
+          data: item.data || {},
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        firestoreList.push(item);
+      } catch (syncErr) {
+        console.warn('Aviso sincronizando diseño local a Firestore:', syncErr);
+      }
+    }
+  }
+
   // Combinar Firestore y Local sin duplicados
   const mergedMap = new Map();
   localList.forEach(item => {
@@ -878,6 +939,23 @@ function renderDesignsGrid() {
   designsGrid.style.display = 'grid';
   designsGrid.innerHTML = '';
 
+  if (!currentUser) {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'grid-column: 1 / -1; background: #fbf8f3; border: 1px solid #e8decb; border-radius: 10px; padding: 14px 18px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;';
+    banner.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.25rem;">💾</span>
+        <span style="font-size: 0.88rem; color: #55483d;">
+          <strong>Tus diseños están guardados en este navegador.</strong> Inicia sesión o crea tu cuenta gratuita para sincronizarlos en la nube y acceder en todos tus dispositivos.
+        </span>
+      </div>
+      <button type="button" class="btn-primary" id="btn-login-local-sync" style="font-size: 0.82rem; padding: 6px 14px; cursor: pointer;">Acceder / Sincronizar</button>
+    `;
+    const btnSync = banner.querySelector('#btn-login-local-sync');
+    btnSync?.addEventListener('click', openAuthModal);
+    designsGrid.appendChild(banner);
+  }
+
   filtered.forEach(item => {
     const card = document.createElement('div');
     card.className = 'design-card';
@@ -950,47 +1028,87 @@ function renderDesignsGrid() {
       const currentTitle = item.name || 'Mi Planificador';
       const newTitle = prompt('Introduce el nuevo nombre para esta plantilla:', currentTitle);
       if (newTitle && newTitle.trim() && newTitle.trim() !== currentTitle) {
+        const finalTitle = newTitle.trim();
+        item.name = finalTitle;
+        const titleEl = document.getElementById(`title-display-${item.id}`);
+        if (titleEl) titleEl.textContent = finalTitle;
+
+        // Actualizar copia local en localStorage
         try {
-          const docRef = doc(db, 'users', currentUser.uid, 'designs', item.id);
-          await updateDoc(docRef, { name: newTitle.trim(), updatedAt: serverTimestamp() });
-          item.name = newTitle.trim();
-          document.getElementById(`title-display-${item.id}`).textContent = newTitle.trim();
-          showToast('✓ Plantilla renombrada');
-        } catch (err) {
-          console.error('Error al renombrar:', err);
-          showToast('No se pudo renombrar la plantilla');
+          let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+          const idx = localDesigns.findIndex(d => d.id === item.id);
+          if (idx >= 0) {
+            localDesigns[idx].name = finalTitle;
+            localDesigns[idx].updatedAt = { seconds: Math.floor(Date.now() / 1000) };
+            localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+            localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+          }
+        } catch (e) {}
+
+        if (currentUser) {
+          try {
+            const docRef = doc(db, 'users', currentUser.uid, 'designs', item.id);
+            await updateDoc(docRef, { name: finalTitle, updatedAt: serverTimestamp() });
+          } catch (err) {
+            console.warn('Aviso al renombrar en Firestore:', err);
+          }
         }
+        showToast('✓ Plantilla renombrada');
       }
     });
 
     // 2. Duplicar plantilla
     const duplicateBtn = card.querySelector('.btn-action-duplicate');
     duplicateBtn?.addEventListener('click', async () => {
-      if (!currentUser) return;
       duplicateBtn.disabled = true;
       duplicateBtn.textContent = 'Copiando...';
+      const copyName = `Copia de ${item.name || 'Planificador'}`;
+      const newId = 'des_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+      const nowSecs = Math.floor(Date.now() / 1000);
+
+      const newItem = {
+        id: newId,
+        name: copyName,
+        type: item.type || 'Planificador',
+        summary: item.summary || '',
+        editUrl: item.editUrl || rawTargetUrl,
+        data: item.data || {},
+        createdAt: { seconds: nowSecs },
+        updatedAt: { seconds: nowSecs }
+      };
 
       try {
-        const designsRef = collection(db, 'users', currentUser.uid, 'designs');
-        const copyName = `Copia de ${item.name || 'Planificador'}`;
-        await addDoc(designsRef, {
-          name: copyName,
-          type: item.type || 'Planificador',
-          summary: item.summary || '',
-          editUrl: item.editUrl || rawTargetUrl,
-          data: item.data || {},
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
+        let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+        localDesigns.unshift(newItem);
+        localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+        localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+      } catch (e) {}
 
-        showToast(`✓ Duplicado como "${copyName}"`);
-        await loadUserDesigns(currentUser);
-      } catch (err) {
-        console.error('Error al duplicar diseño:', err);
-        showToast('Error al duplicar la plantilla');
-        duplicateBtn.disabled = false;
-        duplicateBtn.textContent = '📋 Duplicar';
+      if (currentUser) {
+        try {
+          const docRef = doc(db, 'users', currentUser.uid, 'designs', newId);
+          await setDoc(docRef, {
+            name: copyName,
+            type: item.type || 'Planificador',
+            summary: item.summary || '',
+            editUrl: item.editUrl || rawTargetUrl,
+            data: item.data || {},
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          await loadUserDesigns(currentUser);
+        } catch (err) {
+          console.warn('Aviso al duplicar en Firestore:', err);
+          allDesigns.unshift(newItem);
+          updateDesignCounts();
+          renderDesignsGrid();
+        }
+      } else {
+        allDesigns.unshift(newItem);
+        updateDesignCounts();
+        renderDesignsGrid();
       }
+      showToast(`✓ Duplicado como "${copyName}"`);
     });
 
     // 3. Eliminar plantilla
@@ -1012,14 +1130,30 @@ function renderDesignsGrid() {
       } else {
         deleteBtn.disabled = true;
         deleteBtn.textContent = 'Borrando...';
+
         try {
-          await deleteDoc(doc(db, 'users', currentUser.uid, 'designs', item.id));
-          showToast('✓ Plantilla eliminada');
-          await loadUserDesigns(currentUser);
-        } catch (err) {
-          console.error('Error al borrar diseño:', err);
-          showToast('Error al eliminar la plantilla');
+          let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+          localDesigns = localDesigns.filter(d => d.id !== item.id);
+          localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+          localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+        } catch (e) {}
+
+        if (currentUser) {
+          try {
+            await deleteDoc(doc(db, 'users', currentUser.uid, 'designs', item.id));
+            await loadUserDesigns(currentUser);
+          } catch (err) {
+            console.warn('Aviso al borrar diseño de Firestore:', err);
+            allDesigns = allDesigns.filter(d => d.id !== item.id);
+            updateDesignCounts();
+            renderDesignsGrid();
+          }
+        } else {
+          allDesigns = allDesigns.filter(d => d.id !== item.id);
+          updateDesignCounts();
+          renderDesignsGrid();
         }
+        showToast('✓ Plantilla eliminada');
       }
     });
 

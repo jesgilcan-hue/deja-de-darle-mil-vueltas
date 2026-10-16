@@ -4,6 +4,7 @@ import {
   collection, 
   addDoc, 
   updateDoc, 
+  setDoc,
   doc, 
   getDoc,
   getDocs, 
@@ -269,10 +270,28 @@ export function checkAndLoadSavedDesign(applyDataFn) {
 
   let loaded = false;
 
-  const runLoad = async (user) => {
-    if (!user || loaded) return;
-    loaded = true;
+  // 1. Carga inmediata (0 ms) si está en localStorage
+  try {
+    const rawLocal = localStorage.getItem('mr_local_designs');
+    const localDesigns = rawLocal ? JSON.parse(rawLocal) : [];
+    const item = localDesigns.find(d => d.id === designId);
+    if (item && item.data && typeof applyDataFn === 'function') {
+      currentActiveDesign = {
+        id: item.id,
+        name: item.name || 'Mi Planificador',
+        type: item.type || ''
+      };
+      updateActiveDesignUI();
+      applyDataFn(item.data);
+      setTimeout(() => { hasUnsavedChanges = false; }, 400);
+      notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
+      loaded = true;
+    }
+  } catch (e) {}
 
+  // 2. Si hay sesión iniciada en Firebase, comprobar en Firestore
+  const runLoad = async (user) => {
+    if (!user) return;
     try {
       const designDocRef = doc(db, 'users', user.uid, 'designs', designId);
       const snap = await getDoc(designDocRef);
@@ -285,43 +304,15 @@ export function checkAndLoadSavedDesign(applyDataFn) {
         };
         updateActiveDesignUI();
 
-        if (item.data && typeof applyDataFn === 'function') {
-          const isAutoDownload = params.get('autodownload') === '1' || params.get('autodownload') === 'true';
-
-          const doApply = () => {
-            applyDataFn(item.data);
-            setTimeout(() => { hasUnsavedChanges = false; }, 400);
-
-            if (isAutoDownload) {
-              setTimeout(() => {
-                if (typeof window.openDownloadModal === 'function') {
-                  window.openDownloadModal();
-                } else {
-                  const dlBtn = document.querySelector('.btn-download-primary, #btn-download, [onclick*="openDownloadModal"]');
-                  if (dlBtn) dlBtn.click();
-                }
-              }, 600);
-            }
-          };
-
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', doApply);
-          } else {
-            doApply();
-          }
-
-          if (!isAutoDownload) {
-            notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
-          }
-          const cleanUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, cleanUrl);
+        if (item.data && typeof applyDataFn === 'function' && !loaded) {
+          applyDataFn(item.data);
+          setTimeout(() => { hasUnsavedChanges = false; }, 400);
+          notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
+          loaded = true;
         }
-      } else {
-        notifyToast('No se encontró el diseño seleccionado.');
       }
     } catch (err) {
-      console.error('Error al cargar diseño guardado:', err);
-      notifyToast('No se pudo cargar el diseño guardado.');
+      console.warn('Aviso al consultar diseño en Firestore:', err);
     }
   };
 
@@ -337,24 +328,29 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
   currentGeneratorGetter = getGeneratorDataFn;
   updateActiveDesignUI();
 
-  // Si el usuario acaba de iniciar sesión tras haber intentado guardar, recuperar el borrador y disparar el guardado
+  // Si el usuario acaba de iniciar sesión tras haber guardado localmente, sincronizar el diseño activo
   window.addEventListener('mr-auth-success', async (e) => {
-    const pendingRaw = window.localStorage.getItem('mr_pending_save_design');
-    if (pendingRaw) {
+    if (currentActiveDesign && e.detail) {
       try {
-        const pendingDesign = JSON.parse(pendingRaw);
-        window.localStorage.removeItem('mr_pending_save_design');
-        if (e.detail) {
-          await triggerSaveFlow(btn, pendingDesign, e.detail);
-        }
+        const currentDesign = getGeneratorDataFn();
+        const cleanData = cleanDataForFirestore(currentDesign.data || {});
+        const designDocRef = doc(db, 'users', e.detail.uid, 'designs', currentActiveDesign.id);
+        await setDoc(designDocRef, {
+          name: currentActiveDesign.name,
+          type: currentDesign.type || 'Planificador',
+          summary: currentDesign.summary || '',
+          editUrl: window.location.pathname,
+          data: cleanData,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        notifyToast(`✓ Sincronizado en la nube con tu cuenta`);
       } catch (err) {
-        console.error('Error restaurando diseño pendiente:', err);
+        console.warn('Aviso sincronizando diseño activo tras login:', err);
       }
     }
   });
 
   btn.addEventListener('click', async () => {
-    // Si auth aún está resolviéndose, esperar a auth.authStateReady
     let user = auth.currentUser;
     if (!user && typeof auth.authStateReady === 'function') {
       try {
@@ -363,73 +359,81 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
       } catch (e) {}
     }
 
-    if (!user) {
-      // Guardar el estado actual del generador antes de abrir el modal para que no se pierda jamás
-      try {
-        const currentDraft = getGeneratorDataFn();
-        window.localStorage.setItem('mr_pending_save_design', JSON.stringify(currentDraft));
-        window.localStorage.setItem('mr_auth_return_url', window.location.href);
-      } catch (e) {}
+    const currentDesign = getGeneratorDataFn();
+    const cleanData = cleanDataForFirestore(currentDesign.data || {});
+    const nowSecs = Math.floor(Date.now() / 1000);
 
-      if (typeof window.showToast === 'function') {
-        window.showToast('Inicia sesión para guardar tu diseño en Mi Espacio');
+    let docId = currentActiveDesign ? currentActiveDesign.id : null;
+    if (!docId) {
+      docId = 'des_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    }
+    const finalName = (currentActiveDesign ? currentActiveDesign.name : currentDesign.name) || (currentDesign.type ? `${currentDesign.type} Personalizado` : 'Mi Planificador');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Guardando...';
+
+    // 1. Guardar SIEMPRE e INMEDIATAMENTE en localStorage (0 ms de latencia, backup local 100% garantizado)
+    try {
+      let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+      const existingIdx = localDesigns.findIndex(d => d.id === docId);
+      const savedItem = {
+        id: docId,
+        name: finalName,
+        type: currentDesign.type || 'Planificador',
+        summary: currentDesign.summary || '',
+        editUrl: window.location.pathname,
+        data: cleanData,
+        updatedAt: { seconds: nowSecs },
+        createdAt: existingIdx >= 0 && localDesigns[existingIdx].createdAt ? localDesigns[existingIdx].createdAt : { seconds: nowSecs }
+      };
+
+      if (existingIdx >= 0) {
+        localDesigns[existingIdx] = { ...localDesigns[existingIdx], ...savedItem };
+      } else {
+        localDesigns.unshift(savedItem);
       }
-      openAuthModal();
-      return;
+
+      localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+      localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+    } catch (localErr) {
+      console.warn('Aviso guardando en localStorage:', localErr);
     }
 
-    const currentDesign = getGeneratorDataFn();
-
-    // Si ya estamos editando un diseño existente, guardar directamente en él sin preguntar
-    if (currentActiveDesign) {
-      btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span> Guardando...';
+    // 2. Si el usuario está autenticado, sincronizar en tiempo real con Firestore
+    if (user) {
       try {
-        const designDocRef = doc(db, 'users', user.uid, 'designs', currentActiveDesign.id);
-        const cleanData = cleanDataForFirestore(currentDesign.data || {});
-        await updateDoc(designDocRef, {
+        const designDocRef = doc(db, 'users', user.uid, 'designs', docId);
+        await setDoc(designDocRef, {
+          name: finalName,
+          type: currentDesign.type || 'Planificador',
           summary: currentDesign.summary || '',
           editUrl: window.location.pathname,
           data: cleanData,
           updatedAt: serverTimestamp()
-        });
-
-        // Guardar copia local de seguridad en el navegador
-        try {
-          let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
-          const idx = localDesigns.findIndex(d => d.id === currentActiveDesign.id);
-          const updatedItem = {
-            id: currentActiveDesign.id,
-            name: currentActiveDesign.name,
-            type: currentDesign.type || 'Planificador',
-            summary: currentDesign.summary || '',
-            editUrl: window.location.pathname,
-            data: currentDesign.data || {},
-            updatedAt: { seconds: Math.floor(Date.now() / 1000) }
-          };
-          if (idx >= 0) {
-            localDesigns[idx] = { ...localDesigns[idx], ...updatedItem };
-          } else {
-            localDesigns.unshift(updatedItem);
-          }
-          localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
-          localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
-        } catch (e) {}
-
-        hasUnsavedChanges = false;
-        notifyToast(`✓ Cambios guardados en "${currentActiveDesign.name}"`);
-      } catch (err) {
-        console.error('Error al guardar cambios directos:', err);
-        notifyToast('Error al actualizar el diseño.');
-      } finally {
-        btn.disabled = false;
-        updateActiveDesignUI();
+        }, { merge: true });
+      } catch (cloudErr) {
+        console.warn('Aviso sincronizando en Firestore (guardado local intacto):', cloudErr);
       }
-      return;
     }
 
-    // Si es un diseño nuevo que aún no se ha guardado, abrir modal para darle nombre
-    await triggerSaveFlow(btn, currentDesign, user);
+    currentActiveDesign = {
+      id: docId,
+      name: finalName,
+      type: currentDesign.type || 'Planificador'
+    };
+    hasUnsavedChanges = false;
+
+    btn.disabled = false;
+    btn.innerHTML = '<span>✓</span> ¡Guardado!';
+    setTimeout(() => {
+      updateActiveDesignUI();
+    }, 1200);
+
+    if (user) {
+      notifyToast(`✓ "${finalName}" guardado en Mi Espacio`);
+    } else {
+      notifyToast(`✓ Guardado con éxito en Mi Espacio`);
+    }
   });
 }
 
