@@ -143,6 +143,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (mergedLocal.length > 0) {
       allDesigns = mergedLocal;
+      allDesigns.sort((a, b) => {
+        const tA = getTimestampValue(a.updatedAt || a.createdAt);
+        const tB = getTimestampValue(b.updatedAt || b.createdAt);
+        return tB - tA;
+      });
       updateDesignCounts();
       renderDesignsGrid();
       if (unauthContainer) unauthContainer.style.display = 'none';
@@ -579,6 +584,114 @@ function setupDeleteModal() {
   });
 }
 
+function setupDownloadModal() {
+  btnCloseDlModal?.addEventListener('click', closeDownloadModal);
+  downloadModal?.addEventListener('click', (e) => {
+    if (e.target === downloadModal) closeDownloadModal();
+  });
+  btnDlWritten?.addEventListener('click', () => triggerHeadlessDownload(false));
+  btnDlBlank?.addEventListener('click', () => triggerHeadlessDownload(true));
+  btnModalSendEmail?.addEventListener('click', handleModalSendEmail);
+}
+
+function closeDownloadModal() {
+  if (downloadModal) downloadModal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function openDownloadModal(item) {
+  activeDownloadItem = item;
+  if (dlModalTitle) {
+    dlModalTitle.textContent = item && item.name ? `Descargar ${item.name}` : 'Descargar Planificador';
+  }
+  if (dlModalBadge) {
+    const t = (item && item.type ? item.type : '').toLowerCase();
+    if (t.includes('portada')) {
+      dlModalBadge.innerHTML = '<span>🎨</span> Cubierta Exterior 300 DPI';
+    } else if (t.includes('completo') || t.includes('libro')) {
+      dlModalBadge.innerHTML = '<span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm)';
+    } else {
+      dlModalBadge.innerHTML = '<span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm)';
+    }
+  }
+  if (modalEmailInput) {
+    modalEmailInput.value = localStorage.getItem('mr_user_pdf_email') || (currentUser ? getUserEmail(currentUser) : '');
+  }
+  if (modalEmailFeedback) {
+    modalEmailFeedback.style.display = 'none';
+    modalEmailFeedback.textContent = '';
+  }
+  if (downloadModal) {
+    downloadModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function triggerHeadlessDownload(isBlank) {
+  if (!activeDownloadItem) return;
+  const rawUrl = activeDownloadItem.editUrl || '/generador-planificador-semanal.html';
+  const sep = rawUrl.includes('?') ? '&' : '?';
+  const downloadUrl = `${rawUrl}${sep}load=${encodeURIComponent(activeDownloadItem.id)}&autodownload=1${isBlank ? '&blank=1' : ''}`;
+  showToast('Preparando y descargando PDF...');
+  window.open(downloadUrl, '_blank');
+  closeDownloadModal();
+}
+
+async function handleModalSendEmail() {
+  const email = modalEmailInput ? modalEmailInput.value.trim() : '';
+  if (!email || !email.includes('@')) {
+    if (modalEmailFeedback) {
+      modalEmailFeedback.textContent = 'Por favor, introduce un correo electrónico válido.';
+      modalEmailFeedback.style.display = 'block';
+      modalEmailFeedback.style.color = '#b91c1c';
+    }
+    return;
+  }
+  try {
+    localStorage.setItem('mr_user_pdf_email', email);
+  } catch (e) {}
+
+  if (btnModalSendEmail) {
+    btnModalSendEmail.disabled = true;
+    btnModalSendEmail.innerHTML = '<span>⏳</span> Enviando...';
+  }
+
+  try {
+    const isBlank = modalEmailIsBlank ? modalEmailIsBlank.checked : false;
+    if (activeDownloadItem) {
+      const rawUrl = activeDownloadItem.editUrl || '/generador-planificador-semanal.html';
+      const sep = rawUrl.includes('?') ? '&' : '?';
+      const sendUrl = `${rawUrl}${sep}load=${encodeURIComponent(activeDownloadItem.id)}&email=${encodeURIComponent(email)}${isBlank ? '&blank=1' : ''}`;
+      if (headlessPdfFrame) headlessPdfFrame.src = sendUrl;
+    }
+    if (modalEmailFeedback) {
+      modalEmailFeedback.textContent = `✓ PDF enviado a ${email}. Revisa tu bandeja de entrada o spam.`;
+      modalEmailFeedback.style.display = 'block';
+      modalEmailFeedback.style.color = '#15803d';
+    }
+    showToast(`✓ Enviando PDF a ${email}`);
+  } catch (err) {
+    if (modalEmailFeedback) {
+      modalEmailFeedback.textContent = 'Error al enviar por email. Inténtalo de nuevo.';
+      modalEmailFeedback.style.display = 'block';
+      modalEmailFeedback.style.color = '#b91c1c';
+    }
+  } finally {
+    if (btnModalSendEmail) {
+      btnModalSendEmail.disabled = false;
+      btnModalSendEmail.innerHTML = '<span>Enviar a mi email</span>';
+    }
+  }
+}
+
+function setupPostMessageListener() {
+  window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'mr-pdf-generated') {
+      showToast('✓ PDF generado con éxito');
+    }
+  });
+}
+
 function unlockDevPanel() {
   const pin = devPinInput.value.trim();
   if (pin === DEVELOPER_PIN) {
@@ -854,8 +967,8 @@ async function loadUserDesigns(user) {
 
   // Ordenar por fecha descendente
   allDesigns.sort((a, b) => {
-    const tA = a.updatedAt?.seconds || a.createdAt?.seconds || a.updatedAt || a.createdAt || 0;
-    const tB = b.updatedAt?.seconds || b.createdAt?.seconds || b.updatedAt || b.createdAt || 0;
+    const tA = getTimestampValue(a.updatedAt || a.createdAt);
+    const tB = getTimestampValue(b.updatedAt || b.createdAt);
     return tB - tA;
   });
 
@@ -1161,11 +1274,38 @@ function renderDesignsGrid() {
   });
 }
 
+function getTimestampValue(val) {
+  if (!val) return 0;
+  if (typeof val === 'number') return val < 1e11 ? val * 1000 : val;
+  if (val.seconds) return val.seconds * 1000;
+  if (typeof val.toMillis === 'function') return val.toMillis();
+  if (typeof val === 'string') {
+    const parsed = Date.parse(val);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
 function formatDate(timestamp) {
   if (!timestamp) return 'Reciente';
-  if (typeof timestamp.toDate === 'function') {
-    return timestamp.toDate().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-  }
+  try {
+    if (typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    if (timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    if (typeof timestamp === 'number') {
+      const t = timestamp < 1e11 ? timestamp * 1000 : timestamp;
+      return new Date(t).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    if (typeof timestamp === 'string') {
+      const d = new Date(timestamp);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    }
+  } catch (e) {}
   return 'Reciente';
 }
 
