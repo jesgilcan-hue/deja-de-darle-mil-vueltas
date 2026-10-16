@@ -131,7 +131,7 @@ export default async function handler(req, res) {
                 🌿 EDITORIAL MENOS RUIDO
               </div>
               <div style="font-size: 11px; color: #c4b8aa; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
-                Papelería analógica · En calma y con intención
+                Papelería analógica · Directa y sin rodeos
               </div>
             </td>
           </tr>
@@ -146,8 +146,8 @@ export default async function handler(req, res) {
               ${buttonHtml}
               ${secondaryLinksHtml}
               <div style="margin-top: 28px; padding-top: 18px; border-top: 1px dashed #e2dbce; font-size: 14px; color: #5e5347; line-height: 1.5;">
-                Un saludo en calma,<br>
-                <strong>Jesús Gil · Editorial Menos Ruido</strong>
+                Un saludo,<br>
+                <strong>El equipo de Editorial Menos Ruido</strong>
               </div>
             </td>
           </tr>

@@ -1060,7 +1060,7 @@ window.createDemoOrder = function() {
       province: "Madrid",
       notes: "Timbre no funciona, llamar al móvil",
       bookTitle: "Planificador Anual 2026",
-      subtitle: "52 semanas, 12 meses y perseverancia en calma",
+      subtitle: "52 semanas, 12 meses y organización clara",
       bindingType: "coil",
       pageCount: 144,
       price: 24.90,

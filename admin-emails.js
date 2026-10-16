@@ -189,11 +189,11 @@ const DEFAULT_TEMPLATES = {
     preheader: "Gracias por confiar en el papel. Tu cuaderno personalizado ya está en proceso.",
     body: `Hola {nombre_cliente},
 
-Queríamos confirmarte con tranquilidad que hemos recibido tu pedido #{numero_pedido} y el pago se ha procesado con éxito.
+Te confirmamos que hemos recibido tu pedido #{numero_pedido} y el pago se ha procesado correctamente.
 
-Cada uno de nuestros ejemplares se imprime y encuaderna de forma individual bajo demanda. Antes de mandar tu cuaderno a las máquinas de imprenta, comprobamos personalmente los márgenes, el lomo milimétrico y la resolución de 300 DPI de tu diseño.
+Cada uno de nuestros ejemplares se imprime y encuaderna bajo demanda. Antes de mandar tu cuaderno a imprenta, revisamos los márgenes, el lomo milimétrico y la resolución de 300 DPI de tu diseño.
 
-Puedes consultar en cualquier momento la vista previa exacta de lo que has diseñado o descargar tu recibo de compra en los siguientes enlaces:`,
+Puedes consultar la vista previa exacta de lo que has diseñado o descargar tu recibo de compra en los siguientes enlaces:`,
     buttonText: "Ver el diseño de mi cuaderno ↗",
     showHighlightBox: true,
     showSecondaryLinks: true,
@@ -255,9 +255,9 @@ Puedes seguir en tiempo real la localización del paquete con este botón o intr
 
 El transportista de Correos nos ha informado de que ha intentado entregar tu paquete hoy en {direccion_entrega}, pero no ha sido posible localizar a nadie en el domicilio.
 
-No te preocupes: tu cuaderno está completamente seguro. Puedes solicitar un segundo intento de entrega o retirarlo en la oficina de Correos más cercana a tu domicilio.
+Tu cuaderno está seguro. Puedes solicitar un segundo intento de entrega o retirarlo en la oficina de Correos más cercana a tu domicilio.
 
-Si necesitas que modifiquemos algún detalle de la dirección o indicaciones para el repartidor, puedes responder a este correo o entrar en el enlace:`,
+Si necesitas que modifiquemos algún detalle de la dirección o indicaciones para el repartidor, puedes responder directamente a este correo o entrar en el enlace:`,
     buttonText: "Ver estado y reprogramar entrega ↗",
     showHighlightBox: true,
     showSecondaryLinks: true,
@@ -271,14 +271,14 @@ Si necesitas que modifiquemos algún detalle de la dirección o indicaciones par
     sender: "pedidos@editorialmenosruido.com",
     replyTo: "contacto@editorialmenosruido.com",
     subject: "Tu cuaderno #{numero_pedido} ha sido entregado ✨",
-    preheader: "Esperamos que disfrutes de tu nuevo espacio en papel.",
+    preheader: "Tu pedido ya está en tu dirección.",
     body: `Hola {nombre_cliente},
 
-El sistema de mensajería nos confirma que tu paquete #{numero_pedido} ha sido depositado con éxito en tu dirección o conserjería.
+El sistema de mensajería nos confirma que tu paquete #{numero_pedido} ha sido entregado con éxito en tu dirección o conserjería.
 
-Esperamos de corazón que disfrutes del peso del papel, la textura de la cubierta y la tranquilidad de organizar tus semanas sin notificaciones ni pantallas de por medio.
+Esperamos que te resulte muy útil y práctico para organizar tu trabajo y tus semanas en papel, sin pantallas ni distracciones.
 
-(Si por cualquier motivo no tuvieras el paquete en tus manos o hubiera alguna incidencia, respóndenos a este mismo correo y te lo solucionamos de inmediato).`,
+(Si por cualquier motivo no tuvieras el paquete o hubiera alguna incidencia con el paquete, respóndenos a este mismo correo y te ayudamos de inmediato).`,
     buttonText: "Ver detalles de la entrega ↗",
     showHighlightBox: true,
     showSecondaryLinks: true,
@@ -286,21 +286,21 @@ Esperamos de corazón que disfrutes del peso del papel, la textura de la cubiert
   },
 
   checkin: {
-    name: "Check-in Calma a los 7 Días",
-    icon: "🌿",
+    name: "Check-in a los 7 Días",
+    icon: "📋",
     trigger: "Automático 7 días tras la entrega",
     sender: "contacto@editorialmenosruido.com",
     replyTo: "contacto@editorialmenosruido.com",
-    subject: "¿Cómo te estás sintiendo con tu cuaderno? · Una pausa de 1 minuto",
+    subject: "¿Qué tal te está funcionando tu cuaderno? · Editorial Menos Ruido",
     preheader: "Queríamos saber cómo te va con tu planificador.",
     body: `Hola {nombre_cliente},
 
-Hace una semana que tu {titulo_cuaderno} llegó a tus manos y te escribo personalmente para hacerte una pregunta muy sencilla:
+Hace una semana que recibiste tu {titulo_cuaderno} y te escribimos para preguntarte directamente:
 
-¿Cómo te estás sintiendo con él? ¿Te está sirviendo para ordenar tus días con un poco más de calma y menos saturación mental?
+¿Qué tal te está funcionando? ¿Te está ayudando a organizar tus días de forma clara y sin complicaciones?
 
-No te pedimos una reseña de 5 estrellas ni queremos hacerte perder tiempo. Si hay algo que crees que podríamos mejorar en las páginas, la maquetación o el grosor del papel, o si simplemente quieres compartir tus impresiones, puedes responder directamente a este correo. Siempre leemos y contestamos cada mensaje.`,
-    buttonText: "Escribir a Jesús Gil (Editorial) ↗",
+Si hay algo que creas que podemos mejorar en las páginas, la maquetación o el papel, o simplemente quieres compartir tus impresiones, responde directamente a este correo. Leemos y contestamos siempre.`,
+    buttonText: "Escribir al equipo de la editorial ↗",
     showHighlightBox: false,
     showSecondaryLinks: false,
     showUnsubscribe: true
