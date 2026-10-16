@@ -5,6 +5,10 @@ import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  server: {
+    host: '0.0.0.0',
+    port: 5173
+  },
   build: {
     rollupOptions: {
       input: {
@@ -62,7 +66,9 @@ export default defineConfig({
         tutorialGeneradorAnual: resolve(__dirname, 'tutorial-generador-planificador-anual.html'),
         tutorialGeneradorHorario: resolve(__dirname, 'tutorial-generador-planificador-horario.html'),
         tutorialGeneradorHabitos: resolve(__dirname, 'tutorial-generador-planificador-habitos.html'),
+        tutorialGeneradorLibroCompleto: resolve(__dirname, 'tutorial-generador-libro-completo.html'),
         generadorLibroCompleto: resolve(__dirname, 'generador-libro-completo.html'),
+        generadorPortadas: resolve(__dirname, 'generador-portadas.html'),
         miEspacio: resolve(__dirname, 'mi-espacio.html'),
         baja: resolve(__dirname, 'baja.html'),
         notFound: resolve(__dirname, '404.html')

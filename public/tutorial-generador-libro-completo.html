@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tutorial del Generador de Libro Completo | Editorial Menos Ruido</title>
+    <meta name="description" content="Guía completa paso a paso para diseñar, personalizar y compilar tu propio libro planificador en PDF apaisado a 300 DPI: modelos rápidos, modo intercalado, 8 secciones interiores y consejos de encuadernación." />
+    <link rel="canonical" href="https://www.editorialmenosruido.com/tutorial-generador-libro-completo" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="./style.css" />
+
+    <style>
+        :root {
+            --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-display: 'Playfair Display', Georgia, serif;
+            --bg-page: #f6f3ed;
+            --bg-paper: #fffefb;
+            --text-main: #211d1a;
+            --text-muted: #6b635b;
+            --accent: #87553b;
+            --accent-hover: #70442e;
+            --accent-light: rgba(135, 85, 59, 0.08);
+            --border-soft: #e5ded3;
+            --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.03);
+            --shadow-photo: 0 16px 40px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* HERO DIRECTO */
+        .guide-hero {
+            background: linear-gradient(180deg, #ffffff 0%, var(--bg-page) 100%);
+            border-bottom: 1px solid var(--border-soft);
+            padding: 48px 20px 38px;
+            text-align: center;
+        }
+
+        .guide-hero-container {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .hero-kicker {
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.8px;
+            color: var(--accent);
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .guide-hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 2.85rem);
+            line-height: 1.22;
+            color: #1e1916;
+            margin: 0 0 16px 0;
+            font-weight: 700;
+        }
+
+        .guide-hero-lead {
+            font-size: 1.12rem;
+            color: var(--text-muted);
+            max-width: 720px;
+            margin: 0 auto 24px auto;
+            line-height: 1.6;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn-hero-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(135, 85, 59, 0.28);
+        }
+        .btn-hero-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-hero-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            color: #4a3f36;
+            padding: 12px 22px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            text-decoration: none;
+            border: 1px solid var(--border-soft);
+            transition: all 0.2s ease;
+        }
+        .btn-hero-secondary:hover {
+            background: #fbf9f5;
+            border-color: #d8cebf;
+        }
+
+        /* NAVEGACIÓN RÁPIDA DE APARTADOS */
+        .quick-nav-bar {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 32px auto 0;
+            max-width: 860px;
+            box-shadow: var(--shadow-card);
+        }
+        .quick-nav-title {
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .quick-nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+        }
+        .quick-nav-link {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #4a3e35;
+            text-decoration: none;
+            background: #f7f3ec;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid #e5ded2;
+            transition: all 0.2s ease;
+        }
+        .quick-nav-link:hover {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .guide-main-layout {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 36px 20px 70px;
+        }
+
+        .guide-prose p {
+            margin-bottom: 1.35rem;
+            font-size: 1.04rem;
+            color: #332d28;
+            line-height: 1.7;
+        }
+
+        .guide-prose h2 {
+            font-family: var(--font-display);
+            font-size: 1.85rem;
+            color: #1a1613;
+            margin: 3.4rem 0 1rem;
+            line-height: 1.3;
+            border-bottom: 1.5px solid var(--border-soft);
+            padding-bottom: 8px;
+            scroll-margin-top: 80px;
+        }
+
+        .guide-prose h3 {
+            font-family: var(--font-display);
+            font-size: 1.38rem;
+            color: #2e2621;
+            margin: 2.2rem 0 0.8rem;
+            line-height: 1.35;
+            scroll-margin-top: 80px;
+        }
+
+        .guide-prose strong {
+            color: #15110e;
+            font-weight: 700;
+        }
+
+        /* TARJETAS DE PASO */
+        .step-block-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 24px 26px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+        }
+
+        .step-pill-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .step-number-badge {
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .step-card-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            color: #1a1613;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        /* GRID DE LOS 7 LIBROS */
+        .preset-books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin: 18px 0;
+        }
+
+        .preset-book-item {
+            background: #fbf9f5;
+            border: 1px solid #e5ded2;
+            border-radius: 10px;
+            padding: 16px;
+            box-sizing: border-box;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .preset-book-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+        .preset-book-tag {
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .preset-book-name {
+            font-family: var(--font-display);
+            font-size: 1.12rem;
+            font-weight: 700;
+            color: #211c18;
+            margin-bottom: 6px;
+        }
+        .preset-book-desc {
+            font-size: 0.85rem;
+            color: #5d5349;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* ESQUEMA COMPARATIVO: INTERCALADO VS BLOQUES */
+        .layout-comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin: 20px 0;
+        }
+        @media (max-width: 640px) {
+            .layout-comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .layout-mode-card {
+            background: #ffffff;
+            border: 1.5px solid var(--border-soft);
+            border-radius: 10px;
+            padding: 18px;
+            box-sizing: border-box;
+        }
+        .layout-mode-card.featured {
+            border-color: var(--accent);
+            background: #fffdfa;
+        }
+        .layout-mode-badge {
+            display: inline-block;
+            font-size: 0.70rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .layout-mode-badge.intercalado {
+            background: #f4eee6;
+            color: var(--accent);
+        }
+        .layout-mode-badge.bloques {
+            background: #eeeae3;
+            color: #554b42;
+        }
+        .layout-mode-title {
+            font-family: var(--font-display);
+            font-size: 1.18rem;
+            font-weight: 700;
+            color: #221c17;
+            margin-bottom: 8px;
+        }
+        .layout-diagram {
+            background: #f7f3ec;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 12px 0;
+            font-size: 0.80rem;
+            color: #4a3e35;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        /* SECCIONES INTERIORES */
+        .section-detail-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 22px 24px;
+            margin: 24px 0;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+            scroll-margin-top: 80px;
+        }
+        .section-detail-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            border-bottom: 1px solid #ede6dc;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .section-num {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .section-name {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e1916;
+            margin: 0;
+        }
+        .section-features-list {
+            margin: 12px 0 16px 0;
+            padding-left: 20px;
+            color: #443c34;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .section-features-list li {
+            margin-bottom: 6px;
+        }
+
+        /* CAJAS DE CONSEJO EDITORIAL */
+        .tip-box {
+            background: #fdfbf7;
+            border: 1px solid #e7ded2;
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 1.4rem 0;
+            font-size: 0.95rem;
+            color: #443c34;
+            line-height: 1.6;
+        }
+        .tip-box strong {
+            color: var(--accent);
+        }
+
+        .warning-box {
+            background: #fffcf8;
+            border: 1px solid #eedad3;
+            border-left: 4px solid #c2593f;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 1.4rem 0;
+            font-size: 0.95rem;
+            color: #552d22;
+            line-height: 1.6;
+        }
+        .warning-box strong {
+            color: #99230d;
+        }
+
+        /* FAQ */
+        details.faq-item {
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid var(--border-soft);
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        details.faq-item summary {
+            padding: 16px 20px;
+            font-size: 1.02rem;
+            font-weight: 600;
+            font-family: var(--font-display);
+            color: #1a1613;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        details.faq-item summary::-webkit-details-marker {
+            display: none;
+        }
+        details.faq-item summary::after {
+            content: "+";
+            font-size: 1.3rem;
+            font-weight: 400;
+            color: var(--accent);
+            line-height: 1;
+            margin-left: 12px;
+        }
+        details.faq-item[open] summary::after {
+            content: "−";
+        }
+        details.faq-item[open] summary {
+            background: #fdfbf7;
+            border-bottom: 1px solid #eee7dc;
+        }
+        details.faq-item .faq-answer {
+            padding: 16px 20px;
+            color: #4a4239;
+            font-size: 0.92rem;
+            line-height: 1.65;
+            background: #ffffff;
+        }
+
+        /* BANNER FINAL */
+        .cta-bottom-banner {
+            background: linear-gradient(135deg, #2b221a 0%, #171310 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 40px 28px;
+            text-align: center;
+            margin: 48px 0 20px;
+            box-shadow: var(--shadow-photo);
+        }
+        .cta-bottom-banner h2 {
+            font-family: var(--font-display);
+            font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+            margin: 0 0 12px 0;
+            color: #ffffff;
+            border: none;
+            padding: 0;
+        }
+        .cta-bottom-banner p {
+            color: #d8cec3;
+            max-width: 620px;
+            margin: 0 auto 24px auto;
+            font-size: 1.02rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="nav-left">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="brand-link" style="text-decoration:none; display:flex; align-items:center; gap:8px;">
+                    <img src="/favicon.png" alt="Menos Ruido" style="width:28px; height:28px; border-radius:6px;">
+                    <span style="font-family:'Playfair Display',serif; font-weight:700; font-size:1.15rem; color:#111;">Menos Ruido</span>
+                </a>
+            </div>
+            <nav class="nav-center">
+                <a href="/" onclick="document.body.classList.remove('nav-open')">Home</a>
+                <a href="/apps.html" onclick="document.body.classList.remove('nav-open')">Generadores</a>
+                <a href="/generador-libro-completo.html" style="font-weight:700; color:var(--accent);" onclick="document.body.classList.remove('nav-open')">Diseñar mi Cuaderno</a>
+                <a href="/lecturas.html" onclick="document.body.classList.remove('nav-open')">Lecturas</a>
+            </nav>
+            <div class="nav-right">
+                <a href="/generador-libro-completo.html" class="nav-btn-link" style="background:var(--accent); color:#ffffff; padding:7px 15px; border-radius:6px; font-size:0.84rem; font-weight:700; text-decoration:none;">
+                    Ir al Generador ↗
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO DIRECTO -->
+    <section class="guide-hero">
+        <div class="guide-hero-container">
+            <span class="hero-kicker">EDITORIAL MENOS RUIDO · GUÍA Y TUTORIAL OFICIAL</span>
+            <h1>Cómo diseñar y compilar tu propio libro planificador completo</h1>
+            <p class="guide-hero-lead">
+                Aprende a combinar portadas personalizadas, calendarios, meses, hábitos, semanas y páginas de notas en un único volumen apaisado a 300 DPI, listo para encuadernar o imprimir.
+            </p>
+            <div class="hero-actions">
+                <a href="/generador-libro-completo.html" class="btn-hero-primary">
+                    <span>✨</span> Abrir Generador de Libro Completo
+                </a>
+                <a href="#paso-1-modelos" class="btn-hero-secondary">
+                    <span>📖</span> Explorar la Guía Paso a Paso
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- NAVEGACIÓN RÁPIDA -->
+    <div style="max-width:860px; margin:0 auto; padding:0 20px;">
+        <div class="quick-nav-bar">
+            <div class="quick-nav-title">Índice del tutorial</div>
+            <div class="quick-nav-links">
+                <a href="#paso-1-modelos" class="quick-nav-link">1. Modelos Rápidos</a>
+                <a href="#paso-2-estructura" class="quick-nav-link">2. Estructura (Intercalado vs Bloques)</a>
+                <a href="#paso-3-portada-fechas" class="quick-nav-link">3. Portada, Ex Libris y Fechas</a>
+                <a href="#paso-4-secciones" class="quick-nav-link">4. Las 8 Secciones Interiores</a>
+                <a href="#paso-5-impresion" class="quick-nav-link">5. Compilación e Impresión</a>
+                <a href="#faq" class="quick-nav-link">Preguntas Frecuentes</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO EDITORIAL DE LA GUÍA -->
+    <main class="guide-main-layout">
+        <article class="guide-prose">
+
+            <p>
+                Tener hojas sueltas impresas por la mesa termina generando más dispersión que serenidad. El <strong>Generador de Libro Completo de Editorial Menos Ruido</strong> se diseñó para resolver este problema: te permite crear un volumen unitario y ordenado en formato apaisado estándar de <strong>8.25" × 6" (209.55 × 152.4 mm)</strong> con su portada oficial, sumario ejecutivo de navegación y una cuidada secuencia cronológica.
+            </p>
+
+            <!-- PASO 1: MODELOS RÁPIDOS -->
+            <h2 id="paso-1-modelos">Paso 1: Elige tu modelo de partida</h2>
+            <p>
+                En lugar de empezar desde cero calculando semanas y días a mano, el generador incluye <strong>7 modelos rápidos precalibrados</strong>. Al hacer clic en cualquiera de ellos, se configuran de golpe todas las páginas, la estructura y los títulos correspondientes:
+            </p>
+
+            <div class="preset-books-grid">
+                <div class="preset-book-item">
+                    <div class="preset-book-tag">🌿 Clásico Anual</div>
+                    <div class="preset-book-name">Planificador anual</div>
+                    <p class="preset-book-desc">12 meses completos, 12 láminas de hábitos de 31 días y 52 semanas continuas. Ideal para tener la panorámica de todo el año reunida.</p>
+                </div>
+                <div class="preset-book-item">
+                    <div class="preset-book-tag">🔄 Cronológico</div>
+                    <div class="preset-book-name">Planificador anual Intercalado</div>
+                    <p class="preset-book-desc">La misma capacidad anual pero ordenada por ciclos mensuales: cada mes va seguido de sus hábitos y sus 4-5 semanas sin saltos de página.</p>
+                </div>
+                <div class="preset-book-item">
+                    <div class="preset-book-tag">🎯 Foco Máximo</div>
+                    <div class="preset-book-name">Planificador 90 días</div>
+                    <p class="preset-book-desc">3 meses, 13 semanas y 90 jornadas diarias. Para proyectos intensivos donde una sola meta trimestral debe recibir toda tu atención.</p>
+                </div>
+                <div class="preset-book-item">
+                    <div class="preset-book-tag">⚖️ Semestral</div>
+                    <div class="preset-book-name">Planificador 180 días</div>
+                    <p class="preset-book-desc">6 meses, 26 semanas y 180 jornadas de claridad. El equilibrio perfecto para proyectos con tiempo de maduración sereno.</p>
+                </div>
+                <div class="preset-book-item">
+                    <div class="preset-book-tag">📅 Solo Semanal</div>
+                    <div class="preset-book-name">Planificador semanal</div>
+                    <p class="preset-book-desc">52 semanas completas con vista horizontal de lunes a domingo y hábitos integrados al pie de cada página.</p>
+                </div>
+                <div class="preset-book-item">
+                    <div class="preset-book-tag">✍️ Bitácora</div>
+                    <div class="preset-book-name">Planificador diario</div>
+                    <p class="preset-book-desc">Un mes de descarga mental profunda, introspección y presencia con el método de una sola prioridad nuclear por día.</p>
+                </div>
+                <div class="preset-book-item">
+                    <div class="preset-book-tag">🛠️ Libertad Total</div>
+                    <div class="preset-book-name">Planificador personalizado</div>
+                    <p class="preset-book-desc">Tú decides cuántas semanas, meses o días incluir. Si modificas páginas en cualquier modelo rápido, se activará este modo automáticamente.</p>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong>💡 Consejo editorial:</strong> Si tienes dudas sobre cuál elegir, el <strong>Planificador anual Intercalado</strong> o el de <strong>90 días</strong> son los más populares porque eliminan la necesidad de hojear hacia atrás y adelante continuamente.
+            </div>
+
+            <!-- PASO 2: ESTRUCTURA INTERCALADO VS BLOQUES -->
+            <h2 id="paso-2-estructura">Paso 2: Estructura del libro (Intercalado vs. Bloques)</h2>
+            <p>
+                Una de las decisiones arquitectónicas más importantes al crear un cuaderno en papel es cómo se suceden las páginas. El generador te ofrece dos filosofías organizativas:
+            </p>
+
+            <div class="layout-comparison-grid">
+                <div class="layout-mode-card featured">
+                    <span class="layout-mode-badge intercalado">Recomendado</span>
+                    <div class="layout-mode-title">Modo Intercalado (Por Ciclos)</div>
+                    <p style="font-size:0.88rem; color:#4a4239; margin-bottom:8px;">
+                        Agrupa el libro en ciclos mensuales naturales. Cada mes contiene todo lo necesario para esa etapa antes de pasar a la siguiente:
+                    </p>
+                    <div class="layout-diagram">
+                        [Portada] → [Editorial] → [Índice] → [Calendario]<br>
+                        ↳ <strong>Ciclo Enero:</strong> Mes + Hábitos + Semanas 1 a 5<br>
+                        ↳ <strong>Ciclo Febrero:</strong> Mes + Hábitos + Semanas 6 a 9<br>
+                        ↳ <strong>Ciclo Marzo:</strong> ...<br>
+                        ↳ [Notas y reflexiones finales]
+                    </div>
+                    <p style="font-size:0.82rem; color:#6b6055; margin:0;">
+                        <strong>Ventaja:</strong> Toda tu vida activa está concentrada en unas pocas páginas correlativas. Ideal para quienes abren el cuaderno a diario.
+                    </p>
+                </div>
+
+                <div class="layout-mode-card">
+                    <span class="layout-mode-badge bloques">Clásico</span>
+                    <div class="layout-mode-title">Modo Bloques Continuos</div>
+                    <p style="font-size:0.88rem; color:#4a4239; margin-bottom:8px;">
+                        Organiza el libro agrupando cada tipo de sección completa una detrás de otra:
+                    </p>
+                    <div class="layout-diagram">
+                        [Portada] → [Editorial] → [Índice] → [Calendario]<br>
+                        ↳ <strong>Bloque 1:</strong> Todos los meses juntos (12 páginas)<br>
+                        ↳ <strong>Bloque 2:</strong> Todos los hábitos juntos (12 páginas)<br>
+                        ↳ <strong>Bloque 3:</strong> Todas las semanas del año (52 páginas)<br>
+                        ↳ <strong>Bloque 4:</strong> Notas finales
+                    </div>
+                    <p style="font-size:0.82rem; color:#6b6055; margin:0;">
+                        <strong>Ventaja:</strong> Permite ojear la evolución anual de un solo vistazo en cada sección. Requiere usar marcapáginas o pestañas adhesivas.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PASO 3: PORTADA Y FECHAS -->
+            <h2 id="paso-3-portada-fechas">Paso 3: Personalizar portada interior, fechas y dedicatoria</h2>
+            <p>
+                La primera página del libro es tu territorio personal. Puedes editarla haciendo clic directamente sobre el texto en la previsualización interactiva:
+            </p>
+
+            <div class="step-block-card">
+                <div class="step-pill-header">
+                    <span class="step-number-badge">Edición 1:1</span>
+                    <h3 class="step-card-title">Elementos de la Portada Editorial</h3>
+                </div>
+                <ul class="section-features-list">
+                    <li><strong>Título principal y subtítulo:</strong> Haz clic sobre el título (por defecto el nombre de tu modelo) para renombrarlo a tu gusto (ej. <em>«Bitácora de Enfoque 2026»</em>).</li>
+                    <li><strong>Cartela Ex Libris:</strong> Incluye el campo oficial <em>«ESTE CUADERNO PERTENECE A:»</em>, calibrado con un ancho especial para que quepan holgadamente <strong>nombres largos con dos apellidos</strong> sin desbordarse.</li>
+                    <li><strong>Fechas Automáticas vs. Atemporal en blanco:</strong>
+                        <ul style="margin-top:6px;">
+                            <li><strong>Automáticas (2026 / 2027):</strong> Calcula con precisión matemática los calendarios, días de la semana, números de semana (`S1` a `S52`) y días del mes.</li>
+                            <li><strong>Atemporal (Inicio libre):</strong> Genera plantillas limpias con líneas punteadas para fechar a mano con pluma o lápiz en cualquier momento del año.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Dedicatoria o lema personal:</strong> Puedes escribir tu frase inspiradora entrecomillada al pie de la cartela (máx. 140 caracteres).</li>
+                    <li><strong>Página editorial adaptada:</strong> La página 2 adapta automáticamente su ensayo, cita y los <strong>Tres Principios de Menos Ruido</strong> al modelo de libro que hayas seleccionado.</li>
+                </ul>
+            </div>
+
+            <!-- PASO 4: LAS 8 SECCIONES AL DETALLE -->
+            <h2 id="paso-4-secciones">Paso 4: Las 8 secciones interiores al detalle</h2>
+            <p>
+                Cada sección del libro tiene una función psicológica y metodológica concreta. A continuación te explicamos cómo utilizar y calibrar cada una:
+            </p>
+
+            <!-- 4.1 CALENDARIO ANUAL -->
+            <div class="section-detail-card" id="seccion-calendario">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.1</span>
+                        <h3 class="section-name">Calendario Anual (Panorámica 12 Meses)</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">1 a 2 páginas</span>
+                </div>
+                <p>
+                    Lámina panorámica que reúne los 12 meses del año en una cuadrícula compacta y limpia. Es la brújula que te permite ubicar semanas completas sin tener que consultar la pantalla del teléfono.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>Selección de año:</strong> Puedes elegir entre el año <strong>2026</strong>, <strong>2027</strong> o compilar <strong>ambos años</strong> consecutivos si diseñas un cuaderno bianual.</li>
+                    <li><strong>Números de semana:</strong> Incluye un interruptor para mostrar u ocultar la columna con el número de semana (`S1`, `S2`...) junto a cada bloque de mes.</li>
+                    <li><strong>Consejo de uso:</strong> Usa rotuladores o lápices de colores tenues para resaltar períodos vacacionales, viajes importantes o entregas trimestrales clave.</li>
+                </ul>
+            </div>
+
+            <!-- 4.2 PLANIFICADOR ANUAL (4 TRIMESTRES) -->
+            <div class="section-detail-card" id="seccion-anual">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.2</span>
+                        <h3 class="section-name">Planificador Anual Estratégico (4 Trimestres)</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">1 a 4 páginas</span>
+                </div>
+                <p>
+                    Estructura el año en <strong>cuatro cuadrantes estratégicos (Q1, Q2, Q3 y Q4)</strong>. Cada trimestre cuenta con su espacio para definir metas de alto nivel y desglosar las prioridades de fondo.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>Prioridad estratégica por trimestre:</strong> Espacio destacado para anotar el objetivo maestro que definirá el éxito de esos tres meses.</li>
+                    <li><strong>Líneas tenues de hitos:</strong> Separación sutil mediante líneas discontinuas para listar hitos con fecha límite innegociable.</li>
+                    <li><strong>Regla de oro:</strong> Nunca definas más de una prioridad estratégica por trimestre. Si todo es prioritario, nada lo es.</li>
+                </ul>
+            </div>
+
+            <!-- 4.3 PLANIFICADOR MENSUAL -->
+            <div class="section-detail-card" id="seccion-mensual">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.3</span>
+                        <h3 class="section-name">Planificador Mensual</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">1 a 24 páginas</span>
+                </div>
+                <p>
+                    Cuadrícula mensual tradicional apaisada de lunes a domingo. Proporciona el mapa mental de las 4 a 5 semanas del mes para no perder el contexto temporal de los compromisos.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>Panel de Metas del Mes:</strong> Tres casillas destacadas en la cabecera separadas por líneas discontinuas para fijar el foco del mes.</li>
+                    <li><strong>Hitos y fechas clave:</strong> Columna lateral o panel para bodas, exámenes, citas médicas o lanzamientos importantes.</li>
+                    <li><strong>Número de semana sutil:</strong> Cada lunes incluye un indicador tenue con la semana del año (`S1` a `S52`) que puedes activar o desactivar con un clic.</li>
+                </ul>
+            </div>
+
+            <!-- 4.4 RASTREADOR DE HÁBITOS -->
+            <div class="section-detail-card" id="seccion-habitos">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.4</span>
+                        <h3 class="section-name">Rastreador de Hábitos (31 Días)</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">1 a 24 páginas</span>
+                </div>
+                <p>
+                    Matriz horizontal de 31 días correlativos. El registro manual con tinta genera un compromiso visual directo que ninguna aplicación móvil con notificaciones puede replicar.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>Número de hábitos calibrable:</strong> Elige entre <strong>6, 8, 10, 12, 15 o 18 hábitos</strong> por lámina. Recomendamos no monitorizar más de 6 u 8 a la vez para evitar frustración.</li>
+                    <li><strong>Forma del marcador:</strong> Alterna entre <strong>círculos</strong> (estilo burbuja analógica) o <strong>cuadrados</strong> limpios para tachar con cruz o rellenar.</li>
+                    <li><strong>Zona de balance y notas:</strong> Espacio inferior para reflexionar a fin de mes sobre qué rutinas han funcionado y cuáles conviene simplificar.</li>
+                </ul>
+            </div>
+
+            <!-- 4.5 PLANIFICADOR SEMANAL -->
+            <div class="section-detail-card" id="seccion-semanal">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.5</span>
+                        <h3 class="section-name">Planificador Semanal</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">1 a 60 páginas</span>
+                </div>
+                <p>
+                    El corazón operativo de la planificación analógica. Distribuye la semana de lunes a domingo en columnas apaisadas con abundante espacio en blanco para escribir sin estrecheces.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>Hábitos de la semana:</strong> Bloque inferior para dar seguimiento diario a las rutinas de los 7 días con líneas tenues divisorias.</li>
+                    <li><strong>Notas prioritarias:</strong> Espacio reservado para tareas flotantes o ideas que no tienen un día fijo asignado.</li>
+                    <li><strong>Ritual del domingo:</strong> Planificar la semana el domingo por la tarde toma solo 15 minutos y elimina por completo la ansiedad del lunes por la mañana.</li>
+                </ul>
+            </div>
+
+            <!-- 4.6 PLANIFICADOR HORARIO SEMANAL -->
+            <div class="section-detail-card" id="seccion-horario">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.6</span>
+                        <h3 class="section-name">Planificador Horario Semanal (Time-Blocking)</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">1 a 52 páginas</span>
+                </div>
+                <p>
+                    Diseñado para quienes necesitan proteger bloques de tiempo dedicados a trabajo profundo (*Deep Work*) o conciliar reuniones y citas diarias.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>Intervalo horario configurable:</strong> Elige pasos de <strong>1h, 2h, 3h, 4h o 6h</strong> según el nivel de detalle que requiera tu jornada.</li>
+                    <li><strong>Hora de inicio flexible:</strong> Puedes comenzar a las 06:00, 07:00, 08:00 o 09:00 de la mañana.</li>
+                    <li><strong>Líneas calibradas:</strong> En la exportación a PDF, las líneas horizontales se dibujan con el mismo grosor exacto en todas las columnas para una estética milimétrica.</li>
+                </ul>
+            </div>
+
+            <!-- 4.7 PLANIFICADOR DIARIO -->
+            <div class="section-detail-card" id="seccion-diario">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.7</span>
+                        <h3 class="section-name">Planificador Diario (Enfoque Radical)</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">1 a 365 páginas</span>
+                </div>
+                <p>
+                    Cada día cuenta con una lámina completa dedicada a la presencia y la serenidad. Rechaza las listas interminables de 30 tareas que nunca se cumplen.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>Prioridad nuclear innegociable:</strong> Una sola tarea grande en la parte superior. Si la completas, tu jornada ya habrá tenido sentido.</li>
+                    <li><strong>Tres tareas secundarias:</strong> Espacio limitado conscientemente para evitar la dispersión mental.</li>
+                    <li><strong>Hábitos y reflexión nocturna:</strong> Zona de cierre de día para evaluar tu energía y practicar un breve momento de gratitud sincera.</li>
+                </ul>
+            </div>
+
+            <!-- 4.8 CUADERNO DE NOTAS -->
+            <div class="section-detail-card" id="seccion-notas">
+                <div class="section-detail-header">
+                    <div>
+                        <span class="section-num">Sección 4.8</span>
+                        <h3 class="section-name">Cuaderno de Notas & Reflexión Libre</h3>
+                    </div>
+                    <span style="font-size:0.78rem; font-weight:700; color:#776e65;">2 a 120 páginas</span>
+                </div>
+                <p>
+                    Páginas finales de desahogo analógico para reuniones, bocetos, mapas mentales y diarios personales sin estructuras impuestas.
+                </p>
+                <ul class="section-features-list">
+                    <li><strong>4 estilos de pauta:</strong>
+                        <ul style="margin-top:6px;">
+                            <li><strong>Puntos (Dot Grid):</strong> La cuadrícula favorita del *Bullet Journal* (espaciado 5 mm tenue).</li>
+                            <li><strong>Cuadrícula (Grid):</strong> Rejilla técnica milimetrada ideal para tablas o esquemas geométricos.</li>
+                            <li><strong>Líneas (Ruled):</strong> Pauta horizontal tradicional para escritura continua.</li>
+                            <li><strong>En blanco (Blank):</strong> Lienzo puro sin distracciones para dibujo o libertad total.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- PASO 5: IMPRESIÓN Y ENCUADERNACIÓN -->
+            <h2 id="paso-5-impresion">Paso 5: Compilación PDF, descarga e impresión física</h2>
+            <p>
+                Una vez configurado tu libro, pulsa el botón <strong>«📖 Descargar Libro Completo PDF»</strong> en la barra superior. Se abrirá el modal de compilación que procesará todas las páginas de forma vectorial a 300 DPI.
+            </p>
+
+            <div class="step-block-card">
+                <div class="step-pill-header">
+                    <span class="step-number-badge">Especificaciones Técnicas</span>
+                    <h3 class="step-card-title">Consejos para Imprimir y Encuadernar</h3>
+                </div>
+                <ul class="section-features-list">
+                    <li><strong>Formato oficial:</strong> Tamaño estándar de imprenta <strong>8.25" × 6" (209.55 × 152.4 mm)</strong>. Si imprimes en hojas estándar A4, selecciona en tu impresora la opción <em>«Tamaño real»</em> o imprime dos páginas por hoja en orientación apaisada.</li>
+                    <li><strong>Márgenes de seguridad:</strong> El documento cuenta con un margen de 9 mm a 12.5 mm en los cuatro costados, lo que permite encuadernar con <strong>espiral metálica (Wire-o)</strong> o perforar para carpetas de anillas sin que la espiral corte texto ni líneas.</li>
+                    <li><strong>Gramaje de papel recomendado:</strong> Para evitar que la tinta o los rotuladores traspasen al dorso, imprime en papel de entre <strong>100 g/m² y 120 g/m²</strong> (preferiblemente tono ahuesado o crema natural para descansar la vista).</li>
+                    <li><strong>Límite de 5 MB en envíos por correo:</strong> Para cuadernos voluminosos (más de 170 páginas o más de 5 MB), la opción de envío por email se desactiva automáticamente para proteger la integridad del archivo. Descárgalo directamente con el botón superior para guardarlo en tu ordenador o móvil al instante.</li>
+                </ul>
+            </div>
+
+            <!-- PREGUNTAS FRECUENTES -->
+            <h2 id="faq">Preguntas Frecuentes</h2>
+
+            <details class="faq-item">
+                <summary>¿El PDF generado es apto para imprentas profesionales?</summary>
+                <div class="faq-answer">
+                    <p>Sí, al 100%. El generador utiliza trazado vectorial nativo a 300 DPI. Todas las líneas, tipografías y recuadros son vectores puros, lo que significa que no habrá pérdida de nitidez ni pixelado al imprimir en cualquier copistería profesional o imprenta digital.</p>
+                </div>
+            </details>
+
+            <details class="faq-item">
+                <summary>¿Puedo modificar el número de páginas después de elegir un modelo rápido?</summary>
+                <div class="faq-answer">
+                    <p>Por supuesto. Si eliges el modelo «Planificador 90 días» y decides añadirle 15 páginas extra de notas, puedes hacerlo en la barra lateral. En ese momento, el selector de modelos cambiará suavemente a «Personalizado» para darte total libertad de configuración.</p>
+                </div>
+            </details>
+
+            <details class="faq-item">
+                <summary>¿Cómo funciona la numeración de páginas en el sumario?</summary>
+                <div class="faq-answer">
+                    <p>El libro incluye una página institucional de <strong>Índice de Contenidos</strong> en la página 3. Tanto en el modo intercalado como en el modo bloques, el índice recalcula dinámicamente los números exactos de página donde empieza y termina cada ciclo o sección.</p>
+                </div>
+            </details>
+
+            <details class="faq-item">
+                <summary>¿Qué diferencia hay entre la versión con fechas y la atemporal?</summary>
+                <div class="faq-answer">
+                    <p>La versión con fechas (2026 o 2027) imprime los días del mes y el nombre de la semana de forma correlativa. La versión Atemporal deja el espacio del día o mes con líneas punteadas para que puedas empezar tu cuaderno en cualquier mes del año sin desperdiciar hojas.</p>
+                </div>
+            </details>
+
+            <!-- BANNER FINAL CTA -->
+            <div class="cta-bottom-banner">
+                <h2>Crea tu libro planificador ahora</h2>
+                <p>
+                    Sin suscripciones, sin registros obligatorios y con la calidez del papel analógico. Abre el generador, elige tu estructura y descarga tu PDF en pocos segundos.
+                </p>
+                <a href="/generador-libro-completo.html" class="btn-hero-primary" style="background:#ffffff; color:#1f1813; box-shadow:0 6px 20px rgba(0,0,0,0.3);">
+                    <span>📖</span> Ir al Generador de Libro Completo
+                </a>
+            </div>
+
+        </article>
+    </main>
+
+    <!-- FOOTER OFICIAL -->
+    <footer class="footer" style="background:#fffdfa; border-top:1px solid #e5ded2; padding:40px 20px; text-align:center; font-size:0.85rem; color:#776e65;">
+        <div style="max-width:860px; margin:0 auto;">
+            <p style="margin-bottom:8px; font-weight:700; color:#221c17;">Editorial Menos Ruido · Herramientas en papel para pensar con claridad</p>
+            <p style="margin-bottom:16px;">Papelería analógica, libros guiados y generadores de libre distribución para una vida con menos ruido.</p>
+            <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                <a href="/" style="color:var(--accent); text-decoration:none;">Inicio</a>
+                <a href="/apps.html" style="color:var(--accent); text-decoration:none;">Todos los Generadores</a>
+                <a href="/generador-libro-completo.html" style="color:var(--accent); text-decoration:none;">Generador de Libro</a>
+                <a href="/aviso-legal.html" style="color:#776e65; text-decoration:none;">Aviso Legal</a>
+                <a href="/politica-privacidad.html" style="color:#776e65; text-decoration:none;">Privacidad</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
