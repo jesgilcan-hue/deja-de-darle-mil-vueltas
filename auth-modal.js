@@ -17,6 +17,9 @@ import {
 } from 'firebase/auth';
 
 // Crear e inyectar el Modal de Acceso en el DOM si no existe
+let pendingAuthOptions = null;
+
+// Crear e inyectar el Modal de Acceso en el DOM si no existe
 function injectAuthModal() {
   if (document.getElementById('auth-modal-overlay')) return;
 
@@ -26,9 +29,9 @@ function injectAuthModal() {
         <button type="button" class="auth-modal-close" id="auth-modal-close-btn" aria-label="Cerrar ventana">×</button>
         
         <div class="auth-modal-header">
-          <span class="auth-modal-brand">Menos Ruido</span>
-          <h2 class="auth-modal-title">Tu espacio personal</h2>
-          <p class="auth-modal-subtitle">Guarda tus configuraciones, tus páginas personalizadas y tus datos sin fricción.</p>
+          <span class="auth-modal-brand" id="auth-modal-brand">Menos Ruido</span>
+          <h2 class="auth-modal-title" id="auth-modal-title">Tu espacio personal</h2>
+          <p class="auth-modal-subtitle" id="auth-modal-subtitle">Guarda tus configuraciones, tus páginas personalizadas y tus datos sin fricción.</p>
         </div>
 
         <div class="auth-modal-body">
@@ -59,6 +62,14 @@ function injectAuthModal() {
             <p class="auth-form-help">Te enviaremos un enlace seguro a tu bandeja de entrada. Sin necesidad de recordar contraseñas.</p>
           </form>
 
+          <!-- Consentimiento RGPD para Boletín y Novedades -->
+          <div class="auth-newsletter-box" style="margin-top: 15px; margin-bottom: 6px; text-align: left; font-size: 0.81rem; color: #5a524b; display: flex; align-items: flex-start; gap: 9px; line-height: 1.45; background: #faf8f5; border: 1px solid #ebd8c8; border-radius: 8px; padding: 10px 12px;">
+            <input type="checkbox" id="auth-newsletter-checkbox" style="margin-top: 2px; accent-color: #87553b; cursor: pointer; flex-shrink: 0;" />
+            <label for="auth-newsletter-checkbox" style="cursor: pointer; user-select: none;">
+              Quiero recibir avisos de nuevos lanzamientos, recursos en PDF y ofertas de Editorial Menos Ruido (puedes darte de baja cuando quieras con un solo clic).
+            </label>
+          </div>
+
           <div id="auth-status-msg" class="auth-status-msg" style="display: none;"></div>
         </div>
 
@@ -88,14 +99,30 @@ function injectAuthModal() {
   googleBtn?.addEventListener('click', async () => {
     try {
       showStatus('Conectando con Google...', 'info');
+      const newsletterConsent = !!document.getElementById('auth-newsletter-checkbox')?.checked;
       const result = await signInWithPopup(auth, googleProvider);
-      await syncUserProfile(result.user);
+      await syncUserProfile(result.user, { newsletterConsent });
       if (isDeveloper(result.user)) {
         try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
       }
       showStatus('¡Acceso concedido!', 'success');
       setTimeout(() => {
         closeAuthModal();
+
+        const opts = pendingAuthOptions;
+        pendingAuthOptions = null;
+
+        // Si se abrió para completar una acción pendiente (guardar o descargar), ejecutarla sin recargar página
+        if (opts && typeof opts.onSuccess === 'function') {
+          try {
+            opts.onSuccess(result.user);
+          } catch (cbErr) {
+            console.error('Error en onSuccess tras login:', cbErr);
+          }
+          window.dispatchEvent(new CustomEvent('mr-auth-success', { detail: result.user }));
+          return;
+        }
+
         // Si hay una URL de retorno o estamos en un generador, nos quedamos o volvemos a la página
         const returnUrl = window.localStorage.getItem('mr_auth_return_url');
         if (returnUrl) {
@@ -134,6 +161,11 @@ function injectAuthModal() {
 
     try {
       showStatus('Generando tu enlace de acceso seguro...', 'info');
+      const newsletterConsent = !!document.getElementById('auth-newsletter-checkbox')?.checked;
+      try {
+        window.localStorage.setItem('mr_pending_newsletter_consent', newsletterConsent ? 'true' : 'false');
+      } catch (e) {}
+
       const returnUrl = window.location.href;
       window.localStorage.setItem('mr_auth_return_url', returnUrl);
       const actionCodeSettings = {
@@ -164,9 +196,28 @@ function hideStatus() {
   if (el) el.style.display = 'none';
 }
 
-export function openAuthModal() {
+export function openAuthModal(options = null) {
+  pendingAuthOptions = options;
   injectAuthModal();
   const overlay = document.getElementById('auth-modal-overlay');
+  const titleEl = document.getElementById('auth-modal-title');
+  const subtitleEl = document.getElementById('auth-modal-subtitle');
+  const brandEl = document.getElementById('auth-modal-brand');
+  const checkboxEl = document.getElementById('auth-newsletter-checkbox');
+
+  if (titleEl) {
+    titleEl.textContent = options?.title || 'Tu espacio personal';
+  }
+  if (subtitleEl) {
+    subtitleEl.textContent = options?.subtitle || 'Guarda tus configuraciones, tus páginas personalizadas y tus datos sin fricción.';
+  }
+  if (brandEl) {
+    brandEl.textContent = options?.badge || 'Menos Ruido';
+  }
+  if (checkboxEl) {
+    checkboxEl.checked = false; // RGPD: siempre desmarcada por defecto
+  }
+
   if (overlay) {
     hideStatus();
     overlay.style.display = 'flex';
@@ -504,11 +555,18 @@ function promptEmailConfirmation(callback) {
 async function checkEmailLinkCallback() {
   if (isSignInWithEmailLink(auth, window.location.href)) {
     let email = window.localStorage.getItem('emailForSignIn');
+    const pendingConsent = window.localStorage.getItem('mr_pending_newsletter_consent');
+    const extraData = {};
+    if (pendingConsent !== null) {
+      extraData.newsletterConsent = pendingConsent === 'true';
+      window.localStorage.removeItem('mr_pending_newsletter_consent');
+    }
+
     if (email) {
       try {
         const result = await signInWithEmailLink(auth, email, window.location.href);
         window.localStorage.removeItem('emailForSignIn');
-        await syncUserProfile(result.user);
+        await syncUserProfile(result.user, extraData);
         window.history.replaceState({}, document.title, window.location.pathname);
         const returnUrl = window.localStorage.getItem('mr_auth_return_url');
         if (returnUrl) {
@@ -525,19 +583,19 @@ async function checkEmailLinkCallback() {
         }
       } catch (err) {
         console.error('Error auto-login email link:', err);
-        promptEmailConfirmation(performSignInWithEmail);
+        promptEmailConfirmation((em, done) => performSignInWithEmail(em, extraData, done));
       }
     } else {
-      promptEmailConfirmation(performSignInWithEmail);
+      promptEmailConfirmation((em, done) => performSignInWithEmail(em, extraData, done));
     }
   }
 }
 
-async function performSignInWithEmail(email, done) {
+async function performSignInWithEmail(email, extraData, done) {
   try {
     const result = await signInWithEmailLink(auth, email, window.location.href);
     window.localStorage.removeItem('emailForSignIn');
-    await syncUserProfile(result.user);
+    await syncUserProfile(result.user, extraData || {});
     window.history.replaceState({}, document.title, window.location.pathname);
     done(true);
   } catch (err) {

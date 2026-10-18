@@ -40,7 +40,7 @@ const prevSecondaryLinks = document.getElementById('prevSecondaryLinks');
 const prevUnsubscribeNote = document.getElementById('prevUnsubscribeNote');
 
 // =========================================================================
-// 1. BLINDAJE DE SEGURIDAD ABSOLUTO (EXPULSIÓN A 404 SI NO ES JESÚS GIL)
+// 1. BLINDAJE DE SEGURIDAD ABSOLUTO (EXPULSIÓN A 404 SI NO ES ADMINISTRADOR)
 // =========================================================================
 
 function kickOut(reason = 'Acceso no autorizado') {
@@ -66,7 +66,7 @@ function isLocalDev() {
 function assertAuthorized() {
   if (isLocalDev()) return true;
   if (!auth.currentUser || !isDeveloper(auth.currentUser)) {
-    kickOut('Intento de acción sin autenticación de jesgilcan@gmail.com');
+    kickOut('Intento de acción sin autenticación de administrador');
     return false;
   }
   return true;
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (auth.currentUser && isDeveloper(auth.currentUser)) {
         handleAuthVerification(auth.currentUser);
       } else {
-        kickOut('Tiempo de espera agotado sin sesión de jesgilcan@gmail.com');
+        kickOut('Tiempo de espera agotado sin sesión de administrador');
       }
     }
   }, 1200);

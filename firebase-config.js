@@ -133,7 +133,7 @@ export function clearUserLocalCache() {
 /**
  * Guarda o actualiza los datos del usuario en Firestore
  */
-export async function syncUserProfile(user) {
+export async function syncUserProfile(user, extraData = {}) {
   if (!user) return null;
   const email = getUserEmail(user);
   const name = getUserDisplayName(user);
@@ -149,15 +149,27 @@ export async function syncUserProfile(user) {
     lastLogin: serverTimestamp()
   };
 
+  if (extraData && typeof extraData.newsletterConsent === 'boolean') {
+    userData.newsletterConsent = extraData.newsletterConsent;
+    userData.newsletterConsentDate = serverTimestamp();
+  }
+
   try {
     const snap = await getDoc(userRef);
     if (!snap.exists()) {
       userData.createdAt = serverTimestamp();
+      if (userData.newsletterConsent === undefined) {
+        userData.newsletterConsent = false;
+      }
       await setDoc(userRef, userData);
     } else {
       const existing = snap.data() || {};
       if (!userData.email && existing.email) {
         userData.email = existing.email;
+      }
+      if (userData.newsletterConsent === undefined && existing.newsletterConsent !== undefined) {
+        userData.newsletterConsent = existing.newsletterConsent;
+        userData.newsletterConsentDate = existing.newsletterConsentDate;
       }
       await setDoc(userRef, userData, { merge: true });
     }

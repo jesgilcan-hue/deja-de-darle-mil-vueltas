@@ -162,7 +162,17 @@ function updateActiveDesignUI() {
           } catch (e) {}
         }
         if (!user) {
-          openAuthModal();
+          openAuthModal({
+            title: 'Guardar como nuevo diseño',
+            subtitle: 'Accede a tu cuenta para crear y guardar un nuevo archivo independiente.',
+            badge: 'Nuevo diseño',
+            actionContext: 'save',
+            onSuccess: async (loggedUser) => {
+              if (currentGeneratorGetter) {
+                await triggerSaveFlow(copyBtn, currentGeneratorGetter(), loggedUser);
+              }
+            }
+          });
           return;
         }
         if (currentGeneratorGetter) {
@@ -254,7 +264,15 @@ function openUnsavedWarningModal(targetUrl) {
         window.localStorage.setItem('mr_pending_save_design', JSON.stringify(currentDraft));
         window.localStorage.setItem('mr_auth_return_url', targetUrl);
       } catch (e) {}
-      openAuthModal();
+      openAuthModal({
+        title: 'Guarda tus cambios antes de salir',
+        subtitle: 'Accede a tu cuenta para no perder las modificaciones que acabas de realizar.',
+        badge: 'Guardar y salir',
+        actionContext: 'save',
+        onSuccess: async (loggedUser) => {
+          await triggerSaveFlow(null, currentDraft, loggedUser, targetUrl);
+        }
+      });
       return;
     }
 
@@ -319,7 +337,222 @@ export function checkAndLoadSavedDesign(applyDataFn) {
   onAuthStateChanged(auth, runLoad);
 }
 
-export function setupGeneratorSave(btnId, getGeneratorDataFn) {
+function prefillEmailInputs(user) {
+  if (!user) return;
+  const email = (user.email || '').trim();
+  if (!email) return;
+
+  const modalEmail = document.getElementById('modal-email-input');
+  if (modalEmail && !modalEmail.value) {
+    modalEmail.value = email;
+  }
+  const coverEmail = document.getElementById('inpCoverEmail');
+  if (coverEmail && !coverEmail.value) {
+    coverEmail.value = email;
+  }
+}
+
+async function executeSaveAction(btn, getGeneratorDataFn, user, options = {}) {
+  const currentDesign = getGeneratorDataFn();
+  const cleanData = cleanDataForFirestore(currentDesign.data || {});
+  const nowSecs = Math.floor(Date.now() / 1000);
+
+  let docId = currentActiveDesign ? currentActiveDesign.id : null;
+  if (!docId) {
+    docId = 'des_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+  }
+  const finalName = (currentActiveDesign ? currentActiveDesign.name : currentDesign.name) || (currentDesign.type ? `${currentDesign.type} Personalizado` : 'Mi Planificador');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Guardando...';
+  }
+
+  // 1. Guardar en localStorage como caché y respaldo seguro
+  try {
+    let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+    const existingIdx = localDesigns.findIndex(d => d.id === docId);
+    const savedItem = {
+      id: docId,
+      name: finalName,
+      type: currentDesign.type || 'Planificador',
+      summary: currentDesign.summary || '',
+      editUrl: window.location.pathname,
+      data: cleanData,
+      updatedAt: { seconds: nowSecs },
+      createdAt: existingIdx >= 0 && localDesigns[existingIdx].createdAt ? localDesigns[existingIdx].createdAt : { seconds: nowSecs }
+    };
+
+    if (existingIdx >= 0) {
+      localDesigns[existingIdx] = { ...localDesigns[existingIdx], ...savedItem };
+    } else {
+      localDesigns.unshift(savedItem);
+    }
+
+    localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+    localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
+  } catch (localErr) {
+    console.warn('Aviso guardando en localStorage:', localErr);
+  }
+
+  // 2. Guardar en Firestore del usuario autenticado
+  if (user) {
+    try {
+      const designDocRef = doc(db, 'users', user.uid, 'designs', docId);
+      await setDoc(designDocRef, {
+        name: finalName,
+        type: currentDesign.type || 'Planificador',
+        summary: currentDesign.summary || '',
+        editUrl: window.location.pathname,
+        data: cleanData,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (cloudErr) {
+      console.warn('Aviso sincronizando en Firestore:', cloudErr);
+    }
+  }
+
+  currentActiveDesign = {
+    id: docId,
+    name: finalName,
+    type: currentDesign.type || 'Planificador'
+  };
+  hasUnsavedChanges = false;
+
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<span>✓</span> ¡Guardado!';
+    setTimeout(() => {
+      updateActiveDesignUI();
+    }, 1200);
+  }
+
+  notifyToast(`✓ "${finalName}" guardado en Mi Espacio`);
+}
+
+function interceptDownloadActions(options, getGeneratorDataFn) {
+  // 1. Interceptar función global openDownloadModal
+  const wrapOpenDownloadModal = () => {
+    if (typeof window.openDownloadModal === 'function' && !window.openDownloadModal.__mrWrapped) {
+      const originalModal = window.openDownloadModal;
+      const wrapped = function(...args) {
+        let user = auth.currentUser;
+        if (!user) {
+          try {
+            const currentDesign = getGeneratorDataFn ? getGeneratorDataFn() : null;
+            if (currentDesign) {
+              sessionStorage.setItem('mr_temp_generator_draft', JSON.stringify(currentDesign));
+            }
+          } catch (e) {}
+
+          openAuthModal({
+            title: options?.isPremium ? 'Descarga tu diseño en PDF' : 'Descarga tu plantilla en PDF',
+            subtitle: options?.isPremium 
+              ? 'Accede a tu cuenta para generar y descargar tu archivo listo para imprenta.'
+              : 'Crea tu cuenta gratuita o accede para descargar e imprimir tu plantilla en PDF de alta resolución.',
+            badge: options?.isPremium ? 'Edición Completa' : 'Descarga en PDF',
+            actionContext: 'download',
+            isPremium: !!options?.isPremium,
+            onSuccess: (loggedUser) => {
+              prefillEmailInputs(loggedUser);
+              originalModal.apply(this, args);
+            }
+          });
+          return;
+        }
+
+        prefillEmailInputs(user);
+        return originalModal.apply(this, args);
+      };
+      wrapped.__mrWrapped = true;
+      window.openDownloadModal = wrapped;
+    }
+  };
+
+  // 2. Interceptar función global openCompileModal (Libro Completo)
+  const wrapOpenCompileModal = () => {
+    if (typeof window.openCompileModal === 'function' && !window.openCompileModal.__mrWrapped) {
+      const originalCompile = window.openCompileModal;
+      const wrapped = function(...args) {
+        let user = auth.currentUser;
+        if (!user) {
+          try {
+            const currentDesign = getGeneratorDataFn ? getGeneratorDataFn() : null;
+            if (currentDesign) {
+              sessionStorage.setItem('mr_temp_generator_draft', JSON.stringify(currentDesign));
+            }
+          } catch (e) {}
+
+          openAuthModal({
+            title: 'Descarga tu Cuaderno Completo en PDF',
+            subtitle: 'Accede a tu cuenta para compilar y descargar tu libro completo listo para imprimir.',
+            badge: 'Cuaderno Completo',
+            actionContext: 'download',
+            isPremium: true,
+            onSuccess: (loggedUser) => {
+              prefillEmailInputs(loggedUser);
+              originalCompile.apply(this, args);
+            }
+          });
+          return;
+        }
+
+        prefillEmailInputs(user);
+        return originalCompile.apply(this, args);
+      };
+      wrapped.__mrWrapped = true;
+      window.openCompileModal = wrapped;
+    }
+  };
+
+  wrapOpenDownloadModal();
+  wrapOpenCompileModal();
+
+  setTimeout(() => {
+    wrapOpenDownloadModal();
+    wrapOpenCompileModal();
+  }, 100);
+
+  // 3. Captura defensiva de clics en botones de descarga
+  document.addEventListener('click', (e) => {
+    const target = e.target && e.target.closest && e.target.closest('.btn-download-primary, .btn-download-send, .btn-compile-pdf');
+    if (!target) return;
+    if (target.id === 'btn-save-generator-design' || target.id === 'btn-save-as-copy' || target.getAttribute('href')) return;
+
+    let user = auth.currentUser;
+    if (!user) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      try {
+        const currentDesign = getGeneratorDataFn ? getGeneratorDataFn() : null;
+        if (currentDesign) {
+          sessionStorage.setItem('mr_temp_generator_draft', JSON.stringify(currentDesign));
+        }
+      } catch (err) {}
+
+      openAuthModal({
+        title: options?.isPremium ? 'Descarga tu diseño en PDF' : 'Descarga tu plantilla en PDF',
+        subtitle: options?.isPremium 
+          ? 'Accede a tu cuenta para generar y descargar tu archivo listo para imprenta.'
+          : 'Crea tu cuenta gratuita o accede para descargar e imprimir tu plantilla en PDF de alta resolución.',
+        badge: options?.isPremium ? 'Edición Completa' : 'Descarga en PDF',
+        actionContext: 'download',
+        isPremium: !!options?.isPremium,
+        onSuccess: (loggedUser) => {
+          prefillEmailInputs(loggedUser);
+          if (typeof window.openDownloadModal === 'function') {
+            window.openDownloadModal();
+          } else if (typeof window.openCompileModal === 'function') {
+            window.openCompileModal();
+          }
+        }
+      });
+    }
+  }, true);
+}
+
+export function setupGeneratorSave(btnId, getGeneratorDataFn, options = {}) {
   initUnsavedTracking();
   const btn = document.getElementById(btnId);
   if (!btn) return;
@@ -327,6 +560,9 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
   currentSaveBtn = btn;
   currentGeneratorGetter = getGeneratorDataFn;
   updateActiveDesignUI();
+
+  // Interceptar descargas en PDF para exigir login antes de abrir el modal de descarga
+  interceptDownloadActions(options, getGeneratorDataFn);
 
   // Si el usuario acaba de iniciar sesión tras haber guardado localmente, sincronizar el diseño activo
   window.addEventListener('mr-auth-success', async (e) => {
@@ -359,81 +595,27 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn) {
       } catch (e) {}
     }
 
-    const currentDesign = getGeneratorDataFn();
-    const cleanData = cleanDataForFirestore(currentDesign.data || {});
-    const nowSecs = Math.floor(Date.now() / 1000);
-
-    let docId = currentActiveDesign ? currentActiveDesign.id : null;
-    if (!docId) {
-      docId = 'des_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-    }
-    const finalName = (currentActiveDesign ? currentActiveDesign.name : currentDesign.name) || (currentDesign.type ? `${currentDesign.type} Personalizado` : 'Mi Planificador');
-
-    btn.disabled = true;
-    btn.innerHTML = '<span>⏳</span> Guardando...';
-
-    // 1. Guardar SIEMPRE e INMEDIATAMENTE en localStorage (0 ms de latencia, backup local 100% garantizado)
-    try {
-      let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
-      const existingIdx = localDesigns.findIndex(d => d.id === docId);
-      const savedItem = {
-        id: docId,
-        name: finalName,
-        type: currentDesign.type || 'Planificador',
-        summary: currentDesign.summary || '',
-        editUrl: window.location.pathname,
-        data: cleanData,
-        updatedAt: { seconds: nowSecs },
-        createdAt: existingIdx >= 0 && localDesigns[existingIdx].createdAt ? localDesigns[existingIdx].createdAt : { seconds: nowSecs }
-      };
-
-      if (existingIdx >= 0) {
-        localDesigns[existingIdx] = { ...localDesigns[existingIdx], ...savedItem };
-      } else {
-        localDesigns.unshift(savedItem);
-      }
-
-      localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
-      localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
-    } catch (localErr) {
-      console.warn('Aviso guardando en localStorage:', localErr);
-    }
-
-    // 2. Si el usuario está autenticado, sincronizar en tiempo real con Firestore
-    if (user) {
+    // EXIGENCIA: Para guardar se requiere estar registrado/logueado
+    if (!user) {
       try {
-        const designDocRef = doc(db, 'users', user.uid, 'designs', docId);
-        await setDoc(designDocRef, {
-          name: finalName,
-          type: currentDesign.type || 'Planificador',
-          summary: currentDesign.summary || '',
-          editUrl: window.location.pathname,
-          data: cleanData,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      } catch (cloudErr) {
-        console.warn('Aviso sincronizando en Firestore (guardado local intacto):', cloudErr);
-      }
+        const currentDesign = getGeneratorDataFn();
+        sessionStorage.setItem('mr_temp_generator_draft', JSON.stringify(currentDesign));
+      } catch (e) {}
+
+      openAuthModal({
+        title: 'Guarda tu diseño en Mi Espacio',
+        subtitle: 'Para guardar tus plantillas personalizadas y tenerlas siempre disponibles, accede o crea tu cuenta gratuita.',
+        badge: 'Guardar diseño',
+        actionContext: 'save',
+        isPremium: !!options?.isPremium,
+        onSuccess: async (loggedUser) => {
+          await executeSaveAction(btn, getGeneratorDataFn, loggedUser, options);
+        }
+      });
+      return;
     }
 
-    currentActiveDesign = {
-      id: docId,
-      name: finalName,
-      type: currentDesign.type || 'Planificador'
-    };
-    hasUnsavedChanges = false;
-
-    btn.disabled = false;
-    btn.innerHTML = '<span>✓</span> ¡Guardado!';
-    setTimeout(() => {
-      updateActiveDesignUI();
-    }, 1200);
-
-    if (user) {
-      notifyToast(`✓ "${finalName}" guardado en Mi Espacio`);
-    } else {
-      notifyToast(`✓ Guardado con éxito en Mi Espacio`);
-    }
+    await executeSaveAction(btn, getGeneratorDataFn, user, options);
   });
 }
 

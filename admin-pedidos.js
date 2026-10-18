@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Temporizador de expulsión inmediata (1200 ms):
-  // Si en 1.2 segundos no se ha certificado que es jesgilcan@gmail.com, se expulsa sin piedad a 404
+  // Si en 1.2 segundos no se ha certificado el rol administrador, se expulsa a 404
   setTimeout(() => {
     if (!authResolved) {
       if (isLocalDev()) {
@@ -111,22 +111,22 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (auth.currentUser && isDeveloper(auth.currentUser)) {
         handleAuthVerification(auth.currentUser);
       } else {
-        kickOut('Tiempo de espera agotado sin sesión de jesgilcan@gmail.com');
+        kickOut('Tiempo de espera agotado sin sesión de administrador');
       }
     }
   }, 1200);
 });
 
 function handleAuthVerification(user) {
-  // REGLA SUPREMA: Si NO es jesgilcan@gmail.com (y no es localhost), EXPULSIÓN INMEDIATA A 404
+  // REGLA: Si NO es administrador autorizado (y no es localhost), expulsión inmediata a 404
   if (!isLocalDev()) {
     if (!user || !isDeveloper(user)) {
-      kickOut(user ? `Usuario ajeno bloqueado: ${getUserEmail(user)}` : 'Visitante no autenticado');
+      kickOut(user ? `Usuario no autorizado: ${getUserEmail(user)}` : 'Visitante no autenticado');
       return;
     }
   }
 
-  // Identidad certificada al 100% por Google OAuth como jesgilcan@gmail.com
+  // Identidad certificada al 100% por Google OAuth
   revealPage();
 
   // Doble factor PIN (1111):
@@ -383,6 +383,7 @@ function validateCustomerData(customer) {
   const result = {
     isValid: true,
     isRegistered: customer?.isRegistered !== false,
+    newsletterConsent: customer?.newsletterConsent === true,
     emailStatus: 'correct',
     phoneStatus: 'mobile_ok',
     postalStatus: 'correct'
@@ -507,6 +508,7 @@ function createOrderCardElement(order) {
         <!-- VALIDACIÓN DE IDENTIDAD Y DATOS DEL CLIENTE -->
         <div class="customer-validation-status ${custVal.isValid ? 'verified' : 'warning'}">
           <div>• Cuenta de usuario: <strong>${custVal.isRegistered ? '✅ Alta activa en Menos Ruido' : '⚠️ Sin registro previo'}</strong></div>
+          <div>• Novedades y ofertas (Boletín): <strong>${custVal.newsletterConsent ? '✅ Consentimiento activo (Ticket verde)' : '⚪ Sin consentimiento comercial'}</strong></div>
           <div>• Email de contacto: <strong>${custVal.emailStatus === 'correct' ? '✅ Verificado' : custVal.emailStatus === 'typo' ? '⚠️ Posible errata en dominio' : '❌ Inválido'}</strong></div>
           <div>• Móvil para mensajería: <strong>${custVal.phoneStatus === 'mobile_ok' ? '✅ Móvil nacional OK (SMS)' : custVal.phoneStatus === 'landline' ? '☎️ Fijo (sin SMS)' : '⚠️ Revisar formato'}</strong></div>
           <div>• Código Postal: <strong>${custVal.postalStatus === 'correct' ? `✅ CP ${escapeHtml(order.customer?.postalCode || '')} España` : '⚠️ Código postal inválido'}</strong></div>
