@@ -6,6 +6,7 @@
 import { calculateLuluQuoteAndSafety } from './lulu-quote.js';
 
 const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
+const ALLOWED_TEST_CUSTOMER_EMAIL = 'jesusgil_87@hotmail.com';
 const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf-8');
 
 // Clave secreta de Stripe en MODO PRUEBA (prioriza variable de entorno STRIPE_SECRET_KEY en Vercel)
@@ -35,8 +36,8 @@ async function verifyDeveloperIdToken(req) {
       return { valid: false, error: 'Sesión de Firebase inválida o expirada.' };
     }
     const userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
-    if (userEmail !== ALLOWED_ADMIN_EMAIL) {
-      return { valid: false, error: 'Acceso exclusivo para jesgilcan@gmail.com.' };
+    if (userEmail !== ALLOWED_ADMIN_EMAIL && userEmail !== ALLOWED_TEST_CUSTOMER_EMAIL) {
+      return { valid: false, error: 'Acceso exclusivo para cuentas autorizadas.' };
     }
     return { valid: true, email: userEmail };
   } catch (err) {
@@ -106,7 +107,7 @@ export default async function handler(req, res) {
 
     // 3. Crear sesión en Stripe Checkout API v1 (MODO TEST)
     const origin = (returnOrigin || 'https://www.editorialmenosruido.com').replace(/\/$/, '');
-    const successUrl = `${origin}/admin-pedidos.html?stripe_test_success=1&order=${encodeURIComponent(orderNumber)}`;
+    const successUrl = `${origin}/mi-espacio.html?tab=pedidos&stripe_test_success=1&order=${encodeURIComponent(orderNumber)}`;
     const cancelUrl = `${origin}/generador-portadas.html?stripe_test_cancel=1`;
 
     const params = new URLSearchParams();

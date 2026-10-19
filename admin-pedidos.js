@@ -1,5 +1,6 @@
 import { auth, db, isDeveloper, DEVELOPER_PIN, getUserEmail } from './firebase-config.js';
 import { verifyAndEnforceThreeDevices } from './device-guard.js';
+import { sendOrderLifecycleEmails } from './order-email-notifier.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { 
   collection, 
@@ -308,7 +309,7 @@ function updateKPICounters() {
     if (st === 'pending_review') pendingCount++;
     else if (st === 'approved_printing') approvedCount++;
     else if (st === 'printing') printingCount++;
-    else if (st === 'shipped') shippedCount++;
+    else if (st === 'shipped' || st === 'delivered') shippedCount++;
     else if (st === 'paused') pausedCount++;
   });
 
@@ -355,7 +356,7 @@ function renderOrdersGrid() {
 
   // Filtrado por estado y por texto de búsqueda
   const filtered = allOrders.filter(o => {
-    const matchesFilter = activeFilter === 'all' || o.status === activeFilter;
+    const matchesFilter = activeFilter === 'all' || o.status === activeFilter || (activeFilter === 'shipped' && o.status === 'delivered');
     if (!matchesFilter) return false;
 
     if (!searchQuery) return true;
@@ -446,9 +447,9 @@ function validateCustomerData(customer) {
 function renderCommsBadges(order) {
   const comms = order.comms || {
     compra: { sent: true, date: order.createdAt },
-    imprenta: { sent: order.status === 'printing' || order.status === 'shipped' },
-    tracking: { sent: order.status === 'shipped' },
-    entregado: { sent: false },
+    imprenta: { sent: order.status === 'printing' || order.status === 'shipped' || order.status === 'delivered' },
+    tracking: { sent: order.status === 'shipped' || order.status === 'delivered' },
+    entregado: { sent: order.status === 'delivered' },
     checkin: { sent: false }
   };
 
@@ -536,7 +537,7 @@ function createOrderCardElement(order) {
         <!-- AUDITORÍA DE COMUNICACIONES RESEND -->
         <div class="order-comms-audit">
           <div style="font-weight:700; font-size:0.72rem; text-transform:uppercase; color:#6b6257;">
-            📬 Comunicaciones al cliente (Resend):
+            📬 Comunicaciones al cliente (Resend · pedidos@):
           </div>
           <div class="comms-badges-list">
             ${renderCommsBadges(order)}
@@ -626,7 +627,7 @@ function renderActionButtonsForOrder(order) {
   if (st === 'pending_review') {
     return `
       <button type="button" class="btn-order-approve" onclick="approveAndSendToLulu('${id}')">
-        <span>✅</span> Aprobar y Enviar a Imprenta
+        <span>✅</span> 2. Aprobar y Enviar a Imprenta (+Emails)
       </button>
       <div style="display:flex; gap:6px;">
         <button type="button" class="btn-order-secondary" style="flex:1;" onclick="openEditAddressModal('${id}')">
@@ -643,7 +644,7 @@ function renderActionButtonsForOrder(order) {
         ⏳ Transmitiendo archivos a Lulu API...
       </div>
       <button type="button" class="btn-order-secondary" onclick="simulateLuluProgress('${id}', 'printing')">
-        <span>🖨️</span> Simular que Lulu inicia impresión
+        <span>🖨️</span> Simular que Lulu inicia impresión (+Emails)
       </button>
     `;
   } else if (st === 'printing') {
@@ -652,19 +653,38 @@ function renderActionButtonsForOrder(order) {
         🖨️ En fabricación (Lulu Job: ${escapeHtml(order.luluJob?.jobId || 'LULU-9812')})
       </div>
       <button type="button" class="btn-order-approve" style="background:#2563eb;" onclick="simulateLuluProgress('${id}', 'shipped')">
-        <span>📦</span> Marcar como Enviado (Generar Tracking)
+        <span>📦</span> 3. Marcar como Enviado / Tracking (+Emails)
       </button>
     `;
   } else if (st === 'shipped') {
-    const tracking = order.luluJob?.trackingCode || 'ES84920491028';
+    const tracking = order.luluJob?.trackingCode || order.shipping?.trackingNumber || 'ES84920491028';
     return `
       <div style="background:#dcfce7; color:#15803d; padding:8px 10px; border-radius:6px; font-size:0.78rem;">
-        <div><strong>🚚 Paquete en camino con Correos</strong></div>
+        <div><strong>🚚 Etapa 3/4: En camino con Correos Express</strong></div>
         <div style="margin-top:2px;">Tracking: <a href="https://www.correos.es/es/es/herramientas/localizador/envios?numero=${tracking}" target="_blank" style="color:#15803d; font-weight:700; text-decoration:underline;">${tracking} ↗</a></div>
       </div>
+      <button type="button" class="btn-order-approve" style="background:#166534; margin-top:4px;" onclick="simulateLuluProgress('${id}', 'delivered')">
+        <span>🎉</span> 4. Marcar como Entregado (+Emails)
+      </button>
       <div style="display:flex; gap:6px; margin-top:4px;">
         <button type="button" class="btn-order-secondary" style="flex:1;" onclick="resendCustomerEmail('${id}', 'tracking')">
           <span>✉️</span> Reenviar Tracking
+        </button>
+        <button type="button" class="btn-order-secondary" style="flex:1; color:#991b1b;" onclick="anonymizeOrderRgpd('${id}')" title="Borrar datos personales y fotos transcurridos 30 días">
+          <span>🛡️</span> RGPD Limpieza
+        </button>
+      </div>
+    `;
+  } else if (st === 'delivered') {
+    const tracking = order.luluJob?.trackingCode || order.shipping?.trackingNumber || 'ES84920491028';
+    return `
+      <div style="background:#14532d; color:#f0fdf4; padding:10px 12px; border-radius:6px; font-size:0.79rem; text-align:center;">
+        <div><strong>🎉 Etapa 4/4: Pedido Entregado en Domicilio</strong></div>
+        <div style="font-size:0.72rem; opacity:0.9; margin-top:2px;">Tracking completado: ${escapeHtml(tracking)}</div>
+      </div>
+      <div style="display:flex; gap:6px; margin-top:4px;">
+        <button type="button" class="btn-order-secondary" style="flex:1;" onclick="resendCustomerEmail('${id}', 'delivered')">
+          <span>✉️</span> Reenviar Email Entrega
         </button>
         <button type="button" class="btn-order-secondary" style="flex:1; color:#991b1b;" onclick="anonymizeOrderRgpd('${id}')" title="Borrar datos personales y fotos transcurridos 30 días">
           <span>🛡️</span> RGPD Limpieza
@@ -699,7 +719,7 @@ window.approveAndSendToLulu = async function(orderId) {
   if (!order) return;
 
   const cost = (order.pricing?.luluCostEstimate || 10.50).toFixed(2);
-  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Coste estimado de imprenta Lulu: ${cost} €\n• Se ordenará la impresión en ${getBindingDisplayName(order.book?.bindingType)}.\n• Se notificará al cliente por correo electrónico.`);
+  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Coste estimado de imprenta Lulu: ${cost} €\n• Se ordenará la impresión en ${getBindingDisplayName(order.book?.bindingType)}.\n• Se enviarán emails reales desde pedidos@editorialmenosruido.com al Cliente (jesusgil_87@hotmail.com) y al Gestor (jesgilcan@gmail.com).`);
   if (!ok) return;
 
   order.status = 'approved_printing';
@@ -713,45 +733,76 @@ window.approveAndSendToLulu = async function(orderId) {
 
   saveOrdersState();
   sortAndRenderOrders();
-  showToast(`✓ Pedido #${order.orderNumber} aprobado y enviado a Lulu`);
+  showToast(`✓ Pedido #${order.orderNumber} aprobado · Enviando a Lulu y disparando emails...`);
 
-  // Simulación: tras 2.5 segundos, pasa a "En Imprenta"
-  setTimeout(() => {
+  // Simulación: tras 1.2 segundos, pasa a "En Imprenta" y envía los 2 emails reales
+  setTimeout(async () => {
     order.status = 'printing';
     if (!order.comms) order.comms = {};
     order.comms.imprenta = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
+    if (!order.shipping) order.shipping = { carrier: 'Correos Express', trackingNumber: 'Pendiente de expedición' };
+    order.shipping.lastCarrierMessage = 'En fabricación y encuadernación en planta de Lulu Direct.';
     addTimelineEvent(order, 'Lulu confirma recepción y comienza encuadernación en fábrica');
-    addTimelineEvent(order, `Email de diseño aprobado enviado a ${order.customer?.email}`);
+    addTimelineEvent(order, `Emails de Etapa 2/4 (En Imprenta) enviados desde pedidos@ a Cliente y Gestor`);
     saveOrdersState();
     sortAndRenderOrders();
-  }, 2500);
+    await sendOrderLifecycleEmails(order, 'status_printing');
+    showToast(`✉️ Emails de Etapa 2/4 (En Imprenta) enviados a Cliente y Gestor`);
+  }, 1200);
 };
 
 // Simular progreso de Lulu
-window.simulateLuluProgress = function(orderId, newStatus) {
+window.simulateLuluProgress = async function(orderId, newStatus) {
   if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
   if (newStatus === 'shipped') {
-    const tracking = 'ES' + Math.floor(10000000000 + Math.random() * 90000000000);
+    const tracking = order.luluJob?.trackingCode || order.shipping?.trackingNumber || ('ES' + Math.floor(10000000000 + Math.random() * 90000000000));
     order.status = 'shipped';
+    if (!order.luluJob) order.luluJob = {};
     order.luluJob.carrier = 'Correos Express';
     order.luluJob.trackingCode = tracking;
     order.luluJob.shippedAt = new Date().toISOString();
+    if (!order.shipping) order.shipping = {};
+    order.shipping.carrier = 'Correos Express';
+    order.shipping.trackingNumber = tracking;
+    order.shipping.trackingUrl = 'https://www.correosexpress.com';
+    order.shipping.lastCarrierMessage = `Correos Express: Paquete en reparto con seguimiento activo ${tracking}.`;
     if (!order.comms) order.comms = {};
     order.comms.tracking = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
     addTimelineEvent(order, `Lulu despacha el paquete con Correos Express (Tracking: ${tracking})`);
-    addTimelineEvent(order, `Email automático con número de seguimiento enviado a ${order.customer?.email}`);
-    showToast(`✓ Pedido #${order.orderNumber} marcado como enviado con tracking`);
+    addTimelineEvent(order, `Emails de Etapa 3/4 (En Reparto + Tracking) enviados a Cliente y Gestor`);
+    saveOrdersState();
+    sortAndRenderOrders();
+    showToast(`⏳ Pedido #${order.orderNumber} enviado · Disparando emails de Tracking a Cliente y Gestor...`);
+    await sendOrderLifecycleEmails(order, 'status_shipped');
+    showToast(`✉️ Emails de Etapa 3/4 (Tracking ${tracking}) enviados a jesusgil_87@hotmail.com y jesgilcan@gmail.com`);
+  } else if (newStatus === 'delivered') {
+    const tracking = order.luluJob?.trackingCode || order.shipping?.trackingNumber || 'ES84920491028';
+    order.status = 'delivered';
+    if (!order.shipping) order.shipping = { carrier: 'Correos Express', trackingNumber: tracking };
+    order.shipping.lastCarrierMessage = 'Correos Express: Entrega completada satisfactoriamente en el domicilio del destinatario.';
+    if (!order.comms) order.comms = {};
+    order.comms.entregado = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
+    addTimelineEvent(order, 'Correos Express confirma la entrega del paquete en el domicilio del cliente (Etapa 4/4)');
+    addTimelineEvent(order, 'Emails de Etapa 4/4 (Pedido Entregado) enviados desde pedidos@ a Cliente y Gestor');
+    saveOrdersState();
+    sortAndRenderOrders();
+    showToast(`⏳ Pedido #${order.orderNumber} marcado como Entregado · Enviando emails finales...`);
+    await sendOrderLifecycleEmails(order, 'status_delivered');
+    showToast(`🎉 Etapa 4/4 completada · Emails de Entrega enviados a jesusgil_87@hotmail.com y jesgilcan@gmail.com`);
   } else if (newStatus === 'printing') {
     order.status = 'printing';
-    addTimelineEvent(order, 'Fabricación en curso');
-    showToast(`✓ Pedido en fabricación`);
+    if (!order.comms) order.comms = {};
+    order.comms.imprenta = { sent: true, date: new Date().toISOString() };
+    addTimelineEvent(order, 'Fabricación en curso en Lulu Direct');
+    saveOrdersState();
+    sortAndRenderOrders();
+    showToast(`⏳ Pedido en fabricación · Enviando emails a Cliente y Gestor...`);
+    await sendOrderLifecycleEmails(order, 'status_printing');
+    showToast(`✉️ Emails de Etapa 2/4 (En Imprenta) enviados`);
   }
-
-  saveOrdersState();
-  sortAndRenderOrders();
 };
 
 // Pausar / Reanudar pedido
@@ -783,15 +834,18 @@ window.toggleTimeline = function(orderId) {
 };
 
 // Reenviar email
-window.resendCustomerEmail = function(orderId, type) {
+window.resendCustomerEmail = async function(orderId, type) {
   if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
-  const email = order.customer?.email || 'cliente';
-  addTimelineEvent(order, `Reenvío manual de notificación a ${email}`);
-  showToast(`✉️ Email de seguimiento reenviado con éxito a ${email}`);
+  const email = order.customer?.email || 'jesusgil_87@hotmail.com';
+  const evType = type === 'delivered' ? 'status_delivered' : 'status_shipped';
+  addTimelineEvent(order, `Reenvío manual de notificación (${type}) a ${email} y gestor`);
   saveOrdersState();
   sortAndRenderOrders();
+  showToast(`⏳ Reenviando emails (${type}) a Cliente y Gestor...`);
+  await sendOrderLifecycleEmails(order, evType);
+  showToast(`✉️ Email reenviado con éxito a ${email} y jesgilcan@gmail.com`);
 };
 
 // Anonimización RGPD
@@ -1020,11 +1074,11 @@ window.executeSendCustomerEmail = async function() {
         'Authorization': `Bearer ${idToken}`
       },
       body: JSON.stringify({
-        to: recipientEmail,
+        to: [recipientEmail, 'jesgilcan@gmail.com'],
         subject: subject,
         bodyText: body,
-        senderType: 'contacto',
-        replyTo: 'contacto@editorialmenosruido.com',
+        senderType: 'pedidos',
+        replyTo: 'pedidos@editorialmenosruido.com',
         highlightDetails: {
           orderNumber: order.orderNumber,
           bookTitle: order.book?.title,
@@ -1044,13 +1098,13 @@ window.executeSendCustomerEmail = async function() {
       order.comms['manual_' + Date.now()] = { sent: true, date: new Date().toISOString(), subject, id: commId };
     }
 
-    addTimelineEvent(order, `Email enviado al cliente vía Resend desde contacto@: «${subject}» (ID: ${commId})`);
+    addTimelineEvent(order, `Email enviado al cliente vía Resend desde pedidos@: «${subject}» (ID: ${commId})`);
     saveOrdersState();
     sortAndRenderOrders();
     closeSendEmailModal();
 
     if (res.ok && data.success) {
-      showToast(`✉️ Email enviado con éxito a ${recipientEmail}`);
+      showToast(`✉️ Email enviado con éxito desde pedidos@ a ${recipientEmail}`);
     } else {
       showToast(`⚠️ Registrado en timeline, pero Resend devolvió: ${data.error || 'Aviso'}`);
       alert(`Resend reportó una incidencia:\n${data.error || 'Error desconocido'}`);
@@ -1064,12 +1118,12 @@ window.executeSendCustomerEmail = async function() {
 // =========================================================================
 // 7. SIMULADOR DE PEDIDOS DEMO / TEST (SANDBOX)
 // =========================================================================
-window.createDemoOrder = function() {
+window.createDemoOrder = async function(sendEmails = true) {
   if (!assertAuthorized()) return;
   const demoSeed = [
     {
-      name: "Clara Beltrán",
-      email: "clara.beltran@gmail.com",
+      name: "Cliente Test (jesusgil_87)",
+      email: "jesusgil_87@hotmail.com",
       phone: "+34 654 321 987",
       address: "Calle Serrano 42, 4º Derecha",
       postalCode: "28001",
@@ -1080,12 +1134,12 @@ window.createDemoOrder = function() {
       subtitle: "52 semanas, 12 meses y organización clara",
       bindingType: "coil",
       pageCount: 144,
-      price: 24.90,
+      price: 27.90,
       isRegistered: true
     },
     {
-      name: "Javier Mendoza",
-      email: "javier.mendoza@copisteria.es",
+      name: "Cliente Test (jesusgil_87)",
+      email: "jesusgil_87@hotmail.com",
       phone: "+34 612 889 004",
       address: "Avenida Diagonal 320, 2º 1ª",
       postalCode: "08013",
@@ -1100,8 +1154,8 @@ window.createDemoOrder = function() {
       isRegistered: true
     },
     {
-      name: "Lucía Aranda",
-      email: "lucia.aranda@diseno.com",
+      name: "Cliente Test (jesusgil_87)",
+      email: "jesusgil_87@hotmail.com",
       phone: "+34 670 112 334",
       address: "Plaza del Pilar 7, 1º B",
       postalCode: "50003",
@@ -1109,32 +1163,17 @@ window.createDemoOrder = function() {
       province: "Zaragoza",
       notes: "",
       bookTitle: "Cuaderno Personal Menos Ruido",
-      subtitle: "Edición especial tapa dura con lomo dorado",
+      subtitle: "Edición especial tapa dura Casewrap",
       bindingType: "hardcover",
       pageCount: 144,
       price: 32.90,
       isRegistered: true
-    },
-    {
-      name: "Pedro Valdés",
-      email: "pedro.valdes@gmial.com", // Errata voluntaria de prueba para verificar alertas
-      phone: "912345678", // Teléfono fijo sin SMS para probar avisos
-      address: "Gran Vía 15, 3º Izquierda",
-      postalCode: "28013",
-      city: "Madrid",
-      province: "Madrid",
-      notes: "Horario comercial",
-      bookTitle: "Planificador Semanal Atemporal",
-      subtitle: "Organización abierta sin fechas prefijadas",
-      bindingType: "coil",
-      pageCount: 144,
-      price: 24.90,
-      isRegistered: false // Sin cuenta previa para probar alerta
     }
   ];
 
   const pick = demoSeed[Math.floor(Math.random() * demoSeed.length)];
   const num = 'MR-2026-' + Math.floor(1000 + Math.random() * 9000);
+  const trackingCode = 'ES' + Math.floor(10000000000 + Math.random() * 90000000000);
 
   const newOrder = {
     id: 'ord_' + Date.now(),
@@ -1153,6 +1192,20 @@ window.createDemoOrder = function() {
       notes: pick.notes,
       isRegistered: pick.isRegistered
     },
+    shipping: {
+      carrier: 'Correos Express',
+      trackingNumber: trackingCode,
+      trackingUrl: 'https://www.correosexpress.com',
+      estimatedDelivery: 'Entrega prevista en 3-5 días laborables',
+      lastCarrierMessage: 'Pedido recibido en preimpresión (300 DPI). Pendiente de entrega a Correos Express.'
+    },
+    luluJob: {
+      status: 'queued',
+      jobId: 'LULU-' + Math.floor(100000 + Math.random() * 900000),
+      carrier: 'Correos Express',
+      trackingCode: trackingCode,
+      cost: parseFloat((pick.price * 0.42).toFixed(2))
+    },
     comms: {
       compra: { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) },
       imprenta: { sent: false },
@@ -1167,7 +1220,8 @@ window.createDemoOrder = function() {
       pageCount: pick.pageCount,
       quantity: 1,
       size: "8.25x6",
-      spineWidthMm: (pick.pageCount * 0.057).toFixed(1)
+      spineWidthMm: (pick.pageCount * 0.057).toFixed(1),
+      fileSizeMb: (pick.pageCount * 0.32).toFixed(1)
     },
     pricing: {
       currency: "EUR",
@@ -1176,19 +1230,24 @@ window.createDemoOrder = function() {
       stripePaymentId: "ch_" + Math.random().toString(36).substring(2, 10)
     },
     timeline: [
-      { date: new Date().toISOString(), message: `Pago de ${pick.price.toFixed(2)} € confirmado por Stripe` },
-      { date: new Date().toISOString(), message: `Email de confirmación de pedido enviado a ${pick.email}` }
+      { date: new Date().toISOString(), message: `Pago de ${pick.price.toFixed(2)} € confirmado (Test 0€)` },
+      { date: new Date().toISOString(), message: `Emails de nuevo pedido enviados desde pedidos@ a ${pick.email} (Cliente) y jesgilcan@gmail.com (Gestor)` }
     ]
   };
 
   allOrders.unshift(newOrder);
   saveOrdersState();
   sortAndRenderOrders();
-  showToast(`✓ Nuevo pedido demo #${num} creado`);
+
+  if (sendEmails) {
+    showToast(`⏳ Pedido #${num} creado · Enviando emails a Cliente y Gestor...`);
+    await sendOrderLifecycleEmails(newOrder, 'order_created');
+    showToast(`✉️ Pedido #${num} creado · Emails enviados a jesusgil_87@hotmail.com y jesgilcan@gmail.com`);
+  }
 };
 
 function generateInitialDemoSeed() {
-  createDemoOrder();
+  createDemoOrder(false);
 }
 
 function saveOrdersState() {
@@ -1221,13 +1280,15 @@ function addTimelineEvent(order, message) {
 function getStatusMeta(status) {
   switch (status) {
     case 'pending_review':
-      return { label: 'Pendiente de Revisión', badgeClass: 'status-pending', icon: '🟡' };
+      return { label: '1/4 Pendiente de Revisión', badgeClass: 'status-pending', icon: '🟡' };
     case 'approved_printing':
       return { label: 'Aprobado · Transmitiendo', badgeClass: 'status-approved', icon: '🔵' };
     case 'printing':
-      return { label: 'En Imprenta (Lulu)', badgeClass: 'status-printing', icon: '🟣' };
+      return { label: '2/4 En Imprenta (Lulu)', badgeClass: 'status-printing', icon: '🟣' };
     case 'shipped':
-      return { label: 'Enviado con Tracking', badgeClass: 'status-shipped', icon: '🟢' };
+      return { label: '3/4 Enviado con Tracking', badgeClass: 'status-shipped', icon: '🟢' };
+    case 'delivered':
+      return { label: '4/4 Entregado en Domicilio', badgeClass: 'status-shipped', icon: '🎉' };
     case 'paused':
       return { label: 'Pausado', badgeClass: 'status-paused', icon: '⏸️' };
     default:

@@ -1,8 +1,9 @@
 // cart-drawer.js - Carrito Lateral con Precio Dinámico (Envío Incluido), Vista Limpia de Cliente y Rayos X Lulu para Desarrollador
 // EXCLUSIVO PARA DESARROLLADOR (jesgilcan@gmail.com + Máximo 3 Dispositivos: PC, Móvil, Tablet)
 
-import { auth, db, isDeveloper, onAuthStateChanged } from './firebase-config.js';
+import { auth, db, isDeveloper, isTestCustomer, getUserEmail, getUserDisplayName, onAuthStateChanged } from './firebase-config.js';
 import { verifyAndEnforceThreeDevices } from './device-guard.js';
+import { sendOrderLifecycleEmails } from './order-email-notifier.js';
 import { doc, setDoc } from 'firebase/firestore';
 
 const RETAIL_BASE_PRICES = {
@@ -410,7 +411,7 @@ function buildCartDrawerDOM() {
     </div>
 
     <!-- Barra superior exclusiva para ti (el cliente real no tiene esta barra) -->
-    <div class="mr-cart-dev-banner">
+    <div class="mr-cart-dev-banner" id="mrCartDevBanner" style="display:${isDeveloper(auth.currentUser) ? 'flex' : 'none'};">
       <span>🔒 Modo Pruebas (0€ reales)</span>
       <button type="button" class="mr-btn-toggle-xray" id="mrBtnToggleXray">
         🔧 Ver Rayos X Lulu / Margen
@@ -542,11 +543,19 @@ function buildCartDrawerDOM() {
       </div>
     </div>
 
-    <div class="mr-cart-footer">
-      <button type="button" class="mr-btn-checkout" id="mrBtnStripeCheckout">
-        <span>💳</span>
-        <span id="mrBtnCheckoutText">Tramitar Pedido · 27,90 € (Envío incluido)</span>
+    <div class="mr-cart-footer" style="display:flex; flex-direction:column; gap:8px;">
+      <button type="button" class="mr-btn-checkout" id="mrBtnInstantZeroOrder" style="background:#215c38;">
+        <span>✅</span>
+        <span id="mrBtnCheckoutText">Confirmar Pedido (0 € Test) · 27,90 € (Envío incluido)</span>
       </button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" id="mrBtnStripeCheckout" style="flex:1; background:#f5f0e6; color:#1f1c19; border:1px solid #cbbba0; border-radius:8px; padding:9px 12px; font-size:0.78rem; font-weight:700; cursor:pointer;">
+          💳 Probar Pasarela Stripe Checkout
+        </button>
+        <button type="button" id="mrBtnSavePendingBasket" style="flex:1; background:#ffffff; color:#87553b; border:1px solid #d8cbb8; border-radius:8px; padding:9px 12px; font-size:0.78rem; font-weight:700; cursor:pointer;">
+          💾 Dejar «Pendiente de Pago» en Perfil
+        </button>
+      </div>
     </div>
   `;
   document.body.appendChild(drawer);
@@ -597,8 +606,10 @@ function buildCartDrawerDOM() {
     triggerLuluQuote();
   });
 
+  document.getElementById('mrBtnInstantZeroOrder')?.addEventListener('click', handleDirectOrderSimulation);
   document.getElementById('mrBtnStripeCheckout')?.addEventListener('click', handleLaunchStripeTestCheckout);
   document.getElementById('mrBtnDirectOrderSim')?.addEventListener('click', handleDirectOrderSimulation);
+  document.getElementById('mrBtnSavePendingBasket')?.addEventListener('click', handleSavePendingBasketFromDrawer);
 }
 
 function syncCartStateFromDOM() {
@@ -816,8 +827,19 @@ async function registerSimulatedOrderInBackoffice(orderNumber, quote, stripeSess
   } catch (e) {}
 
   try {
-    if (auth.currentUser && isDeveloper(auth.currentUser)) {
+    if (auth.currentUser && (isDeveloper(auth.currentUser) || isTestCustomer(auth.currentUser))) {
       await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
+    }
+  } catch (e) {}
+
+  // Disparar en tiempo real AMBOS correos desde pedidos@editorialmenosruido.com:
+  // 1) Confirmación de compra al Cliente (jesusgil_87@hotmail.com)
+  // 2) Informe completo de nueva venta y Lulu al Gestor de la Web (jesgilcan@gmail.com)
+  try {
+    const emailRes = await sendOrderLifecycleEmails(newOrder, 'order_created');
+    if (emailRes.clientEmailId && newOrder.comms?.compra) {
+      newOrder.comms.compra.id = emailRes.clientEmailId;
+      newOrder.comms.compra.sent = true;
     }
   } catch (e) {}
 
@@ -825,13 +847,13 @@ async function registerSimulatedOrderInBackoffice(orderNumber, quote, stripeSess
 }
 
 async function handleLaunchStripeTestCheckout() {
-  if (!auth.currentUser || !isDeveloper(auth.currentUser)) return;
+  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
   syncCartStateFromDOM();
 
   const btn = document.getElementById('mrBtnStripeCheckout');
   const btnTxt = document.getElementById('mrBtnCheckoutText');
   if (btn) btn.disabled = true;
-  if (btnTxt) btnTxt.textContent = '⏳ Abriendo pasarela segura...';
+  if (btnTxt) btnTxt.textContent = '⏳ Abriendo pasarela segura y enviando emails...';
 
   try {
     const idToken = await auth.currentUser.getIdToken();
@@ -873,7 +895,7 @@ async function handleLaunchStripeTestCheckout() {
 }
 
 async function handleDirectOrderSimulation() {
-  if (!auth.currentUser || !isDeveloper(auth.currentUser)) return;
+  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
   syncCartStateFromDOM();
 
   if (!devCartState.lastQuote || !devCartState.lastQuote.canPurchase) {
@@ -881,35 +903,79 @@ async function handleDirectOrderSimulation() {
     return;
   }
 
+  const btn = document.getElementById('mrBtnInstantZeroOrder');
+  const btnTxt = document.getElementById('mrBtnCheckoutText');
+  if (btn) btn.disabled = true;
+  if (btnTxt) btnTxt.textContent = '⏳ Registrando pedido y enviando emails al Cliente y al Gestor...';
+
   const orderNumber = 'MR-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
   await registerSimulatedOrderInBackoffice(orderNumber, devCartState.lastQuote, 'cs_test_direct_' + Date.now());
-  window.location.href = `/admin-pedidos.html?stripe_test_success=1&order=${encodeURIComponent(orderNumber)}`;
+  window.location.href = `/mi-espacio.html?tab=pedidos&stripe_test_success=1&order=${encodeURIComponent(orderNumber)}`;
+}
+
+async function handleSavePendingBasketFromDrawer() {
+  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
+  syncCartStateFromDOM();
+
+  const newPending = {
+    id: 'pend_' + Date.now(),
+    title: devCartState.title,
+    subtitle: devCartState.subtitle || 'Libro Completo + Portada sincronizada',
+    bindingType: devCartState.bindingType,
+    pageCount: devCartState.pageCount,
+    fileSizeMb: (devCartState.pageCount * 0.31).toFixed(1),
+    savedAt: new Date().toISOString()
+  };
+
+  try {
+    const raw = localStorage.getItem('mr_pending_payment_books');
+    const list = raw ? JSON.parse(raw) : [];
+    list.unshift(newPending);
+    localStorage.setItem('mr_pending_payment_books', JSON.stringify(list));
+  } catch (e) {}
+
+  try {
+    await setDoc(doc(db, 'users', auth.currentUser.uid), {
+      lastSavedPendingBook: newPending
+    }, { merge: true });
+  } catch (e) {}
+
+  window.location.href = '/mi-espacio.html?tab=pedidos';
 }
 
 function escapeAttr(str) {
   return String(str || '').replace(/"/g, '&quot;');
 }
 
-// Inicialización estricta: SOLO cuando Firebase Auth confirma que el usuario es jesgilcan@gmail.com
-// Y que el dispositivo actual está dentro del cupo de 3 dispositivos autorizados (PC, Móvil, Tablet)
+// Inicialización estricta:
+// 1. Si es jesgilcan@gmail.com + Dispositivo dentro de los 3 autorizados -> Modo Desarrollador + Cliente
+// 2. Si es jesusgil_87@hotmail.com -> Modo Cliente de Pruebas 100% limpio (sin Rayos X de desarrollador)
+// 3. Cualquier otro visitante -> Oculto
 onAuthStateChanged(auth, async (user) => {
   const devWrapper = document.getElementById('devCartWrapper');
-  if (!user || !isDeveloper(user)) {
+  if (!user || (!isDeveloper(user) && !isTestCustomer(user))) {
     if (devWrapper) devWrapper.style.setProperty('display', 'none', 'important');
     document.getElementById('mrDevCartFab')?.remove();
     document.getElementById('mrDevCartDrawer')?.remove();
     return;
   }
 
-  const deviceCheck = await verifyAndEnforceThreeDevices(user);
-  if (!deviceCheck.allowed) {
-    if (devWrapper) devWrapper.style.setProperty('display', 'none', 'important');
-    document.getElementById('mrDevCartFab')?.remove();
-    document.getElementById('mrDevCartDrawer')?.remove();
-    return;
+  if (isDeveloper(user)) {
+    const deviceCheck = await verifyAndEnforceThreeDevices(user);
+    if (!deviceCheck.allowed) {
+      if (devWrapper) devWrapper.style.setProperty('display', 'none', 'important');
+      document.getElementById('mrDevCartFab')?.remove();
+      document.getElementById('mrDevCartDrawer')?.remove();
+      return;
+    }
   }
 
-  // Usuario jesgilcan@gmail.com + Dispositivo dentro de los 3 autorizados: mostrar precio dinámico y carrito
+  // Pre-rellenar datos del usuario actual (ej. jesusgil_87@hotmail.com)
+  const uEmail = getUserEmail(user);
+  const uName = getUserDisplayName(user);
+  if (uEmail) devCartState.customerEmail = uEmail;
+  if (uName && uName !== 'Usuario') devCartState.customerName = uName;
+
   if (devWrapper) {
     devWrapper.style.removeProperty('display');
     devWrapper.style.display = 'flex';
@@ -918,6 +984,11 @@ onAuthStateChanged(auth, async (user) => {
   if (!drawerInitialized) {
     drawerInitialized = true;
     buildCartDrawerDOM();
+  } else {
+    const banner = document.getElementById('mrCartDevBanner');
+    if (banner) banner.style.display = isDeveloper(user) ? 'flex' : 'none';
+    const inpEm = document.getElementById('mrCartInpEmail');
+    if (inpEm && uEmail) inpEm.value = uEmail;
   }
 });
 

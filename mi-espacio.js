@@ -3,6 +3,7 @@ import {
   auth, 
   db, 
   isDeveloper, 
+  isTestCustomer,
   DEVELOPER_PIN,
   getUserEmail,
   getUserDisplayName,
@@ -16,6 +17,7 @@ import {
   resendPendingDeviceVerificationEmail,
   MAX_AUTHORIZED_DEVICES
 } from './device-guard.js';
+import { sendOrderLifecycleEmails } from './order-email-notifier.js';
 import { 
   signOut, 
   onAuthStateChanged,
@@ -272,11 +274,19 @@ function checkUrlTab(allowDevTabs = false) {
   const tab = params.get('tab');
   const user = auth.currentUser;
   const isDevAllowed = isDeveloper(user) && allowDevTabs;
+  const isOrdersAllowed = isDevAllowed || isTestCustomer(user);
+
+  if (params.get('stripe_test_success') === '1') {
+    const ordNum = params.get('order') || '';
+    setTimeout(() => {
+      showToast(`✓ Pago Test completado · Pedido #${ordNum} confirmado y emails enviados`);
+    }, 300);
+  }
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
   } else if (tab === 'pedidos') {
-    if (isDevAllowed) {
+    if (isOrdersAllowed) {
       const btnPed = document.getElementById('tab-btn-pedidos');
       if (btnPed) btnPed.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-pedidos');
@@ -517,28 +527,25 @@ function setupEvents() {
     if (!currentUser) return;
     try {
       btnSimulateOrder.disabled = true;
-      btnSimulateOrder.textContent = 'Generando pedido simulado...';
+      btnSimulateOrder.textContent = '⏳ Creando pedido y enviando emails (Cliente + Gestor)...';
 
-      const ordersRef = collection(db, 'users', currentUser.uid, 'orders_simulated');
-      const docRef = await addDoc(ordersRef, {
-        orderNumber: 'TEST-' + Math.floor(100000 + Math.random() * 900000),
-        items: [
-          { title: 'Planificador Semanal Atemporal', format: 'A5 Tapa Blanda', qty: 1 }
-        ],
-        status: 'simulated_success',
-        createdAt: serverTimestamp()
-      });
+      const createdOrd = await seedFullProfileOrder(currentUser, true);
 
-      simOrderResult.textContent = `✓ Pedido simulado creado: ID ${docRef.id}`;
-      simOrderResult.style.display = 'block';
+      if (simOrderResult) {
+        simOrderResult.style.color = '#86efac';
+        simOrderResult.textContent = `✓ Pedido #${createdOrd?.orderNumber || ''} creado · Emails enviados desde pedidos@editorialmenosruido.com a Cliente (jesusgil_87@hotmail.com) y Gestor (jesgilcan@gmail.com)`;
+        simOrderResult.style.display = 'block';
+      }
     } catch (err) {
       console.error('Error simulando pedido:', err);
-      simOrderResult.textContent = 'Error al simular pedido: ' + err.message;
-      simOrderResult.style.color = '#f87171';
-      simOrderResult.style.display = 'block';
+      if (simOrderResult) {
+        simOrderResult.textContent = 'Error al simular pedido: ' + err.message;
+        simOrderResult.style.color = '#f87171';
+        simOrderResult.style.display = 'block';
+      }
     } finally {
       btnSimulateOrder.disabled = false;
-      btnSimulateOrder.textContent = 'Simular Pedido de Prueba';
+      btnSimulateOrder.textContent = 'Simular Pedido de Prueba (con envío de emails)';
     }
   });
 }
@@ -853,19 +860,27 @@ function renderAuthenticatedView(user) {
     });
   } else {
     // USUARIO CLIENTE (CUALQUIER CORREO DISTINTO DE jesgilcan@gmail.com):
-    // Se oculta tajantemente con display: none !important sin romper el DOM con .remove()
+    // Se oculta tajantemente el Panel Desarrollador y Futuras Ideas con display: none !important
     if (userRoleBadge) userRoleBadge.style.setProperty('display', 'none', 'important');
     if (tabBtnDev) tabBtnDev.style.setProperty('display', 'none', 'important');
     if (tabDevPane) tabDevPane.style.setProperty('display', 'none', 'important');
     if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
     if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
-    const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
-    if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
 
-    // Si por alguna razón estaba en la pestaña de dev, forzar a disenos
-    const activeBtn = document.querySelector('.tab-btn.active');
-    if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras')) {
-      activateTab('tab-disenos');
+    const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
+    if (isTestCustomer(user)) {
+      if (tabBtnPedidos) {
+        tabBtnPedidos.style.removeProperty('display');
+        tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+      }
+      checkUrlTab(false);
+      initClientOrdersAndBasketModule(user);
+    } else {
+      if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
+      const activeBtn = document.querySelector('.tab-btn.active');
+      if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-pedidos')) {
+        activateTab('tab-disenos');
+      }
     }
   }
 
@@ -1613,7 +1628,7 @@ function calcDynamicPriceForProfile(bindingType = 'coil', pageCount = 143) {
 }
 
 async function initClientOrdersAndBasketModule(user) {
-  if (!user || !isDeveloper(user)) return;
+  if (!user || (!isDeveloper(user) && !isTestCustomer(user))) return;
 
   await loadClientOrdersAndBasketData(user);
 
@@ -1630,8 +1645,29 @@ async function initClientOrdersAndBasketModule(user) {
     });
 
     document.getElementById('btn-dev-seed-full-order')?.addEventListener('click', () => {
-      seedFullProfileOrder(user);
+      seedFullProfileOrder(user, true);
     });
+  }
+
+  // Escucha en tiempo real de la colección 'orders' para sincronizar al instante entre jesusgil_87@hotmail.com y jesgilcan@gmail.com
+  if (!window.__mrOrdersCollectionSnapshotUnsub) {
+    try {
+      window.__mrOrdersCollectionSnapshotUnsub = onSnapshot(collection(db, 'orders'), (snap) => {
+        const remote = [];
+        snap.forEach(d => remote.push({ id: d.id, ...d.data() }));
+        if (remote.length > 0) {
+          const map = new Map();
+          clientProfileOrders.forEach(o => map.set(o.id || o.orderNumber, o));
+          remote.forEach(o => map.set(o.id || o.orderNumber, o));
+          clientProfileOrders = Array.from(map.values());
+          clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
+          try {
+            localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+          } catch (e) {}
+          renderClientOrdersAndBasketViews(auth.currentUser || user);
+        }
+      });
+    } catch (e) {}
   }
 
   renderClientOrdersAndBasketViews(user);
@@ -1712,7 +1748,7 @@ function saveClientOrdersAndBasketState(user) {
     localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
   } catch (e) {}
 
-  if (user && isDeveloper(user)) {
+  if (user && (isDeveloper(user) || isTestCustomer(user))) {
     clientProfileOrders.forEach(async (ord) => {
       try {
         await setDoc(doc(db, 'orders', ord.id || ord.orderNumber), ord, { merge: true });
@@ -1745,14 +1781,16 @@ function seedPendingBasketBook() {
 async function seedFullProfileOrder(user, notify = true) {
   const num = 'MR-2026-' + Math.floor(1000 + Math.random() * 9000);
   const price = 27.90;
+  const trackingCode = 'CEX-' + Math.floor(10000000 + Math.random() * 90000000);
+  const initialStatus = notify ? 'pending_review' : 'shipped';
   const newOrd = {
     id: 'ord_' + Date.now(),
     orderNumber: num,
-    status: 'shipped',
+    status: initialStatus,
     createdAt: new Date().toISOString(),
     customer: {
       name: getUserDisplayName(user) || 'Cliente Menos Ruido',
-      email: getUserEmail(user) || 'jesgilcan@gmail.com',
+      email: getUserEmail(user) || 'jesusgil_87@hotmail.com',
       phone: '+34 600 000 000',
       address: 'Calle Serrano 42, 4º Derecha',
       postalCode: '28001',
@@ -1763,10 +1801,26 @@ async function seedFullProfileOrder(user, notify = true) {
     },
     shipping: {
       carrier: 'Correos Express',
-      trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
+      trackingNumber: trackingCode,
       trackingUrl: 'https://www.correosexpress.com',
       estimatedDelivery: 'Entrega prevista en 24/48h laborables',
-      lastCarrierMessage: 'Correos Express: Paquete clasificado en plataforma logística de destino (Madrid). En reparto próximo día hábil.'
+      lastCarrierMessage: notify
+        ? 'Pedido recibido en preimpresión (300 DPI). Pendiente de entrega a Correos Express.'
+        : 'Correos Express: Paquete clasificado en plataforma logística de destino (Madrid). En reparto próximo día hábil.'
+    },
+    luluJob: {
+      status: notify ? 'queued' : 'shipped',
+      jobId: 'LULU-' + Math.floor(100000 + Math.random() * 900000),
+      carrier: 'Correos Express',
+      trackingCode: trackingCode,
+      cost: 17.14
+    },
+    comms: {
+      compra: { sent: true, date: new Date().toISOString() },
+      imprenta: { sent: !notify },
+      tracking: { sent: !notify },
+      entregado: { sent: false },
+      checkin: { sent: false }
     },
     book: {
       title: 'Planificador Anual 2026',
@@ -1782,12 +1836,11 @@ async function seedFullProfileOrder(user, notify = true) {
       currency: 'EUR',
       totalPaid: price,
       luluCostEstimate: 17.14,
-      netMargin: 10.09
+      netMargin: 10.09,
+      stripePaymentId: 'ch_test_0eur_' + Math.random().toString(36).substring(2, 8)
     },
     timeline: [
-      { date: new Date(Date.now() - 86400000 * 2).toISOString(), message: `Pedido #${num} confirmado (${price.toFixed(2)} € · Envío incluido). Archivos 300 DPI (46,8 MB) guardados en tu perfil en la nube.` },
-      { date: new Date(Date.now() - 86400000 * 1.5).toISOString(), message: 'Revisión técnica de márgenes, sangrado (3.175 mm) y lomo superada al 100%. Enviado a imprenta.' },
-      { date: new Date(Date.now() - 3600000 * 6).toISOString(), message: 'Correos Express: Expedición recogida en imprenta. Número de seguimiento asignado.' }
+      { date: new Date().toISOString(), message: `Pedido #${num} confirmado (${price.toFixed(2)} € · Envío incluido). Archivos 300 DPI (46,8 MB) guardados en tu perfil en la nube.` }
     ]
   };
 
@@ -1795,8 +1848,11 @@ async function seedFullProfileOrder(user, notify = true) {
   saveClientOrdersAndBasketState(user);
   if (notify) {
     renderClientOrdersAndBasketViews(user);
-    showToast(`📦 Pedido completo #${num} creado en el perfil`);
+    showToast(`⏳ Pedido #${num} creado · Enviando emails reales a Cliente y Gestor...`);
+    await sendOrderLifecycleEmails(newOrd, 'order_created');
+    showToast(`✉️ Emails enviados desde pedidos@editorialmenosruido.com a Cliente (jesusgil_87@hotmail.com) y Gestor (jesgilcan@gmail.com)`);
   }
+  return newOrd;
 }
 
 function getBindingLabelForProfile(type) {
@@ -1900,7 +1956,7 @@ function renderClientOrdersAndBasketViews(user) {
       const step = getStepIndexFromStatus(ord.status);
       const totalPaid = parseFloat(ord.pricing?.totalPaid || 27.90).toFixed(2).replace('.', ',');
       const carrier = ord.shipping?.carrier || 'Correos Express';
-      const trackingNum = ord.shipping?.trackingNumber || 'Pendiente de asignación en fábrica';
+      const trackingNum = ord.shipping?.trackingNumber || ord.luluJob?.trackingCode || 'Pendiente de asignación en fábrica';
       const carrierMsg = ord.shipping?.lastCarrierMessage || 'Tu ejemplar está siendo procesado antes de entregarse a la empresa repartidora.';
       const fileSizeMb = ord.book?.fileSizeMb || ((ord.book?.pageCount || 143) * 0.32).toFixed(1);
 
@@ -2015,7 +2071,7 @@ function renderClientOrdersAndBasketViews(user) {
     }).join('');
 
     ordersContainer.querySelectorAll('[data-edit-carrier-note]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-edit-carrier-note');
         const ord = clientProfileOrders.find(o => o.id === id);
         if (!ord) return;
@@ -2030,7 +2086,9 @@ function renderClientOrdersAndBasketViews(user) {
         });
         saveClientOrdersAndBasketState(user);
         renderClientOrdersAndBasketViews(user);
-        showToast('✓ Instrucción para la empresa repartidora guardada en el pedido');
+        showToast('⏳ Guardando instrucción y enviando aviso por email a Cliente y Gestor...');
+        await sendOrderLifecycleEmails(ord, 'customer_carrier_note');
+        showToast('✉️ Instrucción para repartidor guardada y notificada por email');
       });
     });
   }
@@ -2038,7 +2096,7 @@ function renderClientOrdersAndBasketViews(user) {
   // 3. RENDERIZAR ESPEJO DE CONTROL EN EL PANEL DE DESARROLLADOR (#dev-client-profile-mirror)
   const devMirror = document.getElementById('dev-client-profile-mirror');
   if (devMirror) {
-    devMirror.innerHTML = clientProfileOrders.slice(0, 4).map(ord => {
+    devMirror.innerHTML = clientProfileOrders.slice(0, 6).map(ord => {
       return `
         <div style="background: #2c2824; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -2048,11 +2106,11 @@ function renderClientOrdersAndBasketViews(user) {
               <span style="color: #9ca3af; font-size: 0.78rem; margin-left: 6px;">(${ord.book?.pageCount || 143} págs · Estado actual: <strong style="color:#4ade80;">${escapeHtml(ord.status)}</strong>)</span>
             </div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="pending_review" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">1. Revisión</button>
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="printing" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">2. En Imprenta</button>
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="shipped" style="background:#1e3a8a; color:#fff; border:1px solid #60a5fa; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">3. En Reparto (Tracking)</button>
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="delivered" style="background:#166534; color:#fff; border:1px solid #4ade80; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">4. Entregado</button>
-              <button type="button" data-dev-carrier-msg="${escapeHtml(ord.id)}" style="background:#87553b; color:#fff; border:none; border-radius:5px; padding:4px 9px; font-size:0.72rem; font-weight:700; cursor:pointer;">📣 Simular Aviso Repartidora</button>
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="pending_review" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">1. Revisión (+Email)</button>
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="printing" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">2. En Imprenta (+Email)</button>
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="shipped" style="background:#1e3a8a; color:#fff; border:1px solid #60a5fa; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">3. En Reparto (+Email)</button>
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="delivered" style="background:#166534; color:#fff; border:1px solid #4ade80; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">4. Entregado (+Email)</button>
+              <button type="button" data-dev-carrier-msg="${escapeHtml(ord.id)}" style="background:#87553b; color:#fff; border:none; border-radius:5px; padding:4px 9px; font-size:0.72rem; font-weight:700; cursor:pointer;">📣 Aviso Repartidora (+Email)</button>
             </div>
           </div>
         </div>
@@ -2060,41 +2118,59 @@ function renderClientOrdersAndBasketViews(user) {
     }).join('');
 
     devMirror.querySelectorAll('[data-dev-set-status]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-dev-set-status');
         const st = btn.getAttribute('data-target-status');
         const ord = clientProfileOrders.find(o => o.id === id);
         if (!ord) return;
         ord.status = st;
         if (!ord.shipping) ord.shipping = { carrier: 'Correos Express', trackingNumber: 'CEX-84920144', trackingUrl: 'https://www.correosexpress.com' };
+        if (!ord.luluJob) ord.luluJob = { jobId: 'LULU-981204', carrier: 'Correos Express', trackingCode: ord.shipping.trackingNumber };
+        if (!ord.comms) ord.comms = { compra: { sent: true }, imprenta: { sent: false }, tracking: { sent: false }, entregado: { sent: false } };
+
         const labels = {
-          pending_review: 'En Revisión Técnica de Imprenta (300 DPI)',
-          printing: 'En Imprenta (Impresión de tripa y encuadernación en curso)',
-          shipped: `En Reparto con ${ord.shipping.carrier} (Tracking: ${ord.shipping.trackingNumber})`,
-          delivered: 'Entregado en el domicilio del cliente'
+          pending_review: '1/4 En Revisión Técnica de Imprenta (300 DPI)',
+          printing: '2/4 En Imprenta (Impresión de tripa y encuadernación en curso)',
+          shipped: `3/4 En Reparto con ${ord.shipping.carrier} (Tracking: ${ord.shipping.trackingNumber})`,
+          delivered: '4/4 Entregado en el domicilio del cliente'
         };
-        if (st === 'shipped') {
+        if (st === 'printing') {
+          ord.comms.imprenta = { sent: true, date: new Date().toISOString() };
+          ord.shipping.lastCarrierMessage = 'En fabricación y encuadernación en planta de Lulu Direct.';
+        } else if (st === 'shipped') {
+          ord.comms.tracking = { sent: true, date: new Date().toISOString() };
           ord.shipping.lastCarrierMessage = `Correos Express: Paquete en reparto hoy. Seguimiento activo ${ord.shipping.trackingNumber}.`;
         } else if (st === 'delivered') {
-          ord.shipping.lastCarrierMessage = 'Correos Express: Entrega completada satisfactoriamente.';
+          ord.comms.entregado = { sent: true, date: new Date().toISOString() };
+          ord.shipping.lastCarrierMessage = 'Correos Express: Entrega completada satisfactoriamente en el domicilio.';
         }
+
+        const eventMap = {
+          pending_review: 'status_pending_review',
+          printing: 'status_printing',
+          shipped: 'status_shipped',
+          delivered: 'status_delivered'
+        };
+
         if (!ord.timeline) ord.timeline = [];
         ord.timeline.push({
           date: new Date().toISOString(),
-          message: `Cambio de estado actualizado: ${labels[st] || st}`
+          message: `Cambio de estado actualizado: ${labels[st] || st} (Emails enviados a Cliente y Gestor)`
         });
         saveClientOrdersAndBasketState(user);
         renderClientOrdersAndBasketViews(user);
-        showToast(`✓ Pedido #${ord.orderNumber} cambiado a: ${labels[st]}`);
+        showToast(`⏳ Estado cambiado a ${labels[st]} · Enviando emails a Cliente y Gestor...`);
+        await sendOrderLifecycleEmails(ord, eventMap[st] || 'status_printing');
+        showToast(`✉️ Emails de etapa «${labels[st]}» enviados a jesusgil_87@hotmail.com y jesgilcan@gmail.com`);
       });
     });
 
     devMirror.querySelectorAll('[data-dev-carrier-msg]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-dev-carrier-msg');
         const ord = clientProfileOrders.find(o => o.id === id);
         if (!ord) return;
-        const msg = prompt('Escribe el mensaje de actualización de la empresa repartidora que verá el cliente en su perfil:', 'Correos Express: El repartidor entregará tu paquete hoy entre las 11:00 y las 14:00.');
+        const msg = prompt('Escribe el mensaje de actualización de la empresa repartidora que verá el cliente en su perfil y recibirá por email:', 'Correos Express: El repartidor entregará tu paquete hoy entre las 11:00 y las 14:00.');
         if (!msg) return;
         if (!ord.shipping) ord.shipping = { carrier: 'Correos Express', trackingNumber: 'CEX-84920144' };
         ord.shipping.lastCarrierMessage = msg.trim();
@@ -2105,7 +2181,9 @@ function renderClientOrdersAndBasketViews(user) {
         });
         saveClientOrdersAndBasketState(user);
         renderClientOrdersAndBasketViews(user);
-        showToast('🚚 Aviso de la repartidora publicado en el perfil del cliente');
+        showToast('⏳ Publicando aviso y enviando emails a Cliente y Gestor...');
+        await sendOrderLifecycleEmails(ord, 'carrier_update', { carrierMessage: msg.trim() });
+        showToast('✉️ Aviso de la repartidora publicado y enviado por email a ambos correos');
       });
     });
   }

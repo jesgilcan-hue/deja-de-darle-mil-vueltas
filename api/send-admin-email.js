@@ -11,9 +11,10 @@ export const config = {
 };
 
 const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
+const ALLOWED_TEST_CUSTOMER_EMAIL = 'jesusgil_87@hotmail.com';
 const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf-8');
 
-async function verifyDeveloperIdToken(req) {
+async function verifyCallerIdToken(req) {
   const authHeader = req.headers.authorization || req.headers.Authorization || '';
   if (!authHeader.startsWith('Bearer ')) {
     return { valid: false, error: 'Falta token de autorización Bearer de Firebase Auth.' };
@@ -37,10 +38,10 @@ async function verifyDeveloperIdToken(req) {
       return { valid: false, error: 'Token de Firebase inválido o expirado.' };
     }
     const userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
-    if (userEmail !== ALLOWED_ADMIN_EMAIL) {
+    if (userEmail !== ALLOWED_ADMIN_EMAIL && userEmail !== ALLOWED_TEST_CUSTOMER_EMAIL) {
       return { valid: false, error: 'Acceso denegado: cuenta no autorizada.' };
     }
-    return { valid: true, email: userEmail };
+    return { valid: true, email: userEmail, isAdmin: userEmail === ALLOWED_ADMIN_EMAIL };
   } catch (err) {
     return { valid: false, error: 'Error al verificar identidad con Google Identity Toolkit.' };
   }
@@ -61,8 +62,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido. Solo se acepta POST.' });
   }
 
-  // Verificación criptográfica obligatoria de sesión de jesgilcan@gmail.com
-  const authCheck = await verifyDeveloperIdToken(req);
+  // Verificación criptográfica obligatoria de sesión autorizada
+  const authCheck = await verifyCallerIdToken(req);
   if (!authCheck.valid) {
     return res.status(403).json({ error: authCheck.error });
   }
@@ -84,13 +85,25 @@ export default async function handler(req, res) {
       buttonText = '',
       buttonUrl = '',
       senderType = 'pedidos', // 'pedidos' | 'contacto'
-      replyTo = 'contacto@editorialmenosruido.com',
+      replyTo = 'pedidos@editorialmenosruido.com',
       highlightDetails = null, // { orderNumber, bookTitle, address }
       showSecondaryLinks = true,
       showUnsubscribe = false
     } = req.body || {};
 
-    if (!to || !to.includes('@')) {
+    const rawList = Array.isArray(to) ? to : [to];
+    let recipients = rawList
+      .map(r => String(r || '').trim().toLowerCase())
+      .filter(r => r && r.includes('@'));
+
+    // Si quien llama es el cliente de prueba (jesusgil_87@hotmail.com), solo puede enviar a sí mismo y al gestor
+    if (!authCheck.isAdmin) {
+      recipients = recipients.filter(r => r === ALLOWED_ADMIN_EMAIL || r === ALLOWED_TEST_CUSTOMER_EMAIL);
+    }
+
+    recipients = Array.from(new Set(recipients));
+
+    if (recipients.length === 0) {
       return res.status(400).json({ error: 'Dirección de correo destinatario no válida.' });
     }
 
@@ -220,7 +233,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         from: fromAddress,
-        to: [to],
+        to: recipients,
         reply_to: replyTo,
         subject: subject,
         html: fullHtml,
@@ -240,7 +253,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       id: resendData.id,
-      message: `Correo enviado con éxito a ${to} desde ${fromAddress}`
+      message: `Correo enviado con éxito a ${recipients.join(', ')} desde ${fromAddress}`
     });
 
   } catch (err) {

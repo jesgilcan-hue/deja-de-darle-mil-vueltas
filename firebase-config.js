@@ -68,10 +68,13 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-// Configuración de roles y seguridad: ÚNICA cuenta autorizada
+// Configuración de roles y seguridad: ÚNICA cuenta autorizada como administrador
 export const DEVELOPER_EMAIL = "jesgilcan@gmail.com";
 export const DEVELOPER_EMAILS = [
   "jesgilcan@gmail.com"
+];
+export const TEST_CUSTOMER_EMAILS = [
+  "jesusgil_87@hotmail.com"
 ];
 export const DEVELOPER_PIN = "1111";
 
@@ -107,13 +110,23 @@ export function getUserDisplayName(user) {
 /**
  * Comprueba de forma ESTRICTA si un usuario es desarrollador/administrador.
  * EXCLUSIVAMENTE mediante coincidencia con la lista blanca DEVELOPER_EMAILS.
- * Cualquier otro correo (incluido Outlook) devuelve false de forma rotunda.
  */
 export function isDeveloper(user) {
   if (!user) return false;
   const email = getUserEmail(user).toLowerCase().trim();
   if (!email) return false;
   return DEVELOPER_EMAILS.some(e => e.toLowerCase() === email);
+}
+
+/**
+ * Comprueba si el usuario es la cuenta de Cliente de Pruebas Autorizado (jesusgil_87@hotmail.com)
+ * Ve la experiencia 100% como cliente comprador (sin panel de desarrollador).
+ */
+export function isTestCustomer(user) {
+  if (!user) return false;
+  const email = getUserEmail(user).toLowerCase().trim();
+  if (!email) return false;
+  return TEST_CUSTOMER_EMAILS.some(e => e.toLowerCase() === email);
 }
 
 /**

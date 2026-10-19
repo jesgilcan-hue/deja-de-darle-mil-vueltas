@@ -4,6 +4,7 @@ import {
   googleProvider, 
   syncUserProfile, 
   isDeveloper,
+  isTestCustomer,
   getUserEmail,
   getUserDisplayName
 } from './firebase-config.js';
@@ -303,6 +304,11 @@ export function setupNavbarAuth() {
               <a href="/mi-espacio.html?tab=disenos" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
                 📐 Mis Plantillas
               </a>
+              ${isTestCustomer(user) || isDeveloper(user) ? `
+              <a href="/mi-espacio.html?tab=pedidos" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
+                📦 Mis Pedidos y Cesta
+              </a>
+              ` : ''}
             </div>
           </div>
         `;
@@ -354,6 +360,7 @@ export function setupNavbarAuth() {
         const devDeviceCheck = await verifyAndEnforceThreeDevices(user);
         isDev = !!devDeviceCheck.allowed;
       }
+      const canSeeOrders = isDev || isTestCustomer(user);
       const initial = (name || email || 'U').charAt(0).toUpperCase();
 
       // Guardar en caché para carga ultrarrápida (nunca cachear permisos dev en aparatos no autorizados)
@@ -404,6 +411,12 @@ export function setupNavbarAuth() {
               <span class="item-icon">📐</span>
               <span>Mis Plantillas y Diseños</span>
             </a>
+            ${canSeeOrders ? `
+            <a href="/mi-espacio.html?tab=pedidos" class="dropdown-user-item">
+              <span class="item-icon">📦</span>
+              <span>Mis Pedidos y Cesta</span>
+            </a>
+            ` : ''}
             <a href="/mi-espacio.html?tab=ajustes" class="dropdown-user-item">
               <span class="item-icon">⚙️</span>
               <span>Ajustes de cuenta</span>
