@@ -1,20 +1,21 @@
 // dev-guard.js - Control estricto de acceso para páginas ocultas de desarrollo
-// A cualquier usuario ajeno le devuelve 404. Exclusivo para jesgilcan@gmail.com autenticado en Firebase Auth.
+// Exclusivo para jesgilcan@gmail.com + Lista Blanca de máximo 3 dispositivos (PC, Móvil, Tablet)
 import { auth, isDeveloper, onAuthStateChanged } from './firebase-config.js';
+import { verifyAndEnforceThreeDevices } from './device-guard.js';
 
 export function protectDevPage() {
-  // 1. Si ya está autenticado en memoria como jesgilcan@gmail.com en Firebase Auth
-  if (auth.currentUser && isDeveloper(auth.currentUser)) {
-    revealPage();
-    return;
-  }
-
   let authResolved = false;
 
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     authResolved = true;
     if (user && isDeveloper(user)) {
-      revealPage();
+      const deviceCheck = await verifyAndEnforceThreeDevices(user);
+      if (deviceCheck.allowed) {
+        revealPage();
+      } else {
+        console.warn('⛔ Dispositivo bloqueado (fuera del cupo de 3 dispositivos):', deviceCheck.reason);
+        kickOut();
+      }
     } else {
       // Para cualquier usuario que no sea jesgilcan@gmail.com: 404 inmediato
       kickOut();
@@ -22,15 +23,20 @@ export function protectDevPage() {
   });
 
   // Temporizador de seguridad: si Firebase Auth no certifica jesgilcan@gmail.com, expulsión a 404
-  setTimeout(() => {
+  setTimeout(async () => {
     if (!authResolved) {
       if (auth.currentUser && isDeveloper(auth.currentUser)) {
-        revealPage();
+        const deviceCheck = await verifyAndEnforceThreeDevices(auth.currentUser);
+        if (deviceCheck.allowed) {
+          revealPage();
+        } else {
+          kickOut();
+        }
       } else {
         kickOut();
       }
     }
-  }, 2000);
+  }, 2200);
 }
 
 function kickOut() {

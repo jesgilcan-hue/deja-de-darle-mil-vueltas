@@ -1,20 +1,32 @@
-// cart-drawer.js - Carrito Lateral Privado con Cotizador Lulu en Tiempo Real, Cortacircuitos de Margen y Stripe Test (0€)
-// EXCLUSIVO PARA DESARROLLADOR: 100% oculto e inerte para cualquier usuario que no sea jesgilcan@gmail.com
+// cart-drawer.js - Carrito Lateral con Precio Dinámico (Envío Incluido), Vista Limpia de Cliente y Rayos X Lulu para Desarrollador
+// EXCLUSIVO PARA DESARROLLADOR (jesgilcan@gmail.com + Máximo 3 Dispositivos: PC, Móvil, Tablet)
 
-import { auth, db, isDeveloper, getUserEmail, onAuthStateChanged } from './firebase-config.js';
+import { auth, db, isDeveloper, onAuthStateChanged } from './firebase-config.js';
+import { verifyAndEnforceThreeDevices } from './device-guard.js';
 import { doc, setDoc } from 'firebase/firestore';
 
-const RETAIL_PRICES = {
-  softcover: { price: 24.90, label: '📕 Tapa Blanda (Mate)', luluBind: 'softcover' },
-  perfect:   { price: 24.90, label: '📕 Tapa Blanda (Mate)', luluBind: 'softcover' },
-  coil:      { price: 27.90, label: '🌀 Anillas Metálicas (Wire-O)', luluBind: 'coil' },
-  hardcover: { price: 32.90, label: '📘 Tapa Dura (Casewrap)', luluBind: 'hardcover' }
+const RETAIL_BASE_PRICES = {
+  softcover: { basePrice: 24.90, label: '📕 Tapa Blanda (Mate)', luluBind: 'softcover' },
+  perfect:   { basePrice: 24.90, label: '📕 Tapa Blanda (Mate)', luluBind: 'softcover' },
+  coil:      { basePrice: 27.90, label: '🌀 Anillas Metálicas (Wire-O)', luluBind: 'coil' },
+  hardcover: { basePrice: 32.90, label: '📘 Tapa Dura (Casewrap)', luluBind: 'hardcover' }
 };
 
 const MIN_SAFE_MARGIN = 8.00;
 
+export function getDynamicRetailPrice(bindingType = 'coil', pageCount = 143) {
+  const cfg = RETAIL_BASE_PRICES[bindingType] || RETAIL_BASE_PRICES.coil;
+  const pages = Math.max(32, Math.min(800, parseInt(pageCount, 10) || 143));
+  let extra = 0;
+  if (pages > 300) extra = 5.00;
+  else if (pages > 220) extra = 3.00;
+  else if (pages > 150) extra = 2.00;
+  return +(cfg.basePrice + extra).toFixed(2);
+}
+
 let devCartState = {
   isOpen: false,
+  showDevXray: false, // Por defecto se abre como lo vería el cliente; el botón superior despliega los Rayos X de Lulu
   title: 'Planificador Anual 2026',
   subtitle: 'Edición Personalizada · 210 × 152 mm',
   bindingType: 'coil',
@@ -159,12 +171,26 @@ function injectCartStyles() {
       background: #2b231d;
       color: #f5d0a9;
       padding: 8px 16px;
-      font-size: 0.73rem;
+      font-size: 0.72rem;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .mr-btn-toggle-xray {
+      background: #3f362e;
+      color: #fde68a;
+      border: 1px solid rgba(253, 230, 138, 0.4);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mr-btn-toggle-xray:hover {
+      background: #52463b;
     }
 
     .mr-cart-body {
@@ -218,6 +244,33 @@ function injectCartStyles() {
       border-radius: 6px;
       font-size: 0.82rem;
       background: #fdfbf8;
+      color: #1f1c19;
+    }
+
+    .mr-customer-summary-box {
+      background: #f4efe6;
+      border: 1px solid #dfd6c5;
+      border-radius: 9px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mr-customer-summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: #4a4138;
+    }
+    .mr-customer-summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-top: 1px solid #d5cab8;
+      padding-top: 8px;
+      margin-top: 4px;
+      font-size: 0.96rem;
+      font-weight: 800;
       color: #1f1c19;
     }
 
@@ -331,7 +384,7 @@ function buildCartDrawerDOM() {
   fab.className = 'mr-dev-cart-fab';
   fab.innerHTML = `
     <span>🛒</span>
-    <span>Carrito Prueba</span>
+    <span>Tu Carrito</span>
     <span class="mr-dev-cart-fab-badge">DEV 0€</span>
   `;
   fab.addEventListener('click', () => openDevCartDrawer());
@@ -351,22 +404,25 @@ function buildCartDrawerDOM() {
   drawer.innerHTML = `
     <div class="mr-cart-header">
       <h3 class="mr-cart-header-title">
-        <span>🛒</span> Carrito & Checkout Imprenta
+        <span>🛒</span> Resumen de tu Pedido
       </h3>
       <button type="button" class="mr-cart-close" id="mrBtnCloseCart" title="Cerrar">✕</button>
     </div>
 
+    <!-- Barra superior exclusiva para ti (el cliente real no tiene esta barra) -->
     <div class="mr-cart-dev-banner">
-      <span>🔒 Visible solo para jesgilcan@gmail.com</span>
-      <span style="background:#166534; color:#dcfce7; padding:2px 6px; border-radius:4px;">SANDBOX 0€ REALES</span>
+      <span>🔒 Modo Pruebas (0€ reales)</span>
+      <button type="button" class="mr-btn-toggle-xray" id="mrBtnToggleXray">
+        🔧 Ver Rayos X Lulu / Margen
+      </button>
     </div>
 
     <div class="mr-cart-body">
-      <!-- 1. Ejemplar configurado -->
+      <!-- 1. Ejemplar configurado (Lo que ve el cliente) -->
       <div class="mr-cart-card">
         <div class="mr-cart-card-title">
-          <span>1. Ejemplar en el Carrito</span>
-          <span id="mrCartPriceBadge" style="font-size:0.95rem; color:#1f1c19; font-weight:900;">27,90 €</span>
+          <span>1. Tu Cuaderno Personalizado</span>
+          <span id="mrCartPriceBadge" style="font-size:1rem; color:#1f1c19; font-weight:900;">27,90 €</span>
         </div>
         <div class="mr-cart-field">
           <label>Título del Cuaderno</label>
@@ -374,11 +430,11 @@ function buildCartDrawerDOM() {
         </div>
         <div class="mr-cart-field-grid">
           <div class="mr-cart-field" style="margin-bottom:0;">
-            <label>Encuadernación (PVP Fijo)</label>
+            <label>Tipo de Encuadernación</label>
             <select id="mrCartSelBinding">
-              <option value="softcover" ${devCartState.bindingType === 'softcover' ? 'selected' : ''}>Tapa Blanda — 24,90 €</option>
-              <option value="coil" ${devCartState.bindingType === 'coil' ? 'selected' : ''}>Anillas Wire-O — 27,90 €</option>
-              <option value="hardcover" ${devCartState.bindingType === 'hardcover' ? 'selected' : ''}>Tapa Dura — 32,90 €</option>
+              <option value="softcover" ${devCartState.bindingType === 'softcover' ? 'selected' : ''}>📕 Tapa Blanda</option>
+              <option value="coil" ${devCartState.bindingType === 'coil' ? 'selected' : ''}>🌀 Anillas Metálicas (Wire-O)</option>
+              <option value="hardcover" ${devCartState.bindingType === 'hardcover' ? 'selected' : ''}>📘 Tapa Dura</option>
             </select>
           </div>
           <div class="mr-cart-field" style="margin-bottom:0;">
@@ -388,24 +444,24 @@ function buildCartDrawerDOM() {
         </div>
       </div>
 
-      <!-- 2. Dirección de Envío -->
+      <!-- 2. Dirección de Envío (Lo que ve el cliente) -->
       <div class="mr-cart-card">
         <div class="mr-cart-card-title">
-          <span>2. Datos de Entrega del Cliente</span>
-          <span style="font-size:0.68rem; color:#666; font-weight:600;">Envío incluido en PVP</span>
+          <span>2. Dirección de Envío</span>
+          <span style="font-size:0.68rem; color:#215c38; font-weight:800;">🚚 Envío GRATIS incluido</span>
         </div>
         <div class="mr-cart-field-grid">
           <div class="mr-cart-field">
-            <label>Nombre completo</label>
+            <label>Nombre y apellidos</label>
             <input type="text" id="mrCartInpName" value="${escapeAttr(devCartState.customerName)}" />
           </div>
           <div class="mr-cart-field">
-            <label>Email para recibo</label>
+            <label>Email (confirmación y seguimiento)</label>
             <input type="email" id="mrCartInpEmail" value="${escapeAttr(devCartState.customerEmail)}" />
           </div>
         </div>
         <div class="mr-cart-field">
-          <label>Dirección (Calle, número, piso)</label>
+          <label>Dirección completa (Calle, número, piso)</label>
           <input type="text" id="mrCartInpAddress" value="${escapeAttr(devCartState.address)}" />
         </div>
         <div class="mr-cart-field-grid">
@@ -420,10 +476,27 @@ function buildCartDrawerDOM() {
         </div>
       </div>
 
-      <!-- 3. Auditoría Lulu API + Cortacircuitos (Safety Guard) -->
-      <div class="mr-cart-card" style="border-color:#d6cec0; background:#fbf9f5;">
+      <!-- 3. Desglose limpio para el cliente (Envío incluido) -->
+      <div class="mr-customer-summary-box">
+        <div class="mr-customer-summary-row">
+          <span id="mrCustSummaryItem">Cuaderno personalizado (143 págs)</span>
+          <span id="mrCustSummarySubtotal">27,90 €</span>
+        </div>
+        <div class="mr-customer-summary-row">
+          <span>Envío a domicilio</span>
+          <strong style="color:#215c38;">GRATIS (Incluido)</strong>
+        </div>
+        <div class="mr-customer-summary-total">
+          <span>Total a pagar (IVA y envío incluidos)</span>
+          <span id="mrCustSummaryTotal">27,90 €</span>
+        </div>
+        <div id="mrCustomerPublicError" style="display:none; margin-top:6px; padding:8px 10px; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; color:#991b1b; font-size:0.76rem; font-weight:600;"></div>
+      </div>
+
+      <!-- 4. PANEL DE RAYOS X DESARROLLADOR (OCULTO AL CLIENTE · DESPLEGABLE SOLO PARA TI) -->
+      <div id="mrDevXrayPanel" class="mr-cart-card" style="display:none; border:1.5px dashed #87553b; background:#fbf9f5;">
         <div class="mr-cart-card-title">
-          <span>🛡️ 3. Cortacircuitos Lulu API (Tiempo Real)</span>
+          <span>🛡️ Rayos X Desarrollador · Cortacircuitos Lulu</span>
           <button type="button" id="mrBtnRecalcLulu" style="background:#ece4d5; border:1px solid #cbbba0; border-radius:5px; padding:2px 8px; font-size:0.7rem; font-weight:700; cursor:pointer;">↻ Recalcular</button>
         </div>
 
@@ -432,7 +505,7 @@ function buildCartDrawerDOM() {
             ⏳ Consultando coste real en Lulu Direct API...
           </div>
           <div class="mr-safety-row">
-            <span>PVP Fijo cobrado al cliente:</span>
+            <span>PVP Dinámico cobrado al cliente:</span>
             <strong id="mrQuoteRetail">27,90 €</strong>
           </div>
           <div class="mr-safety-row">
@@ -462,16 +535,17 @@ function buildCartDrawerDOM() {
           <input type="checkbox" id="mrChkSimulateSpike" />
           <span>🧪 Simular subida imprevista de precio en Lulu (+14,50 €) para verificar que el botón de compra se bloquea</span>
         </label>
+
+        <button type="button" class="mr-btn-direct-sim" id="mrBtnDirectOrderSim" style="margin-top:10px;">
+          ⚡ [Dev] Registrar pedido directo en Centro de Mando (sin pasarela)
+        </button>
       </div>
     </div>
 
     <div class="mr-cart-footer">
       <button type="button" class="mr-btn-checkout" id="mrBtnStripeCheckout">
         <span>💳</span>
-        <span id="mrBtnCheckoutText">Pagar en Stripe (Modo Test 0€)</span>
-      </button>
-      <button type="button" class="mr-btn-direct-sim" id="mrBtnDirectOrderSim">
-        ⚡ Registrar pedido directo en Centro de Mando (sin abrir pasarela)
+        <span id="mrBtnCheckoutText">Tramitar Pedido · 27,90 € (Envío incluido)</span>
       </button>
     </div>
   `;
@@ -480,6 +554,18 @@ function buildCartDrawerDOM() {
   // Eventos del Drawer
   document.getElementById('mrBtnCloseCart')?.addEventListener('click', closeDevCartDrawer);
   document.getElementById('mrBtnRecalcLulu')?.addEventListener('click', () => triggerLuluQuote());
+
+  document.getElementById('mrBtnToggleXray')?.addEventListener('click', () => {
+    devCartState.showDevXray = !devCartState.showDevXray;
+    const xrayPanel = document.getElementById('mrDevXrayPanel');
+    const toggleBtn = document.getElementById('mrBtnToggleXray');
+    if (xrayPanel) xrayPanel.style.display = devCartState.showDevXray ? 'block' : 'none';
+    if (toggleBtn) {
+      toggleBtn.textContent = devCartState.showDevXray
+        ? '👁️ Ocultar Rayos X (Ver como Cliente)'
+        : '🔧 Ver Rayos X Lulu / Margen';
+    }
+  });
 
   const inputsToWatch = [
     'mrCartInpTitle',
@@ -525,9 +611,20 @@ function syncCartStateFromDOM() {
   devCartState.postalCode = document.getElementById('mrCartInpZip')?.value || '28014';
   devCartState.city = document.getElementById('mrCartInpCity')?.value || 'Madrid';
 
-  const cfg = RETAIL_PRICES[devCartState.bindingType] || RETAIL_PRICES.coil;
+  const dynamicPrice = getDynamicRetailPrice(devCartState.bindingType, devCartState.pageCount);
+  const priceStr = `${dynamicPrice.toFixed(2).replace('.', ',')} €`;
+
   const priceBadge = document.getElementById('mrCartPriceBadge');
-  if (priceBadge) priceBadge.textContent = `${cfg.price.toFixed(2).replace('.', ',')} €`;
+  if (priceBadge) priceBadge.textContent = priceStr;
+
+  const custItem = document.getElementById('mrCustSummaryItem');
+  const custSub = document.getElementById('mrCustSummarySubtotal');
+  const custTot = document.getElementById('mrCustSummaryTotal');
+  const cfg = RETAIL_BASE_PRICES[devCartState.bindingType] || RETAIL_BASE_PRICES.coil;
+
+  if (custItem) custItem.textContent = `${cfg.label} · ${devCartState.pageCount} págs`;
+  if (custSub) custSub.textContent = priceStr;
+  if (custTot) custTot.textContent = priceStr;
 }
 
 export function openDevCartDrawer(customItem = null) {
@@ -568,6 +665,7 @@ async function triggerLuluQuote() {
   const safetyBox = document.getElementById('mrSafetyBox');
   const headerEl = document.getElementById('mrSafetyStatusHeader');
   const blockAlert = document.getElementById('mrSafetyBlockAlert');
+  const custPublicError = document.getElementById('mrCustomerPublicError');
   const btnCheckout = document.getElementById('mrBtnStripeCheckout');
   const btnCheckoutText = document.getElementById('mrBtnCheckoutText');
   const btnDirectSim = document.getElementById('mrBtnDirectOrderSim');
@@ -620,9 +718,13 @@ async function triggerLuluQuote() {
         blockAlert.style.display = 'block';
         blockAlert.textContent = data.blockReason || 'Margen por debajo del mínimo de seguridad.';
       }
+      if (custPublicError) {
+        custPublicError.style.display = 'block';
+        custPublicError.textContent = data.publicErrorMessage || 'Envío temporalmente no disponible para esta configuración.';
+      }
       if (btnCheckout) {
         btnCheckout.disabled = true;
-        btnCheckoutText.textContent = '🚫 Compra bloqueada por seguridad de margen';
+        btnCheckoutText.textContent = '🚫 Envío no disponible temporalmente';
       }
       if (btnDirectSim) btnDirectSim.disabled = true;
     } else {
@@ -630,9 +732,10 @@ async function triggerLuluQuote() {
       headerEl.textContent = `✅ MARGEN SEGURO VERIFICADO (+${data.pricing.netMargin.toFixed(2)} € limpios)`;
       headerEl.style.color = '#166534';
       if (blockAlert) blockAlert.style.display = 'none';
+      if (custPublicError) custPublicError.style.display = 'none';
       if (btnCheckout) {
         btnCheckout.disabled = false;
-        btnCheckoutText.textContent = `Pagar ${data.pricing.retailPrice.toFixed(2)} € en Stripe (Modo Test 0€)`;
+        btnCheckoutText.textContent = `Pagar ${data.pricing.retailPrice.toFixed(2).replace('.', ',')} € · Envío incluido`;
       }
       if (btnDirectSim) btnDirectSim.disabled = false;
     }
@@ -646,7 +749,7 @@ async function triggerLuluQuote() {
     }
     if (btnCheckout) {
       btnCheckout.disabled = true;
-      btnCheckoutText.textContent = '🚫 Compra bloqueada por fallo de verificación';
+      btnCheckoutText.textContent = '🚫 Compra bloqueada por seguridad';
     }
   }
 }
@@ -728,7 +831,7 @@ async function handleLaunchStripeTestCheckout() {
   const btn = document.getElementById('mrBtnStripeCheckout');
   const btnTxt = document.getElementById('mrBtnCheckoutText');
   if (btn) btn.disabled = true;
-  if (btnTxt) btnTxt.textContent = '⏳ Creando sesión en Stripe Test...';
+  if (btnTxt) btnTxt.textContent = '⏳ Abriendo pasarela segura...';
 
   try {
     const idToken = await auth.currentUser.getIdToken();
@@ -758,16 +861,13 @@ async function handleLaunchStripeTestCheckout() {
 
     const data = await res.json();
     if (!res.ok || !data.checkoutUrl) {
-      throw new Error(data.error || 'No se pudo iniciar la pasarela de prueba en Stripe.');
+      throw new Error(data.error || 'No se pudo iniciar la pasarela de pago.');
     }
 
-    // Registrar el pedido de prueba antes de redirigir a Stripe Checkout
     await registerSimulatedOrderInBackoffice(data.orderNumber, data.quote, data.sessionId);
-
-    // Redirigir a la pasarela oficial de Stripe Checkout (Modo Prueba)
     window.location.href = data.checkoutUrl;
   } catch (err) {
-    alert('Cortacircuitos / Aviso Stripe:\n' + (err.message || err));
+    alert('Aviso de seguridad:\n' + (err.message || err));
     triggerLuluQuote();
   }
 }
@@ -791,19 +891,25 @@ function escapeAttr(str) {
 }
 
 // Inicialización estricta: SOLO cuando Firebase Auth confirma que el usuario es jesgilcan@gmail.com
-onAuthStateChanged(auth, (user) => {
+// Y que el dispositivo actual está dentro del cupo de 3 dispositivos autorizados (PC, Móvil, Tablet)
+onAuthStateChanged(auth, async (user) => {
   const devWrapper = document.getElementById('devCartWrapper');
   if (!user || !isDeveloper(user)) {
-    // Visitante normal o usuario no autorizado: ocultar al 100% cualquier rastro del carrito
     if (devWrapper) devWrapper.style.setProperty('display', 'none', 'important');
-    const fab = document.getElementById('mrDevCartFab');
-    if (fab) fab.remove();
-    const drawer = document.getElementById('mrDevCartDrawer');
-    if (drawer) drawer.remove();
+    document.getElementById('mrDevCartFab')?.remove();
+    document.getElementById('mrDevCartDrawer')?.remove();
     return;
   }
 
-  // Usuario autenticado como jesgilcan@gmail.com: activar herramientas de carrito de prueba
+  const deviceCheck = await verifyAndEnforceThreeDevices(user);
+  if (!deviceCheck.allowed) {
+    if (devWrapper) devWrapper.style.setProperty('display', 'none', 'important');
+    document.getElementById('mrDevCartFab')?.remove();
+    document.getElementById('mrDevCartDrawer')?.remove();
+    return;
+  }
+
+  // Usuario jesgilcan@gmail.com + Dispositivo dentro de los 3 autorizados: mostrar precio dinámico y carrito
   if (devWrapper) {
     devWrapper.style.removeProperty('display');
     devWrapper.style.display = 'flex';
@@ -815,5 +921,4 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Exponer para llamadas desde generador-portadas.html y mi-espacio.html
 window.openDevCartDrawer = openDevCartDrawer;

@@ -8,24 +8,46 @@ const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('Q
 // Credenciales Lulu Direct API (prioriza variable de entorno en Vercel)
 const LULU_AUTH_BASIC = process.env.LULU_AUTH_BASIC || 'Basic MDQzYjg2NWUtNjRmNC00MzA0LTg5ZTctZTJmZDMzNWI0ZjQwOmpDSkJhMXJVOUNKSnpOMHEzd29ZSEk5MFNSS3czRVM4NmdNWHZmeko0OFRuR0NnOGxZVG5JZkRkUDdZWjI5cHRwOE5pVjVvTGFSSnFUemRGeGN0U0JQ';
 
-// Tabla de Precios de Venta al Público Fijos (PVP con envío incluido)
+// Tabla de Precios Base de Venta al Público (PVP con envío incluido hasta 150 págs)
 export const FIXED_RETAIL_PRICES = {
   softcover: {
-    price: 24.90,
+    basePrice: 24.90,
+    label: 'Tapa blanda (Rústica Fresada · Mate)',
+    podPackageId: '0600X0900BWSTDPB060UC444MXX'
+  },
+  perfect: {
+    basePrice: 24.90,
     label: 'Tapa blanda (Rústica Fresada · Mate)',
     podPackageId: '0600X0900BWSTDPB060UC444MXX'
   },
   coil: {
-    price: 27.90,
+    basePrice: 27.90,
     label: 'Encuadernación Anillas (Espiral Wire-O · Mate)',
     podPackageId: '0600X0900BWSTDCO060UC444MXX'
   },
   hardcover: {
-    price: 32.90,
+    basePrice: 32.90,
     label: 'Tapa dura (Casewrap · Mate)',
     podPackageId: '0600X0900BWSTDCW060UC444MXX'
   }
 };
+
+/**
+ * Calcula el PVP dinámico con envío incluido según encuadernación y número de páginas
+ */
+export function calculateDynamicRetailPrice(bindingType = 'coil', pageCount = 120) {
+  const cfg = FIXED_RETAIL_PRICES[bindingType] || FIXED_RETAIL_PRICES.coil;
+  const pages = Math.max(32, Math.min(800, parseInt(pageCount, 10) || 120));
+  let extraPagesFee = 0;
+  if (pages > 300) {
+    extraPagesFee = 5.00;
+  } else if (pages > 220) {
+    extraPagesFee = 3.00;
+  } else if (pages > 150) {
+    extraPagesFee = 2.00;
+  }
+  return +(cfg.basePrice + extraPagesFee).toFixed(2);
+}
 
 // Margen neto mínimo de seguridad por pedido (Cortacircuitos)
 // Si (PVP - Coste Total Lulu - Comisión Stripe) < MIN_SAFE_MARGIN_EUR, se bloquea la compra.
@@ -75,8 +97,8 @@ export async function calculateLuluQuoteAndSafety({
   simulateSpike = false
 }) {
   const productConfig = FIXED_RETAIL_PRICES[bindingType] || FIXED_RETAIL_PRICES.softcover;
-  const retailPrice = productConfig.price;
   const safePageCount = Math.max(32, Math.min(800, parseInt(pageCount, 10) || 120));
+  const retailPrice = calculateDynamicRetailPrice(bindingType, safePageCount);
 
   // 1. Obtener token OAuth2 de Lulu Direct API
   const tokenRes = await fetch(

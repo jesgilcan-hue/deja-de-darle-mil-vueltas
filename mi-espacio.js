@@ -9,6 +9,11 @@ import {
   DEVELOPER_EMAILS,
   clearUserLocalCache
 } from './firebase-config.js';
+import {
+  verifyAndEnforceThreeDevices,
+  revokeAuthorizedDevice,
+  MAX_AUTHORIZED_DEVICES
+} from './device-guard.js';
 import { 
   signOut, 
   onAuthStateChanged,
@@ -759,25 +764,39 @@ function renderAuthenticatedView(user) {
   const tabFuturasPane = document.getElementById('tab-futuras');
 
   if (isDev) {
-    try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
-    if (userRoleBadge) {
-      userRoleBadge.textContent = 'DESARROLLADOR';
-      userRoleBadge.className = 'role-badge dev';
-      userRoleBadge.style.setProperty('display', 'inline-block', 'important');
-    }
-    if (tabBtnDev) {
-      tabBtnDev.style.removeProperty('display');
-      tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
-    }
-    if (tabDevPane) {
-      tabDevPane.style.removeProperty('display');
-    }
-    if (tabBtnFuturas) {
-      tabBtnFuturas.style.removeProperty('display');
-      tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
-    }
-    if (devLockedView) devLockedView.style.display = 'none';
-    if (devUnlockedContent) devUnlockedContent.style.display = 'block';
+    verifyAndEnforceThreeDevices(user).then((deviceResult) => {
+      if (!deviceResult.allowed) {
+        // Si ya hay 3 dispositivos autorizados y este es un 4º aparato desconocido: ocultar panel de desarrollador
+        if (userRoleBadge) userRoleBadge.style.setProperty('display', 'none', 'important');
+        if (tabBtnDev) tabBtnDev.style.setProperty('display', 'none', 'important');
+        if (tabDevPane) tabDevPane.style.setProperty('display', 'none', 'important');
+        if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
+        if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
+        return;
+      }
+
+      try { sessionStorage.setItem('mr_dev_pin_verified', 'true'); } catch (e) {}
+      if (userRoleBadge) {
+        userRoleBadge.textContent = `DESARROLLADOR (${deviceResult.slotNumber || 1}/${MAX_AUTHORIZED_DEVICES})`;
+        userRoleBadge.className = 'role-badge dev';
+        userRoleBadge.style.setProperty('display', 'inline-block', 'important');
+      }
+      if (tabBtnDev) {
+        tabBtnDev.style.removeProperty('display');
+        tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
+      }
+      if (tabDevPane) {
+        tabDevPane.style.removeProperty('display');
+      }
+      if (tabBtnFuturas) {
+        tabBtnFuturas.style.removeProperty('display');
+        tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
+      }
+      if (devLockedView) devLockedView.style.display = 'none';
+      if (devUnlockedContent) devUnlockedContent.style.display = 'block';
+
+      renderAuthorizedDevicesUI(user, deviceResult.devices || [], deviceResult.currentToken);
+    });
   } else {
     // USUARIO CLIENTE (CUALQUIER CORREO DISTINTO DE jesgilcan@gmail.com):
     // Se oculta tajantemente con display: none !important sin romper el DOM con .remove()
@@ -1336,4 +1355,62 @@ function showToast(msg) {
   setTimeout(() => {
     toast.style.display = 'none';
   }, 3500);
+}
+
+function renderAuthorizedDevicesUI(user, devices, currentToken) {
+  const container = document.getElementById('devAuthorizedDevicesContainer');
+  const badge = document.getElementById('devDevicesCountBadge');
+  if (!container) return;
+
+  const list = Array.isArray(devices) ? devices : [];
+  if (badge) {
+    badge.textContent = `${list.length} / ${MAX_AUTHORIZED_DEVICES} Dispositivos Sellados`;
+  }
+
+  const slotHints = [
+    { slot: 1, defaultIcon: '💻', defaultLabel: 'Hueco 1 · Tu PC' },
+    { slot: 2, defaultIcon: '📱', defaultLabel: 'Hueco 2 · Tu Móvil' },
+    { slot: 3, defaultIcon: '📟', defaultLabel: 'Hueco 3 · Tu Tablet' }
+  ];
+
+  container.innerHTML = slotHints.map((hint, idx) => {
+    const dev = list[idx];
+    if (dev) {
+      const isThisDevice = dev.token === currentToken;
+      return `
+        <div style="background:#262e29; border:1px solid ${isThisDevice ? '#4ade80' : 'rgba(255,255,255,0.14)'}; border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; justify-content:space-between; gap:8px;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+              <span style="font-size:0.72rem; font-weight:800; color:#86efac; text-transform:uppercase;">Dispositivo ${idx + 1}/${MAX_AUTHORIZED_DEVICES}</span>
+              ${isThisDevice ? '<span style="background:#166534; color:#dcfce7; font-size:0.65rem; font-weight:800; padding:2px 7px; border-radius:10px;">✓ ESTE APARATO</span>' : ''}
+            </div>
+            <div style="font-size:0.92rem; font-weight:700; color:#ffffff; margin-top:4px;">${dev.icon || hint.defaultIcon} ${escapeHtml(dev.name || 'Dispositivo autorizado')}</div>
+            <div style="font-size:0.73rem; color:#9ca3af; margin-top:2px;">Pantalla: ${escapeHtml(dev.screen || 'N/A')} · Activo: ${formatDate(dev.lastSeen || dev.registeredAt)}</div>
+          </div>
+          <button type="button" data-revoke-token="${escapeHtml(dev.token)}" style="align-self:flex-start; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#fca5a5; border-radius:6px; padding:4px 10px; font-size:0.72rem; font-weight:700; cursor:pointer;">
+            🗑️ Liberar este hueco
+          </button>
+        </div>
+      `;
+    } else {
+      return `
+        <div style="background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.2); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; justify-content:center; gap:4px;">
+          <div style="font-size:0.72rem; font-weight:800; color:#9ca3af; text-transform:uppercase;">Dispositivo ${idx + 1}/${MAX_AUTHORIZED_DEVICES} · Libre</div>
+          <div style="font-size:0.88rem; font-weight:700; color:#d1d5db;">${hint.defaultIcon} ${hint.defaultLabel}</div>
+          <div style="font-size:0.73rem; color:#9ca3af;">Entra con tu Gmail desde ese dispositivo para sellarlo automáticamente en este hueco.</div>
+        </div>
+      `;
+    }
+  }).join('');
+
+  container.querySelectorAll('[data-revoke-token]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tok = btn.getAttribute('data-revoke-token');
+      if (!tok) return;
+      if (!confirm('¿Liberar este hueco de dispositivo autorizado? Si quieres reemplazarlo por un móvil o tablet nuevo, entra desde él después de liberarlo.')) return;
+      const updated = await revokeAuthorizedDevice(user, tok);
+      renderAuthorizedDevicesUI(user, updated, currentToken);
+      showToast('✓ Hueco de dispositivo liberado');
+    });
+  });
 }

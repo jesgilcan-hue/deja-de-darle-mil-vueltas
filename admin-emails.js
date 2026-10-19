@@ -1,5 +1,5 @@
-// admin-emails.js - Gestor y Editor en Vivo de Plantillas de Email para Editorial Menos Ruido
 import { auth, db, isDeveloper, DEVELOPER_PIN, getUserEmail } from './firebase-config.js';
+import { verifyAndEnforceThreeDevices } from './device-guard.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -98,12 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 1200);
 });
 
-function handleAuthVerification(user) {
-  if (!isLocalDev()) {
-    if (!user || !isDeveloper(user)) {
-      kickOut(user ? `Usuario ajeno bloqueado: ${getUserEmail(user)}` : 'Visitante no autenticado');
-      return;
-    }
+async function handleAuthVerification(user) {
+  if (!user || !isDeveloper(user)) {
+    kickOut(user ? `Usuario ajeno bloqueado: ${getUserEmail(user)}` : 'Visitante no autenticado');
+    return;
+  }
+
+  const deviceCheck = await verifyAndEnforceThreeDevices(user);
+  if (!deviceCheck.allowed) {
+    kickOut(deviceCheck.reason || 'Dispositivo fuera del límite de 3 autorizados');
+    return;
   }
 
   revealPage();
@@ -113,7 +117,7 @@ function handleAuthVerification(user) {
     sessionStorage.getItem('mr_dev_pin_verified') === 'true'
   );
 
-  if (pinAlreadyVerified || isLocalDev()) {
+  if (pinAlreadyVerified) {
     unlockManager();
   } else {
     showPinGate(user);

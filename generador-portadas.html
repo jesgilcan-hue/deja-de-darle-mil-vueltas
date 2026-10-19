@@ -1114,8 +1114,9 @@
 
     <main class="generator-container-wrap">
     <!-- ENLACE DE VUELTA / ACCESO RÁPIDO -->
-    <div class="top-nav" style="justify-content: flex-start; max-width: 1400px; margin: 12px auto 0; padding: 0 16px;">
+    <div class="top-nav" style="justify-content: space-between; max-width: 1400px; margin: 12px auto 0; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 10px;">
         <a href="/tutorial-generador-portadas.html" class="back-link">📖 Guía y Tutorial paso a paso ↗</a>
+        <a href="/generador-libro-completo.html" class="back-link" style="background:#eaf5ee; color:#215c38; border-color:#a7d7b8;">📐 Ir al Constructor de Interior (Libro Completo) →</a>
     </div>
 
     <!-- CABECERA -->
@@ -1153,11 +1154,17 @@
             <button type="button" class="btn-download-send" onclick="openDownloadModal()">
                 <span>📥</span> Descargar / Enviar PDF
             </button>
-            <!-- Botón de Flujo B (Añadir al carrito) - Oculto para visitantes, visible solo para jesgilcan@gmail.com -->
+            <!-- Botón de Flujo B (Precio Dinámico + Añadir al carrito) - Visible solo para jesgilcan@gmail.com -->
             <div id="devCartWrapper" style="display:none !important; flex-direction:column; align-items:flex-end; gap:4px;">
-                <button type="button" class="btn-action-order" id="btnAddToCart" onclick="handleAddToCart()">
-                    <span>🛒</span> Añadir al carrito
-                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="background:#fdfbf7; border:1.5px solid #d8cfc0; border-radius:8px; padding:4px 11px; text-align:right; line-height:1.15;">
+                        <div style="font-size:1.02rem; font-weight:800; color:#1f1c19;" id="topDynamicPriceDisplay">27,90 €</div>
+                        <div style="font-size:0.65rem; font-weight:700; color:#215c38;" id="topDynamicShippingBadge">🚚 Envío incluido</div>
+                    </div>
+                    <button type="button" class="btn-action-order" id="btnAddToCart" onclick="handleAddToCart()">
+                        <span>🛒</span> Añadir al carrito
+                    </button>
+                </div>
                 <div class="cart-overwrite-hint" id="cartOverwriteHint">
                     <span>ℹ️</span> <span id="cartOverwriteHintText">Se guardará encima del anterior</span>
                 </div>
@@ -2632,6 +2639,23 @@ Sección de notas libres (10 páginas)</textarea>
             }
 
             document.getElementById('techBannerRight').textContent = `Sincronizado: ${coverState.syncedBookName || (fmt.name + ' · ' + coverState.pageCount + ' págs')}`;
+
+            // Actualizar Precio Dinámico (según encuadernación + páginas interiores) con Envío Incluido
+            let basePrice = 27.90; // coil
+            if (coverState.bindingType === 'perfect') basePrice = 24.90;
+            if (coverState.bindingType === 'hardcover') basePrice = 32.90;
+
+            const pages = parseInt(coverState.pageCount, 10) || 143;
+            let extraPages = 0;
+            if (pages > 300) extraPages = 5.00;
+            else if (pages > 220) extraPages = 3.00;
+            else if (pages > 150) extraPages = 2.00;
+
+            const finalDynamicPrice = (basePrice + extraPages).toFixed(2).replace('.', ',');
+            const priceEl = document.getElementById('topDynamicPriceDisplay');
+            const shipEl = document.getElementById('topDynamicShippingBadge');
+            if (priceEl) priceEl.textContent = `${finalDynamicPrice} €`;
+            if (shipEl) shipEl.textContent = `🚚 Envío incluido · ${pages} págs`;
         }
 
         // =====================================================================

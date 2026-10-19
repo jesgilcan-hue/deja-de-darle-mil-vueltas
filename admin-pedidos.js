@@ -1,5 +1,5 @@
-// admin-pedidos.js - Lógica completa del Centro de Mando y Gestor de Pedidos de Imprenta
 import { auth, db, isDeveloper, DEVELOPER_PIN, getUserEmail } from './firebase-config.js';
+import { verifyAndEnforceThreeDevices } from './device-guard.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { 
   collection, 
@@ -116,16 +116,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 1200);
 });
 
-function handleAuthVerification(user) {
-  // REGLA: Si NO es administrador autorizado (y no es localhost), expulsión inmediata a 404
-  if (!isLocalDev()) {
-    if (!user || !isDeveloper(user)) {
-      kickOut(user ? `Usuario no autorizado: ${getUserEmail(user)}` : 'Visitante no autenticado');
-      return;
-    }
+async function handleAuthVerification(user) {
+  // REGLA: Si NO es administrador autorizado, expulsión inmediata a 404
+  if (!user || !isDeveloper(user)) {
+    kickOut(user ? `Usuario no autorizado: ${getUserEmail(user)}` : 'Visitante no autenticado');
+    return;
   }
 
-  // Identidad certificada al 100% por Google OAuth
+  // REGLA 2: Candado de máximo 3 dispositivos autorizados (PC, Móvil, Tablet)
+  const deviceCheck = await verifyAndEnforceThreeDevices(user);
+  if (!deviceCheck.allowed) {
+    kickOut(deviceCheck.reason || 'Dispositivo fuera del límite de 3 autorizados');
+    return;
+  }
+
+  // Identidad y dispositivo certificados al 100%
   revealPage();
 
   // Doble factor PIN (1111):
@@ -135,7 +140,7 @@ function handleAuthVerification(user) {
     sessionStorage.getItem('mr_dev_pin_verified') === 'true'
   );
 
-  if (pinAlreadyVerified || isLocalDev()) {
+  if (pinAlreadyVerified) {
     unlockBackoffice();
   } else {
     showPinGate(user);
