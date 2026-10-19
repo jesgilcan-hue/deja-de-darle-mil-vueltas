@@ -1126,6 +1126,7 @@
                     <!-- Navegación de pestañas -->
                     <div class="espacio-nav-tabs">
                         <button type="button" class="tab-btn active" data-tab="tab-disenos">📐 Mis Plantillas y Diseños</button>
+                        <button type="button" class="tab-btn" id="tab-btn-pedidos" data-tab="tab-pedidos" style="display: none;">📦 Mis Pedidos y Cesta <span id="client-orders-badge" style="background:var(--color-accent); color:#fff; font-size:0.7rem; padding:1px 7px; border-radius:12px; margin-left:4px;">0</span></button>
                         <button type="button" class="tab-btn" data-tab="tab-ajustes">⚙️ Ajustes y Mis Datos</button>
                         <button type="button" class="tab-btn" id="tab-btn-dev" data-tab="tab-dev" style="display: none !important;">⚡ Panel Desarrollador</button>
                         <button type="button" class="tab-btn" id="tab-btn-futuras" data-tab="tab-futuras" style="display: none;">✨ Futuras entradas</button>
@@ -1234,6 +1235,53 @@
                         </div>
                         <div class="designs-grid" id="designs-grid" style="display: none;">
                             <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA 1.5: MIS PEDIDOS Y CESTA DE LA COMPRA (PERFIL DEL CLIENTE) -->
+                <div id="tab-pedidos" class="tab-pane">
+                    <div style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px;">
+                        
+                        <!-- BLOQUE A: CESTA DE LA COMPRA / LIBROS COMPLETOS PENDIENTES DE PAGO -->
+                        <div class="ajustes-card" style="border: 1.5px solid #e2d7c5; background: #fdfbf7;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #ebe3d5; padding-bottom: 14px; margin-bottom: 16px;">
+                                <div>
+                                    <div style="display: inline-flex; align-items: center; gap: 6px; background: #f3ece0; color: #87553b; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                                        🛒 Cesta Guardada · Pendiente de Pago
+                                    </div>
+                                    <h3 style="font-family: var(--font-display); font-size: 1.35rem; margin: 0; color: #1f1c19;">Cuadernos Listos para Encargar a Imprenta</h3>
+                                    <p style="color: #665e54; font-size: 0.88rem; margin: 4px 0 0 0;">
+                                        Tus libros completos y portadas configurados quedan guardados aquí en la nube (sin límite de peso) para que puedas revisarlos o encargarlos impresos cuando quieras.
+                                    </p>
+                                </div>
+                                <a href="/generador-portadas.html" class="btn-primary" style="padding: 9px 16px; font-size: 0.84rem; text-decoration: none;">
+                                    🎨 Configurar Portada / Nuevo Encargo
+                                </a>
+                            </div>
+
+                            <div id="client-pending-basket-list" style="display: flex; flex-direction: column; gap: 14px;">
+                                <!-- Se rellena dinámicamente con los libros pendientes de pago en la cesta / perfil -->
+                            </div>
+                        </div>
+
+                        <!-- BLOQUE B: HISTORIAL Y SEGUIMIENTO EN VIVO DE PEDIDOS IMPRESOS -->
+                        <div class="ajustes-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #eae4da; padding-bottom: 14px; margin-bottom: 18px;">
+                                <div>
+                                    <div style="display: inline-flex; align-items: center; gap: 6px; background: #eaf5ee; color: #215c38; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                                        🚚 Seguimiento en Tiempo Real & Archivos en Nube
+                                    </div>
+                                    <h3 style="font-family: var(--font-display); font-size: 1.35rem; margin: 0; color: #1f1c19;">Mis Pedidos y Estado de Envío</h3>
+                                    <p style="color: #665e54; font-size: 0.88rem; margin: 4px 0 0 0;">
+                                        Consulta el estado de fabricación, cambios de estado, comunicación con la empresa repartidora y descarga tus archivos de alta resolución directamente desde tu perfil.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div id="client-orders-history-list" style="display: flex; flex-direction: column; gap: 20px;">
+                                <!-- Se rellena dinámicamente con las tarjetas de pedido del cliente -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1441,6 +1489,37 @@
                                     <h4 style="color: #e5ded3; font-size: 0.95rem; margin-bottom: 8px;">Simulador de Pedidos</h4>
                                     <button type="button" class="btn-dev-unlock" id="btn-simulate-order" style="background: #3f3b37; font-size: 0.85rem; padding: 7px 14px;">Simular Pedido de Prueba</button>
                                     <div id="sim-order-result" style="font-size: 0.82rem; color: #4ade80; margin-top: 10px; display: none;"></div>
+                                </div>
+                            </div>
+
+                            <!-- NUEVO: CONTROL Y ESPEJO EN VIVO DEL PERFIL DE PEDIDOS Y CESTA DEL CLIENTE -->
+                            <div class="dev-card" style="margin-bottom: 24px; background: #23201d; border: 1.5px solid #87553b; padding: 22px 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 16px;">
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 1.3rem;">🛍️</span>
+                                            <h3 style="color: #ffffff; font-size: 1.2rem; margin: 0; font-family: var(--font-display);">Estructura del Perfil del Cliente: Pedidos, Cesta, Estados y Repartidora</h3>
+                                        </div>
+                                        <p style="color: #baa795; font-size: 0.85rem; margin: 4px 0 0 0;">
+                                            Prueba y controla desde aquí lo que ve el cliente en su pestaña <strong>«📦 Mis Pedidos y Cesta»</strong> (archivos pesados en nube sin adjuntos por email, libros pendientes de pago, estados de imprenta y avisos de la empresa repartidora).
+                                        </p>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <button type="button" id="btn-dev-open-client-orders-tab" class="btn-dev-unlock" style="background: #22382c; border: 1px solid #4ade80; color: #ffffff; padding: 9px 15px; font-size: 0.83rem; font-weight: 700; cursor: pointer;">
+                                            👁️ Abrir Pestaña Cliente «Mis Pedidos y Cesta» ↗
+                                        </button>
+                                        <button type="button" id="btn-dev-seed-pending-book" class="btn-dev-unlock" style="background: #3f362e; border: 1px solid rgba(255,255,255,0.2); color: #fde68a; padding: 9px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
+                                            ➕ Añadir Libro «Pendiente de Pago»
+                                        </button>
+                                        <button type="button" id="btn-dev-seed-full-order" class="btn-dev-unlock" style="background: var(--color-accent); color: #ffffff; padding: 9px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
+                                            ➕ Crear Pedido Completo en Perfil
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Espejo en vivo dentro del propio Panel de Desarrollador -->
+                                <div id="dev-client-profile-mirror" style="display: flex; flex-direction: column; gap: 14px;">
+                                    <!-- Se renderiza automáticamente con controles rápidos de cambio de estado (Revisión -> Imprenta -> En Reparto -> Entregado) -->
                                 </div>
                             </div>
 

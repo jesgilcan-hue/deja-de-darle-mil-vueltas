@@ -272,6 +272,14 @@ function checkUrlTab() {
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
+  } else if (tab === 'pedidos') {
+    if (isDev) {
+      const btnPed = document.getElementById('tab-btn-pedidos');
+      if (btnPed) btnPed.style.setProperty('display', 'inline-flex', 'important');
+      activateTab('tab-pedidos');
+    } else {
+      activateTab('tab-disenos');
+    }
   } else if (tab === 'dev') {
     if (isDev) {
       if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
@@ -792,10 +800,16 @@ function renderAuthenticatedView(user) {
         tabBtnFuturas.style.removeProperty('display');
         tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
       }
+      const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
+      if (tabBtnPedidos) {
+        tabBtnPedidos.style.removeProperty('display');
+        tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+      }
       if (devLockedView) devLockedView.style.display = 'none';
       if (devUnlockedContent) devUnlockedContent.style.display = 'block';
 
       renderAuthorizedDevicesUI(user, deviceResult.devices || [], deviceResult.currentToken);
+      initClientOrdersAndBasketModule(user);
     });
   } else {
     // USUARIO CLIENTE (CUALQUIER CORREO DISTINTO DE jesgilcan@gmail.com):
@@ -805,6 +819,8 @@ function renderAuthenticatedView(user) {
     if (tabDevPane) tabDevPane.style.setProperty('display', 'none', 'important');
     if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
     if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
+    const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
+    if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
 
     // Si por alguna razón estaba en la pestaña de dev, forzar a disenos
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -1414,3 +1430,523 @@ function renderAuthorizedDevicesUI(user, devices, currentToken) {
     });
   });
 }
+
+// =========================================================================
+// MÓDULO DE PERFIL DE PEDIDOS, CESTA PENDIENTE DE PAGO Y ESPEJO DEV
+// =========================================================================
+
+let clientProfileOrders = [];
+let clientPendingBasket = [];
+let ordersModuleInitialized = false;
+
+function calcDynamicPriceForProfile(bindingType = 'coil', pageCount = 143) {
+  let base = 27.90;
+  if (bindingType === 'perfect' || bindingType === 'softcover') base = 24.90;
+  if (bindingType === 'hardcover') base = 32.90;
+  const pages = parseInt(pageCount, 10) || 143;
+  let extra = 0;
+  if (pages > 300) extra = 5.00;
+  else if (pages > 220) extra = 3.00;
+  else if (pages > 150) extra = 2.00;
+  return +(base + extra).toFixed(2);
+}
+
+async function initClientOrdersAndBasketModule(user) {
+  if (!user || !isDeveloper(user)) return;
+
+  await loadClientOrdersAndBasketData(user);
+
+  if (!ordersModuleInitialized) {
+    ordersModuleInitialized = true;
+
+    document.getElementById('btn-dev-open-client-orders-tab')?.addEventListener('click', () => {
+      activateTab('tab-pedidos');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    document.getElementById('btn-dev-seed-pending-book')?.addEventListener('click', () => {
+      seedPendingBasketBook();
+    });
+
+    document.getElementById('btn-dev-seed-full-order')?.addEventListener('click', () => {
+      seedFullProfileOrder(user);
+    });
+  }
+
+  renderClientOrdersAndBasketViews(user);
+}
+
+async function loadClientOrdersAndBasketData(user) {
+  // 1. Cargar Cesta / Libros Completos Pendientes de Pago
+  let pending = [];
+  try {
+    const rawPending = localStorage.getItem('mr_pending_payment_books');
+    if (rawPending) pending = JSON.parse(rawPending);
+  } catch (e) {}
+
+  try {
+    const rawCartItem = localStorage.getItem('mr_cart_cover_item');
+    if (rawCartItem) {
+      const parsed = JSON.parse(rawCartItem);
+      const exists = pending.some(p => p.title === parsed.title && p.bindingType === parsed.bindingType);
+      if (!exists && parsed.title) {
+        pending.unshift({
+          id: 'pend_cart_' + (parsed.updatedAt || Date.now()),
+          title: parsed.title,
+          subtitle: parsed.syncedBookName || 'Libro Completo + Portada sincronizada',
+          bindingType: parsed.bindingType || 'coil',
+          pageCount: parsed.pageCount || 143,
+          fileSizeMb: ((parsed.pageCount || 143) * 0.31).toFixed(1),
+          savedAt: new Date(parsed.updatedAt || Date.now()).toISOString()
+        });
+      }
+    }
+  } catch (e) {}
+
+  if (pending.length === 0) {
+    pending = [
+      {
+        id: 'pend_demo_1',
+        title: 'Planificador Anual 2026 · Edición Personalizada',
+        subtitle: 'Interior completo (143 págs) + Portada Clásico Sobrio sincronizada',
+        bindingType: 'coil',
+        pageCount: 143,
+        fileSizeMb: '44.3',
+        savedAt: new Date().toISOString()
+      }
+    ];
+    try { localStorage.setItem('mr_pending_payment_books', JSON.stringify(pending)); } catch (e) {}
+  }
+  clientPendingBasket = pending;
+
+  // 2. Cargar Pedidos Impresos del Perfil (Firestore + Local)
+  let loadedOrders = [];
+  try {
+    const snap = await getDocs(collection(db, 'orders'));
+    snap.forEach(d => loadedOrders.push({ id: d.id, ...d.data() }));
+  } catch (e) {}
+
+  let localSim = [];
+  try {
+    const rawSim = localStorage.getItem('mr_simulated_orders');
+    if (rawSim) localSim = JSON.parse(rawSim);
+  } catch (e) {}
+
+  const map = new Map();
+  localSim.forEach(o => map.set(o.id || o.orderNumber, o));
+  loadedOrders.forEach(o => map.set(o.id || o.orderNumber, o));
+
+  clientProfileOrders = Array.from(map.values());
+
+  if (clientProfileOrders.length === 0) {
+    await seedFullProfileOrder(user, false);
+  }
+
+  clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
+}
+
+function saveClientOrdersAndBasketState(user) {
+  try {
+    localStorage.setItem('mr_pending_payment_books', JSON.stringify(clientPendingBasket));
+    localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+  } catch (e) {}
+
+  if (user && isDeveloper(user)) {
+    clientProfileOrders.forEach(async (ord) => {
+      try {
+        await setDoc(doc(db, 'orders', ord.id || ord.orderNumber), ord, { merge: true });
+      } catch (e) {}
+    });
+  }
+}
+
+function seedPendingBasketBook() {
+  const presets = [
+    { title: 'Planificador Semestral 180 Días', subtitle: 'Interior 238 págs + Portada Doble Contraste', bindingType: 'hardcover', pageCount: 238, fileSizeMb: '68.4' },
+    { title: 'Planificador 90 Días · Enfoque Trimestral', subtitle: 'Interior 128 págs + Portada Orgánico & Botánico', bindingType: 'perfect', pageCount: 128, fileSizeMb: '38.2' },
+    { title: 'Planificador Anual Intercalado', subtitle: 'Interior 136 págs + Portada con Anillas Wire-O', bindingType: 'coil', pageCount: 136, fileSizeMb: '41.5' }
+  ];
+  const pick = presets[Math.floor(Math.random() * presets.length)];
+  clientPendingBasket.unshift({
+    id: 'pend_' + Date.now(),
+    title: pick.title,
+    subtitle: pick.subtitle,
+    bindingType: pick.bindingType,
+    pageCount: pick.pageCount,
+    fileSizeMb: pick.fileSizeMb,
+    savedAt: new Date().toISOString()
+  });
+  saveClientOrdersAndBasketState(auth.currentUser);
+  renderClientOrdersAndBasketViews(auth.currentUser);
+  showToast('🛒 Libro completo «Pendiente de Pago» añadido a la cesta del perfil');
+}
+
+async function seedFullProfileOrder(user, notify = true) {
+  const num = 'MR-2026-' + Math.floor(1000 + Math.random() * 9000);
+  const price = 27.90;
+  const newOrd = {
+    id: 'ord_' + Date.now(),
+    orderNumber: num,
+    status: 'shipped',
+    createdAt: new Date().toISOString(),
+    customer: {
+      name: getUserDisplayName(user) || 'Cliente Menos Ruido',
+      email: getUserEmail(user) || 'jesgilcan@gmail.com',
+      phone: '+34 600 000 000',
+      address: 'Calle Serrano 42, 4º Derecha',
+      postalCode: '28001',
+      city: 'Madrid',
+      province: 'Madrid',
+      country: 'España',
+      notes: 'Entregar en conserjería si no estoy en casa.'
+    },
+    shipping: {
+      carrier: 'Correos Express',
+      trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
+      trackingUrl: 'https://www.correosexpress.com',
+      estimatedDelivery: 'Entrega prevista en 24/48h laborables',
+      lastCarrierMessage: 'Correos Express: Paquete clasificado en plataforma logística de destino (Madrid). En reparto próximo día hábil.'
+    },
+    book: {
+      title: 'Planificador Anual 2026',
+      subtitle: '52 semanas, 12 meses y hábitos · Edición Personalizada',
+      bindingType: 'coil',
+      pageCount: 143,
+      quantity: 1,
+      size: '8.25x6',
+      spineWidthMm: '8.2',
+      fileSizeMb: '46.8'
+    },
+    pricing: {
+      currency: 'EUR',
+      totalPaid: price,
+      luluCostEstimate: 17.14,
+      netMargin: 10.09
+    },
+    timeline: [
+      { date: new Date(Date.now() - 86400000 * 2).toISOString(), message: `Pedido #${num} confirmado (${price.toFixed(2)} € · Envío incluido). Archivos 300 DPI (46,8 MB) guardados en tu perfil en la nube.` },
+      { date: new Date(Date.now() - 86400000 * 1.5).toISOString(), message: 'Revisión técnica de márgenes, sangrado (3.175 mm) y lomo superada al 100%. Enviado a imprenta.' },
+      { date: new Date(Date.now() - 3600000 * 6).toISOString(), message: 'Correos Express: Expedición recogida en imprenta. Número de seguimiento asignado.' }
+    ]
+  };
+
+  clientProfileOrders.unshift(newOrd);
+  saveClientOrdersAndBasketState(user);
+  if (notify) {
+    renderClientOrdersAndBasketViews(user);
+    showToast(`📦 Pedido completo #${num} creado en el perfil`);
+  }
+}
+
+function getBindingLabelForProfile(type) {
+  if (type === 'perfect' || type === 'softcover') return '📕 Tapa Blanda (Mate)';
+  if (type === 'hardcover') return '📘 Tapa Dura (Casewrap)';
+  return '🌀 Anillas Metálicas (Wire-O)';
+}
+
+function getStepIndexFromStatus(status) {
+  if (status === 'pending_review') return 1;
+  if (status === 'approved_printing' || status === 'printing') return 2;
+  if (status === 'shipped') return 3;
+  if (status === 'delivered') return 4;
+  return 1;
+}
+
+function renderClientOrdersAndBasketViews(user) {
+  const badgeEl = document.getElementById('client-orders-badge');
+  if (badgeEl) {
+    badgeEl.textContent = String(clientProfileOrders.length + clientPendingBasket.length);
+  }
+
+  // 1. RENDERIZAR BLOQUE A: CESTA / PENDIENTES DE PAGO EN EL PERFIL DEL CLIENTE
+  const pendingContainer = document.getElementById('client-pending-basket-list');
+  if (pendingContainer) {
+    if (clientPendingBasket.length === 0) {
+      pendingContainer.innerHTML = `
+        <div style="padding: 18px; text-align: center; color: #786e63; font-size: 0.88rem; background: #ffffff; border-radius: 8px; border: 1px dashed #dcd4c6;">
+          No tienes cuadernos pendientes de pago en tu cesta ahora mismo.
+        </div>
+      `;
+    } else {
+      pendingContainer.innerHTML = clientPendingBasket.map(item => {
+        const price = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
+        const priceText = price.toFixed(2).replace('.', ',') + ' €';
+        return `
+          <div style="background: #ffffff; border: 1px solid #dfd6c7; border-radius: 10px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <div style="flex: 1; min-width: 250px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                <span style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 12px;">⏳ PENDIENTE DE PAGO</span>
+                <span style="background: #eff6ff; color: #1e40af; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">☁️ Guardado en tu perfil (${escapeHtml(item.fileSizeMb || '42.0')} MB · 300 DPI)</span>
+              </div>
+              <h4 style="font-family: var(--font-display); font-size: 1.1rem; margin: 4px 0 2px 0; color: #1f1c19;">${escapeHtml(item.title)}</h4>
+              <div style="font-size: 0.82rem; color: #665e54;">
+                ${getBindingLabelForProfile(item.bindingType)} · <strong>${item.pageCount} páginas interiores</strong> · ${escapeHtml(item.subtitle || '')}
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+              <div style="text-align: right;">
+                <div style="font-size: 1.2rem; font-weight: 900; color: #1f1c19;">${priceText}</div>
+                <div style="font-size: 0.7rem; font-weight: 700; color: #215c38;">🚚 Envío GRATIS incluido</div>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" data-pay-pending="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 0.84rem; font-weight: 700; cursor: pointer;">
+                  💳 Pagar y Enviar a Imprenta
+                </button>
+                <a href="/generador-portadas.html" style="background: #f5f0e6; color: #4a3f35; border: 1px solid #d6cec0; border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; font-weight: 700; text-decoration: none;">
+                  ✏️ Editar
+                </a>
+                <button type="button" data-del-pending="${escapeHtml(item.id)}" style="background: transparent; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 11px; font-size: 0.8rem; cursor: pointer;" title="Quitar de la cesta">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      pendingContainer.querySelectorAll('[data-pay-pending]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-pay-pending');
+          const found = clientPendingBasket.find(x => x.id === id);
+          if (found && typeof window.openDevCartDrawer === 'function') {
+            window.openDevCartDrawer({
+              title: found.title,
+              bindingType: found.bindingType,
+              pageCount: found.pageCount,
+              syncedBookName: found.subtitle
+            });
+          }
+        });
+      });
+
+      pendingContainer.querySelectorAll('[data-del-pending]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-del-pending');
+          clientPendingBasket = clientPendingBasket.filter(x => x.id !== id);
+          saveClientOrdersAndBasketState(user);
+          renderClientOrdersAndBasketViews(user);
+          showToast('🗑️ Ejemplar retirado de pendientes de pago');
+        });
+      });
+    }
+  }
+
+  // 2. RENDERIZAR BLOQUE B: HISTORIAL Y SEGUIMIENTO DE PEDIDOS EN EL PERFIL DEL CLIENTE
+  const ordersContainer = document.getElementById('client-orders-history-list');
+  if (ordersContainer) {
+    ordersContainer.innerHTML = clientProfileOrders.map(ord => {
+      const step = getStepIndexFromStatus(ord.status);
+      const totalPaid = parseFloat(ord.pricing?.totalPaid || 27.90).toFixed(2).replace('.', ',');
+      const carrier = ord.shipping?.carrier || 'Correos Express';
+      const trackingNum = ord.shipping?.trackingNumber || 'Pendiente de asignación en fábrica';
+      const carrierMsg = ord.shipping?.lastCarrierMessage || 'Tu ejemplar está siendo procesado antes de entregarse a la empresa repartidora.';
+      const fileSizeMb = ord.book?.fileSizeMb || ((ord.book?.pageCount || 143) * 0.32).toFixed(1);
+
+      const stepsHtml = [
+        { n: 1, label: '1. Revisión Técnica', sub: 'Preflight 300 DPI' },
+        { n: 2, label: '2. En Imprenta', sub: 'Fabricación y Lomo' },
+        { n: 3, label: '3. En Reparto', sub: carrier },
+        { n: 4, label: '4. Entregado', sub: 'En tu domicilio' }
+      ].map(s => {
+        const done = step >= s.n;
+        const current = step === s.n;
+        return `
+          <div style="flex: 1; min-width: 120px; background: ${done ? '#eaf5ee' : '#f5f2ec'}; border: 1.5px solid ${current ? '#215c38' : (done ? '#a7d7b8' : '#e2dcd0')}; border-radius: 8px; padding: 9px 10px; text-align: center;">
+            <div style="font-size: 0.78rem; font-weight: 800; color: ${done ? '#166534' : '#786e63'};">${done ? '✓ ' : ''}${s.label}</div>
+            <div style="font-size: 0.68rem; color: #665e54; margin-top: 2px;">${s.sub}</div>
+          </div>
+        `;
+      }).join('');
+
+      const timelineHtml = (ord.timeline || []).slice().reverse().map(ev => `
+        <div style="display: flex; gap: 10px; font-size: 0.8rem; color: #38322c; padding: 6px 0; border-bottom: 1px dashed #ebe5da;">
+          <span style="color: #87553b; font-weight: 700; white-space: nowrap;">${formatDate(ev.date)}</span>
+          <span>${escapeHtml(ev.message)}</span>
+        </div>
+      `).join('');
+
+      return `
+        <div style="background: #ffffff; border: 1.5px solid #e0d8c8; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+          <!-- Cabecera del Pedido -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #eee7dc; padding-bottom: 14px; margin-bottom: 14px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-family: monospace; font-size: 0.92rem; font-weight: 800; background: #1f1c19; color: #ffffff; padding: 3px 9px; border-radius: 6px;">#${escapeHtml(ord.orderNumber)}</span>
+                <span style="font-size: 0.78rem; color: #665e54;">Realizado el ${formatDate(ord.createdAt)}</span>
+              </div>
+              <h4 style="font-family: var(--font-display); font-size: 1.2rem; margin: 8px 0 2px 0; color: #1f1c19;">${escapeHtml(ord.book?.title || 'Cuaderno Personalizado')}</h4>
+              <div style="font-size: 0.83rem; color: #5a5147;">
+                ${getBindingLabelForProfile(ord.book?.bindingType)} · ${ord.book?.pageCount || 143} páginas interiores · Formato 210 × 152 mm
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 1.25rem; font-weight: 900; color: #1f1c19;">${totalPaid} €</div>
+              <div style="font-size: 0.72rem; font-weight: 700; color: #215c38;">✓ Pagado (Envío incluido)</div>
+            </div>
+          </div>
+
+          <!-- Barra de 4 Estados en Vivo -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+            ${stepsHtml}
+          </div>
+
+          <!-- Bloque de Comunicación con la Empresa Repartidora y Dirección -->
+          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+              <div style="font-size: 0.8rem; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.4px;">
+                🚚 Comunicación con Empresa Repartidora (${escapeHtml(carrier)})
+              </div>
+              <span style="font-family: monospace; font-size: 0.78rem; font-weight: 700; background: #e2e8f0; color: #0f172a; padding: 3px 8px; border-radius: 5px;">
+                Tracking: ${escapeHtml(trackingNum)}
+              </span>
+            </div>
+            <div style="font-size: 0.84rem; color: #0f172a; background: #ffffff; border-left: 3px solid #2563eb; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
+              <strong>Último aviso del transportista:</strong> ${escapeHtml(carrierMsg)}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: #475569;">
+              <div>
+                <strong>Dirección de entrega:</strong> ${escapeHtml(ord.customer?.address || '')}, ${escapeHtml(ord.customer?.postalCode || '')} ${escapeHtml(ord.customer?.city || '')}<br>
+                <strong>Instrucciones para el repartidor:</strong> <span id="note-text-${escapeHtml(ord.id)}">${escapeHtml(ord.customer?.notes || 'Sin instrucciones adicionales')}</span>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" data-edit-carrier-note="${escapeHtml(ord.id)}" style="background: #ffffff; border: 1px solid #94a3b8; color: #1e293b; border-radius: 6px; padding: 6px 11px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+                  ✏️ Dejar aviso al repartidor
+                </button>
+                ${ord.status === 'shipped' || ord.status === 'delivered' ? `
+                  <a href="${escapeHtml(ord.shipping?.trackingUrl || 'https://www.correosexpress.com')}" target="_blank" rel="noopener noreferrer" style="background: #1e293b; color: #ffffff; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
+                    📍 Seguir envío en web del transportista ↗
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bloque de Archivos Pesados Guardados en el Perfil del Cliente (Nube 300 DPI) -->
+          <div style="background: #fdfaf5; border: 1px solid #e4dac9; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="font-size: 0.78rem; font-weight: 800; color: #87553b;">
+                ☁️ Archivos de tu Cuaderno Alojados en tu Perfil (${escapeHtml(fileSizeMb)} MB · 300 DPI)
+              </div>
+              <div style="font-size: 0.75rem; color: #665e54;">
+                Como el documento de imprenta pesa demasiado para adjuntarse por email, lo tienes disponible siempre aquí para verlo o descargarlo.
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <a href="/generador-libro-completo.html" style="background: #87553b; color: #ffffff; border-radius: 6px; padding: 7px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
+                📖 Ver / Descargar Interior (Nube)
+              </a>
+              <a href="/generador-portadas.html" style="background: #22382c; color: #ffffff; border-radius: 6px; padding: 7px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
+                🎨 Ver / Descargar Portada (Nube)
+              </a>
+            </div>
+          </div>
+
+          <!-- Historial de Cambios de Estado y Comunicaciones -->
+          <details style="font-size: 0.8rem;">
+            <summary style="cursor: pointer; font-weight: 700; color: #5a5147;">📋 Ver historial de cambios de estado y notificaciones (${(ord.timeline || []).length})</summary>
+            <div style="margin-top: 8px; padding-left: 6px;">
+              ${timelineHtml}
+            </div>
+          </details>
+        </div>
+      `;
+    }).join('');
+
+    ordersContainer.querySelectorAll('[data-edit-carrier-note]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-edit-carrier-note');
+        const ord = clientProfileOrders.find(o => o.id === id);
+        if (!ord) return;
+        const nextNote = prompt('Indica la instrucción para el repartidor (ej. horario, dejar en conserjería, teléfono de contacto):', ord.customer?.notes || '');
+        if (nextNote === null) return;
+        if (!ord.customer) ord.customer = {};
+        ord.customer.notes = nextNote.trim();
+        if (!ord.timeline) ord.timeline = [];
+        ord.timeline.push({
+          date: new Date().toISOString(),
+          message: `Aviso del cliente para la empresa repartidora actualizado: «${ord.customer.notes}»`
+        });
+        saveClientOrdersAndBasketState(user);
+        renderClientOrdersAndBasketViews(user);
+        showToast('✓ Instrucción para la empresa repartidora guardada en el pedido');
+      });
+    });
+  }
+
+  // 3. RENDERIZAR ESPEJO DE CONTROL EN EL PANEL DE DESARROLLADOR (#dev-client-profile-mirror)
+  const devMirror = document.getElementById('dev-client-profile-mirror');
+  if (devMirror) {
+    devMirror.innerHTML = clientProfileOrders.slice(0, 4).map(ord => {
+      return `
+        <div style="background: #2c2824; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <span style="font-family: monospace; font-weight: 800; color: #fde68a;">#${escapeHtml(ord.orderNumber)}</span>
+              <strong style="color: #ffffff; margin-left: 8px;">${escapeHtml(ord.book?.title || 'Cuaderno')}</strong>
+              <span style="color: #9ca3af; font-size: 0.78rem; margin-left: 6px;">(${ord.book?.pageCount || 143} págs · Estado actual: <strong style="color:#4ade80;">${escapeHtml(ord.status)}</strong>)</span>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="pending_review" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">1. Revisión</button>
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="printing" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">2. En Imprenta</button>
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="shipped" style="background:#1e3a8a; color:#fff; border:1px solid #60a5fa; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">3. En Reparto (Tracking)</button>
+              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="delivered" style="background:#166534; color:#fff; border:1px solid #4ade80; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">4. Entregado</button>
+              <button type="button" data-dev-carrier-msg="${escapeHtml(ord.id)}" style="background:#87553b; color:#fff; border:none; border-radius:5px; padding:4px 9px; font-size:0.72rem; font-weight:700; cursor:pointer;">📣 Simular Aviso Repartidora</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    devMirror.querySelectorAll('[data-dev-set-status]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-dev-set-status');
+        const st = btn.getAttribute('data-target-status');
+        const ord = clientProfileOrders.find(o => o.id === id);
+        if (!ord) return;
+        ord.status = st;
+        if (!ord.shipping) ord.shipping = { carrier: 'Correos Express', trackingNumber: 'CEX-84920144', trackingUrl: 'https://www.correosexpress.com' };
+        const labels = {
+          pending_review: 'En Revisión Técnica de Imprenta (300 DPI)',
+          printing: 'En Imprenta (Impresión de tripa y encuadernación en curso)',
+          shipped: `En Reparto con ${ord.shipping.carrier} (Tracking: ${ord.shipping.trackingNumber})`,
+          delivered: 'Entregado en el domicilio del cliente'
+        };
+        if (st === 'shipped') {
+          ord.shipping.lastCarrierMessage = `Correos Express: Paquete en reparto hoy. Seguimiento activo ${ord.shipping.trackingNumber}.`;
+        } else if (st === 'delivered') {
+          ord.shipping.lastCarrierMessage = 'Correos Express: Entrega completada satisfactoriamente.';
+        }
+        if (!ord.timeline) ord.timeline = [];
+        ord.timeline.push({
+          date: new Date().toISOString(),
+          message: `Cambio de estado actualizado: ${labels[st] || st}`
+        });
+        saveClientOrdersAndBasketState(user);
+        renderClientOrdersAndBasketViews(user);
+        showToast(`✓ Pedido #${ord.orderNumber} cambiado a: ${labels[st]}`);
+      });
+    });
+
+    devMirror.querySelectorAll('[data-dev-carrier-msg]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-dev-carrier-msg');
+        const ord = clientProfileOrders.find(o => o.id === id);
+        if (!ord) return;
+        const msg = prompt('Escribe el mensaje de actualización de la empresa repartidora que verá el cliente en su perfil:', 'Correos Express: El repartidor entregará tu paquete hoy entre las 11:00 y las 14:00.');
+        if (!msg) return;
+        if (!ord.shipping) ord.shipping = { carrier: 'Correos Express', trackingNumber: 'CEX-84920144' };
+        ord.shipping.lastCarrierMessage = msg.trim();
+        if (!ord.timeline) ord.timeline = [];
+        ord.timeline.push({
+          date: new Date().toISOString(),
+          message: `🚚 Aviso de empresa repartidora: ${msg.trim()}`
+        });
+        saveClientOrdersAndBasketState(user);
+        renderClientOrdersAndBasketViews(user);
+        showToast('🚚 Aviso de la repartidora publicado en el perfil del cliente');
+      });
+    });
+  }
+}
+
