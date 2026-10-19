@@ -1773,6 +1773,43 @@ Sección de notas libres (10 páginas)</textarea>
         </div>
     </div>
 
+    <!-- MODAL CONFIRMACIÓN AÑADIDO AL CARRITO -->
+    <div class="modal-overlay" id="addedToCartModal">
+        <div class="modal-box" style="max-width: 480px; text-align: center;">
+            <button class="modal-close" onclick="closeAddedToCartModal()">×</button>
+            <div style="font-size: 2.2rem; margin-bottom: 6px;">🛒</div>
+            <h3 class="modal-title" style="margin-bottom: 6px; font-size: 1.3rem; color: #1f1c19;">¡Cuaderno añadido a tu cesta!</h3>
+            <p class="modal-desc" style="margin-bottom: 16px; font-size: 0.88rem; color: #665e54;">
+                Tu diseño ha quedado guardado y sincronizado. ¿Qué quieres hacer ahora?
+            </p>
+
+            <div style="background: #faf7f2; border: 1.5px solid #e5dcce; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div>
+                    <h4 style="font-family: var(--font-serif); font-size: 1.05rem; margin: 0 0 4px 0; color: #1a1816;" id="addedModalBookTitle">Planificador anual</h4>
+                    <div style="font-size: 0.78rem; color: #5a5247;" id="addedModalBookSpecs">Portada con Anillas · 143 páginas</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #1f1c19;" id="addedModalBookPrice">27,90 €</div>
+                    <div style="font-size: 0.68rem; font-weight: 700; color: #215c38;">🚚 Envío gratuito incluido</div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" class="btn-modal-primary" id="btnAddedModalBuyNow" style="background: #22382c; color: #ffffff; border: none; padding: 12px; font-size: 0.92rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                    💳 Comprar ahora
+                </button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" id="btnAddedModalGoBasket" style="flex: 1; background: #ffffff; color: #1f1c19; border: 1.5px solid #d4c8b6; padding: 10px; font-size: 0.84rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                        📦 Ir a mi cesta
+                    </button>
+                    <button type="button" id="btnAddedModalKeepEditing" onclick="closeAddedToCartModal()" style="flex: 1; background: #f2ece1; color: #5c5247; border: 1px solid #dcd3c4; padding: 10px; font-size: 0.84rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                        ✏️ Seguir / Crear otro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // =====================================================================
         // ESTADO GLOBAL DEL GENERADOR DE PORTADAS
@@ -2384,58 +2421,122 @@ Sección de notas libres (10 páginas)</textarea>
             }
         }
 
-        // =====================================================================
-        // GESTIÓN DEL CARRITO: REACTIVAR AL MODIFICAR E INDICAR QUE SE GUARDA ENCIMA DEL ANTERIOR
-        // =====================================================================
+        function closeAddedToCartModal() {
+            document.getElementById('addedToCartModal')?.classList.remove('active');
+        }
+
         function handleAddToCart() {
             const btn = document.getElementById('btnAddToCart');
             const hint = document.getElementById('cartOverwriteHint');
             const hintText = document.getElementById('cartOverwriteHintText');
             if (!btn) return;
-            if (coverState.cartIsSynced) return;
 
-            const wasOverwrite = coverState.cartAddedOnce;
             coverState.cartAddedOnce = true;
             coverState.cartIsSynced = true;
 
             btn.classList.remove('overwrite-cart-mode');
             btn.classList.add('added-to-cart');
-            btn.disabled = true;
 
-            if (wasOverwrite) {
-                btn.innerHTML = '<span>✓</span> Añadido al carrito';
-                if (hint && hintText) {
-                    hint.style.display = 'inline-flex';
-                    hint.style.background = '#eaf5ee';
-                    hint.style.borderColor = '#a7d7b8';
-                    hint.style.color = '#215c38';
-                    hintText.textContent = 'Guardado encima del anterior en el carrito';
-                }
-            } else {
-                btn.innerHTML = '<span>✓</span> Añadido al carrito';
-                if (hint) {
-                    hint.style.display = 'none';
-                }
+            btn.innerHTML = '<span>✓</span> En tu cesta';
+            if (hint && hintText) {
+                hint.style.display = 'inline-flex';
+                hint.style.background = '#eaf5ee';
+                hint.style.borderColor = '#a7d7b8';
+                hint.style.color = '#215c38';
+                hintText.textContent = 'Guardado y sincronizado en tu cesta';
             }
+
+            const currentCoverItem = {
+                title: coverState.title || 'Planificador Personalizado',
+                bindingType: coverState.bindingType,
+                pageCount: coverState.pageCount,
+                syncedBookName: coverState.syncedBookName,
+                data: {
+                    title: coverState.title || '',
+                    subtitle: coverState.subtitle || '',
+                    author: coverState.author || '',
+                    spineText: coverState.spineText || '',
+                    frontDesc: coverState.frontDesc || '',
+                    backTitle: coverState.backTitle || '',
+                    backIntro: coverState.backIntro || '',
+                    bindingType: coverState.bindingType,
+                    pageCount: coverState.pageCount,
+                    palette: coverState.palette,
+                    template: coverState.template
+                },
+                updatedAt: Date.now()
+            };
 
             try {
-                localStorage.setItem('mr_cart_cover_item', JSON.stringify({
-                    title: coverState.title,
-                    bindingType: coverState.bindingType,
-                    pageCount: coverState.pageCount,
-                    syncedBookName: coverState.syncedBookName,
-                    updatedAt: Date.now()
-                }));
+                localStorage.setItem('mr_cart_cover_item', JSON.stringify(currentCoverItem));
             } catch (e) {}
 
-            if (typeof window.openDevCartDrawer === 'function') {
-                window.openDevCartDrawer({
-                    title: coverState.title,
-                    bindingType: coverState.bindingType,
-                    pageCount: coverState.pageCount,
-                    syncedBookName: coverState.syncedBookName
-                });
+            try {
+                let pending = JSON.parse(localStorage.getItem('mr_pending_payment_books') || '[]');
+                const existingIdx = pending.findIndex(p => p.title === currentCoverItem.title && p.bindingType === currentCoverItem.bindingType);
+                const bookItem = {
+                    id: 'pend_' + Date.now(),
+                    title: currentCoverItem.title,
+                    subtitle: currentCoverItem.syncedBookName || 'Libro Completo + Portada sincronizada',
+                    bindingType: currentCoverItem.bindingType,
+                    pageCount: currentCoverItem.pageCount,
+                    fileSizeMb: (currentCoverItem.pageCount * 0.31).toFixed(1),
+                    data: currentCoverItem.data,
+                    savedAt: new Date().toISOString()
+                };
+                if (existingIdx >= 0) {
+                    pending[existingIdx] = bookItem;
+                } else {
+                    pending.unshift(bookItem);
+                }
+                localStorage.setItem('mr_pending_payment_books', JSON.stringify(pending));
+            } catch (e) {}
+
+            // Calcular precio y rellenar pop-up
+            let baseP = 27.90;
+            if (coverState.bindingType === 'perfect') baseP = 24.90;
+            if (coverState.bindingType === 'hardcover') baseP = 32.90;
+            const pCount = parseInt(coverState.pageCount, 10) || 143;
+            let extraP = 0;
+            if (pCount > 300) extraP = 5.00;
+            else if (pCount > 220) extraP = 3.00;
+            else if (pCount > 150) extraP = 2.00;
+            const priceStr = (baseP + extraP).toFixed(2).replace('.', ',') + ' €';
+
+            let bindLabel = 'Portada con Anillas (Wire-O)';
+            if (coverState.bindingType === 'perfect') bindLabel = 'Tapa Blanda (Mate)';
+            if (coverState.bindingType === 'hardcover') bindLabel = 'Tapa Dura (Casewrap)';
+
+            const tEl = document.getElementById('addedModalBookTitle');
+            const sEl = document.getElementById('addedModalBookSpecs');
+            const pEl = document.getElementById('addedModalBookPrice');
+            if (tEl) tEl.textContent = coverState.title || 'Planificador Personalizado';
+            if (sEl) sEl.textContent = `${bindLabel} · ${coverState.pageCount} páginas interiores`;
+            if (pEl) pEl.textContent = priceStr;
+
+            // Enlazar botones del modal
+            const btnBuyNow = document.getElementById('btnAddedModalBuyNow');
+            const btnGoBasket = document.getElementById('btnAddedModalGoBasket');
+            if (btnBuyNow) {
+                btnBuyNow.onclick = () => {
+                    closeAddedToCartModal();
+                    if (typeof window.openDevCartDrawer === 'function') {
+                        window.openDevCartDrawer({
+                            title: coverState.title,
+                            bindingType: coverState.bindingType,
+                            pageCount: coverState.pageCount,
+                            syncedBookName: coverState.syncedBookName
+                        });
+                    }
+                };
             }
+            if (btnGoBasket) {
+                btnGoBasket.onclick = () => {
+                    window.location.href = '/mi-espacio.html?tab=pedidos';
+                };
+            }
+
+            document.getElementById('addedToCartModal')?.classList.add('active');
         }
 
         function markCartModified() {

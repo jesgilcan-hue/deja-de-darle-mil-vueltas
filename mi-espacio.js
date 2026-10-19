@@ -1418,6 +1418,16 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function escapeAttr(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 function showToast(msg) {
   const toast = document.getElementById('toast-notification');
   if (!toast) return;
@@ -1869,6 +1879,88 @@ function getStepIndexFromStatus(status) {
   return 1;
 }
 
+function openBasketPreviewModal(title, subtitle, iframeSrc) {
+  const modal = document.getElementById('basket-pdf-preview-modal');
+  const titleEl = document.getElementById('basket-preview-modal-title');
+  const subEl = document.getElementById('basket-preview-modal-subtitle');
+  const iframe = document.getElementById('basket-preview-iframe');
+  const loader = document.getElementById('basket-preview-loading');
+
+  if (!modal || !iframe) return;
+  if (titleEl) titleEl.textContent = title;
+  if (subEl) subEl.textContent = subtitle;
+  if (loader) loader.style.display = 'flex';
+  iframe.src = iframeSrc;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBasketPreviewModal() {
+  const modal = document.getElementById('basket-pdf-preview-modal');
+  const iframe = document.getElementById('basket-preview-iframe');
+  if (modal) modal.classList.remove('active');
+  if (iframe) iframe.src = 'about:blank';
+  document.body.style.overflow = '';
+}
+
+// Inicializar listeners del visor modal de PDF de cesta una sola vez
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-close-basket-preview')?.addEventListener('click', closeBasketPreviewModal);
+    document.getElementById('btn-close-basket-preview-foot')?.addEventListener('click', closeBasketPreviewModal);
+    document.getElementById('basket-pdf-preview-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'basket-pdf-preview-modal') closeBasketPreviewModal();
+    });
+  });
+}
+
+function editPendingBasketShipping(itemId, user) {
+  const found = clientPendingBasket.find(x => x.id === itemId);
+  if (!found) return;
+  if (!found.shipping) {
+    found.shipping = {
+      name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+      email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
+      address: 'Calle Serrano 42, 4º Derecha',
+      postalCode: '28001',
+      city: 'Madrid',
+      country: 'España',
+      phone: '+34 600 000 000',
+      notes: 'Entregar en conserjería si no estoy en casa.'
+    };
+  }
+
+  const currAddr = found.shipping.address || 'Calle Serrano 42, 4º Derecha';
+  const newAddr = prompt('Introduce la dirección de entrega completa (Calle, número, piso):', currAddr);
+  if (newAddr === null) return;
+  found.shipping.address = newAddr.trim() || currAddr;
+
+  const currZip = found.shipping.postalCode || '28001';
+  const currCity = found.shipping.city || 'Madrid';
+  const newZipCity = prompt('Código Postal y Ciudad (ej. 28001 Madrid):', `${currZip} ${currCity}`);
+  if (newZipCity) {
+    const parts = newZipCity.trim().split(' ');
+    found.shipping.postalCode = parts[0] || currZip;
+    found.shipping.city = parts.slice(1).join(' ') || currCity;
+  }
+
+  const currPhone = found.shipping.phone || '+34 600 000 000';
+  const newPhone = prompt('Teléfono de contacto para el repartidor:', currPhone);
+  if (newPhone !== null) {
+    found.shipping.phone = newPhone.trim() || currPhone;
+  }
+
+  const currNotes = found.shipping.notes || '';
+  const newNotes = prompt('Instrucciones para el repartidor (opcional):', currNotes);
+  if (newNotes !== null) {
+    found.shipping.notes = newNotes.trim();
+  }
+
+  saveClientOrdersAndBasketState(user);
+  renderClientOrdersAndBasketViews(user);
+  showToast('✓ Dirección de entrega actualizada');
+}
+
 function renderClientOrdersAndBasketViews(user) {
   const badgeEl = document.getElementById('client-orders-badge');
   if (badgeEl) {
@@ -1888,62 +1980,394 @@ function renderClientOrdersAndBasketViews(user) {
       pendingContainer.innerHTML = clientPendingBasket.map(item => {
         const price = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
         const priceText = price.toFixed(2).replace('.', ',') + ' €';
+
+        // Asegurar que item.data y item.shipping existen para evitar valores vacíos
+        if (!item.data) {
+          item.data = {
+            title: item.title || 'Planificador Personalizado',
+            subtitle: item.subtitle || '',
+            author: 'Clara Beltrán',
+            spineText: item.title || 'PLANIFICADOR',
+            frontDesc: ''
+          };
+        }
+        if (!item.shipping) {
+          item.shipping = {
+            name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+            email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
+            address: 'Calle Serrano 42, 4º Derecha',
+            postalCode: '28001',
+            city: 'Madrid',
+            country: 'España',
+            phone: '+34 600 000 000',
+            notes: 'Entregar en conserjería si no estoy en casa.'
+          };
+        }
+
+        const isChecked = !!item.textsConfirmed;
+        const spineWidthMm = (item.pageCount * 0.057).toFixed(1);
+        const fileSizeMb = item.fileSizeMb || (item.pageCount * 0.31).toFixed(1);
+
         return `
-          <div style="background: #ffffff; border: 1px solid #dfd6c7; border-radius: 10px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-            <div style="flex: 1; min-width: 250px;">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
-                <span style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 12px;">⏳ PENDIENTE DE PAGO</span>
-                <span style="background: #eff6ff; color: #1e40af; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">☁️ Guardado en tu perfil (${escapeHtml(item.fileSizeMb || '42.0')} MB · 300 DPI)</span>
+          <div class="pending-basket-card" data-basket-card-id="${escapeHtml(item.id)}" style="background: #ffffff; border: 1.5px solid #dfd6c7; border-radius: 12px; padding: 18px 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 14px;">
+            
+            <!-- Cabecera Principal de la Tarjeta -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;">
+              <div style="flex: 1; min-width: 260px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                  <span style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.3px;">⏳ PENDIENTE DE PAGO</span>
+                  <span style="background: #eff6ff; color: #1e40af; font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 12px;">☁️ Archivos en Nube (${escapeHtml(fileSizeMb)} MB · 300 DPI)</span>
+                </div>
+                <h4 id="basket-title-display-${escapeHtml(item.id)}" style="font-family: var(--font-display); font-size: 1.22rem; margin: 4px 0 3px 0; color: #1f1c19;">${escapeHtml(item.title)}</h4>
+                <div id="basket-subtitle-display-${escapeHtml(item.id)}" style="font-size: 0.84rem; color: #665e54;">
+                  ${getBindingLabelForProfile(item.bindingType)} · <strong>${item.pageCount} páginas interiores</strong> · ${escapeHtml(item.subtitle || '')}
+                </div>
               </div>
-              <h4 style="font-family: var(--font-display); font-size: 1.1rem; margin: 4px 0 2px 0; color: #1f1c19;">${escapeHtml(item.title)}</h4>
-              <div style="font-size: 0.82rem; color: #665e54;">
-                ${getBindingLabelForProfile(item.bindingType)} · <strong>${item.pageCount} páginas interiores</strong> · ${escapeHtml(item.subtitle || '')}
+
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <div style="text-align: right;">
+                  <div style="font-size: 1.3rem; font-weight: 900; color: #1f1c19;">${priceText}</div>
+                  <div style="font-size: 0.72rem; font-weight: 700; color: #215c38;">🚚 Envío GRATIS incluido</div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <!-- Botón Comprar -->
+                  <button type="button" data-buy-pending="${escapeHtml(item.id)}" style="background: #215c38; color: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(33,92,56,0.25);">
+                    <span>💳</span> Comprar
+                  </button>
+                  <!-- Botón Editar Portada -->
+                  <a href="/generador-portadas.html" data-edit-cover-pending="${escapeHtml(item.id)}" style="background: #f5f0e6; color: #4a3f35; border: 1px solid #d6cec0; border-radius: 8px; padding: 10px 13px; font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                    <span>✏️</span> Editar portada
+                  </a>
+                  <!-- Botón Editar Interior -->
+                  <a href="/generador-libro-completo.html" data-edit-interior-pending="${escapeHtml(item.id)}" style="background: #fdfaf5; color: #87553b; border: 1px solid #e2d2c0; border-radius: 8px; padding: 10px 13px; font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                    <span>📖</span> Editar interior
+                  </a>
+                  <!-- Botón Eliminar -->
+                  <button type="button" data-del-pending="${escapeHtml(item.id)}" style="background: #fff5f5; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; cursor: pointer; font-weight: 600;" title="Quitar de la cesta">
+                    🗑️
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-              <div style="text-align: right;">
-                <div style="font-size: 1.2rem; font-weight: 900; color: #1f1c19;">${priceText}</div>
-                <div style="font-size: 0.7rem; font-weight: 700; color: #215c38;">🚚 Envío GRATIS incluido</div>
+            <!-- Desplegable Acordeón: Ficha Técnica, PDFs, Dirección y Corrección Ortográfica -->
+            <details id="details-pending-${escapeHtml(item.id)}" style="background: #faf7f2; border: 1px solid #e6ded2; border-radius: 9px; padding: 12px 16px; margin-top: 4px;">
+              <summary style="cursor: pointer; font-weight: 700; font-size: 0.84rem; color: #443c33; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                <span>🔍 Ver características técnicas, previsualizar PDFs, dirección y revisar ortografía</span>
+                <span style="font-size: 0.78rem; color: #87553b; font-weight: 600;">Desplegar ficha ▾</span>
+              </summary>
+
+              <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 16px;">
+                
+                <!-- 1. Características Técnicas & Botones de Previsualización de PDF -->
+                <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                    <strong style="font-size: 0.85rem; color: #1f1c19;">📐 Ficha Técnica de Imprenta (Lulu Direct)</strong>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                      <button type="button" data-preview-pdf-cover="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 6px; padding: 7px 13px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                        🎨 Previsualizar Portada PDF
+                      </button>
+                      <button type="button" data-preview-pdf-interior="${escapeHtml(item.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 6px; padding: 7px 13px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                        📖 Previsualizar Interior PDF
+                      </button>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; font-size: 0.78rem; color: #554d44;">
+                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
+                      <strong>Encuadernación:</strong><br>${getBindingLabelForProfile(item.bindingType)}
+                    </div>
+                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
+                      <strong>Formato:</strong><br>Apaisado 8.25" × 6" (210 × 152 mm)
+                    </div>
+                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
+                      <strong>Páginas interiores:</strong><br>${item.pageCount} páginas (Papel crema 80g)
+                    </div>
+                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
+                      <strong>Lomo milimétrico:</strong><br>${spineWidthMm} mm de grosor
+                    </div>
+                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
+                      <strong>Calidad de Impresión:</strong><br>300 DPI · Sangría 3.175 mm
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Dirección de Envío y Datos Personales -->
+                <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+                    <strong style="font-size: 0.85rem; color: #1f1c19;">🚚 Dirección de Entrega y Datos del Destinatario</strong>
+                    <button type="button" data-edit-shipping-basket="${escapeHtml(item.id)}" style="background: #f2ece1; color: #443c33; border: 1px solid #d4c8b6; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+                      ✏️ Modificar dirección de entrega
+                    </button>
+                  </div>
+                  <div id="shipping-display-${escapeHtml(item.id)}" style="font-size: 0.82rem; color: #475569; line-height: 1.5;">
+                    <strong>Destinatario:</strong> ${escapeHtml(item.shipping?.name || user?.displayName || 'Cliente Menos Ruido')} (${escapeHtml(item.shipping?.email || user?.email || 'jesusgil_87@hotmail.com')})<br>
+                    <strong>Dirección:</strong> ${escapeHtml(item.shipping?.address || 'Calle Serrano 42, 4º Derecha')}, ${escapeHtml(item.shipping?.postalCode || '28001')} ${escapeHtml(item.shipping?.city || 'Madrid')}, ${escapeHtml(item.shipping?.country || 'España')}<br>
+                    <strong>Teléfono de contacto:</strong> ${escapeHtml(item.shipping?.phone || '+34 600 000 000')}<br>
+                    <strong>Instrucciones al repartidor:</strong> <em>${escapeHtml(item.shipping?.notes || 'Entregar en conserjería si no estoy en casa.')}</em>
+                  </div>
+                </div>
+
+                <!-- 3. Revisión y Corrección de Textos en Vivo (Evitar Erratas antes de Imprenta) -->
+                <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
+                  <div style="margin-bottom: 10px;">
+                    <strong style="font-size: 0.85rem; color: #1f1c19;">✍️ Revisión y Corrección de Textos para Imprenta</strong>
+                    <p style="font-size: 0.77rem; color: #6e6459; margin: 3px 0 0 0;">
+                      Revisa aquí que no haya ninguna falta tipográfica, errata o descuido en los nombres propios. Cualquier cambio que hagas en estas casillas se actualizará al instante en tu cuaderno y en el PDF que irá a imprenta.
+                    </p>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                    <div>
+                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Título del Cuaderno (Portada)</label>
+                      <input type="text" data-text-input="title" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.title || '')}" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
+                    </div>
+                    <div>
+                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Subtítulo o Frase de Portada</label>
+                      <input type="text" data-text-input="subtitle" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.subtitle || item.data?.subtitle || '')}" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
+                    </div>
+                    <div>
+                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Nombre Propio / Autor en Portada</label>
+                      <input type="text" data-text-input="author" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.data?.author || '')}" placeholder="Ej. Clara Beltrán" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
+                    </div>
+                    <div>
+                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Texto del Lomo (Spine)</label>
+                      <input type="text" data-text-input="spineText" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.data?.spineText || '')}" placeholder="Ej. PLANIFICADOR 2026" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Dedicatoria o Descripción (Portada o Interior)</label>
+                      <textarea data-text-input="frontDesc" data-item-id="${escapeHtml(item.id)}" rows="2" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box; resize: vertical;">${escapeHtml(item.data?.frontDesc || item.data?.dedication || '')}</textarea>
+                    </div>
+                  </div>
+                  <div id="text-save-feedback-${escapeHtml(item.id)}" style="font-size: 0.74rem; color: #166534; font-weight: 700; margin-top: 6px; display: none;">
+                    ✓ Texto actualizado y sincronizado para imprenta
+                  </div>
+                </div>
+
+                <!-- 4. Casilla de Aceptación y Confirmación de Ortografía -->
+                <div id="confirm-box-${escapeHtml(item.id)}" style="background: ${isChecked ? '#f0fdf4' : '#fffbeb'}; border: 1.5px solid ${isChecked ? '#86efac' : '#fcd34d'}; border-radius: 8px; padding: 12px 14px; transition: all 0.25s ease;">
+                  <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.84rem; color: #231f1a; line-height: 1.45;">
+                    <input type="checkbox" data-confirm-texts="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} style="margin-top: 3px; width: 18px; height: 18px; accent-color: #215c38; cursor: pointer;" />
+                    <span>
+                      <strong style="color: #1f1c19;">He revisado la ortografía, tildes y nombres propios de mi cuaderno.</strong>
+                      <span style="display: block; font-size: 0.77rem; color: #665b4f; margin-top: 2px;">
+                        Confirmo que todos los textos están redactados tal como deseo que aparezcan impresos en papel y asumo la redacción final para la producción en imprenta.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
               </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" data-pay-pending="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 0.84rem; font-weight: 700; cursor: pointer;">
-                  💳 Pagar y Enviar a Imprenta
-                </button>
-                <a href="/generador-portadas.html" style="background: #f5f0e6; color: #4a3f35; border: 1px solid #d6cec0; border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; font-weight: 700; text-decoration: none;">
-                  ✏️ Editar
-                </a>
-                <button type="button" data-del-pending="${escapeHtml(item.id)}" style="background: transparent; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 11px; font-size: 0.8rem; cursor: pointer;" title="Quitar de la cesta">
-                  🗑️
-                </button>
-              </div>
-            </div>
+            </details>
           </div>
         `;
       }).join('');
 
-      pendingContainer.querySelectorAll('[data-pay-pending]').forEach(btn => {
+      // Listener Botón Comprar
+      pendingContainer.querySelectorAll('[data-buy-pending]').forEach(btn => {
         btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-pay-pending');
+          const id = btn.getAttribute('data-buy-pending');
           const found = clientPendingBasket.find(x => x.id === id);
-          if (found && typeof window.openDevCartDrawer === 'function') {
+          if (!found) return;
+
+          if (!found.textsConfirmed) {
+            const det = document.getElementById('details-pending-' + id);
+            if (det) det.open = true;
+            const box = document.getElementById('confirm-box-' + id);
+            if (box) {
+              box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              box.style.borderColor = '#ea580c';
+              box.style.boxShadow = '0 0 0 3px rgba(234, 88, 12, 0.25)';
+              setTimeout(() => {
+                box.style.borderColor = found.textsConfirmed ? '#86efac' : '#fcd34d';
+                box.style.boxShadow = '';
+              }, 2500);
+            }
+            showToast('⚠️ Por favor, revisa tus textos y marca la casilla de confirmación para comprar.');
+            return;
+          }
+
+          if (typeof window.openDevCartDrawer === 'function') {
             window.openDevCartDrawer({
               title: found.title,
               bindingType: found.bindingType,
               pageCount: found.pageCount,
-              syncedBookName: found.subtitle
+              syncedBookName: found.subtitle,
+              data: found.data
             });
           }
         });
       });
 
+      // Listener Botón Editar Portada
+      pendingContainer.querySelectorAll('[data-edit-cover-pending]').forEach(link => {
+        link.addEventListener('click', () => {
+          const id = link.getAttribute('data-edit-cover-pending');
+          const found = clientPendingBasket.find(x => x.id === id);
+          if (found) {
+            try {
+              localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+                title: found.title,
+                bindingType: found.bindingType,
+                pageCount: found.pageCount,
+                syncedBookName: found.subtitle,
+                data: found.data || {},
+                updatedAt: Date.now()
+              }));
+            } catch (e) {}
+          }
+        });
+      });
+
+      // Listener Botón Editar Interior
+      pendingContainer.querySelectorAll('[data-edit-interior-pending]').forEach(link => {
+        link.addEventListener('click', () => {
+          const id = link.getAttribute('data-edit-interior-pending');
+          const found = clientPendingBasket.find(x => x.id === id);
+          if (found) {
+            try {
+              localStorage.setItem('mr_complete_book_config', JSON.stringify({
+                title: found.title,
+                subtitle: found.subtitle,
+                pageCount: found.pageCount,
+                bindingType: found.bindingType,
+                data: found.data || {}
+              }));
+            } catch (e) {}
+          }
+        });
+      });
+
+      // Listener Botón Eliminar
       pendingContainer.querySelectorAll('[data-del-pending]').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-del-pending');
           clientPendingBasket = clientPendingBasket.filter(x => x.id !== id);
           saveClientOrdersAndBasketState(user);
           renderClientOrdersAndBasketViews(user);
-          showToast('🗑️ Ejemplar retirado de pendientes de pago');
+          showToast('🗑️ Ejemplar retirado de la cesta');
+        });
+      });
+
+      // Listener Previsualizar Portada PDF
+      pendingContainer.querySelectorAll('[data-preview-pdf-cover]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-preview-pdf-cover');
+          const found = clientPendingBasket.find(x => x.id === id);
+          if (!found) return;
+          try {
+            localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+              title: found.title,
+              bindingType: found.bindingType,
+              pageCount: found.pageCount,
+              syncedBookName: found.subtitle,
+              data: found.data || {},
+              updatedAt: Date.now()
+            }));
+          } catch (e) {}
+          openBasketPreviewModal(
+            `🎨 Portada · ${found.title}`,
+            `${getBindingLabelForProfile(found.bindingType)} · ${found.pageCount} páginas · 300 DPI`,
+            `/generador-portadas.html?preview_modal=1`
+          );
+        });
+      });
+
+      // Listener Previsualizar Interior PDF
+      pendingContainer.querySelectorAll('[data-preview-pdf-interior]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-preview-pdf-interior');
+          const found = clientPendingBasket.find(x => x.id === id);
+          if (!found) return;
+          try {
+            localStorage.setItem('mr_complete_book_config', JSON.stringify({
+              title: found.title,
+              subtitle: found.subtitle,
+              pageCount: found.pageCount,
+              bindingType: found.bindingType,
+              data: found.data || {}
+            }));
+          } catch (e) {}
+          openBasketPreviewModal(
+            `📖 Interior Completo · ${found.title}`,
+            `Cuaderno Apaisado 210 × 152 mm · ${found.pageCount} páginas interiores`,
+            `/generador-libro-completo.html?preview_modal=1`
+          );
+        });
+      });
+
+      // Listener Modificar Dirección
+      pendingContainer.querySelectorAll('[data-edit-shipping-basket]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-edit-shipping-basket');
+          editPendingBasketShipping(id, user);
+        });
+      });
+
+      // Listener Entradas de Texto en Vivo (Corrección Ortográfica)
+      pendingContainer.querySelectorAll('[data-text-input]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const field = e.target.getAttribute('data-text-input');
+          const itemId = e.target.getAttribute('data-item-id');
+          const found = clientPendingBasket.find(x => x.id === itemId);
+          if (!found) return;
+          if (!found.data) found.data = {};
+          const val = e.target.value;
+          found.data[field] = val;
+
+          if (field === 'title') {
+            found.title = val.trim() || 'Cuaderno Personalizado';
+            const dispT = document.getElementById('basket-title-display-' + itemId);
+            if (dispT) dispT.textContent = found.title;
+          } else if (field === 'subtitle') {
+            found.subtitle = val.trim();
+            const dispS = document.getElementById('basket-subtitle-display-' + itemId);
+            if (dispS) {
+              dispS.innerHTML = `${getBindingLabelForProfile(found.bindingType)} · <strong>${found.pageCount} páginas interiores</strong> · ${escapeHtml(found.subtitle || '')}`;
+            }
+          }
+
+          // Mantener sincronizado mr_cart_cover_item si coincide
+          try {
+            const activeRaw = localStorage.getItem('mr_cart_cover_item');
+            if (activeRaw) {
+              const parsed = JSON.parse(activeRaw);
+              if (parsed && parsed.data) {
+                parsed.data[field] = val;
+                if (field === 'title') parsed.title = val;
+                if (field === 'subtitle') parsed.subtitle = val;
+                localStorage.setItem('mr_cart_cover_item', JSON.stringify(parsed));
+              }
+            }
+          } catch (err) {}
+
+          saveClientOrdersAndBasketState(user);
+
+          const feedback = document.getElementById('text-save-feedback-' + itemId);
+          if (feedback) {
+            feedback.style.display = 'block';
+            clearTimeout(input._fbTimer);
+            input._fbTimer = setTimeout(() => { feedback.style.display = 'none'; }, 2200);
+          }
+        });
+      });
+
+      // Listener Casilla de Confirmación de Textos
+      pendingContainer.querySelectorAll('[data-confirm-texts]').forEach(chk => {
+        chk.addEventListener('change', (e) => {
+          const itemId = e.target.getAttribute('data-confirm-texts');
+          const found = clientPendingBasket.find(x => x.id === itemId);
+          if (!found) return;
+          found.textsConfirmed = !!e.target.checked;
+          saveClientOrdersAndBasketState(user);
+
+          const box = document.getElementById('confirm-box-' + itemId);
+          if (box) {
+            box.style.background = found.textsConfirmed ? '#f0fdf4' : '#fffbeb';
+            box.style.borderColor = found.textsConfirmed ? '#86efac' : '#fcd34d';
+          }
+          if (found.textsConfirmed) {
+            showToast('✓ Textos confirmados para imprenta. Ya puedes pulsar «Comprar».');
+          }
         });
       });
     }

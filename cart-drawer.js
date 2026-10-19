@@ -639,7 +639,7 @@ function syncCartStateFromDOM() {
 }
 
 export function openDevCartDrawer(customItem = null) {
-  if (!auth.currentUser || !isDeveloper(auth.currentUser)) return;
+  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
   buildCartDrawerDOM();
 
   if (customItem) {
@@ -672,11 +672,12 @@ export function closeDevCartDrawer() {
 }
 
 async function triggerLuluQuote() {
-  if (!auth.currentUser || !isDeveloper(auth.currentUser)) return;
+  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
   const safetyBox = document.getElementById('mrSafetyBox');
   const headerEl = document.getElementById('mrSafetyStatusHeader');
   const blockAlert = document.getElementById('mrSafetyBlockAlert');
   const custPublicError = document.getElementById('mrCustomerPublicError');
+  const btnInstantZero = document.getElementById('mrBtnInstantZeroOrder');
   const btnCheckout = document.getElementById('mrBtnStripeCheckout');
   const btnCheckoutText = document.getElementById('mrBtnCheckoutText');
   const btnDirectSim = document.getElementById('mrBtnDirectOrderSim');
@@ -686,6 +687,7 @@ async function triggerLuluQuote() {
   headerEl.textContent = '⏳ Verificando coste real en Lulu Direct API...';
   headerEl.style.color = '#4a423a';
   if (btnCheckout) btnCheckout.disabled = true;
+  if (btnInstantZero) btnInstantZero.disabled = true;
 
   try {
     const idToken = await auth.currentUser.getIdToken();
@@ -733,10 +735,9 @@ async function triggerLuluQuote() {
         custPublicError.style.display = 'block';
         custPublicError.textContent = data.publicErrorMessage || 'Envío temporalmente no disponible para esta configuración.';
       }
-      if (btnCheckout) {
-        btnCheckout.disabled = true;
-        btnCheckoutText.textContent = '🚫 Envío no disponible temporalmente';
-      }
+      if (btnCheckout) btnCheckout.disabled = true;
+      if (btnInstantZero) btnInstantZero.disabled = true;
+      if (btnCheckoutText) btnCheckoutText.textContent = '🚫 Envío no disponible temporalmente';
       if (btnDirectSim) btnDirectSim.disabled = true;
     } else {
       safetyBox.classList.remove('blocked');
@@ -744,9 +745,10 @@ async function triggerLuluQuote() {
       headerEl.style.color = '#166534';
       if (blockAlert) blockAlert.style.display = 'none';
       if (custPublicError) custPublicError.style.display = 'none';
-      if (btnCheckout) {
-        btnCheckout.disabled = false;
-        btnCheckoutText.textContent = `Pagar ${data.pricing.retailPrice.toFixed(2).replace('.', ',')} € · Envío incluido`;
+      if (btnCheckout) btnCheckout.disabled = false;
+      if (btnInstantZero) btnInstantZero.disabled = false;
+      if (btnCheckoutText) {
+        btnCheckoutText.textContent = `Confirmar Pedido (0 € Test) · ${data.pricing.retailPrice.toFixed(2).replace('.', ',')} € (Envío incluido)`;
       }
       if (btnDirectSim) btnDirectSim.disabled = false;
     }
