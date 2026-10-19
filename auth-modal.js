@@ -7,6 +7,7 @@ import {
   getUserEmail,
   getUserDisplayName
 } from './firebase-config.js';
+import { verifyAndEnforceThreeDevices } from './device-guard.js';
 import { 
   signInWithPopup, 
   signOut, 
@@ -348,10 +349,14 @@ export function setupNavbarAuth() {
     if (user) {
       const email = getUserEmail(user);
       const name = getUserDisplayName(user);
-      const isDev = isDeveloper(user);
+      let isDev = false;
+      if (isDeveloper(user)) {
+        const devDeviceCheck = await verifyAndEnforceThreeDevices(user);
+        isDev = !!devDeviceCheck.allowed;
+      }
       const initial = (name || email || 'U').charAt(0).toUpperCase();
 
-      // Guardar en caché para carga ultrarrápida
+      // Guardar en caché para carga ultrarrápida (nunca cachear permisos dev en aparatos no autorizados)
       try {
         if (email) {
           localStorage.setItem('mr_user_pdf_email', email);
@@ -360,7 +365,7 @@ export function setupNavbarAuth() {
           displayName: name,
           email: email,
           photoURL: user.photoURL || '',
-          isDev: isDev
+          isDev: false
         }));
       } catch (e) {}
       window.mrAuthUserEmail = email;

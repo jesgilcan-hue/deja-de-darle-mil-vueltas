@@ -11,7 +11,9 @@ import {
 } from './firebase-config.js';
 import {
   verifyAndEnforceThreeDevices,
-  revokeAuthorizedDevice,
+  approveAndReplaceAuthorizedDevice,
+  rejectPendingDeviceRequest,
+  resendPendingDeviceVerificationEmail,
   MAX_AUTHORIZED_DEVICES
 } from './device-guard.js';
 import { 
@@ -31,7 +33,8 @@ import {
   addDoc, 
   serverTimestamp, 
   query, 
-  orderBy 
+  orderBy,
+  onSnapshot
 } from 'firebase/firestore';
 import { openAuthModal, setupNavbarAuth } from './auth-modal.js';
 
@@ -180,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try { localStorage.setItem('mr_user_pdf_email', email); } catch (e) {}
       }
       renderAuthenticatedView(user);
-      checkUrlTab();
+      checkUrlTab(false);
       // Cargar datos de usuario y plantillas EN PARALELO para máxima velocidad
       await Promise.all([loadUserData(user), loadUserDesigns(user)]);
     } else {
@@ -264,16 +267,16 @@ function activateTab(tabId) {
   window.history.replaceState({}, document.title, cleanUrl);
 }
 
-function checkUrlTab() {
+function checkUrlTab(allowDevTabs = false) {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab');
   const user = auth.currentUser;
-  const isDev = isDeveloper(user);
+  const isDevAllowed = isDeveloper(user) && allowDevTabs;
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
   } else if (tab === 'pedidos') {
-    if (isDev) {
+    if (isDevAllowed) {
       const btnPed = document.getElementById('tab-btn-pedidos');
       if (btnPed) btnPed.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-pedidos');
@@ -281,7 +284,7 @@ function checkUrlTab() {
       activateTab('tab-disenos');
     }
   } else if (tab === 'dev') {
-    if (isDev) {
+    if (isDevAllowed) {
       if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-dev');
     } else {
@@ -290,7 +293,7 @@ function checkUrlTab() {
   } else if (tab === 'disenos') {
     activateTab('tab-disenos');
   } else if (tab === 'futuras') {
-    if (isDev) {
+    if (isDevAllowed) {
       if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-futuras');
     } else {
@@ -774,12 +777,18 @@ function renderAuthenticatedView(user) {
   if (isDev) {
     verifyAndEnforceThreeDevices(user).then((deviceResult) => {
       if (!deviceResult.allowed) {
-        // Si ya hay 3 dispositivos autorizados y este es un 4º aparato desconocido: ocultar panel de desarrollador
+        // MODO SILENCIOSO TOTAL: Si es un 4.º dispositivo no autorizado, la web NO dice nada y se comporta como cuenta de cliente normal.
         if (userRoleBadge) userRoleBadge.style.setProperty('display', 'none', 'important');
         if (tabBtnDev) tabBtnDev.style.setProperty('display', 'none', 'important');
         if (tabDevPane) tabDevPane.style.setProperty('display', 'none', 'important');
         if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
         if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
+        const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
+        if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
+        const activeBtn = document.querySelector('.tab-btn.active');
+        if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-pedidos')) {
+          activateTab('tab-disenos');
+        }
         return;
       }
 
@@ -808,8 +817,39 @@ function renderAuthenticatedView(user) {
       if (devLockedView) devLockedView.style.display = 'none';
       if (devUnlockedContent) devUnlockedContent.style.display = 'block';
 
-      renderAuthorizedDevicesUI(user, deviceResult.devices || [], deviceResult.currentToken);
+      checkUrlTab(true);
+
+      renderAuthorizedDevicesUI(
+        user,
+        deviceResult.devices || [],
+        deviceResult.currentToken,
+        deviceResult.pendingDevices || []
+      );
       initClientOrdersAndBasketModule(user);
+
+      // Si acaba de pulsar el enlace de verificación del email desde este dispositivo autorizado:
+      if (deviceResult.emailJustVerified) {
+        activateTab('tab-dev');
+        setTimeout(() => {
+          const pendingEl = document.getElementById('devPendingDevicesContainer');
+          if (pendingEl) pendingEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 250);
+        showToast(`✅ Paso 1/2 (Email en Gmail) validado para «${deviceResult.verifiedDeviceName}». Ahora elige qué dispositivo sustituir abajo (Paso 2/2).`);
+      }
+
+      // Escucha en tiempo real de cambios en dispositivos autorizados y solicitudes silenciosas pendientes
+      if (!window.__mrDevDevicesSnapshotUnsub) {
+        window.__mrDevDevicesSnapshotUnsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+          if (!snap.exists()) return;
+          const d = snap.data() || {};
+          renderAuthorizedDevicesUI(
+            user,
+            Array.isArray(d.authorizedDevices) ? d.authorizedDevices : [],
+            deviceResult.currentToken,
+            Array.isArray(d.pendingDevices) ? d.pendingDevices : []
+          );
+        });
+      }
     });
   } else {
     // USUARIO CLIENTE (CUALQUIER CORREO DISTINTO DE jesgilcan@gmail.com):
@@ -1373,12 +1413,15 @@ function showToast(msg) {
   }, 3500);
 }
 
-function renderAuthorizedDevicesUI(user, devices, currentToken) {
+function renderAuthorizedDevicesUI(user, devices, currentToken, pendingDevices = []) {
   const container = document.getElementById('devAuthorizedDevicesContainer');
+  const pendingContainer = document.getElementById('devPendingDevicesContainer');
   const badge = document.getElementById('devDevicesCountBadge');
   if (!container) return;
 
   const list = Array.isArray(devices) ? devices : [];
+  const pendingList = Array.isArray(pendingDevices) ? pendingDevices : [];
+
   if (badge) {
     badge.textContent = `${list.length} / ${MAX_AUTHORIZED_DEVICES} Dispositivos Sellados`;
   }
@@ -1403,9 +1446,9 @@ function renderAuthorizedDevicesUI(user, devices, currentToken) {
             <div style="font-size:0.92rem; font-weight:700; color:#ffffff; margin-top:4px;">${dev.icon || hint.defaultIcon} ${escapeHtml(dev.name || 'Dispositivo autorizado')}</div>
             <div style="font-size:0.73rem; color:#9ca3af; margin-top:2px;">Pantalla: ${escapeHtml(dev.screen || 'N/A')} · Activo: ${formatDate(dev.lastSeen || dev.registeredAt)}</div>
           </div>
-          <button type="button" data-revoke-token="${escapeHtml(dev.token)}" style="align-self:flex-start; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#fca5a5; border-radius:6px; padding:4px 10px; font-size:0.72rem; font-weight:700; cursor:pointer;">
-            🗑️ Liberar este hueco
-          </button>
+          <div style="font-size:0.69rem; color:#a7c4b0; background:rgba(0,0,0,0.22); border-radius:6px; padding:5px 8px; border:1px solid rgba(74,222,128,0.18);">
+            🔒 Sellado · Sustituible solo mediante Doble Llave (1.º Email Gmail + 2.º Aprobación aquí)
+          </div>
         </div>
       `;
     } else {
@@ -1413,20 +1456,138 @@ function renderAuthorizedDevicesUI(user, devices, currentToken) {
         <div style="background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.2); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; justify-content:center; gap:4px;">
           <div style="font-size:0.72rem; font-weight:800; color:#9ca3af; text-transform:uppercase;">Dispositivo ${idx + 1}/${MAX_AUTHORIZED_DEVICES} · Libre</div>
           <div style="font-size:0.88rem; font-weight:700; color:#d1d5db;">${hint.defaultIcon} ${hint.defaultLabel}</div>
-          <div style="font-size:0.73rem; color:#9ca3af;">Entra con tu Gmail desde ese dispositivo para sellarlo automáticamente en este hueco.</div>
+          <div style="font-size:0.73rem; color:#9ca3af;">Entra con tu Gmail desde ese dispositivo para sellarlo en este hueco.</div>
         </div>
       `;
     }
   }).join('');
 
-  container.querySelectorAll('[data-revoke-token]').forEach(btn => {
+  if (!pendingContainer) return;
+
+  if (pendingList.length === 0) {
+    pendingContainer.innerHTML = `
+      <div style="background:rgba(0,0,0,0.24); border:1px solid rgba(255,255,255,0.09); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:0.8rem; color:#d1d5db;">
+          🛡️ <strong>Modo Silencioso Activo:</strong> No hay ningún 4.º dispositivo pendiente de autorización ahora mismo. Si inicias sesión con <code style="color:#fff;">jesgilcan@gmail.com</code> en un navegador o aparato nuevo, la web no mostrará nada en él y te enviará un email automático para iniciar el cambio.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  pendingContainer.innerHTML = `
+    <div style="margin-bottom:10px; font-size:0.84rem; font-weight:800; color:#fde68a; display:flex; align-items:center; gap:8px;">
+      <span>🔔 Solicitudes Silenciosas de Nuevos Dispositivos Detectados (${pendingList.length})</span>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      ${pendingList.map((p) => {
+        const isEmailOk = !!p.emailVerified;
+        const slotOptionsHtml = list.map((d, sIdx) => {
+          return `<option value="${sIdx}">Sustituir Dispositivo ${sIdx + 1}: ${escapeHtml(d.name || 'Equipo ' + (sIdx + 1))}</option>`;
+        }).join('');
+
+        return `
+          <div style="background:${isEmailOk ? 'rgba(22, 101, 52, 0.28)' : 'rgba(120, 53, 15, 0.28)'}; border:1.5px solid ${isEmailOk ? '#4ade80' : '#f59e0b'}; border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span style="font-size:0.95rem; font-weight:800; color:#ffffff;">${p.icon || '💻'} ${escapeHtml(p.name || 'Dispositivo Nuevo')}</span>
+                  <span style="font-size:0.72rem; color:#d1d5db;">Pantalla: ${escapeHtml(p.screen || 'N/A')} · Detectado: ${formatDate(p.lastAttemptAt || p.detectedAt)}</span>
+                </div>
+                <div style="font-size:0.76rem; color:#cbd5e1; margin-top:4px;">
+                  En este dispositivo nuevo la web permanece en <strong>silencio total</strong> (vista normal de cliente, cero avisos) hasta completar las 2 llaves:
+                </div>
+              </div>
+              <button type="button" data-reject-pending="${escapeHtml(p.token)}" style="background:rgba(239,68,68,0.18); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; border-radius:6px; padding:5px 10px; font-size:0.73rem; font-weight:700; cursor:pointer;">
+                🗑️ Rechazar / Ignorar
+              </button>
+            </div>
+
+            <!-- Estado de las 2 llaves -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px;">
+              <!-- Llave 1: Email -->
+              <div style="background:rgba(0,0,0,0.3); border:1px solid ${isEmailOk ? '#4ade80' : 'rgba(245,158,11,0.5)'}; border-radius:8px; padding:10px 12px;">
+                <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:${isEmailOk ? '#86efac' : '#fde68a'};">
+                  ${isEmailOk ? '✅ LLAVE 1/2 COMPLETADA (EMAIL GMAIL)' : '⏳ LLAVE 1/2 PENDIENTE (EMAIL GMAIL)'}
+                </div>
+                <div style="font-size:0.77rem; color:#e5e7eb; margin-top:4px;">
+                  ${isEmailOk
+                    ? 'Ya has pulsado el enlace de autorización enviado a jesgilcan@gmail.com.'
+                    : 'Abre el correo enviado a jesgilcan@gmail.com y pulsa el botón «Paso 1/2: Validar este nuevo dispositivo».'}
+                </div>
+                ${!isEmailOk ? `
+                  <button type="button" data-resend-pending-email="${escapeHtml(p.token)}" style="margin-top:8px; background:#3f3b37; border:1px solid rgba(255,255,255,0.22); color:#fde68a; border-radius:6px; padding:5px 10px; font-size:0.73rem; font-weight:700; cursor:pointer;">
+                    📨 Reenviar enlace a mi Gmail
+                  </button>
+                ` : ''}
+              </div>
+
+              <!-- Llave 2: Confirmación desde este dispositivo ya autorizado -->
+              <div style="background:rgba(0,0,0,0.3); border:1px solid ${isEmailOk ? '#4ade80' : 'rgba(255,255,255,0.12)'}; border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; gap:8px;">
+                <div>
+                  <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:${isEmailOk ? '#86efac' : '#9ca3af'};">
+                    ${isEmailOk ? '🔓 LLAVE 2/2 LISTA PARA CONFIRMAR AQUÍ' : '🔒 LLAVE 2/2 BLOQUEADA HASTA VALIDAR EMAIL'}
+                  </div>
+                  <div style="font-size:0.76rem; color:#d1d5db; margin-top:3px;">
+                    Elige a cuál de tus 3 equipos actuales sustituye desde este dispositivo ya autorizado:
+                  </div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  <select data-slot-select="${escapeHtml(p.token)}" ${!isEmailOk ? 'disabled' : ''} style="flex:1; min-width:170px; background:#191c1a; color:#ffffff; border:1px solid rgba(255,255,255,0.25); border-radius:6px; padding:6px 8px; font-size:0.76rem;">
+                    ${slotOptionsHtml}
+                  </select>
+                  <button type="button" data-approve-pending="${escapeHtml(p.token)}" ${!isEmailOk ? 'disabled' : ''} style="background:${isEmailOk ? '#16a34a' : '#374151'}; color:#ffffff; border:none; border-radius:6px; padding:7px 12px; font-size:0.76rem; font-weight:800; cursor:${isEmailOk ? 'pointer' : 'not-allowed'}; opacity:${isEmailOk ? '1' : '0.55'};">
+                    ${isEmailOk ? '✅ Paso 2/2: Autorizar y Sustituir' : '🔒 Valida primero el Email'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  pendingContainer.querySelectorAll('[data-resend-pending-email]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const tok = btn.getAttribute('data-revoke-token');
+      const tok = btn.getAttribute('data-resend-pending-email');
       if (!tok) return;
-      if (!confirm('¿Liberar este hueco de dispositivo autorizado? Si quieres reemplazarlo por un móvil o tablet nuevo, entra desde él después de liberarlo.')) return;
-      const updated = await revokeAuthorizedDevice(user, tok);
-      renderAuthorizedDevicesUI(user, updated, currentToken);
-      showToast('✓ Hueco de dispositivo liberado');
+      btn.disabled = true;
+      btn.textContent = '⏳ Enviando a jesgilcan@gmail.com...';
+      const ok = await resendPendingDeviceVerificationEmail(user, tok);
+      btn.disabled = false;
+      btn.textContent = ok ? '✓ Correo enviado a tu Gmail' : '📨 Reenviar enlace a mi Gmail';
+      showToast(ok ? '📨 Enlace de validación (Paso 1/2) enviado a jesgilcan@gmail.com' : 'No se pudo reenviar el correo en este momento');
+    });
+  });
+
+  pendingContainer.querySelectorAll('[data-reject-pending]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tok = btn.getAttribute('data-reject-pending');
+      if (!tok) return;
+      const res = await rejectPendingDeviceRequest(user, tok);
+      renderAuthorizedDevicesUI(user, res.devices, currentToken, res.pendingDevices);
+      showToast('🗑️ Solicitud de dispositivo descartada');
+    });
+  });
+
+  pendingContainer.querySelectorAll('[data-approve-pending]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tok = btn.getAttribute('data-approve-pending');
+      if (!tok) return;
+      const selectEl = pendingContainer.querySelector(`[data-slot-select="${tok}"]`);
+      const slotIndex = selectEl ? Number(selectEl.value) : 0;
+      try {
+        btn.disabled = true;
+        btn.textContent = '⏳ Sustituyendo equipo...';
+        const res = await approveAndReplaceAuthorizedDevice(user, tok, slotIndex);
+        renderAuthorizedDevicesUI(user, res.devices, currentToken, res.pendingDevices);
+        showToast(`✅ Nuevo dispositivo autorizado en el Hueco ${slotIndex + 1}/3`);
+      } catch (err) {
+        alert(err.message || 'No se pudo completar el reemplazo.');
+        btn.disabled = false;
+        btn.textContent = '✅ Paso 2/2: Autorizar y Sustituir';
+      }
     });
   });
 }

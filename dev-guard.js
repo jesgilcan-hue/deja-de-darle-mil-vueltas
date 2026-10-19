@@ -13,11 +13,9 @@ export function protectDevPage() {
       if (deviceCheck.allowed) {
         revealPage();
       } else {
-        console.warn('⛔ Dispositivo bloqueado (fuera del cupo de 3 dispositivos):', deviceCheck.reason);
         kickOut();
       }
     } else {
-      // Para cualquier usuario que no sea jesgilcan@gmail.com: 404 inmediato
       kickOut();
     }
   });
