@@ -1153,8 +1153,8 @@
             <button type="button" class="btn-download-send" onclick="openDownloadModal()">
                 <span>📥</span> Descargar / Enviar PDF
             </button>
-            <!-- Botón de Flujo B (Añadir al carrito) - Oculto temporalmente hasta activar Stripe y Lulu -->
-            <div style="display:none !important; flex-direction:column; align-items:flex-end; gap:4px;">
+            <!-- Botón de Flujo B (Añadir al carrito) - Oculto para visitantes, visible solo para jesgilcan@gmail.com -->
+            <div id="devCartWrapper" style="display:none !important; flex-direction:column; align-items:flex-end; gap:4px;">
                 <button type="button" class="btn-action-order" id="btnAddToCart" onclick="handleAddToCart()">
                     <span>🛒</span> Añadir al carrito
                 </button>
@@ -2420,6 +2420,15 @@ Sección de notas libres (10 páginas)</textarea>
                     updatedAt: Date.now()
                 }));
             } catch (e) {}
+
+            if (typeof window.openDevCartDrawer === 'function') {
+                window.openDevCartDrawer({
+                    title: coverState.title,
+                    bindingType: coverState.bindingType,
+                    pageCount: coverState.pageCount,
+                    syncedBookName: coverState.syncedBookName
+                });
+            }
         }
 
         function markCartModified() {
@@ -3642,5 +3651,6 @@ Sección de notas libres (10 páginas)</textarea>
         setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData, { isPremium: true, generatorType: 'cover' });
         checkAndLoadSavedDesign(applySavedCoverDesign);
     </script>
+    <script type="module" src="./cart-drawer.js"></script>
 </body>
 </html>

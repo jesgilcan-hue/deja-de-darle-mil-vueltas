@@ -10,6 +10,42 @@ export const config = {
   }
 };
 
+const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
+const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf-8');
+
+async function verifyDeveloperIdToken(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return { valid: false, error: 'Falta token de autorización Bearer de Firebase Auth.' };
+  }
+  const idToken = authHeader.replace('Bearer ', '').trim();
+  if (!idToken) {
+    return { valid: false, error: 'Token vacío.' };
+  }
+
+  try {
+    const verifyRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_WEB_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken })
+      }
+    );
+    const verifyData = await verifyRes.json();
+    if (!verifyRes.ok || !verifyData.users || !verifyData.users.length) {
+      return { valid: false, error: 'Token de Firebase inválido o expirado.' };
+    }
+    const userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
+    if (userEmail !== ALLOWED_ADMIN_EMAIL) {
+      return { valid: false, error: 'Acceso denegado: cuenta no autorizada.' };
+    }
+    return { valid: true, email: userEmail };
+  } catch (err) {
+    return { valid: false, error: 'Error al verificar identidad con Google Identity Toolkit.' };
+  }
+}
+
 export default async function handler(req, res) {
   // Configuración de CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -23,6 +59,12 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido. Solo se acepta POST.' });
+  }
+
+  // Verificación criptográfica obligatoria de sesión de jesgilcan@gmail.com
+  const authCheck = await verifyDeveloperIdToken(req);
+  if (!authCheck.valid) {
+    return res.status(403).json({ error: authCheck.error });
   }
 
   const apiKey = process.env.RESEND_API_KEY;

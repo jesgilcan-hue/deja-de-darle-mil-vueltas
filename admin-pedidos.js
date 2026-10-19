@@ -54,7 +54,7 @@ const pdfPreviewModal = document.getElementById('pdfPreviewModal');
 const editAddressModal = document.getElementById('editAddressModal');
 
 // =========================================================================
-// 1. BLINDAJE DE SEGURIDAD ABSOLUTO (EXPULSIÓN A 404 SI NO ES JESÚS GIL)
+// 1. BLINDAJE DE SEGURIDAD ABSOLUTO (EXPULSIÓN A 404 SI NO ES DESARROLLADOR)
 // =========================================================================
 
 function kickOut(reason = 'Acceso no autorizado') {
@@ -76,11 +76,10 @@ function revealPage() {
 }
 
 function isLocalDev() {
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  return false; // Seguridad estricta: requiere siempre Firebase Auth (jesgilcan@gmail.com)
 }
 
 function assertAuthorized() {
-  if (isLocalDev()) return true;
   if (!auth.currentUser || !isDeveloper(auth.currentUser)) {
     kickOut('Intento de acción sin autenticación de jesgilcan@gmail.com');
     return false;
@@ -206,7 +205,14 @@ function unlockBackoffice() {
   isAuthorized = true;
   if (authGate) authGate.style.display = 'none';
   if (adminMain) adminMain.style.display = 'block';
-  loadAllOrders();
+  loadAllOrders().then(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('stripe_test_success') === '1') {
+      const ordNum = params.get('order') || '';
+      showToast(`✓ Simulación Stripe Test (0€) completada · Pedido #${ordNum} recibido`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  });
 }
 
 // =========================================================================
@@ -1001,9 +1007,13 @@ window.executeSendCustomerEmail = async function() {
   showToast(`⏳ Enviando correo a ${recipientEmail}...`);
 
   try {
+    const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : '';
     const res = await fetch('/api/send-admin-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({
         to: recipientEmail,
         subject: subject,

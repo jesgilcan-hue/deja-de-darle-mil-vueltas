@@ -263,7 +263,7 @@ function checkUrlTab() {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab');
   const user = auth.currentUser;
-  const isDev = isDeveloper(user) || (sessionStorage.getItem('mr_dev_pin_verified') === 'true');
+  const isDev = isDeveloper(user);
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');

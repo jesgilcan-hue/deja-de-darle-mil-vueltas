@@ -60,11 +60,10 @@ function revealPage() {
 }
 
 function isLocalDev() {
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  return false; // Seguridad estricta: requiere siempre Firebase Auth (jesgilcan@gmail.com)
 }
 
 function assertAuthorized() {
-  if (isLocalDev()) return true;
   if (!auth.currentUser || !isDeveloper(auth.currentUser)) {
     kickOut('Intento de acción sin autenticación de administrador');
     return false;
@@ -566,10 +565,12 @@ async function testSendSimulation() {
   }
 
   try {
+    const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : '';
     const res = await fetch('/api/send-admin-email', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
       },
       body: JSON.stringify({
         to: destination,
