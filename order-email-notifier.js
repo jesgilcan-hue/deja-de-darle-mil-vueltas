@@ -10,11 +10,12 @@ const TEST_CLIENT_EMAIL = 'jesusgil_87@hotmail.com';
 
 function getSafeClientRecipients(orderCustomerEmail) {
   const clean = String(orderCustomerEmail || '').trim().toLowerCase();
-  // Solo enviar a las cuentas reales del propietario/cliente de prueba para no enviar correos a emails ficticios de semillas demo
-  if (clean === TEST_CLIENT_EMAIL || clean === OWNER_EMAIL) {
-    return Array.from(new Set([clean, TEST_CLIENT_EMAIL, OWNER_EMAIL]));
+  // El gestor (jesgilcan@gmail.com) NUNCA debe recibir correos de cliente
+  if (clean && clean.includes('@') && clean !== OWNER_EMAIL) {
+    return [clean];
   }
-  return [TEST_CLIENT_EMAIL, OWNER_EMAIL];
+  // Si no hay email o si es la cuenta del gestor haciendo pruebas, enviar el correo de cliente a jesusgil_87@hotmail.com
+  return [TEST_CLIENT_EMAIL];
 }
 
 function getBindingLabel(bindingType) {
@@ -83,7 +84,7 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
     const luluJobId = order.luluJob?.jobId || ('LULU-' + Math.floor(100000 + Math.random() * 900000));
 
     const clientProfileUrl = 'https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos';
-    const adminOrdersUrl = 'https://www.editorialmenosruido.com/admin-pedidos.html';
+    const adminOrderTargetUrl = `https://www.editorialmenosruido.com/admin-pedidos.html?orderId=${encodeURIComponent(order.id || orderNumber)}`;
 
     let clientSubject = '';
     let clientBody = '';
@@ -92,17 +93,17 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
 
     let managerSubject = '';
     let managerBody = '';
-    let managerBtnText = '⚡ Abrir Gestor de Pedidos (Backoffice)';
-    let managerBtnUrl = adminOrdersUrl;
+    let managerBtnText = '⚡ Abrir este pedido en el Gestor';
+    let managerBtnUrl = adminOrderTargetUrl;
 
     if (eventType === 'order_created') {
       clientSubject = `📦 Confirmación de tu pedido #${orderNumber} · Editorial Menos Ruido`;
       clientBody = [
         `Hola ${customerName},`,
         `Hemos recibido correctamente tu pedido #${orderNumber} (${totalPaid} € · Envío incluido).`,
-        `Tu cuaderno «${bookTitle}» (${bindingLabel}, ${pageCount} páginas interiores) ha entrado en la Fase 1/4: Revisión Técnica de Imprenta (300 DPI).`,
-        `Como el documento de alta resolución pesa ${fileSizeMb} MB, no lo adjuntamos por correo para no saturar tu bandeja: ya lo tienes guardado y disponible para siempre en el apartado «Mis Pedidos y Cesta» de tu perfil.`,
-        `Desde tu perfil también podrás consultar todos los cambios de estado y comunicarte con la empresa repartidora.`
+        `Tu cuaderno «${bookTitle}» (${bindingLabel}, ${pageCount} páginas interiores) ha entrado en revisión de imprenta.`,
+        `Como el documento pesa ${fileSizeMb} MB, no lo adjuntamos por correo para no saturar tu bandeja: ya lo tienes guardado y disponible para siempre en el apartado «Mis Pedidos y Cesta» de tu perfil.`,
+        `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido.`
       ].join('\n\n');
 
       managerSubject = `🔔 [GESTOR WEB] Nueva venta #${orderNumber} (${totalPaid} €) · Informe Lulu`;
@@ -110,36 +111,36 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
         `Se ha registrado un nuevo pedido pagado en la web (#${orderNumber}).`,
         `DATOS DEL CLIENTE COMPRADOR:\n• Nombre: ${customerName}\n• Email: ${customerEmail}\n• Teléfono: ${customerPhone}\n• Dirección: ${fullAddress}\n• Nota para repartidor: ${customerNotes}`,
         `INFORME FINANCIERO Y LULU DIRECT API:\n• PVP cobrado al cliente (envío incluido): ${totalPaid} €\n• Coste de fabricación + envío en Lulu: -${luluCost} €\n• Comisión pasarela Stripe: -${stripeFee} €\n• BENEFICIO NETO LIMPIO: +${netMargin} €`,
-        `ESPECIFICACIONES TÉCNICAS (PREFLIGHT 300 DPI):\n• Ejemplar: ${bookTitle} (${bindingLabel})\n• Páginas interiores: ${pageCount} págs (Lomo calculado: ${spineMm} mm)\n• Peso en nube del perfil: ${fileSizeMb} MB\n• Estado actual: 1/4 Pendiente de tu validación para enviar a Lulu.`
+        `ESPECIFICACIONES TÉCNICAS:\n• Ejemplar: ${bookTitle} (${bindingLabel})\n• Páginas interiores: ${pageCount} págs (Lomo calculado: ${spineMm} mm)\n• Peso en nube del perfil: ${fileSizeMb} MB\n• Estado actual: Pendiente de tu validación para enviar a Lulu.`
       ].join('\n\n');
 
     } else if (eventType === 'status_pending_review') {
-      clientSubject = `🔍 Pedido #${orderNumber} en Revisión Técnica (Fase 1/4) · Editorial Menos Ruido`;
+      clientSubject = `🔍 Pedido #${orderNumber} en Revisión Técnica · Editorial Menos Ruido`;
       clientBody = [
         `Hola ${customerName},`,
-        `Te informamos de que tu pedido #${orderNumber} («${bookTitle}») se encuentra en la Fase 1/4: Revisión Técnica de Imprenta.`,
-        `Estamos verificando los márgenes de corte (3.175 mm), la resolución a 300 DPI y el ancho exacto del lomo (${spineMm} mm) antes de dar orden de fabricación a los talleres.`,
-        `Puedes consultar el estado en directo desde tu perfil.`
+        `Te informamos de que tu pedido #${orderNumber} («${bookTitle}») se encuentra en revisión de imprenta.`,
+        `Estamos verificando los márgenes de corte, el sangrado y el ancho del lomo (${spineMm} mm) antes de dar orden de fabricación a los talleres.`,
+        `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido.`
       ].join('\n\n');
 
-      managerSubject = `🔍 [GESTOR WEB] Pedido #${orderNumber} situado en Fase 1/4 (Revisión Técnica)`;
+      managerSubject = `🔍 [GESTOR WEB] Pedido #${orderNumber} situado en Revisión Técnica`;
       managerBody = [
-        `El pedido #${orderNumber} del cliente ${customerName} (${customerEmail}) se ha situado en estado «1. Revisión Técnica (Preflight)».`,
+        `El pedido #${orderNumber} del cliente ${customerName} (${customerEmail}) se ha situado en estado «Revisión Técnica».`,
         `Revisa el interior y la portada en el Gestor de Pedidos y pulsa «Aprobar y Enviar a Imprenta» cuando quieras lanzar la orden a Lulu.`
       ].join('\n\n');
 
     } else if (eventType === 'status_printing') {
-      clientSubject = `🖨️ Tu cuaderno #${orderNumber} ya está en imprenta (Fase 2/4) · Editorial Menos Ruido`;
+      clientSubject = `🖨️ Tu cuaderno #${orderNumber} ya está en imprenta · Editorial Menos Ruido`;
       clientBody = [
         `Hola ${customerName},`,
-        `¡Buenas noticias! Tu cuaderno «${bookTitle}» (Pedido #${orderNumber}) ha superado al 100% la revisión técnica de 300 DPI y ya ha entrado en fabricación en imprenta (Fase 2/4: En Imprenta).`,
+        `¡Buenas noticias! Tu cuaderno «${bookTitle}» (Pedido #${orderNumber}) ha superado la revisión técnica y ya ha entrado en fabricación en imprenta.`,
         `En estos momentos se está imprimiendo la tripa interior (${pageCount} páginas) y preparando la encuadernación en ${bindingLabel}.`,
         `En cuanto salga del taller con la empresa repartidora te enviaremos tu código de seguimiento.`
       ].join('\n\n');
 
       managerSubject = `🖨️ [GESTOR WEB · LULU] Orden enviada a Lulu Imprenta (#${orderNumber})`;
       managerBody = [
-        `Has validado y enviado a producción en Lulu el pedido #${orderNumber} (Fase 2/4: En Imprenta).`,
+        `Has validado y enviado a producción en Lulu el pedido #${orderNumber} (En Imprenta).`,
         `DATOS DE PRODUCCIÓN EN LULU:\n• ID Trabajo Lulu: ${luluJobId}\n• Formato: ${bindingLabel} · ${pageCount} págs · Lomo ${spineMm} mm\n• Coste de producción + envío en Lulu: ${luluCost} € (Margen neto: +${netMargin} €)\n• Cliente notificado automáticamente en: ${customerEmail}`
       ].join('\n\n');
 
@@ -147,29 +148,29 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
       clientSubject = `🚚 Tu pedido #${orderNumber} está en reparto (Tracking: ${tracking})`;
       clientBody = [
         `Hola ${customerName},`,
-        `Tu cuaderno «${bookTitle}» (Pedido #${orderNumber}) ya ha salido de la imprenta y está en manos de la empresa repartidora ${carrier} (Fase 3/4: En Reparto).`,
+        `Tu cuaderno «${bookTitle}» (Pedido #${orderNumber}) ya ha salido de la imprenta y está en manos de la empresa repartidora ${carrier}.`,
         `DATOS DE SEGUIMIENTO:\n• Empresa repartidora: ${carrier}\n• Código de seguimiento (Tracking): ${tracking}\n• Dirección de entrega: ${fullAddress}\n• Instrucciones actuales para el repartidor: ${customerNotes}`,
-        `Recuerda que puedes seguir el paquete o dejar un aviso para el repartidor (horario, portería, etc.) directamente desde tu perfil en Mi Espacio.`
+        `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido o dejar avisos para el repartidor.`
       ].join('\n\n');
 
       managerSubject = `🚚 [GESTOR WEB] Pedido #${orderNumber} en reparto (${carrier} · ${tracking})`;
       managerBody = [
-        `El pedido #${orderNumber} de ${customerName} (${customerEmail}) ha pasado a la Fase 3/4: En Reparto.`,
-        `INFORMACIÓN LOGÍSTICA:\n• Transportista: ${carrier}\n• Tracking asignado: ${tracking}\n• Dirección: ${fullAddress}\n• El cliente ya ha recibido su correo con el código de seguimiento y tiene habilitado el cuadro de comunicación con el repartidor en su perfil.`
+        `El pedido #${orderNumber} de ${customerName} (${customerEmail}) ha pasado a En Reparto.`,
+        `INFORMACIÓN LOGÍSTICA:\n• Transportista: ${carrier}\n• Tracking asignado: ${tracking}\n• Dirección: ${fullAddress}\n• El cliente ya ha recibido su correo con el código de seguimiento.`
       ].join('\n\n');
 
     } else if (eventType === 'status_delivered') {
-      clientSubject = `🎉 ¡Tu pedido #${orderNumber} ha sido entregado! (Fase 4/4) · Editorial Menos Ruido`;
+      clientSubject = `🎉 ¡Tu pedido #${orderNumber} ha sido entregado! · Editorial Menos Ruido`;
       clientBody = [
         `Hola ${customerName},`,
-        `La empresa repartidora (${carrier}) nos confirma que tu pedido #${orderNumber} («${bookTitle}») ha sido entregado en tu dirección (Fase 4/4: Entregado).`,
-        `Recuerda que en tu perfil de Mi Espacio siguen guardados para siempre los archivos digitales a 300 DPI (${fileSizeMb} MB) de tu cuaderno y tu portada por si en el futuro quieres volver a consultarlos, editarlos o encargar otra copia.`,
+        `La empresa repartidora (${carrier}) nos confirma que tu pedido #${orderNumber} («${bookTitle}») ha sido entregado en tu dirección.`,
+        `Recuerda que en tu perfil de Mi Espacio siguen guardados los archivos digitales (${fileSizeMb} MB) de tu cuaderno y tu portada por si en el futuro quieres volver a consultarlos o encargar otra copia.`,
         `¡Gracias por confiar en Editorial Menos Ruido!`
       ].join('\n\n');
 
-      managerSubject = `✅ [GESTOR WEB] Pedido #${orderNumber} ENTREGADO y completado (Fase 4/4)`;
+      managerSubject = `✅ [GESTOR WEB] Pedido #${orderNumber} ENTREGADO y completado`;
       managerBody = [
-        `El pedido #${orderNumber} del cliente ${customerName} (${customerEmail}) ha completado la Fase 4/4: Entregado en domicilio.`,
+        `El pedido #${orderNumber} del cliente ${customerName} (${customerEmail}) ha sido entregado en domicilio.`,
         `RESUMEN DE CIERRE:\n• Ejemplar: ${bookTitle} (${bindingLabel}, ${pageCount} págs)\n• Transportista: ${carrier} (Tracking: ${tracking})\n• Cobrado: ${totalPaid} € | Coste Lulu: ${luluCost} € | Beneficio Neto: +${netMargin} €\n• Ciclo de emails completado al 100%.`
       ].join('\n\n');
 
@@ -215,7 +216,10 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
       address: fullAddress
     };
 
-    const clientRecipients = getSafeClientRecipients(customerEmail);
+    const clientRecipients = getSafeClientRecipients(customerEmail).filter(e => e !== OWNER_EMAIL);
+    if (clientRecipients.length === 0) {
+      clientRecipients.push(TEST_CLIENT_EMAIL);
+    }
 
     // Disparar AMBOS correos en paralelo desde pedidos@editorialmenosruido.com
     const [clientRes, managerRes] = await Promise.all([

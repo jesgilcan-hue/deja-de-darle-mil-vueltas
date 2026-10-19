@@ -10,7 +10,8 @@ import {
   updateDoc, 
   serverTimestamp, 
   query, 
-  orderBy 
+  orderBy,
+  onSnapshot
 } from 'firebase/firestore';
 
 // ESTADO GLOBAL DEL BACKOFFICE
@@ -211,19 +212,85 @@ function unlockBackoffice() {
   isAuthorized = true;
   if (authGate) authGate.style.display = 'none';
   if (adminMain) adminMain.style.display = 'block';
+
+  setupRealtimeOrdersListener();
+
   loadAllOrders().then(() => {
+    highlightTargetOrderIfPresent();
     const params = new URLSearchParams(window.location.search);
     if (params.get('stripe_test_success') === '1') {
       const ordNum = params.get('order') || '';
       showToast(`✓ Simulación Stripe Test (0€) completada · Pedido #${ordNum} recibido`);
-      window.history.replaceState({}, document.title, window.location.pathname);
     }
   });
 }
 
 // =========================================================================
-// 2. CARGA Y SINCRONIZACIÓN DE PEDIDOS (FIRESTORE + CACHÉ LOCAL)
+// 2. CARGA Y SINCRONIZACIÓN EN TIEMPO REAL (FIRESTORE + CACHÉ LOCAL)
 // =========================================================================
+let ordersUnsub = null;
+function setupRealtimeOrdersListener() {
+  if (ordersUnsub) return;
+  try {
+    ordersUnsub = onSnapshot(collection(db, 'orders'), (snapshot) => {
+      if (!isAuthorized) return;
+      const cloudOrders = [];
+      snapshot.forEach(d => {
+        cloudOrders.push({ id: d.id, ...d.data() });
+      });
+
+      let localSim = [];
+      try {
+        const raw = localStorage.getItem('mr_simulated_orders');
+        if (raw) localSim = JSON.parse(raw);
+      } catch (e) {}
+
+      const map = new Map();
+      localSim.forEach(o => map.set(o.id || o.orderNumber, o));
+      cloudOrders.forEach(o => map.set(o.id || o.orderNumber, o));
+
+      allOrders = Array.from(map.values());
+      sortAndRenderOrders();
+      highlightTargetOrderIfPresent();
+    }, (err) => {
+      console.warn('Aviso en escucha onSnapshot de orders:', err);
+    });
+  } catch (err) {
+    console.warn('Error inicializando onSnapshot en admin-pedidos:', err);
+  }
+}
+
+function highlightTargetOrderIfPresent() {
+  const params = new URLSearchParams(window.location.search);
+  const targetId = (params.get('orderId') || params.get('order') || params.get('id') || '').trim();
+  if (!targetId) return;
+
+  const found = allOrders.find(o => 
+    (o.id === targetId || o.orderNumber === targetId || String(o.id).includes(targetId) || String(o.orderNumber).includes(targetId))
+  );
+
+  if (found) {
+    if (activeFilter !== 'all') {
+      activeFilter = 'all';
+      statusPills.forEach(p => {
+        p.classList.toggle('active', p.getAttribute('data-filter') === 'all');
+      });
+      renderOrdersGrid();
+    }
+
+    setTimeout(() => {
+      const card = document.getElementById(`order-card-${found.id || found.orderNumber}`) ||
+                   document.querySelector(`[data-order-id="${found.id}"], [data-order-number="${found.orderNumber}"]`);
+      if (card) {
+        document.querySelectorAll('.order-highlight-target').forEach(c => c.classList.remove('order-highlight-target'));
+        card.classList.add('order-highlight-target');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast(`🎯 Pedido #${found.orderNumber} localizado en el centro de mando`);
+      }
+    }, 200);
+  }
+}
+
 async function loadAllOrders() {
   if (!assertAuthorized()) return;
   let loaded = [];
@@ -476,6 +543,15 @@ function createOrderCardElement(order) {
   const card = document.createElement('div');
   card.className = 'order-card-box';
   card.id = `order-card-${order.id || order.orderNumber}`;
+  card.dataset.orderId = order.id || '';
+  card.dataset.orderNumber = order.orderNumber || '';
+
+  const params = new URLSearchParams(window.location.search);
+  const targetId = (params.get('orderId') || params.get('order') || '').trim();
+  const isTarget = targetId && (order.id === targetId || order.orderNumber === targetId || String(order.id).includes(targetId) || String(order.orderNumber).includes(targetId));
+  if (isTarget) {
+    card.classList.add('order-highlight-target');
+  }
 
   // Formato y estilos de estado
   const statusMeta = getStatusMeta(order.status);
@@ -494,6 +570,7 @@ function createOrderCardElement(order) {
       <div class="order-id-group">
         <span class="order-number">#${escapeHtml(order.orderNumber)}</span>
         <span class="order-date">📅 ${formattedDate}</span>
+        ${isTarget ? '<span style="background:#ea580c; color:#ffffff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">🎯 PEDIDO SELECCIONADO</span>' : ''}
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
         <span class="order-badge-status ${statusMeta.badgeClass}">
@@ -569,7 +646,7 @@ function createOrderCardElement(order) {
         <div class="preflight-check-list">
           <div>✓ Páginas pares exactas: <strong>${(order.book?.pageCount || 144) % 2 === 0 ? 'Sí (144)' : 'No (Impar)'}</strong></div>
           <div>✓ Sangría de corte: <strong>3.175 mm perimetral OK</strong></div>
-          <div>✓ Resolución fotos: <strong>300 DPI vector OK</strong></div>
+          <div>✓ Archivo digital: <strong>Vectorial verificado OK</strong></div>
           <div>✓ Grosor de lomo calculado: <strong>${order.book?.spineWidthMm || '8.2'} mm</strong></div>
         </div>
 
@@ -1197,7 +1274,7 @@ window.createDemoOrder = async function(sendEmails = true) {
       trackingNumber: trackingCode,
       trackingUrl: 'https://www.correosexpress.com',
       estimatedDelivery: 'Entrega prevista en 3-5 días laborables',
-      lastCarrierMessage: 'Pedido recibido en preimpresión (300 DPI). Pendiente de entrega a Correos Express.'
+      lastCarrierMessage: 'Pedido recibido en preimpresión. Pendiente de entrega a Correos Express.'
     },
     luluJob: {
       status: 'queued',

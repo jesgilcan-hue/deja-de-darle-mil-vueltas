@@ -75,6 +75,58 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* MODO VISOR AISLADO PARA IFRAMES EN CESTA / PERFIL */
+        body.preview-modal-mode header,
+        body.preview-modal-mode .top-nav,
+        body.preview-modal-mode .generator-header-strip,
+        body.preview-modal-mode .generator-options-strip,
+        body.preview-modal-mode .builder-panel,
+        body.preview-modal-mode .index-sidebar-panel,
+        body.preview-modal-mode footer,
+        body.preview-modal-mode #mr-dev-drawer-toggle,
+        body.preview-modal-mode #cart-drawer {
+            display: none !important;
+        }
+        body.preview-modal-mode {
+            background: #1f1b18 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: auto !important;
+        }
+        body.preview-modal-mode .workspace-grid {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 12px !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        body.preview-modal-mode .preview-panel {
+            max-width: 100% !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        body.preview-modal-mode .viewer-nav-bar {
+            background: #2a2521 !important;
+            border: 1px solid #453c35 !important;
+            border-radius: 8px !important;
+            color: #e5ded4 !important;
+            margin-bottom: 12px !important;
+        }
+        body.preview-modal-mode .viewer-page-tag {
+            background: #453c35 !important;
+            color: #f7f3ec !important;
+        }
+        body.preview-modal-mode #previewPageText {
+            color: #d1c8bb !important;
+        }
+
         .generator-container-wrap {
             width: 100%;
             display: flex;
@@ -1992,9 +2044,9 @@
                 <button type="button" class="btn-compile-pdf" id="btn-save-generator-design" style="background:#f4eee4; color:#5c4838; border:1px solid #dcd2c2;" title="Guardar este diseño en Mi Espacio">
                     <span>💾</span> Guardar en Mi Espacio
                 </button>
-                <a href="/generador-portadas.html" class="btn-compile-pdf" style="background:#22382c; color:#ffffff; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" title="Diseñar la portada exterior para este libro">
+                <button type="button" class="btn-compile-pdf" id="btn-open-validate-interior" onclick="openValidateInteriorTextsModal()" style="background:#22382c; color:#ffffff; border:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Revisar textos y diseñar la portada exterior para este libro">
                     <span>🎨</span> Diseñar Portada
-                </a>
+                </button>
                 <button type="button" class="btn-compile-pdf" onclick="openCompileModal()">
                     <span>📥</span> Descargar / Enviar PDF
                 </button>
@@ -2231,6 +2283,61 @@
                     ¿Ya tienes el libro físico? Deja tu reseña en Amazon ★
                 </a>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DE VALIDACIÓN DE TEXTOS DE INTERIOR ANTES DE IR A PORTADA -->
+    <div class="modal-overlay" id="modalValidateInteriorTexts" style="z-index: 100000;">
+        <div class="modal-card" style="max-width: 580px; width: 92%; text-align: left; padding: 24px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8e2d5; padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 style="font-family: var(--font-display); font-size: 1.25rem; margin: 0; color: #1f1c19;">Revisión de Textos para Imprenta</h3>
+                    <div style="font-size: 0.8rem; color: #665e54; margin-top: 2px;">Comprueba la ortografía antes de pasar al diseño de portada exterior</div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeValidateInteriorTextsModal()" style="position: static; font-size: 1.4rem; line-height: 1; cursor: pointer; border: none; background: transparent;">✕</button>
+            </div>
+
+            <div style="background: #faf7f2; border: 1px solid #e8e0d4; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #5a5147; line-height: 1.45;">
+                📖 Los siguientes textos se imprimirán en la <strong>portada interior y dedicatoria</strong> de tu cuaderno. Revisa posibles faltas o erratas:
+            </div>
+
+            <form id="form-validate-interior-texts" onsubmit="return false;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="val-int-title" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Título del cuaderno</label>
+                    <input type="text" id="val-int-title" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="val-int-subtitle" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Subtítulo (opcional)</label>
+                    <input type="text" id="val-int-subtitle" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="val-int-owner" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Perteneciente a / Propiedad de</label>
+                    <input type="text" id="val-int-owner" placeholder="Tu nombre o a quién va dedicado" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="val-int-dedication" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Dedicatoria o frase inicial</label>
+                    <textarea id="val-int-dedication" rows="3" style="width: 100%; padding: 8px 10px; font-size: 0.84rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+                </div>
+
+                <div style="background: #ffffff; border: 1.5px solid #215c38; border-radius: 8px; padding: 10px 12px; margin-bottom: 18px;">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: 0.84rem; color: #1e3d29; font-weight: 700;">
+                        <input type="checkbox" id="val-int-confirmed-check" checked style="width: 17px; height: 17px; accent-color: #215c38; cursor: pointer;" />
+                        <span>He revisado los textos y asumo la corrección de lo escrito</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="closeValidateInteriorTextsModal()" style="background: #f5efe6; color: #4a3f35; border: 1px solid #d6cec0; border-radius: 6px; padding: 9px 18px; font-size: 0.84rem; font-weight: 600; cursor: pointer;">
+                        Seguir editando
+                    </button>
+                    <button type="button" onclick="confirmInteriorTextsAndGoCover()" style="background: #22382c; color: #ffffff; border: none; border-radius: 6px; padding: 9px 20px; font-size: 0.84rem; font-weight: 700; cursor: pointer;">
+                        Confirmar y Diseñar Portada →
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -2772,6 +2879,58 @@
             }
         }
 
+        function openValidateInteriorTextsModal() {
+            const modal = document.getElementById('modalValidateInteriorTexts');
+            if (!modal) {
+                window.location.href = '/generador-portadas.html';
+                return;
+            }
+            const titleInp = document.getElementById('val-int-title');
+            const subInp = document.getElementById('val-int-subtitle');
+            const ownerInp = document.getElementById('val-int-owner');
+            const dedInp = document.getElementById('val-int-dedication');
+            const chk = document.getElementById('val-int-confirmed-check');
+
+            if (titleInp) titleInp.value = bookConfig.title || '';
+            if (subInp) subInp.value = bookConfig.subtitle || '';
+            if (ownerInp) ownerInp.value = bookConfig.owner || '';
+            if (dedInp) dedInp.value = bookConfig.dedication || '';
+            if (chk) chk.checked = true;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        window.openValidateInteriorTextsModal = openValidateInteriorTextsModal;
+
+        function closeValidateInteriorTextsModal() {
+            const modal = document.getElementById('modalValidateInteriorTexts');
+            if (modal) modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        window.closeValidateInteriorTextsModal = closeValidateInteriorTextsModal;
+
+        function confirmInteriorTextsAndGoCover() {
+            const chk = document.getElementById('val-int-confirmed-check');
+            if (chk && !chk.checked) {
+                alert('Por favor, marca la casilla confirmando que has revisado los textos.');
+                return;
+            }
+            const titleInp = document.getElementById('val-int-title');
+            const subInp = document.getElementById('val-int-subtitle');
+            const ownerInp = document.getElementById('val-int-owner');
+            const dedInp = document.getElementById('val-int-dedication');
+
+            if (titleInp && titleInp.value.trim()) bookConfig.title = titleInp.value.trim();
+            if (subInp) bookConfig.subtitle = subInp.value.trim();
+            if (ownerInp) bookConfig.owner = ownerInp.value.trim();
+            if (dedInp) bookConfig.dedication = dedInp.value.trim();
+
+            saveCompleteBookConfigLocally();
+            closeValidateInteriorTextsModal();
+            window.location.href = '/generador-portadas.html?from=interior';
+        }
+        window.confirmInteriorTextsAndGoCover = confirmInteriorTextsAndGoCover;
+
         function init() {
             loadSavedCompleteBookConfig();
             const dateSel = document.getElementById('dateModeSelect');
@@ -2782,6 +2941,24 @@
             recalcPages();
             renderSectionsList();
             renderPreviewPage();
+
+            // Modo visor limpio embebido en modal de cesta/perfil
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('preview_modal') === '1') {
+                document.body.classList.add('preview-modal-mode');
+            }
+
+            // Descarga directa silenciosa de PDF
+            if (urlParams.get('download_direct') === '1') {
+                setTimeout(async () => {
+                    try {
+                        const { doc, filename } = await generateBookPdfDocument(false);
+                        doc.save(filename);
+                    } catch (err) {
+                        console.error('Error en descarga directa de PDF interior:', err);
+                    }
+                }, 800);
+            }
         }
 
         function applyPreset(presetKey) {

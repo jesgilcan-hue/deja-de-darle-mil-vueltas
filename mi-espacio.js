@@ -516,6 +516,153 @@ function setupEvents() {
     }
   });
 
+  // Guardar Direcciones de Envío y Facturación en Ajustes
+  const btnSaveDirecciones = document.getElementById('btn-save-direcciones');
+  const sameBillingCheck = document.getElementById('ajustes-same-billing-check');
+  const billingFields = document.getElementById('ajustes-billing-fields');
+
+  sameBillingCheck?.addEventListener('change', () => {
+    if (billingFields) {
+      billingFields.style.display = sameBillingCheck.checked ? 'none' : 'block';
+    }
+  });
+
+  btnSaveDirecciones?.addEventListener('click', async () => {
+    if (!currentUser) {
+      showToast('Inicia sesión para guardar tus direcciones');
+      return;
+    }
+    const name = document.getElementById('ajustes-shipping-name')?.value.trim();
+    const phone = document.getElementById('ajustes-shipping-phone')?.value.trim();
+    const address = document.getElementById('ajustes-shipping-address')?.value.trim();
+    const postalCode = document.getElementById('ajustes-shipping-zip')?.value.trim();
+    const city = document.getElementById('ajustes-shipping-city')?.value.trim();
+    const province = document.getElementById('ajustes-shipping-province')?.value.trim();
+    const isSameBilling = sameBillingCheck ? sameBillingCheck.checked : true;
+
+    if (!name || !address) {
+      showToast('Por favor, indica al menos nombre y dirección');
+      return;
+    }
+
+    const shippingData = {
+      name,
+      nombre: name,
+      phone,
+      telefono: phone,
+      address,
+      direccion: address,
+      postalCode,
+      cp: postalCode,
+      city,
+      ciudad: city,
+      province,
+      provincia: province,
+      pais: 'España',
+      updatedAt: serverTimestamp()
+    };
+
+    const billingData = {
+      isSame: isSameBilling,
+      name: isSameBilling ? name : (document.getElementById('ajustes-billing-name')?.value.trim() || name),
+      taxId: isSameBilling ? '' : (document.getElementById('ajustes-billing-taxid')?.value.trim() || ''),
+      address: isSameBilling ? address : (document.getElementById('ajustes-billing-address')?.value.trim() || address)
+    };
+
+    btnSaveDirecciones.disabled = true;
+    btnSaveDirecciones.textContent = 'Guardando...';
+
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      await setDoc(userRef, { shipping: shippingData, billing: billingData }, { merge: true });
+      populateShippingFields(shippingData, billingData);
+      showToast('✓ Direcciones de entrega y facturación guardadas');
+      const fb = document.getElementById('feedback-save-direcciones');
+      if (fb) {
+        fb.style.display = 'inline';
+        setTimeout(() => fb.style.display = 'none', 3000);
+      }
+    } catch (err) {
+      console.error('Error guardando direcciones:', err);
+      showToast('No se pudieron guardar las direcciones');
+    } finally {
+      btnSaveDirecciones.disabled = false;
+      btnSaveDirecciones.textContent = 'Guardar direcciones';
+    }
+  });
+
+  // Eventos del modal para editar dirección de entrega en la cesta
+  document.getElementById('btn-close-edit-address-modal')?.addEventListener('click', closeBasketEditAddressModal);
+  document.getElementById('btn-cancel-edit-address-modal')?.addEventListener('click', closeBasketEditAddressModal);
+  document.getElementById('basket-edit-address-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'basket-edit-address-modal') closeBasketEditAddressModal();
+  });
+
+  document.getElementById('btn-save-edit-address-modal')?.addEventListener('click', async () => {
+    const itemId = document.getElementById('modal-edit-addr-item-id')?.value;
+    if (!itemId) return;
+    const name = document.getElementById('modal-addr-name')?.value.trim();
+    const phone = document.getElementById('modal-addr-phone')?.value.trim();
+    const street = document.getElementById('modal-addr-street')?.value.trim();
+    const postalCode = document.getElementById('modal-addr-zip')?.value.trim();
+    const city = document.getElementById('modal-addr-city')?.value.trim();
+    const province = document.getElementById('modal-addr-province')?.value.trim();
+    const notes = document.getElementById('modal-addr-notes')?.value.trim();
+    const saveToProfile = document.getElementById('modal-addr-save-profile')?.checked;
+
+    if (!name || !street) {
+      showToast('Por favor, indica al menos nombre y calle');
+      return;
+    }
+
+    const updatedShip = {
+      name,
+      nombre: name,
+      phone,
+      telefono: phone,
+      address: street,
+      direccion: street,
+      postalCode,
+      cp: postalCode,
+      city,
+      ciudad: city,
+      province: province || city,
+      provincia: province || city,
+      notes,
+      notas: notes,
+      pais: 'España'
+    };
+
+    const targetItem = clientPendingBasket.find(x => x.id === itemId);
+    if (targetItem) {
+      targetItem.shipping = updatedShip;
+      saveClientOrdersAndBasketState(currentUser);
+    }
+
+    if (currentUser) {
+      try {
+        const basketDocRef = doc(db, 'users', currentUser.uid, 'basket', itemId);
+        await setDoc(basketDocRef, { shipping: updatedShip }, { merge: true });
+      } catch (err) {
+        console.warn('Aviso actualizando shipping en basket doc:', err);
+      }
+
+      if (saveToProfile) {
+        try {
+          const userRef = doc(db, 'users', currentUser.uid);
+          await setDoc(userRef, { shipping: updatedShip }, { merge: true });
+          populateShippingFields(updatedShip);
+        } catch (err) {
+          console.warn('Aviso guardando shipping en perfil:', err);
+        }
+      }
+    }
+
+    closeBasketEditAddressModal();
+    renderClientOrdersAndBasketViews(currentUser);
+    showToast('✓ Dirección de entrega actualizada para este pedido');
+  });
+
   // Desbloqueo por PIN en panel de desarrollador
   btnUnlockDev?.addEventListener('click', unlockDevPanel);
   devPinInput?.addEventListener('keyup', (e) => {
@@ -950,16 +1097,17 @@ async function loadUserData(user) {
           prefNewsletter.checked = !!data.preferences.newsletter;
         }
 
-        // Datos de envío en Dev
-        if (data.shipping) {
-          populateShippingFields(data.shipping);
+        // Datos de envío y facturación
+        if (data.shipping || data.billing) {
+          populateShippingFields(data.shipping, data.billing);
         }
 
         // Guardar en caché local para próximas cargas instantáneas
         try {
           localStorage.setItem('mr_user_extra_data', JSON.stringify({
             preferences: data.preferences || {},
-            shipping: data.shipping || null
+            shipping: data.shipping || null,
+            billing: data.billing || null
           }));
         } catch (e) {}
       }
@@ -988,18 +1136,38 @@ async function loadUserData(user) {
   }
 }
 
-function populateShippingFields(shipping) {
-  if (!shipping) return;
+function populateShippingFields(shipping, billing = null) {
+  if (!shipping && !billing) return;
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  setVal('envio-nombre', shipping.nombre);
-  setVal('envio-telefono', shipping.telefono);
-  setVal('envio-dni', shipping.dni);
-  setVal('envio-direccion', shipping.direccion);
-  setVal('envio-cp', shipping.cp);
-  setVal('envio-ciudad', shipping.ciudad);
-  setVal('envio-provincia', shipping.provincia);
-  setVal('envio-pais', shipping.pais || 'España');
-  setVal('envio-notas', shipping.notas);
+  if (shipping) {
+    setVal('envio-nombre', shipping.nombre || shipping.name);
+    setVal('envio-telefono', shipping.telefono || shipping.phone);
+    setVal('envio-dni', shipping.dni);
+    setVal('envio-direccion', shipping.direccion || shipping.address);
+    setVal('envio-cp', shipping.cp || shipping.postalCode);
+    setVal('envio-ciudad', shipping.ciudad || shipping.city);
+    setVal('envio-provincia', shipping.provincia || shipping.province);
+    setVal('envio-pais', shipping.pais || 'España');
+    setVal('envio-notas', shipping.notas || shipping.notes);
+
+    setVal('ajustes-shipping-name', shipping.nombre || shipping.name);
+    setVal('ajustes-shipping-phone', shipping.telefono || shipping.phone);
+    setVal('ajustes-shipping-address', shipping.direccion || shipping.address);
+    setVal('ajustes-shipping-zip', shipping.cp || shipping.postalCode);
+    setVal('ajustes-shipping-city', shipping.ciudad || shipping.city);
+    setVal('ajustes-shipping-province', shipping.provincia || shipping.province);
+  }
+
+  if (billing) {
+    const sameCheck = document.getElementById('ajustes-same-billing-check');
+    const billFields = document.getElementById('ajustes-billing-fields');
+    const isSame = billing.isSame !== false;
+    if (sameCheck) sameCheck.checked = isSame;
+    if (billFields) billFields.style.display = isSame ? 'none' : 'block';
+    setVal('ajustes-billing-name', billing.name || '');
+    setVal('ajustes-billing-taxid', billing.taxId || billing.cif || '');
+    setVal('ajustes-billing-address', billing.address || '');
+  }
 }
 
 async function loadUserDesigns(user) {
@@ -1914,51 +2082,61 @@ if (typeof window !== 'undefined') {
   });
 }
 
-function editPendingBasketShipping(itemId, user) {
+function openBasketEditAddressModal(itemId, user) {
+  const modal = document.getElementById('basket-edit-address-modal');
+  if (!modal) return;
   const found = clientPendingBasket.find(x => x.id === itemId);
   if (!found) return;
-  if (!found.shipping) {
-    found.shipping = {
-      name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
-      email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
-      address: 'Calle Serrano 42, 4º Derecha',
-      postalCode: '28001',
-      city: 'Madrid',
-      country: 'España',
-      phone: '+34 600 000 000',
-      notes: 'Entregar en conserjería si no estoy en casa.'
-    };
+
+  const currentShip = found.shipping || {
+    name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+    email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
+    phone: '+34 600 000 000',
+    address: 'Calle Serrano 42, 4º Derecha',
+    postalCode: '28001',
+    city: 'Madrid',
+    province: 'Madrid',
+    notes: 'Entregar en conserjería si no estoy en casa.'
+  };
+
+  const idInp = document.getElementById('modal-edit-addr-item-id');
+  if (idInp) idInp.value = itemId;
+
+  const currSum = document.getElementById('modal-edit-addr-current-summary');
+  if (currSum) {
+    currSum.innerHTML = `<strong>${escapeHtml(currentShip.name || 'Cliente')}</strong> (Tel: ${escapeHtml(currentShip.phone || '--')})<br>` +
+                        `${escapeHtml(currentShip.address || '')}, ${escapeHtml(currentShip.postalCode || '')} ${escapeHtml(currentShip.city || '')} (${escapeHtml(currentShip.province || '')})` +
+                        (currentShip.notes ? `<br><em>Nota: ${escapeHtml(currentShip.notes)}</em>` : '');
   }
 
-  const currAddr = found.shipping.address || 'Calle Serrano 42, 4º Derecha';
-  const newAddr = prompt('Introduce la dirección de entrega completa (Calle, número, piso):', currAddr);
-  if (newAddr === null) return;
-  found.shipping.address = newAddr.trim() || currAddr;
+  const nameInp = document.getElementById('modal-addr-name');
+  const phoneInp = document.getElementById('modal-addr-phone');
+  const streetInp = document.getElementById('modal-addr-street');
+  const zipInp = document.getElementById('modal-addr-zip');
+  const cityInp = document.getElementById('modal-addr-city');
+  const provInp = document.getElementById('modal-addr-province');
+  const notesInp = document.getElementById('modal-addr-notes');
 
-  const currZip = found.shipping.postalCode || '28001';
-  const currCity = found.shipping.city || 'Madrid';
-  const newZipCity = prompt('Código Postal y Ciudad (ej. 28001 Madrid):', `${currZip} ${currCity}`);
-  if (newZipCity) {
-    const parts = newZipCity.trim().split(' ');
-    found.shipping.postalCode = parts[0] || currZip;
-    found.shipping.city = parts.slice(1).join(' ') || currCity;
-  }
+  if (nameInp) nameInp.value = currentShip.name || (user ? getUserDisplayName(user) : '') || '';
+  if (phoneInp) phoneInp.value = currentShip.phone || '';
+  if (streetInp) streetInp.value = currentShip.address || '';
+  if (zipInp) zipInp.value = currentShip.postalCode || '';
+  if (cityInp) cityInp.value = currentShip.city || '';
+  if (provInp) provInp.value = currentShip.province || currentShip.city || '';
+  if (notesInp) notesInp.value = currentShip.notes || '';
 
-  const currPhone = found.shipping.phone || '+34 600 000 000';
-  const newPhone = prompt('Teléfono de contacto para el repartidor:', currPhone);
-  if (newPhone !== null) {
-    found.shipping.phone = newPhone.trim() || currPhone;
-  }
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
 
-  const currNotes = found.shipping.notes || '';
-  const newNotes = prompt('Instrucciones para el repartidor (opcional):', currNotes);
-  if (newNotes !== null) {
-    found.shipping.notes = newNotes.trim();
-  }
+function closeBasketEditAddressModal() {
+  const modal = document.getElementById('basket-edit-address-modal');
+  if (modal) modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
 
-  saveClientOrdersAndBasketState(user);
-  renderClientOrdersAndBasketViews(user);
-  showToast('✓ Dirección de entrega actualizada');
+function editPendingBasketShipping(itemId, user) {
+  openBasketEditAddressModal(itemId, user);
 }
 
 function renderClientOrdersAndBasketViews(user) {
@@ -2016,7 +2194,7 @@ function renderClientOrdersAndBasketViews(user) {
               <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
                   <span style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.3px;">⏳ PENDIENTE DE PAGO</span>
-                  <span style="background: #eff6ff; color: #1e40af; font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 12px;">☁️ Archivos en Nube (${escapeHtml(fileSizeMb)} MB · 300 DPI)</span>
+                  <span style="background: #eff6ff; color: #1e40af; font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 12px;">☁️ Archivos en Nube (${escapeHtml(fileSizeMb)} MB)</span>
                 </div>
                 <h4 id="basket-title-display-${escapeHtml(item.id)}" style="font-family: var(--font-display); font-size: 1.22rem; margin: 4px 0 3px 0; color: #1f1c19;">${escapeHtml(item.title)}</h4>
                 <div id="basket-subtitle-display-${escapeHtml(item.id)}" style="font-size: 0.84rem; color: #665e54;">
@@ -2050,10 +2228,10 @@ function renderClientOrdersAndBasketViews(user) {
               </div>
             </div>
 
-            <!-- Desplegable Acordeón: Ficha Técnica, PDFs, Dirección y Corrección Ortográfica -->
+            <!-- Desplegable Acordeón: Ficha Técnica, PDFs y Dirección -->
             <details id="details-pending-${escapeHtml(item.id)}" style="background: #faf7f2; border: 1px solid #e6ded2; border-radius: 9px; padding: 12px 16px; margin-top: 4px;">
               <summary style="cursor: pointer; font-weight: 700; font-size: 0.84rem; color: #443c33; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                <span>🔍 Ver características técnicas, previsualizar PDFs, dirección y revisar ortografía</span>
+                <span>🔍 Ver características técnicas, previsualizar PDFs y dirección de entrega</span>
                 <span style="font-size: 0.78rem; color: #87553b; font-weight: 600;">Desplegar ficha ▾</span>
               </summary>
 
@@ -2086,7 +2264,7 @@ function renderClientOrdersAndBasketViews(user) {
                       <strong>Lomo milimétrico:</strong><br>${spineWidthMm} mm de grosor
                     </div>
                     <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
-                      <strong>Calidad de Impresión:</strong><br>300 DPI · Sangría 3.175 mm
+                      <strong>Margen y Sangrado:</strong><br>3.175 mm perimetral
                     </div>
                   </div>
                 </div>
@@ -2101,56 +2279,20 @@ function renderClientOrdersAndBasketViews(user) {
                   </div>
                   <div id="shipping-display-${escapeHtml(item.id)}" style="font-size: 0.82rem; color: #475569; line-height: 1.5;">
                     <strong>Destinatario:</strong> ${escapeHtml(item.shipping?.name || user?.displayName || 'Cliente Menos Ruido')} (${escapeHtml(item.shipping?.email || user?.email || 'jesusgil_87@hotmail.com')})<br>
-                    <strong>Dirección:</strong> ${escapeHtml(item.shipping?.address || 'Calle Serrano 42, 4º Derecha')}, ${escapeHtml(item.shipping?.postalCode || '28001')} ${escapeHtml(item.shipping?.city || 'Madrid')}, ${escapeHtml(item.shipping?.country || 'España')}<br>
+                    <strong>Dirección:</strong> ${escapeHtml(item.shipping?.address || 'Calle Serrano 42, 4º Derecha')}, ${escapeHtml(item.shipping?.postalCode || '28001')} ${escapeHtml(item.shipping?.city || 'Madrid')} (${escapeHtml(item.shipping?.province || 'Madrid')}), ${escapeHtml(item.shipping?.country || 'España')}<br>
                     <strong>Teléfono de contacto:</strong> ${escapeHtml(item.shipping?.phone || '+34 600 000 000')}<br>
                     <strong>Instrucciones al repartidor:</strong> <em>${escapeHtml(item.shipping?.notes || 'Entregar en conserjería si no estoy en casa.')}</em>
                   </div>
                 </div>
 
-                <!-- 3. Revisión y Corrección de Textos en Vivo (Evitar Erratas antes de Imprenta) -->
-                <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
-                  <div style="margin-bottom: 10px;">
-                    <strong style="font-size: 0.85rem; color: #1f1c19;">✍️ Revisión y Corrección de Textos para Imprenta</strong>
-                    <p style="font-size: 0.77rem; color: #6e6459; margin: 3px 0 0 0;">
-                      Revisa aquí que no haya ninguna falta tipográfica, errata o descuido en los nombres propios. Cualquier cambio que hagas en estas casillas se actualizará al instante en tu cuaderno y en el PDF que irá a imprenta.
-                    </p>
-                  </div>
-
-                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
-                    <div>
-                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Título del Cuaderno (Portada)</label>
-                      <input type="text" data-text-input="title" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.title || '')}" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Subtítulo o Frase de Portada</label>
-                      <input type="text" data-text-input="subtitle" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.subtitle || item.data?.subtitle || '')}" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Nombre Propio / Autor en Portada</label>
-                      <input type="text" data-text-input="author" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.data?.author || '')}" placeholder="Ej. Clara Beltrán" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Texto del Lomo (Spine)</label>
-                      <input type="text" data-text-input="spineText" data-item-id="${escapeHtml(item.id)}" value="${escapeAttr(item.data?.spineText || '')}" placeholder="Ej. PLANIFICADOR 2026" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box;" />
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                      <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #554d44; margin-bottom: 3px;">Dedicatoria o Descripción (Portada o Interior)</label>
-                      <textarea data-text-input="frontDesc" data-item-id="${escapeHtml(item.id)}" rows="2" style="width: 100%; padding: 7px 10px; font-size: 0.82rem; border: 1px solid #d4cab9; border-radius: 6px; box-sizing: border-box; resize: vertical;">${escapeHtml(item.data?.frontDesc || item.data?.dedication || '')}</textarea>
-                    </div>
-                  </div>
-                  <div id="text-save-feedback-${escapeHtml(item.id)}" style="font-size: 0.74rem; color: #166534; font-weight: 700; margin-top: 6px; display: none;">
-                    ✓ Texto actualizado y sincronizado para imprenta
-                  </div>
-                </div>
-
-                <!-- 4. Casilla de Aceptación y Confirmación de Ortografía -->
+                <!-- 3. Casilla de Aceptación y Confirmación de Ortografía y Textos -->
                 <div id="confirm-box-${escapeHtml(item.id)}" style="background: ${isChecked ? '#f0fdf4' : '#fffbeb'}; border: 1.5px solid ${isChecked ? '#86efac' : '#fcd34d'}; border-radius: 8px; padding: 12px 14px; transition: all 0.25s ease;">
                   <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.84rem; color: #231f1a; line-height: 1.45;">
                     <input type="checkbox" data-confirm-texts="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} style="margin-top: 3px; width: 18px; height: 18px; accent-color: #215c38; cursor: pointer;" />
                     <span>
-                      <strong style="color: #1f1c19;">He revisado la ortografía, tildes y nombres propios de mi cuaderno.</strong>
+                      <strong style="color: #1f1c19;">He revisado la previsualización y asumo la responsabilidad sobre los textos y contenidos introducidos.</strong>
                       <span style="display: block; font-size: 0.77rem; color: #665b4f; margin-top: 2px;">
-                        Confirmo que todos los textos están redactados tal como deseo que aparezcan impresos en papel y asumo la redacción final para la producción en imprenta.
+                        Confirmo que todos los datos y nombres propios son correctos para su impresión final en papel.
                       </span>
                     </span>
                   </label>
@@ -2192,6 +2334,7 @@ function renderClientOrdersAndBasketViews(user) {
               bindingType: found.bindingType,
               pageCount: found.pageCount,
               syncedBookName: found.subtitle,
+              shipping: found.shipping,
               data: found.data
             });
           }
@@ -2266,7 +2409,7 @@ function renderClientOrdersAndBasketViews(user) {
           } catch (e) {}
           openBasketPreviewModal(
             `🎨 Portada · ${found.title}`,
-            `${getBindingLabelForProfile(found.bindingType)} · ${found.pageCount} páginas · 300 DPI`,
+            `${getBindingLabelForProfile(found.bindingType)} · ${found.pageCount} páginas`,
             `/generador-portadas.html?preview_modal=1`
           );
         });
@@ -2300,54 +2443,6 @@ function renderClientOrdersAndBasketViews(user) {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-edit-shipping-basket');
           editPendingBasketShipping(id, user);
-        });
-      });
-
-      // Listener Entradas de Texto en Vivo (Corrección Ortográfica)
-      pendingContainer.querySelectorAll('[data-text-input]').forEach(input => {
-        input.addEventListener('input', (e) => {
-          const field = e.target.getAttribute('data-text-input');
-          const itemId = e.target.getAttribute('data-item-id');
-          const found = clientPendingBasket.find(x => x.id === itemId);
-          if (!found) return;
-          if (!found.data) found.data = {};
-          const val = e.target.value;
-          found.data[field] = val;
-
-          if (field === 'title') {
-            found.title = val.trim() || 'Cuaderno Personalizado';
-            const dispT = document.getElementById('basket-title-display-' + itemId);
-            if (dispT) dispT.textContent = found.title;
-          } else if (field === 'subtitle') {
-            found.subtitle = val.trim();
-            const dispS = document.getElementById('basket-subtitle-display-' + itemId);
-            if (dispS) {
-              dispS.innerHTML = `${getBindingLabelForProfile(found.bindingType)} · <strong>${found.pageCount} páginas interiores</strong> · ${escapeHtml(found.subtitle || '')}`;
-            }
-          }
-
-          // Mantener sincronizado mr_cart_cover_item si coincide
-          try {
-            const activeRaw = localStorage.getItem('mr_cart_cover_item');
-            if (activeRaw) {
-              const parsed = JSON.parse(activeRaw);
-              if (parsed && parsed.data) {
-                parsed.data[field] = val;
-                if (field === 'title') parsed.title = val;
-                if (field === 'subtitle') parsed.subtitle = val;
-                localStorage.setItem('mr_cart_cover_item', JSON.stringify(parsed));
-              }
-            }
-          } catch (err) {}
-
-          saveClientOrdersAndBasketState(user);
-
-          const feedback = document.getElementById('text-save-feedback-' + itemId);
-          if (feedback) {
-            feedback.style.display = 'block';
-            clearTimeout(input._fbTimer);
-            input._fbTimer = setTimeout(() => { feedback.style.display = 'none'; }, 2200);
-          }
         });
       });
 
@@ -2463,23 +2558,23 @@ function renderClientOrdersAndBasketViews(user) {
             </div>
           </div>
 
-          <!-- Bloque de Archivos Pesados Guardados en el Perfil del Cliente (Nube 300 DPI) -->
-          <div style="background: #fdfaf5; border: 1px solid #e4dac9; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <!-- Bloque de Archivos Digitales en PDF -->
+          <div style="background: #fdfaf5; border: 1px solid #e4dac9; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
             <div>
-              <div style="font-size: 0.78rem; font-weight: 800; color: #87553b;">
-                ☁️ Archivos de tu Cuaderno Alojados en tu Perfil (${escapeHtml(fileSizeMb)} MB · 300 DPI)
+              <div style="font-size: 0.82rem; font-weight: 800; color: #87553b;">
+                ☁️ Archivos digitales de tu Cuaderno (${escapeHtml(fileSizeMb)} MB)
               </div>
-              <div style="font-size: 0.75rem; color: #665e54;">
-                Como el documento de imprenta pesa demasiado para adjuntarse por email, lo tienes disponible siempre aquí para verlo o descargarlo.
+              <div style="font-size: 0.76rem; color: #665e54; margin-top: 2px;">
+                Tus archivos listos para imprenta están guardados en tu perfil para que puedas consultarlos o descargarlos en cualquier momento.
               </div>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <a href="/generador-libro-completo.html" style="background: #87553b; color: #ffffff; border-radius: 6px; padding: 7px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
-                📖 Ver / Descargar Interior (Nube)
-              </a>
-              <a href="/generador-portadas.html" style="background: #22382c; color: #ffffff; border-radius: 6px; padding: 7px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
-                🎨 Ver / Descargar Portada (Nube)
-              </a>
+              <button type="button" data-download-pdf-interior="${escapeHtml(ord.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.80rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>📖</span> Interior en PDF
+              </button>
+              <button type="button" data-download-pdf-cover="${escapeHtml(ord.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.80rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>🎨</span> Portada en PDF
+              </button>
             </div>
           </div>
 
@@ -2513,6 +2608,54 @@ function renderClientOrdersAndBasketViews(user) {
         showToast('⏳ Guardando instrucción y enviando aviso por email a Cliente y Gestor...');
         await sendOrderLifecycleEmails(ord, 'customer_carrier_note');
         showToast('✉️ Instrucción para repartidor guardada y notificada por email');
+      });
+    });
+
+    ordersContainer.querySelectorAll('[data-download-pdf-interior]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-download-pdf-interior');
+        const ord = clientProfileOrders.find(o => o.id === id);
+        if (ord) {
+          try {
+            localStorage.setItem('mr_complete_book_config', JSON.stringify({
+              title: ord.book?.title,
+              subtitle: ord.book?.subtitle,
+              pageCount: ord.book?.pageCount || 143,
+              bindingType: ord.book?.bindingType || 'softcover'
+            }));
+          } catch (e) {}
+        }
+        showToast('⏳ Preparando y descargando Interior en PDF...');
+        const iframe = document.getElementById('headless-pdf-frame');
+        if (iframe) {
+          iframe.src = `/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`;
+        } else {
+          window.open(`/generador-libro-completo.html?download_direct=1`, '_blank');
+        }
+      });
+    });
+
+    ordersContainer.querySelectorAll('[data-download-pdf-cover]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-download-pdf-cover');
+        const ord = clientProfileOrders.find(o => o.id === id);
+        if (ord) {
+          try {
+            localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+              title: ord.book?.title,
+              bindingType: ord.book?.bindingType,
+              pageCount: ord.book?.pageCount || 143,
+              data: {}
+            }));
+          } catch (e) {}
+        }
+        showToast('⏳ Preparando y descargando Portada en PDF...');
+        const iframe = document.getElementById('headless-pdf-frame');
+        if (iframe) {
+          iframe.src = `/generador-portadas.html?download_direct=1&ts=${Date.now()}`;
+        } else {
+          window.open(`/generador-portadas.html?download_direct=1`, '_blank');
+        }
       });
     });
   }

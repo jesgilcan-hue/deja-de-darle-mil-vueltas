@@ -736,6 +736,45 @@
             display: flex;
         }
 
+        /* MODO VISOR AISLADO PARA IFRAMES EN CESTA / PERFIL */
+        body.preview-modal-mode header,
+        body.preview-modal-mode .top-nav,
+        body.preview-modal-mode .hero-section,
+        body.preview-modal-mode .controls-column,
+        body.preview-modal-mode .planner-amazon-promo,
+        body.preview-modal-mode footer,
+        body.preview-modal-mode #mr-dev-drawer-toggle,
+        body.preview-modal-mode #cart-drawer {
+            display: none !important;
+        }
+        body.preview-modal-mode {
+            background: #1c1a17 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: auto !important;
+        }
+        body.preview-modal-mode .cover-app-layout {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 10px !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        body.preview-modal-mode .canvas-column {
+            max-width: 100% !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+        body.preview-modal-mode .canvas-container-outer {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
         .modal-card {
             background: #ffffff;
             border-radius: 14px;
@@ -1161,7 +1200,7 @@
                         <div style="font-size:1.02rem; font-weight:800; color:#1f1c19;" id="topDynamicPriceDisplay">27,90 €</div>
                         <div style="font-size:0.65rem; font-weight:700; color:#215c38;" id="topDynamicShippingBadge">🚚 Envío incluido</div>
                     </div>
-                    <button type="button" class="btn-action-order" id="btnAddToCart" onclick="handleAddToCart()">
+                    <button type="button" class="btn-action-order" id="btnAddToCart" onclick="openValidateCoverTextsModal()">
                         <span>🛒</span> Añadir al carrito
                     </button>
                 </div>
@@ -1773,10 +1812,70 @@ Sección de notas libres (10 páginas)</textarea>
         </div>
     </div>
 
+    <!-- MODAL POP-UP DE VALIDACIÓN DE TEXTOS DE CUBIERTA EXTERIOR -->
+    <div class="modal-overlay" id="modalValidateCoverTexts" style="z-index: 100000;">
+        <div class="modal-card" style="max-width: 580px; width: 92%; text-align: left; padding: 24px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8e2d5; padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin: 0; color: #1f1c19;">Revisión de Textos de la Cubierta</h3>
+                    <div style="font-size: 0.8rem; color: #665e54; margin-top: 2px;">Verifica la ortografía antes de añadir tu ejemplar a la cesta</div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeValidateCoverTextsModal()" style="position: static; font-size: 1.4rem; line-height: 1; cursor: pointer; border: none; background: transparent;">✕</button>
+            </div>
+
+            <div style="background: #faf7f2; border: 1px solid #e8e0d4; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #5a5147; line-height: 1.45;">
+                🎨 Los siguientes textos se imprimirán en la <strong>portada, lomo y contraportada</strong> exterior de tu cuaderno:
+            </div>
+
+            <form id="form-validate-cover-texts" onsubmit="return false;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="val-cov-title" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Título de Portada</label>
+                    <input type="text" id="val-cov-title" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="val-cov-subtitle" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Subtítulo de Portada</label>
+                    <input type="text" id="val-cov-subtitle" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="val-cov-author" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Autor o Firma</label>
+                    <input type="text" id="val-cov-author" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="val-cov-spine" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Texto del Lomo</label>
+                    <input type="text" id="val-cov-spine" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="val-cov-back" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Texto o frase de Contraportada</label>
+                    <textarea id="val-cov-back" rows="3" style="width: 100%; padding: 8px 10px; font-size: 0.84rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+                </div>
+
+                <div style="background: #ffffff; border: 1.5px solid #215c38; border-radius: 8px; padding: 10px 12px; margin-bottom: 18px;">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: 0.84rem; color: #1e3d29; font-weight: 700;">
+                        <input type="checkbox" id="val-cov-confirmed-check" checked style="width: 17px; height: 17px; accent-color: #215c38; cursor: pointer;" />
+                        <span>He revisado la ortografía y confirmo que los textos son correctos</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="closeValidateCoverTextsModal()" style="background: #f5efe6; color: #4a3f35; border: 1px solid #d6cec0; border-radius: 6px; padding: 9px 18px; font-size: 0.84rem; font-weight: 600; cursor: pointer;">
+                        Volver al editor
+                    </button>
+                    <button type="button" onclick="confirmCoverTextsAndAddToCart()" style="background: #22382c; color: #ffffff; border: none; border-radius: 6px; padding: 9px 20px; font-size: 0.84rem; font-weight: 700; cursor: pointer;">
+                        Confirmar y Añadir a la Cesta 🛒
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL CONFIRMACIÓN AÑADIDO AL CARRITO -->
-    <div class="modal-overlay" id="addedToCartModal">
-        <div class="modal-box" style="max-width: 480px; text-align: center;">
-            <button class="modal-close" onclick="closeAddedToCartModal()">×</button>
+    <div class="modal-overlay" id="addedToCartModal" style="z-index: 100001;">
+        <div class="modal-card" style="max-width: 480px; text-align: center; background: #ffffff; border-radius: 14px; padding: 24px; box-shadow: 0 20px 45px rgba(0,0,0,0.3); border: 1px solid #e5ded2;">
+            <button type="button" class="modal-close-btn" onclick="closeAddedToCartModal()" style="position: absolute; top: 14px; right: 14px; font-size: 1.3rem; line-height: 1; cursor: pointer; border: none; background: transparent;">✕</button>
             <div style="font-size: 2.2rem; margin-bottom: 6px;">🛒</div>
             <h3 class="modal-title" style="margin-bottom: 6px; font-size: 1.3rem; color: #1f1c19;">¡Cuaderno añadido a tu cesta!</h3>
             <p class="modal-desc" style="margin-bottom: 16px; font-size: 0.88rem; color: #665e54;">
@@ -2081,6 +2180,24 @@ Sección de notas libres (10 páginas)</textarea>
             refreshLuluPayloadPreview();
             updateSyncedBookLabels();
             isInitializing = false;
+
+            // Modo visor limpio embebido en modal de cesta/perfil
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('preview_modal') === '1') {
+                document.body.classList.add('preview-modal-mode');
+            }
+
+            // Descarga directa silenciosa de PDF
+            if (urlParams.get('download_direct') === '1') {
+                setTimeout(() => {
+                    try {
+                        const { doc, filename } = compileHighResCoverPdf();
+                        doc.save(filename);
+                    } catch (err) {
+                        console.error('Error en descarga directa de portada en PDF:', err);
+                    }
+                }, 800);
+            }
         }
 
         function detectPlannerKeyFromTitle(titleStr) {
@@ -2424,6 +2541,82 @@ Sección de notas libres (10 páginas)</textarea>
         function closeAddedToCartModal() {
             document.getElementById('addedToCartModal')?.classList.remove('active');
         }
+
+        function openValidateCoverTextsModal() {
+            const modal = document.getElementById('modalValidateCoverTexts');
+            if (!modal) {
+                handleAddToCart();
+                return;
+            }
+            const tInp = document.getElementById('val-cov-title');
+            const sInp = document.getElementById('val-cov-subtitle');
+            const aInp = document.getElementById('val-cov-author');
+            const spInp = document.getElementById('val-cov-spine');
+            const bInp = document.getElementById('val-cov-back');
+            const chk = document.getElementById('val-cov-confirmed-check');
+
+            if (tInp) tInp.value = coverState.title || '';
+            if (sInp) sInp.value = coverState.subtitle || '';
+            if (aInp) aInp.value = coverState.author || '';
+            if (spInp) spInp.value = coverState.spineText || '';
+            if (bInp) bInp.value = coverState.backIntro || '';
+            if (chk) chk.checked = true;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        window.openValidateCoverTextsModal = openValidateCoverTextsModal;
+
+        function closeValidateCoverTextsModal() {
+            const modal = document.getElementById('modalValidateCoverTexts');
+            if (modal) modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        window.closeValidateCoverTextsModal = closeValidateCoverTextsModal;
+
+        function confirmCoverTextsAndAddToCart() {
+            const chk = document.getElementById('val-cov-confirmed-check');
+            if (chk && !chk.checked) {
+                alert('Por favor, marca la casilla confirmando que has revisado los textos de la cubierta.');
+                return;
+            }
+            const tInp = document.getElementById('val-cov-title');
+            const sInp = document.getElementById('val-cov-subtitle');
+            const aInp = document.getElementById('val-cov-author');
+            const spInp = document.getElementById('val-cov-spine');
+            const bInp = document.getElementById('val-cov-back');
+
+            if (tInp && tInp.value.trim()) {
+                coverState.title = tInp.value.trim();
+                const uiT = document.getElementById('inpTitle');
+                if (uiT) uiT.value = coverState.title;
+            }
+            if (sInp) {
+                coverState.subtitle = sInp.value.trim();
+                const uiS = document.getElementById('inpSubtitle');
+                if (uiS) uiS.value = coverState.subtitle;
+            }
+            if (aInp) {
+                coverState.author = aInp.value.trim();
+                const uiA = document.getElementById('inpAuthor');
+                if (uiA) uiA.value = coverState.author;
+            }
+            if (spInp) {
+                coverState.spineText = spInp.value.trim();
+                const uiSp = document.getElementById('inpSpineText');
+                if (uiSp) uiSp.value = coverState.spineText;
+            }
+            if (bInp) {
+                coverState.backIntro = bInp.value.trim();
+                const uiB = document.getElementById('inpBackIntro');
+                if (uiB) uiB.value = coverState.backIntro;
+            }
+
+            renderCoverPreview();
+            closeValidateCoverTextsModal();
+            handleAddToCart();
+        }
+        window.confirmCoverTextsAndAddToCart = confirmCoverTextsAndAddToCart;
 
         function handleAddToCart() {
             const btn = document.getElementById('btnAddToCart');

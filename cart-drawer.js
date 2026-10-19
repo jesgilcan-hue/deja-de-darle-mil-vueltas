@@ -419,68 +419,38 @@ function buildCartDrawerDOM() {
     </div>
 
     <div class="mr-cart-body">
-      <!-- 1. Ejemplar configurado (Lo que ve el cliente) -->
+      <!-- 1. Ejemplar configurado (Resumen fijo no editable) -->
       <div class="mr-cart-card">
         <div class="mr-cart-card-title">
-          <span>1. Tu Cuaderno Personalizado</span>
-          <span id="mrCartPriceBadge" style="font-size:1rem; color:#1f1c19; font-weight:900;">27,90 €</span>
+          <span>1. Tu Cuaderno Configurado</span>
+          <span id="mrCartPriceBadge" style="font-size:1.05rem; color:#1f1c19; font-weight:900;">27,90 €</span>
         </div>
-        <div class="mr-cart-field">
-          <label>Título del Cuaderno</label>
-          <input type="text" id="mrCartInpTitle" value="${escapeAttr(devCartState.title)}" />
-        </div>
-        <div class="mr-cart-field-grid">
-          <div class="mr-cart-field" style="margin-bottom:0;">
-            <label>Tipo de Encuadernación</label>
-            <select id="mrCartSelBinding">
-              <option value="softcover" ${devCartState.bindingType === 'softcover' ? 'selected' : ''}>📕 Tapa Blanda</option>
-              <option value="coil" ${devCartState.bindingType === 'coil' ? 'selected' : ''}>🌀 Anillas Metálicas (Wire-O)</option>
-              <option value="hardcover" ${devCartState.bindingType === 'hardcover' ? 'selected' : ''}>📘 Tapa Dura</option>
-            </select>
-          </div>
-          <div class="mr-cart-field" style="margin-bottom:0;">
-            <label>Páginas Interiores</label>
-            <input type="number" id="mrCartInpPages" min="32" max="400" value="${devCartState.pageCount}" />
+        <div style="background: #fdfbf7; border: 1px solid #ebd5c3; border-radius: 8px; padding: 12px 14px;">
+          <h4 id="mrCartSummaryTitle" style="font-family: var(--font-display, serif); font-size: 1.15rem; margin: 0 0 4px 0; color: #1f1c19;">${escapeHtml(devCartState.title)}</h4>
+          <div id="mrCartSummaryBinding" style="font-size: 0.82rem; color: #665e54;">
+            ${(RETAIL_BASE_PRICES[devCartState.bindingType] || RETAIL_BASE_PRICES.coil).label} · <strong>${devCartState.pageCount} páginas</strong> · Formato 210 × 152 mm
           </div>
         </div>
       </div>
 
-      <!-- 2. Dirección de Envío (Lo que ve el cliente) -->
+      <!-- 2. Dirección de Envío Confirmada (Resumen no editable) -->
       <div class="mr-cart-card">
         <div class="mr-cart-card-title">
-          <span>2. Dirección de Envío</span>
+          <span>2. Dirección de Entrega</span>
           <span style="font-size:0.68rem; color:#215c38; font-weight:800;">🚚 Envío GRATIS incluido</span>
         </div>
-        <div class="mr-cart-field-grid">
-          <div class="mr-cart-field">
-            <label>Nombre y apellidos</label>
-            <input type="text" id="mrCartInpName" value="${escapeAttr(devCartState.customerName)}" />
-          </div>
-          <div class="mr-cart-field">
-            <label>Email (confirmación y seguimiento)</label>
-            <input type="email" id="mrCartInpEmail" value="${escapeAttr(devCartState.customerEmail)}" />
-          </div>
-        </div>
-        <div class="mr-cart-field">
-          <label>Dirección completa (Calle, número, piso)</label>
-          <input type="text" id="mrCartInpAddress" value="${escapeAttr(devCartState.address)}" />
-        </div>
-        <div class="mr-cart-field-grid">
-          <div class="mr-cart-field" style="margin-bottom:0;">
-            <label>Código Postal</label>
-            <input type="text" id="mrCartInpZip" value="${escapeAttr(devCartState.postalCode)}" />
-          </div>
-          <div class="mr-cart-field" style="margin-bottom:0;">
-            <label>Ciudad</label>
-            <input type="text" id="mrCartInpCity" value="${escapeAttr(devCartState.city)}" />
-          </div>
+        <div style="background: #fdfbf7; border: 1px solid #ebd5c3; border-radius: 8px; padding: 12px 14px; font-size: 0.82rem; color: #3d342c; line-height: 1.5;">
+          <div><strong id="mrCartSummaryName">${escapeHtml(devCartState.customerName)}</strong> (<span id="mrCartSummaryEmail">${escapeHtml(devCartState.customerEmail)}</span>)</div>
+          <div id="mrCartSummaryAddr">${escapeHtml(devCartState.address)}</div>
+          <div><span id="mrCartSummaryZip">${escapeHtml(devCartState.postalCode)}</span> <span id="mrCartSummaryCity">${escapeHtml(devCartState.city)}</span>, España</div>
+          <div id="mrCartSummaryPhone" style="color: #665e54; font-size: 0.78rem;">Tel: ${escapeHtml(devCartState.customerPhone)}</div>
         </div>
       </div>
 
       <!-- 3. Desglose limpio para el cliente (Envío incluido) -->
       <div class="mr-customer-summary-box">
         <div class="mr-customer-summary-row">
-          <span id="mrCustSummaryItem">Cuaderno personalizado (143 págs)</span>
+          <span id="mrCustSummaryItem">Cuaderno personalizado (${devCartState.pageCount} págs)</span>
           <span id="mrCustSummarySubtotal">27,90 €</span>
         </div>
         <div class="mr-customer-summary-row">
@@ -544,11 +514,14 @@ function buildCartDrawerDOM() {
     </div>
 
     <div class="mr-cart-footer" style="display:flex; flex-direction:column; gap:8px;">
+      <!-- Botón de Simulación Test (Solo cuentas autorizadas) -->
       <button type="button" class="mr-btn-checkout" id="mrBtnInstantZeroOrder" style="background:#215c38;">
         <span>✅</span>
         <span id="mrBtnCheckoutText">Confirmar Pedido (0 € Test) · 27,90 € (Envío incluido)</span>
       </button>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+
+      <!-- Botones de Desarrollador / Modo Pruebas (Ocultos para clientes normales) -->
+      <div id="mrDevTestButtonsRow" style="display:flex; gap:8px; flex-wrap:wrap;">
         <button type="button" id="mrBtnStripeCheckout" style="flex:1; background:#f5f0e6; color:#1f1c19; border:1px solid #cbbba0; border-radius:8px; padding:9px 12px; font-size:0.78rem; font-weight:700; cursor:pointer;">
           💳 Probar Pasarela Stripe Checkout
         </button>
@@ -576,31 +549,6 @@ function buildCartDrawerDOM() {
     }
   });
 
-  const inputsToWatch = [
-    'mrCartInpTitle',
-    'mrCartSelBinding',
-    'mrCartInpPages',
-    'mrCartInpName',
-    'mrCartInpEmail',
-    'mrCartInpAddress',
-    'mrCartInpZip',
-    'mrCartInpCity'
-  ];
-
-  inputsToWatch.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', () => {
-      syncCartStateFromDOM();
-      clearTimeout(quoteDebounceTimer);
-      quoteDebounceTimer = setTimeout(() => triggerLuluQuote(), 450);
-    });
-    el.addEventListener('change', () => {
-      syncCartStateFromDOM();
-      triggerLuluQuote();
-    });
-  });
-
   document.getElementById('mrChkSimulateSpike')?.addEventListener('change', (e) => {
     devCartState.simulateSpike = e.target.checked;
     triggerLuluQuote();
@@ -613,15 +561,6 @@ function buildCartDrawerDOM() {
 }
 
 function syncCartStateFromDOM() {
-  devCartState.title = document.getElementById('mrCartInpTitle')?.value || 'Planificador Personalizado';
-  devCartState.bindingType = document.getElementById('mrCartSelBinding')?.value || 'coil';
-  devCartState.pageCount = parseInt(document.getElementById('mrCartInpPages')?.value || '143', 10) || 143;
-  devCartState.customerName = document.getElementById('mrCartInpName')?.value || 'Cliente Prueba';
-  devCartState.customerEmail = document.getElementById('mrCartInpEmail')?.value || 'jesgilcan@gmail.com';
-  devCartState.address = document.getElementById('mrCartInpAddress')?.value || 'Calle de Alcalá 42';
-  devCartState.postalCode = document.getElementById('mrCartInpZip')?.value || '28014';
-  devCartState.city = document.getElementById('mrCartInpCity')?.value || 'Madrid';
-
   const dynamicPrice = getDynamicRetailPrice(devCartState.bindingType, devCartState.pageCount);
   const priceStr = `${dynamicPrice.toFixed(2).replace('.', ',')} €`;
 
@@ -636,6 +575,26 @@ function syncCartStateFromDOM() {
   if (custItem) custItem.textContent = `${cfg.label} · ${devCartState.pageCount} págs`;
   if (custSub) custSub.textContent = priceStr;
   if (custTot) custTot.textContent = priceStr;
+
+  // Actualizar textos de resumen
+  const sumTitle = document.getElementById('mrCartSummaryTitle');
+  const sumBinding = document.getElementById('mrCartSummaryBinding');
+  const sumName = document.getElementById('mrCartSummaryName');
+  const sumEmail = document.getElementById('mrCartSummaryEmail');
+  const sumAddr = document.getElementById('mrCartSummaryAddr');
+  const sumZip = document.getElementById('mrCartSummaryZip');
+  const sumCity = document.getElementById('mrCartSummaryCity');
+  const sumPhone = document.getElementById('mrCartSummaryPhone');
+  if (sumTitle) sumTitle.textContent = devCartState.title;
+  if (sumBinding) {
+    sumBinding.innerHTML = `${cfg.label} · <strong>${devCartState.pageCount} páginas</strong> · Formato 210 × 152 mm`;
+  }
+  if (sumName) sumName.textContent = devCartState.customerName;
+  if (sumEmail) sumEmail.textContent = devCartState.customerEmail;
+  if (sumAddr) sumAddr.textContent = devCartState.address;
+  if (sumZip) sumZip.textContent = devCartState.postalCode;
+  if (sumCity) sumCity.textContent = devCartState.city;
+  if (sumPhone) sumPhone.textContent = `Tel: ${devCartState.customerPhone}`;
 }
 
 export function openDevCartDrawer(customItem = null) {
@@ -650,15 +609,25 @@ export function openDevCartDrawer(customItem = null) {
     if (customItem.pageCount) devCartState.pageCount = parseInt(customItem.pageCount, 10) || 143;
     if (customItem.syncedBookName) devCartState.subtitle = customItem.syncedBookName;
 
-    const inpTitle = document.getElementById('mrCartInpTitle');
-    const selBind = document.getElementById('mrCartSelBinding');
-    const inpPages = document.getElementById('mrCartInpPages');
-    if (inpTitle) inpTitle.value = devCartState.title;
-    if (selBind) selBind.value = devCartState.bindingType;
-    if (inpPages) inpPages.value = devCartState.pageCount;
+    if (customItem.shipping) {
+      if (customItem.shipping.name) devCartState.customerName = customItem.shipping.name;
+      if (customItem.shipping.email) devCartState.customerEmail = customItem.shipping.email;
+      if (customItem.shipping.address) devCartState.address = customItem.shipping.address;
+      if (customItem.shipping.postalCode) devCartState.postalCode = customItem.shipping.postalCode;
+      if (customItem.shipping.city) devCartState.city = customItem.shipping.city;
+      if (customItem.shipping.phone) devCartState.customerPhone = customItem.shipping.phone;
+    }
   }
 
   syncCartStateFromDOM();
+
+  // Control de visibilidad de herramientas de test para el dueño/cliente de prueba
+  const isAuthTester = auth.currentUser && (isDeveloper(auth.currentUser) || isTestCustomer(auth.currentUser));
+  const testBtnsRow = document.getElementById('mrDevTestButtonsRow');
+  const xrayToggle = document.getElementById('mrBtnToggleXray');
+  if (testBtnsRow) testBtnsRow.style.display = isAuthTester ? 'flex' : 'none';
+  if (xrayToggle) xrayToggle.style.display = (auth.currentUser && isDeveloper(auth.currentUser)) ? 'inline-block' : 'none';
+
   document.getElementById('mrDevCartBackdrop')?.classList.add('open');
   document.getElementById('mrDevCartDrawer')?.classList.add('open');
   devCartState.isOpen = true;
