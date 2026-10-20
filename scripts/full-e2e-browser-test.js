@@ -1,10 +1,8 @@
 import puppeteer from 'puppeteer-core';
 import path from 'path';
-import fs from 'fs';
 
 const EDGE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const USER_DATA_DIR = 'C:\\Users\\IA\\AppData\\Local\\Temp\\edge_test_profile';
-
 const ARTIFACT_DIR = 'C:\\Users\\IA\\.gemini\\antigravity\\brain\\31991198-d8a9-43a3-aedd-d3479e4df3a3';
 
 async function run() {
@@ -20,8 +18,11 @@ async function run() {
   await page.setViewport({ width: 1280, height: 950 });
 
   page.on('console', msg => console.log('[BROWSER CONSOLE]', msg.text()));
+  
+  let lastDialogMessage = '';
   page.on('dialog', async dialog => {
-    console.log('[BROWSER DIALOG ALERT]', dialog.message());
+    lastDialogMessage = dialog.message();
+    console.log('[BROWSER DIALOG ALERT]', lastDialogMessage);
     await dialog.accept();
   });
 
@@ -32,33 +33,26 @@ async function run() {
   // =========================================================================
   console.log('\n--- PASO 1: Verificando validación de páginas pares en el Generador ---');
   await page.goto('https://www.editorialmenosruido.com/generador-libro-completo', { waitUntil: 'networkidle2' });
-  await new Promise(r => setTimeout(r, 2000));
+  await new Promise(r => setTimeout(r, 2500));
 
   const parityCheck = await page.evaluate(() => {
-    // Probar función de validación
-    let oddAlertTriggered = false;
-    let originalAlert = window.alert;
-    window.alert = (msg) => {
-      oddAlertTriggered = true;
-      console.log('Alert interceptado:', msg);
-    };
-
-    // Forzar lista impar
+    // Verificar función de bloqueo en compilación
     if (typeof generatedPageList !== 'undefined') {
-      const origList = [...generatedPageList];
-      generatedPageList = new Array(15).fill({}); // 15 páginas (impar)
-      
-      const saveBtn = document.getElementById('btn-save-generator-design');
-      if (saveBtn) saveBtn.click();
-
-      generatedPageList = origList;
+      const origLen = generatedPageList.length;
+      // Si la lista es par, añadir 1 para hacerla impar
+      if (generatedPageList.length % 2 === 0) {
+        generatedPageList.push({ type: 'page', pageNumber: origLen + 1 });
+      }
+      openCompileModal();
+      return { tested: true, totalPages: generatedPageList.length };
     }
-    window.alert = originalAlert;
-    return { oddAlertTriggered };
+    return { tested: false };
   });
 
-  console.log('Resultado comprobación paridad impar:', parityCheck);
-  testResults.push({ step: '1. Paridad Páginas Generador', ok: parityCheck.oddAlertTriggered });
+  await new Promise(r => setTimeout(r, 1000));
+  const oddBlocked = lastDialogMessage.includes('número impar de páginas') || lastDialogMessage.includes('páginas pares');
+  console.log('Resultado comprobación paridad impar:', { parityCheck, oddBlocked, lastDialogMessage });
+  testResults.push({ step: '1. Paridad Páginas Generador (Bloqueo si es impar)', ok: oddBlocked });
 
   const step1Shot = path.join(ARTIFACT_DIR, 'test_e2e_step1_generador.png');
   await page.screenshot({ path: step1Shot, fullPage: false });
@@ -68,10 +62,9 @@ async function run() {
   // PASO 2: Mi Espacio - Cesta de Cuadernos y Controles
   // =========================================================================
   console.log('\n--- PASO 2: Verificando Cesta interactiva, Cantidades y Checkbox en Mi Espacio ---');
-  await page.goto('https://www.editorialmenosruido.com/mi-espacio?tab=pedidos', { waitUntil: 'networkidle2' });
-  await new Promise(r => setTimeout(r, 2500));
-
-  // Inyectar un libro de prueba par en la cesta si está vacía
+  
+  // Inyectar el libro de prueba par antes de cargar la página
+  await page.goto('https://www.editorialmenosruido.com/mi-espacio', { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => {
     const testBook = {
       id: 'pend_test_e2e_1',
@@ -94,32 +87,21 @@ async function run() {
         notes: 'Llamar al telefonillo del 2ºA'
       }
     };
-    let list = [];
-    try {
-      const raw = localStorage.getItem('mr_pending_payment_books');
-      if (raw) list = JSON.parse(raw);
-    } catch(e) {}
-    list = [testBook];
-    localStorage.setItem('mr_pending_payment_books', JSON.stringify(list));
-    
-    // Si la función de renderizado existe en scope
-    if (typeof updateFloatingCartSummary === 'function') {
-      window.clientPendingBasket = list;
-      updateFloatingCartSummary();
-    }
+    localStorage.setItem('mr_pending_payment_books', JSON.stringify([testBook]));
   });
 
-  // Recargar para que mi-espacio lea la cesta
+  // Navegar a la pestaña de pedidos
   await page.goto('https://www.editorialmenosruido.com/mi-espacio?tab=pedidos', { waitUntil: 'networkidle2' });
-  await new Promise(r => setTimeout(r, 3000));
+  await new Promise(r => setTimeout(r, 3500));
 
+  // Verificar tarjeta de cesta
   const basketCardExists = await page.evaluate(() => {
     return !!document.querySelector('.pending-basket-card');
   });
   console.log('Tarjeta de cesta renderizada:', basketCardExists);
   testResults.push({ step: '2. Renderizado Tarjeta Cesta', ok: basketCardExists });
 
-  // Comprobar botones de Descarga PDF
+  // Comprobar botones de Descarga PDF en la cesta
   const pdfButtons = await page.evaluate(() => {
     const coverBtn = document.querySelector('[data-preview-pdf-cover]');
     const intBtn = document.querySelector('[data-preview-pdf-interior]');
@@ -131,9 +113,12 @@ async function run() {
     };
   });
   console.log('Botones de descarga PDF en cesta:', pdfButtons);
-  testResults.push({ step: '3. Botones Descarga Portada e Interior PDF', ok: pdfButtons.hasCoverBtn && pdfButtons.hasInteriorBtn });
+  testResults.push({
+    step: '3. Botones Descarga Portada e Interior PDF',
+    ok: pdfButtons.hasCoverBtn && pdfButtons.hasInteriorBtn && pdfButtons.coverBtnText.includes('Descargar Portada PDF')
+  });
 
-  // Comprobar selector de cantidad: bajar a 0
+  // Selector de cantidad: Disminución a 0
   console.log('Probando disminución de cantidad a 0...');
   await page.click('[data-qty-dec]');
   await new Promise(r => setTimeout(r, 800));
@@ -144,7 +129,7 @@ async function run() {
     return {
       qty: qtyVal,
       buyDisabled: buyBtn?.disabled,
-      buyOpacity: buyBtn ? window.getComputedStyle(buyBtn).opacity : null
+      subtotalText: document.querySelector('.pending-basket-card [style*="font-weight: 900"]')?.textContent?.trim()
     };
   });
   console.log('Estado con cantidad 0:', qtyZeroState);
@@ -155,7 +140,7 @@ async function run() {
   await page.click('[data-qty-inc]');
   await new Promise(r => setTimeout(r, 800));
 
-  // Intentar pulsar Comprar SIN marcar la casilla
+  // Intentar pulsar Comprar SIN marcar la casilla de confirmación
   console.log('Probando pulsación de Comprar sin confirmación de textos...');
   await page.click('[data-buy-pending]');
   await new Promise(r => setTimeout(r, 1000));
@@ -195,7 +180,7 @@ async function run() {
       isVisible,
       hasNotesInput: !!notesInput,
       notesInputValue: notesInput?.value,
-      hasChangeAddrBtn, // Debe ser false
+      hasChangeAddrBtn,
       confirmBtnText
     };
   });
@@ -271,6 +256,7 @@ async function run() {
   console.log(`\nRESULTADO GLOBAL: ${allOk ? 'TODO EN VERDE (100% FUNCIONAL)' : 'HAY FALLOS'}`);
 
   await browser.close();
+  if (!allOk) process.exit(1);
 }
 
 run().catch(err => {

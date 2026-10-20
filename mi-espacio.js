@@ -176,6 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) {}
 
+  // Cargar inmediatamente pedidos y cesta local
+  initClientOrdersAndBasketModule(null);
+
   // 2. Comprobación en segundo plano con Firebase
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
@@ -189,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
       checkUrlTab(false);
       // Cargar datos de usuario y plantillas EN PARALELO para máxima velocidad
       await Promise.all([loadUserData(user), loadUserDesigns(user)]);
+      await initClientOrdersAndBasketModule(user);
     } else {
       try { localStorage.removeItem('mr_cached_user'); } catch (e) {}
       // Si el usuario no ha iniciado sesión pero tiene diseños guardados localmente, mostrarlos
