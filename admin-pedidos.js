@@ -1517,22 +1517,20 @@ function saveOrdersState() {
     localStorage.setItem('mr_simulated_orders', JSON.stringify(allOrders));
   } catch (e) {}
 
-  // Si hay usuario dev en Firebase, guardar también en Firestore
-  if (auth.currentUser && isDeveloper(auth.currentUser)) {
-    allOrders.forEach(async (o) => {
-      try {
-        if (o.orderNumber) {
-          await setDoc(doc(db, 'orders', o.orderNumber), o, { merge: true });
-        }
-        if (o.id && o.id !== o.orderNumber) {
-          await setDoc(doc(db, 'orders', o.id), o, { merge: true });
-        }
-        if (o.customer?.uid) {
-          await setDoc(doc(db, 'users', o.customer.uid, 'orders', o.orderNumber || o.id), o, { merge: true });
-        }
-      } catch (e) {}
-    });
-  }
+  // Guardar siempre en Firestore en la nube para sincronización en tiempo real con clientes
+  allOrders.forEach(async (o) => {
+    try {
+      if (o.orderNumber) {
+        await setDoc(doc(db, 'orders', o.orderNumber), o, { merge: true });
+      }
+      if (o.id && o.id !== o.orderNumber) {
+        await setDoc(doc(db, 'orders', o.id), o, { merge: true });
+      }
+      if (o.customer?.uid) {
+        await setDoc(doc(db, 'users', o.customer.uid, 'orders', o.orderNumber || o.id), o, { merge: true });
+      }
+    } catch (e) {}
+  });
 }
 
 function addTimelineEvent(order, message) {
