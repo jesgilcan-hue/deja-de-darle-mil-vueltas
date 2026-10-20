@@ -84,7 +84,11 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
     const luluJobId = order.luluJob?.jobId || ('LULU-' + Math.floor(100000 + Math.random() * 900000));
 
     const clientProfileUrl = 'https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos';
-    const adminOrderTargetUrl = `https://www.editorialmenosruido.com/admin-pedidos.html?orderId=${encodeURIComponent(order.id || orderNumber)}`;
+    let orderEncoded = '';
+    try {
+      orderEncoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(order)))));
+    } catch (e) {}
+    const adminOrderTargetUrl = `https://www.editorialmenosruido.com/admin-pedidos.html?orderId=${encodeURIComponent(order.id || orderNumber)}${orderEncoded ? `&orderData=${orderEncoded}` : ''}`;
 
     let clientSubject = '';
     let clientBody = '';
@@ -103,7 +107,9 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
         `Hemos recibido correctamente tu pedido #${orderNumber} (${totalPaid} € · Envío incluido).`,
         `Tu cuaderno «${bookTitle}» (${bindingLabel}, ${pageCount} páginas interiores) ha entrado en revisión de imprenta.`,
         `Puedes consultar y descargar tus archivos en PDF en cualquier momento desde el apartado «Mis Pedidos y Cesta» de tu perfil.`,
-        `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido.`
+        `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido.`,
+        `¿Qué pasa ahora?\nYa estamos revisando tu pedido y te enviaremos una confirmación en las próximas 2 h.`,
+        `Nota:\nEste correo electrónico es informativo conforme hemos recibido su pedido. No significa que lo hayamos confirmado.`
       ].join('\n\n');
 
       managerSubject = `🔔 [GESTOR WEB] Nueva venta #${orderNumber} (${totalPaid} €) · Informe Lulu`;

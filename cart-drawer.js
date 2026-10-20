@@ -1,13 +1,32 @@
 
 export function updateCartFabBadge(count, totalStr) {
   const fab = document.getElementById('mrDevCartFab');
-  if (!fab) return;
+  const btnBuy = document.getElementById('mrBtnFloatingBuy');
   const num = parseInt(count, 10) || 0;
-  fab.innerHTML = `
-    <span>🛒</span>
-    <span>Tu Carrito (${num})</span>
-    <span class="mr-dev-cart-fab-badge" style="background:${num > 0 ? '#215c38' : '#786e63'};">${totalStr}</span>
-  `;
+  if (fab) {
+    fab.innerHTML = `
+      <span>🛒</span>
+      <span>Tu Carrito (${num})</span>
+      <span class="mr-dev-cart-fab-badge" style="background:${num > 0 ? '#215c38' : '#786e63'};">${totalStr}</span>
+    `;
+  }
+  if (btnBuy) {
+    if (num > 0) {
+      btnBuy.style.display = 'inline-flex';
+      btnBuy.style.background = '#215c38';
+      btnBuy.style.borderColor = '#183e25';
+      btnBuy.style.cursor = 'pointer';
+      btnBuy.style.opacity = '1';
+      btnBuy.innerHTML = `<span>💳</span> <span>Finalizar Compra (${num} · ${totalStr})</span>`;
+    } else {
+      btnBuy.style.display = 'inline-flex';
+      btnBuy.style.background = '#a8a196';
+      btnBuy.style.borderColor = '#918b81';
+      btnBuy.style.cursor = 'not-allowed';
+      btnBuy.style.opacity = '0.7';
+      btnBuy.innerHTML = `<span>💳</span> <span>Cesta vacía (0)</span>`;
+    }
+  }
 }
 window.updateCartFabBadge = updateCartFabBadge;
 // cart-drawer.js - Carrito Lateral con Precio Dinámico (Envío Incluido), Vista Limpia de Cliente y Rayos X Lulu para Desarrollador
@@ -390,24 +409,48 @@ function buildCartDrawerDOM() {
   injectCartStyles();
   loadSavedCartItem();
 
-  // Botón flotante exclusivo para desarrollador
-  const fab = document.createElement('button');
-  fab.type = 'button';
-  fab.id = 'mrDevCartFab';
-  fab.className = 'mr-dev-cart-fab';
-  fab.innerHTML = `
-    <span>🛒</span>
-    <span>Tu Carrito</span>
-    <span class="mr-dev-cart-fab-badge">DEV 0€</span>
-  `;
-  fab.addEventListener('click', () => {
-    if (typeof window.openBasketCheckoutModal === 'function') {
-      window.openBasketCheckoutModal();
-    } else {
-      openDevCartDrawer();
-    }
-  });
-  document.body.appendChild(fab);
+  // Botón flotante y botón de finalizar compra encima de Tu Carrito
+  let cluster = document.getElementById('mrFloatingCartCluster');
+  if (!cluster) {
+    cluster = document.createElement('div');
+    cluster.id = 'mrFloatingCartCluster';
+    cluster.style.cssText = 'position: fixed; bottom: 22px; right: 22px; z-index: 99990; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;';
+
+    const btnBuy = document.createElement('button');
+    btnBuy.type = 'button';
+    btnBuy.id = 'mrBtnFloatingBuy';
+    btnBuy.style.cssText = 'background: #215c38; color: #ffffff; border: 1.5px solid #183e25; border-radius: 999px; padding: 10px 20px; font-family: "Inter", system-ui, sans-serif; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; box-shadow: 0 10px 24px rgba(33,92,56,0.3); transition: all 0.2s ease;';
+    btnBuy.innerHTML = `<span>💳</span> <span>Finalizar Compra</span>`;
+    btnBuy.addEventListener('click', () => {
+      if (typeof window.openBasketCheckoutModal === 'function') {
+        window.openBasketCheckoutModal();
+      } else {
+        openDevCartDrawer();
+      }
+    });
+
+    const fab = document.createElement('button');
+    fab.type = 'button';
+    fab.id = 'mrDevCartFab';
+    fab.className = 'mr-dev-cart-fab';
+    fab.style.cssText = 'position: static; margin: 0;';
+    fab.innerHTML = `
+      <span>🛒</span>
+      <span>Tu Carrito</span>
+      <span class="mr-dev-cart-fab-badge">0€</span>
+    `;
+    fab.addEventListener('click', () => {
+      if (typeof window.openBasketCheckoutModal === 'function') {
+        window.openBasketCheckoutModal();
+      } else {
+        openDevCartDrawer();
+      }
+    });
+
+    cluster.appendChild(btnBuy);
+    cluster.appendChild(fab);
+    document.body.appendChild(cluster);
+  }
 
   // Backdrop
   const backdrop = document.createElement('div');

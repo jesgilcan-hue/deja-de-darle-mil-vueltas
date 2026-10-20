@@ -312,6 +312,31 @@ async function loadAllOrders() {
     if (raw) localSim = JSON.parse(raw);
   } catch (e) {}
 
+  // 3. Revisar si viene orderData en la URL (enlace directo desde el email de notificación)
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const orderDataParam = params.get('orderData') || params.get('importOrder');
+    if (orderDataParam) {
+      const decodedJson = decodeURIComponent(escape(atob(decodeURIComponent(orderDataParam))));
+      const importedOrder = JSON.parse(decodedJson);
+      if (importedOrder && (importedOrder.id || importedOrder.orderNumber)) {
+        localSim = localSim.filter(x => (x.id !== importedOrder.id && x.orderNumber !== importedOrder.orderNumber));
+        localSim.unshift(importedOrder);
+        try {
+          localStorage.setItem('mr_simulated_orders', JSON.stringify(localSim));
+        } catch (e) {}
+        // Guardar también en Firestore con la sesión de administrador
+        if (auth.currentUser && isDeveloper(auth.currentUser)) {
+          try {
+            await setDoc(doc(db, 'orders', importedOrder.id || importedOrder.orderNumber), importedOrder, { merge: true });
+          } catch (e) {}
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Aviso parseando orderData de URL:', err);
+  }
+
   // Combinar sin duplicados
   const map = new Map();
   localSim.forEach(o => map.set(o.id || o.orderNumber, o));

@@ -1879,20 +1879,7 @@ async function loadClientOrdersAndBasketData(user) {
     }
   } catch (e) {}
 
-  if (pending.length === 0) {
-    pending = [
-      {
-        id: 'pend_demo_1',
-        title: 'Planificador Anual 2026 · Edición Personalizada',
-        subtitle: 'Interior completo (143 págs) + Portada Clásico Sobrio sincronizada',
-        bindingType: 'coil',
-        pageCount: 143,
-        fileSizeMb: '44.3',
-        savedAt: new Date().toISOString()
-      }
-    ];
-    try { localStorage.setItem('mr_pending_payment_books', JSON.stringify(pending)); } catch (e) {}
-  }
+  // Si no hay cuadernos pendientes (por haber sido comprados o eliminados), se respeta la cesta vacía
   clientPendingBasket = pending;
 
   // 2. Cargar Pedidos Impresos del Perfil (Firestore + Local)
@@ -2136,27 +2123,32 @@ function openBasketCheckoutModal(targetItemId = null) {
   const modal = document.getElementById('basket-checkout-modal');
   if (!modal) return;
 
-  // Si se ha pinchado en un ítem específico y su cantidad era 0, la ponemos en 1
-  if (targetItemId) {
-    const target = clientPendingBasket.find(x => String(x.id) === String(targetItemId));
-    if (target && (!target.quantity || target.quantity <= 0)) {
-      target.quantity = 1;
-      saveClientOrdersAndBasketState(currentUser || auth.currentUser);
-    }
-  }
-
-  // Filtrar ítems seleccionados (con cantidad > 0)
+  // Filtrar estrictamente solo ítems que tengan cantidad > 0
   let selectedItems = clientPendingBasket.filter(x => (x.quantity !== undefined ? x.quantity : 1) > 0);
 
-  // Si ninguno tiene cantidad > 0 pero hay productos en la cesta, asignamos cantidad 1 al primero
-  if (selectedItems.length === 0 && clientPendingBasket.length > 0) {
-    clientPendingBasket[0].quantity = 1;
-    selectedItems = [clientPendingBasket[0]];
-    saveClientOrdersAndBasketState(currentUser || auth.currentUser);
+  if (selectedItems.length === 0) {
+    showToast('⚠️ Todos los cuadernos tienen cantidad 0. Pulsa «+» en el cuaderno que quieras comprar.');
+    return;
   }
 
-  if (selectedItems.length === 0) {
-    showToast('⚠️ No tienes ningún cuaderno en la cesta ahora mismo.');
+  // Si se abrió para un cuaderno en particular o de forma general, verificar confirmación de textos
+  const unconfirmed = selectedItems.find(x => !x.textsConfirmed);
+  if (unconfirmed) {
+    showToast('⚠️ Debes confirmar la revisión de textos y contenidos marcando la casilla antes de tramitar el pedido.');
+    const box = document.getElementById('confirm-box-' + unconfirmed.id);
+    if (box) {
+      box.style.borderColor = '#dc2626';
+      box.style.background = '#fef2f2';
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const chk = box.querySelector('input[type="checkbox"]');
+      if (chk) chk.focus();
+      setTimeout(() => {
+        if (!unconfirmed.textsConfirmed) {
+          box.style.borderColor = '#e4d5bc';
+          box.style.background = '#fffdf5';
+        }
+      }, 2200);
+    }
     return;
   }
 
@@ -2207,16 +2199,11 @@ function openBasketCheckoutModal(targetItemId = null) {
 
   if (shipContainer) {
     shipContainer.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-        <div>
-          <div><strong style="color: #1f1c19;">${escapeHtml(firstShip.name || 'Cliente')}</strong> (<span style="color: #665e54;">${escapeHtml(firstShip.email || user?.email || '')}</span>)</div>
-          <div style="color: #4a4138; margin-top: 2px;">${escapeHtml(firstShip.address || '')}, ${escapeHtml(firstShip.postalCode || '')} ${escapeHtml(firstShip.city || '')} (${escapeHtml(firstShip.province || '')})</div>
-          <div style="color: #665e54; font-size: 0.78rem; margin-top: 2px;">Teléfono: <strong>${escapeHtml(firstShip.phone || '+34 600 000 000')}</strong></div>
-          ${firstShip.notes ? `<div style="color: #87553b; font-size: 0.78rem; margin-top: 3px; font-style: italic;">Nota repartidor: ${escapeHtml(firstShip.notes)}</div>` : ''}
-        </div>
-        <button type="button" data-edit-shipping-basket="${escapeHtml(selectedItems[0].id)}" style="background: #f5efe6; border: 1px solid #d6cec0; border-radius: 5px; padding: 4px 10px; font-size: 0.74rem; font-weight: 700; color: #87553b; cursor: pointer;">
-          ✏️ Cambiar
-        </button>
+      <div style="line-height: 1.55; color: #3d342c;">
+        <div><strong style="color: #1f1c19;">${escapeHtml(firstShip.name || 'Cliente')}</strong> (<span style="color: #665e54;">${escapeHtml(firstShip.email || user?.email || '')}</span>)</div>
+        <div style="color: #4a4138; margin-top: 3px;">${escapeHtml(firstShip.address || '')}, ${escapeHtml(firstShip.postalCode || '')} ${escapeHtml(firstShip.city || '')} (${escapeHtml(firstShip.province || '')})</div>
+        <div style="color: #665e54; font-size: 0.78rem; margin-top: 3px;">Teléfono: <strong>${escapeHtml(firstShip.phone || '+34 600 000 000')}</strong></div>
+        ${firstShip.notes ? `<div style="color: #87553b; font-size: 0.78rem; margin-top: 4px; font-style: italic;">Nota repartidor: ${escapeHtml(firstShip.notes)}</div>` : ''}
       </div>
     `;
   }
@@ -2383,6 +2370,10 @@ async function handleConfirmCheckoutOrder() {
   // 4. Retirar de la cesta los productos comprados
   const purchasedIds = new Set(selectedItems.map(s => String(s.id)));
   clientPendingBasket = clientPendingBasket.filter(x => !purchasedIds.has(String(x.id)));
+  try {
+    localStorage.removeItem('mr_cart_cover_item');
+    localStorage.removeItem('mr_complete_book_config');
+  } catch (e) {}
   saveClientOrdersAndBasketState(user);
 
   // 5. Cerrar modal y actualizar UI
@@ -2440,7 +2431,42 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     const id = buyBtn.getAttribute('data-buy-pending');
+    const item = clientPendingBasket.find(x => String(x.id) === String(id));
+    if (!item) return;
+
+    if ((item.quantity !== undefined ? item.quantity : 1) <= 0) {
+      showToast('⚠️ Este cuaderno tiene 0 ejemplares seleccionados. Añade al menos 1 con «+» para poder comprarlo.');
+      return;
+    }
+
+    if (!item.textsConfirmed) {
+      showToast('⚠️ Debes confirmar la revisión de textos marcando la casilla antes de tramitar el pedido.');
+      const box = document.getElementById('confirm-box-' + id);
+      if (box) {
+        box.style.borderColor = '#dc2626';
+        box.style.background = '#fef2f2';
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const chk = box.querySelector('input[type="checkbox"]');
+        if (chk) chk.focus();
+        setTimeout(() => {
+          if (!item.textsConfirmed) {
+            box.style.borderColor = '#e4d5bc';
+            box.style.background = '#fffdf5';
+          }
+        }, 2200);
+      }
+      return;
+    }
+
     openBasketCheckoutModal(id);
+    return;
+  }
+
+  // 1a. Botón Flotante Comprar (#mrBtnFloatingBuy)
+  if (e.target.closest('#mrBtnFloatingBuy')) {
+    e.preventDefault();
+    e.stopPropagation();
+    openBasketCheckoutModal();
     return;
   }
 
@@ -2724,7 +2750,7 @@ function renderClientOrdersAndBasketViews(user) {
 
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <!-- Botón Comprar -->
-                  <button type="button" data-buy-pending="${escapeHtml(item.id)}" style="background: #215c38; color: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(33,92,56,0.25);">
+                  <button type="button" data-buy-pending="${escapeHtml(item.id)}" ${item.quantity === 0 ? 'disabled' : ''} style="background: ${item.quantity === 0 ? '#b5aca1' : '#215c38'}; color: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: ${item.quantity === 0 ? 'not-allowed' : 'pointer'}; display: inline-flex; align-items: center; gap: 6px; box-shadow: ${item.quantity === 0 ? 'none' : '0 2px 6px rgba(33,92,56,0.25)'}; opacity: ${item.quantity === 0 ? '0.7' : '1'};">
                     <span>💳</span> Comprar
                   </button>
                   <!-- Botón Descargar Portada PDF -->
@@ -2792,21 +2818,21 @@ function renderClientOrdersAndBasketViews(user) {
                   </div>
                 </div>
 
-                <!-- 3. Casilla de Aceptación y Confirmación de Ortografía y Textos -->
-                <div id="confirm-box-${escapeHtml(item.id)}" style="background: ${isChecked ? '#f0fdf4' : '#fffbeb'}; border: 1.5px solid ${isChecked ? '#86efac' : '#fcd34d'}; border-radius: 8px; padding: 12px 14px; transition: all 0.25s ease;">
-                  <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.84rem; color: #231f1a; line-height: 1.45;">
-                    <input type="checkbox" data-confirm-texts="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} style="margin-top: 3px; width: 18px; height: 18px; accent-color: #215c38; cursor: pointer;" />
-                    <span>
-                      <strong style="color: #1f1c19;">He revisado la previsualización y asumo la responsabilidad sobre los textos y contenidos introducidos.</strong>
-                      <span style="display: block; font-size: 0.77rem; color: #665b4f; margin-top: 2px;">
-                        Confirmo que todos los datos y nombres propios son correctos para su impresión final en papel.
-                      </span>
-                    </span>
-                  </label>
-                </div>
-
               </div>
             </details>
+
+            <!-- Casilla de Aceptación y Confirmación de Ortografía y Textos (FUERA DEL DESPLEGABLE) -->
+            <div id="confirm-box-${escapeHtml(item.id)}" style="background: ${isChecked ? '#f0fdf4' : '#fffdf5'}; border: 1.5px solid ${isChecked ? '#86efac' : '#e4d5bc'}; border-radius: 8px; padding: 12px 14px; margin-top: 2px; transition: all 0.25s ease;">
+              <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.84rem; color: #231f1a; line-height: 1.45;">
+                <input type="checkbox" data-confirm-texts="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} style="margin-top: 3px; width: 18px; height: 18px; accent-color: #215c38; cursor: pointer;" />
+                <span>
+                  <strong style="color: #1f1c19;">He revisado la previsualización y asumo la responsabilidad sobre los textos y contenidos introducidos.</strong>
+                  <span style="display: block; font-size: 0.77rem; color: #665b4f; margin-top: 2px;">
+                    Confirmo que todos los datos y nombres propios son correctos para su impresión final en papel.
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
         `;
       }).join('');
