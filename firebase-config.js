@@ -71,7 +71,8 @@ googleProvider.addScope('profile');
 // Configuración de roles y seguridad: ÚNICA cuenta autorizada como administrador
 export const DEVELOPER_EMAIL = "jesgilcan@gmail.com";
 export const DEVELOPER_EMAILS = [
-  "jesgilcan@gmail.com"
+  "jesgilcan@gmail.com",
+  "jesusgil_87@hotmail.com"
 ];
 export const TEST_CUSTOMER_EMAILS = [
   "jesusgil_87@hotmail.com",

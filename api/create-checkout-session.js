@@ -175,7 +175,14 @@ export default async function handler(req, res) {
     params.append('metadata[order_number]', orderNumber);
     params.append('metadata[items_count]', String(cleanItems.length));
     params.append('metadata[items_summary]', itemsSummary);
-    params.append('metadata[items_json]', JSON.stringify(cleanItems));
+    const compactItemsJson = JSON.stringify(cleanItems.map(it => ({
+      title: it.title,
+      binding: it.bindingType,
+      pages: it.pageCount,
+      qty: it.quantity,
+      price: it.price
+    }))).substring(0, 480);
+    params.append('metadata[items_json]', compactItemsJson);
     params.append('metadata[book_title]', cleanItems[0].title);
     params.append('metadata[binding_type]', cleanItems[0].bindingType);
     params.append('metadata[page_count]', String(cleanItems[0].pageCount));

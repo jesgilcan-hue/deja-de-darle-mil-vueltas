@@ -1936,6 +1936,54 @@ async function initClientOrdersAndBasketModule(user) {
   renderClientOrdersAndBasketViews(user);
 }
 
+
+function subscribeToIndividualOrders(ordersList) {
+  if (!ordersList || !ordersList.length) return;
+  if (!window.__mrIndividualOrderUnsubs) window.__mrIndividualOrderUnsubs = new Map();
+
+  ordersList.forEach(ord => {
+    const key = ord.orderNumber || ord.id;
+    if (!key || window.__mrIndividualOrderUnsubs.has(key)) return;
+
+    try {
+      const unsub = onSnapshot(doc(db, 'orders', key), (docSnap) => {
+        if (!docSnap.exists()) return;
+        const incoming = { id: docSnap.id, ...docSnap.data() };
+        const idx = clientProfileOrders.findIndex(o => (
+          (o.orderNumber && incoming.orderNumber && o.orderNumber === incoming.orderNumber) ||
+          (o.id && incoming.id && o.id === incoming.id) ||
+          o.id === key || o.orderNumber === key
+        ));
+        if (idx >= 0) {
+          const prev = clientProfileOrders[idx];
+          const merged = mergeOrderRecords(prev, incoming);
+          clientProfileOrders[idx] = merged;
+          if (prev && prev.status !== incoming.status) {
+            const labels = {
+              pending_review: '1. Revisión Técnica',
+              approved_printing: '2. En Imprenta',
+              printing: '2. En Imprenta',
+              shipped: '3. En Reparto (Correos Express)',
+              delivered: '4. Entregado'
+            };
+            showToast('⚡ Pedido #' + (incoming.orderNumber || key) + ': Estado actualizado a «' + (labels[incoming.status] || incoming.status) + '»');
+          }
+        } else {
+          clientProfileOrders.unshift(incoming);
+        }
+        clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
+        try { localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders)); } catch (e) {}
+        renderClientOrdersAndBasketViews(auth.currentUser || currentUser);
+      }, (err) => {
+        console.warn('Aviso en onSnapshot doc orders ' + key + ':', err);
+      });
+      window.__mrIndividualOrderUnsubs.set(key, unsub);
+    } catch (e) {
+      console.warn('Error suscribiendo doc orders ' + key + ':', e);
+    }
+  });
+}
+
 async function loadClientOrdersAndBasketData(user) {
   // 1. Cargar Cesta / Libros Completos Pendientes de Pago
   let pending = [];
@@ -1968,7 +2016,33 @@ async function loadClientOrdersAndBasketData(user) {
 
   // 2. Cargar Pedidos Impresos del Perfil (Firestore + Local)
   let loadedOrders = [];
+  const safeEmail = (getUserEmail(user) || '').toLowerCase().trim();
+  const safeUserSearchEmail = (getUserEmail(user) || '').toLowerCase().trim();
   if (user && (isDeveloper(user) || isTestCustomer(user))) {
+    try {
+      const snap = await getDocs(collection(db, 'orders'));
+      snap.forEach(d => loadedOrders.push({ id: d.id, ...d.data() }));
+    } catch (e) {}
+  } else if (safeUserSearchEmail) {
+    try {
+      const q = query(collection(db, 'orders'), where('customer.email', '==', safeUserSearchEmail));
+      const snap = await getDocs(q);
+      snap.forEach(d => loadedOrders.push({ id: d.id, ...d.data() }));
+    } catch (e) {}
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetUrlOrderId = urlParams.get('order') || urlParams.get('orderId');
+  if (targetUrlOrderId) {
+    try {
+      const dSnap = await getDoc(doc(db, 'orders', targetUrlOrderId));
+      if (dSnap.exists()) {
+        loadedOrders.push({ id: dSnap.id, ...dSnap.data() });
+      }
+    } catch (e) {}
+  }
+
+  if (false) {
     try {
       const snap = await getDocs(collection(db, 'orders'));
     snap.forEach(d => loadedOrders.push({ id: d.id, ...d.data() }));
@@ -2006,6 +2080,7 @@ function saveClientOrdersAndBasketState(user) {
     localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
   } catch (e) {}
 
+  const safeEmail = (getUserEmail(user) || '').toLowerCase().trim();
   if (user && (isDeveloper(user) || isTestCustomer(user))) {
     clientProfileOrders.forEach(async (ord) => {
       try {

@@ -935,6 +935,7 @@ window.approveAndSendToLulu = async function(orderId) {
     createdAt: new Date().toISOString()
   };
   addTimelineEvent(order, 'Pedido aprobado por el editor y transmitido a la API de Lulu');
+  syncOrderToCloud(order);
 
   saveOrdersState();
   sortAndRenderOrders();
@@ -949,6 +950,7 @@ window.approveAndSendToLulu = async function(orderId) {
     if (!order.shipping) order.shipping = { carrier: 'Correos Express', trackingNumber: 'Pendiente de expedición' };
     order.shipping.lastCarrierMessage = 'En fabricación y encuadernación en planta de Lulu Direct.';
     addTimelineEvent(order, 'Lulu confirma recepción y comienza encuadernación en fábrica');
+    syncOrderToCloud(order);
     saveOrdersState();
     sortAndRenderOrders();
     if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
@@ -978,6 +980,7 @@ window.simulateLuluProgress = async function(orderId, newStatus) {
     if (!order.comms) order.comms = {};
     order.comms.tracking = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
     addTimelineEvent(order, `Lulu despacha el paquete con Correos Express (Tracking: ${tracking})`);
+    syncOrderToCloud(order);
     saveOrdersState();
     sortAndRenderOrders();
     if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
@@ -992,6 +995,7 @@ window.simulateLuluProgress = async function(orderId, newStatus) {
     if (!order.comms) order.comms = {};
     order.comms.entregado = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
     addTimelineEvent(order, 'Correos Express confirma la entrega del paquete en el domicilio del cliente (Etapa 4/4)');
+    syncOrderToCloud(order);
     saveOrdersState();
     sortAndRenderOrders();
     if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
@@ -1511,6 +1515,25 @@ window.createDemoOrder = async function(sendEmails = true) {
 
 function generateInitialDemoSeed() {
   createDemoOrder(false);
+}
+
+
+async function syncOrderToCloud(order) {
+  if (!order) return;
+  try {
+    if (order.orderNumber) {
+      await setDoc(doc(db, 'orders', order.orderNumber), order, { merge: true });
+    }
+    if (order.id && order.id !== order.orderNumber) {
+      await setDoc(doc(db, 'orders', order.id), order, { merge: true });
+    }
+    if (order.customer?.uid) {
+      await setDoc(doc(db, 'users', order.customer.uid, 'orders', order.orderNumber || order.id), order, { merge: true });
+    }
+    console.log('✓ Pedido #' + (order.orderNumber || order.id) + ' persistido en Firestore.');
+  } catch (err) {
+    console.warn('Aviso guardando pedido en Firestore:', err);
+  }
 }
 
 function saveOrdersState() {
