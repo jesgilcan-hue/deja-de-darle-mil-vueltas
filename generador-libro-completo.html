@@ -2880,6 +2880,10 @@
         }
 
         function openValidateInteriorTextsModal() {
+            if (typeof generatedPageList !== 'undefined' && generatedPageList.length % 2 !== 0) {
+                alert(`⚠️ El libro tiene un número impar de páginas (${generatedPageList.length} páginas).\n\nPara poder imprimir en imprenta, el número total de páginas debe ser estrictamente par.\nPor favor, activa la sección de "Notas" para añadir una página de notas y cuadrar el libro a número par, o ajusta las secciones antes de diseñar la portada.`);
+                return;
+            }
             const modal = document.getElementById('modalValidateInteriorTexts');
             if (!modal) {
                 window.location.href = '/generador-portadas.html';
@@ -3331,8 +3335,35 @@
                 });
             }
 
-            const total = generatedPageList.length;
-            document.getElementById('pageCountBadge').textContent = `📖 Total: ${total} páginas`;
+            // Auto-cuadre a páginas pares si la sección de notas está activa
+            let total = generatedPageList.length;
+            if (total % 2 !== 0) {
+                const notesSec = bookConfig.sections.find(s => s.id === 'notes' || s.type === 'notes');
+                if (notesSec && notesSec.active) {
+                    generatedPageList.push({
+                        type: 'notes',
+                        sectionId: notesSec.id,
+                        sectionName: 'Notas & Reflexiones (Cuadre de Imprenta)',
+                        pageIndexInSection: (notesSec.pages || 1),
+                        totalPagesInSection: (notesSec.pages || 1) + 1,
+                        design: notesSec.design || {}
+                    });
+                    total = generatedPageList.length;
+                }
+            }
+
+            const pageBadge = document.getElementById('pageCountBadge');
+            if (pageBadge) {
+                if (total % 2 === 0) {
+                    pageBadge.textContent = `📖 Total: ${total} páginas (Par · Imprenta OK)`;
+                    pageBadge.style.background = '#eaf5ee';
+                    pageBadge.style.color = '#166534';
+                } else {
+                    pageBadge.textContent = `⚠️ Total: ${total} páginas (Impar · Imprenta exige par)`;
+                    pageBadge.style.background = '#fef2f2';
+                    pageBadge.style.color = '#dc2626';
+                }
+            }
 
             if (currentPreviewPageIndex >= total) {
                 currentPreviewPageIndex = Math.max(0, total - 1);

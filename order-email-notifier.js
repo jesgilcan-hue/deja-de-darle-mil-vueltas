@@ -83,7 +83,7 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
     const tracking = order.shipping?.trackingNumber || order.luluJob?.trackingCode || 'CEX-84920144';
     const luluJobId = order.luluJob?.jobId || ('LULU-' + Math.floor(100000 + Math.random() * 900000));
 
-    const clientProfileUrl = 'https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos';
+    const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
     let orderEncoded = '';
     try {
       orderEncoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(order)))));

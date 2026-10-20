@@ -869,7 +869,7 @@ async function registerSimulatedOrderInBackoffice(orderNumber, quote, stripeSess
       city: devCartState.city,
       province: devCartState.province || 'Madrid',
       country: 'España',
-      notes: 'Pedido de prueba desde Carrito de Desarrollador (Simulación 0€)',
+      notes: devCartState.customerNotes || 'Sin instrucciones adicionales',
       isRegistered: true
     },
     comms: {
@@ -898,11 +898,11 @@ async function registerSimulatedOrderInBackoffice(orderNumber, quote, stripeSess
     timeline: [
       {
         date: new Date().toISOString(),
-        message: `[SIMULACIÓN 0€] Cotización real Lulu verificada: coste ${quote?.pricing?.luluTotalCost?.toFixed(2) || '13.93'} € · Margen limpio +${quote?.pricing?.netMargin?.toFixed(2) || '13.30'} €`
+        message: 'Pedido recibido y registrado en imprenta'
       },
       {
         date: new Date().toISOString(),
-        message: `Pago en modo TEST (${(quote?.pricing?.retailPrice || 27.90).toFixed(2)} € simulados) registrado con ID ${stripeSessionId}`
+        message: 'Pago confirmado correctamente'
       }
     ]
   };

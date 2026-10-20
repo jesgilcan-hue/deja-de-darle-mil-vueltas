@@ -49,6 +49,7 @@ const countPending = document.getElementById('countPending');
 const countApproved = document.getElementById('countApproved');
 const countPrinting = document.getElementById('countPrinting');
 const countShipped = document.getElementById('countShipped');
+const countDelivered = document.getElementById('countDelivered');
 const countPaused = document.getElementById('countPaused');
 
 // Modales
@@ -386,6 +387,7 @@ function updateKPICounters() {
   let approvedCount = 0;
   let printingCount = 0;
   let shippedCount = 0;
+  let deliveredCount = 0;
   let pausedCount = 0;
 
   allOrders.forEach(o => {
@@ -401,7 +403,8 @@ function updateKPICounters() {
     if (st === 'pending_review') pendingCount++;
     else if (st === 'approved_printing') approvedCount++;
     else if (st === 'printing') printingCount++;
-    else if (st === 'shipped' || st === 'delivered') shippedCount++;
+    else if (st === 'shipped') shippedCount++;
+    else if (st === 'delivered') deliveredCount++;
     else if (st === 'paused') pausedCount++;
   });
 
@@ -419,6 +422,7 @@ function updateKPICounters() {
   if (countApproved) countApproved.textContent = approvedCount;
   if (countPrinting) countPrinting.textContent = printingCount;
   if (countShipped) countShipped.textContent = shippedCount;
+  if (countDelivered) countDelivered.textContent = deliveredCount;
   if (countPaused) countPaused.textContent = pausedCount;
 }
 
@@ -448,7 +452,7 @@ function renderOrdersGrid() {
 
   // Filtrado por estado y por texto de búsqueda
   const filtered = allOrders.filter(o => {
-    const matchesFilter = activeFilter === 'all' || o.status === activeFilter || (activeFilter === 'shipped' && o.status === 'delivered');
+    const matchesFilter = activeFilter === 'all' || o.status === activeFilter;
     if (!matchesFilter) return false;
 
     if (!searchQuery) return true;
@@ -669,7 +673,9 @@ function createOrderCardElement(order) {
 
         <!-- VALIDACIÓN PREFLIGHT IMPRENTA -->
         <div class="preflight-check-list">
-          <div>✓ Páginas pares exactas: <strong>${(order.book?.pageCount || 144) % 2 === 0 ? 'Sí (144)' : 'No (Impar)'}</strong></div>
+          ${(order.book?.pageCount || 144) % 2 === 0 
+            ? `<div style="color:#166534;">✓ Páginas pares exactas: <strong>Sí (${order.book?.pageCount || 144} págs)</strong></div>` 
+            : `<div style="color:#dc2626; font-weight:700;">✗ Páginas pares: <strong>No (${order.book?.pageCount || 143} págs - Error: Imprenta exige número par)</strong></div>`}
           <div>✓ Sangría de corte: <strong>3.175 mm perimetral OK</strong></div>
           <div>✓ Archivo digital: <strong>Vectorial verificado OK</strong></div>
           <div>✓ Grosor de lomo calculado: <strong>${order.book?.spineWidthMm || '8.2'} mm</strong></div>
@@ -845,7 +851,6 @@ window.approveAndSendToLulu = async function(orderId) {
     if (!order.shipping) order.shipping = { carrier: 'Correos Express', trackingNumber: 'Pendiente de expedición' };
     order.shipping.lastCarrierMessage = 'En fabricación y encuadernación en planta de Lulu Direct.';
     addTimelineEvent(order, 'Lulu confirma recepción y comienza encuadernación en fábrica');
-    addTimelineEvent(order, `Emails de Etapa 2/4 (En Imprenta) enviados desde pedidos@ a Cliente y Gestor`);
     saveOrdersState();
     sortAndRenderOrders();
     await sendOrderLifecycleEmails(order, 'status_printing');
@@ -874,7 +879,6 @@ window.simulateLuluProgress = async function(orderId, newStatus) {
     if (!order.comms) order.comms = {};
     order.comms.tracking = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
     addTimelineEvent(order, `Lulu despacha el paquete con Correos Express (Tracking: ${tracking})`);
-    addTimelineEvent(order, `Emails de Etapa 3/4 (En Reparto + Tracking) enviados a Cliente y Gestor`);
     saveOrdersState();
     sortAndRenderOrders();
     showToast(`⏳ Pedido #${order.orderNumber} enviado · Disparando emails de Tracking a Cliente y Gestor...`);
@@ -888,7 +892,6 @@ window.simulateLuluProgress = async function(orderId, newStatus) {
     if (!order.comms) order.comms = {};
     order.comms.entregado = { sent: true, date: new Date().toISOString(), id: 're_' + Math.random().toString(36).substring(2, 8) };
     addTimelineEvent(order, 'Correos Express confirma la entrega del paquete en el domicilio del cliente (Etapa 4/4)');
-    addTimelineEvent(order, 'Emails de Etapa 4/4 (Pedido Entregado) enviados desde pedidos@ a Cliente y Gestor');
     saveOrdersState();
     sortAndRenderOrders();
     showToast(`⏳ Pedido #${order.orderNumber} marcado como Entregado · Enviando emails finales...`);
@@ -990,11 +993,27 @@ window.openPdfPreviewModal = function(orderId) {
   const btnInterior = document.getElementById('btnOpenInteriorExternal');
 
   btnCover.onclick = () => {
-    window.open(`/generador-portadas.html?previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
+    try {
+      localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+        title: order.book?.title,
+        bindingType: order.book?.bindingType,
+        pageCount: order.book?.pageCount || 144,
+        data: {}
+      }));
+    } catch(e) {}
+    window.open(`/generador-portadas.html?download_direct=1&previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
   };
 
   btnInterior.onclick = () => {
-    window.open(`/generador-libro-completo.html?previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
+    try {
+      localStorage.setItem('mr_complete_book_config', JSON.stringify({
+        title: order.book?.title,
+        subtitle: order.book?.subtitle,
+        pageCount: order.book?.pageCount || 144,
+        bindingType: order.book?.bindingType || 'softcover'
+      }));
+    } catch(e) {}
+    window.open(`/generador-libro-completo.html?download_direct=1&previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
   };
 
   const btnApprove = document.getElementById('btnModalQuickApprove');

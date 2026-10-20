@@ -2186,6 +2186,9 @@ function openBasketCheckoutModal(targetItemId = null) {
   // 2. Renderizar resumen de dirección de entrega
   const shipContainer = document.getElementById('checkout-modal-shipping-summary');
   const user = currentUser || auth.currentUser;
+  const notesInp = document.getElementById('checkout-modal-customer-notes');
+  const deliveryNotes = notesInp ? notesInp.value.trim() : '';
+
   const firstShip = selectedItems[0]?.shipping || {
     name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
     email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
@@ -2194,8 +2197,9 @@ function openBasketCheckoutModal(targetItemId = null) {
     postalCode: '28001',
     city: 'Madrid',
     province: 'Madrid',
-    notes: 'Entregar en conserjería si no estoy en casa.'
+    notes: deliveryNotes || 'Sin instrucciones adicionales'
   };
+  if (deliveryNotes) firstShip.notes = deliveryNotes;
 
   if (shipContainer) {
     shipContainer.innerHTML = `
@@ -2203,7 +2207,10 @@ function openBasketCheckoutModal(targetItemId = null) {
         <div><strong style="color: #1f1c19;">${escapeHtml(firstShip.name || 'Cliente')}</strong> (<span style="color: #665e54;">${escapeHtml(firstShip.email || user?.email || '')}</span>)</div>
         <div style="color: #4a4138; margin-top: 3px;">${escapeHtml(firstShip.address || '')}, ${escapeHtml(firstShip.postalCode || '')} ${escapeHtml(firstShip.city || '')} (${escapeHtml(firstShip.province || '')})</div>
         <div style="color: #665e54; font-size: 0.78rem; margin-top: 3px;">Teléfono: <strong>${escapeHtml(firstShip.phone || '+34 600 000 000')}</strong></div>
-        ${firstShip.notes ? `<div style="color: #87553b; font-size: 0.78rem; margin-top: 4px; font-style: italic;">Nota repartidor: ${escapeHtml(firstShip.notes)}</div>` : ''}
+        <div style="margin-top: 10px; border-top: 1px dashed #ebd5c3; padding-top: 8px;">
+          <label style="display:block; font-size: 0.76rem; font-weight: 700; color: #5a5147; margin-bottom: 4px;">Instrucciones para el repartidor (opcional):</label>
+          <input type="text" id="checkout-modal-customer-notes" value="${escapeHtml(firstShip.notes || '')}" placeholder="Ej: Dejar en conserjería, llamar al 2ºB..." style="width: 100%; font-size: 0.80rem; padding: 7px 10px; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box; background: #ffffff;">
+        </div>
       </div>
     `;
   }
@@ -2869,15 +2876,57 @@ function renderClientOrdersAndBasketViews(user) {
         `;
       }).join('');
 
-      const timelineHtml = (ord.timeline || []).slice().reverse().map(ev => `
+      const cleanTimeline = (ord.timeline || []).filter(ev => {
+        const m = ev.message || '';
+        return !m.includes('Se envían confirmaciones a Cliente y Gestor') &&
+               !m.includes('en modo Simulación') &&
+               !m.includes('SIMULACIÓN') &&
+               !m.includes('Emails de Etapa') &&
+               !m.includes('a Cliente y Gestor');
+      });
+      const timelineHtml = cleanTimeline.slice().reverse().map(ev => `
         <div style="display: flex; gap: 10px; font-size: 0.8rem; color: #38322c; padding: 6px 0; border-bottom: 1px dashed #ebe5da;">
           <span style="color: #87553b; font-weight: 700; white-space: nowrap;">${formatDate(ev.date)}</span>
           <span>${escapeHtml(ev.message)}</span>
         </div>
       `).join('');
 
+      const correosUrl = `https://www.correos.es/es/es/herramientas/localizador/envios?numero=${encodeURIComponent(trackingNum)}`;
+      const courierBlockHtml = (step >= 3) ? `
+          <!-- Bloque de Comunicación con la Empresa Repartidora y Dirección -->
+          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+              <div style="font-size: 0.8rem; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.4px;">
+                🚚 Comunicación con Empresa Repartidora (${escapeHtml(carrier)})
+              </div>
+              <a href="${correosUrl}" target="_blank" rel="noopener noreferrer" style="font-family: monospace; font-size: 0.78rem; font-weight: 700; background: #0284c7; color: #ffffff; padding: 4px 10px; border-radius: 5px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                Tracking: ${escapeHtml(trackingNum)} ↗
+              </a>
+            </div>
+            <div style="font-size: 0.84rem; color: #0f172a; background: #ffffff; border-left: 3px solid #2563eb; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
+              <strong>Último aviso del transportista:</strong> ${escapeHtml(carrierMsg)}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: #475569;">
+              <div>
+                <strong>Dirección de entrega:</strong> ${escapeHtml(ord.customer?.address || '')}, ${escapeHtml(ord.customer?.postalCode || '')} ${escapeHtml(ord.customer?.city || '')}<br>
+                <strong>Instrucciones para el repartidor:</strong> <span id="note-text-${escapeHtml(ord.id)}">${escapeHtml(ord.customer?.notes || 'Sin instrucciones adicionales')}</span>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="${correosUrl}" target="_blank" rel="noopener noreferrer" style="background: #1e293b; color: #ffffff; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
+                  📍 Seguir envío en Correos Express ↗
+                </a>
+              </div>
+            </div>
+          </div>
+      ` : `
+          <!-- En fases 1 y 2 no se muestra transportista -->
+          <div style="background: #fdfbf7; border: 1px dashed #dcd4c7; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.82rem; color: #5a5147;">
+            ⚙️ <strong>Estado de fabricación:</strong> Tu ejemplar se encuentra en ${step === 1 ? 'revisión técnica de imprenta' : 'imprenta para su impresión y encuadernación'}. Te notificaremos por correo con el enlace directo de Correos Express en cuanto salga del taller.
+          </div>
+      `;
+
       return `
-        <div style="background: #ffffff; border: 1.5px solid #e0d8c8; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+        <div id="order-card-${escapeHtml(ord.orderNumber)}" style="background: #ffffff; border: 1.5px solid #e0d8c8; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.04); transition: all 0.3s ease;">
           <!-- Cabecera del Pedido -->
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #eee7dc; padding-bottom: 14px; margin-bottom: 14px;">
             <div>
@@ -2901,33 +2950,7 @@ function renderClientOrdersAndBasketViews(user) {
             ${stepsHtml}
           </div>
 
-          <!-- Bloque de Comunicación con la Empresa Repartidora y Dirección -->
-          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
-              <div style="font-size: 0.8rem; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.4px;">
-                🚚 Comunicación con Empresa Repartidora (${escapeHtml(carrier)})
-              </div>
-              <span style="font-family: monospace; font-size: 0.78rem; font-weight: 700; background: #e2e8f0; color: #0f172a; padding: 3px 8px; border-radius: 5px;">
-                Tracking: ${escapeHtml(trackingNum)}
-              </span>
-            </div>
-            <div style="font-size: 0.84rem; color: #0f172a; background: #ffffff; border-left: 3px solid #2563eb; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
-              <strong>Último aviso del transportista:</strong> ${escapeHtml(carrierMsg)}
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: #475569;">
-              <div>
-                <strong>Dirección de entrega:</strong> ${escapeHtml(ord.customer?.address || '')}, ${escapeHtml(ord.customer?.postalCode || '')} ${escapeHtml(ord.customer?.city || '')}<br>
-                <strong>Instrucciones para el repartidor:</strong> <span id="note-text-${escapeHtml(ord.id)}">${escapeHtml(ord.customer?.notes || 'Sin instrucciones adicionales')}</span>
-              </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                ${ord.status === 'shipped' || ord.status === 'delivered' ? `
-                  <a href="${escapeHtml(ord.shipping?.trackingUrl || 'https://www.correosexpress.com')}" target="_blank" rel="noopener noreferrer" style="background: #1e293b; color: #ffffff; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
-                    📍 Seguir envío en web del transportista ↗
-                  </a>
-                ` : ''}
-              </div>
-            </div>
-          </div>
+          ${courierBlockHtml}
 
           <!-- Bloque de Archivos Digitales en PDF -->
           <div style="background: #fdfaf5; border: 1px solid #e4dac9; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
@@ -3012,6 +3035,26 @@ function renderClientOrdersAndBasketViews(user) {
   }
 
   // 3. RENDERIZAR ESPEJO DE CONTROL EN EL PANEL DE DESARROLLADOR (#dev-client-profile-mirror)
+  // Resaltado de pedido si viene en URL
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetOrder = urlParams.get('orderId') || urlParams.get('order');
+    if (targetOrder) {
+      setTimeout(() => {
+        const card = document.getElementById('order-card-' + targetOrder) || document.querySelector(`[id*="${targetOrder}"]`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.outline = '3px solid #16a34a';
+          card.style.boxShadow = '0 0 25px rgba(22, 163, 74, 0.4)';
+          setTimeout(() => {
+            card.style.outline = 'none';
+            card.style.boxShadow = '';
+          }, 3500);
+        }
+      }, 350);
+    }
+  } catch(e) {}
+
   const devMirror = document.getElementById('dev-client-profile-mirror');
   if (devMirror) {
     devMirror.innerHTML = clientProfileOrders.slice(0, 6).map(ord => {
