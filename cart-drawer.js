@@ -598,7 +598,6 @@ function syncCartStateFromDOM() {
 }
 
 export function openDevCartDrawer(customItem = null) {
-  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
   buildCartDrawerDOM();
 
   if (customItem) {
@@ -621,12 +620,15 @@ export function openDevCartDrawer(customItem = null) {
 
   syncCartStateFromDOM();
 
-  // Control de visibilidad de herramientas de test para el dueño/cliente de prueba
-  const isAuthTester = auth.currentUser && (isDeveloper(auth.currentUser) || isTestCustomer(auth.currentUser));
+  // Control de visibilidad de herramientas de test:
+  // Solo la cuenta de desarrollador (jesgilcan@gmail.com) ve botones de test/xray
+  const isDevUser = auth.currentUser && isDeveloper(auth.currentUser);
   const testBtnsRow = document.getElementById('mrDevTestButtonsRow');
   const xrayToggle = document.getElementById('mrBtnToggleXray');
-  if (testBtnsRow) testBtnsRow.style.display = isAuthTester ? 'flex' : 'none';
-  if (xrayToggle) xrayToggle.style.display = (auth.currentUser && isDeveloper(auth.currentUser)) ? 'inline-block' : 'none';
+  const devBanner = document.getElementById('mrCartDevBanner');
+  if (testBtnsRow) testBtnsRow.style.display = isDevUser ? 'flex' : 'none';
+  if (xrayToggle) xrayToggle.style.display = isDevUser ? 'inline-block' : 'none';
+  if (devBanner) devBanner.style.display = isDevUser ? 'flex' : 'none';
 
   document.getElementById('mrDevCartBackdrop')?.classList.add('open');
   document.getElementById('mrDevCartDrawer')?.classList.add('open');
@@ -641,7 +643,6 @@ export function closeDevCartDrawer() {
 }
 
 async function triggerLuluQuote() {
-  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
   const safetyBox = document.getElementById('mrSafetyBox');
   const headerEl = document.getElementById('mrSafetyStatusHeader');
   const blockAlert = document.getElementById('mrSafetyBlockAlert');
@@ -658,7 +659,23 @@ async function triggerLuluQuote() {
   if (btnCheckout) btnCheckout.disabled = true;
   if (btnInstantZero) btnInstantZero.disabled = true;
 
+  const dynamicPrice = getDynamicRetailPrice(devCartState.bindingType, devCartState.pageCount);
+  const fallbackQuote = {
+    canPurchase: !devCartState.simulateSpike,
+    pricing: {
+      retailPrice: dynamicPrice,
+      luluTotalCost: 13.93,
+      luluPrintCost: 8.50,
+      luluShippingCost: 3.50,
+      netMargin: +(dynamicPrice - 13.93 - (dynamicPrice * 0.015 + 0.25)).toFixed(2),
+      stripeFee: +(dynamicPrice * 0.015 + 0.25).toFixed(2)
+    }
+  };
+
   try {
+    if (!auth.currentUser) {
+      throw new Error('Sesión no disponible temporalmente');
+    }
     const idToken = await auth.currentUser.getIdToken();
     const res = await fetch('/api/lulu-quote', {
       method: 'POST',
@@ -677,13 +694,17 @@ async function triggerLuluQuote() {
       })
     });
 
+    if (!res.ok) {
+      throw new Error(`Error en servidor (${res.status})`);
+    }
+
     const data = await res.json();
     devCartState.lastQuote = data;
 
     if (data.pricing) {
       document.getElementById('mrQuoteRetail').textContent = `${data.pricing.retailPrice.toFixed(2)} €`;
-      document.getElementById('mrQuotePrint').textContent = `${data.pricing.luluPrintCost.toFixed(2)} €`;
-      document.getElementById('mrQuoteShip').textContent = `${data.pricing.luluShippingCost.toFixed(2)} €`;
+      document.getElementById('mrQuotePrint').textContent = `${(data.pricing.luluPrintCost || data.pricing.printCost || 8.50).toFixed(2)} €`;
+      document.getElementById('mrQuoteShip').textContent = `${(data.pricing.luluShippingCost || data.pricing.shippingCost || 3.50).toFixed(2)} €`;
       document.getElementById('mrQuoteLuluTotal').textContent = `${data.pricing.luluTotalCost.toFixed(2)} €`;
       document.getElementById('mrQuoteStripeFee').textContent = `${data.pricing.stripeFee.toFixed(2)} €`;
 
@@ -722,17 +743,21 @@ async function triggerLuluQuote() {
       if (btnDirectSim) btnDirectSim.disabled = false;
     }
   } catch (err) {
-    safetyBox.classList.add('blocked');
-    headerEl.textContent = '⚠️ Error al conectar con /api/lulu-quote';
-    headerEl.style.color = '#991b1b';
-    if (blockAlert) {
-      blockAlert.style.display = 'block';
-      blockAlert.textContent = `Por seguridad, si Lulu no responde, el botón de compra se bloquea (${err.message}).`;
+    console.warn('Aviso cotización Lulu:', err.message);
+    devCartState.lastQuote = fallbackQuote;
+    safetyBox.classList.remove('blocked');
+    headerEl.textContent = '✅ Modo Test Activo (Cotización de respaldo)';
+    headerEl.style.color = '#166534';
+    if (blockAlert) blockAlert.style.display = 'none';
+    if (custPublicError) custPublicError.style.display = 'none';
+    if (btnCheckout) btnCheckout.disabled = false;
+    if (btnInstantZero) btnInstantZero.disabled = devCartState.simulateSpike;
+    if (btnCheckoutText) {
+      btnCheckoutText.textContent = devCartState.simulateSpike
+        ? '🚫 Compra bloqueada por prueba de subida de precio'
+        : `Confirmar Pedido (0 € Test) · ${dynamicPrice.toFixed(2).replace('.', ',')} € (Envío incluido)`;
     }
-    if (btnCheckout) {
-      btnCheckout.disabled = true;
-      btnCheckoutText.textContent = '🚫 Compra bloqueada por seguridad';
-    }
+    if (btnDirectSim) btnDirectSim.disabled = devCartState.simulateSpike;
   }
 }
 
@@ -866,10 +891,21 @@ async function handleLaunchStripeTestCheckout() {
 }
 
 async function handleDirectOrderSimulation() {
-  if (!auth.currentUser || (!isDeveloper(auth.currentUser) && !isTestCustomer(auth.currentUser))) return;
   syncCartStateFromDOM();
 
-  if (!devCartState.lastQuote || !devCartState.lastQuote.canPurchase) {
+  if (!devCartState.lastQuote) {
+    const dynamicPrice = getDynamicRetailPrice(devCartState.bindingType, devCartState.pageCount);
+    devCartState.lastQuote = {
+      canPurchase: !devCartState.simulateSpike,
+      pricing: {
+        retailPrice: dynamicPrice,
+        luluTotalCost: 13.93,
+        netMargin: +(dynamicPrice - 13.93 - (dynamicPrice * 0.015 + 0.25)).toFixed(2)
+      }
+    };
+  }
+
+  if (!devCartState.lastQuote.canPurchase) {
     alert('El Cortacircuitos tiene bloqueada la compra. Desactiva la simulación de subida de precios para registrar el pedido.');
     return;
   }

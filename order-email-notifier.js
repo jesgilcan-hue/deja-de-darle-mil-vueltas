@@ -102,7 +102,7 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
         `Hola ${customerName},`,
         `Hemos recibido correctamente tu pedido #${orderNumber} (${totalPaid} € · Envío incluido).`,
         `Tu cuaderno «${bookTitle}» (${bindingLabel}, ${pageCount} páginas interiores) ha entrado en revisión de imprenta.`,
-        `Como el documento pesa ${fileSizeMb} MB, no lo adjuntamos por correo para no saturar tu bandeja: ya lo tienes guardado y disponible para siempre en el apartado «Mis Pedidos y Cesta» de tu perfil.`,
+        `Puedes consultar y descargar tus archivos en PDF en cualquier momento desde el apartado «Mis Pedidos y Cesta» de tu perfil.`,
         `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido.`
       ].join('\n\n');
 
@@ -150,7 +150,7 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
         `Hola ${customerName},`,
         `Tu cuaderno «${bookTitle}» (Pedido #${orderNumber}) ya ha salido de la imprenta y está en manos de la empresa repartidora ${carrier}.`,
         `DATOS DE SEGUIMIENTO:\n• Empresa repartidora: ${carrier}\n• Código de seguimiento (Tracking): ${tracking}\n• Dirección de entrega: ${fullAddress}\n• Instrucciones actuales para el repartidor: ${customerNotes}`,
-        `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido o dejar avisos para el repartidor.`
+        `Desde tu perfil también podrás hacer el seguimiento del estado de tu pedido.`
       ].join('\n\n');
 
       managerSubject = `🚚 [GESTOR WEB] Pedido #${orderNumber} en reparto (${carrier} · ${tracking})`;
@@ -164,7 +164,7 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
       clientBody = [
         `Hola ${customerName},`,
         `La empresa repartidora (${carrier}) nos confirma que tu pedido #${orderNumber} («${bookTitle}») ha sido entregado en tu dirección.`,
-        `Recuerda que en tu perfil de Mi Espacio siguen guardados los archivos digitales (${fileSizeMb} MB) de tu cuaderno y tu portada por si en el futuro quieres volver a consultarlos o encargar otra copia.`,
+        `Recuerda que en tu perfil de Mi Espacio tienes guardados los archivos de tu cuaderno y tu portada por si en el futuro quieres volver a consultarlos o encargar otra copia.`,
         `¡Gracias por confiar en Editorial Menos Ruido!`
       ].join('\n\n');
 

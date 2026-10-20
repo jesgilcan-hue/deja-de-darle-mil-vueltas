@@ -740,11 +740,14 @@
         body.preview-modal-mode header,
         body.preview-modal-mode .top-nav,
         body.preview-modal-mode .hero-section,
-        body.preview-modal-mode .controls-column,
+        body.preview-modal-mode .generator-header-strip,
+        body.preview-modal-mode .controls-panel,
         body.preview-modal-mode .planner-amazon-promo,
         body.preview-modal-mode footer,
         body.preview-modal-mode #mr-dev-drawer-toggle,
-        body.preview-modal-mode #cart-drawer {
+        body.preview-modal-mode #cart-drawer,
+        body.preview-modal-mode .floating-cta-wrap,
+        body.preview-modal-mode .quick-preview-floating {
             display: none !important;
         }
         body.preview-modal-mode {
@@ -753,7 +756,8 @@
             margin: 0 !important;
             overflow: auto !important;
         }
-        body.preview-modal-mode .cover-app-layout {
+        body.preview-modal-mode .generator-container-wrap,
+        body.preview-modal-mode .workspace-layout {
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
@@ -761,13 +765,19 @@
             min-height: 100vh !important;
             width: 100% !important;
             max-width: 100% !important;
+            margin: 0 !important;
+            background: #1c1a17 !important;
         }
-        body.preview-modal-mode .canvas-column {
+        body.preview-modal-mode .preview-stage-panel {
             max-width: 100% !important;
             width: 100% !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
+            padding: 10px !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
         }
         body.preview-modal-mode .canvas-container-outer {
             background: transparent !important;
@@ -2170,11 +2180,57 @@ Sección de notas libres (10 páginas)</textarea>
             isInitializing = true;
             applyPlannerPreset('anual', false);
             refreshAvailableInteriorBooks();
-            if (window.availableInteriorBooks.length > 0) {
-                applyInteriorBookObject(window.availableInteriorBooks[0], false);
-            } else {
-                syncFromBookBuilder(false);
+
+            // Comprobar si venimos con un cuaderno configurado desde la cesta o visor de pedido
+            let hasLoadedCartItem = false;
+            try {
+                const cartCoverRaw = localStorage.getItem('mr_cart_cover_item');
+                if (cartCoverRaw) {
+                    const cartItem = JSON.parse(cartCoverRaw);
+                    if (cartItem.title) {
+                        coverState.title = cartItem.title;
+                        const titleInp = document.getElementById('coverTitle');
+                        if (titleInp) titleInp.value = cartItem.title;
+                    }
+                    if (cartItem.bindingType) {
+                        coverState.bindingType = cartItem.bindingType === 'perfect' ? 'softcover' : cartItem.bindingType;
+                    }
+                    if (cartItem.pageCount) {
+                        coverState.pageCount = parseInt(cartItem.pageCount, 10) || coverState.pageCount;
+                        const pageInp = document.getElementById('pageCount');
+                        if (pageInp) pageInp.value = coverState.pageCount;
+                    }
+                    if (cartItem.data) {
+                        if (cartItem.data.subtitle !== undefined) {
+                            coverState.subtitle = cartItem.data.subtitle;
+                            const subInp = document.getElementById('coverSubtitle');
+                            if (subInp) subInp.value = cartItem.data.subtitle;
+                        }
+                        if (cartItem.data.author !== undefined) {
+                            coverState.author = cartItem.data.author;
+                            const authInp = document.getElementById('coverAuthor');
+                            if (authInp) authInp.value = cartItem.data.author;
+                        }
+                        if (cartItem.data.spineText !== undefined) {
+                            coverState.spineText = cartItem.data.spineText;
+                            const spineInp = document.getElementById('spineText');
+                            if (spineInp) spineInp.value = cartItem.data.spineText;
+                        }
+                    }
+                    hasLoadedCartItem = true;
+                }
+            } catch (e) {
+                console.warn('Aviso cargando mr_cart_cover_item:', e);
             }
+
+            if (!hasLoadedCartItem) {
+                if (window.availableInteriorBooks.length > 0) {
+                    applyInteriorBookObject(window.availableInteriorBooks[0], false);
+                } else {
+                    syncFromBookBuilder(false);
+                }
+            }
+
             setBindingType(coverState.bindingType);
             renderCoverPreview();
             refreshLuluPayloadPreview();

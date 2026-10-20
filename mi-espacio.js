@@ -777,7 +777,7 @@ function openDownloadModal(item) {
   if (dlModalBadge) {
     const t = (item && item.type ? item.type : '').toLowerCase();
     if (t.includes('portada')) {
-      dlModalBadge.innerHTML = '<span>🎨</span> Cubierta Exterior 300 DPI';
+      dlModalBadge.innerHTML = '<span>🎨</span> Cubierta Exterior';
     } else if (t.includes('completo') || t.includes('libro')) {
       dlModalBadge.innerHTML = '<span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm)';
     } else {
@@ -1983,7 +1983,7 @@ async function seedFullProfileOrder(user, notify = true) {
       trackingUrl: 'https://www.correosexpress.com',
       estimatedDelivery: 'Entrega prevista en 24/48h laborables',
       lastCarrierMessage: notify
-        ? 'Pedido recibido en preimpresión (300 DPI). Pendiente de entrega a Correos Express.'
+        ? 'Pedido recibido en preimpresión. Pendiente de entrega a Correos Express.'
         : 'Correos Express: Paquete clasificado en plataforma logística de destino (Madrid). En reparto próximo día hábil.'
     },
     luluJob: {
@@ -2018,7 +2018,7 @@ async function seedFullProfileOrder(user, notify = true) {
       stripePaymentId: 'ch_test_0eur_' + Math.random().toString(36).substring(2, 8)
     },
     timeline: [
-      { date: new Date().toISOString(), message: `Pedido #${num} confirmado (${price.toFixed(2)} € · Envío incluido). Archivos 300 DPI (46,8 MB) guardados en tu perfil en la nube.` }
+      { date: new Date().toISOString(), message: `Pedido #${num} confirmado (${price.toFixed(2)} € · Envío incluido). Archivos guardados en tu perfil.` }
     ]
   };
 
@@ -2047,6 +2047,27 @@ function getStepIndexFromStatus(status) {
   return 1;
 }
 
+let currentPreviewModalUrl = '';
+let itemPendingDeleteId = null;
+
+function openConfirmDeleteBasketModal(itemId) {
+  itemPendingDeleteId = itemId;
+  const modal = document.getElementById('basket-confirm-delete-modal');
+  if (modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeConfirmDeleteBasketModal() {
+  itemPendingDeleteId = null;
+  const modal = document.getElementById('basket-confirm-delete-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
 function openBasketPreviewModal(title, subtitle, iframeSrc) {
   const modal = document.getElementById('basket-pdf-preview-modal');
   const titleEl = document.getElementById('basket-preview-modal-title');
@@ -2055,6 +2076,7 @@ function openBasketPreviewModal(title, subtitle, iframeSrc) {
   const loader = document.getElementById('basket-preview-loading');
 
   if (!modal || !iframe) return;
+  currentPreviewModalUrl = iframeSrc;
   if (titleEl) titleEl.textContent = title;
   if (subEl) subEl.textContent = subtitle;
   if (loader) loader.style.display = 'flex';
@@ -2076,8 +2098,15 @@ if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-close-basket-preview')?.addEventListener('click', closeBasketPreviewModal);
     document.getElementById('btn-close-basket-preview-foot')?.addEventListener('click', closeBasketPreviewModal);
+    document.getElementById('btn-open-preview-tab')?.addEventListener('click', () => {
+      if (currentPreviewModalUrl) window.open(currentPreviewModalUrl, '_blank');
+    });
     document.getElementById('basket-pdf-preview-modal')?.addEventListener('click', (e) => {
       if (e.target.id === 'basket-pdf-preview-modal') closeBasketPreviewModal();
+    });
+    document.getElementById('btn-cancel-delete-basket-item')?.addEventListener('click', closeConfirmDeleteBasketModal);
+    document.getElementById('basket-confirm-delete-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'basket-confirm-delete-modal') closeConfirmDeleteBasketModal();
     });
   });
 }
@@ -2194,7 +2223,6 @@ function renderClientOrdersAndBasketViews(user) {
               <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
                   <span style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.3px;">⏳ PENDIENTE DE PAGO</span>
-                  <span style="background: #eff6ff; color: #1e40af; font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 12px;">☁️ Archivos en Nube (${escapeHtml(fileSizeMb)} MB)</span>
                 </div>
                 <h4 id="basket-title-display-${escapeHtml(item.id)}" style="font-family: var(--font-display); font-size: 1.22rem; margin: 4px 0 3px 0; color: #1f1c19;">${escapeHtml(item.title)}</h4>
                 <div id="basket-subtitle-display-${escapeHtml(item.id)}" style="font-size: 0.84rem; color: #665e54;">
@@ -2212,14 +2240,14 @@ function renderClientOrdersAndBasketViews(user) {
                   <button type="button" data-buy-pending="${escapeHtml(item.id)}" style="background: #215c38; color: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(33,92,56,0.25);">
                     <span>💳</span> Comprar
                   </button>
-                  <!-- Botón Editar Portada -->
-                  <a href="/generador-portadas.html" data-edit-cover-pending="${escapeHtml(item.id)}" style="background: #f5f0e6; color: #4a3f35; border: 1px solid #d6cec0; border-radius: 8px; padding: 10px 13px; font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                    <span>✏️</span> Editar portada
-                  </a>
-                  <!-- Botón Editar Interior -->
-                  <a href="/generador-libro-completo.html" data-edit-interior-pending="${escapeHtml(item.id)}" style="background: #fdfaf5; color: #87553b; border: 1px solid #e2d2c0; border-radius: 8px; padding: 10px 13px; font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                    <span>📖</span> Editar interior
-                  </a>
+                  <!-- Botón Previsualizar Portada PDF -->
+                  <button type="button" data-preview-pdf-cover="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                    <span>🎨</span> Previsualizar Portada PDF
+                  </button>
+                  <!-- Botón Previsualizar Interior PDF -->
+                  <button type="button" data-preview-pdf-interior="${escapeHtml(item.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                    <span>📖</span> Previsualizar Interior PDF
+                  </button>
                   <!-- Botón Eliminar -->
                   <button type="button" data-del-pending="${escapeHtml(item.id)}" style="background: #fff5f5; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; cursor: pointer; font-weight: 600;" title="Quitar de la cesta">
                     🗑️
@@ -2304,29 +2332,12 @@ function renderClientOrdersAndBasketViews(user) {
         `;
       }).join('');
 
-      // Listener Botón Comprar
+      // Listener Botón Comprar (Abre pasarela/cesta directamente sin bloqueo)
       pendingContainer.querySelectorAll('[data-buy-pending]').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-buy-pending');
           const found = clientPendingBasket.find(x => x.id === id);
           if (!found) return;
-
-          if (!found.textsConfirmed) {
-            const det = document.getElementById('details-pending-' + id);
-            if (det) det.open = true;
-            const box = document.getElementById('confirm-box-' + id);
-            if (box) {
-              box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              box.style.borderColor = '#ea580c';
-              box.style.boxShadow = '0 0 0 3px rgba(234, 88, 12, 0.25)';
-              setTimeout(() => {
-                box.style.borderColor = found.textsConfirmed ? '#86efac' : '#fcd34d';
-                box.style.boxShadow = '';
-              }, 2500);
-            }
-            showToast('⚠️ Por favor, revisa tus textos y marca la casilla de confirmación para comprar.');
-            return;
-          }
 
           if (typeof window.openDevCartDrawer === 'function') {
             window.openDevCartDrawer({
@@ -2341,55 +2352,26 @@ function renderClientOrdersAndBasketViews(user) {
         });
       });
 
-      // Listener Botón Editar Portada
-      pendingContainer.querySelectorAll('[data-edit-cover-pending]').forEach(link => {
-        link.addEventListener('click', () => {
-          const id = link.getAttribute('data-edit-cover-pending');
-          const found = clientPendingBasket.find(x => x.id === id);
-          if (found) {
-            try {
-              localStorage.setItem('mr_cart_cover_item', JSON.stringify({
-                title: found.title,
-                bindingType: found.bindingType,
-                pageCount: found.pageCount,
-                syncedBookName: found.subtitle,
-                data: found.data || {},
-                updatedAt: Date.now()
-              }));
-            } catch (e) {}
-          }
-        });
-      });
-
-      // Listener Botón Editar Interior
-      pendingContainer.querySelectorAll('[data-edit-interior-pending]').forEach(link => {
-        link.addEventListener('click', () => {
-          const id = link.getAttribute('data-edit-interior-pending');
-          const found = clientPendingBasket.find(x => x.id === id);
-          if (found) {
-            try {
-              localStorage.setItem('mr_complete_book_config', JSON.stringify({
-                title: found.title,
-                subtitle: found.subtitle,
-                pageCount: found.pageCount,
-                bindingType: found.bindingType,
-                data: found.data || {}
-              }));
-            } catch (e) {}
-          }
-        });
-      });
-
-      // Listener Botón Eliminar
+      // Listener Botón Eliminar (Pide confirmación antes de eliminar)
       pendingContainer.querySelectorAll('[data-del-pending]').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-del-pending');
-          clientPendingBasket = clientPendingBasket.filter(x => x.id !== id);
-          saveClientOrdersAndBasketState(user);
-          renderClientOrdersAndBasketViews(user);
-          showToast('🗑️ Ejemplar retirado de la cesta');
+          openConfirmDeleteBasketModal(id);
         });
       });
+
+      // Listener Confirmar Eliminación en el Modal
+      const confirmDeleteBtn = document.getElementById('btn-confirm-delete-basket-item');
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.onclick = () => {
+          if (!itemPendingDeleteId) return;
+          clientPendingBasket = clientPendingBasket.filter(x => x.id !== itemPendingDeleteId);
+          saveClientOrdersAndBasketState(user);
+          renderClientOrdersAndBasketViews(user);
+          closeConfirmDeleteBasketModal();
+          showToast('🗑️ Ejemplar retirado de la cesta');
+        };
+      }
 
       // Listener Previsualizar Portada PDF
       pendingContainer.querySelectorAll('[data-preview-pdf-cover]').forEach(btn => {
@@ -2480,7 +2462,7 @@ function renderClientOrdersAndBasketViews(user) {
       const fileSizeMb = ord.book?.fileSizeMb || ((ord.book?.pageCount || 143) * 0.32).toFixed(1);
 
       const stepsHtml = [
-        { n: 1, label: '1. Revisión Técnica', sub: 'Preflight 300 DPI' },
+        { n: 1, label: '1. Revisión Técnica', sub: 'Comprobación técnica' },
         { n: 2, label: '2. En Imprenta', sub: 'Fabricación y Lomo' },
         { n: 3, label: '3. En Reparto', sub: carrier },
         { n: 4, label: '4. Entregado', sub: 'En tu domicilio' }
@@ -2546,9 +2528,6 @@ function renderClientOrdersAndBasketViews(user) {
                 <strong>Instrucciones para el repartidor:</strong> <span id="note-text-${escapeHtml(ord.id)}">${escapeHtml(ord.customer?.notes || 'Sin instrucciones adicionales')}</span>
               </div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" data-edit-carrier-note="${escapeHtml(ord.id)}" style="background: #ffffff; border: 1px solid #94a3b8; color: #1e293b; border-radius: 6px; padding: 6px 11px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
-                  ✏️ Dejar aviso al repartidor
-                </button>
                 ${ord.status === 'shipped' || ord.status === 'delivered' ? `
                   <a href="${escapeHtml(ord.shipping?.trackingUrl || 'https://www.correosexpress.com')}" target="_blank" rel="noopener noreferrer" style="background: #1e293b; color: #ffffff; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
                     📍 Seguir envío en web del transportista ↗
@@ -2562,7 +2541,7 @@ function renderClientOrdersAndBasketViews(user) {
           <div style="background: #fdfaf5; border: 1px solid #e4dac9; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
             <div>
               <div style="font-size: 0.82rem; font-weight: 800; color: #87553b;">
-                ☁️ Archivos digitales de tu Cuaderno (${escapeHtml(fileSizeMb)} MB)
+                📖 Archivos en PDF de tu Cuaderno
               </div>
               <div style="font-size: 0.76rem; color: #665e54; margin-top: 2px;">
                 Tus archivos listos para imprenta están guardados en tu perfil para que puedas consultarlos o descargarlos en cualquier momento.
@@ -2589,27 +2568,7 @@ function renderClientOrdersAndBasketViews(user) {
       `;
     }).join('');
 
-    ordersContainer.querySelectorAll('[data-edit-carrier-note]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-edit-carrier-note');
-        const ord = clientProfileOrders.find(o => o.id === id);
-        if (!ord) return;
-        const nextNote = prompt('Indica la instrucción para el repartidor (ej. horario, dejar en conserjería, teléfono de contacto):', ord.customer?.notes || '');
-        if (nextNote === null) return;
-        if (!ord.customer) ord.customer = {};
-        ord.customer.notes = nextNote.trim();
-        if (!ord.timeline) ord.timeline = [];
-        ord.timeline.push({
-          date: new Date().toISOString(),
-          message: `Aviso del cliente para la empresa repartidora actualizado: «${ord.customer.notes}»`
-        });
-        saveClientOrdersAndBasketState(user);
-        renderClientOrdersAndBasketViews(user);
-        showToast('⏳ Guardando instrucción y enviando aviso por email a Cliente y Gestor...');
-        await sendOrderLifecycleEmails(ord, 'customer_carrier_note');
-        showToast('✉️ Instrucción para repartidor guardada y notificada por email');
-      });
-    });
+
 
     ordersContainer.querySelectorAll('[data-download-pdf-interior]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -2696,7 +2655,7 @@ function renderClientOrdersAndBasketViews(user) {
         if (!ord.comms) ord.comms = { compra: { sent: true }, imprenta: { sent: false }, tracking: { sent: false }, entregado: { sent: false } };
 
         const labels = {
-          pending_review: '1/4 En Revisión Técnica de Imprenta (300 DPI)',
+          pending_review: '1/4 En Revisión Técnica de Imprenta',
           printing: '2/4 En Imprenta (Impresión de tripa y encuadernación en curso)',
           shipped: `3/4 En Reparto con ${ord.shipping.carrier} (Tracking: ${ord.shipping.trackingNumber})`,
           delivered: '4/4 Entregado en el domicilio del cliente'
