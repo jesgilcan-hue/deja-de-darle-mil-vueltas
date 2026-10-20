@@ -74,7 +74,8 @@ export const DEVELOPER_EMAILS = [
   "jesgilcan@gmail.com"
 ];
 export const TEST_CUSTOMER_EMAILS = [
-  "jesusgil_87@hotmail.com"
+  "jesusgil_87@hotmail.com",
+  "jesusgil_87@gmail.com"
 ];
 export const DEVELOPER_PIN = "1111";
 

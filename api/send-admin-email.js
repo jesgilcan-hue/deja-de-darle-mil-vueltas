@@ -11,7 +11,7 @@ export const config = {
 };
 
 const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
-const ALLOWED_TEST_CUSTOMER_EMAIL = 'jesusgil_87@hotmail.com';
+const ALLOWED_TEST_CUSTOMER_EMAILS = ['jesusgil_87@hotmail.com', 'jesusgil_87@gmail.com'];
 const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf-8');
 
 async function verifyCallerIdToken(req) {
@@ -38,7 +38,7 @@ async function verifyCallerIdToken(req) {
       return { valid: false, error: 'Token de Firebase inválido o expirado.' };
     }
     const userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
-    if (userEmail !== ALLOWED_ADMIN_EMAIL && userEmail !== ALLOWED_TEST_CUSTOMER_EMAIL) {
+    if (userEmail !== ALLOWED_ADMIN_EMAIL && !ALLOWED_TEST_CUSTOMER_EMAILS.includes(userEmail)) {
       return { valid: false, error: 'Acceso denegado: cuenta no autorizada.' };
     }
     return { valid: true, email: userEmail, isAdmin: userEmail === ALLOWED_ADMIN_EMAIL };

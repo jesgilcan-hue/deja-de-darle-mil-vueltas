@@ -3,7 +3,7 @@
 // Exclusivo para desarrollador autenticado (jesgilcan@gmail.com) durante fase de pruebas
 
 const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
-const ALLOWED_TEST_CUSTOMER_EMAIL = 'jesusgil_87@hotmail.com';
+const ALLOWED_TEST_CUSTOMER_EMAILS = ['jesusgil_87@hotmail.com', 'jesusgil_87@gmail.com'];
 const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf-8');
 
 // Credenciales Lulu Direct API (prioriza variable de entorno en Vercel)
@@ -78,7 +78,7 @@ async function verifyDeveloperIdToken(req) {
       return { valid: false, error: 'Sesión de Firebase inválida o expirada.' };
     }
     const userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
-    if (userEmail !== ALLOWED_ADMIN_EMAIL && userEmail !== ALLOWED_TEST_CUSTOMER_EMAIL) {
+    if (userEmail !== ALLOWED_ADMIN_EMAIL && !ALLOWED_TEST_CUSTOMER_EMAILS.includes(userEmail)) {
       return { valid: false, error: 'Acceso exclusivo para la cuenta de desarrollo autorizada.' };
     }
     return { valid: true, email: userEmail };
