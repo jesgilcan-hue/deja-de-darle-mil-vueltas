@@ -1812,7 +1812,9 @@ function calcDynamicPriceForProfile(bindingType = 'coil', pageCount = 143) {
 }
 
 async function initClientOrdersAndBasketModule(user) {
-  if (!user || (!isDeveloper(user) && !isTestCustomer(user))) return;
+  const hasPending = !!localStorage.getItem('mr_pending_payment_books') || !!localStorage.getItem('mr_cart_cover_item');
+  if (!user && !hasPending) return;
+  if (user && !isDeveloper(user) && !isTestCustomer(user) && !hasPending) return;
 
   await loadClientOrdersAndBasketData(user);
   await checkAndHandleStripeCheckoutReturn();
@@ -1835,7 +1837,7 @@ async function initClientOrdersAndBasketModule(user) {
   }
 
   // Escucha en tiempo real de la colección 'orders' para sincronizar al instante entre jesusgil_87@hotmail.com y jesgilcan@gmail.com
-  if (!window.__mrOrdersCollectionSnapshotUnsub) {
+  if (!window.__mrOrdersCollectionSnapshotUnsub && user && (isDeveloper(user) || isTestCustomer(user))) {
     try {
       window.__mrOrdersCollectionSnapshotUnsub = onSnapshot(collection(db, 'orders'), (snap) => {
         const remote = [];
@@ -1890,10 +1892,12 @@ async function loadClientOrdersAndBasketData(user) {
 
   // 2. Cargar Pedidos Impresos del Perfil (Firestore + Local)
   let loadedOrders = [];
-  try {
-    const snap = await getDocs(collection(db, 'orders'));
+  if (user && (isDeveloper(user) || isTestCustomer(user))) {
+    try {
+      const snap = await getDocs(collection(db, 'orders'));
     snap.forEach(d => loadedOrders.push({ id: d.id, ...d.data() }));
-  } catch (e) {}
+    } catch (e) {}
+  }
 
   let localSim = [];
   try {
@@ -1907,7 +1911,7 @@ async function loadClientOrdersAndBasketData(user) {
 
   clientProfileOrders = Array.from(map.values());
 
-  if (clientProfileOrders.length === 0) {
+  if (clientProfileOrders.length === 0 && user && isDeveloper(user)) {
     await seedFullProfileOrder(user, false);
   }
 
