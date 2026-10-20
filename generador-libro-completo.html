@@ -2942,23 +2942,9 @@
             renderSectionsList();
             renderPreviewPage();
 
-            // Modo visor limpio embebido en modal de cesta/perfil
+            // Descarga directa y previsualización de PDF interior
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('preview_modal') === '1') {
-                document.body.classList.add('preview-modal-mode');
-                setTimeout(async () => {
-                    try {
-                        const { doc } = await generateBookPdfDocument(false);
-                        const blobUrl = doc.output('bloburl');
-                        window.location.replace(blobUrl);
-                    } catch (e) {
-                        console.warn('Aviso generando Blob de PDF interior:', e);
-                    }
-                }, 300);
-            }
-
-            // Descarga directa silenciosa de PDF
-            if (urlParams.get('download_direct') === '1') {
+            if (urlParams.get('download_direct') === '1' || urlParams.get('preview_modal') === '1') {
                 setTimeout(async () => {
                     try {
                         const { doc, filename } = await generateBookPdfDocument(false);

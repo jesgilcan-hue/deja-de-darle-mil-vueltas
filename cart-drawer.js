@@ -630,15 +630,38 @@ export function openDevCartDrawer(customItem = null) {
   if (xrayToggle) xrayToggle.style.display = isDevUser ? 'inline-block' : 'none';
   if (devBanner) devBanner.style.display = isDevUser ? 'flex' : 'none';
 
-  document.getElementById('mrDevCartBackdrop')?.classList.add('open');
-  document.getElementById('mrDevCartDrawer')?.classList.add('open');
+  const backdrop = document.getElementById('mrDevCartBackdrop');
+  const drawer = document.getElementById('mrDevCartDrawer');
+  if (backdrop) {
+    backdrop.style.setProperty('display', 'block', 'important');
+    backdrop.style.setProperty('opacity', '1', 'important');
+    backdrop.style.setProperty('pointer-events', 'auto', 'important');
+    backdrop.style.setProperty('z-index', '999998', 'important');
+    backdrop.classList.add('open');
+  }
+  if (drawer) {
+    drawer.style.setProperty('display', 'flex', 'important');
+    drawer.style.setProperty('transform', 'translateX(0)', 'important');
+    drawer.style.setProperty('z-index', '999999', 'important');
+    drawer.classList.add('open');
+  }
   devCartState.isOpen = true;
   triggerLuluQuote();
 }
 
 export function closeDevCartDrawer() {
-  document.getElementById('mrDevCartBackdrop')?.classList.remove('open');
-  document.getElementById('mrDevCartDrawer')?.classList.remove('open');
+  const backdrop = document.getElementById('mrDevCartBackdrop');
+  const drawer = document.getElementById('mrDevCartDrawer');
+  if (backdrop) {
+    backdrop.classList.remove('open');
+    backdrop.style.setProperty('opacity', '0', 'important');
+    backdrop.style.setProperty('pointer-events', 'none', 'important');
+    setTimeout(() => { if (!devCartState.isOpen) backdrop.style.setProperty('display', 'none', 'important'); }, 260);
+  }
+  if (drawer) {
+    drawer.classList.remove('open');
+    drawer.style.setProperty('transform', 'translateX(102%)', 'important');
+  }
   devCartState.isOpen = false;
 }
 
@@ -656,8 +679,12 @@ async function triggerLuluQuote() {
 
   headerEl.textContent = '⏳ Verificando coste real en Lulu Direct API...';
   headerEl.style.color = '#4a423a';
-  if (btnCheckout) btnCheckout.disabled = true;
-  if (btnInstantZero) btnInstantZero.disabled = true;
+  if (btnCheckout) btnCheckout.disabled = false;
+  if (btnInstantZero) {
+    btnInstantZero.disabled = false;
+    btnInstantZero.style.opacity = '1';
+    btnInstantZero.style.cursor = 'pointer';
+  }
 
   const dynamicPrice = getDynamicRetailPrice(devCartState.bindingType, devCartState.pageCount);
   const fallbackQuote = {

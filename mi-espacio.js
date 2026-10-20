@@ -2094,31 +2094,183 @@ function closeBasketPreviewModal() {
   document.body.style.overflow = '';
 }
 
-// Inicializar listeners del visor modal de PDF de cesta una sola vez
-if (typeof window !== 'undefined') {
-  window.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-close-basket-preview')?.addEventListener('click', closeBasketPreviewModal);
-    document.getElementById('btn-close-basket-preview-foot')?.addEventListener('click', closeBasketPreviewModal);
-    document.getElementById('btn-open-preview-tab')?.addEventListener('click', () => {
-      if (currentPreviewModalUrl) window.open(currentPreviewModalUrl, '_blank');
-    });
-    document.getElementById('btn-download-preview-pdf')?.addEventListener('click', () => {
-      if (currentPreviewModalUrl) {
-        const dlUrl = currentPreviewModalUrl.includes('?') 
-          ? `${currentPreviewModalUrl}&download_direct=1`
-          : `${currentPreviewModalUrl}?download_direct=1`;
-        window.open(dlUrl, '_blank');
-      }
-    });
-    document.getElementById('basket-pdf-preview-modal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'basket-pdf-preview-modal') closeBasketPreviewModal();
-    });
-    document.getElementById('btn-cancel-delete-basket-item')?.addEventListener('click', closeConfirmDeleteBasketModal);
-    document.getElementById('basket-confirm-delete-modal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'basket-confirm-delete-modal') closeConfirmDeleteBasketModal();
-    });
-  });
+
+// =====================================================================
+// FUNCIONES Y DELEGACIÓN GLOBAL DE ACCIONES DE CESTA Y DESCARGA DIRECTA DE PDF
+// =====================================================================
+function getBasketItemById(id) {
+  let found = clientPendingBasket.find(x => String(x.id) === String(id));
+  if (!found && clientPendingBasket.length > 0) {
+    found = clientPendingBasket[0];
+  }
+  return found;
 }
+
+function handleBasketBuyClick(id) {
+  const item = getBasketItemById(id);
+  if (!item) {
+    showToast('⚠️ No se ha encontrado el ejemplar seleccionado.');
+    return;
+  }
+  showToast('🛒 Abriendo resumen de tu pedido...');
+  try {
+    openDevCartDrawer({
+      title: item.title,
+      bindingType: item.bindingType,
+      pageCount: item.pageCount,
+      syncedBookName: item.subtitle,
+      shipping: item.shipping,
+      data: item.data
+    });
+  } catch (err) {
+    console.warn('Fallback al abrir el carrito:', err);
+    if (typeof window.openDevCartDrawer === 'function') {
+      window.openDevCartDrawer(item);
+    }
+  }
+}
+
+function handleBasketCoverPdfClick(id) {
+  const item = getBasketItemById(id);
+  if (!item) return;
+  try {
+    localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+      title: item.title,
+      bindingType: item.bindingType,
+      pageCount: item.pageCount,
+      syncedBookName: item.subtitle,
+      data: item.data || {},
+      updatedAt: Date.now()
+    }));
+  } catch (e) {}
+
+  showToast('⏳ Preparando y descargando Portada en PDF...');
+  const iframe = document.getElementById('headless-pdf-frame');
+  if (iframe) {
+    iframe.src = `/generador-portadas.html?download_direct=1&ts=${Date.now()}`;
+  } else {
+    window.open(`/generador-portadas.html?download_direct=1`, '_blank');
+  }
+}
+
+function handleBasketInteriorPdfClick(id) {
+  const item = getBasketItemById(id);
+  if (!item) return;
+  try {
+    localStorage.setItem('mr_complete_book_config', JSON.stringify({
+      title: item.title,
+      subtitle: item.subtitle,
+      pageCount: item.pageCount,
+      bindingType: item.bindingType,
+      data: item.data || {}
+    }));
+  } catch (e) {}
+
+  showToast('⏳ Preparando y descargando Interior Completo en PDF...');
+  const iframe = document.getElementById('headless-pdf-frame');
+  if (iframe) {
+    iframe.src = `/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`;
+  } else {
+    window.open(`/generador-libro-completo.html?download_direct=1`, '_blank');
+  }
+}
+
+// Delegación global de clicks (inmune a re-renderizados del contenedor)
+document.addEventListener('click', (e) => {
+  // 1. Botón Comprar en Cesta
+  const buyBtn = e.target.closest('[data-buy-pending]');
+  if (buyBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = buyBtn.getAttribute('data-buy-pending');
+    handleBasketBuyClick(id);
+    return;
+  }
+
+  // 2. Previsualizar / Descargar Portada PDF
+  const coverBtn = e.target.closest('[data-preview-pdf-cover]');
+  if (coverBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = coverBtn.getAttribute('data-preview-pdf-cover');
+    handleBasketCoverPdfClick(id);
+    return;
+  }
+
+  // 3. Previsualizar / Descargar Interior PDF
+  const intBtn = e.target.closest('[data-preview-pdf-interior]');
+  if (intBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = intBtn.getAttribute('data-preview-pdf-interior');
+    handleBasketInteriorPdfClick(id);
+    return;
+  }
+
+  // 4. Botón Eliminar de la Cesta
+  const delBtn = e.target.closest('[data-del-pending]');
+  if (delBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = delBtn.getAttribute('data-del-pending');
+    openConfirmDeleteBasketModal(id);
+    return;
+  }
+
+  // 5. Botón Modificar Dirección de Entrega en Cesta
+  const editShipBtn = e.target.closest('[data-edit-shipping-basket]');
+  if (editShipBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = editShipBtn.getAttribute('data-edit-shipping-basket');
+    editPendingBasketShipping(id, currentUser || auth.currentUser);
+    return;
+  }
+
+  // 6. Botones de modales de cesta
+  if (e.target.id === 'btn-close-basket-preview' || e.target.id === 'btn-close-basket-preview-foot') {
+    closeBasketPreviewModal();
+    return;
+  }
+  if (e.target.id === 'basket-pdf-preview-modal') {
+    closeBasketPreviewModal();
+    return;
+  }
+  if (e.target.id === 'btn-cancel-delete-basket-item' || e.target.id === 'basket-confirm-delete-modal') {
+    closeConfirmDeleteBasketModal();
+    return;
+  }
+  if (e.target.id === 'btn-confirm-delete-basket-item') {
+    if (!itemPendingDeleteId) return;
+    clientPendingBasket = clientPendingBasket.filter(x => String(x.id) !== String(itemPendingDeleteId));
+    saveClientOrdersAndBasketState(currentUser || auth.currentUser);
+    renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
+    closeConfirmDeleteBasketModal();
+    showToast('🗑️ Ejemplar retirado de la cesta');
+    return;
+  }
+});
+
+// Listener global de cambio en casilla de verificación de textos
+document.addEventListener('change', (e) => {
+  const chk = e.target.closest('[data-confirm-texts]');
+  if (chk) {
+    const itemId = chk.getAttribute('data-confirm-texts');
+    const found = clientPendingBasket.find(x => String(x.id) === String(itemId));
+    if (!found) return;
+    found.textsConfirmed = !!chk.checked;
+    saveClientOrdersAndBasketState(currentUser || auth.currentUser);
+    const box = document.getElementById('confirm-box-' + itemId);
+    if (box) {
+      box.style.background = found.textsConfirmed ? '#f0fdf4' : '#fffbeb';
+      box.style.borderColor = found.textsConfirmed ? '#86efac' : '#fcd34d';
+    }
+    if (found.textsConfirmed) {
+      showToast('✓ Textos confirmados para imprenta.');
+    }
+  }
+});
+
 
 function openBasketEditAddressModal(itemId, user) {
   const modal = document.getElementById('basket-edit-address-modal');
@@ -2193,7 +2345,8 @@ function renderClientOrdersAndBasketViews(user) {
         </div>
       `;
     } else {
-      pendingContainer.innerHTML = clientPendingBasket.map(item => {
+      pendingContainer.innerHTML = clientPendingBasket.map((item, idx) => {
+        if (!item.id) item.id = 'pend_item_' + (idx + 1) + '_' + Date.now();
         const price = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
         const priceText = price.toFixed(2).replace('.', ',') + ' €';
 
@@ -2333,126 +2486,8 @@ function renderClientOrdersAndBasketViews(user) {
         `;
       }).join('');
 
-      // Listener Botón Comprar (Abre pasarela/cesta directamente sin bloqueo)
-      pendingContainer.querySelectorAll('[data-buy-pending]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-buy-pending');
-          const found = clientPendingBasket.find(x => x.id === id);
-          if (!found) return;
-
-          try {
-            openDevCartDrawer({
-              title: found.title,
-              bindingType: found.bindingType,
-              pageCount: found.pageCount,
-              syncedBookName: found.subtitle,
-              shipping: found.shipping,
-              data: found.data
-            });
-          } catch (err) {
-            console.warn('Fallback al abrir el carrito:', err);
-            if (typeof window.openDevCartDrawer === 'function') {
-              window.openDevCartDrawer(found);
-            }
-          }
-        });
-      });
-
-      // Listener Botón Eliminar (Pide confirmación antes de eliminar)
-      pendingContainer.querySelectorAll('[data-del-pending]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-del-pending');
-          openConfirmDeleteBasketModal(id);
-        });
-      });
-
-      // Listener Confirmar Eliminación en el Modal
-      const confirmDeleteBtn = document.getElementById('btn-confirm-delete-basket-item');
-      if (confirmDeleteBtn) {
-        confirmDeleteBtn.onclick = () => {
-          if (!itemPendingDeleteId) return;
-          clientPendingBasket = clientPendingBasket.filter(x => x.id !== itemPendingDeleteId);
-          saveClientOrdersAndBasketState(user);
-          renderClientOrdersAndBasketViews(user);
-          closeConfirmDeleteBasketModal();
-          showToast('🗑️ Ejemplar retirado de la cesta');
-        };
-      }
-
-      // Listener Previsualizar Portada PDF
-      pendingContainer.querySelectorAll('[data-preview-pdf-cover]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-preview-pdf-cover');
-          const found = clientPendingBasket.find(x => x.id === id);
-          if (!found) return;
-          try {
-            localStorage.setItem('mr_cart_cover_item', JSON.stringify({
-              title: found.title,
-              bindingType: found.bindingType,
-              pageCount: found.pageCount,
-              syncedBookName: found.subtitle,
-              data: found.data || {},
-              updatedAt: Date.now()
-            }));
-          } catch (e) {}
-          openBasketPreviewModal(
-            `🎨 Portada · ${found.title}`,
-            `${getBindingLabelForProfile(found.bindingType)} · ${found.pageCount} páginas`,
-            `/generador-portadas.html?preview_modal=1`
-          );
-        });
-      });
-
-      // Listener Previsualizar Interior PDF
-      pendingContainer.querySelectorAll('[data-preview-pdf-interior]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-preview-pdf-interior');
-          const found = clientPendingBasket.find(x => x.id === id);
-          if (!found) return;
-          try {
-            localStorage.setItem('mr_complete_book_config', JSON.stringify({
-              title: found.title,
-              subtitle: found.subtitle,
-              pageCount: found.pageCount,
-              bindingType: found.bindingType,
-              data: found.data || {}
-            }));
-          } catch (e) {}
-          openBasketPreviewModal(
-            `📖 Interior Completo · ${found.title}`,
-            `Cuaderno Apaisado 210 × 152 mm · ${found.pageCount} páginas interiores`,
-            `/generador-libro-completo.html?preview_modal=1`
-          );
-        });
-      });
-
-      // Listener Modificar Dirección
-      pendingContainer.querySelectorAll('[data-edit-shipping-basket]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-edit-shipping-basket');
-          editPendingBasketShipping(id, user);
-        });
-      });
-
-      // Listener Casilla de Confirmación de Textos
-      pendingContainer.querySelectorAll('[data-confirm-texts]').forEach(chk => {
-        chk.addEventListener('change', (e) => {
-          const itemId = e.target.getAttribute('data-confirm-texts');
-          const found = clientPendingBasket.find(x => x.id === itemId);
-          if (!found) return;
-          found.textsConfirmed = !!e.target.checked;
-          saveClientOrdersAndBasketState(user);
-
-          const box = document.getElementById('confirm-box-' + itemId);
-          if (box) {
-            box.style.background = found.textsConfirmed ? '#f0fdf4' : '#fffbeb';
-            box.style.borderColor = found.textsConfirmed ? '#86efac' : '#fcd34d';
-          }
-          if (found.textsConfirmed) {
-            showToast('✓ Textos confirmados para imprenta. Ya puedes pulsar «Comprar».');
-          }
-        });
-      });
+      // Los eventos de Cesta se gestionan de forma delegada y global en document
+      // para garantizar que nunca se pierdan ante re-renderizados o snapshots.
     }
   }
 
@@ -2668,7 +2703,7 @@ function renderClientOrdersAndBasketViews(user) {
         };
         if (st === 'printing') {
           ord.comms.imprenta = { sent: true, date: new Date().toISOString() };
-          ord.shipping.lastCarrierMessage = 'En fabricación y encuadernación en planta de Lulu Direct.';
+          ord.shipping.lastCarrierMessage = 'En fabricación y encuadernación en planta de imprenta.';
         } else if (st === 'shipped') {
           ord.comms.tracking = { sent: true, date: new Date().toISOString() };
           ord.shipping.lastCarrierMessage = `Correos Express: Paquete en reparto hoy. Seguimiento activo ${ord.shipping.trackingNumber}.`;

@@ -2237,23 +2237,9 @@ Sección de notas libres (10 páginas)</textarea>
             updateSyncedBookLabels();
             isInitializing = false;
 
-            // Modo visor limpio embebido en modal de cesta/perfil
+            // Descarga directa y previsualización de PDF de portada
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('preview_modal') === '1') {
-                document.body.classList.add('preview-modal-mode');
-                setTimeout(() => {
-                    try {
-                        const { doc } = compileHighResCoverPdf();
-                        const blobUrl = doc.output('bloburl');
-                        window.location.replace(blobUrl);
-                    } catch (e) {
-                        console.warn('Aviso generando Blob de PDF de portada:', e);
-                    }
-                }, 300);
-            }
-
-            // Descarga directa silenciosa de PDF
-            if (urlParams.get('download_direct') === '1') {
+            if (urlParams.get('download_direct') === '1' || urlParams.get('preview_modal') === '1') {
                 setTimeout(() => {
                     try {
                         const { doc, filename } = compileHighResCoverPdf();
