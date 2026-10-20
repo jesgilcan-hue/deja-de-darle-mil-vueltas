@@ -963,7 +963,6 @@ onAuthStateChanged(auth, async (user) => {
   if (!user || (!isDeveloper(user) && !isTestCustomer(user))) {
     if (devWrapper) devWrapper.style.setProperty('display', 'none', 'important');
     document.getElementById('mrDevCartFab')?.remove();
-    document.getElementById('mrDevCartDrawer')?.remove();
     return;
   }
 
@@ -972,7 +971,6 @@ onAuthStateChanged(auth, async (user) => {
     if (!deviceCheck.allowed) {
       if (devWrapper) devWrapper.style.setProperty('display', 'none', 'important');
       document.getElementById('mrDevCartFab')?.remove();
-      document.getElementById('mrDevCartDrawer')?.remove();
       return;
     }
   }

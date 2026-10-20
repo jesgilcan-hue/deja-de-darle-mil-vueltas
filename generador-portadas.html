@@ -2241,6 +2241,15 @@ Sección de notas libres (10 páginas)</textarea>
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('preview_modal') === '1') {
                 document.body.classList.add('preview-modal-mode');
+                setTimeout(() => {
+                    try {
+                        const { doc } = compileHighResCoverPdf();
+                        const blobUrl = doc.output('bloburl');
+                        window.location.replace(blobUrl);
+                    } catch (e) {
+                        console.warn('Aviso generando Blob de PDF de portada:', e);
+                    }
+                }, 300);
             }
 
             // Descarga directa silenciosa de PDF
@@ -2252,7 +2261,7 @@ Sección de notas libres (10 páginas)</textarea>
                     } catch (err) {
                         console.error('Error en descarga directa de portada en PDF:', err);
                     }
-                }, 800);
+                }, 300);
             }
         }
 

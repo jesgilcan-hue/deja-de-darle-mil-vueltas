@@ -18,6 +18,7 @@ import {
   MAX_AUTHORIZED_DEVICES
 } from './device-guard.js';
 import { sendOrderLifecycleEmails } from './order-email-notifier.js';
+import { openDevCartDrawer } from './cart-drawer.js';
 import { 
   signOut, 
   onAuthStateChanged,
@@ -2101,6 +2102,14 @@ if (typeof window !== 'undefined') {
     document.getElementById('btn-open-preview-tab')?.addEventListener('click', () => {
       if (currentPreviewModalUrl) window.open(currentPreviewModalUrl, '_blank');
     });
+    document.getElementById('btn-download-preview-pdf')?.addEventListener('click', () => {
+      if (currentPreviewModalUrl) {
+        const dlUrl = currentPreviewModalUrl.includes('?') 
+          ? `${currentPreviewModalUrl}&download_direct=1`
+          : `${currentPreviewModalUrl}?download_direct=1`;
+        window.open(dlUrl, '_blank');
+      }
+    });
     document.getElementById('basket-pdf-preview-modal')?.addEventListener('click', (e) => {
       if (e.target.id === 'basket-pdf-preview-modal') closeBasketPreviewModal();
     });
@@ -2268,15 +2277,7 @@ function renderClientOrdersAndBasketViews(user) {
                 <!-- 1. Características Técnicas & Botones de Previsualización de PDF -->
                 <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                    <strong style="font-size: 0.85rem; color: #1f1c19;">📐 Ficha Técnica de Imprenta (Lulu Direct)</strong>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                      <button type="button" data-preview-pdf-cover="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 6px; padding: 7px 13px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
-                        🎨 Previsualizar Portada PDF
-                      </button>
-                      <button type="button" data-preview-pdf-interior="${escapeHtml(item.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 6px; padding: 7px 13px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
-                        📖 Previsualizar Interior PDF
-                      </button>
-                    </div>
+                    <strong style="font-size: 0.85rem; color: #1f1c19;">📐 Ficha Técnica</strong>
                   </div>
                   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; font-size: 0.78rem; color: #554d44;">
                     <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
@@ -2339,8 +2340,8 @@ function renderClientOrdersAndBasketViews(user) {
           const found = clientPendingBasket.find(x => x.id === id);
           if (!found) return;
 
-          if (typeof window.openDevCartDrawer === 'function') {
-            window.openDevCartDrawer({
+          try {
+            openDevCartDrawer({
               title: found.title,
               bindingType: found.bindingType,
               pageCount: found.pageCount,
@@ -2348,6 +2349,11 @@ function renderClientOrdersAndBasketViews(user) {
               shipping: found.shipping,
               data: found.data
             });
+          } catch (err) {
+            console.warn('Fallback al abrir el carrito:', err);
+            if (typeof window.openDevCartDrawer === 'function') {
+              window.openDevCartDrawer(found);
+            }
           }
         });
       });
