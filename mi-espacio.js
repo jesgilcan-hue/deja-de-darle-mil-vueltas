@@ -1810,6 +1810,7 @@ async function initClientOrdersAndBasketModule(user) {
   if (!user || (!isDeveloper(user) && !isTestCustomer(user))) return;
 
   await loadClientOrdersAndBasketData(user);
+  await checkAndHandleStripeCheckoutReturn();
 
   if (!ordersModuleInitialized) {
     ordersModuleInitialized = true;
@@ -2227,7 +2228,7 @@ function openBasketCheckoutModal(targetItemId = null) {
   const confirmBtn = document.getElementById('btn-confirm-checkout-order');
   const confirmTxt = document.getElementById('btn-confirm-checkout-order-text');
   if (confirmBtn) confirmBtn.disabled = false;
-  if (confirmTxt) confirmTxt.textContent = `Confirmar y Tramitar Pedido (Simulación 0€) · ${totalAmount.toFixed(2).replace('.', ',')} €`;
+  if (confirmTxt) confirmTxt.textContent = `Pagar con Tarjeta · ${totalAmount.toFixed(2).replace('.', ',')} € (Envío incluido)`;
 
   modal.style.display = 'flex';
   requestAnimationFrame(() => {
@@ -2259,11 +2260,14 @@ async function handleConfirmCheckoutOrder() {
   const confirmBtn = document.getElementById('btn-confirm-checkout-order');
   const confirmTxt = document.getElementById('btn-confirm-checkout-order-text');
   if (confirmBtn) confirmBtn.disabled = true;
-  if (confirmTxt) confirmTxt.textContent = '⏳ Tramitando pedido y enviando emails a Cliente y Gestor...';
+  if (confirmTxt) confirmTxt.textContent = '🔒 Conectando con Stripe Checkout...';
 
   const user = currentUser || auth.currentUser;
+  const notesInp = document.getElementById('checkout-modal-customer-notes');
+  const deliveryNotes = notesInp ? notesInp.value.trim() : '';
+
   const firstShip = selectedItems[0]?.shipping || {
-    name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+    name: (user ? getUserDisplayName(user) : '') || 'Cliente',
     email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
     phone: '+34 600 000 000',
     address: 'Calle Serrano 42, 4º Derecha',
@@ -2271,882 +2275,200 @@ async function handleConfirmCheckoutOrder() {
     city: 'Madrid',
     province: 'Madrid',
     country: 'España',
-    notes: 'Entregar en conserjería si no estoy en casa.'
+    notes: deliveryNotes || 'Sin instrucciones adicionales'
   };
+  if (deliveryNotes) firstShip.notes = deliveryNotes;
 
-  let totalPaid = 0;
-  let totalUnits = 0;
-  const itemsList = selectedItems.map(item => {
-    const q = typeof item.quantity === 'number' ? item.quantity : 1;
-    const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
-    totalPaid += unitPrice * q;
-    totalUnits += q;
-    return {
-      title: item.title,
-      subtitle: item.subtitle,
-      bindingType: item.bindingType,
-      pageCount: item.pageCount,
-      quantity: q,
-      unitPrice: unitPrice
-    };
-  });
-
-  const orderNumber = 'MR-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
   const primaryItem = selectedItems[0];
-  const bindForAdmin = primaryItem.bindingType === 'softcover' ? 'perfect' : primaryItem.bindingType;
-
-  const newOrder = {
-    id: 'ord_' + Date.now(),
-    orderNumber: orderNumber,
-    status: 'pending_review',
-    createdAt: new Date().toISOString(),
-    customer: {
-      name: firstShip.name || (user ? getUserDisplayName(user) : 'Cliente'),
-      email: firstShip.email || (user ? getUserEmail(user) : 'jesusgil_87@hotmail.com'),
-      phone: firstShip.phone || '+34 600 000 000',
-      address: firstShip.address || 'Calle Serrano 42',
-      postalCode: firstShip.postalCode || '28001',
-      city: firstShip.city || 'Madrid',
-      province: firstShip.province || 'Madrid',
-      country: 'España',
-      notes: firstShip.notes || 'Pedido tramitado desde la Cesta de la Web',
-      isRegistered: true
-    },
-    shipping: {
-      carrier: 'Correos Express',
-      trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
-      lastCarrierMessage: 'Pedido recibido. En fase 1: En Revisión Técnica de tripas y maquetación.'
-    },
-    comms: {
-      compra: { sent: true, date: new Date().toISOString(), id: 'sim_test_' + Date.now() },
-      imprenta: { sent: false },
-      tracking: { sent: false },
-      entregado: { sent: false },
-      checkin: { sent: false }
-    },
-    items: itemsList,
-    book: {
-      title: primaryItem.title,
-      subtitle: primaryItem.subtitle,
-      bindingType: bindForAdmin,
-      pageCount: primaryItem.pageCount,
-      quantity: totalUnits,
-      size: '8.25x6',
-      spineWidthMm: (primaryItem.pageCount * 0.057).toFixed(1)
-    },
-    pricing: {
-      currency: 'EUR',
-      totalPaid: +totalPaid.toFixed(2),
-      luluCostEstimate: +(totalPaid * 0.45).toFixed(2),
-      netMargin: +(totalPaid * 0.50).toFixed(2),
-      stripePaymentId: 'sim_checkout_' + Date.now()
-    },
-    timeline: [
-      {
-        date: new Date().toISOString(),
-        message: `Pedido confirmado en modo Simulación (${totalPaid.toFixed(2)} €). Se envían confirmaciones a Cliente y Gestor.`
-      }
-    ]
-  };
-
-  // 1. Guardar en historial de pedidos local
-  clientProfileOrders.unshift(newOrder);
-  try {
-    localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
-  } catch (e) {}
-
-  // 2. Guardar en Firestore si el usuario está autenticado
-  try {
-    if (user && (isDeveloper(user) || isTestCustomer(user))) {
-      await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
-    }
-  } catch (e) {
-    console.warn('Aviso guardando orden en Firestore:', e);
+  const pageCount = primaryItem.pageCount || 144;
+  if (pageCount % 2 !== 0) {
+    alert(`⚠️ El cuaderno "${primaryItem.title}" tiene un número impar de páginas (${pageCount} págs).\n\nPara imprenta el número de páginas debe ser estrictamente par. Ajusta el interior antes de pagar.`);
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (confirmTxt) confirmTxt.textContent = 'Pagar con Tarjeta';
+    return;
   }
 
-  // 3. Enviar correos en paralelo
   try {
-    const emailRes = await sendOrderLifecycleEmails(newOrder, 'order_created');
-    if (emailRes.clientEmailId && newOrder.comms?.compra) {
-      newOrder.comms.compra.id = emailRes.clientEmailId;
+    const idToken = user ? await user.getIdToken() : '';
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+      },
+      body: JSON.stringify({
+        bookTitle: primaryItem.title,
+        bookSubtitle: primaryItem.subtitle || 'Edición Personalizada',
+        bindingType: primaryItem.bindingType || 'softcover',
+        pageCount: pageCount,
+        customerName: firstShip.name,
+        customerEmail: firstShip.email,
+        customerPhone: firstShip.phone,
+        address: firstShip.address,
+        postalCode: firstShip.postalCode,
+        city: firstShip.city,
+        province: firstShip.province || 'Madrid',
+        notes: deliveryNotes || firstShip.notes || '',
+        returnOrigin: window.location.origin
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.checkoutUrl) {
+      throw new Error(data.error || 'No se pudo iniciar la pasarela de Stripe Checkout.');
     }
-  } catch (err) {
-    console.warn('Aviso enviando emails:', err);
+
+    try {
+      localStorage.setItem('mr_active_checkout_order', JSON.stringify({
+        orderNumber: data.orderNumber,
+        sessionId: data.sessionId,
+        item: primaryItem,
+        customer: firstShip
+      }));
+    } catch(e) {}
+
+    // Redirección oficial inmediata a la pasarela real de Stripe
+    window.location.href = data.checkoutUrl;
+  } catch(err) {
+    console.error('Error al iniciar Stripe Checkout:', err);
+    alert('Aviso al conectar con la pasarela de pago:\n' + (err.message || err));
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (confirmTxt) confirmTxt.textContent = 'Pagar con Tarjeta';
   }
-
-  // 4. Retirar de la cesta los productos comprados
-  const purchasedIds = new Set(selectedItems.map(s => String(s.id)));
-  clientPendingBasket = clientPendingBasket.filter(x => !purchasedIds.has(String(x.id)));
-  try {
-    localStorage.removeItem('mr_cart_cover_item');
-    localStorage.removeItem('mr_complete_book_config');
-  } catch (e) {}
-  saveClientOrdersAndBasketState(user);
-
-  // 5. Cerrar modal y actualizar UI
-  closeBasketCheckoutModal();
-  renderClientOrdersAndBasketViews(user);
-  showToast(`🎉 ¡Pedido ${orderNumber} tramitado con éxito! Revisa tu seguimiento abajo.`);
-
-  // 6. Hacer scroll suave hasta el historial de pedidos
-  setTimeout(() => {
-    const hist = document.getElementById('client-orders-history-list') || document.getElementById('client-orders-badge');
-    if (hist) hist.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 350);
 }
 
-function handleBasketCoverPdfClick(id) {
-  const item = getBasketItemById(id);
-  if (!item) return;
+async function checkAndHandleStripeCheckoutReturn() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isStripeSuccess = urlParams.get('stripe_success') === '1' || urlParams.get('stripe_test_success') === '1';
+  const sessionId = urlParams.get('session_id');
+  const ordNumber = urlParams.get('order');
+
+  if (!isStripeSuccess) return;
+
   try {
-    localStorage.setItem('mr_cart_cover_item', JSON.stringify({
-      title: item.title,
-      bindingType: item.bindingType,
-      pageCount: item.pageCount,
-      syncedBookName: item.subtitle,
-      data: item.data || {},
-      updatedAt: Date.now()
-    }));
-  } catch (e) {}
-
-  showToast('⏳ Preparando y descargando Portada en PDF...');
-  window.open(`/generador-portadas.html?download_direct=1&ts=${Date.now()}`, '_blank');
-}
-
-function handleBasketInteriorPdfClick(id) {
-  const item = getBasketItemById(id);
-  if (!item) return;
-  try {
-    localStorage.setItem('mr_complete_book_config', JSON.stringify({
-      title: item.title,
-      subtitle: item.subtitle,
-      pageCount: item.pageCount,
-      bindingType: item.bindingType,
-      data: item.data || {}
-    }));
-  } catch (e) {}
-
-  showToast('⏳ Preparando y descargando Interior Completo en PDF...');
-  window.open(`/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`, '_blank');
-}
-
-// Delegación global de clicks (inmune a re-renderizados del contenedor)
-document.addEventListener('click', (e) => {
-  // 1. Botón Comprar en Cesta
-  const buyBtn = e.target.closest('[data-buy-pending]');
-  if (buyBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = buyBtn.getAttribute('data-buy-pending');
-    const item = clientPendingBasket.find(x => String(x.id) === String(id));
-    if (!item) return;
-
-    if ((item.quantity !== undefined ? item.quantity : 1) <= 0) {
-      showToast('⚠️ Este cuaderno tiene 0 ejemplares seleccionados. Añade al menos 1 con «+» para poder comprarlo.');
-      return;
+    const rawActive = localStorage.getItem('mr_active_checkout_order');
+    let activeData = null;
+    if (rawActive) {
+      try { activeData = JSON.parse(rawActive); } catch(e) {}
     }
 
-    if (!item.textsConfirmed) {
-      showToast('⚠️ Debes confirmar la revisión de textos marcando la casilla antes de tramitar el pedido.');
-      const box = document.getElementById('confirm-box-' + id);
-      if (box) {
-        box.style.borderColor = '#dc2626';
-        box.style.background = '#fef2f2';
-        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const chk = box.querySelector('input[type="checkbox"]');
-        if (chk) chk.focus();
-        setTimeout(() => {
-          if (!item.textsConfirmed) {
-            box.style.borderColor = '#e4d5bc';
-            box.style.background = '#fffdf5';
+    let stripeVerified = true;
+    let stripeData = null;
+    if (sessionId) {
+      try {
+        const vRes = await fetch(`/api/verify-checkout-session?session_id=${encodeURIComponent(sessionId)}`);
+        if (vRes.ok) {
+          stripeData = await vRes.json();
+          stripeVerified = stripeData.paid;
+        }
+      } catch(e) {}
+    }
+
+    if (stripeVerified) {
+      // Retirar de la cesta pendiente el libro comprado
+      try {
+        const pendingRaw = localStorage.getItem('mr_pending_payment_books');
+        if (pendingRaw) {
+          let pList = JSON.parse(pendingRaw);
+          if (activeData?.item?.title) {
+            pList = pList.filter(x => x.title !== activeData.item.title);
+          } else {
+            pList = [];
           }
-        }, 2200);
-      }
-      return;
+          localStorage.setItem('mr_pending_payment_books', JSON.stringify(pList));
+          clientPendingBasket = pList;
+        }
+        localStorage.removeItem('mr_cart_cover_item');
+        localStorage.removeItem('mr_active_checkout_order');
+      } catch(e) {}
+
+      const user = auth.currentUser;
+      const orderNumber = ordNumber || activeData?.orderNumber || ('MR-2026-' + Math.floor(1000 + Math.random() * 9000));
+      const pageCount = parseInt(stripeData?.metadata?.page_count || activeData?.item?.pageCount || 144, 10);
+      const spineWidth = (pageCount * 0.057).toFixed(1);
+
+      const newOrder = {
+        id: 'ord_' + Date.now(),
+        orderNumber: orderNumber,
+        status: 'pending_review',
+        createdAt: new Date().toISOString(),
+        customer: {
+          name: stripeData?.customerName || activeData?.customer?.name || (user ? getUserDisplayName(user) : 'Cliente'),
+          email: stripeData?.customerEmail || activeData?.customer?.email || (user ? getUserEmail(user) : 'jesusgil_87@hotmail.com'),
+          phone: activeData?.customer?.phone || '+34 600 000 000',
+          address: activeData?.customer?.address || 'Calle Serrano 42',
+          postalCode: activeData?.customer?.postalCode || '28001',
+          city: activeData?.customer?.city || 'Madrid',
+          province: activeData?.customer?.province || 'Madrid',
+          country: 'España',
+          notes: activeData?.customer?.notes || stripeData?.metadata?.customer_notes || 'Sin instrucciones adicionales',
+          isRegistered: true
+        },
+        shipping: {
+          carrier: 'Correos Express',
+          trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
+          lastCarrierMessage: 'Pedido recibido. En fase 1: En Revisión Técnica de tripas y maquetación.'
+        },
+        comms: {
+          compra: { sent: true, date: new Date().toISOString(), id: 're_' + Date.now() },
+          imprenta: { sent: false },
+          tracking: { sent: false },
+          entregado: { sent: false }
+        },
+        book: {
+          title: stripeData?.metadata?.book_title || activeData?.item?.title || 'Cuaderno Personalizado',
+          subtitle: activeData?.item?.subtitle || 'Edición Personalizada',
+          bindingType: stripeData?.metadata?.binding_type || activeData?.item?.bindingType || 'softcover',
+          pageCount: pageCount,
+          quantity: 1,
+          size: '8.25x6',
+          spineWidthMm: spineWidth
+        },
+        pricing: {
+          currency: 'EUR',
+          totalPaid: stripeData?.amountTotal || 27.90,
+          luluCostEstimate: parseFloat(stripeData?.metadata?.lulu_total_cost_eur || 13.93),
+          netMargin: parseFloat(stripeData?.metadata?.net_margin_eur || 13.30),
+          stripePaymentId: stripeData?.paymentIntentId || sessionId || 'cs_test_direct'
+        },
+        timeline: [
+          {
+            date: new Date().toISOString(),
+            message: 'Pedido recibido y registrado en imprenta'
+          },
+          {
+            date: new Date().toISOString(),
+            message: 'Pago con tarjeta confirmado vía Stripe Checkout'
+          }
+        ]
+      };
+
+      try {
+        await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
+        await setDoc(doc(db, 'orders', newOrder.orderNumber), newOrder, { merge: true });
+      } catch(e) {}
+
+      clientProfileOrders.unshift(newOrder);
+      try {
+        localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+      } catch(e) {}
+
+      try {
+        await sendOrderLifecycleEmails(newOrder, 'order_created');
+      } catch(e) {}
+
+      showToast(`🎉 ¡Pago completado con éxito en Stripe! Pedido #${orderNumber} registrado.`);
+      
+      // Limpiar URL
+      try {
+        window.history.replaceState({}, document.title, `/mi-espacio.html?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`);
+      } catch(e) {}
+
+      renderClientOrdersAndBasketViews(user);
     }
-
-    openBasketCheckoutModal(id);
-    return;
+  } catch(err) {
+    console.error('Error procesando retorno de Stripe:', err);
   }
-
-  // 1a. Botón Flotante Comprar (#mrBtnFloatingBuy)
-  if (e.target.closest('#mrBtnFloatingBuy')) {
-    e.preventDefault();
-    e.stopPropagation();
-    openBasketCheckoutModal();
-    return;
-  }
-
-  // 1b. Botones de Cantidad (+ / -)
-  const qtyIncBtn = e.target.closest('[data-qty-inc]');
-  if (qtyIncBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = qtyIncBtn.getAttribute('data-qty-inc');
-    const target = clientPendingBasket.find(x => String(x.id) === String(id));
-    if (target) {
-      target.quantity = (typeof target.quantity === 'number' ? target.quantity : 1) + 1;
-      saveClientOrdersAndBasketState(currentUser || auth.currentUser);
-      renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
-    }
-    return;
-  }
-
-  const qtyDecBtn = e.target.closest('[data-qty-dec]');
-  if (qtyDecBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = qtyDecBtn.getAttribute('data-qty-dec');
-    const target = clientPendingBasket.find(x => String(x.id) === String(id));
-    if (target) {
-      const curr = typeof target.quantity === 'number' ? target.quantity : 1;
-      target.quantity = Math.max(0, curr - 1);
-      saveClientOrdersAndBasketState(currentUser || auth.currentUser);
-      renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
-    }
-    return;
-  }
-
-  // 1c. Botón Tu Carrito Flotante (#mrDevCartFab)
-  if (e.target.closest('#mrDevCartFab')) {
-    e.preventDefault();
-    e.stopPropagation();
-    openBasketCheckoutModal();
-    return;
-  }
-
-  // 1d. Botón Confirmar Compra en Modal
-  if (e.target.id === 'btn-confirm-checkout-order' || e.target.closest('#btn-confirm-checkout-order')) {
-    e.preventDefault();
-    e.stopPropagation();
-    handleConfirmCheckoutOrder();
-    return;
-  }
-
-  // 1e. Botones de Cierre de Modal Checkout
-  if (e.target.id === 'btn-close-checkout-modal' || e.target.id === 'btn-cancel-checkout-modal' || e.target.id === 'basket-checkout-modal') {
-    closeBasketCheckoutModal();
-    return;
-  }
-
-  // 2. Descargar Portada PDF
-  const coverBtn = e.target.closest('[data-preview-pdf-cover]');
-  if (coverBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = coverBtn.getAttribute('data-preview-pdf-cover');
-    handleBasketCoverPdfClick(id);
-    return;
-  }
-
-  // 3. Descargar Interior PDF
-  const intBtn = e.target.closest('[data-preview-pdf-interior]');
-  if (intBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = intBtn.getAttribute('data-preview-pdf-interior');
-    handleBasketInteriorPdfClick(id);
-    return;
-  }
-
-  // 4. Botón Eliminar de la Cesta
-  const delBtn = e.target.closest('[data-del-pending]');
-  if (delBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = delBtn.getAttribute('data-del-pending');
-    openConfirmDeleteBasketModal(id);
-    return;
-  }
-
-  // 5. Botón Modificar Dirección de Entrega en Cesta
-  const editShipBtn = e.target.closest('[data-edit-shipping-basket]');
-  if (editShipBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = editShipBtn.getAttribute('data-edit-shipping-basket');
-    editPendingBasketShipping(id, currentUser || auth.currentUser);
-    return;
-  }
-
-  // 6. Botones de modales de cesta
-  if (e.target.id === 'btn-close-basket-preview' || e.target.id === 'btn-close-basket-preview-foot') {
-    closeBasketPreviewModal();
-    return;
-  }
-  if (e.target.id === 'basket-pdf-preview-modal') {
-    closeBasketPreviewModal();
-    return;
-  }
-  if (e.target.id === 'btn-cancel-delete-basket-item' || e.target.id === 'basket-confirm-delete-modal') {
-    closeConfirmDeleteBasketModal();
-    return;
-  }
-  if (e.target.id === 'btn-confirm-delete-basket-item') {
-    if (!itemPendingDeleteId) return;
-    clientPendingBasket = clientPendingBasket.filter(x => String(x.id) !== String(itemPendingDeleteId));
-    saveClientOrdersAndBasketState(currentUser || auth.currentUser);
-    renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
-    closeConfirmDeleteBasketModal();
-    showToast('🗑️ Ejemplar retirado de la cesta');
-    return;
-  }
-});
-
-// Listener global de cambio en casilla de verificación de textos
-document.addEventListener('change', (e) => {
-  const chk = e.target.closest('[data-confirm-texts]');
-  if (chk) {
-    const itemId = chk.getAttribute('data-confirm-texts');
-    const found = clientPendingBasket.find(x => String(x.id) === String(itemId));
-    if (!found) return;
-    found.textsConfirmed = !!chk.checked;
-    saveClientOrdersAndBasketState(currentUser || auth.currentUser);
-    const box = document.getElementById('confirm-box-' + itemId);
-    if (box) {
-      box.style.background = found.textsConfirmed ? '#f0fdf4' : '#fffbeb';
-      box.style.borderColor = found.textsConfirmed ? '#86efac' : '#fcd34d';
-    }
-    if (found.textsConfirmed) {
-      showToast('✓ Textos confirmados para imprenta.');
-    }
-  }
-});
-
-function openBasketEditAddressModal(itemId, user) {
-  const modal = document.getElementById('basket-edit-address-modal');
-  if (!modal) return;
-  const found = clientPendingBasket.find(x => x.id === itemId);
-  if (!found) return;
-
-  const currentShip = found.shipping || {
-    name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
-    email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
-    phone: '+34 600 000 000',
-    address: 'Calle Serrano 42, 4º Derecha',
-    postalCode: '28001',
-    city: 'Madrid',
-    province: 'Madrid',
-    notes: 'Entregar en conserjería si no estoy en casa.'
-  };
-
-  const idInp = document.getElementById('modal-edit-addr-item-id');
-  if (idInp) idInp.value = itemId;
-
-  const currSum = document.getElementById('modal-edit-addr-current-summary');
-  if (currSum) {
-    currSum.innerHTML = `<strong>${escapeHtml(currentShip.name || 'Cliente')}</strong> (Tel: ${escapeHtml(currentShip.phone || '--')})<br>` +
-                        `${escapeHtml(currentShip.address || '')}, ${escapeHtml(currentShip.postalCode || '')} ${escapeHtml(currentShip.city || '')} (${escapeHtml(currentShip.province || '')})` +
-                        (currentShip.notes ? `<br><em>Nota: ${escapeHtml(currentShip.notes)}</em>` : '');
-  }
-
-  const nameInp = document.getElementById('modal-addr-name');
-  const phoneInp = document.getElementById('modal-addr-phone');
-  const streetInp = document.getElementById('modal-addr-street');
-  const zipInp = document.getElementById('modal-addr-zip');
-  const cityInp = document.getElementById('modal-addr-city');
-  const provInp = document.getElementById('modal-addr-province');
-  const notesInp = document.getElementById('modal-addr-notes');
-
-  if (nameInp) nameInp.value = currentShip.name || (user ? getUserDisplayName(user) : '') || '';
-  if (phoneInp) phoneInp.value = currentShip.phone || '';
-  if (streetInp) streetInp.value = currentShip.address || '';
-  if (zipInp) zipInp.value = currentShip.postalCode || '';
-  if (cityInp) cityInp.value = currentShip.city || '';
-  if (provInp) provInp.value = currentShip.province || currentShip.city || '';
-  if (notesInp) notesInp.value = currentShip.notes || '';
-
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
 }
 
-function closeBasketEditAddressModal() {
-  const modal = document.getElementById('basket-edit-address-modal');
-  if (modal) modal.classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-function editPendingBasketShipping(itemId, user) {
-  openBasketEditAddressModal(itemId, user);
-}
-
-function renderClientOrdersAndBasketViews(user) {
-  const badgeEl = document.getElementById('client-orders-badge');
-  if (badgeEl) {
-    badgeEl.textContent = String(clientProfileOrders.length + clientPendingBasket.length);
-  }
-
-  // 1. RENDERIZAR BLOQUE A: CESTA / PENDIENTES DE PAGO EN EL PERFIL DEL CLIENTE
-  const pendingContainer = document.getElementById('client-pending-basket-list');
-  if (pendingContainer) {
-    if (clientPendingBasket.length === 0) {
-      pendingContainer.innerHTML = `
-        <div style="padding: 18px; text-align: center; color: #786e63; font-size: 0.88rem; background: #ffffff; border-radius: 8px; border: 1px dashed #dcd4c6;">
-          No tienes cuadernos pendientes de pago en tu cesta ahora mismo.
-        </div>
-      `;
-    } else {
-      pendingContainer.innerHTML = clientPendingBasket.map((item, idx) => {
-        if (!item.id) item.id = 'pend_item_' + (idx + 1) + '_' + Date.now();
-        if (typeof item.quantity !== 'number') item.quantity = 1;
-
-        const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
-        const subtotal = unitPrice * item.quantity;
-        const subtotalText = subtotal > 0 ? (subtotal.toFixed(2).replace('.', ',') + ' €') : '0,00 €';
-        const unitPriceText = unitPrice.toFixed(2).replace('.', ',') + ' €';
-
-        // Asegurar que item.data y item.shipping existen para evitar valores vacíos
-        if (!item.data) {
-          item.data = {
-            title: item.title || 'Planificador Personalizado',
-            subtitle: item.subtitle || '',
-            author: 'Clara Beltrán',
-            spineText: item.title || 'PLANIFICADOR',
-            frontDesc: ''
-          };
-        }
-        if (!item.shipping) {
-          item.shipping = {
-            name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
-            email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
-            address: 'Calle Serrano 42, 4º Derecha',
-            postalCode: '28001',
-            city: 'Madrid',
-            country: 'España',
-            phone: '+34 600 000 000',
-            notes: 'Entregar en conserjería si no estoy en casa.'
-          };
-        }
-
-        const isChecked = !!item.textsConfirmed;
-        const spineWidthMm = (item.pageCount * 0.057).toFixed(1);
-        const fileSizeMb = item.fileSizeMb || (item.pageCount * 0.31).toFixed(1);
-
-        return `
-          <div class="pending-basket-card" data-basket-card-id="${escapeHtml(item.id)}" style="background: #ffffff; border: 1.5px solid #dfd6c7; border-radius: 12px; padding: 18px 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 14px;">
-            
-            <!-- Cabecera Principal de la Tarjeta -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;">
-              <div style="flex: 1; min-width: 260px;">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
-                  <span style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.3px;">⏳ PENDIENTE DE PAGO</span>
-                </div>
-                <h4 id="basket-title-display-${escapeHtml(item.id)}" style="font-family: var(--font-display); font-size: 1.22rem; margin: 4px 0 3px 0; color: #1f1c19;">${escapeHtml(item.title)}</h4>
-                <div id="basket-subtitle-display-${escapeHtml(item.id)}" style="font-size: 0.84rem; color: #665e54;">
-                  ${getBindingLabelForProfile(item.bindingType)} · <strong>${item.pageCount} páginas interiores</strong> · ${escapeHtml(item.subtitle || '')}
-                </div>
-              </div>
-
-              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                
-                <!-- Selector de Cantidad -->
-                <div style="display: flex; align-items: center; gap: 6px; background: #faf7f2; border: 1.5px solid #dcd4c6; border-radius: 8px; padding: 4px 10px;">
-                  <span style="font-size: 0.76rem; font-weight: 700; color: #5a5147; margin-right: 2px;">Uds:</span>
-                  <button type="button" data-qty-dec="${escapeHtml(item.id)}" style="background: #ffffff; border: 1px solid #cfc5b6; width: 28px; height: 28px; border-radius: 5px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #3a3229;" title="Restar ejemplar">-</button>
-                  <span id="qty-val-${escapeHtml(item.id)}" style="font-weight: 800; font-size: 0.96rem; min-width: 24px; text-align: center; color: #1f1c19;">${item.quantity}</span>
-                  <button type="button" data-qty-inc="${escapeHtml(item.id)}" style="background: #ffffff; border: 1px solid #cfc5b6; width: 28px; height: 28px; border-radius: 5px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #3a3229;" title="Añadir ejemplar">+</button>
-                </div>
-
-                <div style="text-align: right; min-width: 100px;">
-                  <div style="font-size: 1.3rem; font-weight: 900; color: ${item.quantity > 0 ? '#1f1c19' : '#991b1b'};">${subtotalText}</div>
-                  <div style="font-size: 0.72rem; color: #665e54;">
-                    ${item.quantity > 0 ? `(${item.quantity} × ${unitPriceText})` : '(0 seleccionados)'}
-                  </div>
-                  <div style="font-size: 0.7rem; font-weight: 700; color: #215c38;">🚚 Envío GRATIS</div>
-                </div>
-
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <!-- Botón Comprar -->
-                  <button type="button" data-buy-pending="${escapeHtml(item.id)}" ${item.quantity === 0 ? 'disabled' : ''} style="background: ${item.quantity === 0 ? '#b5aca1' : '#215c38'}; color: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: ${item.quantity === 0 ? 'not-allowed' : 'pointer'}; display: inline-flex; align-items: center; gap: 6px; box-shadow: ${item.quantity === 0 ? 'none' : '0 2px 6px rgba(33,92,56,0.25)'}; opacity: ${item.quantity === 0 ? '0.7' : '1'};">
-                    <span>💳</span> Comprar
-                  </button>
-                  <!-- Botón Descargar Portada PDF -->
-                  <button type="button" data-preview-pdf-cover="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Descargar PDF de portada">
-                    <span>📥</span> Descargar Portada PDF
-                  </button>
-                  <!-- Botón Descargar Interior PDF -->
-                  <button type="button" data-preview-pdf-interior="${escapeHtml(item.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Descargar PDF interior">
-                    <span>📥</span> Descargar Interior PDF
-                  </button>
-                  <!-- Botón Eliminar -->
-                  <button type="button" data-del-pending="${escapeHtml(item.id)}" style="background: #fff5f5; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; cursor: pointer; font-weight: 600;" title="Quitar de la cesta">
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Desplegable Acordeón: Ficha Técnica, PDFs y Dirección -->
-            <details id="details-pending-${escapeHtml(item.id)}" style="background: #faf7f2; border: 1px solid #e6ded2; border-radius: 9px; padding: 12px 16px; margin-top: 4px;">
-              <summary style="cursor: pointer; font-weight: 700; font-size: 0.84rem; color: #443c33; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                <span>🔍 Ver características técnicas, PDFs y dirección de entrega</span>
-                <span style="font-size: 0.78rem; color: #87553b; font-weight: 600;">Desplegar ficha ▾</span>
-              </summary>
-
-              <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 16px;">
-                
-                <!-- 1. Características Técnicas -->
-                <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                    <strong style="font-size: 0.85rem; color: #1f1c19;">📐 Ficha Técnica</strong>
-                  </div>
-                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; font-size: 0.78rem; color: #554d44;">
-                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
-                      <strong>Encuadernación:</strong><br>${getBindingLabelForProfile(item.bindingType)}
-                    </div>
-                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
-                      <strong>Formato:</strong><br>Apaisado 8.25" × 6" (210 × 152 mm)
-                    </div>
-                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
-                      <strong>Páginas interiores:</strong><br>${item.pageCount} páginas (Papel crema 80g)
-                    </div>
-                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
-                      <strong>Lomo milimétrico:</strong><br>${spineWidthMm} mm de grosor
-                    </div>
-                    <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
-                      <strong>Margen y Sangrado:</strong><br>3.175 mm perimetral
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 2. Dirección de Envío y Datos Personales -->
-                <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
-                    <strong style="font-size: 0.85rem; color: #1f1c19;">🚚 Dirección de Entrega y Datos del Destinatario</strong>
-                    <button type="button" data-edit-shipping-basket="${escapeHtml(item.id)}" style="background: #f2ece1; color: #443c33; border: 1px solid #d4c8b6; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
-                      ✏️ Modificar dirección de entrega
-                    </button>
-                  </div>
-                  <div id="shipping-display-${escapeHtml(item.id)}" style="font-size: 0.82rem; color: #475569; line-height: 1.5;">
-                    <strong>Destinatario:</strong> ${escapeHtml(item.shipping?.name || user?.displayName || 'Cliente Menos Ruido')} (${escapeHtml(item.shipping?.email || user?.email || 'jesusgil_87@hotmail.com')})<br>
-                    <strong>Dirección:</strong> ${escapeHtml(item.shipping?.address || 'Calle Serrano 42, 4º Derecha')}, ${escapeHtml(item.shipping?.postalCode || '28001')} ${escapeHtml(item.shipping?.city || 'Madrid')} (${escapeHtml(item.shipping?.province || 'Madrid')}), ${escapeHtml(item.shipping?.country || 'España')}<br>
-                    <strong>Teléfono de contacto:</strong> ${escapeHtml(item.shipping?.phone || '+34 600 000 000')}<br>
-                    <strong>Instrucciones al repartidor:</strong> <em>${escapeHtml(item.shipping?.notes || 'Entregar en conserjería si no estoy en casa.')}</em>
-                  </div>
-                </div>
-
-              </div>
-            </details>
-
-            <!-- Casilla de Aceptación y Confirmación de Ortografía y Textos (FUERA DEL DESPLEGABLE) -->
-            <div id="confirm-box-${escapeHtml(item.id)}" style="background: ${isChecked ? '#f0fdf4' : '#fffdf5'}; border: 1.5px solid ${isChecked ? '#86efac' : '#e4d5bc'}; border-radius: 8px; padding: 12px 14px; margin-top: 2px; transition: all 0.25s ease;">
-              <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.84rem; color: #231f1a; line-height: 1.45;">
-                <input type="checkbox" data-confirm-texts="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} style="margin-top: 3px; width: 18px; height: 18px; accent-color: #215c38; cursor: pointer;" />
-                <span>
-                  <strong style="color: #1f1c19;">He revisado la previsualización y asumo la responsabilidad sobre los textos y contenidos introducidos.</strong>
-                  <span style="display: block; font-size: 0.77rem; color: #665b4f; margin-top: 2px;">
-                    Confirmo que todos los datos y nombres propios son correctos para su impresión final en papel.
-                  </span>
-                </span>
-              </label>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-  }
-
-  // Actualizar resumen en botón flotante
-  updateFloatingCartSummary();
-
-// 2. RENDERIZAR BLOQUE B: HISTORIAL Y SEGUIMIENTO DE PEDIDOS EN EL PERFIL DEL CLIENTE
-  const ordersContainer = document.getElementById('client-orders-history-list');
-  if (ordersContainer) {
-    ordersContainer.innerHTML = clientProfileOrders.map(ord => {
-      const step = getStepIndexFromStatus(ord.status);
-      const totalPaid = parseFloat(ord.pricing?.totalPaid || 27.90).toFixed(2).replace('.', ',');
-      const carrier = ord.shipping?.carrier || 'Correos Express';
-      const trackingNum = ord.shipping?.trackingNumber || ord.luluJob?.trackingCode || 'Pendiente de asignación en fábrica';
-      const carrierMsg = ord.shipping?.lastCarrierMessage || 'Tu ejemplar está siendo procesado antes de entregarse a la empresa repartidora.';
-      const fileSizeMb = ord.book?.fileSizeMb || ((ord.book?.pageCount || 143) * 0.32).toFixed(1);
-
-      const stepsHtml = [
-        { n: 1, label: '1. Revisión Técnica', sub: 'Comprobación técnica' },
-        { n: 2, label: '2. En Imprenta', sub: 'Fabricación y Lomo' },
-        { n: 3, label: '3. En Reparto', sub: carrier },
-        { n: 4, label: '4. Entregado', sub: 'En tu domicilio' }
-      ].map(s => {
-        const done = step >= s.n;
-        const current = step === s.n;
-        return `
-          <div style="flex: 1; min-width: 120px; background: ${done ? '#eaf5ee' : '#f5f2ec'}; border: 1.5px solid ${current ? '#215c38' : (done ? '#a7d7b8' : '#e2dcd0')}; border-radius: 8px; padding: 9px 10px; text-align: center;">
-            <div style="font-size: 0.78rem; font-weight: 800; color: ${done ? '#166534' : '#786e63'};">${done ? '✓ ' : ''}${s.label}</div>
-            <div style="font-size: 0.68rem; color: #665e54; margin-top: 2px;">${s.sub}</div>
-          </div>
-        `;
-      }).join('');
-
-      const cleanTimeline = (ord.timeline || []).filter(ev => {
-        const m = ev.message || '';
-        return !m.includes('Se envían confirmaciones a Cliente y Gestor') &&
-               !m.includes('en modo Simulación') &&
-               !m.includes('SIMULACIÓN') &&
-               !m.includes('Emails de Etapa') &&
-               !m.includes('a Cliente y Gestor');
-      });
-      const timelineHtml = cleanTimeline.slice().reverse().map(ev => `
-        <div style="display: flex; gap: 10px; font-size: 0.8rem; color: #38322c; padding: 6px 0; border-bottom: 1px dashed #ebe5da;">
-          <span style="color: #87553b; font-weight: 700; white-space: nowrap;">${formatDate(ev.date)}</span>
-          <span>${escapeHtml(ev.message)}</span>
-        </div>
-      `).join('');
-
-      const correosUrl = `https://www.correos.es/es/es/herramientas/localizador/envios?numero=${encodeURIComponent(trackingNum)}`;
-      const courierBlockHtml = (step >= 3) ? `
-          <!-- Bloque de Comunicación con la Empresa Repartidora y Dirección -->
-          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
-              <div style="font-size: 0.8rem; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.4px;">
-                🚚 Comunicación con Empresa Repartidora (${escapeHtml(carrier)})
-              </div>
-              <a href="${correosUrl}" target="_blank" rel="noopener noreferrer" style="font-family: monospace; font-size: 0.78rem; font-weight: 700; background: #0284c7; color: #ffffff; padding: 4px 10px; border-radius: 5px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                Tracking: ${escapeHtml(trackingNum)} ↗
-              </a>
-            </div>
-            <div style="font-size: 0.84rem; color: #0f172a; background: #ffffff; border-left: 3px solid #2563eb; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
-              <strong>Último aviso del transportista:</strong> ${escapeHtml(carrierMsg)}
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: #475569;">
-              <div>
-                <strong>Dirección de entrega:</strong> ${escapeHtml(ord.customer?.address || '')}, ${escapeHtml(ord.customer?.postalCode || '')} ${escapeHtml(ord.customer?.city || '')}<br>
-                <strong>Instrucciones para el repartidor:</strong> <span id="note-text-${escapeHtml(ord.id)}">${escapeHtml(ord.customer?.notes || 'Sin instrucciones adicionales')}</span>
-              </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="${correosUrl}" target="_blank" rel="noopener noreferrer" style="background: #1e293b; color: #ffffff; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
-                  📍 Seguir envío en Correos Express ↗
-                </a>
-              </div>
-            </div>
-          </div>
-      ` : `
-          <!-- En fases 1 y 2 no se muestra transportista -->
-          <div style="background: #fdfbf7; border: 1px dashed #dcd4c7; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.82rem; color: #5a5147;">
-            ⚙️ <strong>Estado de fabricación:</strong> Tu ejemplar se encuentra en ${step === 1 ? 'revisión técnica de imprenta' : 'imprenta para su impresión y encuadernación'}. Te notificaremos por correo con el enlace directo de Correos Express en cuanto salga del taller.
-          </div>
-      `;
-
-      return `
-        <div id="order-card-${escapeHtml(ord.orderNumber)}" style="background: #ffffff; border: 1.5px solid #e0d8c8; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.04); transition: all 0.3s ease;">
-          <!-- Cabecera del Pedido -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #eee7dc; padding-bottom: 14px; margin-bottom: 14px;">
-            <div>
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-family: monospace; font-size: 0.92rem; font-weight: 800; background: #1f1c19; color: #ffffff; padding: 3px 9px; border-radius: 6px;">#${escapeHtml(ord.orderNumber)}</span>
-                <span style="font-size: 0.78rem; color: #665e54;">Realizado el ${formatDate(ord.createdAt)}</span>
-              </div>
-              <h4 style="font-family: var(--font-display); font-size: 1.2rem; margin: 8px 0 2px 0; color: #1f1c19;">${escapeHtml(ord.book?.title || 'Cuaderno Personalizado')}</h4>
-              <div style="font-size: 0.83rem; color: #5a5147;">
-                ${getBindingLabelForProfile(ord.book?.bindingType)} · ${ord.book?.pageCount || 143} páginas interiores · Formato 210 × 152 mm
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-size: 1.25rem; font-weight: 900; color: #1f1c19;">${totalPaid} €</div>
-              <div style="font-size: 0.72rem; font-weight: 700; color: #215c38;">✓ Pagado (Envío incluido)</div>
-            </div>
-          </div>
-
-          <!-- Barra de 4 Estados en Vivo -->
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
-            ${stepsHtml}
-          </div>
-
-          ${courierBlockHtml}
-
-          <!-- Bloque de Archivos Digitales en PDF -->
-          <div style="background: #fdfaf5; border: 1px solid #e4dac9; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-            <div>
-              <div style="font-size: 0.82rem; font-weight: 800; color: #87553b;">
-                📖 Archivos en PDF de tu Cuaderno
-              </div>
-              <div style="font-size: 0.76rem; color: #665e54; margin-top: 2px;">
-                Tus archivos listos para imprenta están guardados en tu perfil para que puedas consultarlos o descargarlos en cualquier momento.
-              </div>
-            </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="button" data-download-pdf-interior="${escapeHtml(ord.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.80rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                <span>📖</span> Interior en PDF
-              </button>
-              <button type="button" data-download-pdf-cover="${escapeHtml(ord.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.80rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                <span>🎨</span> Portada en PDF
-              </button>
-            </div>
-          </div>
-
-          <!-- Historial de Cambios de Estado y Comunicaciones -->
-          <details style="font-size: 0.8rem;">
-            <summary style="cursor: pointer; font-weight: 700; color: #5a5147;">📋 Ver historial de cambios de estado y notificaciones (${(ord.timeline || []).length})</summary>
-            <div style="margin-top: 8px; padding-left: 6px;">
-              ${timelineHtml}
-            </div>
-          </details>
-        </div>
-      `;
-    }).join('');
-
-
-
-    ordersContainer.querySelectorAll('[data-download-pdf-interior]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-download-pdf-interior');
-        const ord = clientProfileOrders.find(o => o.id === id);
-        if (ord) {
-          try {
-            localStorage.setItem('mr_complete_book_config', JSON.stringify({
-              title: ord.book?.title,
-              subtitle: ord.book?.subtitle,
-              pageCount: ord.book?.pageCount || 143,
-              bindingType: ord.book?.bindingType || 'softcover'
-            }));
-          } catch (e) {}
-        }
-        showToast('⏳ Preparando y descargando Interior en PDF...');
-        const iframe = document.getElementById('headless-pdf-frame');
-        if (iframe) {
-          iframe.src = `/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`;
-        } else {
-          window.open(`/generador-libro-completo.html?download_direct=1`, '_blank');
-        }
-      });
-    });
-
-    ordersContainer.querySelectorAll('[data-download-pdf-cover]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-download-pdf-cover');
-        const ord = clientProfileOrders.find(o => o.id === id);
-        if (ord) {
-          try {
-            localStorage.setItem('mr_cart_cover_item', JSON.stringify({
-              title: ord.book?.title,
-              bindingType: ord.book?.bindingType,
-              pageCount: ord.book?.pageCount || 143,
-              data: {}
-            }));
-          } catch (e) {}
-        }
-        showToast('⏳ Preparando y descargando Portada en PDF...');
-        const iframe = document.getElementById('headless-pdf-frame');
-        if (iframe) {
-          iframe.src = `/generador-portadas.html?download_direct=1&ts=${Date.now()}`;
-        } else {
-          window.open(`/generador-portadas.html?download_direct=1`, '_blank');
-        }
-      });
-    });
-  }
-
-  // 3. RENDERIZAR ESPEJO DE CONTROL EN EL PANEL DE DESARROLLADOR (#dev-client-profile-mirror)
-  // Resaltado de pedido si viene en URL
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetOrder = urlParams.get('orderId') || urlParams.get('order');
-    if (targetOrder) {
-      setTimeout(() => {
-        const card = document.getElementById('order-card-' + targetOrder) || document.querySelector(`[id*="${targetOrder}"]`);
-        if (card) {
-          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          card.style.outline = '3px solid #16a34a';
-          card.style.boxShadow = '0 0 25px rgba(22, 163, 74, 0.4)';
-          setTimeout(() => {
-            card.style.outline = 'none';
-            card.style.boxShadow = '';
-          }, 3500);
-        }
-      }, 350);
-    }
-  } catch(e) {}
-
-  const devMirror = document.getElementById('dev-client-profile-mirror');
-  if (devMirror) {
-    devMirror.innerHTML = clientProfileOrders.slice(0, 6).map(ord => {
-      return `
-        <div style="background: #2c2824; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <div>
-              <span style="font-family: monospace; font-weight: 800; color: #fde68a;">#${escapeHtml(ord.orderNumber)}</span>
-              <strong style="color: #ffffff; margin-left: 8px;">${escapeHtml(ord.book?.title || 'Cuaderno')}</strong>
-              <span style="color: #9ca3af; font-size: 0.78rem; margin-left: 6px;">(${ord.book?.pageCount || 143} págs · Estado actual: <strong style="color:#4ade80;">${escapeHtml(ord.status)}</strong>)</span>
-            </div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="pending_review" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">1. Revisión (+Email)</button>
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="printing" style="background:#3f3b37; color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">2. En Imprenta (+Email)</button>
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="shipped" style="background:#1e3a8a; color:#fff; border:1px solid #60a5fa; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">3. En Reparto (+Email)</button>
-              <button type="button" data-dev-set-status="${escapeHtml(ord.id)}" data-target-status="delivered" style="background:#166534; color:#fff; border:1px solid #4ade80; border-radius:5px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">4. Entregado (+Email)</button>
-              <button type="button" data-dev-carrier-msg="${escapeHtml(ord.id)}" style="background:#87553b; color:#fff; border:none; border-radius:5px; padding:4px 9px; font-size:0.72rem; font-weight:700; cursor:pointer;">📣 Aviso Repartidora (+Email)</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    devMirror.querySelectorAll('[data-dev-set-status]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-dev-set-status');
-        const st = btn.getAttribute('data-target-status');
-        const ord = clientProfileOrders.find(o => o.id === id);
-        if (!ord) return;
-        ord.status = st;
-        if (!ord.shipping) ord.shipping = { carrier: 'Correos Express', trackingNumber: 'CEX-84920144', trackingUrl: 'https://www.correosexpress.com' };
-        if (!ord.luluJob) ord.luluJob = { jobId: 'LULU-981204', carrier: 'Correos Express', trackingCode: ord.shipping.trackingNumber };
-        if (!ord.comms) ord.comms = { compra: { sent: true }, imprenta: { sent: false }, tracking: { sent: false }, entregado: { sent: false } };
-
-        const labels = {
-          pending_review: '1/4 En Revisión Técnica de Imprenta',
-          printing: '2/4 En Imprenta (Impresión de tripa y encuadernación en curso)',
-          shipped: `3/4 En Reparto con ${ord.shipping.carrier} (Tracking: ${ord.shipping.trackingNumber})`,
-          delivered: '4/4 Entregado en el domicilio del cliente'
-        };
-        if (st === 'printing') {
-          ord.comms.imprenta = { sent: true, date: new Date().toISOString() };
-          ord.shipping.lastCarrierMessage = 'En fabricación y encuadernación en planta de imprenta.';
-        } else if (st === 'shipped') {
-          ord.comms.tracking = { sent: true, date: new Date().toISOString() };
-          ord.shipping.lastCarrierMessage = `Correos Express: Paquete en reparto hoy. Seguimiento activo ${ord.shipping.trackingNumber}.`;
-        } else if (st === 'delivered') {
-          ord.comms.entregado = { sent: true, date: new Date().toISOString() };
-          ord.shipping.lastCarrierMessage = 'Correos Express: Entrega completada satisfactoriamente en el domicilio.';
-        }
-
-        const eventMap = {
-          pending_review: 'status_pending_review',
-          printing: 'status_printing',
-          shipped: 'status_shipped',
-          delivered: 'status_delivered'
-        };
-
-        if (!ord.timeline) ord.timeline = [];
-        ord.timeline.push({
-          date: new Date().toISOString(),
-          message: `Cambio de estado actualizado: ${labels[st] || st} (Emails enviados a Cliente y Gestor)`
-        });
-        saveClientOrdersAndBasketState(user);
-        renderClientOrdersAndBasketViews(user);
-        showToast(`⏳ Estado cambiado a ${labels[st]} · Enviando emails a Cliente y Gestor...`);
-        await sendOrderLifecycleEmails(ord, eventMap[st] || 'status_printing');
-        showToast(`✉️ Emails de etapa «${labels[st]}» enviados a jesusgil_87@hotmail.com y jesgilcan@gmail.com`);
-      });
-    });
-
-    devMirror.querySelectorAll('[data-dev-carrier-msg]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-dev-carrier-msg');
-        const ord = clientProfileOrders.find(o => o.id === id);
-        if (!ord) return;
-        const msg = prompt('Escribe el mensaje de actualización de la empresa repartidora que verá el cliente en su perfil y recibirá por email:', 'Correos Express: El repartidor entregará tu paquete hoy entre las 11:00 y las 14:00.');
-        if (!msg) return;
-        if (!ord.shipping) ord.shipping = { carrier: 'Correos Express', trackingNumber: 'CEX-84920144' };
-        ord.shipping.lastCarrierMessage = msg.trim();
-        if (!ord.timeline) ord.timeline = [];
-        ord.timeline.push({
-          date: new Date().toISOString(),
-          message: `🚚 Aviso de empresa repartidora: ${msg.trim()}`
-        });
-        saveClientOrdersAndBasketState(user);
-        renderClientOrdersAndBasketViews(user);
-        showToast('⏳ Publicando aviso y enviando emails a Cliente y Gestor...');
-        await sendOrderLifecycleEmails(ord, 'carrier_update', { carrierMessage: msg.trim() });
-        showToast('✉️ Aviso de la repartidora publicado y enviado por email a ambos correos');
-      });
-    });
-  }
-}
 

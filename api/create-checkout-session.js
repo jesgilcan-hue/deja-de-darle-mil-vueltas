@@ -79,6 +79,7 @@ export default async function handler(req, res) {
       city = 'Madrid',
       province = 'M',
       country = 'ES',
+      notes = '',
       simulateSpike = false,
       returnOrigin = 'https://www.editorialmenosruido.com'
     } = req.body || {};
@@ -107,8 +108,8 @@ export default async function handler(req, res) {
 
     // 3. Crear sesión en Stripe Checkout API v1 (MODO TEST)
     const origin = (returnOrigin || 'https://www.editorialmenosruido.com').replace(/\/$/, '');
-    const successUrl = `${origin}/mi-espacio.html?tab=pedidos&stripe_test_success=1&order=${encodeURIComponent(orderNumber)}`;
-    const cancelUrl = `${origin}/generador-portadas.html?stripe_test_cancel=1`;
+    const successUrl = `${origin}/mi-espacio.html?tab=pedidos&stripe_success=1&order=${encodeURIComponent(orderNumber)}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin}/mi-espacio.html?tab=pedidos&stripe_cancel=1`;
 
     const params = new URLSearchParams();
     params.append('mode', 'payment');
@@ -123,7 +124,7 @@ export default async function handler(req, res) {
     params.append('line_items[0][price_data][product_data][name]', `${bookTitle} — ${quote.product.label}`);
     params.append(
       'line_items[0][price_data][product_data][description]',
-      `${bookSubtitle} · ${quote.product.pageCount} págs · Envío incluido a ${postalCode} ${city} (SIMULACIÓN TEST 0€ REALES)`
+      `${bookSubtitle} · ${quote.product.pageCount} págs · Envío incluido a ${postalCode} ${city}`
     );
     params.append('line_items[0][quantity]', '1');
 
@@ -136,8 +137,11 @@ export default async function handler(req, res) {
     params.append('metadata[lulu_total_cost_eur]', String(quote.pricing.luluTotalCost));
     params.append('metadata[net_margin_eur]', String(quote.pricing.netMargin));
     params.append('metadata[customer_name]', customerName);
+    params.append('metadata[customer_email]', customerEmail);
+    params.append('metadata[customer_phone]', customerPhone);
+    params.append('metadata[customer_notes]', notes || 'Sin indicaciones adicionales');
     params.append('metadata[shipping_address]', `${address}, ${postalCode} ${city} (${province})`);
-    params.append('metadata[environment]', 'TEST_SANDBOX_SIMULATION');
+    params.append('metadata[environment]', 'STRIPE_TEST_OFFICIAL');
 
     const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
