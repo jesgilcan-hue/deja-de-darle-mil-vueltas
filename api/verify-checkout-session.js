@@ -145,10 +145,11 @@ export default async function handler(req, res) {
     const metadata = session.metadata || {};
     const amountTotal = (session.amount_total || 0) / 100;
     const rawCustomerEmail = session.customer_details?.email || session.customer_email || metadata.customer_email;
-    const customerName = session.customer_details?.name || metadata.customer_name || 'Cliente';
+    const customerName = metadata.customer_name || session.customer_details?.name || 'Cliente';
     const orderNumber = metadata.order_number || ('MR-2026-' + Math.floor(1000 + Math.random() * 9000));
-    const bookTitle = metadata.book_title || 'Cuaderno Personalizado';
-    const address = metadata.customer_address || session.customer_details?.address?.line1 || 'Dirección indicada';
+    const bookTitle = metadata.items_summary || metadata.book_title || 'Cuaderno Personalizado';
+    const address = metadata.shipping_address || metadata.customer_address || session.customer_details?.address?.line1 || 'Dirección indicada';
+    const customerNotes = metadata.customer_notes || 'Sin indicaciones adicionales';
 
     // Determinar destinatario seguro para el cliente
     let clientEmailTarget = TEST_CLIENT_EMAIL;
@@ -186,8 +187,9 @@ export default async function handler(req, res) {
       const managerSubject = `🔔 [GESTOR WEB] Nueva venta #${orderNumber} (${amountTotal.toFixed(2)} €) · Notificación Stripe`;
       const managerParagraphs = [
         `Se ha registrado un nuevo pedido pagado mediante Stripe (#${orderNumber}).`,
-        `DATOS DEL CLIENTE:\n• Nombre: ${customerName}\n• Email: ${clientEmailTarget}\n• Dirección: ${address}`,
-        `IMPORTE COBRADO: ${amountTotal.toFixed(2)} €`,
+        `DATOS DEL CLIENTE:\n• Nombre: ${customerName}\n• Email: ${clientEmailTarget}\n• Dirección: ${address}\n• Notas para repartidor: ${customerNotes}`,
+        `EJEMPLARES:\n• ${metadata.items_summary || bookTitle}`,
+        `IMPORTE TOTAL COBRADO: ${amountTotal.toFixed(2)} € (Envío incluido)`,
         `Puedes revisar la portada y el interior desde el Gestor de Pedidos para aprobar su impresión.`
       ];
 

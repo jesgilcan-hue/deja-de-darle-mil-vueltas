@@ -3,7 +3,7 @@
 // Antes de abrir pasarela, re-verifica en servidor el Cortacircuitos de Lulu (Safety Guard)
 // Exclusivo para desarrollador autenticado (jesgilcan@gmail.com)
 
-import { calculateLuluQuoteAndSafety } from './lulu-quote.js';
+import { calculateLuluQuoteAndSafety, calculateDynamicRetailPrice } from './lulu-quote.js';
 
 const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
 const ALLOWED_TEST_CUSTOMER_EMAILS = ['jesusgil_87@hotmail.com', 'jesusgil_87@gmail.com'];
@@ -67,17 +67,18 @@ export default async function handler(req, res) {
 
   try {
     const {
+      items = null,
       bookTitle = 'Mi Cuaderno Personalizado',
       bookSubtitle = 'Edición Personalizada · 15,24 × 22,86 cm (6×9")',
       bindingType = 'softcover',
-      pageCount = 120,
+      pageCount = 144,
       customerName = 'Cliente Prueba',
       customerEmail = 'jesgilcan@gmail.com',
       customerPhone = '+34 600 000 000',
       address = 'Calle de Alcalá 42',
       postalCode = '28014',
       city = 'Madrid',
-      province = 'M',
+      province = 'Madrid',
       country = 'ES',
       notes = '',
       simulateSpike = false,
@@ -118,25 +119,70 @@ export default async function handler(req, res) {
     params.append('customer_email', customerEmail || 'jesgilcan@gmail.com');
     params.append('client_reference_id', orderNumber);
 
-    // Producto en línea con PVP fijo (envío incluido)
-    params.append('line_items[0][price_data][currency]', 'eur');
-    params.append('line_items[0][price_data][unit_amount]', String(amountCents));
-    params.append('line_items[0][price_data][product_data][name]', `${bookTitle} — ${quote.product.label}`);
-    params.append(
-      'line_items[0][price_data][product_data][description]',
-      `${bookSubtitle} · ${quote.product.pageCount} págs · Envío incluido a ${postalCode} ${city}`
-    );
-    params.append('line_items[0][quantity]', '1');
+    // Desglose de artículos en Stripe (Soporte multi-libro completo)
+    const cleanItems = [];
+    if (items && Array.isArray(items) && items.length > 0) {
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const itBinding = it.bindingType || 'softcover';
+        const itPages = parseInt(it.pageCount || 144, 10);
+        const itQty = Math.max(1, parseInt(it.quantity || 1, 10));
+        const itPrice = parseFloat(it.price || calculateDynamicRetailPrice(itBinding, itPages));
+        const itAmountCents = Math.round(itPrice * 100);
 
-    // Metadatos de auditoría para cruzar con Lulu y Admin Pedidos
+        params.append(`line_items[${i}][price_data][currency]`, 'eur');
+        params.append(`line_items[${i}][price_data][unit_amount]`, String(itAmountCents));
+        params.append(`line_items[${i}][price_data][product_data][name]`, it.title || 'Cuaderno Personalizado');
+        params.append(
+          `line_items[${i}][price_data][product_data][description]`,
+          `${it.subtitle || 'Edición Personalizada'} · ${itPages} págs (${itBinding})`
+        );
+        params.append(`line_items[${i}][quantity]`, String(itQty));
+
+        cleanItems.push({
+          title: it.title || 'Cuaderno Personalizado',
+          subtitle: it.subtitle || '',
+          bindingType: itBinding,
+          pageCount: itPages,
+          quantity: itQty,
+          price: itPrice,
+          data: it.data || {}
+        });
+      }
+    } else {
+      params.append('line_items[0][price_data][currency]', 'eur');
+      params.append('line_items[0][price_data][unit_amount]', String(amountCents));
+      params.append('line_items[0][price_data][product_data][name]', `${bookTitle} — ${quote.product.label}`);
+      params.append(
+        'line_items[0][price_data][product_data][description]',
+        `${bookSubtitle} · ${quote.product.pageCount} págs · Envío incluido a ${postalCode} ${city}`
+      );
+      params.append('line_items[0][quantity]', '1');
+
+      cleanItems.push({
+        title: bookTitle,
+        subtitle: bookSubtitle,
+        bindingType,
+        pageCount: quote.product.pageCount,
+        quantity: 1,
+        price: quote.pricing.retailPrice
+      });
+    }
+
+    const itemsSummary = cleanItems.map(x => `${x.quantity}x ${x.title}`).join(', ');
+
+    // Metadatos consolidados
     params.append('metadata[order_number]', orderNumber);
-    params.append('metadata[book_title]', bookTitle);
-    params.append('metadata[binding_type]', bindingType);
-    params.append('metadata[page_count]', String(quote.product.pageCount));
+    params.append('metadata[items_count]', String(cleanItems.length));
+    params.append('metadata[items_summary]', itemsSummary);
+    params.append('metadata[items_json]', JSON.stringify(cleanItems));
+    params.append('metadata[book_title]', cleanItems[0].title);
+    params.append('metadata[binding_type]', cleanItems[0].bindingType);
+    params.append('metadata[page_count]', String(cleanItems[0].pageCount));
     params.append('metadata[pod_package_id]', quote.product.podPackageId);
     params.append('metadata[lulu_total_cost_eur]', String(quote.pricing.luluTotalCost));
     params.append('metadata[net_margin_eur]', String(quote.pricing.netMargin));
-    params.append('metadata[customer_name]', customerName);
+    params.append('metadata[customer_name]', customerName || 'Cliente');
     params.append('metadata[customer_email]', customerEmail);
     params.append('metadata[customer_phone]', customerPhone);
     params.append('metadata[customer_notes]', notes || 'Sin indicaciones adicionales');

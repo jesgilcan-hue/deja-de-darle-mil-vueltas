@@ -74,11 +74,17 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
     const fullAddress = `${order.customer?.address || 'Calle Serrano 42'}, ${order.customer?.postalCode || '28001'} ${order.customer?.city || 'Madrid'} (${order.customer?.province || 'Madrid'})`;
     const customerNotes = order.customer?.notes || 'Sin instrucciones adicionales';
 
-    const bookTitle = order.book?.title || 'Cuaderno Personalizado Menos Ruido';
-    const bindingLabel = getBindingLabel(order.book?.bindingType);
-    const pageCount = order.book?.pageCount || 143;
-    const spineMm = order.book?.spineWidthMm || (pageCount * 0.057).toFixed(1);
+    const itemsList = (order.items && order.items.length > 0) ? order.items : [order.book || {}];
+    const isMultiBook = itemsList.length > 1;
+    const primaryBook = itemsList[0];
+    const bookTitle = isMultiBook 
+      ? itemsList.map(x => `${x.quantity || 1}x «${x.title || 'Cuaderno'}»`).join(', ')
+      : (primaryBook.title || order.book?.title || 'Cuaderno Personalizado Menos Ruido');
+    const bindingLabel = getBindingLabel(primaryBook.bindingType || order.book?.bindingType);
+    const pageCount = primaryBook.pageCount || order.book?.pageCount || 144;
+    const spineMm = primaryBook.spineWidthMm || order.book?.spineWidthMm || (pageCount * 0.057).toFixed(1);
     const fileSizeMb = order.book?.fileSizeMb || (pageCount * 0.32).toFixed(1);
+    const booksDetailList = itemsList.map(x => `• ${x.quantity || 1} ud: «${x.title}» (${getBindingLabel(x.bindingType)}, ${x.pageCount || 144} págs)`).join('\n');
 
     const totalPaid = parseFloat(order.pricing?.totalPaid || 27.90).toFixed(2);
     const luluCost = parseFloat(order.pricing?.luluCostEstimate || 17.14).toFixed(2);
@@ -123,7 +129,7 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
         `Se ha registrado un nuevo pedido pagado en la web (#${orderNumber}).`,
         `DATOS DEL CLIENTE COMPRADOR:\n• Nombre: ${customerName}\n• Email: ${customerEmail}\n• Teléfono: ${customerPhone}\n• Dirección: ${fullAddress}\n• Nota para repartidor: ${customerNotes}`,
         `INFORME FINANCIERO Y LULU DIRECT API:\n• PVP cobrado al cliente (envío incluido): ${totalPaid} €\n• Coste de fabricación + envío en Lulu: -${luluCost} €\n• Comisión pasarela Stripe: -${stripeFee} €\n• BENEFICIO NETO LIMPIO: +${netMargin} €`,
-        `ESPECIFICACIONES TÉCNICAS:\n• Ejemplar: ${bookTitle} (${bindingLabel})\n• Páginas interiores: ${pageCount} págs (Lomo calculado: ${spineMm} mm)\n• Peso en nube del perfil: ${fileSizeMb} MB\n• Estado actual: Pendiente de tu validación para enviar a Lulu.`
+        `ESPECIFICACIONES TÉCNICAS:\n• Ejemplares:\n${booksDetailList}\n• Páginas interiores: ${pageCount} págs (Lomo calculado: ${spineMm} mm)\n• Peso en nube del perfil: ${fileSizeMb} MB\n• Estado actual: Pendiente de tu validación para enviar a Lulu.`
       ].join('\n\n');
 
     } else if (eventType === 'status_pending_review') {

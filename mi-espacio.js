@@ -1851,8 +1851,39 @@ async function initClientOrdersAndBasketModule(user) {
     });
   }
 
-  // Escucha en tiempo real de la colección 'orders' y 'users/{uid}/orders' para sincronizar al instante
-  // Escucha permanente en tiempo real de pedidos para cualquier cliente autenticado
+  // Escucha en tiempo real compatible 100% con Reglas de Seguridad de Firestore
+  const safeUserEmail = (getUserEmail(user) || '').toLowerCase().trim();
+
+  // 1. Escucha por consulta filtrada de email (Permitida por reglas de Firestore)
+  if (safeUserEmail && !window.__mrUserOrdersQueryUnsub) {
+    try {
+      const qOrders = query(collection(db, 'orders'), where('customer.email', '==', safeUserEmail));
+      window.__mrUserOrdersQueryUnsub = onSnapshot(qOrders, (snap) => {
+        const remote = [];
+        snap.forEach(d => remote.push({ id: d.id, ...d.data() }));
+        if (remote.length > 0) {
+          const map = new Map();
+          clientProfileOrders.forEach(o => { const key = o.orderNumber || o.id; map.set(key, o); });
+          remote.forEach(o => {
+            const key = o.orderNumber || o.id;
+            const prev = map.get(key);
+            const merged = mergeOrderRecords(prev, o);
+            map.set(key, merged);
+            if (prev && prev.status !== o.status) {
+              const labels = { pending_review: '1. Revisión Técnica', approved_printing: '2. En Imprenta', printing: '2. En Imprenta', shipped: '3. En Reparto (Correos Express)', delivered: '4. Entregado' };
+              showToast(`⚡ Pedido #${o.orderNumber}: Estado actualizado a «${labels[o.status] || o.status}»`);
+            }
+          });
+          clientProfileOrders = Array.from(map.values());
+          clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
+          try { localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders)); } catch (e) {}
+          renderClientOrdersAndBasketViews(auth.currentUser || user);
+        }
+      }, (err) => { console.warn('Aviso en onSnapshot query orders:', err); });
+    } catch (e) {}
+  }
+
+  // 2. Escucha subcolección privada del usuario: users/{uid}/orders
   if (user && user.uid && !window.__mrUserOrdersSnapshotUnsub) {
     try {
       window.__mrUserOrdersSnapshotUnsub = onSnapshot(collection(db, 'users', user.uid, 'orders'), (snap) => {
@@ -1880,58 +1911,26 @@ async function initClientOrdersAndBasketModule(user) {
     } catch (e) {}
   }
 
-  if (!window.__mrOrdersCollectionSnapshotUnsub && user && (isDeveloper(user) || isTestCustomer(user))) {
+  // 3. Si el usuario es administrador/desarrollador, también escucha la colección global completa
+  if (user && isDeveloper(user) && !window.__mrOrdersAdminGlobalSnapshotUnsub) {
     try {
-      window.__mrOrdersCollectionSnapshotUnsub = onSnapshot(collection(db, 'orders'), (snap) => {
+      window.__mrOrdersAdminGlobalSnapshotUnsub = onSnapshot(collection(db, 'orders'), (snap) => {
         const remote = [];
         snap.forEach(d => remote.push({ id: d.id, ...d.data() }));
         if (remote.length > 0) {
           const map = new Map();
-          clientProfileOrders.forEach(o => {
-            const key = o.orderNumber || o.id;
-            map.set(key, o);
-          });
+          clientProfileOrders.forEach(o => { const key = o.orderNumber || o.id; map.set(key, o); });
           remote.forEach(o => {
             const key = o.orderNumber || o.id;
             map.set(key, mergeOrderRecords(map.get(key), o));
           });
           clientProfileOrders = Array.from(map.values());
           clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
-          try {
-            localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
-          } catch (e) {}
+          try { localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders)); } catch (e) {}
           renderClientOrdersAndBasketViews(auth.currentUser || user);
         }
-      }, (err) => {
-        console.warn('Aviso en escucha onSnapshot orders (cliente):', err);
-      });
+      }, (err) => { console.warn('Aviso admin orders onSnapshot:', err); });
     } catch (e) {}
-
-    if (user && user.uid && !window.__mrUserOrdersSnapshotUnsub) {
-      try {
-        window.__mrUserOrdersSnapshotUnsub = onSnapshot(collection(db, 'users', user.uid, 'orders'), (snap) => {
-          const remote = [];
-          snap.forEach(d => remote.push({ id: d.id, ...d.data() }));
-          if (remote.length > 0) {
-            const map = new Map();
-            clientProfileOrders.forEach(o => {
-              const key = o.orderNumber || o.id;
-              map.set(key, o);
-            });
-            remote.forEach(o => {
-              const key = o.orderNumber || o.id;
-              map.set(key, mergeOrderRecords(map.get(key), o));
-            });
-            clientProfileOrders = Array.from(map.values());
-            clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
-            try {
-              localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
-            } catch (e) {}
-            renderClientOrdersAndBasketViews(auth.currentUser || user);
-          }
-        }, (err) => {});
-      } catch (e) {}
-    }
   }
 
   renderClientOrdersAndBasketViews(user);
@@ -2449,9 +2448,12 @@ async function handleConfirmCheckoutOrder() {
   const notesInp = document.getElementById('checkout-modal-customer-notes');
   const deliveryNotes = notesInp ? notesInp.value.trim() : '';
 
+  const customerPlatformName = (user ? getUserDisplayName(user) : '') || 'Cliente';
+  const customerPlatformEmail = (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com';
+
   const firstShip = selectedItems[0]?.shipping || {
-    name: (user ? getUserDisplayName(user) : '') || 'Cliente',
-    email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
+    name: customerPlatformName,
+    email: customerPlatformEmail,
     phone: '+34 600 000 000',
     address: 'Calle Serrano 42, 4º Derecha',
     postalCode: '28001',
@@ -2461,15 +2463,26 @@ async function handleConfirmCheckoutOrder() {
     notes: deliveryNotes || 'Sin instrucciones adicionales'
   };
   if (deliveryNotes) firstShip.notes = deliveryNotes;
+  firstShip.name = customerPlatformName;
+
+  // Persistir dirección e instrucciones de entrega en el perfil del cliente
+  try {
+    localStorage.setItem('mr_customer_shipping_address', JSON.stringify(firstShip));
+  } catch(e) {}
+
+  // Verificar que todos los libros de la cesta tengan páginas pares
+  for (const it of selectedItems) {
+    const pCount = it.pageCount || 144;
+    if (pCount % 2 !== 0) {
+      alert(`⚠️ El cuaderno "${it.title}" tiene un número impar de páginas (${pCount} págs).\n\nPara imprenta el número de páginas debe ser estrictamente par. Ajusta el interior antes de pagar.`);
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (confirmTxt) confirmTxt.textContent = 'Pagar con Tarjeta';
+      return;
+    }
+  }
 
   const primaryItem = selectedItems[0];
   const pageCount = primaryItem.pageCount || 144;
-  if (pageCount % 2 !== 0) {
-    alert(`⚠️ El cuaderno "${primaryItem.title}" tiene un número impar de páginas (${pageCount} págs).\n\nPara imprenta el número de páginas debe ser estrictamente par. Ajusta el interior antes de pagar.`);
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Pagar con Tarjeta';
-    return;
-  }
 
   try {
     const idToken = user ? await user.getIdToken() : '';
@@ -2480,12 +2493,21 @@ async function handleConfirmCheckoutOrder() {
         ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
       },
       body: JSON.stringify({
+        items: selectedItems.map(it => ({
+          title: it.title,
+          subtitle: it.subtitle || 'Edición Personalizada',
+          bindingType: it.bindingType || 'softcover',
+          pageCount: it.pageCount || 144,
+          quantity: it.quantity || 1,
+          price: it.price,
+          data: it.data || {}
+        })),
         bookTitle: primaryItem.title,
         bookSubtitle: primaryItem.subtitle || 'Edición Personalizada',
         bindingType: primaryItem.bindingType || 'softcover',
         pageCount: pageCount,
-        customerName: firstShip.name,
-        customerEmail: firstShip.email,
+        customerName: customerPlatformName,
+        customerEmail: customerPlatformEmail,
         customerPhone: firstShip.phone,
         address: firstShip.address,
         postalCode: firstShip.postalCode,
@@ -2505,8 +2527,10 @@ async function handleConfirmCheckoutOrder() {
       localStorage.setItem('mr_active_checkout_order', JSON.stringify({
         orderNumber: data.orderNumber,
         sessionId: data.sessionId,
+        items: selectedItems,
         item: primaryItem,
-        customer: firstShip
+        customer: firstShip,
+        deliveryNotes: deliveryNotes
       }));
     } catch(e) {}
 
@@ -2548,13 +2572,15 @@ async function checkAndHandleStripeCheckoutReturn() {
     }
 
     if (stripeVerified) {
-      // Retirar de la cesta pendiente el libro comprado
+      // Retirar de la cesta pendiente todos los libros comprados
       try {
         const pendingRaw = localStorage.getItem('mr_pending_payment_books');
         if (pendingRaw) {
           let pList = JSON.parse(pendingRaw);
-          if (activeData?.item?.title) {
-            pList = pList.filter(x => x.title !== activeData.item.title);
+          const itemsList = activeData?.items || (activeData?.item ? [activeData.item] : []);
+          const boughtTitles = itemsList.map(x => x.title);
+          if (boughtTitles.length > 0) {
+            pList = pList.filter(x => !boughtTitles.includes(x.title));
           } else {
             pList = [];
           }
@@ -2570,22 +2596,28 @@ async function checkAndHandleStripeCheckoutReturn() {
       const pageCount = parseInt(stripeData?.metadata?.page_count || activeData?.item?.pageCount || 144, 10);
       const spineWidth = (pageCount * 0.057).toFixed(1);
 
+      const itemsList = activeData?.items || (activeData?.item ? [activeData.item] : []);
+      const platformCustomerName = (user ? getUserDisplayName(user) : '') || activeData?.customer?.name || stripeData?.customerName || 'Cliente';
+      const platformCustomerEmail = (user ? getUserEmail(user) : '') || activeData?.customer?.email || stripeData?.customerEmail || 'jesusgil_87@hotmail.com';
+      const consolidatedNotes = activeData?.deliveryNotes || activeData?.customer?.notes || stripeData?.metadata?.customer_notes || 'Sin instrucciones adicionales';
+
       const newOrder = {
         id: 'ord_' + Date.now(),
         orderNumber: orderNumber,
         status: 'pending_review',
         createdAt: new Date().toISOString(),
+        items: itemsList,
         customer: {
           uid: user?.uid || (auth.currentUser ? auth.currentUser.uid : ''),
-          name: stripeData?.customerName || activeData?.customer?.name || (user ? getUserDisplayName(user) : 'Cliente'),
-          email: stripeData?.customerEmail || activeData?.customer?.email || (user ? getUserEmail(user) : 'jesusgil_87@hotmail.com'),
+          name: platformCustomerName,
+          email: platformCustomerEmail.toLowerCase().trim(),
           phone: activeData?.customer?.phone || '+34 600 000 000',
           address: activeData?.customer?.address || 'Calle Serrano 42',
           postalCode: activeData?.customer?.postalCode || '28001',
           city: activeData?.customer?.city || 'Madrid',
           province: activeData?.customer?.province || 'Madrid',
           country: 'España',
-          notes: activeData?.customer?.notes || stripeData?.metadata?.customer_notes || 'Sin instrucciones adicionales',
+          notes: consolidatedNotes,
           isRegistered: true
         },
         shipping: {

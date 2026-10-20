@@ -751,39 +751,38 @@ function createOrderCardElement(order) {
       <!-- COLUMNA 2: ESPECIFICACIONES TÉCNICAS Y CONTROL DE CALIDAD PREFLIGHT -->
       <div class="order-book-specs">
         <div class="order-section-title">
-          <span>📖</span> Especificaciones del Cuaderno
+          <span>📖</span> Especificaciones del Pedido ${order.items && order.items.length > 1 ? `(${order.items.length} ejemplares)` : ''}
         </div>
-        <div class="book-title-display">«${escapeHtml(order.book?.title || 'Planificador Personalizado')}»</div>
-        <div style="font-size:0.80rem; color:#6b6257; margin-bottom:6px;">${escapeHtml(order.book?.subtitle || '')}</div>
-
-        <div class="book-badges-row">
-          <span class="book-spec-pill" style="background:#eaf2ec; color:#225533; border-color:#bed6c3;">${bindingName}</span>
-          <span class="book-spec-pill">${order.book?.pageCount || 144} páginas</span>
-          <span class="book-spec-pill">8.25" × 6" (210 × 152 mm)</span>
-          <span class="book-spec-pill">Cantidad: ${order.book?.quantity || 1} ud</span>
-        </div>
-
-        <!-- VALIDACIÓN PREFLIGHT IMPRENTA -->
-        <div class="preflight-check-list">
-          ${(order.book?.pageCount || 144) % 2 === 0 
-            ? `<div style="color:#166534;">✓ Páginas pares exactas: <strong>Sí (${order.book?.pageCount || 144} págs)</strong></div>` 
-            : `<div style="color:#dc2626; font-weight:700;">✗ Páginas pares: <strong>No (${order.book?.pageCount || 143} págs - Error: Imprenta exige número par)</strong></div>`}
-          <div>✓ Sangría de corte: <strong>3.175 mm perimetral OK</strong></div>
-          <div>✓ Archivo digital: <strong>Vectorial verificado OK</strong></div>
-          <div>✓ Grosor de lomo calculado: <strong>${order.book?.spineWidthMm || '8.2'} mm</strong></div>
-        </div>
-
-        <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
-          <button type="button" class="btn-order-secondary" style="flex:1; min-width:115px; font-weight:700;" onclick="downloadOrderCoverPdf('${order.id || order.orderNumber}')" title="Descargar Portada PDF (300 DPI imprenta)">
-            <span>📥</span> Portada PDF
-          </button>
-          <button type="button" class="btn-order-secondary" style="flex:1; min-width:115px; font-weight:700;" onclick="downloadOrderInteriorPdf('${order.id || order.orderNumber}')" title="Descargar Interior PDF (Vectorial imprenta)">
-            <span>📥</span> Interior PDF
-          </button>
-          <button type="button" class="btn-order-secondary" style="padding:6px 10px;" onclick="openPdfPreviewModal('${order.id || order.orderNumber}')" title="Inspección técnica preflight">
-            <span>🔍</span> Preflight
-          </button>
-        </div>
+        ${(order.items && order.items.length > 0 ? order.items : [order.book || {}]).map((bk, bIdx) => {
+          const bBinding = getBindingName(bk?.bindingType);
+          const bPages = parseInt(bk?.pageCount || 144, 10);
+          const bSpine = (bPages * 0.057).toFixed(1);
+          return `
+            <div style="${bIdx > 0 ? 'margin-top:14px; padding-top:12px; border-top:1px dashed #e2dad0;' : ''}">
+              <div class="book-title-display">«${escapeHtml(bk?.title || 'Planificador Personalizado')}»</div>
+              <div style="font-size:0.80rem; color:#6b6257; margin-bottom:6px;">${escapeHtml(bk?.subtitle || '')}</div>
+              <div class="book-badges-row">
+                <span class="book-spec-pill" style="background:#eaf2ec; color:#225533; border-color:#bed6c3;">${bBinding}</span>
+                <span class="book-spec-pill">${bPages} páginas</span>
+                <span class="book-spec-pill">Cantidad: ${bk?.quantity || 1} ud</span>
+              </div>
+              <div class="preflight-check-list" style="margin-top:6px;">
+                ${bPages % 2 === 0 
+                  ? `<div style="color:#166534;">✓ Páginas pares exactas: <strong>Sí (${bPages} págs)</strong></div>` 
+                  : `<div style="color:#dc2626; font-weight:700;">✗ Páginas pares: <strong>No (${bPages} págs - Error: Imprenta exige número par)</strong></div>`}
+                <div>✓ Lomo calculado: <strong>${bSpine} mm</strong></div>
+              </div>
+              <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+                <button type="button" class="btn-order-secondary" style="flex:1; min-width:110px; font-weight:700; font-size:0.75rem;" onclick="downloadOrderCoverPdf('${order.id || order.orderNumber}', ${bIdx})" title="Descargar Portada PDF">
+                  <span>📥</span> Portada PDF ${order.items && order.items.length > 1 ? `(#${bIdx+1})` : ''}
+                </button>
+                <button type="button" class="btn-order-secondary" style="flex:1; min-width:110px; font-weight:700; font-size:0.75rem;" onclick="downloadOrderInteriorPdf('${order.id || order.orderNumber}', ${bIdx})" title="Descargar Interior PDF">
+                  <span>📥</span> Interior PDF ${order.items && order.items.length > 1 ? `(#${bIdx+1})` : ''}
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
       </div>
 
       <!-- COLUMNA 3: PRECIOS, ESTADO LULU Y ACCIONES -->
@@ -1081,37 +1080,39 @@ window.anonymizeOrderRgpd = function(orderId) {
 // =========================================================================
 // DESCARGA DIRECTA DE ARCHIVOS PDF DE IMPRENTA
 // =========================================================================
-window.downloadOrderCoverPdf = function(orderId) {
+window.downloadOrderCoverPdf = function(orderId, itemIndex = 0) {
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
+  const targetBook = (order.items && order.items[itemIndex]) || order.book || {};
   try {
     localStorage.setItem('mr_cart_cover_item', JSON.stringify({
-      title: order.book?.title,
-      bindingType: order.book?.bindingType || 'softcover',
-      pageCount: order.book?.pageCount || 144,
-      syncedBookName: order.book?.subtitle || order.book?.title,
-      data: order.book?.data || {},
+      title: targetBook.title,
+      bindingType: targetBook.bindingType || 'softcover',
+      pageCount: targetBook.pageCount || 144,
+      syncedBookName: targetBook.subtitle || targetBook.title,
+      data: targetBook.data || {},
       updatedAt: Date.now()
     }));
   } catch(e) {}
-  showToast(`📥 Descargando Portada PDF del pedido #${order.orderNumber}...`);
-  window.open(`/generador-portadas.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&title=${encodeURIComponent(order.book?.title || '')}&pages=${order.book?.pageCount || 144}&binding=${order.book?.bindingType || 'softcover'}`, '_blank');
+  showToast(`📥 Descargando Portada PDF de «${targetBook.title || order.orderNumber}»...`);
+  window.open(`/generador-portadas.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&title=${encodeURIComponent(targetBook.title || '')}&pages=${targetBook.pageCount || 144}&binding=${targetBook.bindingType || 'softcover'}`, '_blank');
 };
 
-window.downloadOrderInteriorPdf = function(orderId) {
+window.downloadOrderInteriorPdf = function(orderId, itemIndex = 0) {
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
+  const targetBook = (order.items && order.items[itemIndex]) || order.book || {};
   try {
     localStorage.setItem('mr_complete_book_config', JSON.stringify({
-      title: order.book?.title,
-      subtitle: order.book?.subtitle,
-      pageCount: order.book?.pageCount || 144,
-      bindingType: order.book?.bindingType || 'softcover',
-      data: order.book?.data || {}
+      title: targetBook.title,
+      subtitle: targetBook.subtitle,
+      pageCount: targetBook.pageCount || 144,
+      bindingType: targetBook.bindingType || 'softcover',
+      data: targetBook.data || {}
     }));
   } catch(e) {}
-  showToast(`📥 Descargando Interior PDF del pedido #${order.orderNumber}...`);
-  window.open(`/generador-libro-completo.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&pages=${order.book?.pageCount || 144}&binding=${order.book?.bindingType || 'softcover'}`, '_blank');
+  showToast(`📥 Descargando Interior PDF de «${targetBook.title || order.orderNumber}»...`);
+  window.open(`/generador-libro-completo.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&pages=${targetBook.pageCount || 144}&binding=${targetBook.bindingType || 'softcover'}`, '_blank');
 };
 
 // 6. MODALES: PREVISUALIZACIÓN DE PDFS Y EDICIÓN DE DIRECCIÓN
