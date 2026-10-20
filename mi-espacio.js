@@ -196,8 +196,16 @@ document.addEventListener('DOMContentLoaded', () => {
       await initClientOrdersAndBasketModule(user);
     } else {
       try { localStorage.removeItem('mr_cached_user'); } catch (e) {}
-      // Si el usuario no ha iniciado sesión pero tiene diseños guardados localmente, mostrarlos
-      if (allDesigns.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isOrderReturn = urlParams.get('stripe_success') === '1' ||
+                            urlParams.get('stripe_test_success') === '1' ||
+                            urlParams.get('order') ||
+                            urlParams.get('orderId') ||
+                            urlParams.get('tab') === 'pedidos';
+      const hasLocalOrders = !!localStorage.getItem('mr_simulated_orders');
+      const hasPendingBooks = !!localStorage.getItem('mr_pending_payment_books');
+
+      if (isOrderReturn || hasLocalOrders || hasPendingBooks || allDesigns.length > 0) {
         renderGuestLocalView();
       } else {
         renderUnauthenticatedView();
@@ -545,22 +553,19 @@ function setupEvents() {
     }
   });
 
-  btnSaveDirecciones?.addEventListener('click', async () => {
-    if (!currentUser) {
-      showToast('Inicia sesión para guardar tus direcciones');
-      return;
-    }
+  async function executeSaveDirecciones(returnToBasket = false) {
     const name = document.getElementById('ajustes-shipping-name')?.value.trim();
     const phone = document.getElementById('ajustes-shipping-phone')?.value.trim();
     const address = document.getElementById('ajustes-shipping-address')?.value.trim();
     const postalCode = document.getElementById('ajustes-shipping-zip')?.value.trim();
     const city = document.getElementById('ajustes-shipping-city')?.value.trim();
     const province = document.getElementById('ajustes-shipping-province')?.value.trim();
+    const notes = document.getElementById('ajustes-shipping-notes')?.value.trim() || '';
     const isSameBilling = sameBillingCheck ? sameBillingCheck.checked : true;
 
     if (!name || !address) {
-      showToast('Por favor, indica al menos nombre y dirección');
-      return;
+      showToast('Por favor, indica al menos destinatario y dirección');
+      return false;
     }
 
     const shippingData = {
@@ -576,8 +581,10 @@ function setupEvents() {
       ciudad: city,
       province,
       provincia: province,
+      notes,
+      notas: notes,
       pais: 'España',
-      updatedAt: serverTimestamp()
+      updatedAt: new Date().toISOString()
     };
 
     const billingData = {
@@ -587,26 +594,41 @@ function setupEvents() {
       address: isSameBilling ? address : (document.getElementById('ajustes-billing-address')?.value.trim() || address)
     };
 
-    btnSaveDirecciones.disabled = true;
-    btnSaveDirecciones.textContent = 'Guardando...';
-
+    // 1. Guardar en localStorage siempre (para todos los libros de la cesta)
     try {
-      const userRef = doc(db, 'users', currentUser.uid);
-      await setDoc(userRef, { shipping: shippingData, billing: billingData }, { merge: true });
-      populateShippingFields(shippingData, billingData);
-      showToast('✓ Direcciones de entrega y facturación guardadas');
-      const fb = document.getElementById('feedback-save-direcciones');
-      if (fb) {
-        fb.style.display = 'inline';
-        setTimeout(() => fb.style.display = 'none', 3000);
-      }
-    } catch (err) {
-      console.error('Error guardando direcciones:', err);
-      showToast('No se pudieron guardar las direcciones');
-    } finally {
-      btnSaveDirecciones.disabled = false;
-      btnSaveDirecciones.textContent = 'Guardar direcciones';
+      localStorage.setItem('mr_customer_shipping_address', JSON.stringify(shippingData));
+    } catch(e) {}
+
+    // 2. Actualizar la dirección de TODOS los libros en la cesta
+    clientPendingBasket.forEach(it => {
+      it.shipping = { ...shippingData };
+    });
+    saveClientOrdersAndBasketState(currentUser);
+
+    // 3. Guardar en Firestore si hay usuario
+    if (currentUser) {
+      try {
+        const userRef = doc(db, 'users', currentUser.uid);
+        await setDoc(userRef, { shipping: shippingData, billing: billingData }, { merge: true });
+      } catch(e) {}
     }
+
+    showToast('✓ Dirección de entrega actualizada para todos tus libros');
+    renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
+
+    if (returnToBasket) {
+      activateTab('tab-pedidos');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    return true;
+  }
+
+  document.getElementById('btn-save-and-return-basket')?.addEventListener('click', () => {
+    executeSaveDirecciones(true);
+  });
+
+  btnSaveDirecciones?.addEventListener('click', async () => {
+    executeSaveDirecciones(false);
   });
 
   // Eventos del modal para editar dirección de entrega en la cesta
@@ -1076,19 +1098,32 @@ function renderGuestLocalView() {
   if (unauthContainer) unauthContainer.style.display = 'none';
   if (authContainer) authContainer.style.display = 'block';
 
+  const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
+  if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+
   if (userNameDisplay) {
     const titleText = userNameDisplay.querySelector('.user-name-text');
-    if (titleText) titleText.textContent = 'Mi Espacio (Local)';
-    else if (userNameDisplay.firstChild) userNameDisplay.firstChild.textContent = 'Mi Espacio (Local) ';
+    if (titleText) titleText.textContent = 'Mi Espacio';
+    else if (userNameDisplay.firstChild) userNameDisplay.firstChild.textContent = 'Mi Espacio ';
   }
   if (userEmailDisplay) {
-    userEmailDisplay.textContent = 'Diseños guardados en este navegador';
+    const savedAddr = JSON.parse(localStorage.getItem('mr_customer_shipping_address') || '{}');
+    userEmailDisplay.textContent = savedAddr.email || 'Modo Cliente';
   }
   if (userRoleBadge) userRoleBadge.style.setProperty('display', 'none', 'important');
   if (tabBtnDev) tabBtnDev.style.setProperty('display', 'none', 'important');
   if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
 
-  activateTab('tab-disenos');
+  const params = new URLSearchParams(window.location.search);
+  const targetTab = params.get('tab') || (params.get('stripe_success') === '1' || params.get('order') || params.get('orderId') ? 'pedidos' : 'disenos');
+
+  if (targetTab === 'pedidos') {
+    activateTab('tab-pedidos');
+  } else if (targetTab === 'ajustes') {
+    activateTab('tab-ajustes');
+  } else {
+    activateTab('tab-disenos');
+  }
   updateDesignCounts();
   renderDesignsGrid();
 }
