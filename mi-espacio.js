@@ -275,7 +275,8 @@ function checkUrlTab(allowDevTabs = false) {
   const tab = params.get('tab');
   const user = auth.currentUser;
   const isDevAllowed = isDeveloper(user) && allowDevTabs;
-  const isOrdersAllowed = isDevAllowed || isTestCustomer(user);
+  const hasPending = !!localStorage.getItem('mr_pending_payment_books') || !!localStorage.getItem('mr_cart_cover_item');
+  const isOrdersAllowed = isDevAllowed || isTestCustomer(user) || hasPending;
 
   if (params.get('stripe_test_success') === '1') {
     const ordNum = params.get('order') || '';
@@ -3226,3 +3227,7 @@ function renderClientOrdersAndBasketViews(user) {
   }
 }
 
+
+
+window.initClientOrdersAndBasketModule = initClientOrdersAndBasketModule;
+window.renderClientOrdersAndBasketViews = renderClientOrdersAndBasketViews;
