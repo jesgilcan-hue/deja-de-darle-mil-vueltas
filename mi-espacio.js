@@ -2096,8 +2096,10 @@ function closeBasketPreviewModal() {
 
 
 // =====================================================================
-// FUNCIONES Y DELEGACIÓN GLOBAL DE ACCIONES DE CESTA Y DESCARGA DIRECTA DE PDF
 // =====================================================================
+// FUNCIONES Y DELEGACIÓN GLOBAL DE ACCIONES DE CESTA Y CHECKOUT DIRECTO
+// =====================================================================
+
 function getBasketItemById(id) {
   let found = clientPendingBasket.find(x => String(x.id) === String(id));
   if (!found && clientPendingBasket.length > 0) {
@@ -2106,28 +2108,293 @@ function getBasketItemById(id) {
   return found;
 }
 
-function handleBasketBuyClick(id) {
-  const item = getBasketItemById(id);
-  if (!item) {
-    showToast('⚠️ No se ha encontrado el ejemplar seleccionado.');
-    return;
-  }
-  showToast('🛒 Abriendo resumen de tu pedido...');
-  try {
-    openDevCartDrawer({
-      title: item.title,
-      bindingType: item.bindingType,
-      pageCount: item.pageCount,
-      syncedBookName: item.subtitle,
-      shipping: item.shipping,
-      data: item.data
-    });
-  } catch (err) {
-    console.warn('Fallback al abrir el carrito:', err);
-    if (typeof window.openDevCartDrawer === 'function') {
-      window.openDevCartDrawer(item);
+function updateFloatingCartSummary() {
+  const totalUnits = clientPendingBasket.reduce((sum, item) => sum + (typeof item.quantity === 'number' ? item.quantity : 1), 0);
+  const totalAmount = clientPendingBasket.reduce((sum, item) => {
+    const q = (typeof item.quantity === 'number' ? item.quantity : 1);
+    const p = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
+    return sum + (p * q);
+  }, 0);
+  const totalStr = totalAmount.toFixed(2).replace('.', ',') + ' €';
+
+  if (typeof window.updateCartFabBadge === 'function') {
+    window.updateCartFabBadge(totalUnits, totalStr);
+  } else {
+    const fab = document.getElementById('mrDevCartFab');
+    if (fab) {
+      fab.innerHTML = `
+        <span>🛒</span>
+        <span>Tu Carrito (${totalUnits})</span>
+        <span class="mr-dev-cart-fab-badge" style="background:${totalUnits > 0 ? '#215c38' : '#786e63'};">${totalStr}</span>
+      `;
     }
   }
+}
+window.updateFloatingCartSummary = updateFloatingCartSummary;
+
+function openBasketCheckoutModal(targetItemId = null) {
+  const modal = document.getElementById('basket-checkout-modal');
+  if (!modal) return;
+
+  // Si se ha pinchado en un ítem específico y su cantidad era 0, la ponemos en 1
+  if (targetItemId) {
+    const target = clientPendingBasket.find(x => String(x.id) === String(targetItemId));
+    if (target && (!target.quantity || target.quantity <= 0)) {
+      target.quantity = 1;
+      saveClientOrdersAndBasketState(currentUser || auth.currentUser);
+    }
+  }
+
+  // Filtrar ítems seleccionados (con cantidad > 0)
+  let selectedItems = clientPendingBasket.filter(x => (x.quantity !== undefined ? x.quantity : 1) > 0);
+
+  // Si ninguno tiene cantidad > 0 pero hay productos en la cesta, asignamos cantidad 1 al primero
+  if (selectedItems.length === 0 && clientPendingBasket.length > 0) {
+    clientPendingBasket[0].quantity = 1;
+    selectedItems = [clientPendingBasket[0]];
+    saveClientOrdersAndBasketState(currentUser || auth.currentUser);
+  }
+
+  if (selectedItems.length === 0) {
+    showToast('⚠️ No tienes ningún cuaderno en la cesta ahora mismo.');
+    return;
+  }
+
+  // 1. Renderizar lista de cuadernos a tramitar
+  const itemsContainer = document.getElementById('checkout-modal-items-list');
+  let totalAmount = 0;
+  let totalUnits = 0;
+
+  if (itemsContainer) {
+    itemsContainer.innerHTML = selectedItems.map(item => {
+      const q = typeof item.quantity === 'number' ? item.quantity : 1;
+      const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
+      const sub = unitPrice * q;
+      totalAmount += sub;
+      totalUnits += q;
+      return `
+        <div style="background: #ffffff; border: 1px solid #ebd5c3; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div style="flex: 1;">
+            <div style="font-weight: 800; font-size: 0.95rem; color: #1f1c19;">${escapeHtml(item.title)}</div>
+            <div style="font-size: 0.8rem; color: #665e54; margin-top: 2px;">
+              ${getBindingLabelForProfile(item.bindingType)} · <strong>${item.pageCount} págs</strong> · Cantidad: <strong>${q}</strong> (${unitPrice.toFixed(2).replace('.', ',')} €/ud)
+            </div>
+          </div>
+          <div style="text-align: right; min-width: 90px;">
+            <div style="font-weight: 900; font-size: 1.05rem; color: #1f1c19;">
+              ${sub.toFixed(2).replace('.', ',')} €
+            </div>
+            <div style="font-size: 0.7rem; color: #215c38; font-weight: 700;">Envío GRATIS</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 2. Renderizar resumen de dirección de entrega
+  const shipContainer = document.getElementById('checkout-modal-shipping-summary');
+  const user = currentUser || auth.currentUser;
+  const firstShip = selectedItems[0]?.shipping || {
+    name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+    email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
+    phone: '+34 600 000 000',
+    address: 'Calle Serrano 42, 4º Derecha',
+    postalCode: '28001',
+    city: 'Madrid',
+    province: 'Madrid',
+    notes: 'Entregar en conserjería si no estoy en casa.'
+  };
+
+  if (shipContainer) {
+    shipContainer.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+        <div>
+          <div><strong style="color: #1f1c19;">${escapeHtml(firstShip.name || 'Cliente')}</strong> (<span style="color: #665e54;">${escapeHtml(firstShip.email || user?.email || '')}</span>)</div>
+          <div style="color: #4a4138; margin-top: 2px;">${escapeHtml(firstShip.address || '')}, ${escapeHtml(firstShip.postalCode || '')} ${escapeHtml(firstShip.city || '')} (${escapeHtml(firstShip.province || '')})</div>
+          <div style="color: #665e54; font-size: 0.78rem; margin-top: 2px;">Teléfono: <strong>${escapeHtml(firstShip.phone || '+34 600 000 000')}</strong></div>
+          ${firstShip.notes ? `<div style="color: #87553b; font-size: 0.78rem; margin-top: 3px; font-style: italic;">Nota repartidor: ${escapeHtml(firstShip.notes)}</div>` : ''}
+        </div>
+        <button type="button" data-edit-shipping-basket="${escapeHtml(selectedItems[0].id)}" style="background: #f5efe6; border: 1px solid #d6cec0; border-radius: 5px; padding: 4px 10px; font-size: 0.74rem; font-weight: 700; color: #87553b; cursor: pointer;">
+          ✏️ Cambiar
+        </button>
+      </div>
+    `;
+  }
+
+  // 3. Totales
+  const subLabel = document.getElementById('checkout-modal-subtotal-label');
+  const subVal = document.getElementById('checkout-modal-subtotal-val');
+  const totVal = document.getElementById('checkout-modal-total-val');
+  if (subLabel) subLabel.textContent = `Subtotal cuadernos (${totalUnits} ${totalUnits === 1 ? 'ejemplar' : 'ejemplares'})`;
+  if (subVal) subVal.textContent = totalAmount.toFixed(2).replace('.', ',') + ' €';
+  if (totVal) totVal.textContent = totalAmount.toFixed(2).replace('.', ',') + ' €';
+
+  // 4. Restaurar botón
+  const confirmBtn = document.getElementById('btn-confirm-checkout-order');
+  const confirmTxt = document.getElementById('btn-confirm-checkout-order-text');
+  if (confirmBtn) confirmBtn.disabled = false;
+  if (confirmTxt) confirmTxt.textContent = `Confirmar y Tramitar Pedido (Simulación 0€) · ${totalAmount.toFixed(2).replace('.', ',')} €`;
+
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => {
+    modal.style.opacity = '1';
+  });
+  document.body.style.overflow = 'hidden';
+}
+window.openBasketCheckoutModal = openBasketCheckoutModal;
+
+function closeBasketCheckoutModal() {
+  const modal = document.getElementById('basket-checkout-modal');
+  if (modal) {
+    modal.style.opacity = '0';
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 240);
+  }
+  document.body.style.overflow = '';
+}
+window.closeBasketCheckoutModal = closeBasketCheckoutModal;
+
+async function handleConfirmCheckoutOrder() {
+  const selectedItems = clientPendingBasket.filter(x => (x.quantity !== undefined ? x.quantity : 1) > 0);
+  if (selectedItems.length === 0) {
+    showToast('⚠️ No hay ningún ejemplar con cantidad seleccionada.');
+    return;
+  }
+
+  const confirmBtn = document.getElementById('btn-confirm-checkout-order');
+  const confirmTxt = document.getElementById('btn-confirm-checkout-order-text');
+  if (confirmBtn) confirmBtn.disabled = true;
+  if (confirmTxt) confirmTxt.textContent = '⏳ Tramitando pedido y enviando emails a Cliente y Gestor...';
+
+  const user = currentUser || auth.currentUser;
+  const firstShip = selectedItems[0]?.shipping || {
+    name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+    email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
+    phone: '+34 600 000 000',
+    address: 'Calle Serrano 42, 4º Derecha',
+    postalCode: '28001',
+    city: 'Madrid',
+    province: 'Madrid',
+    country: 'España',
+    notes: 'Entregar en conserjería si no estoy en casa.'
+  };
+
+  let totalPaid = 0;
+  let totalUnits = 0;
+  const itemsList = selectedItems.map(item => {
+    const q = typeof item.quantity === 'number' ? item.quantity : 1;
+    const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
+    totalPaid += unitPrice * q;
+    totalUnits += q;
+    return {
+      title: item.title,
+      subtitle: item.subtitle,
+      bindingType: item.bindingType,
+      pageCount: item.pageCount,
+      quantity: q,
+      unitPrice: unitPrice
+    };
+  });
+
+  const orderNumber = 'MR-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+  const primaryItem = selectedItems[0];
+  const bindForAdmin = primaryItem.bindingType === 'softcover' ? 'perfect' : primaryItem.bindingType;
+
+  const newOrder = {
+    id: 'ord_' + Date.now(),
+    orderNumber: orderNumber,
+    status: 'pending_review',
+    createdAt: new Date().toISOString(),
+    customer: {
+      name: firstShip.name || (user ? getUserDisplayName(user) : 'Cliente'),
+      email: firstShip.email || (user ? getUserEmail(user) : 'jesusgil_87@hotmail.com'),
+      phone: firstShip.phone || '+34 600 000 000',
+      address: firstShip.address || 'Calle Serrano 42',
+      postalCode: firstShip.postalCode || '28001',
+      city: firstShip.city || 'Madrid',
+      province: firstShip.province || 'Madrid',
+      country: 'España',
+      notes: firstShip.notes || 'Pedido tramitado desde la Cesta de la Web',
+      isRegistered: true
+    },
+    shipping: {
+      carrier: 'Correos Express',
+      trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
+      lastCarrierMessage: 'Pedido recibido. En fase 1: En Revisión Técnica de tripas y maquetación.'
+    },
+    comms: {
+      compra: { sent: true, date: new Date().toISOString(), id: 'sim_test_' + Date.now() },
+      imprenta: { sent: false },
+      tracking: { sent: false },
+      entregado: { sent: false },
+      checkin: { sent: false }
+    },
+    items: itemsList,
+    book: {
+      title: primaryItem.title,
+      subtitle: primaryItem.subtitle,
+      bindingType: bindForAdmin,
+      pageCount: primaryItem.pageCount,
+      quantity: totalUnits,
+      size: '8.25x6',
+      spineWidthMm: (primaryItem.pageCount * 0.057).toFixed(1)
+    },
+    pricing: {
+      currency: 'EUR',
+      totalPaid: +totalPaid.toFixed(2),
+      luluCostEstimate: +(totalPaid * 0.45).toFixed(2),
+      netMargin: +(totalPaid * 0.50).toFixed(2),
+      stripePaymentId: 'sim_checkout_' + Date.now()
+    },
+    timeline: [
+      {
+        date: new Date().toISOString(),
+        message: `Pedido confirmado en modo Simulación (${totalPaid.toFixed(2)} €). Se envían confirmaciones a Cliente y Gestor.`
+      }
+    ]
+  };
+
+  // 1. Guardar en historial de pedidos local
+  clientProfileOrders.unshift(newOrder);
+  try {
+    localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+  } catch (e) {}
+
+  // 2. Guardar en Firestore si el usuario está autenticado
+  try {
+    if (user && (isDeveloper(user) || isTestCustomer(user))) {
+      await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
+    }
+  } catch (e) {
+    console.warn('Aviso guardando orden en Firestore:', e);
+  }
+
+  // 3. Enviar correos en paralelo
+  try {
+    const emailRes = await sendOrderLifecycleEmails(newOrder, 'order_created');
+    if (emailRes.clientEmailId && newOrder.comms?.compra) {
+      newOrder.comms.compra.id = emailRes.clientEmailId;
+    }
+  } catch (err) {
+    console.warn('Aviso enviando emails:', err);
+  }
+
+  // 4. Retirar de la cesta los productos comprados
+  const purchasedIds = new Set(selectedItems.map(s => String(s.id)));
+  clientPendingBasket = clientPendingBasket.filter(x => !purchasedIds.has(String(x.id)));
+  saveClientOrdersAndBasketState(user);
+
+  // 5. Cerrar modal y actualizar UI
+  closeBasketCheckoutModal();
+  renderClientOrdersAndBasketViews(user);
+  showToast(`🎉 ¡Pedido ${orderNumber} tramitado con éxito! Revisa tu seguimiento abajo.`);
+
+  // 6. Hacer scroll suave hasta el historial de pedidos
+  setTimeout(() => {
+    const hist = document.getElementById('client-orders-history-list') || document.getElementById('client-orders-badge');
+    if (hist) hist.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 350);
 }
 
 function handleBasketCoverPdfClick(id) {
@@ -2145,12 +2412,7 @@ function handleBasketCoverPdfClick(id) {
   } catch (e) {}
 
   showToast('⏳ Preparando y descargando Portada en PDF...');
-  const iframe = document.getElementById('headless-pdf-frame');
-  if (iframe) {
-    iframe.src = `/generador-portadas.html?download_direct=1&ts=${Date.now()}`;
-  } else {
-    window.open(`/generador-portadas.html?download_direct=1`, '_blank');
-  }
+  window.open(`/generador-portadas.html?download_direct=1&ts=${Date.now()}`, '_blank');
 }
 
 function handleBasketInteriorPdfClick(id) {
@@ -2167,12 +2429,7 @@ function handleBasketInteriorPdfClick(id) {
   } catch (e) {}
 
   showToast('⏳ Preparando y descargando Interior Completo en PDF...');
-  const iframe = document.getElementById('headless-pdf-frame');
-  if (iframe) {
-    iframe.src = `/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`;
-  } else {
-    window.open(`/generador-libro-completo.html?download_direct=1`, '_blank');
-  }
+  window.open(`/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`, '_blank');
 }
 
 // Delegación global de clicks (inmune a re-renderizados del contenedor)
@@ -2183,11 +2440,63 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     const id = buyBtn.getAttribute('data-buy-pending');
-    handleBasketBuyClick(id);
+    openBasketCheckoutModal(id);
     return;
   }
 
-  // 2. Previsualizar / Descargar Portada PDF
+  // 1b. Botones de Cantidad (+ / -)
+  const qtyIncBtn = e.target.closest('[data-qty-inc]');
+  if (qtyIncBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = qtyIncBtn.getAttribute('data-qty-inc');
+    const target = clientPendingBasket.find(x => String(x.id) === String(id));
+    if (target) {
+      target.quantity = (typeof target.quantity === 'number' ? target.quantity : 1) + 1;
+      saveClientOrdersAndBasketState(currentUser || auth.currentUser);
+      renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
+    }
+    return;
+  }
+
+  const qtyDecBtn = e.target.closest('[data-qty-dec]');
+  if (qtyDecBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = qtyDecBtn.getAttribute('data-qty-dec');
+    const target = clientPendingBasket.find(x => String(x.id) === String(id));
+    if (target) {
+      const curr = typeof target.quantity === 'number' ? target.quantity : 1;
+      target.quantity = Math.max(0, curr - 1);
+      saveClientOrdersAndBasketState(currentUser || auth.currentUser);
+      renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
+    }
+    return;
+  }
+
+  // 1c. Botón Tu Carrito Flotante (#mrDevCartFab)
+  if (e.target.closest('#mrDevCartFab')) {
+    e.preventDefault();
+    e.stopPropagation();
+    openBasketCheckoutModal();
+    return;
+  }
+
+  // 1d. Botón Confirmar Compra en Modal
+  if (e.target.id === 'btn-confirm-checkout-order' || e.target.closest('#btn-confirm-checkout-order')) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleConfirmCheckoutOrder();
+    return;
+  }
+
+  // 1e. Botones de Cierre de Modal Checkout
+  if (e.target.id === 'btn-close-checkout-modal' || e.target.id === 'btn-cancel-checkout-modal' || e.target.id === 'basket-checkout-modal') {
+    closeBasketCheckoutModal();
+    return;
+  }
+
+  // 2. Descargar Portada PDF
   const coverBtn = e.target.closest('[data-preview-pdf-cover]');
   if (coverBtn) {
     e.preventDefault();
@@ -2197,7 +2506,7 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  // 3. Previsualizar / Descargar Interior PDF
+  // 3. Descargar Interior PDF
   const intBtn = e.target.closest('[data-preview-pdf-interior]');
   if (intBtn) {
     e.preventDefault();
@@ -2270,7 +2579,6 @@ document.addEventListener('change', (e) => {
     }
   }
 });
-
 
 function openBasketEditAddressModal(itemId, user) {
   const modal = document.getElementById('basket-edit-address-modal');
@@ -2347,8 +2655,12 @@ function renderClientOrdersAndBasketViews(user) {
     } else {
       pendingContainer.innerHTML = clientPendingBasket.map((item, idx) => {
         if (!item.id) item.id = 'pend_item_' + (idx + 1) + '_' + Date.now();
-        const price = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
-        const priceText = price.toFixed(2).replace('.', ',') + ' €';
+        if (typeof item.quantity !== 'number') item.quantity = 1;
+
+        const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
+        const subtotal = unitPrice * item.quantity;
+        const subtotalText = subtotal > 0 ? (subtotal.toFixed(2).replace('.', ',') + ' €') : '0,00 €';
+        const unitPriceText = unitPrice.toFixed(2).replace('.', ',') + ' €';
 
         // Asegurar que item.data y item.shipping existen para evitar valores vacíos
         if (!item.data) {
@@ -2393,22 +2705,35 @@ function renderClientOrdersAndBasketViews(user) {
               </div>
 
               <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                <div style="text-align: right;">
-                  <div style="font-size: 1.3rem; font-weight: 900; color: #1f1c19;">${priceText}</div>
-                  <div style="font-size: 0.72rem; font-weight: 700; color: #215c38;">🚚 Envío GRATIS incluido</div>
+                
+                <!-- Selector de Cantidad -->
+                <div style="display: flex; align-items: center; gap: 6px; background: #faf7f2; border: 1.5px solid #dcd4c6; border-radius: 8px; padding: 4px 10px;">
+                  <span style="font-size: 0.76rem; font-weight: 700; color: #5a5147; margin-right: 2px;">Uds:</span>
+                  <button type="button" data-qty-dec="${escapeHtml(item.id)}" style="background: #ffffff; border: 1px solid #cfc5b6; width: 28px; height: 28px; border-radius: 5px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #3a3229;" title="Restar ejemplar">-</button>
+                  <span id="qty-val-${escapeHtml(item.id)}" style="font-weight: 800; font-size: 0.96rem; min-width: 24px; text-align: center; color: #1f1c19;">${item.quantity}</span>
+                  <button type="button" data-qty-inc="${escapeHtml(item.id)}" style="background: #ffffff; border: 1px solid #cfc5b6; width: 28px; height: 28px; border-radius: 5px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #3a3229;" title="Añadir ejemplar">+</button>
                 </div>
+
+                <div style="text-align: right; min-width: 100px;">
+                  <div style="font-size: 1.3rem; font-weight: 900; color: ${item.quantity > 0 ? '#1f1c19' : '#991b1b'};">${subtotalText}</div>
+                  <div style="font-size: 0.72rem; color: #665e54;">
+                    ${item.quantity > 0 ? `(${item.quantity} × ${unitPriceText})` : '(0 seleccionados)'}
+                  </div>
+                  <div style="font-size: 0.7rem; font-weight: 700; color: #215c38;">🚚 Envío GRATIS</div>
+                </div>
+
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <!-- Botón Comprar -->
                   <button type="button" data-buy-pending="${escapeHtml(item.id)}" style="background: #215c38; color: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(33,92,56,0.25);">
                     <span>💳</span> Comprar
                   </button>
-                  <!-- Botón Previsualizar Portada PDF -->
-                  <button type="button" data-preview-pdf-cover="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
-                    <span>🎨</span> Previsualizar Portada PDF
+                  <!-- Botón Descargar Portada PDF -->
+                  <button type="button" data-preview-pdf-cover="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Descargar PDF de portada">
+                    <span>📥</span> Descargar Portada PDF
                   </button>
-                  <!-- Botón Previsualizar Interior PDF -->
-                  <button type="button" data-preview-pdf-interior="${escapeHtml(item.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
-                    <span>📖</span> Previsualizar Interior PDF
+                  <!-- Botón Descargar Interior PDF -->
+                  <button type="button" data-preview-pdf-interior="${escapeHtml(item.id)}" style="background: #87553b; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Descargar PDF interior">
+                    <span>📥</span> Descargar Interior PDF
                   </button>
                   <!-- Botón Eliminar -->
                   <button type="button" data-del-pending="${escapeHtml(item.id)}" style="background: #fff5f5; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; cursor: pointer; font-weight: 600;" title="Quitar de la cesta">
@@ -2421,13 +2746,13 @@ function renderClientOrdersAndBasketViews(user) {
             <!-- Desplegable Acordeón: Ficha Técnica, PDFs y Dirección -->
             <details id="details-pending-${escapeHtml(item.id)}" style="background: #faf7f2; border: 1px solid #e6ded2; border-radius: 9px; padding: 12px 16px; margin-top: 4px;">
               <summary style="cursor: pointer; font-weight: 700; font-size: 0.84rem; color: #443c33; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                <span>🔍 Ver características técnicas, previsualizar PDFs y dirección de entrega</span>
+                <span>🔍 Ver características técnicas, PDFs y dirección de entrega</span>
                 <span style="font-size: 0.78rem; color: #87553b; font-weight: 600;">Desplegar ficha ▾</span>
               </summary>
 
               <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 16px;">
                 
-                <!-- 1. Características Técnicas & Botones de Previsualización de PDF -->
+                <!-- 1. Características Técnicas -->
                 <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
                     <strong style="font-size: 0.85rem; color: #1f1c19;">📐 Ficha Técnica</strong>
@@ -2485,13 +2810,13 @@ function renderClientOrdersAndBasketViews(user) {
           </div>
         `;
       }).join('');
-
-      // Los eventos de Cesta se gestionan de forma delegada y global en document
-      // para garantizar que nunca se pierdan ante re-renderizados o snapshots.
     }
   }
 
-  // 2. RENDERIZAR BLOQUE B: HISTORIAL Y SEGUIMIENTO DE PEDIDOS EN EL PERFIL DEL CLIENTE
+  // Actualizar resumen en botón flotante
+  updateFloatingCartSummary();
+
+// 2. RENDERIZAR BLOQUE B: HISTORIAL Y SEGUIMIENTO DE PEDIDOS EN EL PERFIL DEL CLIENTE
   const ordersContainer = document.getElementById('client-orders-history-list');
   if (ordersContainer) {
     ordersContainer.innerHTML = clientProfileOrders.map(ord => {

@@ -1,3 +1,15 @@
+
+export function updateCartFabBadge(count, totalStr) {
+  const fab = document.getElementById('mrDevCartFab');
+  if (!fab) return;
+  const num = parseInt(count, 10) || 0;
+  fab.innerHTML = `
+    <span>🛒</span>
+    <span>Tu Carrito (${num})</span>
+    <span class="mr-dev-cart-fab-badge" style="background:${num > 0 ? '#215c38' : '#786e63'};">${totalStr}</span>
+  `;
+}
+window.updateCartFabBadge = updateCartFabBadge;
 // cart-drawer.js - Carrito Lateral con Precio Dinámico (Envío Incluido), Vista Limpia de Cliente y Rayos X Lulu para Desarrollador
 // EXCLUSIVO PARA DESARROLLADOR (jesgilcan@gmail.com + Máximo 3 Dispositivos: PC, Móvil, Tablet)
 
@@ -388,7 +400,13 @@ function buildCartDrawerDOM() {
     <span>Tu Carrito</span>
     <span class="mr-dev-cart-fab-badge">DEV 0€</span>
   `;
-  fab.addEventListener('click', () => openDevCartDrawer());
+  fab.addEventListener('click', () => {
+    if (typeof window.openBasketCheckoutModal === 'function') {
+      window.openBasketCheckoutModal();
+    } else {
+      openDevCartDrawer();
+    }
+  });
   document.body.appendChild(fab);
 
   // Backdrop
@@ -598,6 +616,10 @@ function syncCartStateFromDOM() {
 }
 
 export function openDevCartDrawer(customItem = null) {
+  if (typeof window.openBasketCheckoutModal === 'function') {
+    window.openBasketCheckoutModal(customItem ? (customItem.id || null) : null);
+    return;
+  }
   buildCartDrawerDOM();
 
   if (customItem) {

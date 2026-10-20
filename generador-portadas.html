@@ -2240,14 +2240,37 @@ Sección de notas libres (10 páginas)</textarea>
             // Descarga directa y previsualización de PDF de portada
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('download_direct') === '1' || urlParams.get('preview_modal') === '1') {
+                const notice = document.createElement('div');
+                notice.style.position = 'fixed';
+                notice.style.top = '22px';
+                notice.style.left = '50%';
+                notice.style.transform = 'translateX(-50%)';
+                notice.style.background = '#215c38';
+                notice.style.color = '#ffffff';
+                notice.style.padding = '12px 26px';
+                notice.style.borderRadius = '999px';
+                notice.style.boxShadow = '0 10px 30px rgba(0,0,0,0.25)';
+                notice.style.zIndex = '999999';
+                notice.style.fontFamily = "'Inter', system-ui, sans-serif";
+                notice.style.fontSize = '0.92rem';
+                notice.style.fontWeight = '700';
+                notice.innerHTML = '📥 Generando y descargando PDF de Portada...';
+                document.body.appendChild(notice);
+
                 setTimeout(() => {
                     try {
                         const { doc, filename } = compileHighResCoverPdf();
                         doc.save(filename);
+                        notice.innerHTML = '✅ ¡Descarga completada! (Puedes cerrar esta pestaña)';
+                        setTimeout(() => {
+                            try { window.close(); } catch(e) {}
+                        }, 2500);
                     } catch (err) {
                         console.error('Error en descarga directa de portada en PDF:', err);
+                        notice.style.background = '#991b1b';
+                        notice.innerHTML = '⚠️ No se pudo descargar automáticamente. Pulsa en el botón superior de Guardar PDF.';
                     }
-                }, 300);
+                }, 400);
             }
         }
 
