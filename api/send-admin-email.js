@@ -38,9 +38,7 @@ async function verifyCallerIdToken(req) {
       return { valid: false, error: 'Token de Firebase inválido o expirado.' };
     }
     const userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
-    if (userEmail !== ALLOWED_ADMIN_EMAIL && !ALLOWED_TEST_CUSTOMER_EMAILS.includes(userEmail)) {
-      return { valid: false, error: 'Acceso denegado: cuenta no autorizada.' };
-    }
+    // Acceso autorizado para cualquier usuario autenticado en Firebase
     return { valid: true, email: userEmail, isAdmin: userEmail === ALLOWED_ADMIN_EMAIL };
   } catch (err) {
     return { valid: false, error: 'Error al verificar identidad con Google Identity Toolkit.' };

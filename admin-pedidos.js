@@ -2,8 +2,9 @@ import { auth, db, isDeveloper, DEVELOPER_PIN, getUserEmail } from './firebase-c
 import { verifyAndEnforceThreeDevices } from './device-guard.js';
 import { sendOrderLifecycleEmails } from './order-email-notifier.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { 
-  collection, 
+import {
+  collection,
+  where, 
   getDocs, 
   doc, 
   setDoc, 
@@ -772,9 +773,15 @@ function createOrderCardElement(order) {
           <div>✓ Grosor de lomo calculado: <strong>${order.book?.spineWidthMm || '8.2'} mm</strong></div>
         </div>
 
-        <div style="display:flex; gap:8px; margin-top:12px;">
-          <button type="button" class="btn-order-secondary" style="flex:1;" onclick="openPdfPreviewModal('${order.id || order.orderNumber}')">
-            <span>👁️</span> Previsualizar PDFs
+        <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
+          <button type="button" class="btn-order-secondary" style="flex:1; min-width:115px; font-weight:700;" onclick="downloadOrderCoverPdf('${order.id || order.orderNumber}')" title="Descargar Portada PDF (300 DPI imprenta)">
+            <span>📥</span> Portada PDF
+          </button>
+          <button type="button" class="btn-order-secondary" style="flex:1; min-width:115px; font-weight:700;" onclick="downloadOrderInteriorPdf('${order.id || order.orderNumber}')" title="Descargar Interior PDF (Vectorial imprenta)">
+            <span>📥</span> Interior PDF
+          </button>
+          <button type="button" class="btn-order-secondary" style="padding:6px 10px;" onclick="openPdfPreviewModal('${order.id || order.orderNumber}')" title="Inspección técnica preflight">
+            <span>🔍</span> Preflight
           </button>
         </div>
       </div>
@@ -1070,6 +1077,43 @@ window.anonymizeOrderRgpd = function(orderId) {
 };
 
 // =========================================================================
+
+// =========================================================================
+// DESCARGA DIRECTA DE ARCHIVOS PDF DE IMPRENTA
+// =========================================================================
+window.downloadOrderCoverPdf = function(orderId) {
+  const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
+  if (!order) return;
+  try {
+    localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+      title: order.book?.title,
+      bindingType: order.book?.bindingType || 'softcover',
+      pageCount: order.book?.pageCount || 144,
+      syncedBookName: order.book?.subtitle || order.book?.title,
+      data: order.book?.data || {},
+      updatedAt: Date.now()
+    }));
+  } catch(e) {}
+  showToast(`📥 Descargando Portada PDF del pedido #${order.orderNumber}...`);
+  window.open(`/generador-portadas.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&title=${encodeURIComponent(order.book?.title || '')}&pages=${order.book?.pageCount || 144}&binding=${order.book?.bindingType || 'softcover'}`, '_blank');
+};
+
+window.downloadOrderInteriorPdf = function(orderId) {
+  const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
+  if (!order) return;
+  try {
+    localStorage.setItem('mr_complete_book_config', JSON.stringify({
+      title: order.book?.title,
+      subtitle: order.book?.subtitle,
+      pageCount: order.book?.pageCount || 144,
+      bindingType: order.book?.bindingType || 'softcover',
+      data: order.book?.data || {}
+    }));
+  } catch(e) {}
+  showToast(`📥 Descargando Interior PDF del pedido #${order.orderNumber}...`);
+  window.open(`/generador-libro-completo.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&pages=${order.book?.pageCount || 144}&binding=${order.book?.bindingType || 'softcover'}`, '_blank');
+};
+
 // 6. MODALES: PREVISUALIZACIÓN DE PDFS Y EDICIÓN DE DIRECCIÓN
 // =========================================================================
 window.openPdfPreviewModal = function(orderId) {

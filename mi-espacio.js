@@ -25,8 +25,9 @@ import {
   updateProfile,
   deleteUser
 } from 'firebase/auth';
-import { 
-  doc, 
+import {
+  doc,
+  where, 
   getDoc, 
   setDoc,
   updateDoc, 
@@ -955,7 +956,7 @@ function renderAuthenticatedView(user) {
         if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
         if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
         const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
-        if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
+        if (tabBtnPedidos) { tabBtnPedidos.style.removeProperty('display'); tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important'); }
         const activeBtn = document.querySelector('.tab-btn.active');
         if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-pedidos')) {
           activateTab('tab-disenos');
@@ -1040,7 +1041,7 @@ function renderAuthenticatedView(user) {
       checkUrlTab(false);
       initClientOrdersAndBasketModule(user);
     } else {
-      if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
+      if (tabBtnPedidos) { tabBtnPedidos.style.removeProperty('display'); tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important'); }
       const activeBtn = document.querySelector('.tab-btn.active');
       if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-pedidos')) {
         activateTab('tab-disenos');
@@ -1823,9 +1824,12 @@ function calcDynamicPriceForProfile(bindingType = 'coil', pageCount = 143) {
 }
 
 async function initClientOrdersAndBasketModule(user) {
-  const hasPending = !!localStorage.getItem('mr_pending_payment_books') || !!localStorage.getItem('mr_cart_cover_item');
-  if (!user && !hasPending) return;
-  if (user && !isDeveloper(user) && !isTestCustomer(user) && !hasPending) return;
+  // Inicializar siempre para escuchar pedidos y cesta del usuario
+  const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
+  if (tabBtnPedidos) {
+    tabBtnPedidos.style.removeProperty('display');
+    tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+  }
 
   await loadClientOrdersAndBasketData(user);
   await checkAndHandleStripeCheckoutReturn();
@@ -1848,6 +1852,34 @@ async function initClientOrdersAndBasketModule(user) {
   }
 
   // Escucha en tiempo real de la colección 'orders' y 'users/{uid}/orders' para sincronizar al instante
+  // Escucha permanente en tiempo real de pedidos para cualquier cliente autenticado
+  if (user && user.uid && !window.__mrUserOrdersSnapshotUnsub) {
+    try {
+      window.__mrUserOrdersSnapshotUnsub = onSnapshot(collection(db, 'users', user.uid, 'orders'), (snap) => {
+        const remote = [];
+        snap.forEach(d => remote.push({ id: d.id, ...d.data() }));
+        if (remote.length > 0) {
+          const map = new Map();
+          clientProfileOrders.forEach(o => { const key = o.orderNumber || o.id; map.set(key, o); });
+          remote.forEach(o => {
+            const key = o.orderNumber || o.id;
+            const prev = map.get(key);
+            const merged = mergeOrderRecords(prev, o);
+            map.set(key, merged);
+            if (prev && prev.status !== o.status) {
+              const labels = { pending_review: '1. Revisión Técnica', approved_printing: '2. En Imprenta', printing: '2. En Imprenta', shipped: '3. En Reparto (Correos Express)', delivered: '4. Entregado' };
+              showToast(`⚡ Pedido #${o.orderNumber}: Estado actualizado a «${labels[o.status] || o.status}»`);
+            }
+          });
+          clientProfileOrders = Array.from(map.values());
+          clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
+          try { localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders)); } catch (e) {}
+          renderClientOrdersAndBasketViews(auth.currentUser || user);
+        }
+      }, (err) => { console.warn('Aviso en onSnapshot users/orders:', err); });
+    } catch (e) {}
+  }
+
   if (!window.__mrOrdersCollectionSnapshotUnsub && user && (isDeveloper(user) || isTestCustomer(user))) {
     try {
       window.__mrOrdersCollectionSnapshotUnsub = onSnapshot(collection(db, 'orders'), (snap) => {
@@ -2544,6 +2576,7 @@ async function checkAndHandleStripeCheckoutReturn() {
         status: 'pending_review',
         createdAt: new Date().toISOString(),
         customer: {
+          uid: user?.uid || (auth.currentUser ? auth.currentUser.uid : ''),
           name: stripeData?.customerName || activeData?.customer?.name || (user ? getUserDisplayName(user) : 'Cliente'),
           email: stripeData?.customerEmail || activeData?.customer?.email || (user ? getUserEmail(user) : 'jesusgil_87@hotmail.com'),
           phone: activeData?.customer?.phone || '+34 600 000 000',

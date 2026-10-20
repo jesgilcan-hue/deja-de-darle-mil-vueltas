@@ -54,7 +54,13 @@ async function postEmailPayload(idToken, payload) {
  * Envía en paralelo el email del Cliente y el email del Gestor de la Web para cualquier evento del pedido
  */
 export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {}) {
-  const currentUser = auth.currentUser;
+  let currentUser = auth.currentUser;
+  if (!currentUser) {
+    await new Promise(resolve => {
+      const unsub = auth.onAuthStateChanged ? auth.onAuthStateChanged(u => { if (u) currentUser = u; unsub(); resolve(); }) : null;
+      setTimeout(() => { if (unsub) unsub(); resolve(); }, 1200);
+    });
+  }
   if (!currentUser || !order) {
     return { sentClient: false, sentManager: false };
   }

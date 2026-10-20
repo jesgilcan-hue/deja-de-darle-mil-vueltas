@@ -1497,7 +1497,7 @@ Sección de notas libres (10 páginas)</textarea>
 
                     <div class="field-group">
                         <label for="inpPageCount">Número Total de Páginas Interiores:</label>
-                        <input type="number" id="inpPageCount" value="143" readonly disabled>
+                        <input type="number" id="inpPageCount" value="144" readonly disabled>
                         <span style="font-size:0.7rem; color:#776f65;">Viene dado automáticamente por las secciones de tu Cuaderno Completo.</span>
                     </div>
 
@@ -2143,7 +2143,7 @@ Sección de notas libres (10 páginas)</textarea>
             template: 'bosque',        // 'bosque' | 'organico' | 'bicolor' | 'marco'
             palette: 'forest',
             trimFormat: 'landscape_825_6',
-            pageCount: 143,
+            pageCount: 144,
             paperThicknessMm: 0.0635,
             bleedMm: 3.175,            // 3.175mm (0.125") en Anillas/Tapa Blanda; 15.875mm (0.625") en Tapa Dura Lulu
             coilMarginMm: 10.0,        // Margen interior libre para perforación de anillas
@@ -2693,6 +2693,12 @@ Sección de notas libres (10 páginas)</textarea>
         window.confirmCoverTextsAndAddToCart = confirmCoverTextsAndAddToCart;
 
         function handleAddToCart() {
+        // Auditoria estricta de paginas pares
+        if (coverState.pageCount % 2 !== 0) {
+            coverState.pageCount += 1;
+            const pInp = document.getElementById('inpPageCount');
+            if (pInp) pInp.value = coverState.pageCount;
+        }
             const btn = document.getElementById('btnAddToCart');
             const hint = document.getElementById('cartOverwriteHint');
             const hintText = document.getElementById('cartOverwriteHintText');
