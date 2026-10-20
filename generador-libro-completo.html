@@ -5200,6 +5200,10 @@
         function openCompileModal() {
             recalcPages();
             const total = generatedPageList.length;
+            if (total % 2 !== 0) {
+                alert(`⚠️ El cuaderno tiene un número impar de páginas (${total} páginas).\n\nPara imprenta, el interior debe tener un número par de páginas.\nPor favor, activa la sección de "Notas" para cuadrar a páginas pares o añade una página más antes de compilar.`);
+                return;
+            }
             const isBlank = bookConfig.dateMode === 'blank';
             const estMb = ((total * 28) / 1024).toFixed(1);
 
@@ -5212,7 +5216,7 @@
                         💾 ~${estMb} MB estimados
                     </span>
                     <span style="display:inline-flex; align-items:center; gap:5px; background:#f4eee4; border:1px solid #dfd3c3; border-radius:16px; padding:3px 10px; font-size:0.75rem; font-weight:700; color:#5c4838;">
-                        🖨️ A5 Apaisado (300 DPI)
+                        🖨️ Formato Apaisado (Listo para imprenta)
                     </span>
                 </div>
                 <strong>Resumen del Cuaderno a compilar:</strong>
@@ -7284,6 +7288,10 @@
         });
 
         setupGeneratorSave('btn-save-generator-design', () => {
+            if (typeof generatedPageList !== 'undefined' && generatedPageList.length % 2 !== 0) {
+                alert(`⚠️ El libro tiene un número impar de páginas (${generatedPageList.length} páginas).\n\nLa imprenta exige obligatoriamente un número par de páginas.\nActiva la sección de "Notas" para añadir una página de notas y cuadrar el libro a número par, o añade una página más antes de guardar.`);
+                return null;
+            }
             return {
                 name: (typeof bookConfig !== 'undefined' && bookConfig.title) ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado',
                 type: 'Cuaderno Completo',

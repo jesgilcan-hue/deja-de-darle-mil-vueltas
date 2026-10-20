@@ -194,7 +194,7 @@ const DEFAULT_TEMPLATES = {
 
 Te confirmamos que hemos recibido tu pedido #{numero_pedido} y el pago se ha procesado correctamente.
 
-Cada uno de nuestros ejemplares se imprime y encuaderna bajo demanda. Antes de mandar tu cuaderno a imprenta, revisamos los márgenes, el lomo milimétrico y la resolución de 300 DPI de tu diseño.
+Cada uno de nuestros ejemplares se imprime y encuaderna bajo demanda. Antes de mandar tu cuaderno a imprenta, revisamos los márgenes, el lomo milimétrico y la maquetación de tu diseño.
 
 Puedes consultar la vista previa exacta de lo que has diseñado o descargar tu recibo de compra en los siguientes enlaces:`,
     buttonText: "Ver el diseño de mi cuaderno ↗",
