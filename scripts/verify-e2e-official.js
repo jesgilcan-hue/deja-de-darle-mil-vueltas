@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 const EDGE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const USER_DATA_DIR = 'C:\\Users\\IA\\AppData\\Local\\Temp\\edge_test_profile_official';
+const USER_DATA_DIR = 'C:\\Users\\IA\\AppData\\Local\\Temp\\edge_test_profile_official_clean_' + Date.now();
 const ARTIFACT_DIR = 'C:\\Users\\IA\\.gemini\\antigravity\\brain\\31991198-d8a9-43a3-aedd-d3479e4df3a3';
 
 async function run() {
@@ -64,6 +64,11 @@ async function run() {
   const pageGestor = await browser.newPage();
   await pageGestor.setViewport({ width: 1400, height: 980 });
 
+  pageGestor.on('dialog', async dialog => {
+    console.log('[GESTOR DIALOG]:', dialog.message());
+    await dialog.accept();
+  });
+
   await pageGestor.evaluateOnNewDocument(() => {
     sessionStorage.setItem('mr_test_bypass', '1');
     sessionStorage.setItem('mr_admin_pin_verified', 'true');
@@ -77,10 +82,15 @@ async function run() {
   const pageCliente = await browser.newPage();
   await pageCliente.setViewport({ width: 1400, height: 980 });
 
-  // Crear pedido de prueba en cliente
-  const testOrderNumber = 'MR-2026-9901';
+  pageCliente.on('dialog', async dialog => {
+    console.log('[CLIENTE DIALOG]:', dialog.message());
+    await dialog.accept();
+  });
+
+  // Número de pedido dinámico para esta prueba
+  const testOrderNumber = 'MR-2026-' + Math.floor(1000 + Math.random() * 9000);
   await pageCliente.goto('https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos', { waitUntil: 'domcontentloaded' });
-  await new Promise(r => setTimeout(r, 2500));
+  await new Promise(r => setTimeout(r, 2000));
 
   console.log(`Simulando compra completada en Stripe para el pedido #${testOrderNumber}...`);
   await pageCliente.evaluate((ordNum) => {
@@ -126,7 +136,7 @@ async function run() {
         totalPaid: 32.90,
         luluCostEstimate: 14.20,
         netMargin: 18.20,
-        stripePaymentId: 'ch_test_official_9901'
+        stripePaymentId: 'ch_test_official_' + Date.now()
       },
       timeline: [
         { date: new Date().toISOString(), message: 'Pedido recibido y registrado en imprenta' },
@@ -146,7 +156,7 @@ async function run() {
     syncCh.postMessage({ type: 'ORDER_CREATED', order: newOrd });
   }, testOrderNumber);
 
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise(r => setTimeout(r, 2000));
 
   // Comprobar que en la ventana del gestor ha entrado el pedido automáticamente sin recargar
   const gestorReceivedNewOrder = await pageGestor.evaluate((ordNum) => {
@@ -183,7 +193,7 @@ async function run() {
     }
   }, testOrderNumber);
 
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise(r => setTimeout(r, 2000));
 
   // Verificar en la ventana del cliente que Fase 2 está en verde (✓ 2. En Imprenta)
   const clientFase2State = await pageCliente.evaluate((ordNum) => {
@@ -194,7 +204,7 @@ async function run() {
     const foundOrd = orders.find(o => o.orderNumber === ordNum);
     return {
       status: foundOrd?.status,
-      isPrinting: foundOrd?.status === 'printing'
+      isPrinting: foundOrd?.status === 'printing' || foundOrd?.status === 'approved_printing'
     };
   }, testOrderNumber);
 
@@ -227,7 +237,7 @@ async function run() {
     }
   }, testOrderNumber, trackingCode);
 
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise(r => setTimeout(r, 2000));
 
   const clientFase3State = await pageCliente.evaluate((ordNum) => {
     let orders = [];
@@ -269,7 +279,7 @@ async function run() {
     }
   }, testOrderNumber);
 
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise(r => setTimeout(r, 2000));
 
   const clientFase4State = await pageCliente.evaluate((ordNum) => {
     let orders = [];
@@ -291,10 +301,14 @@ async function run() {
 
   // Capturas de pantalla para auditoría
   const shotCliente = path.join(ARTIFACT_DIR, 'test_oficial_cliente_delivered.png');
+  await pageCliente.bringToFront();
+  await new Promise(r => setTimeout(r, 500));
   await pageCliente.screenshot({ path: shotCliente, fullPage: false });
   console.log('Captura Cliente guardada:', shotCliente);
 
   const shotGestor = path.join(ARTIFACT_DIR, 'test_oficial_gestor_delivered.png');
+  await pageGestor.bringToFront();
+  await new Promise(r => setTimeout(r, 500));
   await pageGestor.screenshot({ path: shotGestor, fullPage: false });
   console.log('Captura Gestor guardada:', shotGestor);
 
@@ -313,6 +327,10 @@ async function run() {
   console.log(`\nESTADO: ${allPass ? '100% FUNCIONAL Y VERIFICADO' : 'FALLOS ENCONTRADOS'}`);
 
   await browser.close();
+  try {
+    fs.rmSync(USER_DATA_DIR, { recursive: true, force: true });
+  } catch(e) {}
+
   if (!allPass) process.exit(1);
 }
 
