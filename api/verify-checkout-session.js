@@ -2,7 +2,7 @@
 // Valida una sesión de Stripe Checkout, devuelve los datos del pedido verificado y dispara los emails por Resend API
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || Buffer.from('c2tfdGVzdF81MVVTQXN6RnRMdGxyRHVPYkNvcHZTRTZNM0VqbVV5UXdBSWhHdXdxaERHNVdaNXlBempZaUdQSE5xY3c4YUpkbmhTd3hZd0F0SGFPOEJORUJwdm1EWkoxTjAwSW9idXpaWWI=', 'base64').toString('utf-8');
-const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from('cmVfS0NueGN6OHJfOGt1RDNSU1gzeWJHemh3dUR2dXNOOUFU', 'base64').toString('utf-8');
+const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from('cmVfS0NueGN6OHJfOGt1RDNSU1gzeWJCemh3dUR2dXNOOUFU', 'base64').toString('utf-8');
 
 const OWNER_EMAIL = 'jesgilcan@gmail.com';
 const TEST_CLIENT_EMAIL = 'jesusgil_87@hotmail.com';
