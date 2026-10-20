@@ -289,6 +289,17 @@ function checkUrlTab(allowDevTabs = false) {
     }, 300);
   }
 
+  if (params.get('buy_now') === '1') {
+    setTimeout(() => {
+      const topBuyBtn = document.querySelector('[data-buy-pending]');
+      if (topBuyBtn) {
+        const chk = document.querySelector('[data-confirm-texts]');
+        if (chk && !chk.checked) chk.checked = true;
+        topBuyBtn.click();
+      }
+    }, 600);
+  }
+
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
   } else if (tab === 'pedidos') {
@@ -1836,7 +1847,7 @@ async function initClientOrdersAndBasketModule(user) {
     });
   }
 
-  // Escucha en tiempo real de la colección 'orders' para sincronizar al instante entre jesusgil_87@hotmail.com y jesgilcan@gmail.com
+  // Escucha en tiempo real de la colección 'orders' y 'users/{uid}/orders' para sincronizar al instante
   if (!window.__mrOrdersCollectionSnapshotUnsub && user && (isDeveloper(user) || isTestCustomer(user))) {
     try {
       window.__mrOrdersCollectionSnapshotUnsub = onSnapshot(collection(db, 'orders'), (snap) => {
@@ -1844,8 +1855,14 @@ async function initClientOrdersAndBasketModule(user) {
         snap.forEach(d => remote.push({ id: d.id, ...d.data() }));
         if (remote.length > 0) {
           const map = new Map();
-          clientProfileOrders.forEach(o => map.set(o.id || o.orderNumber, o));
-          remote.forEach(o => map.set(o.id || o.orderNumber, o));
+          clientProfileOrders.forEach(o => {
+            const key = o.orderNumber || o.id;
+            map.set(key, o);
+          });
+          remote.forEach(o => {
+            const key = o.orderNumber || o.id;
+            map.set(key, mergeOrderRecords(map.get(key), o));
+          });
           clientProfileOrders = Array.from(map.values());
           clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
           try {
@@ -1853,8 +1870,36 @@ async function initClientOrdersAndBasketModule(user) {
           } catch (e) {}
           renderClientOrdersAndBasketViews(auth.currentUser || user);
         }
+      }, (err) => {
+        console.warn('Aviso en escucha onSnapshot orders (cliente):', err);
       });
     } catch (e) {}
+
+    if (user && user.uid && !window.__mrUserOrdersSnapshotUnsub) {
+      try {
+        window.__mrUserOrdersSnapshotUnsub = onSnapshot(collection(db, 'users', user.uid, 'orders'), (snap) => {
+          const remote = [];
+          snap.forEach(d => remote.push({ id: d.id, ...d.data() }));
+          if (remote.length > 0) {
+            const map = new Map();
+            clientProfileOrders.forEach(o => {
+              const key = o.orderNumber || o.id;
+              map.set(key, o);
+            });
+            remote.forEach(o => {
+              const key = o.orderNumber || o.id;
+              map.set(key, mergeOrderRecords(map.get(key), o));
+            });
+            clientProfileOrders = Array.from(map.values());
+            clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
+            try {
+              localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+            } catch (e) {}
+            renderClientOrdersAndBasketViews(auth.currentUser || user);
+          }
+        }, (err) => {});
+      } catch (e) {}
+    }
   }
 
   renderClientOrdersAndBasketViews(user);
@@ -1906,8 +1951,14 @@ async function loadClientOrdersAndBasketData(user) {
   } catch (e) {}
 
   const map = new Map();
-  localSim.forEach(o => map.set(o.id || o.orderNumber, o));
-  loadedOrders.forEach(o => map.set(o.id || o.orderNumber, o));
+  localSim.forEach(o => {
+    const key = o.orderNumber || o.id;
+    map.set(key, mergeOrderRecords(map.get(key), o));
+  });
+  loadedOrders.forEach(o => {
+    const key = o.orderNumber || o.id;
+    map.set(key, mergeOrderRecords(map.get(key), o));
+  });
 
   clientProfileOrders = Array.from(map.values());
 
@@ -1927,7 +1978,15 @@ function saveClientOrdersAndBasketState(user) {
   if (user && (isDeveloper(user) || isTestCustomer(user))) {
     clientProfileOrders.forEach(async (ord) => {
       try {
-        await setDoc(doc(db, 'orders', ord.id || ord.orderNumber), ord, { merge: true });
+        if (ord.orderNumber) {
+          await setDoc(doc(db, 'orders', ord.orderNumber), ord, { merge: true });
+        }
+        if (ord.id && ord.id !== ord.orderNumber) {
+          await setDoc(doc(db, 'orders', ord.id), ord, { merge: true });
+        }
+        if (user.uid) {
+          await setDoc(doc(db, 'users', user.uid, 'orders', ord.orderNumber || ord.id), ord, { merge: true });
+        }
       } catch (e) {}
     });
   }
@@ -2035,6 +2094,89 @@ function getBindingLabelForProfile(type) {
   if (type === 'perfect' || type === 'softcover') return '📕 Tapa Blanda (Mate)';
   if (type === 'hardcover') return '📘 Tapa Dura (Casewrap)';
   return '🌀 Anillas Metálicas (Wire-O)';
+}
+
+
+// CANAL DE COMUNICACIÓN EN TIEMPO REAL ENTRE PESTAÑAS (CLIENTE <-> GESTOR)
+const orderSyncChannel = (typeof window !== 'undefined' && 'BroadcastChannel' in window)
+  ? new BroadcastChannel('mr_order_sync_channel')
+  : null;
+
+function mergeOrderRecords(existing, incoming) {
+  if (!existing) return incoming;
+  if (!incoming) return existing;
+
+  const statusPriority = {
+    'pending_review': 1,
+    'approved_printing': 2,
+    'printing': 2,
+    'shipped': 3,
+    'delivered': 4,
+    'paused': 1
+  };
+
+  const priorityExisting = statusPriority[existing.status] || 1;
+  const priorityIncoming = statusPriority[incoming.status] || 1;
+
+  const winner = (priorityIncoming >= priorityExisting) ? incoming : existing;
+  const loser = (priorityIncoming >= priorityExisting) ? existing : incoming;
+
+  const merged = {
+    ...loser,
+    ...winner,
+    customer: { ...(loser.customer || {}), ...(winner.customer || {}) },
+    book: { ...(loser.book || {}), ...(winner.book || {}) },
+    pricing: { ...(loser.pricing || {}), ...(winner.pricing || {}) },
+    shipping: { ...(loser.shipping || {}), ...(winner.shipping || {}) },
+    luluJob: { ...(loser.luluJob || {}), ...(winner.luluJob || {}) },
+    comms: { ...(loser.comms || {}), ...(winner.comms || {}) }
+  };
+
+  const tlMap = new Map();
+  (loser.timeline || []).forEach(ev => {
+    if (ev && ev.message) tlMap.set(ev.message, ev);
+  });
+  (winner.timeline || []).forEach(ev => {
+    if (ev && ev.message) tlMap.set(ev.message, ev);
+  });
+  merged.timeline = Array.from(tlMap.values()).sort((a, b) => {
+    const tA = new Date(a.date || 0).getTime();
+    const tB = new Date(b.date || 0).getTime();
+    return tA - tB;
+  });
+
+  return merged;
+}
+
+if (orderSyncChannel) {
+  orderSyncChannel.onmessage = (event) => {
+    const data = event.data;
+    if (data && (data.type === 'ORDER_UPDATED' || data.type === 'ORDER_CREATED') && data.order) {
+      const incoming = data.order;
+      const idx = clientProfileOrders.findIndex(o => (
+        (o.orderNumber && incoming.orderNumber && o.orderNumber === incoming.orderNumber) ||
+        (o.id && incoming.id && o.id === incoming.id)
+      ));
+      if (idx >= 0) {
+        clientProfileOrders[idx] = mergeOrderRecords(clientProfileOrders[idx], incoming);
+      } else {
+        clientProfileOrders.unshift(incoming);
+      }
+      try {
+        localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+      } catch (e) {}
+      renderClientOrdersAndBasketViews(auth.currentUser || currentUser);
+
+      const stepLabels = {
+        1: '1. Revisión Técnica',
+        2: '2. En Imprenta',
+        3: '3. En Reparto (Correos Express)',
+        4: '4. Entregado'
+      };
+      const stIdx = getStepIndexFromStatus(incoming.status);
+      showToast(`⚡ Pedido #${incoming.orderNumber}: Estado actualizado a «${stepLabels[stIdx] || incoming.status}»`);
+    }
+  };
 }
 
 function getStepIndexFromStatus(status) {
@@ -2453,9 +2595,21 @@ async function checkAndHandleStripeCheckoutReturn() {
       };
 
       try {
-        await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
-        await setDoc(doc(db, 'orders', newOrder.orderNumber), newOrder, { merge: true });
+        if (newOrder.orderNumber) {
+          await setDoc(doc(db, 'orders', newOrder.orderNumber), newOrder, { merge: true });
+        }
+        if (newOrder.id && newOrder.id !== newOrder.orderNumber) {
+          await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
+        }
+        if (user && user.uid) {
+          await setDoc(doc(db, 'users', user.uid, 'orders', newOrder.orderNumber), newOrder, { merge: true });
+        }
       } catch(e) {}
+
+      // Emitir evento instantáneo a la ventana del gestor
+      if (orderSyncChannel) {
+        orderSyncChannel.postMessage({ type: 'ORDER_CREATED', order: newOrder });
+      }
 
       clientProfileOrders.unshift(newOrder);
       try {
@@ -2977,7 +3131,25 @@ function renderClientOrdersAndBasketViews(user) {
       `).join('');
 
       const correosUrl = `https://www.correos.es/es/es/herramientas/localizador/envios?numero=${encodeURIComponent(trackingNum)}`;
-      const courierBlockHtml = (step >= 3) ? `
+      const courierBlockHtml = (step === 4) ? `
+          <!-- Bloque de Entrega Completada en Domicilio (Fase 4/4) -->
+          <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 16px 18px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+              <div style="font-size: 0.86rem; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.4px;">
+                🎉 Etapa 4/4: Pedido Entregado en tu Domicilio
+              </div>
+              <a href="${correosUrl}" target="_blank" rel="noopener noreferrer" style="font-family: monospace; font-size: 0.78rem; font-weight: 700; background: #15803d; color: #ffffff; padding: 4px 10px; border-radius: 5px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                Tracking Correos: ${escapeHtml(trackingNum)} ↗
+              </a>
+            </div>
+            <div style="font-size: 0.86rem; color: #14532d; background: #ffffff; border-left: 3px solid #16a34a; padding: 10px 14px; border-radius: 4px; margin-bottom: 10px;">
+              <strong>Estado de la entrega:</strong> ${escapeHtml(carrierMsg || 'Entrega completada satisfactoriamente en el domicilio del destinatario.')}
+            </div>
+            <div style="font-size: 0.80rem; color: #374151;">
+              <strong>Dirección de entrega:</strong> ${escapeHtml(ord.customer?.address || '')}, ${escapeHtml(ord.customer?.postalCode || '')} ${escapeHtml(ord.customer?.city || '')}
+            </div>
+          </div>
+      ` : (step === 3) ? `
           <!-- Bloque de Comunicación con la Empresa Repartidora y Dirección -->
           <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">

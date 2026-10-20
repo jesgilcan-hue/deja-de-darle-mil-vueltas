@@ -21,6 +21,82 @@ let searchQuery = '';
 let currentPreviewOrder = null;
 let isAuthorized = false;
 
+// CANAL DE COMUNICACIÓN EN TIEMPO REAL ENTRE PESTAÑAS (CLIENTE <-> GESTOR)
+const orderSyncChannel = (typeof window !== 'undefined' && 'BroadcastChannel' in window)
+  ? new BroadcastChannel('mr_order_sync_channel')
+  : null;
+
+function mergeOrderRecords(existing, incoming) {
+  if (!existing) return incoming;
+  if (!incoming) return existing;
+
+  const statusPriority = {
+    'pending_review': 1,
+    'approved_printing': 2,
+    'printing': 2,
+    'shipped': 3,
+    'delivered': 4,
+    'paused': 1
+  };
+
+  const priorityExisting = statusPriority[existing.status] || 1;
+  const priorityIncoming = statusPriority[incoming.status] || 1;
+
+  const winner = (priorityIncoming >= priorityExisting) ? incoming : existing;
+  const loser = (priorityIncoming >= priorityExisting) ? existing : incoming;
+
+  const merged = {
+    ...loser,
+    ...winner,
+    customer: { ...(loser.customer || {}), ...(winner.customer || {}) },
+    book: { ...(loser.book || {}), ...(winner.book || {}) },
+    pricing: { ...(loser.pricing || {}), ...(winner.pricing || {}) },
+    shipping: { ...(loser.shipping || {}), ...(winner.shipping || {}) },
+    luluJob: { ...(loser.luluJob || {}), ...(winner.luluJob || {}) },
+    comms: { ...(loser.comms || {}), ...(winner.comms || {}) }
+  };
+
+  const tlMap = new Map();
+  (loser.timeline || []).forEach(ev => {
+    if (ev && ev.message) tlMap.set(ev.message, ev);
+  });
+  (winner.timeline || []).forEach(ev => {
+    if (ev && ev.message) tlMap.set(ev.message, ev);
+  });
+  merged.timeline = Array.from(tlMap.values()).sort((a, b) => {
+    const tA = new Date(a.date || 0).getTime();
+    const tB = new Date(b.date || 0).getTime();
+    return tA - tB;
+  });
+
+  return merged;
+}
+
+if (orderSyncChannel) {
+  orderSyncChannel.onmessage = (event) => {
+    const data = event.data;
+    if (data && (data.type === 'ORDER_CREATED' || data.type === 'ORDER_UPDATED') && data.order) {
+      const incoming = data.order;
+      const idx = allOrders.findIndex(o => (
+        (o.orderNumber && incoming.orderNumber && o.orderNumber === incoming.orderNumber) ||
+        (o.id && incoming.id && o.id === incoming.id)
+      ));
+      if (idx >= 0) {
+        allOrders[idx] = mergeOrderRecords(allOrders[idx], incoming);
+      } else {
+        allOrders.unshift(incoming);
+      }
+      saveOrdersState();
+      sortAndRenderOrders();
+      highlightTargetOrderIfPresent();
+      if (data.type === 'ORDER_CREATED') {
+        showToast('⚡ ¡Nuevo pedido #' + (incoming.orderNumber || '') + ' recibido en tiempo real!');
+      }
+    }
+  };
+}
+
+
 // ELEMENTOS DEL DOM
 const authGate = document.getElementById('authGate');
 const adminMain = document.getElementById('adminMain');
@@ -247,8 +323,14 @@ function setupRealtimeOrdersListener() {
       } catch (e) {}
 
       const map = new Map();
-      localSim.forEach(o => map.set(o.id || o.orderNumber, o));
-      cloudOrders.forEach(o => map.set(o.id || o.orderNumber, o));
+      localSim.forEach(o => {
+        const key = o.orderNumber || o.id;
+        map.set(key, mergeOrderRecords(map.get(key), o));
+      });
+      cloudOrders.forEach(o => {
+        const key = o.orderNumber || o.id;
+        map.set(key, mergeOrderRecords(map.get(key), o));
+      });
 
       allOrders = Array.from(map.values());
       sortAndRenderOrders();
@@ -841,6 +923,7 @@ window.approveAndSendToLulu = async function(orderId) {
 
   saveOrdersState();
   sortAndRenderOrders();
+  if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
   showToast(`✓ Pedido #${order.orderNumber} aprobado · Enviando a Lulu y disparando emails...`);
 
   // Simulación: tras 1.2 segundos, pasa a "En Imprenta" y envía los 2 emails reales
@@ -853,6 +936,7 @@ window.approveAndSendToLulu = async function(orderId) {
     addTimelineEvent(order, 'Lulu confirma recepción y comienza encuadernación en fábrica');
     saveOrdersState();
     sortAndRenderOrders();
+    if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
     await sendOrderLifecycleEmails(order, 'status_printing');
     showToast(`✉️ Emails de Etapa 2/4 (En Imprenta) enviados a Cliente y Gestor`);
   }, 1200);
@@ -881,6 +965,7 @@ window.simulateLuluProgress = async function(orderId, newStatus) {
     addTimelineEvent(order, `Lulu despacha el paquete con Correos Express (Tracking: ${tracking})`);
     saveOrdersState();
     sortAndRenderOrders();
+    if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
     showToast(`⏳ Pedido #${order.orderNumber} enviado · Disparando emails de Tracking a Cliente y Gestor...`);
     await sendOrderLifecycleEmails(order, 'status_shipped');
     showToast(`✉️ Emails de Etapa 3/4 (Tracking ${tracking}) enviados a jesusgil_87@hotmail.com y jesgilcan@gmail.com`);
@@ -894,6 +979,7 @@ window.simulateLuluProgress = async function(orderId, newStatus) {
     addTimelineEvent(order, 'Correos Express confirma la entrega del paquete en el domicilio del cliente (Etapa 4/4)');
     saveOrdersState();
     sortAndRenderOrders();
+    if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
     showToast(`⏳ Pedido #${order.orderNumber} marcado como Entregado · Enviando emails finales...`);
     await sendOrderLifecycleEmails(order, 'status_delivered');
     showToast(`🎉 Etapa 4/4 completada · Emails de Entrega enviados a jesusgil_87@hotmail.com y jesgilcan@gmail.com`);
@@ -904,6 +990,7 @@ window.simulateLuluProgress = async function(orderId, newStatus) {
     addTimelineEvent(order, 'Fabricación en curso en Lulu Direct');
     saveOrdersState();
     sortAndRenderOrders();
+    if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
     showToast(`⏳ Pedido en fabricación · Enviando emails a Cliente y Gestor...`);
     await sendOrderLifecycleEmails(order, 'status_printing');
     showToast(`✉️ Emails de Etapa 2/4 (En Imprenta) enviados`);
@@ -1073,6 +1160,7 @@ window.saveEditedAddress = function() {
   addTimelineEvent(order, 'Dirección de envío modificada por el editor');
   saveOrdersState();
   sortAndRenderOrders();
+  if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
   closeEditAddressModal();
   showToast('✓ Dirección actualizada con éxito');
 };
@@ -1380,8 +1468,15 @@ function saveOrdersState() {
   if (auth.currentUser && isDeveloper(auth.currentUser)) {
     allOrders.forEach(async (o) => {
       try {
-        const ref = doc(db, 'orders', o.id || o.orderNumber);
-        await setDoc(ref, o, { merge: true });
+        if (o.orderNumber) {
+          await setDoc(doc(db, 'orders', o.orderNumber), o, { merge: true });
+        }
+        if (o.id && o.id !== o.orderNumber) {
+          await setDoc(doc(db, 'orders', o.id), o, { merge: true });
+        }
+        if (o.customer?.uid) {
+          await setDoc(doc(db, 'users', o.customer.uid, 'orders', o.orderNumber || o.id), o, { merge: true });
+        }
       } catch (e) {}
     });
   }
