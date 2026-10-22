@@ -83,8 +83,7 @@
         body.preview-modal-mode .builder-panel,
         body.preview-modal-mode .index-sidebar-panel,
         body.preview-modal-mode footer,
-        body.preview-modal-mode #mr-dev-drawer-toggle,
-        body.preview-modal-mode #cart-drawer {
+        body.preview-modal-mode #mr-dev-drawer-toggle {
             display: none !important;
         }
         body.preview-modal-mode {
@@ -2286,6 +2285,54 @@
         </div>
     </div>
 
+    
+    <!-- MODAL DE GUARDADO Y VALIDACIÓN EN MI ESPACIO -->
+    <div class="modal-overlay" id="modalSaveAndValidateBook" style="z-index: 100001; display: none;">
+        <div class="modal-card" style="max-width: 580px; width: 92%; text-align: left; padding: 24px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8e2d5; padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 style="font-family: var(--font-display); font-size: 1.25rem; margin: 0; color: #1f1c19;">Guardar en Mi Espacio</h3>
+                    <div style="font-size: 0.8rem; color: #665e54; margin-top: 2px;">Elige si deseas guardar como borrador o validar para imprenta</div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeSaveAndValidateModal()" style="position: static; font-size: 1.4rem; line-height: 1; cursor: pointer; border: none; background: transparent;">✕</button>
+            </div>
+
+            <div style="background: #faf7f2; border: 1px solid #e8e0d4; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #5a5147; line-height: 1.5;">
+                <div style="font-weight: 800; color: #1f1c19; margin-bottom: 4px;" id="saveModalPagesCountDisplay">📖 Total actual: -- páginas</div>
+                <div style="margin-top: 6px; font-size: 0.78rem; color: #443c33;">
+                    <strong>Especificaciones físicas de imprenta:</strong><br>
+                    • <strong>Anillas metálicas (Wire-O):</strong> Mínimo 16 págs · Máximo 450 págs.<br>
+                    • <strong>Tapa blanda (fresada):</strong> Mínimo 32 págs · Máximo 365 págs.<br>
+                    • <strong>Tapa dura (Casewrap):</strong> Mínimo 60 págs · Máximo 365 págs.<br>
+                    <em>* Requisito físico estricto: El número total de páginas siempre debe ser par.</em>
+                </div>
+            </div>
+
+            <form id="form-save-validate-book" onsubmit="return false;">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="save-modal-book-title" style="display: block; font-size: 0.76rem; font-weight: 700; color: #473f36; margin-bottom: 4px;">Nombre del diseño en Mi Espacio</label>
+                    <input type="text" id="save-modal-book-title" style="width: 100%; padding: 8px 10px; font-size: 0.86rem; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box; background: #ffffff; color: #2b2520;" />
+                </div>
+
+                <div style="background: #ffffff; border: 1.5px solid #215c38; border-radius: 8px; padding: 12px 14px; margin-bottom: 18px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.82rem; color: #1e3d29; font-weight: 700; line-height: 1.4;">
+                        <input type="checkbox" id="save-modal-confirm-check" style="margin-top: 2px; width: 17px; height: 17px; accent-color: #215c38; cursor: pointer;" />
+                        <span>He revisado la ortografía, nombres y contenidos de las páginas y valido este libro para imprenta.</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" onclick="executeSaveDraftOnly()" style="background: #f5efe6; color: #4a3f35; border: 1px solid #d6cec0; border-radius: 6px; padding: 10px 16px; font-size: 0.84rem; font-weight: 600; cursor: pointer;" title="Guardar como borrador sin validar">
+                        💾 Guardar como Borrador
+                    </button>
+                    <button type="button" onclick="executeValidateAndSave()" style="background: #215c38; color: #ffffff; border: none; border-radius: 6px; padding: 10px 22px; font-size: 0.86rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(33,92,56,0.25);" title="Validar para imprenta y guardar">
+                        ✓ Validar y Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL POP-UP DE VALIDACIÓN DE TEXTOS DE INTERIOR ANTES DE IR A PORTADA -->
     <div class="modal-overlay" id="modalValidateInteriorTexts" style="z-index: 100000;">
         <div class="modal-card" style="max-width: 580px; width: 92%; text-align: left; padding: 24px; max-height: 90vh; overflow-y: auto;">
@@ -2934,6 +2981,86 @@
             window.location.href = '/generador-portadas.html?from=interior';
         }
         window.confirmInteriorTextsAndGoCover = confirmInteriorTextsAndGoCover;
+
+        function openSaveAndValidateModal() {
+            const modal = document.getElementById('modalSaveAndValidateBook');
+            const pagesEl = document.getElementById('saveModalPagesCountDisplay');
+            const titleInp = document.getElementById('save-modal-book-title');
+            const chk = document.getElementById('save-modal-confirm-check');
+            const total = (typeof generatedPageList !== 'undefined' ? generatedPageList.length : 86);
+
+            if (pagesEl) {
+                const isEven = total % 2 === 0;
+                pagesEl.innerHTML = `📖 Total actual: <strong>${total} páginas</strong> (${isEven ? 'Número par ✓ Apto' : '<span style="color:#dc2626;">Número impar ⚠️ No apto para imprenta</span>'})`;
+            }
+            if (titleInp) {
+                titleInp.value = (typeof bookConfig !== 'undefined' && bookConfig.title) ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado';
+            }
+            if (chk) {
+                chk.checked = !!(bookConfig && bookConfig.validated);
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        window.openSaveAndValidateModal = openSaveAndValidateModal;
+
+        function closeSaveAndValidateModal() {
+            const modal = document.getElementById('modalSaveAndValidateBook');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+        window.closeSaveAndValidateModal = closeSaveAndValidateModal;
+
+        function executeSaveDraftOnly() {
+            if (typeof bookConfig !== 'undefined') {
+                bookConfig.validated = false;
+                saveCompleteBookConfigLocally();
+            }
+            closeSaveAndValidateModal();
+            const btn = document.getElementById('btn-save-generator-design');
+            if (typeof window.__mrTriggerDirectSave === 'function') {
+                window.__mrTriggerDirectSave(false);
+            } else if (btn) {
+                btn.click();
+            }
+        }
+        window.executeSaveDraftOnly = executeSaveDraftOnly;
+
+        function executeValidateAndSave() {
+            const total = (typeof generatedPageList !== 'undefined' ? generatedPageList.length : 86);
+            if (total % 2 !== 0) {
+                alert(`⚠️ El libro tiene un número impar de páginas (${total} páginas).\n\nPara poder validar para imprenta, el número de páginas debe ser estrictamente par.\nActiva la sección de "Notas" para añadir 1 página y cuadrar el libro a número par.`);
+                return;
+            }
+            if (total < 16) {
+                alert(`⚠️ El libro tiene ${total} páginas. Se requiere un mínimo de 16 páginas para cualquier tipo de libro físico en imprenta.`);
+                return;
+            }
+            const chk = document.getElementById('save-modal-confirm-check');
+            if (chk && !chk.checked) {
+                alert('Por favor, marca la casilla confirmando la revisión de ortografía y contenidos para validar el libro.');
+                return;
+            }
+
+            if (typeof bookConfig !== 'undefined') {
+                bookConfig.validated = true;
+                bookConfig.validatedAt = new Date().toISOString();
+                saveCompleteBookConfigLocally();
+            }
+            closeSaveAndValidateModal();
+            if (typeof window.__mrTriggerDirectSave === 'function') {
+                window.__mrTriggerDirectSave(true);
+            } else {
+                const btn = document.getElementById('btn-save-generator-design');
+                if (btn) btn.click();
+            }
+        }
+        window.executeValidateAndSave = executeValidateAndSave;
+
 
         function init() {
             loadSavedCompleteBookConfig();
@@ -7300,6 +7427,5 @@
             };
         }, { isPremium: true, generatorType: 'book' });
     </script>
-    <script type="module" src="./cart-drawer.js"></script>
 </body>
 </html>

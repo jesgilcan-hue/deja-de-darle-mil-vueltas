@@ -18,7 +18,6 @@ import {
   MAX_AUTHORIZED_DEVICES
 } from './device-guard.js';
 import { sendOrderLifecycleEmails } from './order-email-notifier.js';
-import { openDevCartDrawer } from './cart-drawer.js';
 import { 
   signOut, 
   onAuthStateChanged,
@@ -117,10 +116,6 @@ const devUnlockedContent = document.getElementById('dev-unlocked-content');
 const devPinInput = document.getElementById('dev-pin-input');
 const btnUnlockDev = document.getElementById('btn-unlock-dev');
 const devPinError = document.getElementById('dev-pin-error');
-const envioForm = document.getElementById('envio-form');
-const btnSaveEnvio = document.getElementById('btn-save-envio');
-const btnSimulateOrder = document.getElementById('btn-simulate-order');
-const simOrderResult = document.getElementById('sim-order-result');
 
 // Inicialización al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
@@ -288,7 +283,7 @@ function checkUrlTab(allowDevTabs = false) {
   const tab = params.get('tab');
   const user = auth.currentUser;
   const isDevAllowed = isDeveloper(user) && allowDevTabs;
-  const hasPending = !!localStorage.getItem('mr_pending_payment_books') || !!localStorage.getItem('mr_cart_cover_item');
+  const hasPending = !!localStorage.getItem('mr_pending_payment_books');
   const isOrdersAllowed = isDevAllowed || isTestCustomer(user) || hasPending;
 
   if (params.get('stripe_test_success') === '1') {
@@ -296,17 +291,6 @@ function checkUrlTab(allowDevTabs = false) {
     setTimeout(() => {
       showToast(`✓ Pago Test completado · Pedido #${ordNum} confirmado y emails enviados`);
     }, 300);
-  }
-
-  if (params.get('buy_now') === '1') {
-    setTimeout(() => {
-      const topBuyBtn = document.querySelector('[data-buy-pending]');
-      if (topBuyBtn) {
-        const chk = document.querySelector('[data-confirm-texts]');
-        if (chk && !chk.checked) chk.checked = true;
-        topBuyBtn.click();
-      }
-    }, 600);
   }
 
   if (tab === 'ajustes') {
@@ -508,40 +492,6 @@ function setupEvents() {
     }
   });
 
-  // Guardar datos de envío en Panel Desarrollador (para Lulu)
-  envioForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentUser) return;
-
-    btnSaveEnvio.disabled = true;
-    btnSaveEnvio.textContent = 'Guardando...';
-
-    const shippingData = {
-      nombre: document.getElementById('envio-nombre').value.trim(),
-      telefono: document.getElementById('envio-telefono').value.trim(),
-      dni: document.getElementById('envio-dni').value.trim(),
-      direccion: document.getElementById('envio-direccion').value.trim(),
-      cp: document.getElementById('envio-cp').value.trim(),
-      ciudad: document.getElementById('envio-ciudad').value.trim(),
-      provincia: document.getElementById('envio-provincia').value.trim(),
-      pais: document.getElementById('envio-pais').value.trim(),
-      notas: document.getElementById('envio-notas').value.trim(),
-      updatedAt: serverTimestamp()
-    };
-
-    try {
-      const userRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userRef, { shipping: shippingData });
-      showToast('✓ Datos de envío guardados (Lulu Ready)');
-    } catch (err) {
-      console.error('Error al guardar datos de envío:', err);
-      showToast('Hubo un error al guardar los datos');
-    } finally {
-      btnSaveEnvio.disabled = false;
-      btnSaveEnvio.textContent = 'Guardar datos de envío';
-    }
-  });
-
   // Guardar Direcciones de Envío y Facturación en Ajustes
   const btnSaveDirecciones = document.getElementById('btn-save-direcciones');
   const sameBillingCheck = document.getElementById('ajustes-same-billing-check');
@@ -631,109 +581,10 @@ function setupEvents() {
     executeSaveDirecciones(false);
   });
 
-  // Eventos del modal para editar dirección de entrega en la cesta
-  document.getElementById('btn-close-edit-address-modal')?.addEventListener('click', closeBasketEditAddressModal);
-  document.getElementById('btn-cancel-edit-address-modal')?.addEventListener('click', closeBasketEditAddressModal);
-  document.getElementById('basket-edit-address-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'basket-edit-address-modal') closeBasketEditAddressModal();
-  });
-
-  document.getElementById('btn-save-edit-address-modal')?.addEventListener('click', async () => {
-    const itemId = document.getElementById('modal-edit-addr-item-id')?.value;
-    if (!itemId) return;
-    const name = document.getElementById('modal-addr-name')?.value.trim();
-    const phone = document.getElementById('modal-addr-phone')?.value.trim();
-    const street = document.getElementById('modal-addr-street')?.value.trim();
-    const postalCode = document.getElementById('modal-addr-zip')?.value.trim();
-    const city = document.getElementById('modal-addr-city')?.value.trim();
-    const province = document.getElementById('modal-addr-province')?.value.trim();
-    const notes = document.getElementById('modal-addr-notes')?.value.trim();
-    const saveToProfile = document.getElementById('modal-addr-save-profile')?.checked;
-
-    if (!name || !street) {
-      showToast('Por favor, indica al menos nombre y calle');
-      return;
-    }
-
-    const updatedShip = {
-      name,
-      nombre: name,
-      phone,
-      telefono: phone,
-      address: street,
-      direccion: street,
-      postalCode,
-      cp: postalCode,
-      city,
-      ciudad: city,
-      province: province || city,
-      provincia: province || city,
-      notes,
-      notas: notes,
-      pais: 'España'
-    };
-
-    const targetItem = clientPendingBasket.find(x => x.id === itemId);
-    if (targetItem) {
-      targetItem.shipping = updatedShip;
-      saveClientOrdersAndBasketState(currentUser);
-    }
-
-    if (currentUser) {
-      try {
-        const basketDocRef = doc(db, 'users', currentUser.uid, 'basket', itemId);
-        await setDoc(basketDocRef, { shipping: updatedShip }, { merge: true });
-      } catch (err) {
-        console.warn('Aviso actualizando shipping en basket doc:', err);
-      }
-
-      if (saveToProfile) {
-        try {
-          const userRef = doc(db, 'users', currentUser.uid);
-          await setDoc(userRef, { shipping: updatedShip }, { merge: true });
-          populateShippingFields(updatedShip);
-        } catch (err) {
-          console.warn('Aviso guardando shipping en perfil:', err);
-        }
-      }
-    }
-
-    closeBasketEditAddressModal();
-    renderClientOrdersAndBasketViews(currentUser);
-    showToast('✓ Dirección de entrega actualizada para este pedido');
-  });
-
   // Desbloqueo por PIN en panel de desarrollador
   btnUnlockDev?.addEventListener('click', unlockDevPanel);
   devPinInput?.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') unlockDevPanel();
-  });
-
-  // Simulador de pedido de prueba en Panel Desarrollador
-  btnSimulateOrder?.addEventListener('click', async () => {
-    if (!currentUser) return;
-    try {
-      btnSimulateOrder.disabled = true;
-      btnSimulateOrder.textContent = '⏳ Creando pedido y enviando emails (Cliente + Gestor)...';
-
-      const createdOrd = await seedFullProfileOrder(currentUser, true);
-
-      if (simOrderResult) {
-        simOrderResult.style.color = '#86efac';
-        simOrderResult.textContent = `✓ Pedido #${createdOrd?.orderNumber || ''} creado · Emails enviados desde pedidos@editorialmenosruido.com a Cliente (jesusgil_87@hotmail.com) y Gestor (jesgilcan@gmail.com)`;
-        simOrderResult.style.display = 'block';
-      }
-    } catch (err) {
-      console.error('Error simulando pedido:', err);
-      if (simOrderResult) {
-        simOrderResult.textContent = 'Error al simular pedido: ' + err.message;
-        simOrderResult.style.color = '#f87171';
-        simOrderResult.style.display = 'block';
-      }
-    } finally {
-      btnSimulateOrder.disabled = false;
-      btnSimulateOrder.textContent = 'Simular Pedido de Prueba (con envío de emails)';
-    }
   });
 }
 
@@ -1193,16 +1044,6 @@ function populateShippingFields(shipping, billing = null) {
   if (!shipping && !billing) return;
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   if (shipping) {
-    setVal('envio-nombre', shipping.nombre || shipping.name);
-    setVal('envio-telefono', shipping.telefono || shipping.phone);
-    setVal('envio-dni', shipping.dni);
-    setVal('envio-direccion', shipping.direccion || shipping.address);
-    setVal('envio-cp', shipping.cp || shipping.postalCode);
-    setVal('envio-ciudad', shipping.ciudad || shipping.city);
-    setVal('envio-provincia', shipping.provincia || shipping.province);
-    setVal('envio-pais', shipping.pais || 'España');
-    setVal('envio-notas', shipping.notas || shipping.notes);
-
     setVal('ajustes-shipping-name', shipping.nombre || shipping.name);
     setVal('ajustes-shipping-phone', shipping.telefono || shipping.phone);
     setVal('ajustes-shipping-address', shipping.direccion || shipping.address);
@@ -1876,14 +1717,6 @@ async function initClientOrdersAndBasketModule(user) {
       activateTab('tab-pedidos');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-
-    document.getElementById('btn-dev-seed-pending-book')?.addEventListener('click', () => {
-      seedPendingBasketBook();
-    });
-
-    document.getElementById('btn-dev-seed-full-order')?.addEventListener('click', () => {
-      seedFullProfileOrder(user, true);
-    });
   }
 
   // Escucha en tiempo real compatible 100% con Reglas de Seguridad de Firestore
@@ -2027,31 +1860,11 @@ async function loadClientOrdersAndBasketData(user) {
     if (rawPending) pending = JSON.parse(rawPending);
   } catch (e) {}
 
-  try {
-    const rawCartItem = localStorage.getItem('mr_cart_cover_item');
-    if (rawCartItem) {
-      const parsed = JSON.parse(rawCartItem);
-      const exists = pending.some(p => p.title === parsed.title && p.bindingType === parsed.bindingType);
-      if (!exists && parsed.title) {
-        pending.unshift({
-          id: 'pend_cart_' + (parsed.updatedAt || Date.now()),
-          title: parsed.title,
-          subtitle: parsed.syncedBookName || 'Libro Completo + Portada sincronizada',
-          bindingType: parsed.bindingType || 'coil',
-          pageCount: parsed.pageCount || 143,
-          fileSizeMb: ((parsed.pageCount || 143) * 0.31).toFixed(1),
-          savedAt: new Date(parsed.updatedAt || Date.now()).toISOString()
-        });
-      }
-    }
-  } catch (e) {}
-
   // Si no hay cuadernos pendientes (por haber sido comprados o eliminados), se respeta la cesta vacía
   clientPendingBasket = pending;
 
   // 2. Cargar Pedidos Impresos del Perfil (Firestore + Local)
   let loadedOrders = [];
-  const safeEmail = (getUserEmail(user) || '').toLowerCase().trim();
   const safeUserSearchEmail = (getUserEmail(user) || '').toLowerCase().trim();
   if (user && (isDeveloper(user) || isTestCustomer(user))) {
     try {
@@ -2077,13 +1890,6 @@ async function loadClientOrdersAndBasketData(user) {
     } catch (e) {}
   }
 
-  if (false) {
-    try {
-      const snap = await getDocs(collection(db, 'orders'));
-    snap.forEach(d => loadedOrders.push({ id: d.id, ...d.data() }));
-    } catch (e) {}
-  }
-
   let localSim = [];
   try {
     const rawSim = localStorage.getItem('mr_simulated_orders');
@@ -2102,10 +1908,6 @@ async function loadClientOrdersAndBasketData(user) {
 
   clientProfileOrders = Array.from(map.values());
 
-  if (clientProfileOrders.length === 0 && user && isDeveloper(user)) {
-    await seedFullProfileOrder(user, false);
-  }
-
   clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
 }
 
@@ -2115,7 +1917,6 @@ function saveClientOrdersAndBasketState(user) {
     localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
   } catch (e) {}
 
-  const safeEmail = (getUserEmail(user) || '').toLowerCase().trim();
   if (user && (isDeveloper(user) || isTestCustomer(user))) {
     clientProfileOrders.forEach(async (ord) => {
       try {
@@ -2131,104 +1932,6 @@ function saveClientOrdersAndBasketState(user) {
       } catch (e) {}
     });
   }
-}
-
-function seedPendingBasketBook() {
-  const presets = [
-    { title: 'Planificador Semestral 180 Días', subtitle: 'Interior 238 págs + Portada Doble Contraste', bindingType: 'hardcover', pageCount: 238, fileSizeMb: '68.4' },
-    { title: 'Planificador 90 Días · Enfoque Trimestral', subtitle: 'Interior 128 págs + Portada Orgánico & Botánico', bindingType: 'perfect', pageCount: 128, fileSizeMb: '38.2' },
-    { title: 'Planificador Anual Intercalado', subtitle: 'Interior 136 págs + Portada con Anillas Wire-O', bindingType: 'coil', pageCount: 136, fileSizeMb: '41.5' }
-  ];
-  const pick = presets[Math.floor(Math.random() * presets.length)];
-  clientPendingBasket.unshift({
-    id: 'pend_' + Date.now(),
-    title: pick.title,
-    subtitle: pick.subtitle,
-    bindingType: pick.bindingType,
-    pageCount: pick.pageCount,
-    fileSizeMb: pick.fileSizeMb,
-    savedAt: new Date().toISOString()
-  });
-  saveClientOrdersAndBasketState(auth.currentUser);
-  renderClientOrdersAndBasketViews(auth.currentUser);
-  showToast('🛒 Libro completo «Pendiente de Pago» añadido a la cesta del perfil');
-}
-
-async function seedFullProfileOrder(user, notify = true) {
-  const num = 'MR-2026-' + Math.floor(1000 + Math.random() * 9000);
-  const price = 27.90;
-  const trackingCode = 'CEX-' + Math.floor(10000000 + Math.random() * 90000000);
-  const initialStatus = notify ? 'pending_review' : 'shipped';
-  const newOrd = {
-    id: 'ord_' + Date.now(),
-    orderNumber: num,
-    status: initialStatus,
-    createdAt: new Date().toISOString(),
-    customer: {
-      name: getUserDisplayName(user) || 'Cliente Menos Ruido',
-      email: getUserEmail(user) || 'jesusgil_87@hotmail.com',
-      phone: '+34 600 000 000',
-      address: 'Calle Serrano 42, 4º Derecha',
-      postalCode: '28001',
-      city: 'Madrid',
-      province: 'Madrid',
-      country: 'España',
-      notes: 'Entregar en conserjería si no estoy en casa.'
-    },
-    shipping: {
-      carrier: 'Correos Express',
-      trackingNumber: trackingCode,
-      trackingUrl: 'https://www.correosexpress.com',
-      estimatedDelivery: 'Entrega prevista en 24/48h laborables',
-      lastCarrierMessage: notify
-        ? 'Pedido recibido en preimpresión. Pendiente de entrega a Correos Express.'
-        : 'Correos Express: Paquete clasificado en plataforma logística de destino (Madrid). En reparto próximo día hábil.'
-    },
-    luluJob: {
-      status: notify ? 'queued' : 'shipped',
-      jobId: 'LULU-' + Math.floor(100000 + Math.random() * 900000),
-      carrier: 'Correos Express',
-      trackingCode: trackingCode,
-      cost: 17.14
-    },
-    comms: {
-      compra: { sent: true, date: new Date().toISOString() },
-      imprenta: { sent: !notify },
-      tracking: { sent: !notify },
-      entregado: { sent: false },
-      checkin: { sent: false }
-    },
-    book: {
-      title: 'Planificador Anual 2026',
-      subtitle: '52 semanas, 12 meses y hábitos · Edición Personalizada',
-      bindingType: 'coil',
-      pageCount: 143,
-      quantity: 1,
-      size: '8.25x6',
-      spineWidthMm: '8.2',
-      fileSizeMb: '46.8'
-    },
-    pricing: {
-      currency: 'EUR',
-      totalPaid: price,
-      luluCostEstimate: 17.14,
-      netMargin: 10.09,
-      stripePaymentId: 'ch_test_0eur_' + Math.random().toString(36).substring(2, 8)
-    },
-    timeline: [
-      { date: new Date().toISOString(), message: `Pedido #${num} confirmado (${price.toFixed(2)} € · Envío incluido). Archivos guardados en tu perfil.` }
-    ]
-  };
-
-  clientProfileOrders.unshift(newOrd);
-  saveClientOrdersAndBasketState(user);
-  if (notify) {
-    renderClientOrdersAndBasketViews(user);
-    showToast(`⏳ Pedido #${num} creado · Enviando emails reales a Cliente y Gestor...`);
-    await sendOrderLifecycleEmails(newOrd, 'order_created');
-    showToast(`✉️ Emails enviados desde pedidos@editorialmenosruido.com a Cliente (jesusgil_87@hotmail.com) y Gestor (jesgilcan@gmail.com)`);
-  }
-  return newOrd;
 }
 
 function getBindingLabelForProfile(type) {
@@ -2388,29 +2091,26 @@ function getBasketItemById(id) {
   return found;
 }
 
-function updateFloatingCartSummary() {
-  const totalUnits = clientPendingBasket.reduce((sum, item) => sum + (typeof item.quantity === 'number' ? item.quantity : 1), 0);
-  const totalAmount = clientPendingBasket.reduce((sum, item) => {
+function updateBasketCheckoutBar() {
+  const bar = document.getElementById('client-basket-checkout-bar');
+  if (!bar) return;
+  const units = clientPendingBasket.reduce((sum, item) => sum + (typeof item.quantity === 'number' ? item.quantity : 1), 0);
+  const total = clientPendingBasket.reduce((sum, item) => {
     const q = (typeof item.quantity === 'number' ? item.quantity : 1);
-    const p = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
-    return sum + (p * q);
+    return sum + calcDynamicPriceForProfile(item.bindingType, item.pageCount) * q;
   }, 0);
-  const totalStr = totalAmount.toFixed(2).replace('.', ',') + ' €';
-
-  if (typeof window.updateCartFabBadge === 'function') {
-    window.updateCartFabBadge(totalUnits, totalStr);
-  } else {
-    const fab = document.getElementById('mrDevCartFab');
-    if (fab) {
-      fab.innerHTML = `
-        <span>🛒</span>
-        <span>Tu Carrito (${totalUnits})</span>
-        <span class="mr-dev-cart-fab-badge" style="background:${totalUnits > 0 ? '#215c38' : '#786e63'};">${totalStr}</span>
-      `;
-    }
+  bar.style.display = clientPendingBasket.length > 0 ? 'flex' : 'none';
+  const totalEl = document.getElementById('client-basket-total');
+  if (totalEl) {
+    totalEl.textContent = `${units} ${units === 1 ? 'ejemplar' : 'ejemplares'} · Total ${total.toFixed(2).replace('.', ',')} € (envío incluido)`;
+  }
+  const btn = document.getElementById('btn-basket-checkout');
+  if (btn) {
+    btn.disabled = units === 0;
+    btn.style.opacity = units === 0 ? '0.55' : '1';
+    btn.style.cursor = units === 0 ? 'not-allowed' : 'pointer';
   }
 }
-window.updateFloatingCartSummary = updateFloatingCartSummary;
 
 function openBasketCheckoutModal(targetItemId = null) {
   const modal = document.getElementById('basket-checkout-modal');
@@ -2542,6 +2242,7 @@ function closeBasketCheckoutModal() {
 }
 window.closeBasketCheckoutModal = closeBasketCheckoutModal;
 
+
 async function handleConfirmCheckoutOrder() {
   const selectedItems = clientPendingBasket.filter(x => (x.quantity !== undefined ? x.quantity : 1) > 0);
   if (selectedItems.length === 0) {
@@ -2552,7 +2253,7 @@ async function handleConfirmCheckoutOrder() {
   const confirmBtn = document.getElementById('btn-confirm-checkout-order');
   const confirmTxt = document.getElementById('btn-confirm-checkout-order-text');
   if (confirmBtn) confirmBtn.disabled = true;
-  if (confirmTxt) confirmTxt.textContent = '🔒 Conectando con Stripe Checkout...';
+  if (confirmTxt) confirmTxt.textContent = '🔒 Registrando pedido y confirmando...';
 
   const user = currentUser || auth.currentUser;
   const notesInp = document.getElementById('checkout-modal-customer-notes');
@@ -2584,75 +2285,133 @@ async function handleConfirmCheckoutOrder() {
   for (const it of selectedItems) {
     const pCount = it.pageCount || 144;
     if (pCount % 2 !== 0) {
-      alert(`⚠️ El cuaderno "${it.title}" tiene un número impar de páginas (${pCount} págs).\n\nPara imprenta el número de páginas debe ser estrictamente par. Ajusta el interior antes de pagar.`);
+      alert(`⚠️ El cuaderno "${it.title}" tiene un número impar de páginas (${pCount} págs).
+
+Para imprenta el número de páginas debe ser estrictamente par. Ajusta el interior antes de pagar.`);
       if (confirmBtn) confirmBtn.disabled = false;
-      if (confirmTxt) confirmTxt.textContent = 'Pagar con Tarjeta';
+      if (confirmTxt) confirmTxt.textContent = 'Confirmar Pedido (0 € Test)';
       return;
     }
   }
 
+  // Calcular total acumulado de todos los libros
+  let totalAmount = 0;
+  selectedItems.forEach(it => {
+    const q = typeof it.quantity === 'number' ? it.quantity : 1;
+    totalAmount += calcDynamicPriceForProfile(it.bindingType, it.pageCount) * q;
+  });
+
+  const orderNumber = 'MR-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
   const primaryItem = selectedItems[0];
   const pageCount = primaryItem.pageCount || 144;
+  const spineWidth = (pageCount * 0.057).toFixed(1);
+
+  // Registro del pedido unificado con todos los libros
+  const newOrder = {
+    id: 'ord_' + Date.now(),
+    orderNumber: orderNumber,
+    status: 'pending_review',
+    createdAt: new Date().toISOString(),
+    items: selectedItems,
+    customer: {
+      uid: user?.uid || (auth.currentUser ? auth.currentUser.uid : ''),
+      name: customerPlatformName,
+      email: customerPlatformEmail.toLowerCase().trim(),
+      phone: firstShip.phone || '+34 600 000 000',
+      address: firstShip.address || 'Calle Serrano 42',
+      postalCode: firstShip.postalCode || '28001',
+      city: firstShip.city || 'Madrid',
+      province: firstShip.province || 'Madrid',
+      country: 'España',
+      notes: deliveryNotes || firstShip.notes || 'Sin instrucciones adicionales',
+      isRegistered: true
+    },
+    shipping: {
+      carrier: 'Correos Express',
+      trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
+      lastCarrierMessage: 'Pedido recibido. En fase 1: En Revisión Técnica de tripas y maquetación.'
+    },
+    comms: {
+      compra: { sent: true, date: new Date().toISOString(), id: 'sim_test_' + Date.now() },
+      imprenta: { sent: false },
+      tracking: { sent: false },
+      entregado: { sent: false }
+    },
+    book: {
+      title: primaryItem.title || 'Cuaderno Personalizado',
+      subtitle: primaryItem.subtitle || 'Edición Personalizada',
+      bindingType: primaryItem.bindingType || 'softcover',
+      pageCount: pageCount,
+      quantity: primaryItem.quantity || 1,
+      size: '8.25x6',
+      spineWidthMm: spineWidth
+    },
+    pricing: {
+      currency: 'EUR',
+      totalPaid: totalAmount,
+      luluCostEstimate: 13.93,
+      netMargin: +(totalAmount - 13.93).toFixed(2),
+      stripePaymentId: 'test_demo_0eur'
+    },
+    timeline: [
+      {
+        date: new Date().toISOString(),
+        message: 'Pedido recibido y registrado en imprenta'
+      },
+      {
+        date: new Date().toISOString(),
+        message: 'Pago simulado de prueba confirmado (0 €)'
+      }
+    ]
+  };
 
   try {
-    const idToken = user ? await user.getIdToken() : '';
-    const res = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
-      },
-      body: JSON.stringify({
-        items: selectedItems.map(it => ({
-          title: it.title,
-          subtitle: it.subtitle || 'Edición Personalizada',
-          bindingType: it.bindingType || 'softcover',
-          pageCount: it.pageCount || 144,
-          quantity: it.quantity || 1,
-          price: it.price,
-          data: it.data || {}
-        })),
-        bookTitle: primaryItem.title,
-        bookSubtitle: primaryItem.subtitle || 'Edición Personalizada',
-        bindingType: primaryItem.bindingType || 'softcover',
-        pageCount: pageCount,
-        customerName: customerPlatformName,
-        customerEmail: customerPlatformEmail,
-        customerPhone: firstShip.phone,
-        address: firstShip.address,
-        postalCode: firstShip.postalCode,
-        city: firstShip.city,
-        province: firstShip.province || 'Madrid',
-        notes: deliveryNotes || firstShip.notes || '',
-        returnOrigin: window.location.origin
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok || !data.checkoutUrl) {
-      throw new Error(data.error || 'No se pudo iniciar la pasarela de Stripe Checkout.');
+    if (newOrder.orderNumber) {
+      await setDoc(doc(db, 'orders', newOrder.orderNumber), newOrder, { merge: true });
     }
+    if (newOrder.id && newOrder.id !== newOrder.orderNumber) {
+      await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
+    }
+    if (user && user.uid) {
+      await setDoc(doc(db, 'users', user.uid, 'orders', newOrder.orderNumber), newOrder, { merge: true });
+    }
+  } catch(e) {}
 
-    try {
-      localStorage.setItem('mr_active_checkout_order', JSON.stringify({
-        orderNumber: data.orderNumber,
-        sessionId: data.sessionId,
-        items: selectedItems,
-        item: primaryItem,
-        customer: firstShip,
-        deliveryNotes: deliveryNotes
-      }));
-    } catch(e) {}
-
-    // Redirección oficial inmediata a la pasarela real de Stripe
-    window.location.href = data.checkoutUrl;
-  } catch(err) {
-    console.error('Error al iniciar Stripe Checkout:', err);
-    alert('Aviso al conectar con la pasarela de pago:\n' + (err.message || err));
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Pagar con Tarjeta';
+  // Sincronizar en tiempo real con la pestaña del gestor
+  if (orderSyncChannel) {
+    orderSyncChannel.postMessage({ type: 'ORDER_CREATED', order: newOrder });
   }
+
+  // Vaciar cesta
+  clientPendingBasket = [];
+  try {
+    localStorage.setItem('mr_pending_payment_books', '[]');
+  } catch(e) {}
+
+  // Añadir a lista local de pedidos
+  clientProfileOrders.unshift(newOrder);
+  try {
+    localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+  } catch(e) {}
+
+  // Enviar correos si el servicio está disponible
+  try {
+    await sendOrderLifecycleEmails(newOrder, 'order_created');
+  } catch(e) {}
+
+  closeBasketCheckoutModal();
+  renderClientOrdersAndBasketViews(user || auth.currentUser);
+  showToast(`🎉 ¡Pedido #${orderNumber} confirmado con éxito! Entrando en Revisión Técnica.`);
+
+  // Llevar a la vista del pedido
+  setTimeout(() => {
+    const card = document.getElementById('order-card-' + orderNumber);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 400);
 }
+
 
 async function checkAndHandleStripeCheckoutReturn() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -2846,45 +2605,8 @@ function handleBasketInteriorPdfClick(id) {
 
 // Delegación global de clicks (inmune a re-renderizados del contenedor)
 document.addEventListener('click', (e) => {
-  // 1. Botón Comprar en Cesta
-  const buyBtn = e.target.closest('[data-buy-pending]');
-  if (buyBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = buyBtn.getAttribute('data-buy-pending');
-    const item = clientPendingBasket.find(x => String(x.id) === String(id));
-    if (!item) return;
-
-    if ((item.quantity !== undefined ? item.quantity : 1) <= 0) {
-      showToast('⚠️ Este cuaderno tiene 0 ejemplares seleccionados. Añade al menos 1 con «+» para poder comprarlo.');
-      return;
-    }
-
-    if (!item.textsConfirmed) {
-      showToast('⚠️ Debes confirmar la revisión de textos marcando la casilla antes de tramitar el pedido.');
-      const box = document.getElementById('confirm-box-' + id);
-      if (box) {
-        box.style.borderColor = '#dc2626';
-        box.style.background = '#fef2f2';
-        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const chk = box.querySelector('input[type="checkbox"]');
-        if (chk) chk.focus();
-        setTimeout(() => {
-          if (!item.textsConfirmed) {
-            box.style.borderColor = '#e4d5bc';
-            box.style.background = '#fffdf5';
-          }
-        }, 2200);
-      }
-      return;
-    }
-
-    openBasketCheckoutModal(id);
-    return;
-  }
-
-  // 1a. Botón Flotante Comprar (#mrBtnFloatingBuy)
-  if (e.target.closest('#mrBtnFloatingBuy')) {
+  // 1. Botón único «Tramitar pedido» de la cesta
+  if (e.target.closest('#btn-basket-checkout')) {
     e.preventDefault();
     e.stopPropagation();
     openBasketCheckoutModal();
@@ -2918,14 +2640,6 @@ document.addEventListener('click', (e) => {
       saveClientOrdersAndBasketState(currentUser || auth.currentUser);
       renderClientOrdersAndBasketViews(currentUser || auth.currentUser);
     }
-    return;
-  }
-
-  // 1c. Botón Tu Carrito Flotante (#mrDevCartFab)
-  if (e.target.closest('#mrDevCartFab')) {
-    e.preventDefault();
-    e.stopPropagation();
-    openBasketCheckoutModal();
     return;
   }
 
@@ -2973,13 +2687,13 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  // 5. Botón Modificar Dirección de Entrega en Cesta
-  const editShipBtn = e.target.closest('[data-edit-shipping-basket]');
-  if (editShipBtn) {
+  // 5. «Cambiar dirección en Ajustes»: la dirección se edita en un solo sitio y se aplica a toda la cesta
+  if (e.target.closest('[data-go-ajustes-shipping]')) {
     e.preventDefault();
     e.stopPropagation();
-    const id = editShipBtn.getAttribute('data-edit-shipping-basket');
-    editPendingBasketShipping(id, currentUser || auth.currentUser);
+    activateTab('tab-ajustes');
+    const shipCard = document.getElementById('ajustes-shipping-name')?.closest('.ajustes-card');
+    if (shipCard) shipCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
 
@@ -3026,63 +2740,6 @@ document.addEventListener('change', (e) => {
     }
   }
 });
-
-function openBasketEditAddressModal(itemId, user) {
-  const modal = document.getElementById('basket-edit-address-modal');
-  if (!modal) return;
-  const found = clientPendingBasket.find(x => x.id === itemId);
-  if (!found) return;
-
-  const currentShip = found.shipping || {
-    name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
-    email: (user ? getUserEmail(user) : '') || 'jesusgil_87@hotmail.com',
-    phone: '+34 600 000 000',
-    address: 'Calle Serrano 42, 4º Derecha',
-    postalCode: '28001',
-    city: 'Madrid',
-    province: 'Madrid',
-    notes: 'Entregar en conserjería si no estoy en casa.'
-  };
-
-  const idInp = document.getElementById('modal-edit-addr-item-id');
-  if (idInp) idInp.value = itemId;
-
-  const currSum = document.getElementById('modal-edit-addr-current-summary');
-  if (currSum) {
-    currSum.innerHTML = `<strong>${escapeHtml(currentShip.name || 'Cliente')}</strong> (Tel: ${escapeHtml(currentShip.phone || '--')})<br>` +
-                        `${escapeHtml(currentShip.address || '')}, ${escapeHtml(currentShip.postalCode || '')} ${escapeHtml(currentShip.city || '')} (${escapeHtml(currentShip.province || '')})` +
-                        (currentShip.notes ? `<br><em>Nota: ${escapeHtml(currentShip.notes)}</em>` : '');
-  }
-
-  const nameInp = document.getElementById('modal-addr-name');
-  const phoneInp = document.getElementById('modal-addr-phone');
-  const streetInp = document.getElementById('modal-addr-street');
-  const zipInp = document.getElementById('modal-addr-zip');
-  const cityInp = document.getElementById('modal-addr-city');
-  const provInp = document.getElementById('modal-addr-province');
-  const notesInp = document.getElementById('modal-addr-notes');
-
-  if (nameInp) nameInp.value = currentShip.name || (user ? getUserDisplayName(user) : '') || '';
-  if (phoneInp) phoneInp.value = currentShip.phone || '';
-  if (streetInp) streetInp.value = currentShip.address || '';
-  if (zipInp) zipInp.value = currentShip.postalCode || '';
-  if (cityInp) cityInp.value = currentShip.city || '';
-  if (provInp) provInp.value = currentShip.province || currentShip.city || '';
-  if (notesInp) notesInp.value = currentShip.notes || '';
-
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeBasketEditAddressModal() {
-  const modal = document.getElementById('basket-edit-address-modal');
-  if (modal) modal.classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-function editPendingBasketShipping(itemId, user) {
-  openBasketEditAddressModal(itemId, user);
-}
 
 function renderClientOrdersAndBasketViews(user) {
   const badgeEl = document.getElementById('client-orders-badge');
@@ -3170,10 +2827,6 @@ function renderClientOrdersAndBasketViews(user) {
                 </div>
 
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <!-- Botón Comprar -->
-                  <button type="button" data-buy-pending="${escapeHtml(item.id)}" ${item.quantity === 0 ? 'disabled' : ''} style="background: ${item.quantity === 0 ? '#b5aca1' : '#215c38'}; color: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: ${item.quantity === 0 ? 'not-allowed' : 'pointer'}; display: inline-flex; align-items: center; gap: 6px; box-shadow: ${item.quantity === 0 ? 'none' : '0 2px 6px rgba(33,92,56,0.25)'}; opacity: ${item.quantity === 0 ? '0.7' : '1'};">
-                    <span>💳</span> Comprar
-                  </button>
                   <!-- Botón Descargar Portada PDF -->
                   <button type="button" data-preview-pdf-cover="${escapeHtml(item.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Descargar PDF de portada">
                     <span>📥</span> Descargar Portada PDF
@@ -3227,8 +2880,8 @@ function renderClientOrdersAndBasketViews(user) {
                 <div style="background: #ffffff; border: 1px solid #e5ded2; border-radius: 8px; padding: 14px 16px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
                     <strong style="font-size: 0.85rem; color: #1f1c19;">🚚 Dirección de Entrega y Datos del Destinatario</strong>
-                    <button type="button" data-edit-shipping-basket="${escapeHtml(item.id)}" style="background: #f2ece1; color: #443c33; border: 1px solid #d4c8b6; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
-                      ✏️ Modificar dirección de entrega
+                    <button type="button" data-go-ajustes-shipping="1" style="background: #f2ece1; color: #443c33; border: 1px solid #d4c8b6; border-radius: 6px; padding: 6px 12px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+                      ✏️ Cambiar dirección en Ajustes y mis datos
                     </button>
                   </div>
                   <div id="shipping-display-${escapeHtml(item.id)}" style="font-size: 0.82rem; color: #475569; line-height: 1.5;">
@@ -3260,8 +2913,8 @@ function renderClientOrdersAndBasketViews(user) {
     }
   }
 
-  // Actualizar resumen en botón flotante
-  updateFloatingCartSummary();
+  // Barra inferior de la cesta: total y botón único «Tramitar pedido»
+  updateBasketCheckoutBar();
 
 // 2. RENDERIZAR BLOQUE B: HISTORIAL Y SEGUIMIENTO DE PEDIDOS EN EL PERFIL DEL CLIENTE
   const ordersContainer = document.getElementById('client-orders-history-list');

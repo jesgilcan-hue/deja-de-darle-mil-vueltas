@@ -745,7 +745,6 @@
         body.preview-modal-mode .planner-amazon-promo,
         body.preview-modal-mode footer,
         body.preview-modal-mode #mr-dev-drawer-toggle,
-        body.preview-modal-mode #cart-drawer,
         body.preview-modal-mode .floating-cta-wrap,
         body.preview-modal-mode .quick-preview-floating {
             display: none !important;
@@ -1022,38 +1021,18 @@
         }
         .btn-book-amazon:hover { text-decoration: underline; }
 
-        .order-step-box {
-            background: #fbf9f5;
-            border: 1px solid #e6dfd3;
-            border-radius: 10px;
-            padding: 14px;
-            margin-top: 12px;
-            text-align: left;
+    
+        .binding-pill-btn.binding-disabled {
+            opacity: 0.45 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(0.6);
+            border-style: dashed !important;
+        }
+        .binding-pill-btn.binding-disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
         }
 
-        .form-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        @media (max-width: 520px) {
-            .form-grid-2 { grid-template-columns: 1fr; }
-        }
-
-        .dev-json-box {
-            background: #1a1d1a;
-            color: #a8e6cf;
-            font-family: monospace;
-            font-size: 0.72rem;
-            padding: 12px;
-            border-radius: 8px;
-            overflow-x: auto;
-            max-height: 220px;
-            overflow-y: auto;
-            text-align: left;
-            margin-top: 10px;
-            line-height: 1.4;
-        }
     </style>
 </head>
 <body>
@@ -1203,7 +1182,7 @@
             <button type="button" class="btn-download-send" onclick="openDownloadModal()">
                 <span>📥</span> Descargar / Enviar PDF
             </button>
-            <!-- Botón de Flujo B (Precio Dinámico + Añadir al carrito) - Visible solo para jesgilcan@gmail.com -->
+            <!-- Botón «Añadir a la cesta»: visible solo para cuentas de prueba mientras la tienda está en modo prueba -->
             <div id="devCartWrapper" style="display:none !important; flex-direction:column; align-items:flex-end; gap:4px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div style="background:#fdfbf7; border:1.5px solid #d8cfc0; border-radius:8px; padding:4px 11px; text-align:right; line-height:1.15;">
@@ -1712,75 +1691,6 @@ Sección de notas libres (10 páginas)</textarea>
     </div>
 
     <!-- =========================================================================
-         MODAL FLUJO B: PEDIDO TRANSPARENTE PARA EL USUARIO (CONEXIÓN LULU API)
-         ========================================================================= -->
-    <div class="modal-overlay" id="orderModal" onclick="if(event.target.id==='orderModal') closeOrderModal()">
-        <div class="modal-card" style="max-width: 640px;">
-            <button type="button" class="modal-close-btn" onclick="closeOrderModal()">✕</button>
-            <span style="background:#eaf5ee; color:#2b7a4b; font-size:0.7rem; font-weight:800; padding:3px 10px; border-radius:12px; text-transform:uppercase;">Servicio de Imprenta Editorial Menos Ruido</span>
-            <h3 style="font-family:var(--font-serif); font-size:1.45rem; margin-top:6px; margin-bottom:4px;">Recibe tu Cuaderno Impreso en Casa</h3>
-            <p style="font-size:0.83rem; color:#666;">
-                Nosotros nos encargamos de todo: imprimimos tu interior y tu portada personalizada en papel crema de alta gama, lo encuadernamos y te lo enviamos directamente a tu puerta.
-            </p>
-
-            <!-- Resumen del producto para el usuario (100% marca Menos Ruido, transparente) -->
-            <div class="order-step-box">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ece5d8; padding-bottom:8px; margin-bottom:8px;">
-                    <div>
-                        <div style="font-size:0.88rem; font-weight:800; color:#1e1916;" id="orderBookTitle">Planificador Personalizado Menos Ruido</div>
-                        <div style="font-size:0.76rem; color:#665e54;" id="orderBookSpecs">Encuadernación con Anillas Metálicas · 86 páginas</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:1.15rem; font-weight:800; color:var(--accent);" id="orderPriceDisplay">24,90 €</div>
-                        <div style="font-size:0.68rem; color:#777;">Imprenta + Envío incluido</div>
-                    </div>
-                </div>
-
-                <div class="form-grid-2" style="margin-top:10px;">
-                    <div class="field-group">
-                        <label>Nombre completo</label>
-                        <input type="text" id="ordName" placeholder="Ej. Clara Beltrán">
-                    </div>
-                    <div class="field-group">
-                        <label>Correo electrónico (Seguimiento)</label>
-                        <input type="email" id="ordEmail" placeholder="clara@ejemplo.com" style="padding:8px 10px; border:1.5px solid #dcd4c6; border-radius:6px;">
-                    </div>
-                    <div class="field-group" style="grid-column: 1 / -1;">
-                        <label>Dirección de entrega (Calle, número, piso)</label>
-                        <input type="text" id="ordStreet" placeholder="Calle Mayor 14, 3º B">
-                    </div>
-                    <div class="field-group">
-                        <label>Ciudad</label>
-                        <input type="text" id="ordCity" placeholder="Madrid">
-                    </div>
-                    <div class="field-group">
-                        <label>Código Postal y País</label>
-                        <div style="display:flex; gap:6px;">
-                            <input type="text" id="ordZip" placeholder="28013" style="width:45%;">
-                            <select id="ordCountry" style="width:55%;">
-                                <option value="ES">España (ES)</option>
-                                <option value="MX">México (MX)</option>
-                                <option value="AR">Argentina (AR)</option>
-                                <option value="CO">Colombia (CO)</option>
-                                <option value="US">Estados Unidos (US)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="button" class="btn-action-order" style="width:100%; justify-content:center; padding:12px; margin-top:14px;" onclick="simulateTransparentOrder()">
-                    <span>💳</span> Pagar y Enviar mi Cuaderno a Imprenta →
-                </button>
-            </div>
-
-            <!-- CONTENEDOR OCULTO PAYLOAD API -->
-            <div style="display:none;">
-                <pre class="dev-json-box" id="luluApiPayloadBox"></pre>
-            </div>
-        </div>
-    </div>
-
-    <!-- =========================================================================
          MODAL DE SINCRONIZACIÓN CON EL LIBRO INTERIOR CREADO
          ========================================================================= -->
     <div class="modal-overlay" id="syncInteriorModal" onclick="if(event.target.id==='syncInteriorModal') closeSyncInteriorModal()">
@@ -1903,18 +1813,13 @@ Sección de notas libres (10 páginas)</textarea>
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button type="button" class="btn-modal-primary" id="btnAddedModalBuyNow" style="background: #22382c; color: #ffffff; border: none; padding: 12px; font-size: 0.92rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
-                    💳 Comprar ahora
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="btnAddedModalKeepEditing" onclick="closeAddedToCartModal()" style="flex: 1; background: #f2ece1; color: #5c5247; border: 1px solid #dcd3c4; padding: 12px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                    ✏️ Seguir editando
                 </button>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" id="btnAddedModalGoBasket" style="flex: 1; background: #ffffff; color: #1f1c19; border: 1.5px solid #d4c8b6; padding: 10px; font-size: 0.84rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
-                        📦 Ir a mi cesta
-                    </button>
-                    <button type="button" id="btnAddedModalKeepEditing" onclick="closeAddedToCartModal()" style="flex: 1; background: #f2ece1; color: #5c5247; border: 1px solid #dcd3c4; padding: 10px; font-size: 0.84rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
-                        ✏️ Seguir / Crear otro
-                    </button>
-                </div>
+                <button type="button" id="btnAddedModalGoBasket" style="flex: 1; background: #22382c; color: #ffffff; border: none; padding: 12px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                    📦 Ir a mi cesta
+                </button>
             </div>
         </div>
     </div>
@@ -2131,7 +2036,7 @@ Sección de notas libres (10 páginas)</textarea>
         window.firestoreInteriorBooks = [];
         window.availableInteriorBooks = [];
 
-        let coverState = {
+        let coverState = window.coverState = {
             plannerKey: 'anual',
             syncedBookId: 'active_draft',
             syncedBookName: 'Libro Completo · Planificador anual',
@@ -2233,8 +2138,8 @@ Sección de notas libres (10 páginas)</textarea>
 
             setBindingType(coverState.bindingType);
             renderCoverPreview();
-            refreshLuluPayloadPreview();
             updateSyncedBookLabels();
+            updateBindingAvailability();
             isInitializing = false;
 
             // Descarga directa y previsualización de PDF de portada
@@ -2654,50 +2559,41 @@ Sección de notas libres (10 páginas)</textarea>
                 alert('Por favor, marca la casilla confirmando que has revisado los textos de la cubierta.');
                 return;
             }
-            const tInp = document.getElementById('val-cov-title');
-            const sInp = document.getElementById('val-cov-subtitle');
-            const aInp = document.getElementById('val-cov-author');
-            const spInp = document.getElementById('val-cov-spine');
-            const bInp = document.getElementById('val-cov-back');
-
-            if (tInp && tInp.value.trim()) {
-                coverState.title = tInp.value.trim();
-                const uiT = document.getElementById('inpTitle');
-                if (uiT) uiT.value = coverState.title;
-            }
-            if (sInp) {
-                coverState.subtitle = sInp.value.trim();
-                const uiS = document.getElementById('inpSubtitle');
-                if (uiS) uiS.value = coverState.subtitle;
-            }
-            if (aInp) {
-                coverState.author = aInp.value.trim();
-                const uiA = document.getElementById('inpAuthor');
-                if (uiA) uiA.value = coverState.author;
-            }
-            if (spInp) {
-                coverState.spineText = spInp.value.trim();
-                const uiSp = document.getElementById('inpSpineText');
-                if (uiSp) uiSp.value = coverState.spineText;
-            }
-            if (bInp) {
-                coverState.backIntro = bInp.value.trim();
-                const uiB = document.getElementById('inpBackIntro');
-                if (uiB) uiB.value = coverState.backIntro;
-            }
-
-            renderCoverPreview();
             closeValidateCoverTextsModal();
             handleAddToCart();
         }
         window.confirmCoverTextsAndAddToCart = confirmCoverTextsAndAddToCart;
 
         function handleAddToCart() {
-        // Auditoria estricta de paginas pares
-        if (coverState.pageCount % 2 !== 0) {
-            coverState.pageCount += 1;
-            const pInp = document.getElementById('inpPageCount');
-            if (pInp) pInp.value = coverState.pageCount;
+        const pages = parseInt(coverState.pageCount, 10) || 0;
+
+        // 1. Auditoría de páginas pares (sin trampas silenciosas)
+        if (pages % 2 !== 0) {
+            alert(`⚠️ El libro tiene un número impar de páginas (${pages} páginas).\n\nPara imprenta el número de páginas debe ser estrictamente par. Ajusta las secciones en el Constructor de Libro Completo antes de añadir a la cesta.`);
+            return;
+        }
+
+        // 2. Comprobación de límites por encuadernación
+        if (coverState.bindingType === 'hardcover' && pages < 60) {
+            alert(`⚠️ La tapa dura requiere un mínimo de 60 páginas (actualmente tiene ${pages}).\n\nCambia a Tapa Blanda o Anillas, o añade más páginas al interior.`);
+            return;
+        }
+        if (coverState.bindingType === 'perfect' && pages < 32) {
+            alert(`⚠️ La tapa blanda requiere un mínimo de 32 páginas (actualmente tiene ${pages}).\n\nCambia a Anillas o añade más páginas al interior.`);
+            return;
+        }
+        if (coverState.bindingType === 'coil' && pages < 16) {
+            alert(`⚠️ Se requiere un mínimo de 16 páginas para cualquier encuadernación física (actualmente tiene ${pages}).`);
+            return;
+        }
+
+        // 3. Comprobación de que el interior esté validado
+        if (coverState.syncedBookValidated === false) {
+            const irAValidar = confirm(`⚠️ El libro interior sincronizado está guardado como BORRADOR sin validar.\n\nPara poder encargarlo a imprenta, debes revisar y validar el interior.\n\n¿Deseas abrir el Constructor de Libro Completo ahora para validarlo?`);
+            if (irAValidar) {
+                window.location.href = '/generador-libro-completo.html';
+            }
+            return;
         }
             const btn = document.getElementById('btnAddToCart');
             const hint = document.getElementById('cartOverwriteHint');
@@ -2787,15 +2683,8 @@ Sección de notas libres (10 páginas)</textarea>
             if (sEl) sEl.textContent = `${bindLabel} · ${coverState.pageCount} páginas interiores`;
             if (pEl) pEl.textContent = priceStr;
 
-            // Enlazar botones del modal
-            const btnBuyNow = document.getElementById('btnAddedModalBuyNow');
+            // Enlazar botón «Ir a mi cesta» del modal
             const btnGoBasket = document.getElementById('btnAddedModalGoBasket');
-            if (btnBuyNow) {
-                btnBuyNow.onclick = () => {
-                    closeAddedToCartModal();
-                    window.location.href = '/mi-espacio.html?tab=pedidos&buy_now=1';
-                };
-            }
             if (btnGoBasket) {
                 btnGoBasket.onclick = () => {
                     closeAddedToCartModal();
@@ -2840,7 +2729,93 @@ Sección de notas libres (10 páginas)</textarea>
             });
         }
 
-        function setBindingType(type) {
+        
+        window.updateBindingAvailability = updateBindingAvailability;
+        function updateBindingAvailability() {
+            const pages = parseInt(coverState.pageCount, 10) || 0;
+            const btnCoil = document.getElementById('btnBindCoil');
+            const btnPerfect = document.getElementById('btnBindPerfect');
+            const btnHard = document.getElementById('btnBindHardcover');
+
+            // 1. Anillas (Wire-O): mín 16, máx 450
+            const coilAllowed = pages >= 16 && pages <= 450;
+            let coilTooltip = 'Encuadernación con anillas metálicas Wire-O (mínimo 16 páginas, máximo 450 páginas)';
+            if (pages < 16) {
+                coilTooltip = `Te faltan ${16 - pages} páginas para encuadernación en anillas (mínimo 16 páginas, actualmente tiene ${pages})`;
+            } else if (pages > 450) {
+                coilTooltip = `Supera el límite de 450 páginas para anillas metálicas (actualmente tiene ${pages} páginas)`;
+            }
+
+            // 2. Tapa Blanda: mín 32, máx 365
+            const perfectAllowed = pages >= 32 && pages <= 365;
+            let perfectTooltip = 'Encuadernación rústica fresada en tapa blanda mate (mínimo 32 páginas, máximo 365 páginas)';
+            if (pages < 32) {
+                perfectTooltip = `Te faltan ${32 - pages} páginas para tapa blanda (mínimo 32 páginas, actualmente tiene ${pages})`;
+            } else if (pages > 365) {
+                perfectTooltip = `Supera el límite de 365 páginas para tapa blanda (actualmente tiene ${pages} páginas)`;
+            }
+
+            // 3. Tapa Dura: mín 60, máx 365
+            const hardAllowed = pages >= 60 && pages <= 365;
+            let hardTooltip = 'Encuadernación rígida en tapa dura casewrap con lomo impreso (mínimo 60 páginas, máximo 365 páginas)';
+            if (pages < 60) {
+                hardTooltip = `Te faltan ${60 - pages} páginas para tapa dura (mínimo 60 páginas, actualmente tiene ${pages})`;
+            } else if (pages > 365) {
+                hardTooltip = `Supera el límite de 365 páginas para tapa dura (actualmente tiene ${pages} páginas)`;
+            }
+
+            const applyBtn = (btn, allowed, tooltip) => {
+                if (!btn) return;
+                btn.title = tooltip;
+                if (allowed) {
+                    btn.classList.remove('binding-disabled');
+                    btn.removeAttribute('disabled');
+                } else {
+                    btn.classList.add('binding-disabled');
+                }
+            };
+
+            applyBtn(btnCoil, coilAllowed, coilTooltip);
+            applyBtn(btnPerfect, perfectAllowed, perfectTooltip);
+            applyBtn(btnHard, hardAllowed, hardTooltip);
+
+            // Reasignación automática si la actual no está permitida
+            if (coverState.bindingType === 'hardcover' && !hardAllowed) {
+                if (perfectAllowed) setBindingType('perfect', true);
+                else if (coilAllowed) setBindingType('coil', true);
+            } else if (coverState.bindingType === 'perfect' && !perfectAllowed) {
+                if (coilAllowed) setBindingType('coil', true);
+                else if (hardAllowed) setBindingType('hardcover', true);
+            } else if (coverState.bindingType === 'coil' && !coilAllowed) {
+                if (perfectAllowed) setBindingType('perfect', true);
+                else if (hardAllowed) setBindingType('hardcover', true);
+            }
+        }
+        window.updateBindingAvailability = updateBindingAvailability;
+
+        function setBindingType(type, silent = false) {
+            const pages = parseInt(coverState.pageCount, 10) || 0;
+            if (!silent) {
+                if (type === 'hardcover' && pages < 60) {
+                    alert(`Te faltan ${60 - pages} páginas para encuadernación en tapa dura.
+
+El mínimo técnico para tapa dura con lomo rígido impreso es de 60 páginas (actualmente tiene ${pages}).`);
+                    return;
+                }
+                if (type === 'perfect' && pages < 32) {
+                    alert(`Te faltan ${32 - pages} páginas para encuadernación en tapa blanda.
+
+El mínimo técnico de fresado y cola para tapa blanda es de 32 páginas (actualmente tiene ${pages}).`);
+                    return;
+                }
+                if (type === 'coil' && pages < 16) {
+                    alert(`Te faltan ${16 - pages} páginas para encuadernación en anillas.
+
+El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmente tiene ${pages}).`);
+                    return;
+                }
+            }
+
             const changed = coverState.bindingType !== type;
             coverState.bindingType = type;
             document.getElementById('btnBindCoil').classList.toggle('active', type === 'coil');
@@ -2878,7 +2853,6 @@ Sección de notas libres (10 páginas)</textarea>
             if (changed) markCartModified();
             updateSpecsLabels();
             renderCoverPreview();
-            refreshLuluPayloadPreview();
         }
 
         function setCoilPreviewMode(mode) {
@@ -2967,7 +2941,6 @@ Sección de notas libres (10 páginas)</textarea>
             if (triggerCartDirty) markCartModified();
             updateSpecsLabels();
             renderCoverPreview();
-            refreshLuluPayloadPreview();
         }
 
         function getCalculatedSpineMm() {
@@ -3857,95 +3830,6 @@ Sección de notas libres (10 páginas)</textarea>
             }
         }
 
-        // =====================================================================
-        // FLUJO B: PEDIDO TRANSPARENTE AL USUARIO CON PAYLOAD LULU PRINT API
-        // =====================================================================
-        function getLuluPodPackageId() {
-            const fmt = TRIM_FORMATS.landscape_825_6;
-            // En Lulu Print API: CO = Coil Bound (Anillas), PB = Perfect Bound (Tapa Blanda), CW = Hardcover (Tapa Dura)
-            let bindCode = 'CO';
-            if (coverState.bindingType === 'perfect') bindCode = 'PB';
-            if (coverState.bindingType === 'hardcover') bindCode = 'CW';
-            return `${fmt.luluSkuPrefix}BWSTDC${bindCode}060UC444MXX`;
-        }
-
-        function refreshLuluPayloadPreview() {
-            const box = document.getElementById('luluApiPayloadBox');
-            if (!box) return;
-
-            const name = (document.getElementById('ordName')?.value || coverState.author || 'Clara Beltrán').replace('Edición Personalizada · ', '');
-            const email = document.getElementById('ordEmail')?.value || 'cliente@ejemplo.com';
-            const street = document.getElementById('ordStreet')?.value || 'Calle Mayor 14, 3B';
-            const city = document.getElementById('ordCity')?.value || 'Madrid';
-            const zip = document.getElementById('ordZip')?.value || '28013';
-            const country = document.getElementById('ordCountry')?.value || 'ES';
-
-            const payload = {
-                contact_email: "pedidos@editorialmenosruido.com",
-                external_id: `MR-ORDER-${Date.now()}`,
-                shipping_level: "MAIL",
-                shipping_address: {
-                    name: name,
-                    street1: street,
-                    city: city,
-                    postcode: zip,
-                    country_code: country,
-                    email: email
-                },
-                line_items: [
-                    {
-                        external_id: "ITEM-CUADERNO-1",
-                        title: coverState.title || "Cuaderno Personalizado Menos Ruido",
-                        quantity: 1,
-                        printable_normalization: {
-                            pod_package_id: getLuluPodPackageId(),
-                            cover: {
-                                source_url: `https://www.editorialmenosruido.com/api/temp-files/cover_${coverState.bindingType}_${coverState.pageCount}p.pdf`
-                            },
-                            interior: {
-                                source_url: `https://www.editorialmenosruido.com/api/temp-files/interior_${coverState.pageCount}p.pdf`
-                            }
-                        }
-                    }
-                ]
-            };
-
-            box.textContent = JSON.stringify(payload, null, 2);
-        }
-
-        function openOrderModal() {
-            document.getElementById('orderBookTitle').textContent = coverState.title || 'Planificador Personalizado Menos Ruido';
-            let bindName = 'Encuadernación con Anillas Metálicas (Wire-O)';
-            let priceText = '24,90 €';
-            if (coverState.bindingType === 'perfect') {
-                bindName = 'Encuadernación Tapa Blanda';
-                priceText = '22,90 €';
-            } else if (coverState.bindingType === 'hardcover') {
-                bindName = 'Encuadernación Tapa Dura';
-                priceText = '29,90 €';
-            }
-            document.getElementById('orderBookSpecs').textContent = `${bindName} · ${coverState.pageCount} páginas interiores`;
-            document.getElementById('orderPriceDisplay').textContent = priceText;
-
-            refreshLuluPayloadPreview();
-            document.getElementById('orderModal').classList.add('active');
-        }
-
-        function closeOrderModal() {
-            document.getElementById('orderModal').classList.remove('active');
-        }
-
-        function simulateTransparentOrder() {
-            refreshLuluPayloadPreview();
-            alert('¡Gracias por tu pedido! La pasarela de pago directo e imprenta bajo demanda estará disponible muy pronto. Mientras tanto, puedes descargar tu portada exterior y tu interior completo en PDF 100% gratis.');
-        }
-
-        // Escuchar cambios en el formulario de dirección para actualizar el JSON en tiempo real
-        ['ordName', 'ordEmail', 'ordStreet', 'ordCity', 'ordZip', 'ordCountry'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', refreshLuluPayloadPreview);
-        });
-
         window.addEventListener('DOMContentLoaded', initCoverGenerator);
     </script>
 
@@ -3954,11 +3838,17 @@ Sección de notas libres (10 páginas)</textarea>
     <!-- Integración con "Guardar en Mi Espacio" y carga de libros creados en Firestore -->
     <script type="module">
         import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
-        import { auth, db } from './firebase-config.js';
+        import { auth, db, isDeveloper, isTestCustomer } from './firebase-config.js';
         import { collection, getDocs } from 'firebase/firestore';
         import { onAuthStateChanged } from 'firebase/auth';
 
         onAuthStateChanged(auth, async (user) => {
+            // Botón «Añadir a la cesta»: solo cuentas de prueba mientras la tienda está en modo prueba
+            const cartWrapper = document.getElementById('devCartWrapper');
+            if (cartWrapper) {
+                const canBuy = !!user && (isDeveloper(user) || isTestCustomer(user));
+                cartWrapper.style.setProperty('display', canBuy ? 'flex' : 'none', 'important');
+            }
             if (!user) return;
             try {
                 const snap = await getDocs(collection(db, 'users', user.uid, 'designs'));
@@ -4043,6 +3933,5 @@ Sección de notas libres (10 páginas)</textarea>
         setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData, { isPremium: true, generatorType: 'cover' });
         checkAndLoadSavedDesign(applySavedCoverDesign);
     </script>
-    <script type="module" src="./cart-drawer.js"></script>
 </body>
 </html>
