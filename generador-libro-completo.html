@@ -2976,11 +2976,53 @@
             if (ownerInp) bookConfig.owner = ownerInp.value.trim();
             if (dedInp) bookConfig.dedication = dedInp.value.trim();
 
+            // Guardar total de páginas real en el objeto para sincronización perfecta
+            if (typeof generatedPageList !== 'undefined') {
+                bookConfig.pageCount = generatedPageList.length;
+            }
+
             saveCompleteBookConfigLocally();
+
+            // Guardar silenciosamente en Firestore si hay sesión iniciada
+            if (typeof window.saveCompleteBookDirectly === 'function') {
+                try {
+                    window.saveCompleteBookDirectly(!!bookConfig.validated, bookConfig.title, true);
+                } catch(e) {}
+            }
+
             closeValidateInteriorTextsModal();
+
+            // Desactivar aviso del navegador "¿Quieres salir del sitio web?"
+            window.onbeforeunload = null;
+            if (typeof window.setUnsavedChanges === 'function') {
+                window.setUnsavedChanges(false);
+            }
+
+            // Navegar directamente a diseñar portada
             window.location.href = '/generador-portadas.html?from=interior';
         }
         window.confirmInteriorTextsAndGoCover = confirmInteriorTextsAndGoCover;
+
+        function autoFixBookParity() {
+            const total = (typeof generatedPageList !== 'undefined' ? generatedPageList.length : 86);
+            if (total % 2 === 0) {
+                alert('El libro ya tiene un número par de páginas (' + total + ' págs).');
+                return;
+            }
+            let notesSec = bookConfig.sections.find(s => s.id === 'notes');
+            if (!notesSec) {
+                notesSec = { id: 'notes', pages: 1, active: true, design: { pattern: 'dots' } };
+                bookConfig.sections.push(notesSec);
+            } else {
+                notesSec.active = true;
+                notesSec.pages = (parseInt(notesSec.pages, 10) || 0) + 1;
+            }
+            recalcPages();
+            renderSectionsList();
+            saveCompleteBookConfigLocally();
+            openSaveAndValidateModal();
+        }
+        window.autoFixBookParity = autoFixBookParity;
 
         function openSaveAndValidateModal() {
             const modal = document.getElementById('modalSaveAndValidateBook');
@@ -2991,7 +3033,11 @@
 
             if (pagesEl) {
                 const isEven = total % 2 === 0;
-                pagesEl.innerHTML = `📖 Total actual: <strong>${total} páginas</strong> (${isEven ? 'Número par ✓ Apto' : '<span style="color:#dc2626;">Número impar ⚠️ No apto para imprenta</span>'})`;
+                let fixBtnHtml = '';
+                if (!isEven) {
+                    fixBtnHtml = `<div style="margin-top:8px;"><button type="button" onclick="autoFixBookParity()" style="background:#2563eb; color:#ffffff; border:none; padding:6px 12px; border-radius:6px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;"><span>➕</span> Cuadrar automáticamente (+1 pág. de Notas para hacer par ${total + 1} págs)</button></div>`;
+                }
+                pagesEl.innerHTML = `📖 Total actual: <strong>${total} páginas</strong> (${isEven ? '<span style="color:#166534; font-weight:700;">Número par ✓ Apto para imprenta</span>' : '<span style="color:#dc2626; font-weight:700;">Número impar ⚠️ No apto para imprenta</span>'})${fixBtnHtml}`;
             }
             if (titleInp) {
                 titleInp.value = (typeof bookConfig !== 'undefined' && bookConfig.title) ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado';

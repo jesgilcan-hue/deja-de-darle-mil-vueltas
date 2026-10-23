@@ -2129,7 +2129,14 @@ Sección de notas libres (10 páginas)</textarea>
             }
 
             if (!hasLoadedCartItem) {
-                if (window.availableInteriorBooks.length > 0) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const fromInterior = urlParams.get('from') === 'interior';
+                const hasLocalDraft = !!localStorage.getItem('mr_complete_book_config');
+
+                // Si viene de pulsar "Diseñar Portada" o hay borrador local, manda el libro recién editado
+                if (fromInterior || (hasLocalDraft && window.availableInteriorBooks.length === 0)) {
+                    syncFromBookBuilder(false);
+                } else if (window.availableInteriorBooks.length > 0) {
                     applyInteriorBookObject(window.availableInteriorBooks[0], false);
                 } else {
                     syncFromBookBuilder(false);
@@ -2494,15 +2501,25 @@ Sección de notas libres (10 páginas)</textarea>
                 }
 
                 // 3. Calcular número exacto de páginas y lista de contenidos real
-                const calc = calculatePagesFromSections(saved.sections);
-                if (calc) {
-                    coverState.pageCount = calc.totalPages;
-                    document.getElementById('inpPageCount').value = calc.totalPages;
-                    if (calc.bullets.length > 0) {
-                        coverState.backBullets = calc.bullets;
-                        document.getElementById('inpBackBullets').value = calc.bullets.join('\n');
+                // Si el libro guardó su número de páginas exacto, usarlo prioritariamente
+                if (saved.pageCount && parseInt(saved.pageCount, 10) > 0) {
+                    coverState.pageCount = parseInt(saved.pageCount, 10);
+                    document.getElementById('inpPageCount').value = coverState.pageCount;
+                } else {
+                    const calc = calculatePagesFromSections(saved.sections);
+                    if (calc) {
+                        coverState.pageCount = calc.totalPages;
+                        document.getElementById('inpPageCount').value = calc.totalPages;
+                        if (calc.bullets.length > 0) {
+                            coverState.backBullets = calc.bullets;
+                            document.getElementById('inpBackBullets').value = calc.bullets.join('\n');
+                        }
                     }
                 }
+                if (saved.validated !== undefined) {
+                    coverState.syncedBookValidated = !!saved.validated;
+                }
+                updateBindingAvailability();
 
                 coverState.spineText = `MENOS RUIDO  •  ${(coverState.title || 'PLANIFICADOR').toUpperCase()}`;
                 document.getElementById('inpSpineText').value = coverState.spineText;
