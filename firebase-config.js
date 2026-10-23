@@ -195,4 +195,22 @@ export async function syncUserProfile(user, extraData = {}) {
   return userData;
 }
 
-export { onAuthStateChanged, signOut, sendSignInLinkToEmail, signInWithPopup };
+export { 
+  onAuthStateChanged, 
+  signOut, 
+  sendSignInLinkToEmail, 
+  signInWithPopup,
+  signInWithEmailLink,
+  isSignInWithEmailLink,
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  deleteDoc, 
+  serverTimestamp, 
+  query, 
+  orderBy
+};
