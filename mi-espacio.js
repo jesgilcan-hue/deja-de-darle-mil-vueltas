@@ -1,3 +1,15 @@
+window.closeBasketCheckoutModalAndGoToAjustes = function() {
+  closeBasketCheckoutModal();
+  const tabBtn = document.querySelector('button[data-tab="tab-ajustes"]');
+  if (tabBtn) tabBtn.click();
+  const addressCard = document.getElementById('ajustes-address-card');
+  if (addressCard) {
+    addressCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const inp = document.getElementById('ajustes-shipping-address') || document.getElementById('ajustes-shipping-name');
+    if (inp) inp.focus();
+  }
+};
+
 // mi-espacio.js - Lógica completa del panel de usuario y desarrollador
 import { 
   auth, 
@@ -505,6 +517,7 @@ function setupEvents() {
 
   async function executeSaveDirecciones(returnToBasket = false) {
     const name = document.getElementById('ajustes-shipping-name')?.value.trim();
+    const email = document.getElementById('ajustes-shipping-email')?.value.trim().toLowerCase() || (currentUser ? getUserEmail(currentUser) : '');
     const phone = document.getElementById('ajustes-shipping-phone')?.value.trim();
     const address = document.getElementById('ajustes-shipping-address')?.value.trim();
     const postalCode = document.getElementById('ajustes-shipping-zip')?.value.trim();
@@ -521,6 +534,7 @@ function setupEvents() {
     const shippingData = {
       name,
       nombre: name,
+      email,
       phone,
       telefono: phone,
       address,
@@ -536,6 +550,7 @@ function setupEvents() {
       pais: 'España',
       updatedAt: new Date().toISOString()
     };
+    try { localStorage.setItem('mr_customer_contact_email', email); } catch(e) {}
 
     const billingData = {
       isSame: isSameBilling,
@@ -1045,11 +1060,13 @@ function populateShippingFields(shipping, billing = null) {
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   if (shipping) {
     setVal('ajustes-shipping-name', shipping.nombre || shipping.name);
+    setVal('ajustes-shipping-email', shipping.email || getUserEmail(user));
     setVal('ajustes-shipping-phone', shipping.telefono || shipping.phone);
     setVal('ajustes-shipping-address', shipping.direccion || shipping.address);
     setVal('ajustes-shipping-zip', shipping.cp || shipping.postalCode);
     setVal('ajustes-shipping-city', shipping.ciudad || shipping.city);
     setVal('ajustes-shipping-province', shipping.provincia || shipping.province);
+    setVal('ajustes-shipping-notes', shipping.notas || shipping.notes || '');
   }
 
   if (billing) {
@@ -2198,7 +2215,7 @@ function openBasketCheckoutModal(targetItemId = null) {
     }).join('');
   }
 
-  // 2. Renderizar formulario estructurado de dirección postal y línea de validación
+    // 2. Renderizar resumen limpio de dirección postal en 1 línea y check de validación
   const shipContainer = document.getElementById('checkout-modal-shipping-summary');
   const user = currentUser || auth.currentUser;
 
@@ -2208,94 +2225,68 @@ function openBasketCheckoutModal(targetItemId = null) {
     if (raw) savedShip = JSON.parse(raw);
   } catch(e) {}
 
-  const defaultName = savedShip?.name || (user ? getUserDisplayName(user) : '') || '';
-  const defaultEmail = savedShip?.email || localStorage.getItem('mr_customer_contact_email') || (user ? getUserEmail(user) : '') || '';
-  const defaultPhone = savedShip?.phone || '';
-  const defaultAddress = savedShip?.address || '';
-  const defaultPostal = savedShip?.postalCode || '';
-  const defaultCity = savedShip?.city || '';
-  const defaultProvince = savedShip?.province || '';
-  const defaultNotes = savedShip?.notes || '';
+  const shipName = savedShip?.name || savedShip?.nombre || (user ? getUserDisplayName(user) : '') || '';
+  const shipEmail = savedShip?.email || localStorage.getItem('mr_customer_contact_email') || (user ? getUserEmail(user) : '') || '';
+  const shipPhone = savedShip?.phone || savedShip?.telefono || '';
+  const shipAddr = savedShip?.address || savedShip?.direccion || '';
+  const shipPostal = savedShip?.postalCode || savedShip?.cp || '';
+  const shipCity = savedShip?.city || savedShip?.ciudad || '';
+  const shipProv = savedShip?.province || savedShip?.provincia || '';
+  const shipNotes = savedShip?.notes || savedShip?.notas || '';
+
+  const hasFullAddress = !!(shipName && shipAddr && shipPostal && shipCity);
 
   if (shipContainer) {
-    shipContainer.innerHTML = `
-      <div style="line-height: 1.45; color: #3d342c;">
-        <!-- CAMPOS POSTALES ESTRUCTURADOS -->
-        <div style="background: #ffffff; border: 1.5px solid #d8cfc0; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;">
+    if (!hasFullAddress) {
+      shipContainer.innerHTML = `
+        <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 8px; padding: 14px 16px; text-align: center;">
+          <div style="font-size: 0.88rem; font-weight: 800; color: #92400e; margin-bottom: 5px;">
+            ⚠️ Falta completar tu dirección física de entrega
+          </div>
+          <p style="font-size: 0.79rem; color: #78350f; margin: 0 0 10px 0; line-height: 1.4;">
+            Para imprimir y enviarte el cuaderno por mensajería, necesitamos tu dirección postal completa guardada en tu perfil.
+          </p>
+          <button type="button" onclick="closeBasketCheckoutModalAndGoToAjustes()" style="background: #87553b; color: #ffffff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <span>📍</span> Rellenar Dirección en «Ajustes y Mis Datos» →
+          </button>
+        </div>
+      `;
+    } else {
+      const lineHtml = `<strong>${escapeHtml(shipName)}</strong> · ${escapeHtml(shipAddr)}, ${escapeHtml(shipPostal)} ${escapeHtml(shipCity)}${shipProv ? ' (' + escapeHtml(shipProv) + ')' : ''} · Tlf: <strong>${escapeHtml(shipPhone || 'No indicado')}</strong> · Email: <strong>${escapeHtml(shipEmail || 'No indicado')}</strong>`;
+
+      shipContainer.innerHTML = `
+        <div style="background: #ffffff; border: 1.5px solid #ded5c6; border-radius: 10px; padding: 13px 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-              <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #473f36; margin-bottom: 3px;">Nombre y apellidos del destinatario *</label>
-              <input type="text" id="checkout-ship-name" value="${escapeHtml(defaultName)}" placeholder="Ej: Lucas Molina Gómez" oninput="updateCheckoutShippingSingleLine()" required style="width: 100%; font-size: 0.84rem; padding: 7px 10px; border: 1px solid #d4cbbd; border-radius: 6px; box-sizing: border-box; background: #faf8f5;">
-            </div>
-            <div>
-              <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #473f36; margin-bottom: 3px;">Teléfono móvil (para el repartidor) *</label>
-              <input type="tel" id="checkout-ship-phone" value="${escapeHtml(defaultPhone)}" placeholder="Ej: 612 345 678" oninput="updateCheckoutShippingSingleLine()" required style="width: 100%; font-size: 0.84rem; padding: 7px 10px; border: 1px solid #d4cbbd; border-radius: 6px; box-sizing: border-box; background: #faf8f5;">
-            </div>
-          </div>
-
-          <div style="background: #f4faf6; border: 1.5px solid #215c38; border-radius: 6px; padding: 9px 12px;">
-            <label for="checkout-modal-customer-email" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 800; color: #1e3d29; margin-bottom: 3px;">
-              <span>📧</span> Email para confirmación y seguimiento de entrega *
-            </label>
-            <input type="email" id="checkout-modal-customer-email" value="${escapeHtml(defaultEmail)}" placeholder="tu-email@ejemplo.com" oninput="updateCheckoutShippingSingleLine()" required style="width: 100%; font-size: 0.84rem; font-weight: 600; padding: 7px 10px; border: 1px solid #a3cfbb; border-radius: 5px; box-sizing: border-box; background: #ffffff; color: #143522;">
-            <span style="display: block; font-size: 0.69rem; color: #4a5d52; margin-top: 3px;">
-              Enviaremos aquí la factura digital y el seguimiento en vivo de Correos Express.
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 0.73rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #87553b;">
+              📍 Dirección de Entrega Física
             </span>
+            <button type="button" onclick="closeBasketCheckoutModalAndGoToAjustes()" style="background: none; border: none; color: #2563eb; font-weight: 700; font-size: 0.78rem; cursor: pointer; text-decoration: underline; padding: 0; display: inline-flex; align-items: center; gap: 4px;">
+              ✏️ Modificar en «Ajustes y Mis Datos» →
+            </button>
           </div>
 
-          <div>
-            <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #473f36; margin-bottom: 3px;">Dirección completa (Calle, número, piso, puerta) *</label>
-            <input type="text" id="checkout-ship-address" value="${escapeHtml(defaultAddress)}" placeholder="Ej: Calle Velázquez 34, 4º Derecha" oninput="updateCheckoutShippingSingleLine()" required style="width: 100%; font-size: 0.84rem; padding: 7px 10px; border: 1px solid #d4cbbd; border-radius: 6px; box-sizing: border-box; background: #faf8f5;">
+          <!-- Línea única limpia -->
+          <div style="background: #faf7f2; border: 1px solid #e7dfd1; border-radius: 6px; padding: 10px 12px; font-size: 0.82rem; color: #1f1c19; line-height: 1.55; word-break: break-word;">
+            ${lineHtml}
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1.3fr 1.3fr; gap: 10px;">
-            <div>
-              <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #473f36; margin-bottom: 3px;">C. Postal *</label>
-              <input type="text" id="checkout-ship-postal" maxlength="5" value="${escapeHtml(defaultPostal)}" placeholder="28001" oninput="updateCheckoutShippingSingleLine()" required style="width: 100%; font-size: 0.84rem; padding: 7px 10px; border: 1px solid #d4cbbd; border-radius: 6px; box-sizing: border-box; background: #faf8f5;">
-            </div>
-            <div>
-              <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #473f36; margin-bottom: 3px;">Ciudad / Municipio *</label>
-              <input type="text" id="checkout-ship-city" value="${escapeHtml(defaultCity)}" placeholder="Madrid" oninput="updateCheckoutShippingSingleLine()" required style="width: 100%; font-size: 0.84rem; padding: 7px 10px; border: 1px solid #d4cbbd; border-radius: 6px; box-sizing: border-box; background: #faf8f5;">
-            </div>
-            <div>
-              <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #473f36; margin-bottom: 3px;">Provincia *</label>
-              <input type="text" id="checkout-ship-province" value="${escapeHtml(defaultProvince)}" placeholder="Madrid" oninput="updateCheckoutShippingSingleLine()" required style="width: 100%; font-size: 0.84rem; padding: 7px 10px; border: 1px solid #d4cbbd; border-radius: 6px; box-sizing: border-box; background: #faf8f5;">
-            </div>
-          </div>
+          ${shipNotes ? `<div style="font-size: 0.74rem; color: #665e54; margin-top: 6px;">ℹ️ Instrucciones repartidor: <em>${escapeHtml(shipNotes)}</em></div>` : ''}
 
-          <div>
-            <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #5a5147; margin-bottom: 3px;">Instrucciones para el repartidor (opcional):</label>
-            <input type="text" id="checkout-modal-customer-notes" value="${escapeHtml(defaultNotes)}" placeholder="Ej: Dejar en conserjería, llamar al 2ºB..." style="width: 100%; font-size: 0.80rem; padding: 7px 10px; border: 1px solid #dcd3c5; border-radius: 6px; box-sizing: border-box; background: #ffffff;">
-          </div>
-        </div>
-
-        <!-- LÍNEA DE RESUMEN DE ENTREGA -->
-        <div id="checkout-shipping-single-line-box" style="background: #faf7f2; border: 1px dashed #d6cbba; border-radius: 7px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.79rem; color: #453c33; line-height: 1.45;">
-          <div style="font-weight: 800; color: #87553b; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px;">
-            📍 Resumen de Entrega en 1 línea:
-          </div>
-          <div id="checkout-shipping-single-line-text" style="font-size: 0.80rem; color: #1f1c19; word-break: break-word;">
-            <!-- Rellenado dinámicamente -->
-          </div>
-        </div>
-
-        <!-- CASILLA DE VALIDACIÓN COMPLETA DE DIRECCIÓN E EMAIL -->
-        <div id="checkout-shipping-confirm-box" style="background: #fffdf5; border: 1.5px solid #e4d5bc; border-radius: 8px; padding: 12px 14px; margin-bottom: 6px; transition: all 0.25s;">
-          <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.82rem; color: #231f1a; line-height: 1.45;">
-            <input type="checkbox" id="checkout-ship-confirm-check" onchange="const b = document.getElementById('checkout-shipping-confirm-box'); if(b){ b.style.background = this.checked ? '#f0fdf4' : '#fffdf5'; b.style.borderColor = this.checked ? '#86efac' : '#e4d5bc'; }" style="margin-top: 3px; width: 18px; height: 18px; accent-color: #215c38; cursor: pointer;" />
-            <span>
-              <strong style="color: #1f1c19;">He comprobado la línea de entrega y valido que la dirección física y el email son exactos y completos.</strong>
-              <span style="display: block; font-size: 0.74rem; color: #665b4f; margin-top: 2px;">
-                Entiendo que el cuaderno se imprimirá y enviará físicamente por mensajería a esta dirección exacta.
+          <!-- Casilla obligatoria de validación completa -->
+          <div id="checkout-shipping-confirm-box" style="margin-top: 12px; background: #fffdf5; border: 1.5px solid #e4d5bc; border-radius: 8px; padding: 11px 13px; transition: all 0.25s;">
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.82rem; color: #231f1a; line-height: 1.45;">
+              <input type="checkbox" id="checkout-ship-confirm-check" onchange="const b = document.getElementById('checkout-shipping-confirm-box'); if(b){ b.style.background = this.checked ? '#f0fdf4' : '#fffdf5'; b.style.borderColor = this.checked ? '#86efac' : '#e4d5bc'; }" style="margin-top: 3px; width: 18px; height: 18px; accent-color: #215c38; cursor: pointer;" />
+              <span>
+                <strong style="color: #1f1c19;">He comprobado la línea de entrega y valido que la dirección física y el email son exactos y completos.</strong>
+                <span style="display: block; font-size: 0.74rem; color: #665b4f; margin-top: 2px;">
+                  Entiendo que el cuaderno se imprimirá y enviará físicamente por mensajería a esta dirección exacta.
+                </span>
               </span>
-            </span>
-          </label>
+            </label>
+          </div>
         </div>
-      </div>
-    `;
-    if (typeof window.updateCheckoutShippingSingleLine === 'function') {
-      window.updateCheckoutShippingSingleLine();
+      `;
     }
   }
 
@@ -2347,71 +2338,31 @@ async function handleConfirmCheckoutOrder() {
   if (confirmTxt) confirmTxt.textContent = '🔒 Registrando pedido y confirmando...';
 
   const user = currentUser || auth.currentUser;
-  const nameInp = document.getElementById('checkout-ship-name');
-  const phoneInp = document.getElementById('checkout-ship-phone');
-  const emailInp = document.getElementById('checkout-modal-customer-email');
-  const addrInp = document.getElementById('checkout-ship-address');
-  const postalInp = document.getElementById('checkout-ship-postal');
-  const cityInp = document.getElementById('checkout-ship-city');
-  const provInp = document.getElementById('checkout-ship-province');
-  const notesInp = document.getElementById('checkout-modal-customer-notes');
+    let savedShip = null;
+  try {
+    const raw = localStorage.getItem('mr_customer_shipping_address');
+    if (raw) savedShip = JSON.parse(raw);
+  } catch(e) {}
+
+  const shipName = savedShip?.name || savedShip?.nombre || (user ? getUserDisplayName(user) : '') || '';
+  const shipEmail = savedShip?.email || localStorage.getItem('mr_customer_contact_email') || (user ? getUserEmail(user) : '') || '';
+  const shipPhone = savedShip?.phone || savedShip?.telefono || '';
+  const shipAddr = savedShip?.address || savedShip?.direccion || '';
+  const shipPostal = savedShip?.postalCode || savedShip?.cp || '';
+  const shipCity = savedShip?.city || savedShip?.ciudad || '';
+  const shipProv = savedShip?.province || savedShip?.provincia || '';
+  const shipNotes = savedShip?.notes || savedShip?.notas || '';
+
+  if (!shipName || !shipAddr || !shipPostal || !shipCity) {
+    alert('⚠️ Por favor, introduce tu dirección de entrega en «Ajustes y Mis Datos» antes de tramitar el pedido.');
+    closeBasketCheckoutModalAndGoToAjustes();
+    if (confirmBtn) confirmBtn.disabled = false;
+    return;
+  }
+
   const chkShipConfirm = document.getElementById('checkout-ship-confirm-check');
-
-  const shipName = nameInp ? nameInp.value.trim() : '';
-  const shipPhone = phoneInp ? phoneInp.value.trim() : '';
-  const shipEmail = emailInp ? emailInp.value.trim().toLowerCase() : '';
-  const shipAddr = addrInp ? addrInp.value.trim() : '';
-  const shipPostal = postalInp ? postalInp.value.trim() : '';
-  const shipCity = cityInp ? cityInp.value.trim() : '';
-  const shipProvince = provInp ? provInp.value.trim() : '';
-  const deliveryNotes = notesInp ? notesInp.value.trim() : '';
-
-  if (!shipName) {
-    alert('Por favor, indica el nombre y apellidos del destinatario para la entrega.');
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Confirmar Pedido';
-    if (nameInp) nameInp.focus();
-    return;
-  }
-  if (!shipPhone || shipPhone.length < 8) {
-    alert('Por favor, introduce un teléfono móvil de contacto para que el transportista coordine la entrega.');
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Confirmar Pedido';
-    if (phoneInp) phoneInp.focus();
-    return;
-  }
-  if (!shipEmail || !shipEmail.includes('@') || !shipEmail.includes('.')) {
-    alert('Por favor, indica un email válido donde recibir la confirmación y el seguimiento del pedido.');
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Confirmar Pedido';
-    if (emailInp) emailInp.focus();
-    return;
-  }
-  if (!shipAddr || shipAddr.length < 5) {
-    alert('Por favor, introduce la dirección postal completa (calle, número, piso/puerta).');
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Confirmar Pedido';
-    if (addrInp) addrInp.focus();
-    return;
-  }
-  if (!shipPostal || shipPostal.length < 4) {
-    alert('Por favor, introduce un código postal válido.');
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Confirmar Pedido';
-    if (postalInp) postalInp.focus();
-    return;
-  }
-  if (!shipCity) {
-    alert('Por favor, introduce la ciudad o municipio de entrega.');
-    if (confirmBtn) confirmBtn.disabled = false;
-    if (confirmTxt) confirmTxt.textContent = 'Confirmar Pedido';
-    if (cityInp) cityInp.focus();
-    return;
-  }
-
-  // Validación obligatoria del check de dirección y email
   if (chkShipConfirm && !chkShipConfirm.checked) {
-    alert('⚠️ Por favor, revisa la línea de resumen de entrega y marca la casilla confirmando que la dirección física y el email son exactos.');
+    alert('⚠️ Por favor, revisa la línea de entrega y marca la casilla confirmando que los datos son exactos.');
     const box = document.getElementById('checkout-shipping-confirm-box');
     if (box) {
       box.style.borderColor = '#dc2626';
@@ -2431,15 +2382,10 @@ async function handleConfirmCheckoutOrder() {
     address: shipAddr,
     postalCode: shipPostal,
     city: shipCity,
-    province: shipProvince,
+    province: shipProv,
     country: 'España',
-    notes: deliveryNotes || 'Sin instrucciones adicionales'
+    notes: shipNotes || 'Sin instrucciones adicionales'
   };
-
-  try {
-    localStorage.setItem('mr_customer_shipping_address', JSON.stringify(shippingObj));
-    localStorage.setItem('mr_customer_contact_email', shipEmail);
-  } catch(e) {}
 
   const customerPlatformName = shipName;
   const customerPlatformEmail = shipEmail;
