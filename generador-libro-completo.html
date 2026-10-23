@@ -2879,6 +2879,10 @@
 
         function saveCompleteBookConfigLocally() {
             try {
+                const totalPages = (typeof generatedPageList !== 'undefined' && generatedPageList.length > 0)
+                    ? generatedPageList.length
+                    : (bookConfig.pageCount || 0);
+
                 localStorage.setItem('mr_complete_book_config', JSON.stringify({
                     title: bookConfig.title,
                     subtitle: bookConfig.subtitle,
@@ -2888,7 +2892,9 @@
                     layoutMode: bookConfig.layoutMode,
                     dateMode: bookConfig.dateMode,
                     year: bookConfig.year,
-                    sections: bookConfig.sections
+                    sections: bookConfig.sections,
+                    pageCount: totalPages,
+                    validated: !!bookConfig.validated
                 }));
             } catch(e) {
                 console.warn('No se pudo guardar en localStorage:', e);
