@@ -754,7 +754,7 @@ function createOrderCardElement(order) {
           <span>📖</span> Especificaciones del Pedido ${order.items && order.items.length > 1 ? `(${order.items.length} ejemplares)` : ''}
         </div>
         ${(order.items && order.items.length > 0 ? order.items : [order.book || {}]).map((bk, bIdx) => {
-          const bBinding = getBindingName(bk?.bindingType);
+          const bBinding = getBindingDisplayName(bk?.bindingType);
           const bPages = parseInt(bk?.pageCount || 144, 10);
           const bSpine = (bPages * 0.057).toFixed(1);
           return `
@@ -1629,3 +1629,5 @@ function showToast(msg) {
     toast.style.display = 'none';
   }, 3500);
 }
+
+function getBindingName(type) { return getBindingDisplayName(type); }

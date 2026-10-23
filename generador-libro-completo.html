@@ -2040,7 +2040,7 @@
             </div>
 
             <div style="display:flex; align-items:center; gap:8px;">
-                <button type="button" class="btn-compile-pdf" id="btn-save-generator-design" style="background:#f4eee4; color:#5c4838; border:1px solid #dcd2c2;" title="Guardar este diseño en Mi Espacio">
+                <button type="button" class="btn-compile-pdf" id="btn-save-generator-design" onclick="openSaveAndValidateModal()" style="background:#f4eee4; color:#5c4838; border:1px solid #dcd2c2;" title="Guardar este diseño en Mi Espacio">
                     <span>💾</span> Guardar en Mi Espacio
                 </button>
                 <button type="button" class="btn-compile-pdf" id="btn-open-validate-interior" onclick="openValidateInteriorTextsModal()" style="background:#22382c; color:#ffffff; border:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Revisar textos y diseñar la portada exterior para este libro">
@@ -3016,16 +3016,18 @@
         window.closeSaveAndValidateModal = closeSaveAndValidateModal;
 
         function executeSaveDraftOnly() {
+            const titleInp = document.getElementById('save-modal-book-title');
+            const chosenTitle = (titleInp && titleInp.value.trim()) ? titleInp.value.trim() : (bookConfig && bookConfig.title ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado');
             if (typeof bookConfig !== 'undefined') {
                 bookConfig.validated = false;
+                bookConfig.title = chosenTitle.replace(/^Libro Completo · /, '');
                 saveCompleteBookConfigLocally();
             }
             closeSaveAndValidateModal();
-            const btn = document.getElementById('btn-save-generator-design');
-            if (typeof window.__mrTriggerDirectSave === 'function') {
-                window.__mrTriggerDirectSave(false);
-            } else if (btn) {
-                btn.click();
+            if (typeof window.saveCompleteBookDirectly === 'function') {
+                window.saveCompleteBookDirectly(false, chosenTitle);
+            } else {
+                alert('✓ Guardado como borrador localmente.');
             }
         }
         window.executeSaveDraftOnly = executeSaveDraftOnly;
@@ -3046,17 +3048,20 @@
                 return;
             }
 
+            const titleInp = document.getElementById('save-modal-book-title');
+            const chosenTitle = (titleInp && titleInp.value.trim()) ? titleInp.value.trim() : (bookConfig && bookConfig.title ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado');
+
             if (typeof bookConfig !== 'undefined') {
                 bookConfig.validated = true;
                 bookConfig.validatedAt = new Date().toISOString();
+                bookConfig.title = chosenTitle.replace(/^Libro Completo · /, '');
                 saveCompleteBookConfigLocally();
             }
             closeSaveAndValidateModal();
-            if (typeof window.__mrTriggerDirectSave === 'function') {
-                window.__mrTriggerDirectSave(true);
+            if (typeof window.saveCompleteBookDirectly === 'function') {
+                window.saveCompleteBookDirectly(true, chosenTitle);
             } else {
-                const btn = document.getElementById('btn-save-generator-design');
-                if (btn) btn.click();
+                alert('✓ Validado para imprenta y guardado localmente.');
             }
         }
         window.executeValidateAndSave = executeValidateAndSave;
@@ -7406,26 +7411,82 @@
     </script>
     <script type="module" src="./main.js"></script>
     <script type="module">
-        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+        import { auth, db } from './firebase-config.js';
+        import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+        import { openAuthModal } from './auth-modal.js';
+        import { checkAndLoadSavedDesign, cleanDataForFirestore } from './save-generator-design.js';
 
-        checkAndLoadSavedDesign((data) => {
+        let activeLoadedDesignId = null;
+
+        checkAndLoadSavedDesign((data, designMeta) => {
+            if (designMeta && designMeta.id) {
+                activeLoadedDesignId = designMeta.id;
+            }
             if (typeof applyCompleteBookData === 'function') {
                 applyCompleteBookData(data);
             }
         });
 
-        setupGeneratorSave('btn-save-generator-design', () => {
-            if (typeof generatedPageList !== 'undefined' && generatedPageList.length % 2 !== 0) {
-                alert(`⚠️ El libro tiene un número impar de páginas (${generatedPageList.length} páginas).\n\nLa imprenta exige obligatoriamente un número par de páginas.\nActiva la sección de "Notas" para añadir una página de notas y cuadrar el libro a número par, o añade una página más antes de guardar.`);
-                return null;
+        // Guardado directo y limpio en Firestore sin intermediarios
+        window.saveCompleteBookDirectly = async function(isValidated, customTitle) {
+            let user = auth.currentUser;
+            if (!user && typeof auth.authStateReady === 'function') {
+                try {
+                    await auth.authStateReady();
+                    user = auth.currentUser;
+                } catch(e) {}
             }
-            return {
-                name: (typeof bookConfig !== 'undefined' && bookConfig.title) ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado',
-                type: 'Cuaderno Completo',
-                summary: `${(typeof generatedPageList !== 'undefined' ? generatedPageList.length : 86)} págs · ${(typeof bookConfig !== 'undefined' && bookConfig.owner) ? 'Para ' + bookConfig.owner : ((typeof bookConfig !== 'undefined' && bookConfig.subtitle) ? bookConfig.subtitle : 'Personalizado')}`,
-                data: (typeof bookConfig !== 'undefined') ? JSON.parse(JSON.stringify(bookConfig)) : {}
-            };
-        }, { isPremium: true, generatorType: 'book' });
+
+            if (!user) {
+                openAuthModal({
+                    title: 'Guarda tu cuaderno en Mi Espacio',
+                    subtitle: 'Accede con tu cuenta para guardar tu diseño personalizado y poder encargarlo o editarlo cuando quieras.',
+                    badge: 'Guardar diseño',
+                    actionContext: 'save',
+                    onSuccess: async (loggedUser) => {
+                        await doSave(loggedUser);
+                    }
+                });
+                return;
+            }
+
+            await doSave(user);
+
+            async function doSave(u) {
+                try {
+                    const totalPages = (typeof generatedPageList !== 'undefined') ? generatedPageList.length : 86;
+                    const bookData = (typeof bookConfig !== 'undefined') ? JSON.parse(JSON.stringify(bookConfig)) : {};
+                    bookData.validated = isValidated;
+                    bookData.pageCount = totalPages;
+
+                    const cleanData = cleanDataForFirestore(bookData);
+                    const designId = activeLoadedDesignId || ('book_' + Date.now());
+                    activeLoadedDesignId = designId;
+
+                    const docRef = doc(db, 'users', u.uid, 'designs', designId);
+                    await setDoc(docRef, {
+                        name: customTitle || (bookData.title ? `Libro Completo · ${bookData.title}` : 'Libro Completo Personalizado'),
+                        type: 'Cuaderno Completo',
+                        summary: `${totalPages} págs · ${isValidated ? '✓ Validado para imprenta' : '⚠️ Borrador sin validar'}`,
+                        validated: isValidated,
+                        totalPages: totalPages,
+                        editUrl: '/generador-libro-completo.html',
+                        data: cleanData,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+
+                    // Guardar también copia local sincronizada
+                    localStorage.setItem('mr_active_book_design_id', designId);
+                    localStorage.setItem('mr_active_book_validated', isValidated ? 'true' : 'false');
+
+                    const statusMsg = isValidated ? 'Validado para imprenta y guardado con éxito' : 'Guardado como borrador con éxito';
+                    alert(`✓ ${statusMsg} en Mi Espacio.`);
+                } catch (err) {
+                    console.error('Error al guardar libro completo en Firestore:', err);
+                    alert('Error al guardar en Mi Espacio: ' + (err.message || err));
+                }
+            }
+        };
     </script>
 </body>
 </html>
