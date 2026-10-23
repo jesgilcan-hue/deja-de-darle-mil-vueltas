@@ -2520,7 +2520,7 @@
                     weekly: { active: true, pages: 52 },
                     hourly: { active: false, pages: 4 },
                     daily: { active: true, pages: 365 },
-                    notes: { active: true, pages: 10 }
+                    notes: { active: true, pages: 11 }
                 }
             },
             trimestre: {
@@ -3037,7 +3037,17 @@
                 if (!isEven) {
                     fixBtnHtml = `<div style="margin-top:8px;"><button type="button" onclick="autoFixBookParity()" style="background:#2563eb; color:#ffffff; border:none; padding:6px 12px; border-radius:6px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;"><span>➕</span> Cuadrar automáticamente (+1 pág. de Notas para hacer par ${total + 1} págs)</button></div>`;
                 }
-                pagesEl.innerHTML = `📖 Total actual: <strong>${total} páginas</strong> (${isEven ? '<span style="color:#166534; font-weight:700;">Número par ✓ Apto para imprenta</span>' : '<span style="color:#dc2626; font-weight:700;">Número impar ⚠️ No apto para imprenta</span>'})${fixBtnHtml}`;
+                let statusHtml = '';
+                if (!isEven) {
+                    statusHtml = '<span style="color:#dc2626; font-weight:700;">Número impar ⚠️ No apto para imprenta</span>';
+                } else if (total > 450) {
+                    statusHtml = '<span style="color:#dc2626; font-weight:700;">Supera el límite de 450 págs ⚠️ No apto para imprenta</span>';
+                } else if (total > 365) {
+                    statusHtml = '<span style="color:#166534; font-weight:700;">Número par ✓ Apto solo para Anillas (máx. 450 págs)</span>';
+                } else {
+                    statusHtml = '<span style="color:#166534; font-weight:700;">Número par ✓ Apto para imprenta (Tapa blanda, dura o anillas)</span>';
+                }
+                pagesEl.innerHTML = `📖 Total actual: <strong>${total} páginas</strong> (${statusHtml})${fixBtnHtml}`;
             }
             if (titleInp) {
                 titleInp.value = (typeof bookConfig !== 'undefined' && bookConfig.title) ? `Libro Completo · ${bookConfig.title}` : 'Libro Completo Personalizado';
