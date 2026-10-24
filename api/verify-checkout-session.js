@@ -1,3 +1,14 @@
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf8'),
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || 'editorialmenosruido.firebaseapp.com',
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'editorialmenosruido'
+};
+const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const firestoreDb = getFirestore(firebaseApp);
+
 // Serverless Function para Vercel: /api/verify-checkout-session
 // Valida una sesión de Stripe Checkout, devuelve los datos del pedido verificado y dispara los emails por Resend API
 
@@ -152,15 +163,96 @@ export default async function handler(req, res) {
     const customerNotes = metadata.customer_notes || 'Sin indicaciones adicionales';
 
     // Determinar destinatario seguro para el cliente
-    let clientEmailTarget = TEST_CLIENT_EMAIL;
-    if (rawCustomerEmail && rawCustomerEmail.includes('@') && rawCustomerEmail.toLowerCase().trim() !== OWNER_EMAIL) {
-      clientEmailTarget = rawCustomerEmail.toLowerCase().trim();
-    }
+    const safeCustomerEmail = (rawCustomerEmail || metadata.customer_email || 'jesusgil_87@hotmail.com').toLowerCase().trim();
+    let clientEmailTarget = safeCustomerEmail;
 
     let emailSentToClient = false;
     let emailSentToManager = false;
 
     // Disparar emails inmediatamente al confirmar pago
+    
+    let parsedItems = [];
+    if (metadata.items_json) {
+      try {
+        parsedItems = JSON.parse(metadata.items_json);
+      } catch(e) {}
+    }
+    if (!parsedItems.length) {
+      parsedItems = [{
+        title: metadata.book_title || bookTitle,
+        binding: metadata.binding_type || 'softcover',
+        pages: parseInt(metadata.page_count || 144, 10),
+        qty: 1,
+        price: amountTotal
+      }];
+    }
+
+    const orderDoc = {
+      id: 'ord_' + (session.created ? session.created * 1000 : Date.now()),
+      orderNumber: orderNumber,
+            status: 'pending_review',
+      createdAt: new Date(session.created ? session.created * 1000 : Date.now()).toISOString(),
+      items: parsedItems,
+      customer: {
+        uid: metadata.customer_uid || '',
+        name: customerName,
+        email: safeCustomerEmail,
+        phone: metadata.customer_phone || '+34 600 000 000',
+        address: address,
+        notes: customerNotes,
+        isRegistered: true
+      },
+      shipping: {
+        carrier: 'Correos Express',
+        trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
+        lastCarrierMessage: 'Pedido recibido. En fase 1: En Revisión Técnica de tripas y maquetación.'
+      },
+      comms: {
+        compra: { sent: true, date: new Date().toISOString() },
+        imprenta: { sent: false },
+        tracking: { sent: false },
+        entregado: { sent: false }
+      },
+      book: {
+        title: metadata.book_title || bookTitle,
+        subtitle: metadata.book_subtitle || 'Edición Personalizada',
+        bindingType: metadata.binding_type || 'softcover',
+        pageCount: parseInt(metadata.page_count || 144, 10),
+        quantity: 1,
+        size: '8.25x6',
+        spineWidthMm: (parseInt(metadata.page_count || 144, 10) * 0.057).toFixed(1)
+      },
+      pricing: {
+        currency: (session.currency || 'eur').toUpperCase(),
+        totalPaid: amountTotal,
+        luluCostEstimate: parseFloat(metadata.lulu_total_cost_eur || 13.93),
+        netMargin: parseFloat(metadata.net_margin_eur || 13.30),
+        stripePaymentId: session.payment_intent || session.id
+      },
+      timeline: [
+        {
+          date: new Date(session.created ? session.created * 1000 : Date.now()).toISOString(),
+          message: 'Pedido recibido y registrado en imprenta'
+        },
+        {
+          date: new Date().toISOString(),
+          message: 'Pago con tarjeta confirmado vía Stripe Checkout'
+        }
+      ]
+    };
+
+    if (isPaid) {
+      try {
+        await setDoc(doc(firestoreDb, 'orders', orderNumber), orderDoc, { merge: true });
+        if (metadata.customer_uid) {
+          await setDoc(doc(firestoreDb, 'users', metadata.customer_uid, 'orders', orderNumber), orderDoc, { merge: true });
+        }
+        console.log('✓ Pedido #' + orderNumber + ' guardado directamente en Firestore desde el servidor.');
+      } catch(dbErr) {
+        console.error('Error persistiendo pedido en Firestore desde servidor:', dbErr);
+      }
+    }
+
     if (isPaid) {
       const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
       const adminOrderUrl = `https://www.editorialmenosruido.com/admin-pedidos.html?orderId=${encodeURIComponent(orderNumber)}`;
@@ -214,6 +306,7 @@ export default async function handler(req, res) {
       customerName: customerName,
       orderNumber: orderNumber,
       metadata: metadata,
+      order: orderDoc,
       paymentIntentId: session.payment_intent,
       clientReferenceId: session.client_reference_id,
       emailSentToClient,

@@ -293,30 +293,32 @@ function activateTab(tabId) {
 function checkUrlTab(allowDevTabs = false) {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab');
-  const user = auth.currentUser;
-  const isDevAllowed = isDeveloper(user) && allowDevTabs;
+  const user = auth.currentUser || currentUser;
+  const isOrderReturn = params.get('stripe_success') === '1' || params.get('stripe_test_success') === '1' || !!params.get('order') || !!params.get('orderId');
+  const isDevAllowed = isDeveloper(user);
+  const isCustomer = isTestCustomer(user);
   const hasPending = !!localStorage.getItem('mr_pending_payment_books');
-  const isOrdersAllowed = isDevAllowed || isTestCustomer(user) || hasPending;
+  const hasOrders = (clientProfileOrders && clientProfileOrders.length > 0) || !!localStorage.getItem('mr_simulated_orders');
+  const isOrdersAllowed = isOrderReturn || hasOrders || hasPending || isDevAllowed || isCustomer;
 
-  if (params.get('stripe_test_success') === '1') {
+  if (params.get('stripe_success') === '1' || params.get('stripe_test_success') === '1') {
     const ordNum = params.get('order') || '';
     setTimeout(() => {
-      showToast(`✓ Pago Test completado · Pedido #${ordNum} confirmado y emails enviados`);
+      showToast('✓ Pago con tarjeta completado · Pedido #' + ordNum + ' confirmado');
     }, 300);
+  }
+
+  if (tab === 'pedidos' || isOrderReturn) {
+    const btnPed = document.getElementById('tab-btn-pedidos');
+    if (btnPed) btnPed.style.setProperty('display', 'inline-flex', 'important');
+    activateTab('tab-pedidos');
+    return;
   }
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
-  } else if (tab === 'pedidos') {
-    if (isOrdersAllowed) {
-      const btnPed = document.getElementById('tab-btn-pedidos');
-      if (btnPed) btnPed.style.setProperty('display', 'inline-flex', 'important');
-      activateTab('tab-pedidos');
-    } else {
-      activateTab('tab-disenos');
-    }
   } else if (tab === 'dev') {
-    if (isDevAllowed) {
+    if (isDevAllowed && allowDevTabs) {
       if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-dev');
     } else {
@@ -325,7 +327,7 @@ function checkUrlTab(allowDevTabs = false) {
   } else if (tab === 'disenos') {
     activateTab('tab-disenos');
   } else if (tab === 'futuras') {
-    if (isDevAllowed) {
+    if (isDevAllowed && allowDevTabs) {
       if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'inline-flex', 'important');
       activateTab('tab-futuras');
     } else {
@@ -1935,6 +1937,7 @@ async function loadClientOrdersAndBasketData(user) {
   clientProfileOrders = Array.from(map.values());
 
   clientProfileOrders.sort((a, b) => getTimestampValue(b.createdAt) - getTimestampValue(a.createdAt));
+  subscribeToIndividualOrders(clientProfileOrders);
 }
 
 function saveClientOrdersAndBasketState(user) {
@@ -2627,40 +2630,42 @@ async function checkAndHandleStripeCheckoutReturn() {
         ]
       };
 
+      const finalOrder = (stripeData && stripeData.order) ? stripeData.order : newOrder;
+
       try {
-        if (newOrder.orderNumber) {
-          await setDoc(doc(db, 'orders', newOrder.orderNumber), newOrder, { merge: true });
-        }
-        if (newOrder.id && newOrder.id !== newOrder.orderNumber) {
-          await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
+        if (finalOrder.orderNumber) {
+          await setDoc(doc(db, 'orders', finalOrder.orderNumber), finalOrder, { merge: true });
         }
         if (user && user.uid) {
-          await setDoc(doc(db, 'users', user.uid, 'orders', newOrder.orderNumber), newOrder, { merge: true });
+          await setDoc(doc(db, 'users', user.uid, 'orders', finalOrder.orderNumber), finalOrder, { merge: true });
         }
       } catch(e) {}
 
       // Emitir evento instantáneo a la ventana del gestor
       if (orderSyncChannel) {
-        orderSyncChannel.postMessage({ type: 'ORDER_CREATED', order: newOrder });
+        orderSyncChannel.postMessage({ type: 'ORDER_CREATED', order: finalOrder });
       }
 
-      clientProfileOrders.unshift(newOrder);
+      const existingIdx = clientProfileOrders.findIndex(o => (o.orderNumber === finalOrder.orderNumber || o.id === finalOrder.id));
+      if (existingIdx >= 0) {
+        clientProfileOrders[existingIdx] = mergeOrderRecords(clientProfileOrders[existingIdx], finalOrder);
+      } else {
+        clientProfileOrders.unshift(finalOrder);
+      }
       try {
         localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
       } catch(e) {}
 
+      subscribeToIndividualOrders([finalOrder]);
+
+      showToast('🎉 ¡Pago completado con éxito en Stripe! Pedido #' + orderNumber + ' registrado.');
+
       try {
-        await sendOrderLifecycleEmails(newOrder, 'order_created');
+        window.history.replaceState({}, document.title, '/mi-espacio.html?tab=pedidos&orderId=' + encodeURIComponent(orderNumber));
       } catch(e) {}
 
-      showToast(`🎉 ¡Pago completado con éxito en Stripe! Pedido #${orderNumber} registrado.`);
-      
-      // Limpiar URL
-      try {
-        window.history.replaceState({}, document.title, `/mi-espacio.html?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`);
-      } catch(e) {}
-
-      renderClientOrdersAndBasketViews(user);
+      renderClientOrdersAndBasketViews(user || auth.currentUser || currentUser);
+      activateTab('tab-pedidos');
     }
   } catch(err) {
     console.error('Error procesando retorno de Stripe:', err);

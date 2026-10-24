@@ -209,6 +209,9 @@ export default async function handler(req, res) {
 
     // Metadatos consolidados
     params.append('metadata[order_number]', orderNumber);
+    if (authCheck && authCheck.uid) {
+      params.append('metadata[customer_uid]', authCheck.uid);
+    }
     params.append('metadata[items_count]', String(cleanItems.length));
     params.append('metadata[items_summary]', itemsSummary);
     const compactItemsJson = JSON.stringify(cleanItems.map(it => ({
