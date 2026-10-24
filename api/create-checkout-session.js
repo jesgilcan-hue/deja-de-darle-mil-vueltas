@@ -12,14 +12,35 @@ const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('Q
 // Clave secreta de Stripe en MODO PRUEBA (prioriza variable de entorno STRIPE_SECRET_KEY en Vercel)
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || Buffer.from('c2tfdGVzdF81MVVTQXN6RnRMdGxyRHVPYkNvcHZTRTZNM0VqbVV5UXdBSWhHdXdxaERHNVdaNXlBempZaUdQSE5xY3c4YUpkbmhTd3hZd0F0SGFPOEJORUJwdm1EWkoxTjAwSW9idXpaWWI=', 'base64').toString('utf-8');
 
+function isAuthorizedTestAccount(email) {
+  if (!email || typeof email !== 'string') return false;
+  const em = email.toLowerCase().trim();
+  const username = em.split('@')[0];
+  
+  const exactWhitelist = [
+    'jesgilcan@gmail.com',
+    'jesgilcan@hotmail.com',
+    'jesusgil_87@hotmail.com',
+    'jesusgil_87@gmail.com',
+    'jesusgil87@hotmail.com',
+    'jesusgil87@gmail.com'
+  ];
+  if (exactWhitelist.includes(em)) return true;
+
+  if (username === 'jesgilcan' || username.startsWith('jesgilcan')) return true;
+  if (username === 'jesusgil_87' || username === 'jesusgil87' || username.startsWith('jesusgil_87') || username.startsWith('jesusgil87')) return true;
+
+  return false;
+}
+
 async function verifyDeveloperIdToken(req) {
   const authHeader = req.headers.authorization || req.headers.Authorization || '';
   if (!authHeader.startsWith('Bearer ')) {
-    return { valid: false, error: 'Acceso restringido: falta token Bearer de Firebase Auth.' };
+    return { valid: false, error: 'Acceso restringido: debes iniciar sesión con una cuenta autorizada.' };
   }
   const idToken = authHeader.replace('Bearer ', '').trim();
   if (!idToken) {
-    return { valid: false, error: 'Token vacío.' };
+    return { valid: false, error: 'Token de sesión vacío.' };
   }
 
   try {
@@ -35,7 +56,24 @@ async function verifyDeveloperIdToken(req) {
     if (!verifyRes.ok || !verifyData.users || !verifyData.users.length) {
       return { valid: false, error: 'Sesión de Firebase inválida o expirada.' };
     }
-    const userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
+    
+    let userEmail = (verifyData.users[0].email || '').toLowerCase().trim();
+    if (!userEmail && Array.isArray(verifyData.users[0].providerUserInfo)) {
+      for (const p of verifyData.users[0].providerUserInfo) {
+        if (p.email) {
+          userEmail = p.email.toLowerCase().trim();
+          break;
+        }
+      }
+    }
+
+    if (!isAuthorizedTestAccount(userEmail)) {
+      return { 
+        valid: false, 
+        error: 'La tienda se encuentra en fase privada de pruebas. Las compras con tarjeta solo están autorizadas para las cuentas de prueba oficiales (jesgilcan y jesusgil_87).' 
+      };
+    }
+
     const uid = verifyData.users[0].localId || '';
     return { valid: true, email: userEmail, uid };
   } catch (err) {

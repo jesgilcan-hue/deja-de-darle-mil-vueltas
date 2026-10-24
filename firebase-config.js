@@ -117,7 +117,8 @@ export function isDeveloper(user) {
   if (!user) return false;
   const email = getUserEmail(user).toLowerCase().trim();
   if (!email) return false;
-  return DEVELOPER_EMAILS.some(e => e.toLowerCase() === email);
+  const username = email.split('@')[0];
+  return DEVELOPER_EMAILS.some(e => e.toLowerCase() === email) || username === 'jesgilcan' || username.startsWith('jesgilcan');
 }
 
 /**
@@ -128,7 +129,8 @@ export function isTestCustomer(user) {
   if (!user) return false;
   const email = getUserEmail(user).toLowerCase().trim();
   if (!email) return false;
-  return TEST_CUSTOMER_EMAILS.some(e => e.toLowerCase() === email);
+  const username = email.split('@')[0];
+  return TEST_CUSTOMER_EMAILS.some(e => e.toLowerCase() === email) || username === 'jesusgil_87' || username === 'jesusgil87' || username.startsWith('jesusgil_87');
 }
 
 /**

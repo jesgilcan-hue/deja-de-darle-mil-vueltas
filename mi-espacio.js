@@ -2451,6 +2451,22 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
     localStorage.setItem('mr_active_checkout_order', JSON.stringify(activeCheckoutOrder));
   } catch(e) {}
 
+  // Comprobación de seguridad: la tienda está en modo privado exclusivo para jesgilcan y jesusgil_87
+  const currentEmail = (user ? getUserEmail(user) : '').toLowerCase().trim();
+  const currentUsername = currentEmail.split('@')[0];
+  const isAuthorizedClient = currentUsername === 'jesgilcan' || 
+                             currentUsername.startsWith('jesgilcan') || 
+                             currentUsername === 'jesusgil_87' || 
+                             currentUsername === 'jesusgil87' || 
+                             currentUsername.startsWith('jesusgil_87');
+
+  if (!isAuthorizedClient) {
+    alert('🔒 Tienda en Fase Privada de Pruebas\n\nEl trámite de compra con tarjeta está restringido temporalmente a las cuentas de prueba autorizadas (jesgilcan y jesusgil_87).');
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (confirmTxt) confirmTxt.textContent = `Pagar con Tarjeta · ${totalAmount.toFixed(2).replace('.', ',')} € (Envío incluido)`;
+    return;
+  }
+
   // Iniciar sesión segura en Stripe Checkout
   try {
     const idToken = user ? await user.getIdToken() : '';
