@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             urlParams.get('stripe_test_success') === '1' ||
                             urlParams.get('order') ||
                             urlParams.get('orderId') ||
-                            urlParams.get('tab') === 'pedidos';
+                            urlParams.get('tab') === 'pedidos' || urlParams.get('tab') === 'ajustes';
       const hasLocalOrders = !!localStorage.getItem('mr_simulated_orders');
       const hasPendingBooks = !!localStorage.getItem('mr_pending_payment_books');
 
@@ -528,10 +528,39 @@ function setupEvents() {
     const notes = document.getElementById('ajustes-shipping-notes')?.value.trim() || '';
     const isSameBilling = sameBillingCheck ? sameBillingCheck.checked : true;
 
-    if (!name || !address) {
-      showToast('Por favor, indica al menos destinatario y dirección');
+    if (!name || !address || !postalCode || !city) {
+      alert('⚠️ Por favor, completa los campos requeridos: Destinatario, Dirección de entrega, Código Postal y Ciudad.');
       return false;
     }
+
+    if (!email || !email.includes('@')) {
+      alert('⚠️ Por favor, introduce un correo electrónico válido para poder enviarte la confirmación y el seguimiento de tu pedido.');
+      const inpEmail = document.getElementById('ajustes-shipping-email');
+      if (inpEmail) inpEmail.focus();
+      return false;
+    }
+
+    // Modal popup con estética Menos Ruido para validación en 1 sola línea
+    const summaryAddress = `${address}, ${postalCode} ${city}${province ? ' (' + province + ')' : ''}`;
+    const confirmMessage = `Por favor, confirma que tu dirección de entrega y correo son exactos:
+
+📍 Dirección de entrega:
+${name}
+${summaryAddress}
+
+✉️ Correo de confirmación y tracking:
+${email}${phone ? `\n📞 Teléfono: ${phone}` : ''}${notes ? `\n📝 Notas repartidor: «${notes}»` : ''}
+
+¿Son correctos estos datos para el envío de tus cuadernos?`;
+
+    const userConfirmed = await (window.mrConfirm ? window.mrConfirm(confirmMessage, {
+      title: 'Validación de Dirección y Contacto',
+      badge: 'Editorial Menos Ruido · Envío Físico',
+      confirmText: '✓ Confirmar y Guardar',
+      cancelText: 'Modificar datos'
+    }) : confirm(confirmMessage));
+
+    if (!userConfirmed) return false;
 
     const shippingData = {
       name,
