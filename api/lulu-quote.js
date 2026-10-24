@@ -34,9 +34,9 @@ export const FIXED_RETAIL_PRICES = {
 };
 
 /**
- * Calcula el PVP dinámico con envío incluido según encuadernación y número de páginas
+ * Calcula el PVP dinámico con envío incluido según encuadernación, número de páginas y tipo de papel
  */
-export function calculateDynamicRetailPrice(bindingType = 'coil', pageCount = 120) {
+export function calculateDynamicRetailPrice(bindingType = 'coil', pageCount = 120, paperType = 'cream_90') {
   const cfg = FIXED_RETAIL_PRICES[bindingType] || FIXED_RETAIL_PRICES.coil;
   const pages = Math.max(32, Math.min(800, parseInt(pageCount, 10) || 120));
   let extraPagesFee = 0;
@@ -47,7 +47,15 @@ export function calculateDynamicRetailPrice(bindingType = 'coil', pageCount = 12
   } else if (pages > 150) {
     extraPagesFee = 2.00;
   }
-  return +(cfg.basePrice + extraPagesFee).toFixed(2);
+
+  let paperExtra = 0;
+  if (typeof paperType === 'string' && (paperType === 'premium_105' || parseFloat(paperType) >= 0.0700)) {
+    paperExtra = 2.50;
+  } else if (typeof paperType === 'number' && paperType >= 0.0700) {
+    paperExtra = 2.50;
+  }
+
+  return +(cfg.basePrice + extraPagesFee + paperExtra).toFixed(2);
 }
 
 // Margen neto mínimo de seguridad por pedido (Cortacircuitos)

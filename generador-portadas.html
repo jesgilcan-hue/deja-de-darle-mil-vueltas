@@ -1481,12 +1481,13 @@ Sección de notas libres (10 páginas)</textarea>
                     </div>
 
                     <div class="field-group">
-                        <label for="selPaperWeight">Grosor de Papel (Lo ajustaremos según catálogo Lulu):</label>
+                        <label for="selPaperWeight">Tipo y Gramaje del Papel Interior:</label>
                         <select id="selPaperWeight" onchange="updateConfigFromUI()">
-                            <option value="0.0635">Crema / Blanco Estándar 90g (0.0635 mm/pág)</option>
-                            <option value="0.0572">Blanco Estándar 80g (0.0572 mm/pág)</option>
-                            <option value="0.0750">Papel Premium Grueso 105g (0.0750 mm/pág)</option>
+                            <option value="0.0635" selected>Papel Crema 90g (Tacto natural y lectura descansada)</option>
+                            <option value="0.0572">Papel Blanco 80g (Limpio y estándar)</option>
+                            <option value="0.0750">Papel Premium Grueso 105g (Extra opaco, especial pluma) (+2,50 €)</option>
                         </select>
+                        <span style="font-size:0.7rem; color:#776f65;">Calibra el gramaje físico de las hojas interiores y el lomo exacto para imprenta.</span>
                     </div>
 
                     <div style="background:#f3ede2; border-radius:6px; padding:10px; font-size:0.75rem; color:#3d352e; display:flex; flex-direction:column; gap:4px;">
@@ -2869,12 +2870,17 @@ Sección de notas libres (10 páginas)</textarea>
             try {
                 let pending = JSON.parse(localStorage.getItem('mr_pending_payment_books') || '[]');
                 const existingIdx = pending.findIndex(p => p.title === currentCoverItem.title && p.bindingType === currentCoverItem.bindingType);
+                const priceInfo = getCalculatedBookPriceDetails();
                 const bookItem = {
                     id: 'pend_' + Date.now(),
                     title: currentCoverItem.title,
                     subtitle: currentCoverItem.syncedBookName || 'Libro Completo + Portada sincronizada',
                     bindingType: currentCoverItem.bindingType,
                     pageCount: currentCoverItem.pageCount,
+                    paperThicknessMm: coverState.paperThicknessMm,
+                    paperType: coverState.paperThicknessMm >= 0.0700 ? 'premium_105' : (coverState.paperThicknessMm <= 0.0600 ? 'white_80' : 'cream_90'),
+                    paperLabel: priceInfo.paperLabel,
+                    unitPrice: priceInfo.totalPrice,
                     fileSizeMb: (currentCoverItem.pageCount * 0.31).toFixed(1),
                     data: currentCoverItem.data,
                     savedAt: new Date().toISOString()
@@ -2888,15 +2894,7 @@ Sección de notas libres (10 páginas)</textarea>
             } catch (e) {}
 
             // Calcular precio y rellenar pop-up
-            let baseP = 27.90;
-            if (coverState.bindingType === 'perfect') baseP = 24.90;
-            if (coverState.bindingType === 'hardcover') baseP = 32.90;
-            const pCount = parseInt(coverState.pageCount, 10) || 143;
-            let extraP = 0;
-            if (pCount > 300) extraP = 5.00;
-            else if (pCount > 220) extraP = 3.00;
-            else if (pCount > 150) extraP = 2.00;
-            const priceStr = (baseP + extraP).toFixed(2).replace('.', ',') + ' €';
+            const priceInfo = getCalculatedBookPriceDetails();
 
             let bindLabel = 'Portada con Anillas (Wire-O)';
             if (coverState.bindingType === 'perfect') bindLabel = 'Tapa Blanda (Mate)';
@@ -2906,8 +2904,8 @@ Sección de notas libres (10 páginas)</textarea>
             const sEl = document.getElementById('addedModalBookSpecs');
             const pEl = document.getElementById('addedModalBookPrice');
             if (tEl) tEl.textContent = coverState.title || 'Planificador Personalizado';
-            if (sEl) sEl.textContent = `${bindLabel} · ${coverState.pageCount} páginas interiores`;
-            if (pEl) pEl.textContent = priceStr;
+            if (sEl) sEl.textContent = `${bindLabel} · ${coverState.pageCount} páginas · ${priceInfo.paperLabel}`;
+            if (pEl) pEl.textContent = priceInfo.priceStr;
 
             // Enlazar botón «Ir a mi cesta» del modal
             const btnGoBasket = document.getElementById('btnAddedModalGoBasket');
@@ -3184,6 +3182,42 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             return +baseSpine.toFixed(2);
         }
 
+        function getCalculatedBookPriceDetails() {
+            let baseP = 27.90; // coil (anillas)
+            if (coverState.bindingType === 'perfect') baseP = 24.90;
+            if (coverState.bindingType === 'hardcover') baseP = 32.90;
+
+            // Suplemento por papel Premium 105g (+2,50 €)
+            let paperExtra = 0;
+            let paperLabel = 'Papel Crema 90g';
+            if (coverState.paperThicknessMm >= 0.0700) {
+                paperExtra = 2.50;
+                paperLabel = 'Papel Premium 105g';
+            } else if (coverState.paperThicknessMm <= 0.0600) {
+                paperLabel = 'Papel Blanco 80g';
+            }
+
+            // Suplemento por número de páginas (escala progresiva)
+            const pages = parseInt(coverState.pageCount, 10) || 144;
+            let extraPages = 0;
+            if (pages > 300) extraPages = 5.00;
+            else if (pages > 220) extraPages = 3.00;
+            else if (pages > 150) extraPages = 2.00;
+
+            const totalPrice = +(baseP + paperExtra + extraPages).toFixed(2);
+            const priceStr = totalPrice.toFixed(2).replace('.', ',') + ' €';
+
+            return {
+                baseP,
+                paperExtra,
+                paperLabel,
+                extraPages,
+                pages,
+                totalPrice,
+                priceStr
+            };
+        }
+
         function updateSpecsLabels() {
             const fmt = TRIM_FORMATS.landscape_825_6;
             const B = coverState.bleedMm;
@@ -3212,22 +3246,12 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
             document.getElementById('techBannerRight').textContent = `Sincronizado: ${coverState.syncedBookName || (fmt.name + ' · ' + coverState.pageCount + ' págs')}`;
 
-            // Actualizar Precio Dinámico (según encuadernación + páginas interiores) con Envío Incluido
-            let basePrice = 27.90; // coil
-            if (coverState.bindingType === 'perfect') basePrice = 24.90;
-            if (coverState.bindingType === 'hardcover') basePrice = 32.90;
-
-            const pages = parseInt(coverState.pageCount, 10) || 143;
-            let extraPages = 0;
-            if (pages > 300) extraPages = 5.00;
-            else if (pages > 220) extraPages = 3.00;
-            else if (pages > 150) extraPages = 2.00;
-
-            const finalDynamicPrice = (basePrice + extraPages).toFixed(2).replace('.', ',');
+            // Actualizar Precio Dinámico (encuadernación + páginas + tipo de papel) con Envío Incluido
+            const priceInfo = getCalculatedBookPriceDetails();
             const priceEl = document.getElementById('topDynamicPriceDisplay');
             const shipEl = document.getElementById('topDynamicShippingBadge');
-            if (priceEl) priceEl.textContent = `${finalDynamicPrice} €`;
-            if (shipEl) shipEl.textContent = `🚚 Envío incluido · ${pages} págs`;
+            if (priceEl) priceEl.textContent = priceInfo.priceStr;
+            if (shipEl) shipEl.textContent = `🚚 Envío incluido · ${priceInfo.pages} págs · ${priceInfo.paperLabel}`;
         }
 
         // =====================================================================

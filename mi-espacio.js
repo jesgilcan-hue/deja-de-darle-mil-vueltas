@@ -1704,16 +1704,25 @@ let clientProfileOrders = [];
 let clientPendingBasket = [];
 let ordersModuleInitialized = false;
 
-function calcDynamicPriceForProfile(bindingType = 'coil', pageCount = 143) {
+function calcDynamicPriceForProfile(bindingType = 'coil', pageCount = 143, paperThicknessOrType = 0.0635) {
   let base = 27.90;
   if (bindingType === 'perfect' || bindingType === 'softcover') base = 24.90;
   if (bindingType === 'hardcover') base = 32.90;
+
+  // Suplemento por papel Premium 105g (+2,50 €)
+  let paperExtra = 0;
+  if (typeof paperThicknessOrType === 'string' && (paperThicknessOrType === 'premium_105' || parseFloat(paperThicknessOrType) >= 0.0700)) {
+    paperExtra = 2.50;
+  } else if (typeof paperThicknessOrType === 'number' && paperThicknessOrType >= 0.0700) {
+    paperExtra = 2.50;
+  }
+
   const pages = parseInt(pageCount, 10) || 143;
   let extra = 0;
   if (pages > 300) extra = 5.00;
   else if (pages > 220) extra = 3.00;
   else if (pages > 150) extra = 2.00;
-  return +(base + extra).toFixed(2);
+  return +(base + paperExtra + extra).toFixed(2);
 }
 
 async function initClientOrdersAndBasketModule(user) {
@@ -2114,7 +2123,7 @@ function updateBasketCheckoutBar() {
   const units = clientPendingBasket.reduce((sum, item) => sum + (typeof item.quantity === 'number' ? item.quantity : 1), 0);
   const total = clientPendingBasket.reduce((sum, item) => {
     const q = (typeof item.quantity === 'number' ? item.quantity : 1);
-    return sum + calcDynamicPriceForProfile(item.bindingType, item.pageCount) * q;
+    return sum + calcDynamicPriceForProfile(item.bindingType, item.pageCount, item.paperThicknessMm || item.paperType) * q;
   }, 0);
   bar.style.display = clientPendingBasket.length > 0 ? 'flex' : 'none';
   const totalEl = document.getElementById('client-basket-total');
@@ -2192,16 +2201,17 @@ function openBasketCheckoutModal(targetItemId = null) {
   if (itemsContainer) {
     itemsContainer.innerHTML = selectedItems.map(item => {
       const q = typeof item.quantity === 'number' ? item.quantity : 1;
-      const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
+      const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount, item.paperThicknessMm || item.paperType);
       const sub = unitPrice * q;
       totalAmount += sub;
       totalUnits += q;
+      const paperTxt = item.paperLabel || (item.paperThicknessMm >= 0.07 ? 'Papel Premium 105g' : 'Papel Crema 90g');
       return `
         <div style="background: #ffffff; border: 1px solid #ebd5c3; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
           <div style="flex: 1;">
             <div style="font-weight: 800; font-size: 0.95rem; color: #1f1c19;">${escapeHtml(item.title)}</div>
             <div style="font-size: 0.8rem; color: #665e54; margin-top: 2px;">
-              ${getBindingLabelForProfile(item.bindingType)} · <strong>${item.pageCount} págs</strong> · Cantidad: <strong>${q}</strong> (${unitPrice.toFixed(2).replace('.', ',')} €/ud)
+              ${getBindingLabelForProfile(item.bindingType)} · <strong>${item.pageCount} págs</strong> · <strong>${escapeHtml(paperTxt)}</strong> · Cantidad: <strong>${q}</strong> (${unitPrice.toFixed(2).replace('.', ',')} €/ud)
             </div>
           </div>
           <div style="text-align: right; min-width: 90px;">
@@ -2408,7 +2418,7 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
   let totalAmount = 0;
   selectedItems.forEach(it => {
     const q = typeof it.quantity === 'number' ? it.quantity : 1;
-    totalAmount += calcDynamicPriceForProfile(it.bindingType, it.pageCount) * q;
+    totalAmount += calcDynamicPriceForProfile(it.bindingType, it.pageCount, it.paperThicknessMm || it.paperType) * q;
   });
 
   const orderNumber = 'MR-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
@@ -2834,7 +2844,7 @@ function renderClientOrdersAndBasketViews(user) {
         if (!item.id) item.id = 'pend_item_' + (idx + 1) + '_' + Date.now();
         if (typeof item.quantity !== 'number') item.quantity = 1;
 
-        const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount);
+        const unitPrice = calcDynamicPriceForProfile(item.bindingType, item.pageCount, item.paperThicknessMm || item.paperType);
         const subtotal = unitPrice * item.quantity;
         const subtotalText = subtotal > 0 ? (subtotal.toFixed(2).replace('.', ',') + ' €') : '0,00 €';
         const unitPriceText = unitPrice.toFixed(2).replace('.', ',') + ' €';
@@ -2865,6 +2875,7 @@ function renderClientOrdersAndBasketViews(user) {
         const isChecked = !!item.textsConfirmed;
         const spineWidthMm = (item.pageCount * 0.057).toFixed(1);
         const fileSizeMb = item.fileSizeMb || (item.pageCount * 0.31).toFixed(1);
+        const paperBadgeText = item.paperLabel || (item.paperThicknessMm >= 0.07 ? 'Papel Premium 105g' : 'Papel Crema 90g');
 
         return `
           <div class="pending-basket-card" data-basket-card-id="${escapeHtml(item.id)}" style="background: #ffffff; border: 1.5px solid #dfd6c7; border-radius: 12px; padding: 18px 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 14px;">
@@ -2874,6 +2885,7 @@ function renderClientOrdersAndBasketViews(user) {
               <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
                   <span style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.3px;">⏳ PENDIENTE DE PAGO</span>
+                  <span style="background: #fdf6ec; color: #78350f; border: 1px solid #fed7aa; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.3px;">📖 ${escapeHtml(paperBadgeText)}</span>
                 </div>
                 <h4 id="basket-title-display-${escapeHtml(item.id)}" style="font-family: var(--font-display); font-size: 1.22rem; margin: 4px 0 3px 0; color: #1f1c19;">${escapeHtml(item.title)}</h4>
                 <div id="basket-subtitle-display-${escapeHtml(item.id)}" style="font-size: 0.84rem; color: #665e54;">
