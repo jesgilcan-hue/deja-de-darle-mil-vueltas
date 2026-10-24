@@ -630,3 +630,8 @@ if (typeof document !== 'undefined') {
     setupNavbarAuth();
   }
 }
+
+if (typeof window !== 'undefined') {
+  window.openAuthModal = openAuthModal;
+  window.auth = auth;
+}

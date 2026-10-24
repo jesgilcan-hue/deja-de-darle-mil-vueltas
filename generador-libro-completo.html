@@ -3031,6 +3031,17 @@
         window.autoFixBookParity = autoFixBookParity;
 
         function openSaveAndValidateModal() {
+            let user = (window.auth && window.auth.currentUser) || null;
+            if (!user && window.openAuthModal) {
+                window.openAuthModal({
+                    title: 'Guarda tu cuaderno en Mi Espacio',
+                    subtitle: 'Inicia sesión o crea tu cuenta gratuita para conservar tu libro y poder editarlo cuando quieras.',
+                    badge: 'Guardar diseño',
+                    actionContext: 'save',
+                    onSuccess: () => { openSaveAndValidateModal(); }
+                });
+                return;
+            }
             const modal = document.getElementById('modalSaveAndValidateBook');
             const pagesEl = document.getElementById('saveModalPagesCountDisplay');
             const titleInp = document.getElementById('save-modal-book-title');
@@ -5392,6 +5403,17 @@
         // MOTOR DE COMPILACIÓN MULTI-PÁGINA EN PDF (IDÉNTICO A LOS GENERADORES)
         // =========================================================================
         function openCompileModal() {
+            let user = (window.auth && window.auth.currentUser) || null;
+            if (!user && window.openAuthModal) {
+                window.openAuthModal({
+                    title: 'Descarga tu Cuaderno Completo en PDF',
+                    subtitle: 'Inicia sesión o crea tu cuenta gratuita para compilar y descargar tu libro completo listo para imprenta.',
+                    badge: 'Cuaderno Completo',
+                    actionContext: 'download',
+                    onSuccess: () => { openCompileModal(); }
+                });
+                return;
+            }
             recalcPages();
             const total = generatedPageList.length;
             if (total % 2 !== 0) {

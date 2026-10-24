@@ -2416,110 +2416,73 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
   const pageCount = primaryItem.pageCount || 144;
   const spineWidth = (pageCount * 0.057).toFixed(1);
 
-  // Registro del pedido unificado con todos los libros
-  const newOrder = {
-    id: 'ord_' + Date.now(),
-    orderNumber: orderNumber,
-    status: 'pending_review',
-    createdAt: new Date().toISOString(),
+  // Guardar datos temporales del pedido para el retorno de la pasarela Stripe
+  const activeCheckoutOrder = {
+    orderNumber,
     items: selectedItems,
     customer: {
       uid: user?.uid || (auth.currentUser ? auth.currentUser.uid : ''),
       name: customerPlatformName,
       email: customerPlatformEmail.toLowerCase().trim(),
       phone: firstShip.phone || '+34 600 000 000',
-      address: firstShip.address || 'Calle Serrano 42',
-      postalCode: firstShip.postalCode || '28001',
-      city: firstShip.city || 'Madrid',
-      province: firstShip.province || 'Madrid',
+      address: firstShip.address,
+      postalCode: firstShip.postalCode,
+      city: firstShip.city,
+      province: firstShip.province,
       country: 'España',
-      notes: deliveryNotes || firstShip.notes || 'Sin instrucciones adicionales',
-      isRegistered: true
+      notes: firstShip.notes || 'Sin instrucciones adicionales'
     },
-    shipping: {
-      carrier: 'Correos Express',
-      trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
-      lastCarrierMessage: 'Pedido recibido. En fase 1: En Revisión Técnica de tripas y maquetación.'
-    },
-    comms: {
-      compra: { sent: true, date: new Date().toISOString(), id: 'sim_test_' + Date.now() },
-      imprenta: { sent: false },
-      tracking: { sent: false },
-      entregado: { sent: false }
-    },
-    book: {
-      title: primaryItem.title || 'Cuaderno Personalizado',
-      subtitle: primaryItem.subtitle || 'Edición Personalizada',
-      bindingType: primaryItem.bindingType || 'softcover',
-      pageCount: pageCount,
-      quantity: primaryItem.quantity || 1,
-      size: '8.25x6',
-      spineWidthMm: spineWidth
-    },
-    pricing: {
-      currency: 'EUR',
-      totalPaid: totalAmount,
-      luluCostEstimate: 13.93,
-      netMargin: +(totalAmount - 13.93).toFixed(2),
-      stripePaymentId: 'test_demo_0eur'
-    },
-    timeline: [
-      {
-        date: new Date().toISOString(),
-        message: 'Pedido recibido y registrado en imprenta'
-      },
-      {
-        date: new Date().toISOString(),
-        message: 'Pago simulado de prueba confirmado (0 €)'
-      }
-    ]
+    deliveryNotes: firstShip.notes || 'Sin instrucciones adicionales',
+    totalAmount,
+    createdAt: new Date().toISOString()
   };
 
   try {
-    if (newOrder.orderNumber) {
-      await setDoc(doc(db, 'orders', newOrder.orderNumber), newOrder, { merge: true });
-    }
-    if (newOrder.id && newOrder.id !== newOrder.orderNumber) {
-      await setDoc(doc(db, 'orders', newOrder.id), newOrder, { merge: true });
-    }
-    if (user && user.uid) {
-      await setDoc(doc(db, 'users', user.uid, 'orders', newOrder.orderNumber), newOrder, { merge: true });
-    }
+    localStorage.setItem('mr_active_checkout_order', JSON.stringify(activeCheckoutOrder));
   } catch(e) {}
 
-  // Sincronizar en tiempo real con la pestaña del gestor
-  if (orderSyncChannel) {
-    orderSyncChannel.postMessage({ type: 'ORDER_CREATED', order: newOrder });
+  // Iniciar sesión segura en Stripe Checkout
+  try {
+    const idToken = user ? await user.getIdToken() : '';
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+      },
+      body: JSON.stringify({
+        items: selectedItems,
+        bookTitle: primaryItem.title,
+        bookSubtitle: primaryItem.subtitle || 'Edición Personalizada',
+        bindingType: primaryItem.bindingType || 'softcover',
+        pageCount: pageCount,
+        customerName: firstShip.name,
+        customerEmail: firstShip.email,
+        customerPhone: firstShip.phone,
+        address: firstShip.address,
+        postalCode: firstShip.postalCode,
+        city: firstShip.city,
+        province: firstShip.province,
+        notes: firstShip.notes || '',
+        returnOrigin: window.location.origin
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.checkoutUrl) {
+      throw new Error(data.error || 'No se pudo iniciar la sesión de pago con tarjeta en Stripe.');
+    }
+
+    // Redirigir a la pasarela segura de pago
+    window.location.href = data.checkoutUrl;
+    return;
+  } catch (err) {
+    console.error('Error al iniciar pago con Stripe:', err);
+    alert('⚠️ No se pudo conectar con la pasarela de pago: ' + (err.message || 'Inténtalo de nuevo en unos instantes.'));
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (confirmTxt) confirmTxt.textContent = `Pagar con Tarjeta · ${totalAmount.toFixed(2).replace('.', ',')} € (Envío incluido)`;
+    return;
   }
-
-  // Vaciar cesta
-  clientPendingBasket = [];
-  try {
-    localStorage.setItem('mr_pending_payment_books', '[]');
-  } catch(e) {}
-
-  // Añadir a lista local de pedidos
-  clientProfileOrders.unshift(newOrder);
-  try {
-    localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
-  } catch(e) {}
-
-  // Enviar correos si el servicio está disponible
-  try {
-    await sendOrderLifecycleEmails(newOrder, 'order_created');
-  } catch(e) {}
-
-  closeBasketCheckoutModal();
-  renderClientOrdersAndBasketViews(user || auth.currentUser);
-  showToast(`🎉 ¡Pedido #${orderNumber} confirmado con éxito! Entrando en Revisión Técnica.`);
-
-  // Llevar a la vista del pedido
-  setTimeout(() => {
-    const card = document.getElementById('order-card-' + orderNumber);
-    if (card) {
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 400);
 }
 
 

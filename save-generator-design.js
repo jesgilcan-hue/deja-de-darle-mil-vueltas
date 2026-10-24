@@ -446,10 +446,10 @@ function interceptDownloadActions(options, getGeneratorDataFn) {
           } catch (e) {}
 
           openAuthModal({
-            title: options?.isPremium ? 'Descarga tu diseño en PDF' : 'Descarga tu plantilla en PDF',
+            title: options?.isPremium ? 'Descarga tu diseño en PDF' : 'Descarga o imprime en PDF',
             subtitle: options?.isPremium 
               ? 'Accede a tu cuenta para generar y descargar tu archivo listo para imprenta.'
-              : 'Crea tu cuenta gratuita o accede para descargar e imprimir tu plantilla en PDF de alta resolución.',
+              : 'Inicia sesión o crea tu cuenta gratuita para descargar e imprimir tu plantilla en PDF de alta resolución.',
             badge: options?.isPremium ? 'Edición Completa' : 'Descarga en PDF',
             actionContext: 'download',
             isPremium: !!options?.isPremium,
@@ -469,7 +469,33 @@ function interceptDownloadActions(options, getGeneratorDataFn) {
     }
   };
 
-  // 2. Interceptar función global openCompileModal (Libro Completo)
+  // 2. Interceptar función global generatePdf
+  const wrapGeneratePdf = () => {
+    if (typeof window.generatePdf === 'function' && !window.generatePdf.__mrWrapped) {
+      const origPdf = window.generatePdf;
+      const wrappedPdf = function(...args) {
+        let user = auth.currentUser;
+        if (!user) {
+          if (typeof window.closeDownloadModal === 'function') window.closeDownloadModal();
+          openAuthModal({
+            title: 'Descarga o imprime en PDF',
+            subtitle: 'Inicia sesión o crea tu cuenta gratuita para generar y descargar tu plantilla en PDF.',
+            badge: 'Descarga en PDF',
+            actionContext: 'download',
+            onSuccess: () => {
+              origPdf.apply(this, args);
+            }
+          });
+          return;
+        }
+        return origPdf.apply(this, args);
+      };
+      wrappedPdf.__mrWrapped = true;
+      window.generatePdf = wrappedPdf;
+    }
+  };
+
+  // 3. Interceptar función global openCompileModal (Libro Completo)
   const wrapOpenCompileModal = () => {
     if (typeof window.openCompileModal === 'function' && !window.openCompileModal.__mrWrapped) {
       const originalCompile = window.openCompileModal;
@@ -506,16 +532,24 @@ function interceptDownloadActions(options, getGeneratorDataFn) {
   };
 
   wrapOpenDownloadModal();
+  wrapGeneratePdf();
   wrapOpenCompileModal();
 
   setTimeout(() => {
     wrapOpenDownloadModal();
+    wrapGeneratePdf();
     wrapOpenCompileModal();
   }, 100);
 
-  // 3. Captura defensiva de clics en botones de descarga
+  setInterval(() => {
+    wrapOpenDownloadModal();
+    wrapGeneratePdf();
+    wrapOpenCompileModal();
+  }, 500);
+
+  // 4. Captura defensiva de clics en botones de descarga, impresión o envío
   document.addEventListener('click', (e) => {
-    const target = e.target && e.target.closest && e.target.closest('.btn-download-primary, .btn-download-send, .btn-compile-pdf');
+    const target = e.target && e.target.closest && e.target.closest('.btn-download-primary, .btn-download-send, .btn-compile-pdf, .btn-modal-primary, .btn-modal-secondary, #btn-modal-send-email');
     if (!target) return;
     if (target.id === 'btn-save-generator-design' || target.id === 'btn-save-as-copy' || target.getAttribute('href')) return;
 
@@ -531,11 +565,15 @@ function interceptDownloadActions(options, getGeneratorDataFn) {
         }
       } catch (err) {}
 
+      if (typeof window.closeDownloadModal === 'function') {
+        window.closeDownloadModal();
+      }
+
       openAuthModal({
-        title: options?.isPremium ? 'Descarga tu diseño en PDF' : 'Descarga tu plantilla en PDF',
+        title: options?.isPremium ? 'Descarga tu diseño en PDF' : 'Descarga o imprime en PDF',
         subtitle: options?.isPremium 
           ? 'Accede a tu cuenta para generar y descargar tu archivo listo para imprenta.'
-          : 'Crea tu cuenta gratuita o accede para descargar e imprimir tu plantilla en PDF de alta resolución.',
+          : 'Inicia sesión o crea tu cuenta gratuita para descargar e imprimir tu plantilla en PDF de alta resolución.',
         badge: options?.isPremium ? 'Edición Completa' : 'Descarga en PDF',
         actionContext: 'download',
         isPremium: !!options?.isPremium,

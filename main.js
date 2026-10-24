@@ -1,3 +1,4 @@
+import './mr-popup.js';
 import './auth-modal.js';
 import './pwa-install.js';
 
@@ -533,6 +534,18 @@ if ('serviceWorker' in navigator) {
       </button>
       <div class="mobile-planners-list">
         <div class="mobile-scrollable-sublist">
+          <a href="/generador-portadas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Diseñador de Portadas</span>
+              <span class="mobile-book-subtitle">Lomo y pliego exacto</span>
+            </div>
+          </a>
+          <a href="/generador-libro-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Cuaderno Completo</span>
+              <span class="mobile-book-subtitle">Compilador de libro continuo</span>
+            </div>
+          </a>
           <a href="/generador-planificador-diario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
             <div class="mobile-book-info">
               <span class="mobile-book-title">Planificador Diario (Hoy)</span>
@@ -567,18 +580,6 @@ if ('serviceWorker' in navigator) {
             <div class="mobile-book-info">
               <span class="mobile-book-title">Bloques Horarios</span>
               <span class="mobile-book-subtitle">Time blocking diario</span>
-            </div>
-          </a>
-          <a href="/generador-portadas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Diseñador de Portadas</span>
-              <span class="mobile-book-subtitle">Lomo y pliego exacto</span>
-            </div>
-          </a>
-          <a href="/generador-libro-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Cuaderno Completo (86 págs)</span>
-              <span class="mobile-book-subtitle">Compilador de libro continuo</span>
             </div>
           </a>
         </div>
@@ -801,19 +802,19 @@ function setupUnifiedNavDropdowns() {
       const content = drop.querySelector('.dropdown-content');
       if (content) {
         content.innerHTML = `
-          <div class="tree-group">
+          <div class="tree-group tree-group-generadores">
             <span class="tree-branch-title">Generadores Web (8)</span>
-            <div class="tree-branch-items tree-branch-scrollable">
+            <div class="tree-branch-items tree-branch-generadores-list">
+              <a href="/generador-portadas.html" class="tree-item">Diseñador de Portadas</a>
+              <a href="/generador-libro-completo.html" class="tree-item">Cuaderno Completo</a>
               <a href="/generador-planificador-diario.html" class="tree-item">Planificador Diario (Hoy)</a>
               <a href="/generador-planificador-semanal.html" class="tree-item">Planificador Semanal</a>
               <a href="/generador-planificador-mensual.html" class="tree-item">Planificador Mensual</a>
               <a href="/generador-planificador-anual.html" class="tree-item">Planificador Anual</a>
               <a href="/generador-planificador-habitos.html" class="tree-item">Rastreador de Hábitos</a>
               <a href="/generador-planificador-horario.html" class="tree-item">Bloques Horarios</a>
-              <a href="/generador-portadas.html" class="tree-item">Diseñador de Portadas</a>
-              <a href="/generador-libro-completo.html" class="tree-item">Cuaderno Completo (86 págs)</a>
             </div>
-            <a href="/generador.html" class="tree-view-all-link">Ver todos los generadores (8)</a>
+            <a href="/generador.html" class="tree-view-all-link">Ver todos los generadores (8) &rarr;</a>
           </div>
         `;
       }
