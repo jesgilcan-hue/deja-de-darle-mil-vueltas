@@ -121,6 +121,19 @@ export default async function handler(req, res) {
       returnOrigin = 'https://www.editorialmenosruido.com'
     } = req.body || {};
 
+    // Validación estricta de servidor para datos postales y de contacto
+    const cleanPostal = String(postalCode || '').trim();
+    if (!/^\d{5}$/.test(cleanPostal)) {
+      return res.status(400).json({ error: 'Código postal inválido. Debe contener exactamente 5 dígitos numéricos.' });
+    }
+    const cleanPhoneDigits = String(customerPhone || '').replace(/\D/g, '');
+    if (cleanPhoneDigits.length < 9) {
+      return res.status(400).json({ error: 'Teléfono de contacto inválido. Debe contener al menos 9 dígitos.' });
+    }
+    if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(customerEmail)) {
+      return res.status(400).json({ error: 'Correo electrónico de contacto inválido.' });
+    }
+
     // 2. RE-VERIFICACIÓN EN SERVIDOR DEL CORTACIRCUITOS LULU (SAFETY GUARD)
     // Garantiza que aunque alguien manipule el navegador, nunca se cree un cobro si Lulu sube costes
     const quote = await calculateLuluQuoteAndSafety({

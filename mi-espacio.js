@@ -53,6 +53,47 @@ import {
 } from 'firebase/firestore';
 import { openAuthModal, setupNavbarAuth } from './auth-modal.js';
 
+// --- Validadores de integridad postal y de contacto ---
+function isValidSpanishPostalCode(zip) {
+  if (!zip) return false;
+  const cleaned = String(zip).trim();
+  if (!/^\d{5}$/.test(cleaned)) return false;
+  const prefix = parseInt(cleaned.substring(0, 2), 10);
+  return prefix >= 1 && prefix <= 52;
+}
+
+function isValidPhoneNumber(phone) {
+  if (!phone) return false;
+  const cleaned = String(phone).replace(/[\s\-\(\)\.]/g, '');
+  let national = cleaned;
+  if (national.startsWith('+34')) {
+    national = national.substring(3);
+  } else if (national.startsWith('0034')) {
+    national = national.substring(4);
+  } else if (national.startsWith('+')) {
+    return /^\d{8,14}$/.test(national.substring(1));
+  }
+  return /^[6789]\d{8}$/.test(national);
+}
+
+function isValidEmailAddress(email) {
+  if (!email) return false;
+  const cleaned = String(email).trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleaned);
+}
+
+function isValidDeliveryAddress(address) {
+  if (!address) return false;
+  const cleaned = String(address).trim();
+  return cleaned.length >= 5 && /[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(cleaned);
+}
+
+function isValidRecipientName(name) {
+  if (!name) return false;
+  const cleaned = String(name).trim();
+  return cleaned.length >= 3 && /[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(cleaned);
+}
+
 let currentUser = null;
 let allDesigns = [];
 let currentFilter = 'all';
@@ -511,6 +552,41 @@ function setupEvents() {
   const sameBillingCheck = document.getElementById('ajustes-same-billing-check');
   const billingFields = document.getElementById('ajustes-billing-fields');
 
+  // Filtros en vivo en los campos de entrada
+  const zipInput = document.getElementById('ajustes-shipping-zip');
+  if (zipInput) {
+    zipInput.addEventListener('input', (e) => {
+      // Solo números y máximo 5 dígitos
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+    });
+  }
+
+  const phoneInput = document.getElementById('ajustes-shipping-phone');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', (e) => {
+      // Filtrar caracteres válidos para teléfono y máximo 16 caracteres
+      let val = e.target.value;
+      const startsWithPlus = val.startsWith('+');
+      val = val.replace(/[^\d\s\-]/g, '');
+      if (startsWithPlus) val = '+' + val.replace(/\+/g, '');
+      e.target.value = val.slice(0, 16);
+    });
+  }
+
+  const emailInput = document.getElementById('ajustes-shipping-email');
+  if (emailInput) {
+    emailInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\s/g, '').toLowerCase();
+    });
+  }
+
+  const billingTaxInput = document.getElementById('ajustes-billing-taxid');
+  if (billingTaxInput) {
+    billingTaxInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase().replace(/\s/g, '').slice(0, 15);
+    });
+  }
+
   sameBillingCheck?.addEventListener('change', () => {
     if (billingFields) {
       billingFields.style.display = sameBillingCheck.checked ? 'none' : 'block';
@@ -528,16 +604,76 @@ function setupEvents() {
     const notes = document.getElementById('ajustes-shipping-notes')?.value.trim() || '';
     const isSameBilling = sameBillingCheck ? sameBillingCheck.checked : true;
 
-    if (!name || !address || !postalCode || !city) {
-      alert('⚠️ Por favor, completa los campos requeridos: Destinatario, Dirección de entrega, Código Postal y Ciudad.');
+    // 1. Filtro Nombre del Destinatario
+    if (!isValidRecipientName(name)) {
+      alert('⚠️ Por favor, introduce el nombre y dos apellidos del destinatario (mínimo 3 caracteres).');
+      document.getElementById('ajustes-shipping-name')?.focus();
       return false;
     }
 
-    if (!email || !email.includes('@')) {
-      alert('⚠️ Por favor, introduce un correo electrónico válido para poder enviarte la confirmación y el seguimiento de tu pedido.');
+    // 2. Filtro Email de Confirmación
+    if (!isValidEmailAddress(email)) {
+      alert('⚠️ Por favor, introduce un correo electrónico válido (ej. tu-nombre@ejemplo.com) para poder enviarte la confirmación y el seguimiento de tu pedido.');
       const inpEmail = document.getElementById('ajustes-shipping-email');
       if (inpEmail) inpEmail.focus();
       return false;
+    }
+
+    // 3. Filtro Teléfono de Contacto (al menos 9 dígitos)
+    if (!isValidPhoneNumber(phone)) {
+      alert('⚠️ Por favor, introduce un teléfono móvil o de contacto válido (mínimo 9 dígitos numéricos, ej. 600 123 456). El repartidor lo necesita para avisar de la entrega física.');
+      document.getElementById('ajustes-shipping-phone')?.focus();
+      return false;
+    }
+
+    // 4. Filtro Dirección de Entrega Física
+    if (!isValidDeliveryAddress(address)) {
+      alert('⚠️ Por favor, introduce una dirección de entrega completa (calle, número, piso o puerta; mínimo 5 caracteres).');
+      document.getElementById('ajustes-shipping-address')?.focus();
+      return false;
+    }
+
+    // 5. Filtro Código Postal (exactamente 5 dígitos en España)
+    if (!isValidSpanishPostalCode(postalCode)) {
+      alert('⚠️ El código postal debe tener exactamente 5 dígitos numéricos válidos en España (del 01000 al 52999, ej. 28001).');
+      document.getElementById('ajustes-shipping-zip')?.focus();
+      return false;
+    }
+
+    // 6. Filtro Ciudad / Población
+    if (!city || city.length < 2) {
+      alert('⚠️ Por favor, indica la ciudad o población de entrega.');
+      document.getElementById('ajustes-shipping-city')?.focus();
+      return false;
+    }
+
+    // 7. Filtro Provincia
+    if (!province || province.length < 2) {
+      alert('⚠️ Por favor, indica la provincia de entrega.');
+      document.getElementById('ajustes-shipping-province')?.focus();
+      return false;
+    }
+
+    // 8. Filtro Facturación opcional
+    if (!isSameBilling) {
+      const bName = document.getElementById('ajustes-billing-name')?.value.trim();
+      const bTaxId = document.getElementById('ajustes-billing-taxid')?.value.trim();
+      const bAddr = document.getElementById('ajustes-billing-address')?.value.trim();
+      if (!bName || bName.length < 3) {
+        alert('⚠️ Por favor, indica la razón social o nombre completo para la factura.');
+        document.getElementById('ajustes-billing-name')?.focus();
+        return false;
+      }
+      if (!bTaxId || bTaxId.length < 7) {
+        alert('⚠️ Por favor, indica un NIF / CIF / NIE fiscal válido.');
+        document.getElementById('ajustes-billing-taxid')?.focus();
+        return false;
+      }
+      if (!bAddr || bAddr.length < 5) {
+        alert('⚠️ Por favor, indica la dirección fiscal completa.');
+        document.getElementById('ajustes-billing-address')?.focus();
+        return false;
+      }
     }
 
     // Modal popup con estética Menos Ruido para validación en 1 sola línea
@@ -2276,20 +2412,27 @@ function openBasketCheckoutModal(targetItemId = null) {
   const shipProv = savedShip?.province || savedShip?.provincia || '';
   const shipNotes = savedShip?.notes || savedShip?.notas || '';
 
-  const hasFullAddress = !!(shipName && shipAddr && shipPostal && shipCity);
+  const hasFullAddress = !!(
+    isValidRecipientName(shipName) &&
+    isValidDeliveryAddress(shipAddr) &&
+    isValidSpanishPostalCode(shipPostal) &&
+    isValidPhoneNumber(shipPhone) &&
+    isValidEmailAddress(shipEmail) &&
+    shipCity && shipCity.length >= 2
+  );
 
   if (shipContainer) {
     if (!hasFullAddress) {
       shipContainer.innerHTML = `
         <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 8px; padding: 14px 16px; text-align: center;">
           <div style="font-size: 0.88rem; font-weight: 800; color: #92400e; margin-bottom: 5px;">
-            ⚠️ Falta completar tu dirección física de entrega
+            ⚠️ Falta completar o validar tu dirección física de entrega
           </div>
           <p style="font-size: 0.79rem; color: #78350f; margin: 0 0 10px 0; line-height: 1.4;">
-            Para imprimir y enviarte el cuaderno por mensajería, necesitamos tu dirección postal completa guardada en tu perfil.
+            Para imprimir y enviarte el cuaderno por mensajería, necesitamos un código postal de 5 dígitos, un teléfono válido y un email de confirmación.
           </p>
           <button type="button" onclick="closeBasketCheckoutModalAndGoToAjustes()" style="background: #87553b; color: #ffffff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <span>📍</span> Rellenar Dirección en «Ajustes y Mis Datos» →
+            <span>📍</span> Revisar Dirección en «Ajustes y Mis Datos» →
           </button>
         </div>
       `;
@@ -2395,8 +2538,8 @@ async function handleConfirmCheckoutOrder() {
   const shipProv = savedShip?.province || savedShip?.provincia || '';
   const shipNotes = savedShip?.notes || savedShip?.notas || '';
 
-  if (!shipName || !shipAddr || !shipPostal || !shipCity) {
-    alert('⚠️ Por favor, introduce tu dirección de entrega en «Ajustes y Mis Datos» antes de tramitar el pedido.');
+  if (!isValidRecipientName(shipName) || !isValidDeliveryAddress(shipAddr) || !isValidSpanishPostalCode(shipPostal) || !isValidPhoneNumber(shipPhone) || !isValidEmailAddress(shipEmail) || !shipCity) {
+    alert('⚠️ Por favor, comprueba tus datos de entrega en «Ajustes y Mis Datos». Asegúrate de que el código postal tenga 5 dígitos (ej. 28001), el teléfono al menos 9 dígitos y el correo un formato válido.');
     closeBasketCheckoutModalAndGoToAjustes();
     if (confirmBtn) confirmBtn.disabled = false;
     return;
