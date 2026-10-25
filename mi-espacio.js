@@ -289,6 +289,9 @@ function renderCachedView(cached) {
   if (tabBtnFuturas) tabBtnFuturas.style.display = 'none';
   if (devLockedView) devLockedView.style.display = 'none';
   if (devUnlockedContent) devUnlockedContent.style.display = 'none';
+
+  const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
+  if (tabBtnPedidos) tabBtnPedidos.style.removeProperty('display');
 }
 
 // Soporte de navegación por pestañas y lectura de query params (?tab=disenos, ?tab=ajustes, ?tab=dev)
@@ -1088,20 +1091,16 @@ function renderAuthenticatedView(user) {
     if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
 
     const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
-    if (isTestCustomer(user)) {
-      if (tabBtnPedidos) {
-        tabBtnPedidos.style.removeProperty('display');
-        tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
-      }
-      checkUrlTab(false);
-      initClientOrdersAndBasketModule(user);
-    } else {
-      if (tabBtnPedidos) { tabBtnPedidos.style.removeProperty('display'); tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important'); }
-      const activeBtn = document.querySelector('.tab-btn.active');
-      if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-pedidos')) {
-        activateTab('tab-disenos');
-      }
+    if (tabBtnPedidos) {
+      tabBtnPedidos.style.removeProperty('display');
+      tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
     }
+    const activeBtn = document.querySelector('.tab-btn.active');
+    if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras')) {
+      activateTab('tab-disenos');
+    }
+    checkUrlTab(false);
+    initClientOrdersAndBasketModule(user);
   }
 
   // Guardar datos básicos en caché local (NUNCA guardar flags de desarrollador)
@@ -3020,7 +3019,9 @@ document.addEventListener('change', (e) => {
 function renderClientOrdersAndBasketViews(user) {
   const badgeEl = document.getElementById('client-orders-badge');
   if (badgeEl) {
-    badgeEl.textContent = String(clientProfileOrders.length + clientPendingBasket.length);
+    const totalCount = clientProfileOrders.length + clientPendingBasket.length;
+    badgeEl.textContent = String(totalCount);
+    badgeEl.style.display = totalCount > 0 ? 'inline-block' : 'none';
   }
 
   // 1. RENDERIZAR BLOQUE A: CESTA / PENDIENTES DE PAGO EN EL PERFIL DEL CLIENTE
@@ -3197,7 +3198,18 @@ function renderClientOrdersAndBasketViews(user) {
 // 2. RENDERIZAR BLOQUE B: HISTORIAL Y SEGUIMIENTO DE PEDIDOS EN EL PERFIL DEL CLIENTE
   const ordersContainer = document.getElementById('client-orders-history-list');
   if (ordersContainer) {
-    ordersContainer.innerHTML = clientProfileOrders.map(ord => {
+    if (clientProfileOrders.length === 0) {
+      ordersContainer.innerHTML = `
+        <div style="padding: 28px 20px; text-align: center; color: #786e63; font-size: 0.88rem; background: #ffffff; border-radius: 8px; border: 1px dashed #dcd4c6;">
+          <span style="font-size: 2rem; display: block; margin-bottom: 8px;">📦</span>
+          <strong style="color: #1f1c19; font-size: 0.98rem; display: block; margin-bottom: 5px;">Aún no tienes pedidos registrados</strong>
+          <span style="max-width: 500px; display: inline-block; line-height: 1.5; color: #665e54;">
+            Cuando realices un encargo, aquí podrás seguir en tiempo real las 4 etapas de tu pedido (Revisión técnica, En imprenta, En reparto y Entregado) con enlace al localizador oficial de Correos Express.
+          </span>
+        </div>
+      `;
+    } else {
+      ordersContainer.innerHTML = clientProfileOrders.map(ord => {
       const step = getStepIndexFromStatus(ord.status);
       const totalPaid = parseFloat(ord.pricing?.totalPaid || 27.90).toFixed(2).replace('.', ',');
       const carrier = ord.shipping?.carrier || 'Correos Express';
@@ -3345,6 +3357,7 @@ function renderClientOrdersAndBasketViews(user) {
         </div>
       `;
     }).join('');
+    }
 
 
 
