@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Sudoku del Día · Editorial Menos Ruido</title>
+    <meta name="description" content="Juega gratis al reto diario de Sudoku de Editorial Menos Ruido. Lógica y deducción en móvil o escritorio." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="manifest" href="/manifest-diario.webmanifest" />
+    <meta name="theme-color" content="#1e1916" />
+    <link rel="canonical" href="https://www.editorialmenosruido.com/sudoku-diario.html" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./diagnostic.css" />
+
+    <style>
+        :root {
+            --bg-paper: #f8f6f0;
+            --surface-card: #ffffff;
+            --border-color: #e5dfd5;
+            --text-dark: #1e1916;
+            --text-muted: #666059;
+            --accent: #111111;
+            --accent-light: #ece9e2;
+            --cell-active: #e4e0d7;
+            --cell-highlight: #f3efe8;
+            --cell-error: #fde8e8;
+            --text-error: #b91c1c;
+            --cell-initial: #111111;
+            --cell-user: #2563eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-paper);
+            color: var(--text-dark);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .dev-badge-bar {
+            background: #f1ede6;
+            color: #444;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 4px 10px;
+            border-bottom: 1px solid #e2ddd3;
+            letter-spacing: 0.3px;
+        }
+
+        .sudoku-daily-wrap {
+            flex: 1;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 12px 14px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-nav-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .back-link:hover { color: #000; }
+
+        .game-mode-pill {
+            background: #ede6dc;
+            color: #333;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .challenge-header {
+            text-align: center;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .challenge-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .challenge-date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mode-toggle-group {
+            display: inline-flex;
+            background: #ede6dc;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 3px;
+            margin-top: 8px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            padding: 4px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #666;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .mode-btn.active {
+            background: #ffffff;
+            color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .game-toolbar {
+            width: 100%;
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .timer-box {
+            font-size: 0.90rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-tool {
+            background: #f7f5f0;
+            border: 1px solid var(--border-color);
+            color: var(--text-dark);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 5px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-tool:hover { background: #ede8df; }
+
+        /* TABLERO */
+        .board-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .sudoku-board {
+            width: 100%;
+            max-width: 440px;
+            aspect-ratio: 1 / 1;
+            display: grid;
+            background: #ffffff;
+            border: 2.5px solid #111111;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+            user-select: none;
+        }
+
+        .sudoku-board.size-9 {
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+        }
+
+        .sudoku-board.size-4 {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            max-width: 320px;
+        }
+
+        .sudoku-cell {
+            position: relative;
+            background: #ffffff;
+            border: 1px solid #dcd7ce;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1rem, 4vw, 1.45rem);
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.1s ease;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .sudoku-cell.cell-initial {
+            color: var(--cell-initial);
+            font-weight: 800;
+        }
+
+        .sudoku-cell.cell-user {
+            color: var(--cell-user);
+        }
+
+        .sudoku-cell.cell-active {
+            background: var(--cell-active) !important;
+        }
+
+        .sudoku-cell.cell-highlight {
+            background: var(--cell-highlight);
+        }
+
+        .sudoku-cell.cell-error {
+            background: var(--cell-error) !important;
+            color: var(--text-error) !important;
+        }
+
+        /* BORDES DE SUBBLOQUES */
+        .border-bottom-thick { border-bottom: 2.5px solid #111111 !important; }
+        .border-right-thick { border-right: 2.5px solid #111111 !important; }
+
+        /* TECLADO EN PANTALLA */
+        .keypad-container {
+            width: 100%;
+            max-width: 440px;
+            margin-top: 4px;
+        }
+
+        .keypad-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+            gap: 6px;
+        }
+
+        .key-btn {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease;
+        }
+        .key-btn:active {
+            transform: scale(0.96);
+            background: var(--accent-light);
+        }
+
+        .key-action {
+            font-size: 0.85rem;
+            background: #ede8df;
+            color: #444;
+            grid-column: span 2;
+        }
+
+        /* REGLAS RÁPIDAS */
+        .rules-card {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 0.80rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .rules-title {
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            padding: 16px;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 440px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: modalPop 0.25s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.5rem;
+            color: #111;
+            margin-bottom: 8px;
+        }
+
+        .modal-p {
+            font-size: 0.90rem;
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .stat-item {
+            background: #f7f5f0;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e5dfd5;
+        }
+
+        .stat-val {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .stat-lbl {
+            font-size: 0.68rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .modal-btn-close {
+            background: #111111;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        <span>MODO EN DESARROLLO · SUDOKU DEL DÍA · EDITORIAL MENOS RUIDO</span>
+    </div>
+
+    <div class="sudoku-daily-wrap">
+        <nav class="game-nav-bar">
+            <a href="/hoy.html" class="back-link">← Retos de Hoy</a>
+            <span class="game-mode-pill">Reto Determinista</span>
+        </nav>
+
+        <div class="challenge-header">
+            <h1 class="challenge-title">Sudoku del Día</h1>
+            <div class="challenge-date-badge" id="dailyDateDisplay">
+                Cargando reto de hoy...
+            </div>
+            <div>
+                <div class="mode-toggle-group" id="modeToggleGroup">
+                    <button type="button" class="mode-btn active" data-mode="classic">Clásico 9×9</button>
+                    <button type="button" class="mode-btn" data-mode="mini">Mini 4×4</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-toolbar">
+            <div class="timer-box">
+                ⏱ <span id="gameTimer">00:00</span>
+            </div>
+            <div class="toolbar-buttons">
+                <button type="button" class="btn-tool" id="btnPause" title="Pausar reto">⏸ Pausa</button>
+                <button type="button" class="btn-tool" id="btnRestart" title="Reiniciar tablero">↺ Reiniciar</button>
+                <button type="button" class="btn-tool" id="btnStats" title="Ver mis estadísticas">📊</button>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div id="sudokuBoard" class="sudoku-board size-9">
+                <!-- Celdas dinámicas -->
+            </div>
+        </div>
+
+        <div class="keypad-container">
+            <div class="keypad-row" id="keypadNumbers">
+                <!-- Botones numéricos dinámicos -->
+            </div>
+        </div>
+
+        <div class="rules-card">
+            <div class="rules-title">
+                <span>🧩</span> ¿Cómo se juega al Sudoku?
+            </div>
+            <p>Rellena las casillas vacías con números del 1 al 9 (o 1 al 4 en mini) sin repetir ningún número en la misma fila, columna ni región delimitada por líneas gruesas.</p>
+        </div>
+    </div>
+
+    <!-- MODAL DE VICTORIA -->
+    <div class="modal-overlay" id="victoryModal">
+        <div class="modal-box">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">✨</div>
+            <h2 class="modal-title">¡Sudoku Resuelto!</h2>
+            <p class="modal-p" id="victoryTimeMsg">Has completado el reto diario con éxito.</p>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-val" id="statCompleted">0</div>
+                    <div class="stat-lbl">Resueltos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="statStreak">0</div>
+                    <div class="stat-lbl">Racha Días</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="statBestTime">--:--</div>
+                    <div class="stat-lbl">Mejor Tiempo</div>
+                </div>
+            </div>
+            <a href="/hoy.html" class="modal-btn-close" style="display: block; text-decoration: none; background: #111111; color: #ffffff; padding: 12px; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.92rem;">Volver a Retos de Hoy</a>
+        </div>
+    </div>
+
+    <!-- MODAL DE ESTADÍSTICAS -->
+    <div class="modal-overlay" id="statsModal">
+        <div class="modal-box">
+            <h2 class="modal-title">Tus Estadísticas</h2>
+            <p class="modal-p">Progreso guardado en este dispositivo.</p>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-val" id="modalStatCompleted">0</div>
+                    <div class="stat-lbl">Resueltos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="modalStatStreak">0</div>
+                    <div class="stat-lbl">Racha Días</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="modalStatBestTime">--:--</div>
+                    <div class="stat-lbl">Mejor Tiempo</div>
+                </div>
+            </div>
+            <button type="button" class="modal-btn-close" onclick="closeModal('statsModal')">Volver al juego</button>
+        </div>
+    </div>
+
+    <!-- Script de lógica de Sudoku determinista -->
+    <script>
+        // PRNG Mulberry32
+        function createPRNG(seed) {
+            let s = seed >>> 0;
+            return function () {
+                s |= 0;
+                s = (s + 0x6D2B79F5) | 0;
+                let t = Math.imul(s ^ (s >>> 15), 1 | s);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        function shuffle(arr, rng) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(rng() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function getTodayString() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function getDateSeed(dateStr, mode) {
+            const parts = dateStr.split('-').map(Number);
+            const modeOffset = mode === 'mini' ? 77777 : 12345;
+            return parts[0] * 10000 + parts[1] * 100 + parts[2] + modeOffset;
+        }
+
+        // Generador 9x9
+        function generateSolved9(rng) {
+            const grid = [];
+            for (let r = 0; r < 9; r++) {
+                const row = [];
+                for (let c = 0; c < 9; c++) {
+                    row.push(((r * 3 + Math.floor(r / 3) + c) % 9) + 1);
+                }
+                grid.push(row);
+            }
+            const digits = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9], rng);
+            const map = {};
+            for (let i = 0; i < 9; i++) map[i + 1] = digits[i];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) grid[r][c] = map[grid[r][c]];
+            }
+            for (let b = 0; b < 3; b++) {
+                const order = shuffle([0, 1, 2], rng);
+                const orig = grid.slice(b * 3, b * 3 + 3);
+                for (let i = 0; i < 3; i++) grid[b * 3 + i] = orig[order[i]];
+            }
+            for (let b = 0; b < 3; b++) {
+                const order = shuffle([0, 1, 2], rng);
+                for (let r = 0; r < 9; r++) {
+                    const orig = [grid[r][b * 3], grid[r][b * 3 + 1], grid[r][b * 3 + 2]];
+                    grid[r][b * 3] = orig[order[0]];
+                    grid[r][b * 3 + 1] = orig[order[1]];
+                    grid[r][b * 3 + 2] = orig[order[2]];
+                }
+            }
+            return grid;
+        }
+
+        function createPuzzle9(solved, rng, clues = 36) {
+            const pz = solved.map(r => r.slice());
+            const cells = [];
+            for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r, c]);
+            const shuffled = shuffle(cells, rng);
+            const toRemove = 81 - clues;
+            for (let i = 0; i < toRemove; i++) {
+                const [r, c] = shuffled[i];
+                pz[r][c] = 0;
+            }
+            return pz;
+        }
+
+        // Generador 4x4
+        function generateSolved4(rng) {
+            const base = [
+                [1, 2, 3, 4],
+                [3, 4, 1, 2],
+                [2, 1, 4, 3],
+                [4, 3, 2, 1]
+            ];
+            const digits = shuffle([1, 2, 3, 4], rng);
+            const map = {};
+            for (let i = 0; i < 4; i++) map[i + 1] = digits[i];
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) base[r][c] = map[base[r][c]];
+            }
+            return base;
+        }
+
+        function createPuzzle4(solved, rng) {
+            const pz = solved.map(r => r.slice());
+            const cells = [];
+            for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) cells.push([r, c]);
+            const shuffled = shuffle(cells, rng);
+            for (let i = 0; i < 9; i++) {
+                const [r, c] = shuffled[i];
+                pz[r][c] = 0;
+            }
+            return pz;
+        }
+
+        // Estado del juego
+        const state = {
+            mode: 'classic',
+            size: 9,
+            subgrid: 3,
+            initialGrid: [],
+            currentGrid: [],
+            solution: [],
+            selectedCell: null,
+            timerSecs: 0,
+            timerInterval: null,
+            isPaused: false,
+            isCompleted: false
+        };
+
+        const STATS_KEY = 'menosruido_sudoku_stats_v1';
+        const STATE_KEY = 'menosruido_sudoku_state_v1';
+
+        function initGame(mode = 'classic') {
+            state.mode = mode;
+            state.size = mode === 'classic' ? 9 : 4;
+            state.subgrid = mode === 'classic' ? 3 : 2;
+            state.selectedCell = null;
+            state.isCompleted = false;
+            state.isPaused = false;
+
+            const todayStr = getTodayString();
+            const dateObj = new Date();
+            const dateFmt = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('dailyDateDisplay').textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
+
+            const seed = getDateSeed(todayStr, mode);
+            const rng = createPRNG(seed);
+
+            if (state.size === 9) {
+                state.solution = generateSolved9(rng);
+                state.initialGrid = createPuzzle9(state.solution, rng, 36);
+            } else {
+                state.solution = generateSolved4(rng);
+                state.initialGrid = createPuzzle4(state.solution, rng);
+            }
+
+            // Cargar progreso previo
+            const savedRaw = localStorage.getItem(`${STATE_KEY}_${mode}_${todayStr}`);
+            if (savedRaw) {
+                try {
+                    const saved = JSON.parse(savedRaw);
+                    state.currentGrid = saved.current || state.initialGrid.map(r => r.slice());
+                    state.timerSecs = saved.secondsElapsed || 0;
+                    state.isCompleted = !!saved.isCompleted;
+                } catch(e) {
+                    state.currentGrid = state.initialGrid.map(r => r.slice());
+                    state.timerSecs = 0;
+                }
+            } else {
+                state.currentGrid = state.initialGrid.map(r => r.slice());
+                state.timerSecs = 0;
+            }
+
+            renderBoard();
+            buildKeypad();
+            startTimer();
+
+            if (state.isCompleted) {
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                showVictoryModal();
+            }
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('sudokuBoard');
+            if (!board) return;
+            board.innerHTML = '';
+            board.className = `sudoku-board size-${state.size}`;
+
+            const sz = state.size;
+            const sub = state.subgrid;
+
+            for (let r = 0; r < sz; r++) {
+                for (let c = 0; c < sz; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'sudoku-cell';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+
+                    if ((r + 1) % sub === 0 && r + 1 < sz) cell.classList.add('border-bottom-thick');
+                    if ((c + 1) % sub === 0 && c + 1 < sz) cell.classList.add('border-right-thick');
+
+                    const isInit = state.initialGrid[r][c] !== 0;
+                    const val = state.currentGrid[r][c];
+
+                    if (isInit) {
+                        cell.classList.add('cell-initial');
+                        cell.textContent = val;
+                    } else if (val !== 0) {
+                        cell.classList.add('cell-user');
+                        cell.textContent = val;
+                    }
+
+                    cell.addEventListener('click', () => selectCell(r, c));
+                    board.appendChild(cell);
+                }
+            }
+            highlightCells();
+        }
+
+        function selectCell(r, c) {
+            state.selectedCell = { r, c };
+            highlightCells();
+        }
+
+        function highlightCells() {
+            const cells = document.querySelectorAll('.sudoku-cell');
+            cells.forEach(el => el.classList.remove('cell-active', 'cell-highlight'));
+
+            if (!state.selectedCell) return;
+            const { r, c } = state.selectedCell;
+            const activeVal = state.currentGrid[r][c];
+
+            cells.forEach(el => {
+                const er = parseInt(el.dataset.r, 10);
+                const ec = parseInt(el.dataset.c, 10);
+
+                if (er === r && ec === c) {
+                    el.classList.add('cell-active');
+                } else if (er === r || ec === c || (Math.floor(er / state.subgrid) === Math.floor(r / state.subgrid) && Math.floor(ec / state.subgrid) === Math.floor(c / state.subgrid))) {
+                    el.classList.add('cell-highlight');
+                } else if (activeVal !== 0 && state.currentGrid[er][ec] === activeVal) {
+                    el.classList.add('cell-highlight');
+                }
+            });
+        }
+
+        function buildKeypad() {
+            const row = document.getElementById('keypadNumbers');
+            if (!row) return;
+            row.innerHTML = '';
+
+            for (let i = 1; i <= state.size; i++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'key-btn';
+                btn.textContent = i;
+                btn.addEventListener('click', () => inputDigit(i));
+                row.appendChild(btn);
+            }
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'key-btn key-action';
+            delBtn.textContent = '⌫ Borrar';
+            delBtn.addEventListener('click', () => inputDigit(0));
+            row.appendChild(delBtn);
+        }
+
+        function inputDigit(val) {
+            if (!state.selectedCell || state.isCompleted || state.isPaused) return;
+            const { r, c } = state.selectedCell;
+            if (state.initialGrid[r][c] !== 0) return; // Celda fija
+
+            state.currentGrid[r][c] = val;
+            renderBoard();
+            saveProgress();
+            checkVictory();
+        }
+
+        function checkVictory() {
+            const sz = state.size;
+            for (let r = 0; r < sz; r++) {
+                for (let c = 0; c < sz; c++) {
+                    if (state.currentGrid[r][c] !== state.solution[r][c]) return;
+                }
+            }
+
+            // ¡Victoria!
+            state.isCompleted = true;
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            saveVictoryStats();
+            showVictoryModal();
+        }
+
+        function startTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            updateTimerDisplay();
+            state.timerInterval = setInterval(() => {
+                if (!state.isPaused && !state.isCompleted) {
+                    state.timerSecs++;
+                    updateTimerDisplay();
+                    if (state.timerSecs % 5 === 0) saveProgress();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const el = document.getElementById('gameTimer');
+            if (!el) return;
+            const m = String(Math.floor(state.timerSecs / 60)).padStart(2, '0');
+            const s = String(state.timerSecs % 60).padStart(2, '0');
+            el.textContent = `${m}:${s}`;
+        }
+
+        function saveProgress() {
+            const todayStr = getTodayString();
+            const data = {
+                current: state.currentGrid,
+                secondsElapsed: state.timerSecs,
+                isCompleted: state.isCompleted
+            };
+            try {
+                localStorage.setItem(`${STATE_KEY}_${state.mode}_${todayStr}`, JSON.stringify(data));
+            } catch(e) {}
+        }
+
+        function saveVictoryStats() {
+            const todayStr = getTodayString();
+            let stats = { streak: 0, lastSolvedDate: null, totalCompleted: 0, bestTime: null };
+            try {
+                const raw = localStorage.getItem(STATS_KEY);
+                if (raw) stats = JSON.parse(raw);
+            } catch(e) {}
+
+            stats.totalCompleted = (stats.totalCompleted || 0) + 1;
+            if (stats.lastSolvedDate) {
+                const last = new Date(stats.lastSolvedDate);
+                const current = new Date(todayStr);
+                const diffDays = Math.round((current - last) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) stats.streak = (stats.streak || 0) + 1;
+                else if (diffDays > 1) stats.streak = 1;
+            } else {
+                stats.streak = 1;
+            }
+            stats.lastSolvedDate = todayStr;
+
+            if (!stats.bestTime || state.timerSecs < stats.bestTime) {
+                stats.bestTime = state.timerSecs;
+            }
+
+            try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch(e) {}
+            saveProgress();
+        }
+
+        function showVictoryModal() {
+            const m = Math.floor(state.timerSecs / 60);
+            const s = state.timerSecs % 60;
+            const msg = document.getElementById('victoryTimeMsg');
+            if (msg) msg.textContent = `Has resuelto el Sudoku del Día en ${m}m ${s}s.`;
+
+            let stats = { totalCompleted: 1, streak: 1, bestTime: state.timerSecs };
+            try {
+                const raw = localStorage.getItem(STATS_KEY);
+                if (raw) stats = JSON.parse(raw);
+            } catch(e) {}
+
+            document.getElementById('statCompleted').textContent = stats.totalCompleted || 1;
+            document.getElementById('statStreak').textContent = stats.streak || 1;
+            const bm = Math.floor((stats.bestTime || state.timerSecs) / 60);
+            const bs = (stats.bestTime || state.timerSecs) % 60;
+            document.getElementById('statBestTime').textContent = `${String(bm).padStart(2,'0')}:${String(bs).padStart(2,'0')}`;
+
+            openModal('victoryModal');
+        }
+
+        function openModal(id) {
+            document.getElementById(id)?.classList.add('open');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id)?.classList.remove('open');
+            if (id === 'victoryModal') {
+                window.location.href = '/hoy.html';
+            }
+        }
+
+        // EVENTOS
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame('classic');
+
+            // Toggle modo
+            document.querySelectorAll('#modeToggleGroup .mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#modeToggleGroup .mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    initGame(btn.dataset.mode);
+                });
+            });
+
+            // Pausa
+            document.getElementById('btnPause')?.addEventListener('click', () => {
+                state.isPaused = !state.isPaused;
+                const btn = document.getElementById('btnPause');
+                if (btn) btn.textContent = state.isPaused ? '▶ Seguir' : '⏸ Pausa';
+                const board = document.getElementById('sudokuBoard');
+                if (board) board.style.opacity = state.isPaused ? '0.2' : '1';
+            });
+
+            // Reiniciar
+            document.getElementById('btnRestart')?.addEventListener('click', () => {
+                if (confirm('¿Reiniciar el tablero de Sudoku de hoy?')) {
+                    state.currentGrid = state.initialGrid.map(r => r.slice());
+                    state.timerSecs = 0;
+                    state.isCompleted = false;
+                    renderBoard();
+                    saveProgress();
+                }
+            });
+
+            // Compartir
+            document.getElementById('btnShareVictory')?.addEventListener('click', () => {
+                const m = String(Math.floor(state.timerSecs / 60)).padStart(2, '0');
+                const s = String(state.timerSecs % 60).padStart(2, '0');
+                const modeStr = state.mode === 'classic' ? '9×9' : 'Mini 4×4';
+                const shareText = `Editorial Menos Ruido · Sudoku del Día (${modeStr}) 🧩\nHe resuelto el reto de hoy en ${m}:${s}.\nJuega gratis en: https://www.editorialmenosruido.com/hoy.html`;
+                
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareText).then(() => alert('¡Copiado al portapapeles!'));
+                } else {
+                    alert(shareText);
+                }
+            });
+
+            // Teclado físico
+            window.addEventListener('keydown', (e) => {
+                const maxVal = state.size;
+                if (e.key >= '1' && e.key <= String(maxVal)) {
+                    inputDigit(parseInt(e.key, 10));
+                } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                    inputDigit(0);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

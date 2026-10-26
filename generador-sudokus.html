@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- MODO PRIVADO Y OCULTO -->
+    <meta name="robots" content="noindex, nofollow">
+    <title>Generador de Sudokus en PDF (8.25" × 6") · Editorial Menos Ruido</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-sudokus.html">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos base -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./diagnostic.css">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #ffffff;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border-grid-thick: #111111;
+            --border-grid-thin: #b0aba0;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --accent: #87553b;
+            --accent-hover: #6f422c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .dev-badge-bar {
+            background: #fef08a;
+            color: #854d0e;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 5px 12px;
+            border-bottom: 1px solid #fde047;
+            letter-spacing: 0.3px;
+        }
+
+        .generator-container-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 14px 40px;
+            flex: 1;
+        }
+
+        .top-nav {
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: #555;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+        .back-link:hover { color: #000; }
+
+        .badge-version {
+            background: #ede6dc;
+            color: #4a443c;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 820px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #111111;
+            margin-bottom: 3px;
+        }
+        .header-title-box p {
+            font-size: 0.88rem;
+            color: #555;
+        }
+
+        /* BARRA DE HERRAMIENTAS */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-right: 2px;
+        }
+
+        .btn-toggle-group {
+            display: inline-flex;
+            background: #f1ede6;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 2px;
+        }
+
+        .btn-toggle-item {
+            background: transparent;
+            border: none;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+        .btn-toggle-item.active {
+            background: #ffffff;
+            color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toolbar-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #443e39;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .toolbar-btn:hover {
+            background: #ede7dc;
+            border-color: #c9bfb0;
+            color: #111;
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 16px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-action {
+            background: #ffffff;
+            color: #111111;
+            border: 1px solid #d1cbbf;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-secondary-action:hover {
+            border-color: #111;
+            background: #faf8f5;
+        }
+
+        .btn-help-tutorial {
+            background: #ffffff;
+            border: 1px solid #d1cbbf;
+            color: #443e39;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-help-tutorial:hover {
+            background: #f7f4ee;
+            border-color: #87553b;
+            color: #111;
+        }
+
+        /* MODAL TUTORIAL ESTILOS */
+        .modal-card-tutorial {
+            max-width: 580px;
+            text-align: left;
+            padding: 24px;
+        }
+        .tutorial-section {
+            background: #fbf9f6;
+            border: 1px solid #eae4d9;
+            border-radius: 10px;
+            padding: 13px 15px;
+            margin-bottom: 12px;
+        }
+        .tutorial-section h4 {
+            font-size: 0.90rem;
+            font-weight: 700;
+            color: #1e1916;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tutorial-section p {
+            font-size: 0.82rem;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+        .tutorial-section p:last-child {
+            margin-bottom: 0;
+        }
+        .tutorial-highlight-box {
+            background: #ffffff;
+            border-left: 3px solid var(--accent);
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.80rem;
+            color: #333;
+            line-height: 1.45;
+        }
+        .tutorial-step-list {
+            margin: 6px 0 0 16px;
+            font-size: 0.82rem;
+            color: #444;
+            line-height: 1.5;
+        }
+        .tutorial-step-list li {
+            margin-bottom: 6px;
+        }
+
+        /* AVISO TOAST EN LÍNEA */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            min-height: 34px;
+            margin: 4px auto 10px auto;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            text-align: center;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            pointer-events: none;
+        }
+        .sheet-inline-notice.active {
+            opacity: 1;
+            visibility: visible;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border: 1px solid #dfd6c7;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            pointer-events: auto;
+        }
+
+        /* MODAL DE DESCARGA E IMPRESIÓN */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 14px; right: 16px;
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            color: #888;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+        .modal-close-btn:hover { color: #111; }
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
+        }
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+        .btn-modal-secondary {
+            background: #f7f5f0;
+            color: #443e39;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-secondary:hover { background: #ede7dc; }
+
+        .modal-email-box {
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .modal-email-header { margin-bottom: 10px; }
+        .modal-email-title {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #212121;
+        }
+        .modal-email-sub {
+            display: block;
+            font-size: 0.74rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        .modal-email-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-email-input {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            background: #ffffff;
+            color: #212121;
+            box-sizing: border-box;
+        }
+        .modal-email-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
+        }
+        .modal-btn-send {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+        .modal-btn-send:hover { background: var(--accent-hover); }
+        .modal-email-feedback {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 8px 12px;
+            line-height: 1.4;
+        }
+
+        /* LIENZO 1:1 MAXIMIZADO */
+        .canvas-preview-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .sheet-container {
+            width: 100%;
+            max-width: 980px;
+            aspect-ratio: 8.25 / 6;
+            background: var(--paper-color);
+            border: 1px solid #d9d4c9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border-radius: 4px;
+            padding: 2% 2.8%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        /* CABECERA DE HOJA MINIMALISTA */
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1.5px solid var(--border-grid-thick);
+            padding-bottom: 4px;
+            margin-bottom: 2%;
+        }
+        .sheet-header-title {
+            font-family: var(--font-serif);
+            font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #111;
+        }
+
+        /* DIFICULTAD CON PALABRA EN LA ESQUINA SUPERIOR DERECHA (SIN &&&) */
+        .sheet-header-diff {
+            font-family: var(--font-sans);
+            font-size: clamp(0.72rem, 1.2vw, 0.92rem);
+            color: #111;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        /* REJILLAS DE SUDOKUS MAXIMIZADAS (SIN TÍTULOS NI FILAS PREVIAS) */
+        .sheet-sudokus-grid {
+            flex: 1;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 2.5% 4%;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .sheet-sudokus-grid.layout-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-rows: 1fr;
+            gap: 0 6%;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .sheet-sudokus-grid.layout-2 .sudoku-card {
+            min-width: 0;
+            min-height: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sheet-sudokus-grid.layout-2 .sudoku-box-board {
+            width: 78%;
+            max-width: 380px;
+            height: auto;
+            max-height: 90%;
+            aspect-ratio: 1 / 1;
+        }
+
+        .sheet-sudokus-grid.layout-2 .grid-cell {
+            font-size: clamp(0.75rem, 1.4vw, 1.25rem);
+        }
+
+        /* FORMATO VERTICAL 6" x 9" (2 SUDOKUS EN VERTICAL) */
+        .sheet-container.format-6x9 {
+            max-width: 520px;
+            aspect-ratio: 6 / 9;
+            padding: 3% 4%;
+        }
+
+        .sheet-sudokus-grid.layout-6x9-2 {
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 3.5% 0;
+            width: 100%;
+            height: 100%;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .sheet-sudokus-grid.layout-6x9-2 .sudoku-card {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .sheet-sudokus-grid.layout-6x9-2 .sudoku-box-board {
+            height: 92%;
+            width: auto;
+            max-width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+
+        .sheet-sudokus-grid.layout-6x9-2 .grid-cell {
+            font-size: clamp(0.75rem, 1.4vw, 1.25rem);
+        }
+
+        .sheet-sudokus-grid.layout-4 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 3% 8%;
+        }
+
+        .sudoku-card {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* TABLEROS CUADRADOS MAXIMIZADOS (CON FILA 9 PERFECTAMENTE SELLADA) */
+        .sudoku-box-board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            border: 2px solid var(--border-grid-thick);
+            background: #fff;
+            aspect-ratio: 1 / 1;
+            max-height: 100%;
+            max-width: 100%;
+            width: auto;
+            height: 100%;
+        }
+
+        .grid-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid var(--border-grid-thin);
+            border-bottom: 1px solid var(--border-grid-thin);
+            font-size: clamp(0.6rem, 1.1vw, 1rem);
+            font-weight: 600;
+            color: #111;
+            font-family: var(--font-sans);
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            line-height: 1;
+        }
+
+        .grid-cell.thick-right {
+            border-right: 2px solid var(--border-grid-thick);
+        }
+        .grid-cell.thick-bottom {
+            border-bottom: 2px solid var(--border-grid-thick);
+        }
+
+        .grid-cell.empty {
+            color: transparent;
+        }
+
+        /* PIE DE HOJA */
+        .sheet-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e0dbd1;
+            padding-top: 4px;
+            margin-top: 1.5%;
+            font-size: clamp(0.58rem, 0.9vw, 0.72rem);
+            color: #777;
+        }
+
+        .download-hint {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        🔒 Vista Privada de Desarrollo · Generador de Sudokus en PDF (8.25" × 6" Apaisado)
+    </div>
+
+    <!-- HEADER MENOS RUIDO -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="nav-left">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;">Menos Ruido</a>
+            </div>
+            <nav>
+                <div class="nav-drawer-header">
+                    <span class="nav-drawer-title">Menos Ruido</span>
+                    <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <a href="/">Home</a>
+                <a href="/#cuadernos">Cuadernos y Planificadores</a>
+                <a href="/pasatiempos.html" style="font-weight: 600;">Pasatiempos</a>
+                <a href="/lecturas.html">Lecturas</a>
+            </nav>
+        </div>
+    </header>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
+
+    <main class="generator-container-wrap">
+        <div class="top-nav">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <a href="/pasatiempos.html" class="back-link">← Volver a Pasatiempos</a>
+                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo imprimir a doble cara y usar el reverso">
+                    <span>📖</span> Guía de impresión y negativo
+                </button>
+            </div>
+            <span class="badge-version" id="formatBadgeDisplay">Formato 8.25" × 6" · Anverso y Reverso</span>
+        </div>
+
+        <div class="header-title-box">
+            <h1>Generador de Sudokus en PDF</h1>
+            <p>Aprovechamiento total de la hoja. Solamente los sudokus en página. El nivel se indica en la esquina superior y el reverso es el negativo exacto.</p>
+        </div>
+
+        <!-- BARRA DE HERRAMIENTAS -->
+        <div class="canvas-toolbar">
+            <!-- 0. FORMATO DE HOJA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Formato:</span>
+                <div class="btn-toggle-group" id="formatToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-format="8.25x6">8.25" × 6" (Apaisado)</button>
+                    <button type="button" class="btn-toggle-item" data-format="6x9">6" × 9" (Vertical)</button>
+                </div>
+            </div>
+
+            <!-- 1. CANTIDAD EN HOJA -->
+            <div class="toolbar-group" id="countToolbarGroup">
+                <span class="toolbar-label">Total en hoja:</span>
+                <div class="btn-toggle-group" id="countToggleGroup">
+                    <button type="button" class="btn-toggle-item" data-count="2">2 (1 Fila)</button>
+                    <button type="button" class="btn-toggle-item" data-count="4">4 (2×2)</button>
+                    <button type="button" class="btn-toggle-item active" data-count="6">6 (3×2)</button>
+                </div>
+            </div>
+
+            <!-- 2. DIFICULTAD UNIFICADA (TODOS FÁCILES, MEDIOS O DIFÍCILES) -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Dificultad:</span>
+                <div class="btn-toggle-group" id="diffToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-diff="easy">Fácil</button>
+                    <button type="button" class="btn-toggle-item" data-diff="medium">Medio</button>
+                    <button type="button" class="btn-toggle-item" data-diff="hard">Difícil</button>
+                </div>
+            </div>
+
+            <!-- 3. SÍMBOLOS -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Símbolos:</span>
+                <div class="btn-toggle-group" id="symbolsToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-symbols="numbers">1 - 9</button>
+                    <button type="button" class="btn-toggle-item" data-symbols="letters">A - I</button>
+                </div>
+            </div>
+
+            <!-- 4. VISTA DE PÁGINA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Página:</span>
+                <div class="btn-toggle-group" id="pageToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-page="1">Pág. 1 (Retos)</button>
+                    <button type="button" class="btn-toggle-item" data-page="2">Pág. 2 (Negativo)</button>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN (GUARDAR EN MI ESPACIO Y DESCARGAR PDF) -->
+            <div class="toolbar-group">
+                <button type="button" class="btn-secondary-action" id="btnRegenerate" title="Generar una combinación nueva">
+                    ↺ Nuevos
+                </button>
+                <button type="button" class="toolbar-btn" id="btn-save-generator-design" title="Guardar diseño en Mi Espacio">
+                    <span>💾</span> Guardar en Mi Espacio
+                </button>
+                <button type="button" class="btn-download-primary" id="btnOpenDownloadModal">
+                    <span>📥</span> Descargar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- AVISO TOAST EN LÍNEA -->
+        <div class="sheet-inline-notice" id="toast-notify"></div>
+
+        <!-- LIENZO 1:1 MAXIMIZADO -->
+        <div class="canvas-preview-wrapper">
+            <div class="sheet-container" id="sheetPreview">
+                <!-- CABECERA: TÍTULO A LA IZQUIERDA Y DIFICULTAD CON PALABRA A LA DERECHA (SIN &&&) -->
+                <div class="sheet-header">
+                    <div class="sheet-header-title" id="sheetTitleDisplay">MENOS RUIDO · SUDOKU</div>
+                    <div class="sheet-header-diff" id="sheetHeaderDiff">FÁCIL</div>
+                </div>
+
+                <!-- CUADRÍCULAS (SOLAMENTE LOS SUDOKUS, SIN FILAS NI TÍTULOS PREVIOS) -->
+                <div class="sheet-sudokus-grid layout-6" id="sheetSudokusGrid">
+                    <!-- Dinámico -->
+                </div>
+
+                <!-- PIE -->
+                <div class="sheet-footer">
+                    <span>Editorial Menos Ruido · www.editorialmenosruido.com</span>
+                    <span id="sheetFooterPage">Pág. 1 / 2</span>
+                </div>
+            </div>
+
+            <p class="download-hint">
+                💡 En la <strong>Página 2</strong> se imprime el <em>negativo exacto</em> (solo las cifras que faltaban por resolver) y su nivel de dificultad se invierte automáticamente.
+            </p>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="text-align: center; padding: 20px 0; color: #888; font-size: 0.85rem;">
+                <p>&copy; 2026 Editorial Menos Ruido. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL POP-UP DE DESCARGA E IMPRESIÓN -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Sudokus en PDF</h3>
+            <p class="modal-desc" id="modalDesc">Documento de 2 páginas. La página 1 incluye tus sudokus limpios y la página 2 contiene el reverso en negativo exacto.</p>
+            
+            <div class="modal-format-badge" id="modalFormatBadge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · 2 Páginas
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" id="btnExecuteDownload">
+                    <span>📥</span> Descargar archivo PDF (2 Páginas)
+                </button>
+            </div>
+
+            <!-- RECIBIR POR EMAIL -->
+            <div class="modal-email-box">
+                <div class="modal-email-header">
+                    <span class="modal-email-title">✉️ ¿Prefieres recibirlo en tu email?</span>
+                    <span class="modal-email-sub">Te enviamos el archivo PDF adjunto listo para imprimir cuando quieras.</span>
+                </div>
+                <div class="modal-email-form">
+                    <input type="email" id="modal-email-input" class="modal-email-input" placeholder="tu-correo@ejemplo.com" autocomplete="email" />
+                    <button type="button" id="btn-modal-send-email" class="modal-btn-send">
+                        <span>Enviar a mi email</span>
+                    </button>
+                </div>
+                <div id="modal-email-feedback" class="modal-email-feedback" style="display: none;"></div>
+            </div>
+
+            <!-- ENLACE DIRECTO AL TUTORIAL -->
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2ddd3; text-align: center;">
+                <a href="javascript:void(0)" id="linkTutorialInDownload" style="font-size: 0.80rem; color: #87553b; text-decoration: underline; font-weight: 600;">
+                    📖 ¿Dudas sobre cómo imprimir a doble cara o usar el negativo? Ver guía rápida
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP TUTORIAL: GUÍA RÁPIDA DE IMPRESIÓN Y NEGATIVO -->
+    <div class="modal-overlay" id="tutorial-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card modal-card-tutorial">
+            <button type="button" class="modal-close-btn" onclick="closeTutorialModal()">✕</button>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">Guía rápida: Impresión y Negativo</h3>
+            <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
+                Todo lo necesario para imprimir a doble cara haciendo coincidir las casillas y sacarle partido al sudoku en negativo.
+            </p>
+
+            <!-- SECCIÓN 1: QUÉ ES EL NEGATIVO -->
+            <div class="tutorial-section">
+                <h4><span>🧩</span> 1. ¿Cómo funciona el Sudoku en Negativo?</h4>
+                <p>
+                    La <strong>Página 1</strong> contiene los tableros limpios listos para resolver con lápiz o bolígrafo.
+                </p>
+                <p>
+                    La <strong>Página 2</strong> es el <strong>negativo exacto</strong>: las casillas que ya venían dadas en el anverso aparecen <em>en blanco</em>, y únicamente se muestran las soluciones de las casillas que tú tienes que rellenar.
+                </p>
+                <div class="tutorial-highlight-box">
+                    <strong>Pista sin trampas:</strong> Si te atascas con un número concreto, no necesitas mirar la solución completa. Pon la hoja al trasluz o gira la página y consulta únicamente esa casilla. El resto del reto se mantiene intacto.
+                </div>
+                <p style="margin-top: 8px; font-size: 0.78rem; color: #666;">
+                    * Además, la dificultad se invierte: un sudoku fácil por delante es difícil por detrás (porque tiene más huecos que rellenar en el negativo).
+                </p>
+            </div>
+
+            <!-- SECCIÓN 2: AJUSTES DE IMPRESIÓN SEGÚN FORMATO -->
+            <div class="tutorial-section">
+                <h4><span>🖨️</span> 2. Ajuste de tu impresora (Doble Cara / Duplex)</h4>
+                <p>
+                    Para que las casillas del anverso y del reverso coincidan al milímetro por detrás, abre el cuadro de impresión de tu navegador o visor de PDF y aplica estos ajustes:
+                </p>
+                <ul class="tutorial-step-list">
+                    <li>
+                        <strong>Si eliges formato 8.25" × 6" (Apaisado):</strong><br>
+                        Activa <em>Imprimir a doble cara</em> y selecciona <strong>«Voltear por el borde corto»</strong> (o <em>Plegar hacia arriba</em>). De lo contrario el reverso saldrá boca abajo.
+                    </li>
+                    <li>
+                        <strong>Si eliges formato 6" × 9" (Vertical):</strong><br>
+                        Activa <em>Imprimir a doble cara</em> y selecciona <strong>«Voltear por el borde largo»</strong> (la opción estándar de doble cara en documentos verticales).
+                    </li>
+                    <li>
+                        <strong>Escala de impresión:</strong> Marca siempre <strong>«Tamaño real» o «100%»</strong> (nunca «Ajustar a la página», para evitar márgenes falsos).
+                    </li>
+                </ul>
+            </div>
+
+            <!-- SECCIÓN 3: SI NO TIENES IMPRESORA DE DOBLE CARA AUTOMÁTICA -->
+            <div class="tutorial-section">
+                <h4><span>📄</span> 3. ¿Tu impresora es manual (1 cara cada vez)?</h4>
+                <ol class="tutorial-step-list" style="list-style-type: decimal;">
+                    <li>Imprime primero solo la <strong>Página 1</strong>.</li>
+                    <li>Vuelve a colocar esa misma hoja impresa en la bandeja de entrada de papel.</li>
+                    <li>Imprime solo la <strong>Página 2</strong> en el reverso. <em>(Haz una prueba con una hoja usada para ver en qué orientación recoge el papel tu impresora)</em>.</li>
+                </ol>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
+                    Entendido, volver al generador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOTOR DE GENERACIÓN Y PDF -->
+    <script>
+    (function() {
+        'use strict';
+
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function generateSolved9() {
+            const grid = [];
+            for (let r = 0; r < 9; r++) {
+                const row = [];
+                for (let c = 0; c < 9; c++) {
+                    row.push(((r * 3 + Math.floor(r / 3) + c) % 9) + 1);
+                }
+                grid.push(row);
+            }
+            const digits = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+            const map = {};
+            for (let i = 0; i < 9; i++) map[i + 1] = digits[i];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) grid[r][c] = map[grid[r][c]];
+            }
+            for (let b = 0; b < 3; b++) {
+                const order = shuffle([0, 1, 2]);
+                const orig = grid.slice(b * 3, b * 3 + 3);
+                for (let i = 0; i < 3; i++) grid[b * 3 + i] = orig[order[i]];
+            }
+            for (let b = 0; b < 3; b++) {
+                const order = shuffle([0, 1, 2]);
+                for (let r = 0; r < 9; r++) {
+                    const orig = [grid[r][b * 3], grid[r][b * 3 + 1], grid[r][b * 3 + 2]];
+                    grid[r][b * 3] = orig[order[0]];
+                    grid[r][b * 3 + 1] = orig[order[1]];
+                    grid[r][b * 3 + 2] = orig[order[2]];
+                }
+            }
+            if (Math.random() > 0.5) {
+                const transposed = [];
+                for (let c = 0; c < 9; c++) {
+                    const row = [];
+                    for (let r = 0; r < 9; r++) row.push(grid[r][c]);
+                    transposed.push(row);
+                }
+                return transposed;
+            }
+            return grid;
+        }
+
+        function countSolutions(grid, limit = 2) {
+            let count = 0;
+            function getPossibilities(g, r, c) {
+                const used = new Uint8Array(10);
+                for (let i = 0; i < 9; i++) {
+                    used[g[r][i]] = 1;
+                    used[g[i][c]] = 1;
+                }
+                const br = Math.floor(r / 3) * 3;
+                const bc = Math.floor(c / 3) * 3;
+                for (let dr = 0; dr < 3; dr++) {
+                    for (let dc = 0; dc < 3; dc++) {
+                        used[g[br + dr][bc + dc]] = 1;
+                    }
+                }
+                const poss = [];
+                for (let v = 1; v <= 9; v++) {
+                    if (!used[v]) poss.push(v);
+                }
+                return poss;
+            }
+
+            function solve(g) {
+                let minPoss = null;
+                let bestR = -1, bestC = -1;
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (g[r][c] === 0) {
+                            const p = getPossibilities(g, r, c);
+                            if (p.length === 0) return;
+                            if (minPoss === null || p.length < minPoss.length) {
+                                minPoss = p;
+                                bestR = r;
+                                bestC = c;
+                                if (p.length === 1) break;
+                            }
+                        }
+                    }
+                    if (minPoss && minPoss.length === 1) break;
+                }
+                if (bestR === -1) {
+                    count++;
+                    return;
+                }
+                for (let i = 0; i < minPoss.length; i++) {
+                    g[bestR][bestC] = minPoss[i];
+                    solve(g);
+                    g[bestR][bestC] = 0;
+                    if (count >= limit) return;
+                }
+            }
+            const copy = grid.map(r => r.slice());
+            solve(copy);
+            return count;
+        }
+
+        function createPuzzle(solved, targetClues) {
+            const puzzle = solved.map(r => r.slice());
+            const positions = [];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) positions.push({ r, c });
+            }
+            const shuffled = shuffle(positions);
+            let clues = 81;
+            for (const pos of shuffled) {
+                if (clues <= targetClues) break;
+                const { r, c } = pos;
+                if (puzzle[r][c] === 0) continue;
+                const val = puzzle[r][c];
+                puzzle[r][c] = 0;
+                if (countSolutions(puzzle, 2) === 1) {
+                    clues--;
+                } else {
+                    puzzle[r][c] = val;
+                }
+            }
+            return puzzle;
+        }
+
+        // --- ESTADO GENERAL ---
+        const state = {
+            format: '8.25x6',     // '8.25x6' o '6x9'
+            count: 6,             // 2, 4 o 6 (en 6x9 siempre son 2)
+            difficulty: 'easy',   // 'easy', 'medium', 'hard'
+            symbols: 'numbers',   // 'numbers' (1-9) o 'letters' (A-I)
+            viewPage: 1,          // 1 (Retos) o 2 (Negativo)
+            items: []             // Sudokus generados
+        };
+
+        const LETTER_MAP = {
+            1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'G', 8: 'H', 9: 'I'
+        };
+
+        function formatSymbol(num) {
+            if (num === 0) return '';
+            if (state.symbols === 'letters') return LETTER_MAP[num] || num;
+            return String(num);
+        }
+
+        function getTargetCluesFor(diffKey) {
+            if (diffKey === 'easy') return 38;
+            if (diffKey === 'medium') return 32;
+            if (diffKey === 'hard') return 27;
+            return 38;
+        }
+
+        function getDifficultyLabel(diffKey, isPage2) {
+            if (!isPage2) {
+                if (diffKey === 'easy') return 'FÁCIL';
+                if (diffKey === 'medium') return 'MEDIO';
+                if (diffKey === 'hard') return 'DIFÍCIL';
+            } else {
+                if (diffKey === 'easy') return 'DIFÍCIL';
+                if (diffKey === 'medium') return 'MEDIO';
+                if (diffKey === 'hard') return 'FÁCIL';
+            }
+            return 'FÁCIL';
+        }
+
+        function getDifficultyLabelAscii(diffKey, isPage2) {
+            if (!isPage2) {
+                if (diffKey === 'easy') return 'FACIL';
+                if (diffKey === 'medium') return 'MEDIO';
+                if (diffKey === 'hard') return 'DIFICIL';
+            } else {
+                if (diffKey === 'easy') return 'DIFICIL';
+                if (diffKey === 'medium') return 'MEDIO';
+                if (diffKey === 'hard') return 'FACIL';
+            }
+            return 'FACIL';
+        }
+
+        function generateAllItems() {
+            state.items = [];
+            const targetClues = getTargetCluesFor(state.difficulty);
+            const totalCount = state.format === '6x9' ? 2 : state.count;
+
+            for (let i = 0; i < totalCount; i++) {
+                const solved = generateSolved9();
+                const puzzle = createPuzzle(solved, targetClues);
+
+                state.items.push({
+                    index: i + 1,
+                    solved,
+                    puzzle
+                });
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast-notify');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('active');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                t.classList.remove('active');
+            }, 2600);
+        }
+
+        // --- RENDERIZADO EN LIENZO 1:1 ---
+        function renderSheet() {
+            const sheetContainer = document.getElementById('sheetPreview');
+            const gridEl = document.getElementById('sheetSudokusGrid');
+            const titleEl = document.getElementById('sheetTitleDisplay');
+            const diffEl = document.getElementById('sheetHeaderDiff');
+            const pageFooterEl = document.getElementById('sheetFooterPage');
+            const formatBadge = document.getElementById('formatBadgeDisplay');
+            const modalBadge = document.getElementById('modalFormatBadge');
+            const countGroup = document.getElementById('countToolbarGroup');
+
+            const is6x9 = state.format === '6x9';
+
+            sheetContainer.classList.toggle('format-6x9', is6x9);
+            if (is6x9) {
+                gridEl.className = 'sheet-sudokus-grid layout-6x9-2';
+                if (countGroup) countGroup.style.display = 'none';
+                if (formatBadge) formatBadge.textContent = 'Formato 6" × 9" (Vertical) · 2 Sudokus';
+                if (modalBadge) modalBadge.innerHTML = '<span>📐</span> Formato Libro 6" × 9" (152 × 229 mm) · 2 Páginas';
+            } else {
+                gridEl.className = `sheet-sudokus-grid layout-${state.count}`;
+                if (countGroup) countGroup.style.display = 'flex';
+                if (formatBadge) formatBadge.textContent = 'Formato 8.25" × 6" · Anverso y Reverso';
+                if (modalBadge) modalBadge.innerHTML = '<span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · 2 Páginas';
+            }
+
+            gridEl.innerHTML = '';
+
+            const isPage1 = state.viewPage === 1;
+
+            if (isPage1) {
+                titleEl.textContent = 'MENOS RUIDO · SUDOKU';
+                if (diffEl) diffEl.textContent = getDifficultyLabel(state.difficulty, false);
+                pageFooterEl.textContent = 'Pág. 1 / 2';
+            } else {
+                titleEl.textContent = 'MENOS RUIDO · SUDOKU (Negativo)';
+                if (diffEl) diffEl.textContent = getDifficultyLabel(state.difficulty, true);
+                pageFooterEl.textContent = 'Pág. 2 / 2';
+            }
+
+            state.items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'sudoku-card';
+
+                const board = document.createElement('div');
+                board.className = 'sudoku-box-board';
+
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        if ((c + 1) % 3 === 0 && c < 8) cell.classList.add('thick-right');
+                        if ((r + 1) % 3 === 0 && r < 8) cell.classList.add('thick-bottom');
+
+                        const isInitialClue = item.puzzle[r][c] !== 0;
+
+                        if (isPage1) {
+                            if (isInitialClue) {
+                                cell.textContent = formatSymbol(item.puzzle[r][c]);
+                            } else {
+                                cell.classList.add('empty');
+                                cell.textContent = '';
+                            }
+                        } else {
+                            if (!isInitialClue) {
+                                cell.textContent = formatSymbol(item.solved[r][c]);
+                            } else {
+                                cell.classList.add('empty');
+                                cell.textContent = '';
+                            }
+                        }
+
+                        board.appendChild(cell);
+                    }
+                }
+
+                card.appendChild(board);
+                gridEl.appendChild(card);
+            });
+        }
+
+        // --- EXPORTACIÓN PDF 1:1 VECTORIAL CON jsPDF ---
+        function generatePdfDoc() {
+            const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+            if (!jsPDFClass) {
+                alert('No se pudo cargar jsPDF. Comprueba tu conexión a internet.');
+                return null;
+            }
+
+            const is6x9 = state.format === '6x9';
+
+            if (is6x9) {
+                // FORMATO 6" x 9" VERTICAL (152.4 mm x 228.6 mm) CON 2 SUDOKUS
+                const PAGE_W = 152.4;
+                const PAGE_H = 228.6;
+
+                const doc = new jsPDFClass({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [152.4, 228.6]
+                });
+
+                function draw6x9Sheet(pageNumber, isNegativeReverso) {
+                    if (pageNumber > 1) {
+                        doc.addPage([152.4, 228.6], 'portrait');
+                    }
+
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+
+                    // CABECERA
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(11);
+                    doc.setTextColor(20, 20, 20);
+                    const titleStr = isNegativeReverso ? 'MENOS RUIDO · SUDOKU (Negativo)' : 'MENOS RUIDO · SUDOKU';
+                    doc.text(titleStr, 8, 9.5);
+
+                    const diffLabel = getDifficultyLabelAscii(state.difficulty, isNegativeReverso);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(20, 20, 20);
+                    doc.text(diffLabel, PAGE_W - 8, 9.5, { align: 'right' });
+
+                    doc.setDrawColor(20, 20, 20);
+                    doc.setLineWidth(0.35);
+                    doc.line(8, 12, PAGE_W - 8, 12);
+
+                    const boardSize = 75; // 75 mm cada sudoku
+                    const cellSize = boardSize / 9;
+                    const startX = (PAGE_W - boardSize) / 2;
+                    const gapY = 16;
+                    const startYBase = 22;
+
+                    state.items.slice(0, 2).forEach((item, rowIdx) => {
+                        const startY = startYBase + rowIdx * (boardSize + gapY);
+
+                        for (let r = 0; r < 9; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                const x = startX + c * cellSize;
+                                const y = startY + r * cellSize;
+
+                                doc.setDrawColor(185, 180, 172);
+                                doc.setLineWidth(0.12);
+                                doc.rect(x, y, cellSize, cellSize);
+
+                                const isInitialClue = item.puzzle[r][c] !== 0;
+
+                                if (!isNegativeReverso) {
+                                    if (isInitialClue) {
+                                        doc.setFont('helvetica', 'bold');
+                                        doc.setFontSize(11);
+                                        doc.setTextColor(20, 20, 20);
+                                        doc.text(formatSymbol(item.puzzle[r][c]), x + cellSize / 2, y + cellSize / 2 + 1.2, { align: 'center' });
+                                    }
+                                } else {
+                                    if (!isInitialClue) {
+                                        doc.setFont('helvetica', 'bold');
+                                        doc.setFontSize(11);
+                                        doc.setTextColor(15, 15, 15);
+                                        doc.text(formatSymbol(item.solved[r][c]), x + cellSize / 2, y + cellSize / 2 + 1.2, { align: 'center' });
+                                    }
+                                }
+                            }
+                        }
+
+                        doc.setDrawColor(20, 20, 20);
+                        doc.setLineWidth(0.55);
+                        for (let b = 0; b <= 3; b++) {
+                            const linePos = startY + b * 3 * cellSize;
+                            const lineColPos = startX + b * 3 * cellSize;
+                            doc.line(startX, linePos, startX + boardSize, linePos);
+                            doc.line(lineColPos, startY, lineColPos, startY + boardSize);
+                        }
+                    });
+
+                    // PIE
+                    doc.setDrawColor(220, 215, 208);
+                    doc.setLineWidth(0.2);
+                    doc.line(8, PAGE_H - 8, PAGE_W - 8, PAGE_H - 8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+                    doc.setTextColor(120, 120, 120);
+                    doc.text('Editorial Menos Ruido · www.editorialmenosruido.com', 8, PAGE_H - 4.5);
+                    doc.text(`Pág. ${pageNumber} / 2`, PAGE_W - 8, PAGE_H - 4.5, { align: 'right' });
+                }
+
+                draw6x9Sheet(1, false);
+                draw6x9Sheet(2, true);
+                return doc;
+            }
+
+            // FORMATO 8.25" x 6" APAISADO (209.55 mm x 152.4 mm)
+            const PAGE_W = 209.55;
+            const PAGE_H = 152.4;
+
+            const doc = new jsPDFClass({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [152.4, 209.55]
+            });
+
+            function drawSudokuSheet(pageNumber, isNegativeReverso) {
+                if (pageNumber > 1) {
+                    doc.addPage([152.4, 209.55], 'landscape');
+                }
+
+                doc.setFillColor(255, 255, 255);
+                doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+
+                // CABECERA A 8 mm DEL BORDE
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor(20, 20, 20);
+                const titleStr = isNegativeReverso ? 'MENOS RUIDO · SUDOKU (Negativo)' : 'MENOS RUIDO · SUDOKU';
+                doc.text(titleStr, 8, 9.5);
+
+                const diffLabel = getDifficultyLabelAscii(state.difficulty, isNegativeReverso);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(20, 20, 20);
+                doc.text(diffLabel, PAGE_W - 8, 9.5, { align: 'right' });
+
+                doc.setDrawColor(20, 20, 20);
+                doc.setLineWidth(0.35);
+                doc.line(8, 12, PAGE_W - 8, 12);
+
+                const count = state.items.length;
+                let cols = 3;
+                let rows = 2;
+                let boardSize = 60;
+
+                if (count === 2) {
+                    cols = 2;
+                    rows = 1;
+                    boardSize = 80;
+                } else if (count === 4) {
+                    cols = 2;
+                    rows = 2;
+                    boardSize = 60;
+                } else if (count === 6) {
+                    cols = 3;
+                    rows = 2;
+                    boardSize = 60;
+                }
+
+                const cellSize = boardSize / 9;
+                const marginX = (PAGE_W - (cols * boardSize)) / (cols + 1);
+                const startYBase = 15;
+                const gapY = rows > 1 ? 8 : 0;
+
+                state.items.forEach((item, idx) => {
+                    const colIdx = idx % cols;
+                    const rowIdx = Math.floor(idx / cols);
+
+                    const startX = marginX + colIdx * (boardSize + marginX);
+                    const startY = rows > 1 ? (startYBase + rowIdx * (boardSize + gapY)) : (startYBase + (PAGE_H - 8 - startYBase - boardSize) / 2);
+
+                    for (let r = 0; r < 9; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            const x = startX + c * cellSize;
+                            const y = startY + r * cellSize;
+
+                            doc.setDrawColor(185, 180, 172);
+                            doc.setLineWidth(0.12);
+                            doc.rect(x, y, cellSize, cellSize);
+
+                            const isInitialClue = item.puzzle[r][c] !== 0;
+
+                            if (!isNegativeReverso) {
+                                if (isInitialClue) {
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setFontSize(count === 2 ? 12 : 9);
+                                    doc.setTextColor(20, 20, 20);
+                                    doc.text(formatSymbol(item.puzzle[r][c]), x + cellSize / 2, y + cellSize / 2 + 1.2, { align: 'center' });
+                                }
+                            } else {
+                                if (!isInitialClue) {
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setFontSize(count === 2 ? 12 : 9);
+                                    doc.setTextColor(15, 15, 15);
+                                    doc.text(formatSymbol(item.solved[r][c]), x + cellSize / 2, y + cellSize / 2 + 1.2, { align: 'center' });
+                                }
+                            }
+                        }
+                    }
+
+                    doc.setDrawColor(20, 20, 20);
+                    doc.setLineWidth(0.55);
+                    for (let b = 0; b <= 3; b++) {
+                        const linePos = startY + b * 3 * cellSize;
+                        const lineColPos = startX + b * 3 * cellSize;
+                        doc.line(startX, linePos, startX + boardSize, linePos);
+                        doc.line(lineColPos, startY, lineColPos, startY + boardSize);
+                    }
+                });
+
+                doc.setDrawColor(220, 215, 208);
+                doc.setLineWidth(0.2);
+                doc.line(8, PAGE_H - 8, PAGE_W - 8, PAGE_H - 8);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(120, 120, 120);
+                doc.text('Editorial Menos Ruido · www.editorialmenosruido.com', 8, PAGE_H - 4.5);
+                doc.text(`Pág. ${pageNumber} / 2`, PAGE_W - 8, PAGE_H - 4.5, { align: 'right' });
+            }
+
+            drawSudokuSheet(1, false);
+            drawSudokuSheet(2, true);
+
+            return doc;
+        }
+
+        // --- CONTROLADORES DEL MODAL DE DESCARGA E IMPRESIÓN ---
+        function openDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.add('active');
+
+            const feedback = document.getElementById('modal-email-feedback');
+            if (feedback) feedback.style.display = 'none';
+
+            const emailInput = document.getElementById('modal-email-input');
+            if (emailInput && !emailInput.value) {
+                try {
+                    let prefill = '';
+                    if (window.mrAuthUserEmail) prefill = window.mrAuthUserEmail;
+                    if (!prefill) prefill = localStorage.getItem('mr_user_pdf_email') || localStorage.getItem('emailForSignIn') || '';
+                    if (!prefill) {
+                        const cached = localStorage.getItem('mr_cached_user');
+                        if (cached) prefill = JSON.parse(cached).email || '';
+                    }
+                    if (prefill) emailInput.value = prefill;
+                } catch(e) {}
+            }
+        }
+
+        function closeDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function openTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.add('active');
+        }
+
+        function closeTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target && e.target.id === 'download-modal') closeDownloadModal();
+            if (e.target && e.target.id === 'tutorial-modal') closeTutorialModal();
+        }
+
+        function executeDownload() {
+            const doc = generatePdfDoc();
+            if (!doc) return;
+            const diffText = state.difficulty === 'easy' ? 'facil' : (state.difficulty === 'medium' ? 'medio' : 'dificil');
+            const formatText = state.format === '6x9' ? '6x9-2' : `${state.count}`;
+            doc.save(`Menos-Ruido-Sudokus-${formatText}-${diffText}.pdf`);
+            closeDownloadModal();
+            showToast('✓ PDF descargado con éxito');
+        }
+
+        function executePrint() {
+            const doc = generatePdfDoc();
+            if (!doc) return;
+            doc.autoPrint();
+            const blobUrl = doc.output('bloburl');
+            window.open(blobUrl, '_blank');
+            closeDownloadModal();
+            showToast('✓ Abriendo ventana de impresión');
+        }
+
+        async function sendPdfViaEmail() {
+            const emailInput = document.getElementById('modal-email-input');
+            const feedback = document.getElementById('modal-email-feedback');
+            const btn = document.getElementById('btn-modal-send-email');
+            
+            const email = (emailInput ? emailInput.value : '').trim();
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'Por favor, escribe un correo electrónico válido.';
+                }
+                if (emailInput) emailInput.focus();
+                return;
+            }
+
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#eff6ff';
+                feedback.style.color = '#1e40af';
+                feedback.style.border = '1px solid #bfdbfe';
+                feedback.textContent = '⏳ Generando documento y enviando por correo...';
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.textContent = 'Enviando...';
+            }
+
+            try {
+                const doc = generatePdfDoc();
+                if (!doc) throw new Error('No se pudo generar el documento PDF.');
+                const pdfBase64 = doc.output('datauristring');
+                const diffText = state.difficulty === 'easy' ? 'Fácil' : (state.difficulty === 'medium' ? 'Medio' : 'Difícil');
+                const fmtName = state.format === '6x9' ? '6" × 9" (2 Sudokus)' : `8.25" × 6" (${state.count} Sudokus)`;
+
+                const response = await fetch('/api/send-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        pdfBase64: pdfBase64,
+                        filename: `Menos-Ruido-Sudokus-${state.format}-${state.difficulty}.pdf`,
+                        plannerName: `Sudokus Menos Ruido · ${fmtName} (${diffText})`
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error al procesar el envío del correo.');
+                }
+
+                try { localStorage.setItem('mr_user_pdf_email', email); } catch(e) {}
+
+                if (feedback) {
+                    feedback.style.background = '#f0fdf4';
+                    feedback.style.color = '#166534';
+                    feedback.style.border = '1px solid #bbf7d0';
+                    feedback.textContent = '✓ ¡Enviado! Revisa tu bandeja de entrada en unos instantes.';
+                }
+                if (btn) btn.textContent = 'Enviado';
+
+                setTimeout(() => {
+                    closeDownloadModal();
+                    showToast('✓ PDF enviado a ' + email);
+                }, 1800);
+            } catch(err) {
+                console.error('Error enviando PDF por email:', err);
+                if (feedback) {
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'No se pudo enviar el correo: ' + (err.message || 'Error de red.');
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.textContent = 'Reintentar';
+                }
+            }
+        }
+
+        function setViewPage(pageNum) {
+            state.viewPage = pageNum;
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.page, 10) === pageNum);
+            });
+        }
+
+        // Exportar al ámbito global para manejadores inline y para la integración con Mi Espacio
+        window.openDownloadModal = openDownloadModal;
+        window.closeDownloadModal = closeDownloadModal;
+        window.openTutorialModal = openTutorialModal;
+        window.closeTutorialModal = closeTutorialModal;
+        window.closeModalOnBackdrop = closeModalOnBackdrop;
+        window.executeDownload = executeDownload;
+        window.executePrint = executePrint;
+        window.sendPdfViaEmail = sendPdfViaEmail;
+        window.mrSudokuState = state;
+        window.mrSudokuRender = renderSheet;
+        window.mrSudokuGenerateAll = generateAllItems;
+        window.mrSetViewPage = setViewPage;
+        window.mrShowToast = showToast;
+
+        function initGeneratorUI() {
+            generateAllItems();
+            renderSheet();
+
+            // Selector de Formato (8.25x6 vs 6x9)
+            document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.format = btn.dataset.format;
+                    setViewPage(1);
+                    generateAllItems();
+                    renderSheet();
+                });
+            });
+
+            // Selector de Cantidad
+            document.querySelectorAll('#countToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#countToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.count = parseInt(btn.dataset.count, 10);
+                    setViewPage(1);
+                    generateAllItems();
+                    renderSheet();
+                });
+            });
+
+            // Selector de Dificultad (Vuelve automáticamente a la Pág. 1)
+            document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.difficulty = btn.dataset.diff;
+                    setViewPage(1);
+                    generateAllItems();
+                    renderSheet();
+                });
+            });
+
+            // Selector de Símbolos
+            document.querySelectorAll('#symbolsToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#symbolsToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.symbols = btn.dataset.symbols;
+                    renderSheet();
+                });
+            });
+
+            // Selector de Vista de Página
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.viewPage = parseInt(btn.dataset.page, 10);
+                    renderSheet();
+                });
+            });
+
+            // Botón Regenerar
+            const btnRegen = document.getElementById('btnRegenerate');
+            if (btnRegen) {
+                btnRegen.addEventListener('click', () => {
+                    generateAllItems();
+                    renderSheet();
+                    showToast('✓ Nuevos sudokus generados');
+                });
+            }
+
+            // Botón Abrir Modal de Descarga
+            const btnOpenModal = document.getElementById('btnOpenDownloadModal');
+            if (btnOpenModal) {
+                btnOpenModal.addEventListener('click', openDownloadModal);
+            }
+
+            // Botón Abrir Modal Tutorial
+            const btnOpenTut = document.getElementById('btnOpenTutorialModal');
+            if (btnOpenTut) {
+                btnOpenTut.addEventListener('click', openTutorialModal);
+            }
+
+            // Enlace al tutorial dentro del modal de descarga
+            const linkTutDl = document.getElementById('linkTutorialInDownload');
+            if (linkTutDl) {
+                linkTutDl.addEventListener('click', () => {
+                    closeDownloadModal();
+                    openTutorialModal();
+                });
+            }
+
+            // Cerrar con Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeDownloadModal();
+                    closeTutorialModal();
+                }
+            });
+
+            // Acciones del modal de descarga
+            const btnExecDl = document.getElementById('btnExecuteDownload');
+            if (btnExecDl) btnExecDl.addEventListener('click', executeDownload);
+
+            const btnExecPrint = document.getElementById('btnExecutePrint');
+            if (btnExecPrint) btnExecPrint.addEventListener('click', executePrint);
+
+            const btnSendMail = document.getElementById('btn-modal-send-email');
+            if (btnSendMail) btnSendMail.addEventListener('click', sendPdfViaEmail);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGeneratorUI);
+        } else {
+            initGeneratorUI();
+        }
+    })();
+    </script>
+
+    <!-- ENTRADA PRINCIPAL DEL SISTEMA (CARGA AUTH Y FIREBASE) -->
+    <script type="module" src="./main.js"></script>
+
+    <!-- INTEGRACIÓN CON MI ESPACIO Y GUARDADO EN LA NUBE -->
+    <script type="module">
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        // Guardado en Mi Espacio
+        setupGeneratorSave('btn-save-generator-design', () => {
+            const state = window.mrSudokuState || {};
+            const diffText = state.difficulty === 'easy' ? 'Fácil' : (state.difficulty === 'medium' ? 'Medio' : 'Difícil');
+            const fmtText = state.format === '6x9' ? '6" × 9" (2 Sudokus)' : `8.25" × 6" (${state.count} Sudokus)`;
+            return {
+                name: `Sudokus Menos Ruido · ${fmtText} ${diffText}`,
+                type: 'Sudokus',
+                summary: `${fmtText} (${diffText}) · Anverso y Reverso`,
+                data: {
+                    format: state.format,
+                    count: state.count,
+                    difficulty: state.difficulty,
+                    symbols: state.symbols,
+                    items: state.items
+                }
+            };
+        });
+
+        // Carga si viene con ?designId=...
+        checkAndLoadSavedDesign((savedData) => {
+            if (!savedData) return;
+            const state = window.mrSudokuState;
+            if (!state) return;
+
+            if (savedData.format) {
+                state.format = savedData.format;
+                document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.format === state.format);
+                });
+            }
+            if (savedData.count) {
+                state.count = savedData.count;
+                document.querySelectorAll('#countToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', parseInt(b.dataset.count, 10) === state.count);
+                });
+            }
+            if (savedData.difficulty) {
+                state.difficulty = savedData.difficulty;
+                document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.diff === state.difficulty);
+                });
+            }
+            if (savedData.symbols) {
+                state.symbols = savedData.symbols;
+                document.querySelectorAll('#symbolsToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.symbols === state.symbols);
+                });
+            }
+            if (savedData.items && savedData.items.length) {
+                state.items = savedData.items;
+            }
+            if (typeof window.mrSetViewPage === 'function') window.mrSetViewPage(1);
+            if (typeof window.mrSudokuRender === 'function') window.mrSudokuRender();
+            if (typeof window.mrShowToast === 'function') window.mrShowToast('✓ Sudokus cargados desde Mi Espacio');
+        });
+    </script>
+</body>
+</html>

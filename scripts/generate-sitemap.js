@@ -37,7 +37,8 @@ const EXCLUDED_FILES = new Set([
   'generador-calcudoku.html',
   'hoy.html',
   'sudoku-diario.html',
-  'como-generar-tu-planificador-facil-y-rapido.html',
+  'generador-libro-pasatiempos.html',
+  'por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html',
   'generador-bitacora-enfoque.html'
 ]);
 

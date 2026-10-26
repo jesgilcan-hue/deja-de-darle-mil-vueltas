@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- MODO PRIVADO Y OCULTO -->
+    <meta name="robots" content="noindex, nofollow">
+    <title>Generador de Sopa de Letras en PDF · Editorial Menos Ruido</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-sopas.html">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos base -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./diagnostic.css">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #ffffff;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border-grid-thick: #111111;
+            --border-grid-thin: #b0aba0;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --accent: #87553b;
+            --accent-hover: #6f422c;
+            --sol-highlight: rgba(135, 85, 59, 0.18);
+            --sol-stroke: #87553b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .dev-badge-bar {
+            background: #fef08a;
+            color: #854d0e;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 5px 12px;
+            border-bottom: 1px solid #fde047;
+            letter-spacing: 0.3px;
+        }
+
+        .generator-container-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 14px 40px;
+            flex: 1;
+        }
+
+        .top-nav {
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: #555;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+        .back-link:hover { color: #000; }
+
+        .btn-help-tutorial {
+            background: #ffffff;
+            border: 1px solid #d1cbbf;
+            color: #443e39;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-help-tutorial:hover {
+            background: #f7f4ee;
+            border-color: #87553b;
+            color: #111;
+        }
+
+        .badge-version {
+            background: #ede6dc;
+            color: #4a443c;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 820px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #111111;
+            margin-bottom: 3px;
+        }
+        .header-title-box p {
+            font-size: 0.88rem;
+            color: #555;
+        }
+
+        /* BARRA DE HERRAMIENTAS */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-right: 2px;
+        }
+
+        .btn-toggle-group {
+            display: inline-flex;
+            background: #f1ede6;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 2px;
+        }
+
+        .btn-toggle-item {
+            background: transparent;
+            border: none;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+        .btn-toggle-item.active {
+            background: #ffffff;
+            color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .theme-select {
+            padding: 5px 10px;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            background: #f7f5f0;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #333;
+            outline: none;
+            cursor: pointer;
+        }
+        .theme-select:focus {
+            border-color: var(--accent);
+            background: #fff;
+        }
+
+        .toolbar-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #443e39;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .toolbar-btn:hover {
+            background: #ede7dc;
+            border-color: #c9bfb0;
+            color: #111;
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 16px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-action {
+            background: #ffffff;
+            color: #111111;
+            border: 1px solid #d1cbbf;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-secondary-action:hover {
+            border-color: #111;
+            background: #faf8f5;
+        }
+
+        /* CAMPO PERSONALIZADO EXPANDIBLE */
+        .custom-words-drawer {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: none;
+            box-sizing: border-box;
+        }
+        .custom-words-drawer.active {
+            display: block;
+        }
+        .custom-words-drawer label {
+            display: block;
+            font-size: 0.80rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .custom-words-input-wrap {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .custom-words-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 8px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-family: inherit;
+        }
+        .btn-custom-apply {
+            background: #111;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* AVISO TOAST */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            min-height: 34px;
+            margin: 4px auto 10px auto;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            text-align: center;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            pointer-events: none;
+        }
+        .sheet-inline-notice.active {
+            opacity: 1;
+            visibility: visible;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border: 1px solid #dfd6c7;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            pointer-events: auto;
+        }
+
+        /* LIENZO 1:1 MAXIMIZADO */
+        .canvas-preview-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .sheet-container {
+            width: 100%;
+            max-width: 980px;
+            aspect-ratio: 8.25 / 6;
+            background: var(--paper-color);
+            border: 1px solid #e0dbd1;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            padding: 2.8% 3.5%;
+            transition: aspect-ratio 0.2s ease, max-width 0.2s ease;
+            position: relative;
+        }
+
+        .sheet-container.format-6x9 {
+            max-width: 620px;
+            aspect-ratio: 6 / 9;
+            padding: 4.5% 5%;
+        }
+
+        /* CABECERA DE LA HOJA */
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--border-grid-thick);
+            padding-bottom: 6px;
+            margin-bottom: 2%;
+        }
+        .sheet-header-title {
+            font-family: var(--font-serif);
+            font-size: clamp(0.95rem, 1.8vw, 1.4rem);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #111;
+        }
+        .sheet-header-meta {
+            font-size: clamp(0.70rem, 1.1vw, 0.85rem);
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* CONTENIDO DE LA HOJA: LAYOUT 8.25x6 (2 COLUMNAS) */
+        .sheet-body-layout {
+            flex: 1;
+            display: flex;
+            gap: 4%;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            position: relative;
+        }
+
+        /* CONTENIDO DE LA HOJA: LAYOUT 6x9 (VERTICAL) */
+        .sheet-container.format-6x9 .sheet-body-layout {
+            flex-direction: column;
+            gap: 3%;
+        }
+
+        /* CONTENEDOR DE LA CUADRÍCULA */
+        .sopa-grid-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            max-height: 100%;
+            position: relative;
+        }
+
+        .sheet-container:not(.format-6x9) .sopa-grid-container {
+            aspect-ratio: 15 / 13;
+            max-width: 62%;
+        }
+
+        .sheet-container.format-6x9 .sopa-grid-container {
+            width: 100%;
+            height: auto;
+            max-height: 64%;
+            aspect-ratio: 13 / 15;
+        }
+
+        .sopa-grid-board {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--border-grid-thick);
+            background: #ffffff;
+            user-select: none;
+            position: relative;
+        }
+
+        .sheet-container:not(.format-6x9) .sopa-grid-board {
+            aspect-ratio: 15 / 13;
+        }
+
+        .sheet-container.format-6x9 .sopa-grid-board {
+            aspect-ratio: 13 / 15;
+        }
+
+        .sopa-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: clamp(0.62rem, 1.05vw, 0.95rem);
+            color: #111111;
+            border: 0.5px solid #ece7df;
+            line-height: 1;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sheet-container.format-6x9 .sopa-cell {
+            font-size: clamp(0.70rem, 2.0vw, 1.08rem);
+        }
+
+        /* CASILLA MARCADA EN REVERSO (SOLUCIÓN) */
+        .sopa-cell.solved-cell {
+            background-color: var(--sol-highlight);
+            color: #87553b;
+            font-weight: 800;
+        }
+
+        /* PANEL DE PALABRAS (18 PALABRAS EN 3 COLUMNAS) */
+        .sopa-words-container {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+            padding-left: 6px;
+        }
+
+        .sheet-container.format-6x9 .sopa-words-container {
+            width: 100%;
+            height: auto;
+            flex: 1;
+            justify-content: flex-start;
+            padding-left: 0;
+            padding-top: 4px;
+        }
+
+        .words-section-title {
+            font-size: clamp(0.70rem, 1.0vw, 0.84rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #333;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #d5cfc4;
+            padding-bottom: 3px;
+        }
+
+        .words-list-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px 8px;
+        }
+
+        .sheet-container.format-6x9 .words-list-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px 8px;
+        }
+
+        .word-item-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: clamp(0.65rem, 0.95vw, 0.78rem);
+            font-weight: 600;
+            color: #222;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .word-checkbox {
+            width: 10px;
+            height: 10px;
+            border: 1.5px solid #666;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .word-item-row.is-found {
+            text-decoration: line-through;
+            color: #87553b;
+        }
+        .word-item-row.is-found .word-checkbox {
+            background-color: #87553b;
+            border-color: #87553b;
+        }
+
+        /* PIE DE HOJA */
+        .sheet-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e0dbd1;
+            padding-top: 4px;
+            margin-top: 2%;
+            font-size: clamp(0.58rem, 0.9vw, 0.72rem);
+            color: #777;
+        }
+
+        .download-hint {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 14px; right: 16px;
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            color: #888;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+        .modal-close-btn:hover { color: #111; }
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
+        }
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+        .btn-modal-secondary {
+            background: #f7f5f0;
+            color: #443e39;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-secondary:hover { background: #ede7dc; }
+
+        .modal-email-box {
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .modal-email-header { margin-bottom: 10px; }
+        .modal-email-title {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #212121;
+        }
+        .modal-email-sub {
+            display: block;
+            font-size: 0.74rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        .modal-email-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-email-input {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            background: #ffffff;
+            color: #212121;
+            box-sizing: border-box;
+        }
+        .modal-email-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
+        }
+        .modal-btn-send {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+        .modal-btn-send:hover { background: var(--accent-hover); }
+        .modal-email-feedback {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 8px 12px;
+            line-height: 1.4;
+        }
+
+        /* MODAL TUTORIAL */
+        .modal-card-tutorial {
+            max-width: 580px;
+            text-align: left;
+            padding: 24px;
+        }
+        .tutorial-section {
+            background: #fbf9f6;
+            border: 1px solid #eae4d9;
+            border-radius: 10px;
+            padding: 13px 15px;
+            margin-bottom: 12px;
+        }
+        .tutorial-section h4 {
+            font-size: 0.90rem;
+            font-weight: 700;
+            color: #1e1916;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tutorial-section p {
+            font-size: 0.82rem;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+        .tutorial-section p:last-child {
+            margin-bottom: 0;
+        }
+        .tutorial-highlight-box {
+            background: #ffffff;
+            border-left: 3px solid var(--accent);
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.80rem;
+            color: #333;
+            line-height: 1.45;
+        }
+        .tutorial-step-list {
+            margin: 6px 0 0 16px;
+            font-size: 0.82rem;
+            color: #444;
+            line-height: 1.5;
+        }
+        .tutorial-step-list li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        🔒 Vista Privada de Desarrollo · Generador de Sopa de Letras en PDF (8.25" × 6" y 6" × 9")
+    </div>
+
+    <!-- HEADER MENOS RUIDO -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="nav-left">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;">Menos Ruido</a>
+            </div>
+            <nav>
+                <div class="nav-drawer-header">
+                    <span class="nav-drawer-title">Menos Ruido</span>
+                    <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <a href="/">Home</a>
+                <a href="/#cuadernos">Cuadernos y Planificadores</a>
+                <a href="/pasatiempos.html" style="font-weight: 600;">Pasatiempos</a>
+                <a href="/lecturas.html">Lecturas</a>
+            </nav>
+        </div>
+    </header>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
+
+    <main class="generator-container-wrap">
+        <div class="top-nav">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <a href="/pasatiempos.html" class="back-link">← Volver a Pasatiempos</a>
+                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo imprimir a doble cara y resolver">
+                    <span>📖</span> Guía de impresión y solución
+                </button>
+            </div>
+            <span class="badge-version" id="formatBadgeDisplay">Formato 8.25" × 6" · Anverso y Solución</span>
+        </div>
+
+        <div class="header-title-box">
+            <h1>Generador de Sopa de Letras en PDF</h1>
+            <p>Diseño limpio y tipografía editorial. Cuadrícula optimizada con anverso para resolver y reverso con soluciones exactas.</p>
+        </div>
+
+        <!-- BARRA DE HERRAMIENTAS -->
+        <div class="canvas-toolbar">
+            <!-- 0. FORMATO DE HOJA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Formato:</span>
+                <div class="btn-toggle-group" id="formatToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-format="8.25x6">8.25" × 6" (Apaisado)</button>
+                    <button type="button" class="btn-toggle-item" data-format="6x9">6" × 9" (Vertical)</button>
+                </div>
+            </div>
+
+            <!-- 1. TEMÁTICA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Tema:</span>
+                <select class="theme-select" id="themeSelect">
+                    <option value="desconexion">Desconexión</option>
+                    <option value="deportes">Deportes y Ejercicio</option>
+                    <option value="naturaleza">Naturaleza y Senderos</option>
+                    <option value="cafe">Café y Mañanas</option>
+                    <option value="mente">Agilidad Mental</option>
+                    <option value="cocina">Gastronomía y Cocina</option>
+                    <option value="viajes">Geografía y Viajes</option>
+                    <option value="custom">✏️ Escribir mi propio tema o palabras...</option>
+                </select>
+            </div>
+
+            <!-- 2. DIFICULTAD -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Dificultad:</span>
+                <div class="btn-toggle-group" id="diffToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-diff="easy" title="Horizontal y vertical">Fácil</button>
+                    <button type="button" class="btn-toggle-item" data-diff="medium" title="Horizontal, vertical y diagonal">Medio</button>
+                    <button type="button" class="btn-toggle-item" data-diff="hard" title="Todas las direcciones e invertidas">Difícil</button>
+                </div>
+            </div>
+
+            <!-- 3. VISTA DE PÁGINA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Página:</span>
+                <div class="btn-toggle-group" id="pageToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-page="1">Pág. 1 (Reto)</button>
+                    <button type="button" class="btn-toggle-item" data-page="2">Pág. 2 (Solución)</button>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN -->
+            <div class="toolbar-group">
+                <button type="button" class="btn-secondary-action" id="btnRegenerate" title="Reorganizar cuadrícula">
+                    ↺ Nuevas
+                </button>
+                <button type="button" class="toolbar-btn" id="btn-save-generator-design" title="Guardar diseño en Mi Espacio">
+                    <span>💾</span> Guardar en Mi Espacio
+                </button>
+                <button type="button" class="btn-download-primary" id="btnOpenDownloadModal">
+                    <span>📥</span> Descargar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- CAJÓN PARA TEMA LIBRE O PALABRAS PERSONALIZADAS -->
+        <div class="custom-words-drawer" id="customWordsDrawer">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div>
+                    <label for="customTopicInput"><strong>Opción 1: Escribe cualquier tema</strong> (se generan 18 palabras automáticas relacionadas):</label>
+                    <div class="custom-words-input-wrap">
+                        <input type="text" id="customTopicInput" class="custom-words-input" placeholder="Ej: Deportes, Animales salvajes, Astronomía, Cine, Mitología..." />
+                        <button type="button" id="btnGenerateFromTopic" class="btn-custom-apply" style="background: var(--accent);">✨ Generar 18 palabras</button>
+                    </div>
+                </div>
+                <div style="border-top: 1px dashed #e0d8cb; padding-top: 8px; margin-top: 4px;">
+                    <label for="customWordsInput"><strong>Opción 2: O escribe tus propias palabras</strong> (separadas por comas, 18 palabras):</label>
+                    <div class="custom-words-input-wrap">
+                        <input type="text" id="customWordsInput" class="custom-words-input" placeholder="Ej: LIBRO, CUADERNO, TINTA, SILENCIO, PAUSA, TAZA, FOCO, CAFE, LUZ, MESA..." />
+                        <button type="button" id="btnApplyCustomWords" class="btn-custom-apply">Aplicar a la sopa</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AVISO TOAST EN LÍNEA -->
+        <div class="sheet-inline-notice" id="toast-notify"></div>
+
+        <!-- LIENZO 1:1 MAXIMIZADO -->
+        <div class="canvas-preview-wrapper">
+            <div class="sheet-container" id="sheetPreview">
+                <!-- CABECERA -->
+                <div class="sheet-header">
+                    <div class="sheet-header-title" id="sheetTitleDisplay">MENOS RUIDO · SOPA DE LETRAS</div>
+                    <div class="sheet-header-meta" id="sheetHeaderMeta">EDITORIAL MENOS RUIDO</div>
+                </div>
+
+                <!-- CONTENIDO DINÁMICO (CUADRÍCULA + PALABRAS) -->
+                <div class="sheet-body-layout" id="sheetBodyLayout">
+                    <!-- Cuadrícula -->
+                    <div class="sopa-grid-container">
+                        <div class="sopa-grid-board" id="sopaGridBoard">
+                            <!-- Celdas dinámicas -->
+                        </div>
+                    </div>
+
+                    <!-- Panel de palabras -->
+                    <div class="sopa-words-container" id="sopaWordsContainer">
+                        <div class="words-section-title" id="wordsListTitle">Palabras a buscar:</div>
+                        <div class="words-list-grid" id="wordsListGrid">
+                            <!-- Lista dinámica -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PIE -->
+                <div class="sheet-footer">
+                    <span>Editorial Menos Ruido · www.editorialmenosruido.com</span>
+                    <span id="sheetFooterPage">Pág. 1 / 2</span>
+                </div>
+            </div>
+
+            <p class="download-hint">
+                💡 En la <strong>Página 2</strong> se imprime la cuadrícula con las palabras localizadas exactamente en el mismo lugar para coincidencia a doble cara.
+            </p>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="text-align: center; padding: 20px 0; color: #888; font-size: 0.85rem;">
+                <p>&copy; 2026 Editorial Menos Ruido. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE DESCARGA E IMPRESIÓN -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Sopa de Letras en PDF</h3>
+            <p class="modal-desc" id="modalDesc">Documento de 2 páginas a 300 DPI. La página 1 incluye la sopa limpia con la lista de palabras y la página 2 contiene el reverso con las soluciones marcadas.</p>
+            
+            <div class="modal-format-badge" id="modalFormatBadge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · 2 Páginas
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" id="btnExecuteDownload">
+                    <span>📥</span> Descargar archivo PDF (2 Páginas)
+                </button>
+            </div>
+
+            <!-- RECIBIR POR EMAIL -->
+            <div class="modal-email-box">
+                <div class="modal-email-header">
+                    <span class="modal-email-title">✉️ ¿Prefieres recibirlo en tu email?</span>
+                    <span class="modal-email-sub">Te enviamos el archivo PDF adjunto listo para imprimir cuando quieras.</span>
+                </div>
+                <div class="modal-email-form">
+                    <input type="email" id="modal-email-input" class="modal-email-input" placeholder="tu-correo@ejemplo.com" autocomplete="email" />
+                    <button type="button" id="btn-modal-send-email" class="modal-btn-send">
+                        <span>Enviar a mi email</span>
+                    </button>
+                </div>
+                <div id="modal-email-feedback" class="modal-email-feedback" style="display: none;"></div>
+            </div>
+
+            <!-- ENLACE AL TUTORIAL -->
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2ddd3; text-align: center;">
+                <a href="javascript:void(0)" id="linkTutorialInDownload" style="font-size: 0.80rem; color: #87553b; text-decoration: underline; font-weight: 600;">
+                    📖 ¿Dudas sobre cómo imprimir a doble cara? Ver guía rápida
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TUTORIAL: IMPRESIÓN Y SOLUCIÓN -->
+    <div class="modal-overlay" id="tutorial-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card modal-card-tutorial">
+            <button type="button" class="modal-close-btn" onclick="closeTutorialModal()">✕</button>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">Guía rápida: Impresión de Sopas de Letras</h3>
+            <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
+                Cómo imprimir anverso y reverso para que las soluciones coincidan al milímetro por detrás.
+            </p>
+
+            <div class="tutorial-section">
+                <h4><span>🧩</span> 1. Anverso de juego y Reverso de soluciones</h4>
+                <p>
+                    La <strong>Página 1</strong> contiene la cuadrícula limpia de letras con la lista de palabras a buscar y casillas circulares para ir tachando a lápiz.
+                </p>
+                <p>
+                    La <strong>Página 2</strong> contiene las <strong>soluciones exactas</strong>: resalta las palabras escondidas sobre la misma rejilla geométrica para que puedas comprobarlas al trasluz o girando la hoja.
+                </p>
+            </div>
+
+            <div class="tutorial-section">
+                <h4><span>🖨️</span> 2. Configuración de impresora (Doble Cara / Duplex)</h4>
+                <ul class="tutorial-step-list">
+                    <li>
+                        <strong>Formato 8.25" × 6" (Apaisado):</strong> Selecciona <em>Imprimir a doble cara</em> y marca <strong>«Voltear por el borde corto»</strong>.
+                    </li>
+                    <li>
+                        <strong>Formato 6" × 9" (Vertical):</strong> Selecciona <em>Imprimir a doble cara</em> y marca <strong>«Voltear por el borde largo»</strong>.
+                    </li>
+                    <li>
+                        <strong>Escala de impresión:</strong> Selecciona siempre <strong>«Tamaño real» o «100%»</strong> (nunca «Ajustar a la página»).
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tutorial-section">
+                <h4><span>📄</span> 3. Para impresoras manuales</h4>
+                <ol class="tutorial-step-list" style="list-style-type: decimal;">
+                    <li>Imprime solo la Página 1.</li>
+                    <li>Vuelve a introducir la hoja en la bandeja de papel.</li>
+                    <li>Imprime la Página 2 en el dorso.</li>
+                </ol>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
+                    Entendido, volver al generador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOTOR DE GENERACIÓN Y PDF -->
+    <script>
+    (function() {
+        'use strict';
+
+        // BANCOS TEMÁTICOS AMPLIOS (+80 PALABRAS CADA UNO)
+        const THEME_BANKS = {
+            desconexion: {
+                title: 'Desconexión',
+                words: [
+                    'PAPEL', 'TINTA', 'LIBRO', 'SILENCIO', 'PAUSA', 'CALMA', 'FOCO', 'ATENCION', 'RITMO', 'DETALLE',
+                    'ESCRIBIR', 'LECTURA', 'REFLEXION', 'MEMORIA', 'CUADERNO', 'HOJA', 'TRAZO', 'SOSIEGO', 'PRESENTE', 'TRANQUILO',
+                    'APAGAR', 'PANTALLA', 'VAPOR', 'TIEMPO', 'ESPACIO', 'SERENIDAD', 'ORDEN', 'TALLER', 'CALIGRAFIA', 'MARGEN',
+                    'DIARIO', 'NOTAS', 'LAPICERO', 'PLUMA', 'ESTUDIO', 'RESPIRAR', 'SOLEDAD', 'ESCUCHA', 'CLARIDAD', 'LENTITUD',
+                    'RUTINA', 'DESCANSO', 'DESCONECTAR', 'NATURAL', 'PROCESO', 'MANUAL', 'CREATIVO', 'PENSAR', 'MIRADA', 'SOMBRA',
+                    'HORIZONTE', 'COMPAS', 'BLANCO', 'ORIGEN', 'LENGUAJE', 'ARTESANO', 'PACIENCIA', 'SENCILLEZ', 'MINIMALISMO', 'INTENCION',
+                    'VITAL', 'REFUGIO', 'MEDITAR', 'FONDO', 'PAZ', 'ARMONIA', 'ALIENTO', 'LIBRE', 'CALMA', 'TRAZOS',
+                    'PAGINA', 'LINEA', 'MADERA', 'MANOS', 'TEXTURA', 'PULSO', 'REPOSO', 'BOCETO', 'SEÑAL', 'ANALOGICO'
+                ]
+            },
+            deportes: {
+                title: 'Deportes y Ejercicio',
+                words: [
+                    'FUTBOL', 'BALONCESTO', 'TENIS', 'ATLETISMO', 'NATACION', 'CICLISMO', 'VOLEIBOL', 'BOXEO', 'GOLF', 'RUGBY',
+                    'ESCALADA', 'REMO', 'JUDO', 'ESQUI', 'SURF', 'PADEL', 'KARATE', 'PATINAJE', 'GIMNASIA', 'WATERPOLO',
+                    'PIRAGUA', 'BADMINTON', 'ESGRIMA', 'TRIATLON', 'SENDERISMO', 'BEISBOL', 'HOCKEY', 'TIRO', 'MOTOCROSS', 'BALONMANO',
+                    'TAEKWONDO', 'MARATON', 'ALPINISMO', 'VELA', 'CANOTAJE', 'CROSSFIT', 'BUCEO', 'SQUASH', 'CRICKET', 'POLO',
+                    'PARAPENTE', 'WINDSURF', 'KARTING', 'DARDO', 'AJEDREZ', 'TREKKING', 'SURFING', 'SALTO', 'CARRERA', 'FONDO',
+                    'VELOCIDAD', 'LANZAMIENTO', 'DISCO', 'JABALINA', 'PESAS', 'ANILLAS', 'POTRO', 'BARRA', 'VALLAS', 'PISCINA',
+                    'CANCHA', 'PISTA', 'CIRCUITO', 'ESTADIO', 'TATAMI', 'RING', 'PORTERIA', 'RED', 'CANASTA', 'META',
+                    'CRONOMETRO', 'MEDALLA', 'TROFEO', 'PODIO', 'EQUIPO', 'ENTRENO', 'RITMO', 'ENERGIA', 'ESFUERZO', 'CAMPEON'
+                ]
+            },
+            naturaleza: {
+                title: 'Naturaleza y Senderos',
+                words: [
+                    'BOSQUE', 'MONTAÑA', 'RIO', 'SENDERO', 'ARBOL', 'VIENTO', 'NIEBLA', 'CUMBRE', 'HOJAS', 'PIEDRA',
+                    'VALLE', 'LAGO', 'MANANTIAL', 'CUEVA', 'BARRANCO', 'COLINA', 'PINAR', 'PRADERA', 'CAUCE', 'CORONA',
+                    'MUSGO', 'CORTEZA', 'ROCIO', 'NIEVE', 'HORIZONTE', 'CAÑON', 'PEÑASCO', 'ACANTILADO', 'ARROYO', 'CASCADA',
+                    'ROBLEDAL', 'HAYA', 'ALAMO', 'SAUCE', 'ENCINA', 'OLIVO', 'BREZO', 'HELECHO', 'FLOR', 'SEMILLA',
+                    'RAIZ', 'RAMA', 'TRONCO', 'PINO', 'ABETO', 'CEDRO', 'SIERRA', 'CORDILLERA', 'PICO', 'CRESTA',
+                    'LADERA', 'SENDITA', 'VEREDA', 'LLANURA', 'DESIERTO', 'DUNAS', 'PLAYA', 'MARISMA', 'DELTA', 'ISLA',
+                    'COSTA', 'BAHIA', 'CALA', 'ESTUARIO', 'BRISA', 'AURORA', 'OCASO', 'TORMENTA', 'LLUVIA', 'TRUENO',
+                    'PAISAJE', 'CIEGO', 'SENDAS', 'PARQUE', 'BOSCOSO', 'MONTE', 'FUENTE', 'CANTERA', 'TIERRA', 'AIRE'
+                ]
+            },
+            cafe: {
+                title: 'Café y Mañanas',
+                words: [
+                    'AROMA', 'CAFETERA', 'TAZA', 'TOSTADA', 'VENTANA', 'LECTURA', 'MAÑANA', 'VAPOR', 'DESPERTAR', 'GRANOS',
+                    'INFUSION', 'DESAYUNO', 'TETERA', 'MOLINILLO', 'ESPUMA', 'LECHE', 'CANELA', 'CHOCOLATE', 'PANADERIA', 'CALOR',
+                    'REPOSO', 'SABOR', 'REUNION', 'TREGUA', 'BODEGON', 'TARTAS', 'MESA', 'CAPUCHINO', 'EXPRESO', 'AMERICANO',
+                    'MOKA', 'BARISTA', 'FILTRO', 'PRENSA', 'ORIGEN', 'TOSTADO', 'CREMA', 'DULCE', 'AMARGO', 'NOTAS',
+                    'MATICES', 'CACAO', 'VAINILLA', 'GALLETA', 'CROISSANT', 'BIZCOCHO', 'MANTEQUILLA', 'MERMELADA', 'RITUAL', 'SOFA',
+                    'RINCON', 'LIBRERIA', 'PAPEL', 'CHARLA', 'DIARIO', 'PRIMERA', 'HORA', 'DESCANSO', 'PAUSA', 'SABOREAR',
+                    'TIBIO', 'CALIENTE', 'TRAGO', 'SORBO', 'VASO', 'PLATILLO', 'JARRA', 'DESPIERTO', 'LUZ', 'SOL',
+                    'ALIENTO', 'MOLIDO', 'CASCARA', 'GRANO', 'BOMBON', 'DESCAFEINADO', 'PASTEL', 'SERENO', 'CARIÑO', 'PLACER'
+                ]
+            },
+            mente: {
+                title: 'Agilidad Mental',
+                words: [
+                    'LOGICA', 'MEMORIA', 'ENFOQUE', 'REFLEJO', 'DESTREZA', 'CLARIDAD', 'CALCULO', 'ATENCION', 'AGILIDAD', 'RAZON',
+                    'INGENIO', 'CEREBRO', 'DEDUCCION', 'DESAFIO', 'ESTRATEGIA', 'PENSAR', 'RETO', 'ANALISIS', 'CRITERIO', 'AUDACIA',
+                    'JUICIO', 'INTUICION', 'AGUDEZA', 'DISCERNIR', 'BRILLO', 'LUCIDEZ', 'TALENTO', 'PERSPICAZ', 'CONCENTRACION', 'METODO',
+                    'PRACTICA', 'HABILIDAD', 'SINAPSIS', 'NEURONA', 'VIGOR', 'DESPERTAR', 'SOLUCION', 'PISTA', 'MISTERIO', 'ENIGMA',
+                    'PATRON', 'SECUENCIA', 'CIFRA', 'CODIGO', 'MAPA', 'RUMBO', 'VERDAD', 'PROBABLE', 'HIPOTESIS', 'RAZONAR',
+                    'DISCURRIR', 'IDEA', 'CREATIVIDAD', 'ASTUCIA', 'CIENCIA', 'SABER', 'CONOCER', 'APRENDER', 'DOMINIO', 'DISCIPLINA',
+                    'CHISPA', 'AGIL', 'DESPIERTO', 'AGUDO', 'VIVO', 'MEMORIZAR', 'SABIDURIA', 'INTELIGENCIA', 'PENSADOR', 'RETOS'
+                ]
+            },
+            cocina: {
+                title: 'Gastronomía y Cocina',
+                words: [
+                    'SARTEN', 'CAZUELA', 'CUCHILLO', 'TABLA', 'HORNO', 'FUEGO', 'ACEITE', 'VINAGRE', 'PIMIENTA', 'SALERO',
+                    'ROMERO', 'TOMILLO', 'LAUREL', 'AJO', 'CEBOLLA', 'TOMATE', 'ZANAHORIA', 'PATATA', 'GUISO', 'CALDO',
+                    'SOPA', 'ASADO', 'FRITO', 'VAPOR', 'HERVIDO', 'PLANCHA', 'POSTRE', 'HARINA', 'HUEVO', 'LECHE',
+                    'QUESO', 'ARROZ', 'PASTA', 'PAN', 'MASA', 'FERMENTO', 'LEVADURA', 'RECETA', 'CHEF', 'FOGON',
+                    'DELANTAL', 'CUCHARA', 'TENEDOR', 'PLATO', 'FUENTE', 'BANQUETE', 'GUSTO', 'PALADAR', 'AROMA', 'CONDIMENTO',
+                    'ESPECIA', 'OREGANO', 'ALBAHACA', 'PEREJIL', 'CILANTRO', 'CANELA', 'CLAVO', 'NUEZ', 'ALMENDRA', 'PIÑON',
+                    'MIEL', 'LIMON', 'NARANJA', 'MANZANA', 'PERA', 'PESCADO', 'CARNE', 'VERDURA', 'LEGUMBRE', 'POSTRES'
+                ]
+            },
+            viajes: {
+                title: 'Geografía y Viajes',
+                words: [
+                    'MALETA', 'BILLETE', 'PASAPORTE', 'AVION', 'TREN', 'BARCO', 'ESTACION', 'PUERTO', 'AEROPUERTO', 'RUTA',
+                    'MAPA', 'BRUJULA', 'DESTINO', 'HOTEL', 'HOSTAL', 'CIUDAD', 'CAPITAL', 'PUEBLO', 'ALDEA', 'MONUMENTO',
+                    'MUSEO', 'PLAZA', 'AVENIDA', 'CALLEJON', 'PUENTE', 'FRONTERA', 'IDIOMA', 'CULTURA', 'PAISAJE', 'AVENTURA',
+                    'EQUIPAJE', 'MOCHILA', 'GUIA', 'CAMINO', 'PARADA', 'VIAJERO', 'TURISTA', 'EXCURSION', 'TRAVESIA', 'CRUCERO',
+                    'VUELO', 'ANDEN', 'FARO', 'MIRADOR', 'CATEDRAL', 'CASTILLO', 'PALACIO', 'TORRE', 'MERCADO', 'BAZAR',
+                    'HORIZONTE', 'TIERRA', 'MUNDO', 'CONTINENTE', 'OCEANO', 'ISLA', 'ARCHIPIELAGO', 'SENDERO', 'EXPEDICION', 'ESTANCIA'
+                ]
+            }
+        };
+
+        // DICCIONARIOS SEMÁNTICOS PARA GENERAR DESDE CUALQUIER TEMA LIBRE
+        const SEMANTIC_TOPICS = {
+            animal: ['LEON', 'TIGRE', 'ELEFANTE', 'JIRAFA', 'DELFIN', 'BALLENA', 'AGUILA', 'HALCON', 'LOBO', 'ZORRO', 'OSO', 'PANDA', 'CANGURO', 'CABALLO', 'CEBRA', 'RINOCERONTE', 'HIPOPOTAMO', 'KOALA', 'PINGUINO', 'LEOPARDO', 'PANTERA', 'MONO', 'JABALI', 'CIERVO', 'CONEJO'],
+            espacio: ['PLANETA', 'ESTRELLA', 'GALAXIA', 'COMETA', 'METEORO', 'ORBITA', 'LUNA', 'SOLAR', 'NEBULOSA', 'COHETE', 'SATELITE', 'ASTRONAUTA', 'TELESCOPIO', 'GRAVEDAD', 'COSMOS', 'UNIVERSO', 'ECLIPSE', 'MARTE', 'JUPITER', 'SATURNO', 'VENUS', 'MERCURIO', 'AURORA'],
+            musica: ['GUITARRA', 'PIANO', 'VIOLIN', 'BATERIA', 'BAJO', 'TROMPETA', 'FLAUTA', 'SAXOFON', 'RITMO', 'ARMONIA', 'MELODIA', 'COMPAS', 'PARTITURA', 'CONCIERTO', 'ORQUESTA', 'SOLISTA', 'CANCION', 'ACORDE', 'ESCALA', 'SONIDO', 'CANTO', 'CORO', 'OPERA'],
+            cine: ['PELICULA', 'ACTOR', 'ACTRIZ', 'DIRECTOR', 'GUION', 'CAMARA', 'PANTALLA', 'ESTRENO', 'BUTACA', 'FOTOGRAMA', 'RODAJE', 'ESCENA', 'BANDA', 'SONORA', 'EFECTOS', 'PREMIO', 'FESTIVAL', 'MONTAJE', 'PROYECTOR', 'TRAILER', 'CARTEL'],
+            mitologia: ['ZEUS', 'HERA', 'POSEIDON', 'ATENEA', 'APOLO', 'ARTEMISA', 'ARES', 'HERMES', 'AFRODITA', 'HADES', 'DIONISO', 'HERCULES', 'PERSEO', 'AQUILES', 'MINOTAURO', 'CENTAURO', 'CICLOPE', 'SIRENA', 'PEGASO', 'OLIMPO', 'TITAN'],
+            fruta: ['MANZANA', 'PLATANO', 'NARANJA', 'LIMON', 'FRESA', 'CEREZA', 'MELOCOTON', 'CIRUELA', 'SANDIA', 'MELON', 'PIÑA', 'MANGO', 'AGUACATE', 'KIWI', 'PERA', 'UVA', 'MANDARINA', 'HIGUERA', 'GRANADA', 'FRAMBUESA', 'MORA', 'ARANDANO'],
+            profesion: ['MEDICO', 'MAESTRO', 'INGENIERO', 'ABOGADO', 'ARQUITECTO', 'PINTOR', 'ESCRITOR', 'MUSICO', 'COCINERO', 'CARPINTERO', 'FONTANERO', 'ELECTRICISTA', 'PILOTO', 'BOMBERO', 'POLICIA', 'ENFERMERO', 'DENTISTA', 'PERIODISTA', 'CIENTIFICO', 'VETERINARIO'],
+            invierno: ['NIEVE', 'HIELO', 'FRIO', 'ESQUI', 'BUFANDA', 'GUANTES', 'GORRO', 'TRINEO', 'ABRIGO', 'CHIMENEA', 'VENTISCA', 'ESCARCHA', 'NAVADILLA', 'GLACIAR', 'POLAR', 'LEÑA', 'FUEGO', 'MANTA', 'CHOCOLATE', 'REFUGIO', 'INVIERNO'],
+            playa: ['ARENA', 'OLAS', 'MAREA', 'TOALLA', 'SOMBRILLA', 'BRISA', 'CONCHA', 'CARACOL', 'BAÑADOR', 'SOL', 'PALMERA', 'DUNA', 'ORILLA', 'SURF', 'VELERO', 'COSTA', 'ISLA', 'FARO', 'CALA', 'BAHIA', 'VERANO', 'SALITRE', 'GAFAS']
+        };
+
+        const SPANISH_LETTER_POOL = 'AAAAAAEEEEEEEEIIIIIOOOOOOUUUBCCDDDEEFGGHHJJLLMMNNNÑOOPPQRRRSSSTTTUVXYZ';
+
+        function randomLetter() {
+            return SPANISH_LETTER_POOL[Math.floor(Math.random() * SPANISH_LETTER_POOL.length)];
+        }
+
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function cleanWord(w) {
+            return w.toUpperCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^A-ZÑ]/g, '');
+        }
+
+        // Estado del generador
+        const state = {
+            format: '8.25x6', // '8.25x6' (15 cols x 13 rows) o '6x9' (13 cols x 15 rows)
+            cols: 15,
+            rows: 13,
+            themeKey: 'desconexion',
+            themeTitle: 'Desconexión',
+            customTopic: '',
+            customWords: [],
+            words: [],
+            difficulty: 'easy', // 'easy', 'medium', 'hard'
+            viewPage: 1, // 1: reto, 2: solución
+            grid: [],
+            placedWords: []
+        };
+
+        // Genera 18 palabras automáticas a partir de un tema libre
+        function generateWordsForTopic(topicQuery) {
+            const q = topicQuery.toLowerCase().trim();
+            for (const [key, wordList] of Object.entries(SEMANTIC_TOPICS)) {
+                if (q.includes(key) || key.includes(q)) {
+                    return shuffle(wordList).slice(0, 18);
+                }
+            }
+            // Si el tema no coincide directamente con una clave, buscar en los bancos temáticos generales
+            for (const t of Object.values(THEME_BANKS)) {
+                if (t.title.toLowerCase().includes(q)) {
+                    return shuffle(t.words).slice(0, 18);
+                }
+            }
+            // Fallback genérico rico
+            const fallback = shuffle(THEME_BANKS.desconexion.words.concat(THEME_BANKS.mente.words));
+            return fallback.slice(0, 18);
+        }
+
+        // Extrae 18 palabras frescas para el tema activo
+        function pickFreshWordsForActiveTheme() {
+            if (state.themeKey === 'custom' && state.customWords && state.customWords.length >= 6) {
+                return state.customWords.slice(0, 18);
+            }
+            const bank = THEME_BANKS[state.themeKey] || THEME_BANKS.desconexion;
+            state.themeTitle = bank.title;
+            const valid = bank.words.filter(w => w.length >= 3 && w.length <= Math.max(state.cols, state.rows));
+            return shuffle(valid).slice(0, 18);
+        }
+
+        // Direcciones según dificultad
+        // [dr, dc]
+        const DIR_DEFINITIONS = {
+            // Fácil: solo horizontal y vertical hacia adelante
+            easy: [
+                { dr: 0, dc: 1, isDiag: false, isRev: false },  // Horiz der
+                { dr: 1, dc: 0, isDiag: false, isRev: false }   // Vert abajo
+            ],
+            // Medio: horizontal, vertical y diagonales hacia adelante (cero reversas)
+            medium: [
+                { dr: 0, dc: 1, isDiag: false, isRev: false },
+                { dr: 1, dc: 0, isDiag: false, isRev: false },
+                { dr: 1, dc: 1, isDiag: true,  isRev: false },  // Diag abajo-der
+                { dr: -1, dc: 1, isDiag: true, isRev: false }  // Diag arriba-der
+            ],
+            // Difícil: todas las 8 direcciones con palabras reversas obligatorias
+            hard: [
+                { dr: 0, dc: 1,  isDiag: false, isRev: false },
+                { dr: 1, dc: 0,  isDiag: false, isRev: false },
+                { dr: 1, dc: 1,  isDiag: true,  isRev: false },
+                { dr: -1, dc: 1, isDiag: true,  isRev: false },
+                // Reversas:
+                { dr: 0, dc: -1,  isDiag: false, isRev: true },  // Horiz izq
+                { dr: -1, dc: 0,  isDiag: false, isRev: true },  // Vert arriba
+                { dr: -1, dc: -1, isDiag: true,  isRev: true },  // Diag arriba-izq
+                { dr: 1, dc: -1,  isDiag: true,  isRev: true }   // Diag abajo-izq
+            ]
+        };
+
+        // ALGORITMO CON BÚSQUEDA PRIORITARIA DE INTERSECCIONES Y REVERSAS
+        function generateSopa() {
+            // Ajustar dimensiones según el formato solicitado:
+            // 8.25" × 6" (Apaisado) = 15 columnas × 13 filas
+            // 6" × 9" (Vertical) = 13 columnas × 15 filas
+            const is6x9 = state.format === '6x9';
+            state.cols = is6x9 ? 13 : 15;
+            state.rows = is6x9 ? 15 : 13;
+
+            // Obtener 18 palabras frescas
+            state.words = pickFreshWordsForActiveTheme();
+
+            const rows = state.rows;
+            const cols = state.cols;
+            const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
+            const placedWords = [];
+
+            const allDirs = DIR_DEFINITIONS[state.difficulty] || DIR_DEFINITIONS.easy;
+            const maxWordLen = Math.max(rows, cols);
+
+            // Ordenar palabras de más larga a más corta (las largas crean la red inicial de cruces)
+            const cleanWordList = state.words
+                .map(w => cleanWord(w))
+                .filter(w => w.length >= 3 && w.length <= maxWordLen)
+                .sort((a, b) => b.length - a.length);
+
+            // Cuotas según dificultad
+            let reverseQuota = state.difficulty === 'hard' ? 7 : 0;
+            let diagonalQuota = state.difficulty === 'medium' ? 5 : (state.difficulty === 'hard' ? 5 : 0);
+            let reverseCount = 0;
+            let diagonalCount = 0;
+
+            for (const word of cleanWordList) {
+                const len = word.length;
+                let placed = false;
+
+                // Determinar qué direcciones priorizar para cumplir las cuotas de dificultad
+                let candidateDirs = allDirs.slice();
+                if (state.difficulty === 'hard' && reverseCount < reverseQuota) {
+                    const revOnly = allDirs.filter(d => d.isRev);
+                    if (revOnly.length > 0) candidateDirs = revOnly;
+                } else if (state.difficulty === 'medium' && diagonalCount < diagonalQuota) {
+                    const diagOnly = allDirs.filter(d => d.isDiag);
+                    if (diagOnly.length > 0) candidateDirs = diagOnly;
+                }
+
+                // 1. PRIMER INTENTO: BUSCAR INTERSECCIONES CON PALABRAS YA COLOCADAS
+                if (placedWords.length > 0) {
+                    const intersectionCandidates = [];
+
+                    for (let letterIdx = 0; letterIdx < len; letterIdx++) {
+                        const targetChar = word[letterIdx];
+
+                        // Buscar en la cuadrícula dónde existe esta letra
+                        for (let r = 0; r < rows; r++) {
+                            for (let c = 0; c < cols; c++) {
+                                if (grid[r][c] === targetChar) {
+                                    // Probar cada dirección candidata
+                                    for (const d of candidateDirs) {
+                                        const startR = r - letterIdx * d.dr;
+                                        const startC = c - letterIdx * d.dc;
+                                        const endR = startR + (len - 1) * d.dr;
+                                        const endC = startC + (len - 1) * d.dc;
+
+                                        if (startR >= 0 && startR < rows && endR >= 0 && endR < rows &&
+                                            startC >= 0 && startC < cols && endC >= 0 && endC < cols) {
+                                            
+                                            // Comprobar si toda la palabra encaja
+                                            let fits = true;
+                                            let overlaps = 0;
+                                            const cells = [];
+
+                                            for (let step = 0; step < len; step++) {
+                                                const curR = startR + step * d.dr;
+                                                const curC = startC + step * d.dc;
+                                                const existing = grid[curR][curC];
+                                                if (existing === word[step]) {
+                                                    overlaps++;
+                                                } else if (existing !== '') {
+                                                    fits = false;
+                                                    break;
+                                                }
+                                                cells.push([curR, curC]);
+                                            }
+
+                                            if (fits && overlaps >= 1) {
+                                                intersectionCandidates.push({
+                                                    cells,
+                                                    dir: d,
+                                                    overlaps,
+                                                    startR,
+                                                    startC
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Si encontramos candidatos con cruce, elegir uno aleatorio de los mejores
+                    if (intersectionCandidates.length > 0) {
+                        const chosen = intersectionCandidates[Math.floor(Math.random() * intersectionCandidates.length)];
+                        for (let step = 0; step < len; step++) {
+                            const [cr, cc] = chosen.cells[step];
+                            grid[cr][cc] = word[step];
+                        }
+                        placedWords.push({ word, cells: chosen.cells, dir: chosen.dir });
+                        if (chosen.dir.isRev) reverseCount++;
+                        if (chosen.dir.isDiag) diagonalCount++;
+                        placed = true;
+                    }
+                }
+
+                // 2. SEGUNDO INTENTO: SI NO HUBO CRUCE POSIBLE, COLOCAR EN ESPACIO LIBRE
+                if (!placed) {
+                    const shuffledDirs = shuffle(candidateDirs);
+                    for (let attempt = 0; attempt < 80; attempt++) {
+                        const d = shuffledDirs[attempt % shuffledDirs.length];
+                        const minR = d.dr < 0 ? len - 1 : 0;
+                        const maxR = d.dr > 0 ? rows - len : rows - 1;
+                        const minC = d.dc < 0 ? len - 1 : 0;
+                        const maxC = d.dc > 0 ? cols - len : cols - 1;
+
+                        if (minR > maxR || minC > maxC) continue;
+
+                        const startR = Math.floor(Math.random() * (maxR - minR + 1)) + minR;
+                        const startC = Math.floor(Math.random() * (maxC - minC + 1)) + minC;
+
+                        let canFit = true;
+                        const cells = [];
+                        for (let i = 0; i < len; i++) {
+                            const cr = startR + i * d.dr;
+                            const cc = startC + i * d.dc;
+                            const existing = grid[cr][cc];
+                            if (existing !== '' && existing !== word[i]) {
+                                canFit = false;
+                                break;
+                            }
+                            cells.push([cr, cc]);
+                        }
+
+                        if (canFit) {
+                            for (let i = 0; i < len; i++) {
+                                const [cr, cc] = cells[i];
+                                grid[cr][cc] = word[i];
+                            }
+                            placedWords.push({ word, cells, dir: d });
+                            if (d.isRev) reverseCount++;
+                            if (d.isDiag) diagonalCount++;
+                            placed = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Rellenar huecos vacíos con letras de despiste ponderadas
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (grid[r][c] === '') {
+                        grid[r][c] = randomLetter();
+                    }
+                }
+            }
+
+            state.grid = grid;
+            state.placedWords = placedWords;
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-notify');
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 2400);
+        }
+
+        // Renderizado del lienzo
+        function renderSheet() {
+            const sheet = document.getElementById('sheetPreview');
+            const formatBadge = document.getElementById('formatBadgeDisplay');
+            const modalBadge = document.getElementById('modalFormatBadge');
+            const headerMeta = document.getElementById('sheetHeaderMeta');
+            const footerPage = document.getElementById('sheetFooterPage');
+
+            const is6x9 = state.format === '6x9';
+            sheet.classList.toggle('format-6x9', is6x9);
+
+            const fmtLabel = is6x9 ? 'Formato 6" × 9" (13×15 Vertical)' : 'Formato 8.25" × 6" (15×13 Apaisado)';
+            const diffLabel = state.difficulty === 'easy' ? 'FÁCIL' : (state.difficulty === 'medium' ? 'MEDIO (DIAGONALES)' : 'DIFÍCIL (REVERSAS)');
+            const pageLabel = state.viewPage === 1 ? 'Pág. 1 / 2' : 'Pág. 2 / 2 (Solución)';
+
+            if (formatBadge) formatBadge.textContent = `${fmtLabel} · ${state.viewPage === 1 ? 'Anverso' : 'Solución'}`;
+            if (modalBadge) modalBadge.innerHTML = `<span>📐</span> ${fmtLabel} · 2 Páginas`;
+            if (headerMeta) headerMeta.textContent = 'EDITORIAL MENOS RUIDO';
+            if (footerPage) footerPage.textContent = pageLabel;
+
+            // Renderizar Rejilla
+            const gridBoard = document.getElementById('sopaGridBoard');
+            if (gridBoard) {
+                gridBoard.style.gridTemplateColumns = `repeat(${state.cols}, 1fr)`;
+                gridBoard.style.gridTemplateRows = `repeat(${state.rows}, 1fr)`;
+                gridBoard.innerHTML = '';
+
+                const solvedCoords = new Set();
+                if (state.viewPage === 2) {
+                    state.placedWords.forEach(pw => {
+                        pw.cells.forEach(([r, c]) => solvedCoords.add(`${r},${c}`));
+                    });
+                }
+
+                for (let r = 0; r < state.rows; r++) {
+                    for (let c = 0; c < state.cols; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'sopa-cell';
+                        cell.textContent = state.grid[r][c] || 'A';
+                        if (solvedCoords.has(`${r},${c}`)) {
+                            cell.classList.add('solved-cell');
+                        }
+                        gridBoard.appendChild(cell);
+                    }
+                }
+            }
+
+            // Renderizar Lista de Palabras (18 palabras en 3 columnas)
+            const wordsGrid = document.getElementById('wordsListGrid');
+            const wordsTitle = document.getElementById('wordsListTitle');
+            if (wordsTitle) {
+                const actionLabel = state.viewPage === 1 ? 'Palabras a buscar' : 'Solución';
+                wordsTitle.textContent = `${actionLabel} · ${state.themeTitle.toUpperCase()} · ${diffLabel}`;
+            }
+            if (wordsGrid) {
+                wordsGrid.innerHTML = '';
+                state.placedWords.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'word-item-row';
+                    if (state.viewPage === 2) row.classList.add('is-found');
+
+                    const box = document.createElement('span');
+                    box.className = 'word-checkbox';
+
+                    const label = document.createElement('span');
+                    label.textContent = item.word;
+
+                    row.appendChild(box);
+                    row.appendChild(label);
+                    wordsGrid.appendChild(row);
+                });
+            }
+        }
+
+        // GENERACIÓN DE DOCUMENTO jsPDF A 300 DPI (2 PÁGINAS)
+        function generatePdfDoc() {
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar la librería PDF.');
+                return null;
+            }
+
+            const is6x9 = state.format === '6x9';
+            // 8.25" × 6" = 209.55 × 152.4 mm
+            // 6" × 9" = 152.4 × 228.6 mm
+            const widthMm = is6x9 ? 152.4 : 209.55;
+            const heightMm = is6x9 ? 228.6 : 152.4;
+            const orientation = is6x9 ? 'portrait' : 'landscape';
+
+            const doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: [widthMm, heightMm]
+            });
+
+            const diffText = state.difficulty === 'easy' ? 'FACIL' : (state.difficulty === 'medium' ? 'MEDIO' : 'DIFICIL');
+
+            function drawPage(pageNum, isSolution) {
+                const marginX = 12;
+                const marginY = is6x9 ? 13 : 11;
+
+                // 1. CABECERA
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(is6x9 ? 11 : 12);
+                doc.setTextColor(20, 20, 20);
+                doc.text('MENOS RUIDO  ·  SOPA DE LETRAS', marginX, marginY + 4);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(90, 90, 90);
+                doc.text('EDITORIAL MENOS RUIDO', widthMm - marginX, marginY + 4, { align: 'right' });
+
+                // Línea separadora
+                doc.setDrawColor(20, 20, 20);
+                doc.setLineWidth(0.4);
+                doc.line(marginX, marginY + 6.5, widthMm - marginX, marginY + 6.5);
+
+                // 2. CUADRÍCULA Y PALABRAS
+                if (!is6x9) {
+                    // LAYOUT 8.25" × 6" (15 COLS × 13 ROWS APAISADO)
+                    const cellSize = 8.6; // mm
+                    const gridW = state.cols * cellSize; // 15 * 8.6 = 129 mm
+                    const gridH = state.rows * cellSize; // 13 * 8.6 = 111.8 mm
+                    const gridX = marginX;
+                    const gridY = marginY + 10;
+
+                    // Si es solución, sombrear las celdas
+                    if (isSolution) {
+                        doc.setFillColor(235, 224, 215);
+                        state.placedWords.forEach(pw => {
+                            pw.cells.forEach(([r, c]) => {
+                                const cx = gridX + c * cellSize;
+                                const cy = gridY + r * cellSize;
+                                doc.rect(cx, cy, cellSize, cellSize, 'F');
+                            });
+                        });
+                    }
+
+                    // Marco exterior
+                    doc.setDrawColor(20, 20, 20);
+                    doc.setLineWidth(0.5);
+                    doc.rect(gridX, gridY, gridW, gridH);
+
+                    // Rejilla interior fina
+                    doc.setDrawColor(220, 215, 208);
+                    doc.setLineWidth(0.15);
+                    for (let c = 1; c < state.cols; c++) {
+                        doc.line(gridX + c * cellSize, gridY, gridX + c * cellSize, gridY + gridH);
+                    }
+                    for (let r = 1; r < state.rows; r++) {
+                        doc.line(gridX, gridY + r * cellSize, gridX + gridW, gridY + r * cellSize);
+                    }
+
+                    // Letras
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10.5);
+                    doc.setTextColor(20, 20, 20);
+                    for (let r = 0; r < state.rows; r++) {
+                        for (let c = 0; c < state.cols; c++) {
+                            const letter = state.grid[r][c];
+                            const cx = gridX + c * cellSize + cellSize / 2;
+                            const cy = gridY + r * cellSize + cellSize / 2 + 1.3;
+                            doc.text(letter, cx, cy, { align: 'center' });
+                        }
+                    }
+
+                    // Panel de Palabras (Derecha: 18 palabras en 2 columnas)
+                    const wordsX = gridX + gridW + 7;
+                    const wordsW = widthMm - marginX - wordsX;
+                    let currentY = gridY + 4;
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.6);
+                    doc.setTextColor(40, 40, 40);
+                    const listTitleApaisado = `${isSolution ? 'SOLUCION' : 'PALABRAS A BUSCAR'} · ${state.themeTitle.toUpperCase()} · ${diffText}`;
+                    doc.text(listTitleApaisado, wordsX, currentY);
+                    currentY += 5.5;
+
+                    const colCount = 2;
+                    const colW = wordsW / colCount;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.6);
+
+                    state.placedWords.forEach((pw, idx) => {
+                        const col = idx % colCount;
+                        const row = Math.floor(idx / colCount);
+                        const itemX = wordsX + col * colW;
+                        const itemY = currentY + row * 6.2;
+
+                        doc.setDrawColor(100, 100, 100);
+                        doc.setLineWidth(0.25);
+                        if (isSolution) {
+                            doc.setFillColor(135, 85, 59);
+                            doc.circle(itemX + 1.8, itemY - 1.0, 1.2, 'FD');
+                        } else {
+                            doc.circle(itemX + 1.8, itemY - 1.0, 1.2, 'D');
+                        }
+
+                        doc.setTextColor(30, 30, 30);
+                        doc.text(pw.word, itemX + 5, itemY);
+                    });
+
+                } else {
+                    // LAYOUT 6" × 9" (13 COLS × 15 ROWS VERTICAL)
+                    const cellSize = 9.3; // mm
+                    const gridW = state.cols * cellSize; // 13 * 9.3 = 120.9 mm
+                    const gridH = state.rows * cellSize; // 15 * 9.3 = 139.5 mm
+                    const gridX = (widthMm - gridW) / 2;
+                    const gridY = marginY + 10;
+
+                    // Si es solución, sombrear
+                    if (isSolution) {
+                        doc.setFillColor(235, 224, 215);
+                        state.placedWords.forEach(pw => {
+                            pw.cells.forEach(([r, c]) => {
+                                const cx = gridX + c * cellSize;
+                                const cy = gridY + r * cellSize;
+                                doc.rect(cx, cy, cellSize, cellSize, 'F');
+                            });
+                        });
+                    }
+
+                    // Marco exterior
+                    doc.setDrawColor(20, 20, 20);
+                    doc.setLineWidth(0.5);
+                    doc.rect(gridX, gridY, gridW, gridH);
+
+                    // Rejilla interior
+                    doc.setDrawColor(220, 215, 208);
+                    doc.setLineWidth(0.15);
+                    for (let c = 1; c < state.cols; c++) {
+                        doc.line(gridX + c * cellSize, gridY, gridX + c * cellSize, gridY + gridH);
+                    }
+                    for (let r = 1; r < state.rows; r++) {
+                        doc.line(gridX, gridY + r * cellSize, gridX + gridW, gridY + r * cellSize);
+                    }
+
+                    // Letras
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(11);
+                    doc.setTextColor(20, 20, 20);
+                    for (let r = 0; r < state.rows; r++) {
+                        for (let c = 0; c < state.cols; c++) {
+                            const letter = state.grid[r][c];
+                            const cx = gridX + c * cellSize + cellSize / 2;
+                            const cy = gridY + r * cellSize + cellSize / 2 + 1.4;
+                            doc.text(letter, cx, cy, { align: 'center' });
+                        }
+                    }
+
+                    // Panel de Palabras (Abajo: 18 palabras en 3 columnas)
+                    let wordsY = gridY + gridH + 7;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.0);
+                    doc.setTextColor(40, 40, 40);
+                    const listTitle6x9 = `${isSolution ? 'SOLUCION' : 'PALABRAS A BUSCAR'} · ${state.themeTitle.toUpperCase()} · ${diffText}`;
+                    doc.text(listTitle6x9, marginX, wordsY);
+                    wordsY += 5;
+
+                    const colW = (widthMm - marginX * 2) / 3;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.6);
+
+                    state.placedWords.forEach((pw, idx) => {
+                        const col = idx % 3;
+                        const row = Math.floor(idx / 3);
+                        const itemX = marginX + col * colW;
+                        const itemY = wordsY + row * 5.6;
+
+                        doc.setDrawColor(100, 100, 100);
+                        doc.setLineWidth(0.25);
+                        if (isSolution) {
+                            doc.setFillColor(135, 85, 59);
+                            doc.circle(itemX + 1.8, itemY - 1.0, 1.2, 'FD');
+                        } else {
+                            doc.circle(itemX + 1.8, itemY - 1.0, 1.2, 'D');
+                        }
+
+                        doc.setTextColor(30, 30, 30);
+                        doc.text(pw.word, itemX + 5, itemY);
+                    });
+                }
+
+                // 3. PIE DE HOJA
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.2);
+                doc.line(marginX, heightMm - marginY + 2, widthMm - marginX, heightMm - marginY + 2);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.8);
+                doc.setTextColor(110, 110, 110);
+                doc.text('Editorial Menos Ruido  ·  www.editorialmenosruido.com', marginX, heightMm - marginY + 5.5);
+                doc.text(`Pag. ${pageNum} / 2`, widthMm - marginX, heightMm - marginY + 5.5, { align: 'right' });
+            }
+
+            // Página 1: Reto limpio
+            drawPage(1, false);
+
+            // Página 2: Soluciones exactas
+            doc.addPage([widthMm, heightMm], orientation);
+            drawPage(2, true);
+
+            return doc;
+        }
+
+        // Modales y acciones
+        function openDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.add('active');
+            const emailInput = document.getElementById('modal-email-input');
+            if (emailInput && !emailInput.value) {
+                try {
+                    let prefill = '';
+                    if (window.mrAuthUserEmail) prefill = window.mrAuthUserEmail;
+                    if (!prefill) prefill = localStorage.getItem('mr_user_pdf_email') || localStorage.getItem('emailForSignIn') || '';
+                    if (!prefill) {
+                        const cached = localStorage.getItem('mr_cached_user');
+                        if (cached) prefill = JSON.parse(cached).email || '';
+                    }
+                    if (prefill) emailInput.value = prefill;
+                } catch(e) {}
+            }
+        }
+
+        function closeDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function openTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.add('active');
+        }
+
+        function closeTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target && e.target.id === 'download-modal') closeDownloadModal();
+            if (e.target && e.target.id === 'tutorial-modal') closeTutorialModal();
+        }
+
+        function executeDownload() {
+            const doc = generatePdfDoc();
+            if (!doc) return;
+            const diffText = state.difficulty === 'easy' ? 'facil' : (state.difficulty === 'medium' ? 'medio' : 'dificil');
+            const safeTheme = state.themeKey.replace(/[^a-z0-9]/gi, '-');
+            doc.save(`Menos-Ruido-Sopa-Letras-${state.format}-${safeTheme}-${diffText}.pdf`);
+            closeDownloadModal();
+            showToast('✓ PDF de Sopa de Letras descargado');
+        }
+
+        function executePrint() {
+            const doc = generatePdfDoc();
+            if (!doc) return;
+            doc.autoPrint();
+            const blobUrl = doc.output('bloburl');
+            window.open(blobUrl, '_blank');
+            closeDownloadModal();
+            showToast('✓ Abriendo ventana de impresión');
+        }
+
+        async function sendPdfViaEmail() {
+            const emailInput = document.getElementById('modal-email-input');
+            const feedback = document.getElementById('modal-email-feedback');
+            const btn = document.getElementById('btn-modal-send-email');
+            
+            const email = (emailInput ? emailInput.value : '').trim();
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'Por favor, escribe un correo electrónico válido.';
+                }
+                if (emailInput) emailInput.focus();
+                return;
+            }
+
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#eff6ff';
+                feedback.style.color = '#1e40af';
+                feedback.style.border = '1px solid #bfdbfe';
+                feedback.textContent = '⏳ Generando documento y enviando por correo...';
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.textContent = 'Enviando...';
+            }
+
+            try {
+                const doc = generatePdfDoc();
+                if (!doc) throw new Error('No se pudo generar el documento PDF.');
+                const pdfBase64 = doc.output('datauristring');
+                const diffText = state.difficulty === 'easy' ? 'Fácil' : (state.difficulty === 'medium' ? 'Medio' : 'Difícil');
+                const fmtName = state.format === '6x9' ? '6" × 9" (13×15 Vertical)' : '8.25" × 6" (15×13 Apaisado)';
+
+                const response = await fetch('/api/send-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        pdfBase64: pdfBase64,
+                        filename: `Menos-Ruido-Sopa-Letras-${state.format}-${state.themeKey}.pdf`,
+                        plannerName: `Sopa de Letras Menos Ruido · ${fmtName} (${state.themeTitle} - ${diffText})`
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error al procesar el envío del correo.');
+                }
+
+                try { localStorage.setItem('mr_user_pdf_email', email); } catch(e) {}
+
+                if (feedback) {
+                    feedback.style.background = '#f0fdf4';
+                    feedback.style.color = '#166534';
+                    feedback.style.border = '1px solid #bbf7d0';
+                    feedback.textContent = '✓ ¡Enviado! Revisa tu bandeja de entrada en unos instantes.';
+                }
+                if (btn) btn.textContent = 'Enviado';
+
+                setTimeout(() => {
+                    closeDownloadModal();
+                    showToast('✓ PDF enviado a ' + email);
+                }, 1800);
+            } catch(err) {
+                console.error('Error enviando PDF por email:', err);
+                if (feedback) {
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'No se pudo enviar el correo: ' + (err.message || 'Error de red.');
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.textContent = 'Reintentar';
+                }
+            }
+        }
+
+        function setViewPage(pageNum) {
+            state.viewPage = pageNum;
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.page, 10) === pageNum);
+            });
+        }
+
+        // Exponer al ámbito global
+        window.mrSopaState = state;
+        window.mrSopaRender = renderSheet;
+        window.mrSopaGenerate = generateSopa;
+        window.mrSetViewPage = setViewPage;
+        window.openDownloadModal = openDownloadModal;
+        window.closeDownloadModal = closeDownloadModal;
+        window.openTutorialModal = openTutorialModal;
+        window.closeTutorialModal = closeTutorialModal;
+        window.closeModalOnBackdrop = closeModalOnBackdrop;
+        window.executeDownload = executeDownload;
+        window.executePrint = executePrint;
+        window.sendPdfViaEmail = sendPdfViaEmail;
+
+        function initGeneratorUI() {
+            generateSopa();
+            renderSheet();
+
+            // Selector de Formato (8.25x6 vs 6x9)
+            document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.format = btn.dataset.format;
+                    setViewPage(1);
+                    generateSopa();
+                    renderSheet();
+                });
+            });
+
+            // Selector de Tema Predefinido
+            const themeSel = document.getElementById('themeSelect');
+            const customDrawer = document.getElementById('customWordsDrawer');
+            if (themeSel) {
+                themeSel.addEventListener('change', () => {
+                    const val = themeSel.value;
+                    if (val === 'custom') {
+                        if (customDrawer) customDrawer.classList.add('active');
+                        state.themeKey = 'custom';
+                        state.themeTitle = 'Tema Personalizado';
+                    } else {
+                        if (customDrawer) customDrawer.classList.remove('active');
+                        state.themeKey = val;
+                        setViewPage(1);
+                        generateSopa();
+                        renderSheet();
+                    }
+                });
+            }
+
+            // Generar 18 palabras automáticas a partir de un tema libre
+            const btnTopicGen = document.getElementById('btnGenerateFromTopic');
+            const inputTopic = document.getElementById('customTopicInput');
+            const inputWords = document.getElementById('customWordsInput');
+            if (btnTopicGen && inputTopic) {
+                btnTopicGen.addEventListener('click', () => {
+                    const topicQuery = inputTopic.value.trim();
+                    if (!topicQuery) {
+                        alert('Escribe un tema (ej: Deportes, Animales, Espacio, Cine, Mitología...)');
+                        return;
+                    }
+                    const generated = generateWordsForTopic(topicQuery);
+                    state.themeKey = 'custom';
+                    state.themeTitle = topicQuery.charAt(0).toUpperCase() + topicQuery.slice(1);
+                    state.customWords = generated;
+                    if (inputWords) inputWords.value = generated.join(', ');
+                    setViewPage(1);
+                    generateSopa();
+                    renderSheet();
+                    showToast(`✓ 18 palabras generadas para "${state.themeTitle}"`);
+                });
+            }
+
+            // Aplicar palabras personalizadas manuales
+            const btnApplyCustom = document.getElementById('btnApplyCustomWords');
+            if (btnApplyCustom && inputWords) {
+                btnApplyCustom.addEventListener('click', () => {
+                    const raw = inputWords.value.trim();
+                    if (!raw) return;
+                    const parsed = raw.split(/[,;\n]+/)
+                        .map(w => cleanWord(w))
+                        .filter(w => w.length >= 3 && w.length <= 15);
+                    
+                    if (parsed.length < 6) {
+                        alert('Por favor, escribe al menos 6 palabras de entre 3 y 15 letras.');
+                        return;
+                    }
+                    state.themeKey = 'custom';
+                    state.customWords = parsed;
+                    state.themeTitle = inputTopic && inputTopic.value.trim() ? inputTopic.value.trim() : 'Personalizada';
+                    setViewPage(1);
+                    generateSopa();
+                    renderSheet();
+                    showToast('✓ Palabras aplicadas a la sopa');
+                });
+            }
+
+            // Selector de Dificultad
+            document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.difficulty = btn.dataset.diff;
+                    setViewPage(1);
+                    generateSopa();
+                    renderSheet();
+                });
+            });
+
+            // Selector de Vista de Página
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.viewPage = parseInt(btn.dataset.page, 10);
+                    renderSheet();
+                });
+            });
+
+            // Botón Regenerar (Extrae 18 palabras frescas distintas del banco y cruza la cuadrícula)
+            const btnRegen = document.getElementById('btnRegenerate');
+            if (btnRegen) {
+                btnRegen.addEventListener('click', () => {
+                    generateSopa();
+                    renderSheet();
+                    showToast('✓ Nuevas 18 palabras y cuadrícula generadas');
+                });
+            }
+
+            // Botón Modal Descarga
+            const btnOpenDl = document.getElementById('btnOpenDownloadModal');
+            if (btnOpenDl) btnOpenDl.addEventListener('click', openDownloadModal);
+
+            // Botón Modal Tutorial
+            const btnOpenTut = document.getElementById('btnOpenTutorialModal');
+            if (btnOpenTut) btnOpenTut.addEventListener('click', openTutorialModal);
+
+            const linkTutDl = document.getElementById('linkTutorialInDownload');
+            if (linkTutDl) {
+                linkTutDl.addEventListener('click', () => {
+                    closeDownloadModal();
+                    openTutorialModal();
+                });
+            }
+
+            // Tecla Escape para cerrar modales
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeDownloadModal();
+                    closeTutorialModal();
+                }
+            });
+
+            // Acciones del modal
+            const btnExecDl = document.getElementById('btnExecuteDownload');
+            if (btnExecDl) btnExecDl.addEventListener('click', executeDownload);
+
+            const btnExecPrint = document.getElementById('btnExecutePrint');
+            if (btnExecPrint) btnExecPrint.addEventListener('click', executePrint);
+
+            const btnSendMail = document.getElementById('btn-modal-send-email');
+            if (btnSendMail) btnSendMail.addEventListener('click', sendPdfViaEmail);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGeneratorUI);
+        } else {
+            initGeneratorUI();
+        }
+    })();
+    </script>
+
+    <!-- ENTRADA PRINCIPAL DEL SISTEMA (AUTH Y FIREBASE) -->
+    <script type="module" src="./main.js"></script>
+
+    <!-- INTEGRACIÓN CON MI ESPACIO -->
+    <script type="module">
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        // Guardado en Mi Espacio
+        setupGeneratorSave('btn-save-generator-design', () => {
+            const state = window.mrSopaState || {};
+            const diffText = state.difficulty === 'easy' ? 'Fácil' : (state.difficulty === 'medium' ? 'Medio' : 'Difícil');
+            const fmtText = state.format === '6x9' ? '6" × 9" Vertical' : '8.25" × 6" Apaisado';
+            return {
+                name: `Sopa de Letras · ${state.themeTitle} (${diffText})`,
+                type: 'Sopa de Letras',
+                summary: `${fmtText} · ${state.themeTitle} (${diffText}) · Anverso y Solución`,
+                data: {
+                    format: state.format,
+                    themeKey: state.themeKey,
+                    themeTitle: state.themeTitle,
+                    words: state.words,
+                    difficulty: state.difficulty,
+                    grid: state.grid,
+                    placedWords: state.placedWords
+                }
+            };
+        });
+
+        // Carga si viene con ?designId=...
+        checkAndLoadSavedDesign((savedData) => {
+            if (!savedData) return;
+            const state = window.mrSopaState;
+            if (!state) return;
+
+            if (savedData.format) {
+                state.format = savedData.format;
+                document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.format === state.format);
+                });
+            }
+            if (savedData.themeKey) {
+                state.themeKey = savedData.themeKey;
+                const sel = document.getElementById('themeSelect');
+                if (sel) sel.value = state.themeKey;
+            }
+            if (savedData.themeTitle) state.themeTitle = savedData.themeTitle;
+            if (savedData.words) state.words = savedData.words;
+            if (savedData.difficulty) {
+                state.difficulty = savedData.difficulty;
+                document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.diff === state.difficulty);
+                });
+            }
+            if (savedData.grid) state.grid = savedData.grid;
+            if (savedData.placedWords) state.placedWords = savedData.placedWords;
+
+            if (typeof window.mrSetViewPage === 'function') window.mrSetViewPage(1);
+            if (typeof window.mrSopaRender === 'function') window.mrSopaRender();
+        });
+    </script>
+</body>
+</html>

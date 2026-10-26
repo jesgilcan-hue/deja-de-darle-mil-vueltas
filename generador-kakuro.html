@@ -1,0 +1,3404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Generador de Kakuro en PDF (8.25" × 6" y 6" × 9") · Editorial Menos Ruido</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-kakuro.html">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos base -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./diagnostic.css">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #ffffff;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border-grid-thick: #111111;
+            --border-grid-thin: #b0aba0;
+            --clue-bg: #ede6dc;
+            --clue-text: #2c251e;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --accent: #87553b;
+            --accent-hover: #6f422c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .dev-badge-bar {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 5px 12px;
+            border-bottom: 1px solid #fde68a;
+            letter-spacing: 0.3px;
+        }
+
+        .generator-container-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 20px 48px;
+            flex: 1;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 16px;
+            max-width: 800px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #111111;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.88rem;
+            color: #555;
+        }
+
+        /* BARRA DE HERRAMIENTAS */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 1050px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+        }
+
+        .btn-toggle-group {
+            display: inline-flex;
+            background: #f1ede6;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 2px;
+        }
+
+        .btn-toggle-item {
+            background: transparent;
+            border: none;
+            padding: 5px 12px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+        .btn-toggle-item.active {
+            background: #ffffff;
+            color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-action {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            padding: 6px 12px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #111;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-action:hover {
+            border-color: #111;
+            background: #ffffff;
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 7px 16px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.25);
+            transition: background 0.15s ease;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* LIENZO DE PREVISUALIZACIÓN 1:1 */
+        .canvas-preview-wrapper {
+            width: 100%;
+            max-width: 1050px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .sheet-container {
+            width: 100%;
+            max-width: 960px;
+            aspect-ratio: 8.25 / 6;
+            background: var(--paper-color);
+            border: 1px solid #e0dbd1;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            padding: 2.2% 3.2%;
+            transition: aspect-ratio 0.2s ease, max-width 0.2s ease;
+            position: relative;
+        }
+
+        .sheet-container.format-6x9 {
+            max-width: 640px;
+            aspect-ratio: 6 / 9;
+            padding: 3.5% 4.5%;
+        }
+
+        /* CABECERA HOJA */
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--border-grid-thick);
+            padding-bottom: 5px;
+            margin-bottom: 2%;
+        }
+        .sheet-header-title {
+            font-family: var(--font-serif);
+            font-size: clamp(0.95rem, 1.8vw, 1.35rem);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #111;
+        }
+        .sheet-header-meta {
+            font-size: clamp(0.70rem, 1.1vw, 0.82rem);
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* CUERPO DEL LIENZO MULTI-PUZZLE */
+        .sheet-body-layout {
+            flex: 1;
+            display: grid;
+            gap: 12px 20px;
+            min-height: 0;
+            position: relative;
+            align-content: center;
+            justify-items: center;
+        }
+
+        /* 8.25x6: 3 columnas x 2 filas = 6 puzzles */
+        .sheet-container:not(.format-6x9) .sheet-body-layout {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 14px 18px;
+        }
+
+        /* 6x9: 1 columna x 2 filas = 2 puzzles */
+        .sheet-container.format-6x9 .sheet-body-layout {
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 22px;
+        }
+
+        /* TARJETA INDIVIDUAL DE PUZZLE */
+        .kakuro-puzzle-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+        }
+
+        .kakuro-puzzle-tag {
+            font-size: clamp(0.68rem, 1vw, 0.78rem);
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .kakuro-board-wrap {
+            aspect-ratio: 1 / 1;
+            height: 100%;
+            max-height: calc(100% - 20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kakuro-board-preview {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            background: #222222;
+            border: 2px solid #222222;
+            gap: 1px;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* CELDAS KAKURO */
+        .kakuro-cell-box {
+            position: relative;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.70rem, 1.2vw, 1.1rem);
+            font-weight: 700;
+            color: #111;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .kakuro-cell-box.cell-clue {
+            background: var(--clue-bg);
+        }
+
+        .kakuro-cell-box.cell-clue.has-diagonal::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top right, transparent calc(50% - 0.6px), #222 calc(50% - 0.4px), #222 calc(50% + 0.4px), transparent calc(50% + 0.6px));
+            pointer-events: none;
+        }
+
+        .clue-sub {
+            position: absolute;
+            font-size: clamp(0.40rem, 0.7vw, 0.58rem);
+            font-weight: 800;
+            color: var(--clue-text);
+            line-height: 1;
+            font-family: var(--font-sans);
+        }
+        .clue-sub.across { top: 1.5px; right: 2px; }
+        .clue-sub.down { bottom: 1.5px; left: 2px; }
+
+        .kakuro-cell-box.cell-blocked {
+            background: var(--clue-bg);
+        }
+
+        /* PIE DE HOJA */
+        .sheet-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #d5cfc4;
+            padding-top: 5px;
+            margin-top: 1.8%;
+            font-size: 0.72rem;
+            color: #777;
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            padding: 16px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            max-width: 440px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #111;
+            margin-bottom: 6px;
+        }
+
+        .modal-desc {
+            font-size: 0.84rem;
+            color: #555;
+            margin-bottom: 16px;
+            line-height: 1.45;
+        }
+
+        .modal-format-badge {
+            background: #f7f5f0;
+            border: 1px solid #e2ddd3;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #888;
+            cursor: pointer;
+        }
+
+        /* TOAST */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 5000;
+        }
+        .toast-notify.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        <span>MODO EN DESARROLLO · GENERADOR DE KAKUROS EN PDF · EDITORIAL MENOS RUIDO</span>
+    </div>
+
+    <header class="header">
+        <div class="container" style="max-width: 1050px; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+            <a href="/" class="logo" style="text-decoration: none; color: inherit; font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700;">Menos Ruido</a>
+            <nav style="display: flex; gap: 16px; font-size: 0.84rem; font-weight: 600;">
+                <a href="/pasatiempos.html" style="text-decoration: none; color: #555;">← Pasatiempos</a>
+                <a href="/kakuro-diario.html" style="text-decoration: none; color: var(--accent);">Reto del Día</a>
+                <a href="/mi-espacio.html" style="text-decoration: none; color: #555;">Mi Espacio</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="generator-container-wrap">
+        <div class="header-title-box">
+            <h1>Generador de Kakuro en PDF</h1>
+            <p id="pageSubtitleText">Genera hojas de Kakuro a 300 DPI listas para imprimir o encuadernar. Anverso con retos y reverso con soluciones canónicas.</p>
+        </div>
+
+        <!-- BARRA DE HERRAMIENTAS -->
+        <div class="canvas-toolbar">
+            <!-- 1. FORMATO -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Formato:</span>
+                <div class="btn-toggle-group" id="formatToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-format="8.25x6">8.25" × 6" (6 por pág.)</button>
+                    <button type="button" class="btn-toggle-item" data-format="6x9">6" × 9" (2 por pág.)</button>
+                </div>
+            </div>
+
+            <!-- 2. DIFICULTAD -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Nivel:</span>
+                <div class="btn-toggle-group" id="diffToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-diff="easy">Fácil (6×6)</button>
+                    <button type="button" class="btn-toggle-item" data-diff="medium">Medio (7×7)</button>
+                </div>
+            </div>
+
+            <!-- 3. PÁGINA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Página:</span>
+                <div class="btn-toggle-group" id="pageToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-page="1">Pág. 1 (Retos)</button>
+                    <button type="button" class="btn-toggle-item" data-page="2">Pág. 2 (Soluciones)</button>
+                </div>
+            </div>
+
+            <!-- ACCIONES -->
+            <div class="toolbar-group">
+                <button type="button" class="btn-action" id="btnRegenerate" title="Generar nuevos retos">
+                    ↺ Nuevos retos
+                </button>
+                <button type="button" class="btn-action" id="btn-save-generator-design" title="Guardar en Mi Espacio">
+                    💾 Guardar
+                </button>
+                <button type="button" class="btn-download-primary" id="btnOpenDownloadModal">
+                    📥 Descargar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- LIENZO 1:1 -->
+        <div class="canvas-preview-wrapper">
+            <div class="sheet-container" id="sheetPreview">
+                <!-- CABECERA -->
+                <div class="sheet-header">
+                    <div class="sheet-header-title">MENOS RUIDO · KAKURO</div>
+                    <div class="sheet-header-meta" id="headerMetaText">EDITORIAL MENOS RUIDO · FÁCIL (6×6) · RETOS</div>
+                </div>
+
+                <!-- CONTENIDO: CUADRÍCULA DE PUZZLES -->
+                <div class="sheet-body-layout" id="sheetBodyLayout">
+                    <!-- Celdas multi-puzzle dinámicas -->
+                </div>
+
+                <!-- PIE -->
+                <div class="sheet-footer">
+                    <span>Editorial Menos Ruido · www.editorialmenosruido.com</span>
+                    <span id="footerPageText">Pág. 1 / 2</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE DESCARGA -->
+    <div class="modal-overlay" id="downloadModal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Kakuro en PDF</h3>
+            <p class="modal-desc">Documento editorial de 2 páginas a 300 DPI. Página 1 con los retos en blanco y página 2 con las soluciones completas.</p>
+            
+            <div class="modal-format-badge" id="modalFormatBadge">
+                <span>📐</span> Formato Libro 8.25" × 6" (6 puzzles por página) · 2 Páginas
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" id="btnExecuteDownload">
+                    📥 Descargar PDF a 300 DPI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-notify" id="toastNotify"></div>
+
+    <!-- Script de guardado en Mi Espacio -->
+    <script type="module" src="./save-generator-design.js"></script>
+
+    <script>
+        // BANCO DE 20 KAKUROS CERTIFICADOS MATEMÁTICAMENTE
+        const KAKURO_BANK_6X6 = [
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 5
+                                },
+                                {
+                                        "down": 7
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 11,
+                                        "across": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 6,
+                                        "across": 10
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 4
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "down": 7
+                                },
+                                {
+                                        "down": 3
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 11
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 12
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 5
+                                },
+                                {
+                                        "down": 3
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "down": 18
+                                },
+                                {
+                                        "down": 10
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 14
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "down": 15
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 20
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 8
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 10
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 7
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 4
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 6
+                                },
+                                {
+                                        "down": 16
+                                },
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 8
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "down": 3,
+                                        "across": 5
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 15
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 5
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 3,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 7
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 4
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 17
+                                },
+                                {
+                                        "down": 11
+                                },
+                                {
+                                        "down": 23
+                                },
+                                {
+                                        "down": 14
+                                },
+                                {
+                                        "down": 24
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 34
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 9
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 35
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 7
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 8
+                                },
+                                {
+                                        "down": 7,
+                                        "across": 14
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 8
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 18
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 27
+                                },
+                                {
+                                        "down": 7
+                                },
+                                {
+                                        "down": 20
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 7,
+                                        "across": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "down": 9
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 34
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 7
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "down": 17,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 23
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 15
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 8
+                                },
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 11
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 10,
+                                        "across": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "down": 12
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 6,
+                                        "across": 11
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 5
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "across": 7
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 6
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 5
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 7
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 4
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 14
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 5
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "down": 20
+                                },
+                                {
+                                        "down": 10
+                                },
+                                {
+                                        "down": 4
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 18
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 10
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 15
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 7
+                                },
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 15
+                                },
+                                "B",
+                                {
+                                        "down": 7
+                                },
+                                {
+                                        "down": 6
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "down": 3,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 16
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 4
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 5,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 8
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 5
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 34
+                                },
+                                {
+                                        "down": 35
+                                },
+                                "B",
+                                {
+                                        "down": 18
+                                },
+                                {
+                                        "down": 3
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 17
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "across": 8
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 11
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "down": 14,
+                                        "across": 7
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 2
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 23
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 14
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 24
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 8
+                                },
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 6,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 34
+                                },
+                                {
+                                        "down": 6
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 6,
+                                        "across": 7
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "down": 23
+                                },
+                                {
+                                        "down": 15
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 27
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 7
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 7
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "down": 3,
+                                        "across": 17
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 20
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 8
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 9
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B",
+                                "B"
+                        ]
+                ]
+        }
+];
+
+        const KAKURO_BANK_7X7 = [
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 6
+                                },
+                                {
+                                        "down": 7
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "across": 5
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 5
+                                },
+                                {
+                                        "down": 29,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 17,
+                                        "across": 16
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 4
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 21
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "down": 16
+                                },
+                                {
+                                        "down": 14
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 10
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "across": 18
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 6
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "across": 24
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                }
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 12
+                                },
+                                {
+                                        "down": 34
+                                },
+                                "B",
+                                {
+                                        "down": 16
+                                },
+                                {
+                                        "down": 23
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 17
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "down": 24,
+                                        "across": 17
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 19
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "down": 11
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 9
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "down": 23,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 34
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 9
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 27
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 5
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 17
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 9
+                                },
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 17
+                                },
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 4
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 12,
+                                        "across": 7
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 23
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 7
+                                },
+                                {
+                                        "down": 6
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "across": 10
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 5
+                                }
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 18
+                                },
+                                {
+                                        "down": 15
+                                },
+                                "B",
+                                "B",
+                                {
+                                        "down": 6
+                                },
+                                {
+                                        "down": 3
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 17
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 9
+                                },
+                                "B",
+                                {
+                                        "down": 16,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 11
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "across": 8
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 4
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "down": 7,
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 7
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 8
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 4
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 3
+                                },
+                                {
+                                        "down": 16
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 4
+                                },
+                                "B",
+                                {
+                                        "down": 23
+                                },
+                                {
+                                        "down": 9
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 4
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "down": 11,
+                                        "across": 17
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 11
+                                },
+                                {
+                                        "down": 6,
+                                        "across": 20
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 16
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 13
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B",
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 21
+                                },
+                                {
+                                        "down": 10
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 16,
+                                        "across": 17
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 5
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "down": 18
+                                },
+                                {
+                                        "down": 24
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 5
+                                },
+                                {
+                                        "down": 3,
+                                        "across": 29
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 7
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "across": 16
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 9
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 7
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "across": 14
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 8
+                                }
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 17
+                                },
+                                {
+                                        "down": 19
+                                },
+                                "B",
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 12
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "down": 9
+                                },
+                                {
+                                        "down": 34
+                                },
+                                {
+                                        "down": 27
+                                },
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 34
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "down": 17
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 17,
+                                        "across": 24
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 8
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 16
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "down": 3,
+                                        "across": 23
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 9
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 23
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 7
+                                },
+                                {
+                                        "val": 5
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "across": 11
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 9
+                                },
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 23
+                                },
+                                {
+                                        "down": 6
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "down": 3
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 7,
+                                        "across": 12
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 17
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "down": 6
+                                },
+                                {
+                                        "down": 10
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 4
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                "B",
+                                {
+                                        "across": 7
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 4
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 5
+                                }
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                {
+                                        "down": 17
+                                },
+                                {
+                                        "down": 11
+                                },
+                                {
+                                        "down": 4
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 18
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "down": 7
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 15
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "down": 8
+                                },
+                                {
+                                        "down": 4
+                                }
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 8
+                                },
+                                {
+                                        "down": 3,
+                                        "across": 7
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 3,
+                                        "across": 16
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 6
+                                },
+                                {
+                                        "val": 3
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 6
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B",
+                                "B",
+                                "B"
+                        ]
+                ]
+        },
+        {
+                "size": 7,
+                "grid": [
+                        [
+                                "B",
+                                "B",
+                                "B",
+                                "B",
+                                {
+                                        "down": 16
+                                },
+                                {
+                                        "down": 13
+                                },
+                                {
+                                        "down": 3
+                                }
+                        ],
+                        [
+                                "B",
+                                {
+                                        "down": 6
+                                },
+                                {
+                                        "down": 4
+                                },
+                                {
+                                        "across": 11
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 5
+                                },
+                                {
+                                        "val": 2
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "down": 20,
+                                        "across": 6
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                }
+                        ],
+                        [
+                                {
+                                        "across": 16
+                                },
+                                {
+                                        "val": 4
+                                },
+                                {
+                                        "val": 3
+                                },
+                                {
+                                        "val": 2
+                                },
+                                {
+                                        "val": 1
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B"
+                        ],
+                        [
+                                "B",
+                                "B",
+                                {
+                                        "down": 17,
+                                        "across": 11
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 2
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 23
+                                },
+                                {
+                                        "val": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 6
+                                },
+                                "B",
+                                "B"
+                        ],
+                        [
+                                "B",
+                                {
+                                        "across": 9
+                                },
+                                {
+                                        "val": 8
+                                },
+                                {
+                                        "val": 1
+                                },
+                                "B",
+                                "B",
+                                "B"
+                        ]
+                ]
+        }
+];
+
+        const state = {
+            format: '8.25x6', // '8.25x6' (6 puzzles) o '6x9' (2 puzzles)
+            difficulty: 'easy', // 'easy' (6x6) o 'medium' (7x7)
+            page: 1, // 1: Retos, 2: Soluciones
+            puzzles: []
+        };
+
+        function selectPuzzles() {
+            const count = state.format === '8.25x6' ? 6 : 2;
+            const bank = state.difficulty === 'easy' ? KAKURO_BANK_6X6 : KAKURO_BANK_7X7;
+            
+            // Barajar y tomar 'count' puzzles distintos
+            const indices = Array.from({ length: bank.length }, (_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+
+            state.puzzles = indices.slice(0, count).map(idx => bank[idx]);
+        }
+
+        function renderSheet() {
+            const sheet = document.getElementById('sheetPreview');
+            const is6x9 = state.format === '6x9';
+            sheet.classList.toggle('format-6x9', is6x9);
+
+            const metaText = document.getElementById('headerMetaText');
+            const footerText = document.getElementById('footerPageText');
+            const diffName = state.difficulty === 'easy' ? 'FÁCIL (6×6)' : 'MEDIO (7×7)';
+            const pageType = state.page === 1 ? 'RETOS' : 'SOLUCIONES';
+            const pageName = state.page === 1 ? 'Pág. 1 / 2' : 'Pág. 2 / 2 (Soluciones)';
+
+            if (metaText) {
+                metaText.textContent = `EDITORIAL MENOS RUIDO · ${diffName} · ${pageType}`;
+            }
+            if (footerText) footerText.textContent = pageName;
+
+            const badge = document.getElementById('modalFormatBadge');
+            if (badge) {
+                const fmtStr = is6x9 ? 'Formato Libro 6" × 9" (2 puzzles por página)' : 'Formato Libro 8.25" × 6" (6 puzzles por página)';
+                badge.innerHTML = `<span>📐</span> ${fmtStr} · 2 Páginas`;
+            }
+
+            // Renderizar la cuadrícula de puzzles
+            const layoutEl = document.getElementById('sheetBodyLayout');
+            if (!layoutEl) return;
+            layoutEl.innerHTML = '';
+
+            const isSolution = state.page === 2;
+
+            state.puzzles.forEach((pz, pzIdx) => {
+                const card = document.createElement('div');
+                card.className = 'kakuro-puzzle-card';
+
+                const tag = document.createElement('div');
+                tag.className = 'kakuro-puzzle-tag';
+                tag.textContent = isSolution ? `SOLUCIÓN ${pzIdx + 1}` : `KAKURO ${pzIdx + 1}`;
+                card.appendChild(tag);
+
+                const wrap = document.createElement('div');
+                wrap.className = 'kakuro-board-wrap';
+
+                const board = document.createElement('div');
+                board.className = 'kakuro-board-preview';
+                const sz = pz.size;
+                board.style.gridTemplateColumns = `repeat(${sz}, 1fr)`;
+                board.style.gridTemplateRows = `repeat(${sz}, 1fr)`;
+
+                const pzGrid = pz.grid;
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        const item = pzGrid[r][c];
+                        const cell = document.createElement('div');
+                        cell.className = 'kakuro-cell-box';
+
+                        if (item === 'B') {
+                            cell.classList.add('cell-blocked');
+                        } else if (typeof item === 'object' && (item.down !== undefined || item.across !== undefined)) {
+                            cell.classList.add('cell-clue');
+                            if (item.down !== undefined && item.across !== undefined) {
+                                cell.classList.add('has-diagonal');
+                            }
+                            if (item.down !== undefined) {
+                                const sub = document.createElement('span');
+                                sub.className = 'clue-sub down';
+                                sub.textContent = item.down;
+                                cell.appendChild(sub);
+                            }
+                            if (item.across !== undefined) {
+                                const sub = document.createElement('span');
+                                sub.className = 'clue-sub across';
+                                sub.textContent = item.across;
+                                cell.appendChild(sub);
+                            }
+                        } else {
+                            if (isSolution && item && item.val !== undefined) {
+                                cell.textContent = item.val;
+                            }
+                        }
+                        board.appendChild(cell);
+                    }
+                }
+
+                wrap.appendChild(board);
+                card.appendChild(wrap);
+                layoutEl.appendChild(card);
+            });
+        }
+
+        // GENERACIÓN DE PDF VECTORIAL A 300 DPI (2 PÁGINAS)
+        function generatePdfDoc() {
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar jsPDF.');
+                return null;
+            }
+
+            const is6x9 = state.format === '6x9';
+            const widthMm = is6x9 ? 152.4 : 209.55;
+            const heightMm = is6x9 ? 228.6 : 152.4;
+            const orientation = is6x9 ? 'portrait' : 'landscape';
+
+            const doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: [widthMm, heightMm]
+            });
+
+            const diffTxt = state.difficulty === 'easy' ? 'FACIL (6x6)' : 'MEDIO (7x7)';
+
+            function drawPage(pageNum, isSolution) {
+                const marginX = is6x9 ? 16 : 13;
+                const marginY = is6x9 ? 12 : 10;
+
+                // 1. CABECERA
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(is6x9 ? 11 : 11);
+                doc.setTextColor(20, 20, 20);
+                doc.text('MENOS RUIDO  ·  KAKURO', marginX, marginY + 4);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(90, 90, 90);
+                const pageLabel = isSolution ? 'SOLUCIONES' : 'RETOS';
+                doc.text(`EDITORIAL MENOS RUIDO · ${diffTxt} · ${pageLabel}`, widthMm - marginX, marginY + 4, { align: 'right' });
+
+                // Línea superior
+                doc.setDrawColor(20, 20, 20);
+                doc.setLineWidth(0.4);
+                const headerLineY = marginY + 6.5;
+                doc.line(marginX, headerLineY, widthMm - marginX, headerLineY);
+
+                // 2. DIBUJAR LOS PUZZLES
+                if (!is6x9) {
+                    // LAYOUT 8.25" × 6" (3 columnas × 2 filas = 6 puzzles)
+                    const puzzleSizeMm = 52.0; // mm
+                    const startY = 24.0;
+                    const colWidth = (widthMm - marginX * 2) / 3;
+                    const rowHeight = 56.0;
+
+                    state.puzzles.forEach((pz, idx) => {
+                        const col = idx % 3;
+                        const row = Math.floor(idx / 3);
+                        const px = marginX + col * colWidth + (colWidth - puzzleSizeMm) / 2;
+                        const py = startY + row * rowHeight;
+
+                        // Título del puzzle
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.5);
+                        doc.setTextColor(135, 85, 59);
+                        const pzTag = isSolution ? `SOLUCION ${idx + 1}` : `KAKURO ${idx + 1}`;
+                        doc.text(pzTag, px, py - 2.0);
+
+                        // Tablero
+                        const cSize = puzzleSizeMm / pz.size;
+                        drawKakuroGrid(doc, px, py, cSize, pz.size, pz.grid, isSolution);
+                    });
+                } else {
+                    // LAYOUT 6" × 9" (1 columna × 2 filas = 2 puzzles)
+                    const puzzleSizeMm = 82.0; // mm
+                    const px = (widthMm - puzzleSizeMm) / 2;
+                    const rowHeight = 94.0;
+                    const startY = 27.0;
+
+                    state.puzzles.forEach((pz, idx) => {
+                        const py = startY + idx * rowHeight;
+
+                        // Título
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(9.0);
+                        doc.setTextColor(135, 85, 59);
+                        const pzTag = isSolution ? `SOLUCION ${idx + 1}` : `KAKURO ${idx + 1}`;
+                        doc.text(pzTag, px, py - 3.0);
+
+                        // Tablero
+                        const cSize = puzzleSizeMm / pz.size;
+                        drawKakuroGrid(doc, px, py, cSize, pz.size, pz.grid, isSolution);
+                    });
+                }
+
+                // 3. PIE
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.2);
+                const footerLineY = heightMm - marginY + 2;
+                doc.line(marginX, footerLineY, widthMm - marginX, footerLineY);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.8);
+                doc.setTextColor(110, 110, 110);
+                doc.text('Editorial Menos Ruido  ·  www.editorialmenosruido.com', marginX, heightMm - marginY + 5.5);
+                doc.text(`Pag. ${pageNum} / 2`, widthMm - marginX, heightMm - marginY + 5.5, { align: 'right' });
+            }
+
+            function drawKakuroGrid(d, gx, gy, cSize, sz, gridData, isSol) {
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        const cx = gx + c * cSize;
+                        const cy = gy + r * cSize;
+                        const item = gridData[r][c];
+
+                        if (item === 'B') {
+                            // Bloque crema sobrio
+                            d.setFillColor(238, 232, 220);
+                            d.setDrawColor(205, 198, 185);
+                            d.setLineWidth(0.2);
+                            d.rect(cx, cy, cSize, cSize, 'FD');
+                        } else if (typeof item === 'object' && (item.down !== undefined || item.across !== undefined)) {
+                            // Celda pista con diagonal
+                            d.setFillColor(238, 232, 220);
+                            d.setDrawColor(30, 30, 30);
+                            d.setLineWidth(0.25);
+                            d.rect(cx, cy, cSize, cSize, 'FD');
+
+                            // Línea diagonal
+                            d.line(cx, cy, cx + cSize, cy + cSize);
+
+                            d.setFont('helvetica', 'bold');
+                            const fontSz = cSize > 11 ? 6.8 : 5.4;
+                            d.setFontSize(fontSz);
+                            d.setTextColor(30, 30, 30);
+
+                            if (item.across !== undefined) {
+                                const padX = cSize > 11 ? 1.0 : 0.8;
+                                const padY = cSize > 11 ? 2.6 : 2.0;
+                                d.text(String(item.across), cx + cSize - padX, cy + padY, { align: 'right' });
+                            }
+                            if (item.down !== undefined) {
+                                const padX = cSize > 11 ? 1.0 : 0.8;
+                                const padY = cSize > 11 ? 0.9 : 0.7;
+                                d.text(String(item.down), cx + padX, cy + cSize - padY, { align: 'left' });
+                            }
+                        } else {
+                            // Casilla jugable blanca
+                            d.setFillColor(255, 255, 255);
+                            d.setDrawColor(30, 30, 30);
+                            d.setLineWidth(0.25);
+                            d.rect(cx, cy, cSize, cSize, 'FD');
+
+                            if (isSol && item && item.val !== undefined) {
+                                d.setFont('helvetica', 'bold');
+                                const solFont = cSize > 11 ? 10.5 : 8.0;
+                                d.setFontSize(solFont);
+                                d.setTextColor(20, 20, 20);
+                                const dy = cSize > 11 ? 1.2 : 1.0;
+                                d.text(String(item.val), cx + cSize / 2, cy + cSize / 2 + dy, { align: 'center' });
+                            }
+                        }
+                    }
+                }
+
+                // Marco exterior reforzado continuo
+                d.setDrawColor(20, 20, 20);
+                d.setLineWidth(0.6);
+                d.rect(gx, gy, sz * cSize, sz * cSize, 'D');
+            }
+
+            drawPage(1, false);
+            doc.addPage([widthMm, heightMm], orientation);
+            drawPage(2, true);
+
+            return doc;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toastNotify');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('active');
+            setTimeout(() => t.classList.remove('active'), 2500);
+        }
+
+        function openDownloadModal() {
+            const m = document.getElementById('downloadModal');
+            if (m) m.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const m = document.getElementById('downloadModal');
+            if (m) m.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.classList.contains('modal-overlay')) closeDownloadModal();
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            selectPuzzles();
+            renderSheet();
+
+            // Toggle Formato
+            document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.format = btn.dataset.format;
+                    selectPuzzles();
+                    renderSheet();
+                });
+            });
+
+            // Toggle Dificultad
+            document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.difficulty = btn.dataset.diff;
+                    selectPuzzles();
+                    renderSheet();
+                });
+            });
+
+            // Toggle Página
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.page = parseInt(btn.dataset.page, 10);
+                    renderSheet();
+                });
+            });
+
+            // Botón regenerar
+            document.getElementById('btnRegenerate')?.addEventListener('click', () => {
+                selectPuzzles();
+                renderSheet();
+                showToast('Nuevos Kakuros generados con éxito');
+            });
+
+            // Modal descarga
+            document.getElementById('btnOpenDownloadModal')?.addEventListener('click', openDownloadModal);
+
+            // Descarga directa
+            document.getElementById('btnExecuteDownload')?.addEventListener('click', () => {
+                const doc = generatePdfDoc();
+                if (!doc) return;
+                const diffTxt = state.difficulty === 'easy' ? 'facil-6x6' : 'medio-7x7';
+                doc.save(`Menos-Ruido-Kakuro-${state.format}-${diffTxt}.pdf`);
+                closeDownloadModal();
+                showToast('✓ PDF vectorial descargado con éxito');
+            });
+        });
+
+        // Configurar guardado en Mi Espacio
+        window.mrKakuroState = state;
+        if (typeof setupGeneratorSave === 'function') {
+            setupGeneratorSave('btn-save-generator-design', () => {
+                const diffText = state.difficulty === 'easy' ? 'Fácil (6×6)' : 'Medio (7×7)';
+                const fmtText = state.format === '6x9' ? '6" × 9" Vertical (2 por pág.)' : '8.25" × 6" Apaisado (6 por pág.)';
+                return {
+                    name: `Kakuro · ${diffText}`,
+                    type: 'Kakuro',
+                    summary: `${fmtText} · ${state.puzzles.length} retos · Anverso y Solución`,
+                    data: {
+                        format: state.format,
+                        difficulty: state.difficulty,
+                        puzzles: state.puzzles
+                    }
+                };
+            });
+        }
+    </script>
+</body>
+</html>

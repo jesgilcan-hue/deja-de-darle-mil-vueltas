@@ -1,0 +1,3025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Calcudoku del Día (KenKen) · Editorial Menos Ruido</title>
+    <meta name="description" content="Juega gratis al reto diario de Calcudoku (KenKen) de Editorial Menos Ruido. Lógica matemática y deducción sin prisas ni pantallas invasivas." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="canonical" href="https://www.editorialmenosruido.com/calcudoku-diario.html" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./diagnostic.css" />
+
+    <style>
+        :root {
+            --bg-paper: #f8f6f0;
+            --surface-card: #ffffff;
+            --border-color: #e5dfd5;
+            --text-dark: #1e1916;
+            --text-muted: #666059;
+            --accent: #2e604a; /* Verde bosque sobrio y relajante */
+            --accent-hover: #1f4233;
+            --accent-light: #e8f2ec;
+            --cell-active: #e2ede7;
+            --cell-cage: #f3f8f5;
+            --cell-error: #fde8e8;
+            --text-error: #b91c1c;
+            --cell-complete: #e6f4ea;
+            --border-grid: #222222;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-paper);
+            color: var(--text-dark);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .dev-badge-bar {
+            background: #dcfce7;
+            color: #166534;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 4px 10px;
+            border-bottom: 1px solid #bbf7d0;
+            letter-spacing: 0.3px;
+        }
+
+        .calcudoku-daily-wrap {
+            flex: 1;
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 12px 14px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* NAVEGACIÓN SUPERIOR */
+        .game-nav-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            font-size: 0.80rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .back-link:hover { color: #000; }
+
+        .game-mode-pill {
+            background: #e2ede7;
+            color: var(--accent);
+            font-size: 0.70rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* CABECERA RETO */
+        .challenge-header {
+            text-align: center;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .challenge-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .challenge-date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* SELECTOR DE MODOS (4x4 vs 5x5) */
+        .mode-toggle-group {
+            display: inline-flex;
+            background: #ede6dc;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 3px;
+            margin-top: 8px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            padding: 4px 12px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #666;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .mode-btn.active {
+            background: #ffffff;
+            color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* BARRA DE HERRAMIENTAS: CRONO Y BOTONES */
+        .game-toolbar {
+            width: 100%;
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .timer-box {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-tool {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 5px 9px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease;
+        }
+        .btn-tool:hover { background: #ede7dc; }
+
+        /* GUÍA DE JAULA ACTIVA */
+        .cage-helper-bar {
+            width: 100%;
+            background: var(--accent-light);
+            border: 1px solid #cce2d5;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #1f4233;
+            min-height: 32px;
+        }
+
+        /* CUADRÍCULA CALCUDOKU / KENKEN */
+        .board-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .calcudoku-board {
+            display: grid;
+            background: #ffffff;
+            border: 3px solid #222222;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            user-select: none;
+            touch-action: manipulation;
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 1 / 1;
+        }
+
+        /* CELDA CALCUDOKU */
+        .calcudoku-cell {
+            position: relative;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 5vw, 1.7rem);
+            font-weight: 700;
+            color: #111111;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background 0.12s ease;
+        }
+
+        /* Etiqueta de la jaula (en la celda superior izquierda de cada jaula) */
+        .cage-label {
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            font-size: clamp(0.58rem, 2vw, 0.72rem);
+            font-weight: 800;
+            color: #333333;
+            font-family: 'Inter', sans-serif;
+            pointer-events: none;
+            line-height: 1;
+        }
+
+        /* Bordes entre jaulas */
+        .border-top-thick { border-top: 2.5px solid #222222; }
+        .border-top-thin { border-top: 1px dashed #d5cfc4; }
+        
+        .border-bottom-thick { border-bottom: 2.5px solid #222222; }
+        .border-bottom-thin { border-bottom: 1px dashed #d5cfc4; }
+
+        .border-left-thick { border-left: 2.5px solid #222222; }
+        .border-left-thin { border-left: 1px dashed #d5cfc4; }
+
+        .border-right-thick { border-right: 2.5px solid #222222; }
+        .border-right-thin { border-right: 1px dashed #d5cfc4; }
+
+        /* Estados de celda */
+        .calcudoku-cell.cell-active {
+            background: var(--cell-active) !important;
+            box-shadow: inset 0 0 0 2px var(--accent);
+            z-index: 2;
+        }
+
+        .calcudoku-cell.cell-cage-mate {
+            background: var(--cell-cage);
+        }
+
+        .calcudoku-cell.cell-error {
+            background: var(--cell-error) !important;
+            color: var(--text-error) !important;
+        }
+
+        .calcudoku-cell.cell-complete {
+            background: var(--cell-complete);
+        }
+
+        /* TECLADO EN PANTALLA */
+        .keypad-container {
+            width: 100%;
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .keypad-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .key-btn {
+            flex: 1;
+            height: 46px;
+            background: #faf8f5;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+
+        .key-btn:active {
+            background: #e2ddd3;
+            transform: scale(0.96);
+        }
+
+        .key-btn.key-action {
+            font-size: 0.85rem;
+            background: #f1ece4;
+            color: #555;
+            flex: 1.4;
+        }
+
+        /* REGLAS RÁPIDAS */
+        .rules-card {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 0.80rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .rules-title {
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rules-list {
+            padding-left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            padding: 16px;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 440px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: modalPop 0.25s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.5rem;
+            color: #111;
+            margin-bottom: 8px;
+        }
+
+        .modal-p {
+            font-size: 0.90rem;
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .stat-item {
+            background: #f7f5f0;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e5dfd5;
+        }
+
+        .stat-val {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-lbl {
+            font-size: 0.68rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 2px;
+        }
+
+        .modal-btn-close {
+            background: #111111;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .simple-footer {
+            text-align: center;
+            padding: 24px 14px;
+            font-size: 0.78rem;
+            color: #888;
+            border-top: 1px solid #eae5dc;
+            background: #faf8f5;
+        }
+        .simple-footer a {
+            color: #555;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        <span>MODO EN DESARROLLO · CALCUDOKU / KENKEN DEL DÍA · EDITORIAL MENOS RUIDO</span>
+    </div>
+
+    <div class="calcudoku-daily-wrap">
+
+        <!-- NAVEGACIÓN SUPERIOR -->
+        <header class="game-nav-bar">
+            <a href="/hoy.html" class="back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                ← Retos de Hoy
+            </a>
+            <span class="game-mode-pill">Reto de hoy</span>
+        </header>
+
+        <!-- CABECERA DEL RETO -->
+        <div class="challenge-header">
+            <h1 class="challenge-title">Calcudoku del Día</h1>
+            <div class="challenge-date-badge" id="dailyDateDisplay">
+                Cargando reto de hoy...
+            </div>
+            <div>
+                <div class="mode-toggle-group" id="modeToggleGroup">
+                    <button type="button" class="mode-btn active" data-size="4">Rápido 4×4</button>
+                    <button type="button" class="mode-btn" data-size="5">Clásico 5×5</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BARRA DE HERRAMIENTAS: CRONO Y BOTONES -->
+        <div class="game-toolbar">
+            <div class="timer-box">
+                ⏱ <span id="gameTimer">00:00</span>
+            </div>
+            <div class="toolbar-buttons">
+                <button type="button" class="btn-tool" id="btnPause" title="Pausar reto">⏸ Pausa</button>
+                <button type="button" class="btn-tool" id="btnHint" title="Revelar celda activa">💡 Pista</button>
+                <button type="button" class="btn-tool" id="btnRestart" title="Reiniciar tablero">↺ Reiniciar</button>
+                <button type="button" class="btn-tool" id="btnStats" title="Ver mis estadísticas">📊</button>
+            </div>
+        </div>
+
+        <!-- GUÍA DE JAULA EN TIEMPO REAL -->
+        <div class="cage-helper-bar" id="cageHelperBar">
+            <span id="cageHelperText">Toca una casilla para comenzar</span>
+        </div>
+
+        <!-- TABLERO CALCUDOKU -->
+        <div class="board-container">
+            <div id="calcudokuBoard" class="calcudoku-board">
+                <!-- Celdas dinámicas -->
+            </div>
+        </div>
+
+        <!-- TECLADO EN PANTALLA -->
+        <div class="keypad-container">
+            <div class="keypad-row" id="keypadRowNumbers">
+                <!-- Botones 1..N dinámicos -->
+            </div>
+        </div>
+
+        <!-- REGLAS RÁPIDAS -->
+        <div class="rules-card">
+            <div class="rules-title">
+                <span>🧮</span> ¿Cómo se juega al Calcudoku / KenKen?
+            </div>
+            <ul class="rules-list">
+                <li>Rellena cada fila y columna con números del <strong>1 al 4 (o 1 al 5)</strong> sin repetir ninguno en la misma fila ni columna.</li>
+                <li>Los bordes gruesos delimitan una <strong>jaula</strong>.</li>
+                <li>La etiqueta superior izquierda indica el <strong>objetivo matemático</strong> (ej. <code>8+</code> para sumar 8, <code>12×</code> para multiplicar, <code>2÷</code> para dividir, <code>3-</code> para restar).</li>
+                <li>Dentro de una jaula <em>sí</em> se puede repetir un número siempre que esté en diferente fila y columna.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- MODAL DE VICTORIA -->
+    <div class="modal-overlay" id="victoryModal">
+        <div class="modal-box">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">✨</div>
+            <h2 class="modal-title">¡Calcudoku Resuelto!</h2>
+            <p class="modal-p" id="victoryTimeMsg">Has completado el reto diario con éxito.</p>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-val" id="statCompleted">0</div>
+                    <div class="stat-lbl">Resueltos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="statStreak">0</div>
+                    <div class="stat-lbl">Racha Días</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="statBestTime">--:--</div>
+                    <div class="stat-lbl">Mejor Tiempo</div>
+                </div>
+            </div>
+            <a href="/hoy.html" class="modal-btn-close" style="display: block; text-decoration: none; background: #111111; color: #ffffff; padding: 12px; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.92rem;">Volver a Retos de Hoy</a>
+        </div>
+    </div>
+
+    <!-- MODAL DE ESTADÍSTICAS -->
+    <div class="modal-overlay" id="statsModal">
+        <div class="modal-box">
+            <h2 class="modal-title">Tus Estadísticas</h2>
+            <p class="modal-p">Progreso guardado en este dispositivo.</p>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-val" id="modalStatCompleted">0</div>
+                    <div class="stat-lbl">Resueltos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="modalStatStreak">0</div>
+                    <div class="stat-lbl">Racha Días</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="modalStatBestTime">--:--</div>
+                    <div class="stat-lbl">Mejor Tiempo</div>
+                </div>
+            </div>
+            <button type="button" class="modal-btn-close" onclick="closeModal('statsModal')">Volver al juego</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="simple-footer">
+        <p>Editorial Menos Ruido · Pasatiempos de agilidad mental sin prisas.</p>
+        <p style="margin-top: 4px;"><a href="/pasatiempos.html">Ir al catálogo de pasatiempos</a></p>
+    </footer>
+
+    <script>
+        // BANCO CERTIFICADO MATEMÁTICAMENTE DE CALCUDOKU (KENKEN)
+        const PUZZLES_4X4 = [
+    {
+        "size": 4,
+        "solution": [
+            [
+                1,
+                2,
+                4,
+                3
+            ],
+            [
+                3,
+                4,
+                2,
+                1
+            ],
+            [
+                4,
+                1,
+                3,
+                2
+            ],
+            [
+                2,
+                3,
+                1,
+                4
+            ]
+        ],
+        "cages": [
+            {
+                "target": 4,
+                "op": "+",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        1,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 8,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        1
+                    ],
+                    [
+                        0,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        1,
+                        1
+                    ],
+                    [
+                        1,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        1,
+                        3
+                    ],
+                    [
+                        2,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        2,
+                        0
+                    ],
+                    [
+                        3,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        1
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "+",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        3,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 4,
+        "solution": [
+            [
+                2,
+                1,
+                3,
+                4
+            ],
+            [
+                4,
+                3,
+                2,
+                1
+            ],
+            [
+                3,
+                4,
+                1,
+                2
+            ],
+            [
+                1,
+                2,
+                4,
+                3
+            ]
+        ],
+        "cages": [
+            {
+                "target": 2,
+                "cells": [
+                    [
+                        0,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "+",
+                "cells": [
+                    [
+                        0,
+                        1
+                    ],
+                    [
+                        0,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 7,
+                "op": "+",
+                "cells": [
+                    [
+                        0,
+                        3
+                    ],
+                    [
+                        1,
+                        3
+                    ],
+                    [
+                        2,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        1,
+                        0
+                    ],
+                    [
+                        2,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 6,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        1
+                    ],
+                    [
+                        1,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "cells": [
+                    [
+                        3,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 8,
+                "op": "*",
+                "cells": [
+                    [
+                        2,
+                        1
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        3,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 4,
+        "solution": [
+            [
+                4,
+                3,
+                2,
+                1
+            ],
+            [
+                3,
+                4,
+                1,
+                2
+            ],
+            [
+                2,
+                1,
+                4,
+                3
+            ],
+            [
+                1,
+                2,
+                3,
+                4
+            ]
+        ],
+        "cages": [
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        1,
+                        0
+                    ],
+                    [
+                        2,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        1,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "cells": [
+                    [
+                        3,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        1
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 7,
+                "op": "+",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        3,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 12,
+                "op": "*",
+                "cells": [
+                    [
+                        2,
+                        3
+                    ],
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 4,
+        "solution": [
+            [
+                3,
+                4,
+                1,
+                2
+            ],
+            [
+                2,
+                1,
+                4,
+                3
+            ],
+            [
+                4,
+                3,
+                2,
+                1
+            ],
+            [
+                1,
+                2,
+                3,
+                4
+            ]
+        ],
+        "cages": [
+            {
+                "target": 7,
+                "op": "+",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        1,
+                        0
+                    ],
+                    [
+                        2,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "op": "-",
+                "cells": [
+                    [
+                        1,
+                        1
+                    ],
+                    [
+                        1,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        1,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "op": "+",
+                "cells": [
+                    [
+                        2,
+                        1
+                    ],
+                    [
+                        2,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        3
+                    ],
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        3,
+                        0
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        3,
+                        2
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 4,
+        "solution": [
+            [
+                4,
+                2,
+                3,
+                1
+            ],
+            [
+                2,
+                4,
+                1,
+                3
+            ],
+            [
+                1,
+                3,
+                2,
+                4
+            ],
+            [
+                3,
+                1,
+                4,
+                2
+            ]
+        ],
+        "cages": [
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        1,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "cells": [
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "-",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        1,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "op": "*",
+                "cells": [
+                    [
+                        2,
+                        0
+                    ],
+                    [
+                        3,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        1
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 8,
+                "op": "*",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        2,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        3,
+                        2
+                    ],
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            }
+        ]
+    }
+];
+
+        const PUZZLES_5X5 = [
+    {
+        "size": 5,
+        "solution": [
+            [
+                1,
+                5,
+                2,
+                4,
+                3
+            ],
+            [
+                2,
+                3,
+                4,
+                5,
+                1
+            ],
+            [
+                5,
+                4,
+                1,
+                3,
+                2
+            ],
+            [
+                4,
+                1,
+                3,
+                2,
+                5
+            ],
+            [
+                3,
+                2,
+                5,
+                1,
+                4
+            ]
+        ],
+        "cages": [
+            {
+                "target": 5,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 8,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        0,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "cells": [
+                    [
+                        1,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 12,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        1
+                    ],
+                    [
+                        1,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        3
+                    ],
+                    [
+                        1,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        0
+                    ],
+                    [
+                        2,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "+",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        3,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        3
+                    ],
+                    [
+                        2,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        3,
+                        0
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "cells": [
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 10,
+                "op": "*",
+                "cells": [
+                    [
+                        3,
+                        3
+                    ],
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 6,
+                "op": "*",
+                "cells": [
+                    [
+                        4,
+                        0
+                    ],
+                    [
+                        4,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "cells": [
+                    [
+                        4,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "op": "-",
+                "cells": [
+                    [
+                        4,
+                        3
+                    ],
+                    [
+                        4,
+                        4
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 5,
+        "solution": [
+            [
+                3,
+                1,
+                4,
+                5,
+                2
+            ],
+            [
+                1,
+                4,
+                2,
+                3,
+                5
+            ],
+            [
+                4,
+                2,
+                5,
+                1,
+                3
+            ],
+            [
+                5,
+                3,
+                1,
+                2,
+                4
+            ],
+            [
+                2,
+                5,
+                3,
+                4,
+                1
+            ]
+        ],
+        "cages": [
+            {
+                "target": 3,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 20,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "cells": [
+                    [
+                        0,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        0
+                    ],
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 6,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        1,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "cells": [
+                    [
+                        1,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        2,
+                        0
+                    ],
+                    [
+                        2,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "cells": [
+                    [
+                        2,
+                        2
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        3
+                    ],
+                    [
+                        2,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 15,
+                "op": "*",
+                "cells": [
+                    [
+                        3,
+                        0
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "*",
+                "cells": [
+                    [
+                        3,
+                        2
+                    ],
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 10,
+                "op": "*",
+                "cells": [
+                    [
+                        4,
+                        0
+                    ],
+                    [
+                        4,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        4,
+                        2
+                    ],
+                    [
+                        4,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "cells": [
+                    [
+                        4,
+                        4
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 5,
+        "solution": [
+            [
+                5,
+                4,
+                3,
+                2,
+                1
+            ],
+            [
+                4,
+                3,
+                2,
+                1,
+                5
+            ],
+            [
+                3,
+                2,
+                1,
+                5,
+                4
+            ],
+            [
+                2,
+                1,
+                5,
+                4,
+                3
+            ],
+            [
+                1,
+                5,
+                4,
+                3,
+                2
+            ]
+        ],
+        "cages": [
+            {
+                "target": 20,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 6,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "cells": [
+                    [
+                        0,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        1,
+                        0
+                    ],
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        1,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "cells": [
+                    [
+                        1,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        0
+                    ],
+                    [
+                        2,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "op": "*",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        2,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        2,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        3,
+                        0
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 20,
+                "op": "*",
+                "cells": [
+                    [
+                        3,
+                        2
+                    ],
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "op": "*",
+                "cells": [
+                    [
+                        4,
+                        0
+                    ],
+                    [
+                        4,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        4,
+                        2
+                    ],
+                    [
+                        4,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "cells": [
+                    [
+                        4,
+                        4
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 5,
+        "solution": [
+            [
+                2,
+                3,
+                5,
+                1,
+                4
+            ],
+            [
+                3,
+                5,
+                1,
+                4,
+                2
+            ],
+            [
+                5,
+                1,
+                4,
+                2,
+                3
+            ],
+            [
+                1,
+                4,
+                2,
+                3,
+                5
+            ],
+            [
+                4,
+                2,
+                3,
+                5,
+                1
+            ]
+        ],
+        "cages": [
+            {
+                "target": 6,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        0,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 15,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        0
+                    ],
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        1,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "cells": [
+                    [
+                        1,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        0
+                    ],
+                    [
+                        2,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        2,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        2,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "*",
+                "cells": [
+                    [
+                        3,
+                        0
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 6,
+                "op": "*",
+                "cells": [
+                    [
+                        3,
+                        2
+                    ],
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "cells": [
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "/",
+                "cells": [
+                    [
+                        4,
+                        0
+                    ],
+                    [
+                        4,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 15,
+                "op": "*",
+                "cells": [
+                    [
+                        4,
+                        2
+                    ],
+                    [
+                        4,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "cells": [
+                    [
+                        4,
+                        4
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "size": 5,
+        "solution": [
+            [
+                4,
+                1,
+                2,
+                5,
+                3
+            ],
+            [
+                1,
+                2,
+                5,
+                3,
+                4
+            ],
+            [
+                2,
+                5,
+                3,
+                4,
+                1
+            ],
+            [
+                5,
+                3,
+                4,
+                1,
+                2
+            ],
+            [
+                3,
+                4,
+                1,
+                2,
+                5
+            ]
+        ],
+        "cages": [
+            {
+                "target": 3,
+                "op": "-",
+                "cells": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 10,
+                "op": "*",
+                "cells": [
+                    [
+                        0,
+                        2
+                    ],
+                    [
+                        0,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 3,
+                "cells": [
+                    [
+                        0,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        0
+                    ],
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 15,
+                "op": "*",
+                "cells": [
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        1,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "cells": [
+                    [
+                        1,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 10,
+                "op": "*",
+                "cells": [
+                    [
+                        2,
+                        0
+                    ],
+                    [
+                        2,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "op": "-",
+                "cells": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        2,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 1,
+                "cells": [
+                    [
+                        2,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "-",
+                "cells": [
+                    [
+                        3,
+                        0
+                    ],
+                    [
+                        3,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 4,
+                "op": "*",
+                "cells": [
+                    [
+                        3,
+                        2
+                    ],
+                    [
+                        3,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "cells": [
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "target": 12,
+                "op": "*",
+                "cells": [
+                    [
+                        4,
+                        0
+                    ],
+                    [
+                        4,
+                        1
+                    ]
+                ]
+            },
+            {
+                "target": 2,
+                "op": "*",
+                "cells": [
+                    [
+                        4,
+                        2
+                    ],
+                    [
+                        4,
+                        3
+                    ]
+                ]
+            },
+            {
+                "target": 5,
+                "cells": [
+                    [
+                        4,
+                        4
+                    ]
+                ]
+            }
+        ]
+    }
+];
+
+        // ESTADO GLOBAL
+        const state = {
+            size: 4, // 4 o 5
+            puzzle: null,
+            userGrid: [],
+            activeCell: null,
+            timerSecs: 0,
+            timerInterval: null,
+            isPaused: false,
+            isCompleted: false
+        };
+
+        function getTodaySeedString() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getDailyIndex(seedStr, max) {
+            let hash = 0;
+            for (let i = 0; i < seedStr.length; i++) {
+                hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash) % max;
+        }
+
+        function initCalcudoku() {
+            const todayStr = getTodaySeedString();
+            const dateObj = new Date();
+            const dateFmt = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            const badge = document.getElementById('dailyDateDisplay');
+            if (badge) badge.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
+
+            const bank = state.size === 4 ? PUZZLES_4X4 : PUZZLES_5X5;
+            const idx = getDailyIndex(todayStr, bank.length);
+            state.puzzle = bank[idx];
+
+            const sz = state.puzzle.size;
+            state.userGrid = Array.from({ length: sz }, () => Array(sz).fill(null));
+            state.activeCell = null;
+            state.isCompleted = false;
+
+            buildKeypad();
+            startTimer();
+            renderBoard();
+            updateCageHelper();
+            loadStats();
+        }
+
+        function buildKeypad() {
+            const row = document.getElementById('keypadRowNumbers');
+            if (!row) return;
+            row.innerHTML = '';
+
+            const sz = state.size;
+            for (let i = 1; i <= sz; i++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'key-btn';
+                btn.dataset.val = i;
+                btn.textContent = i;
+                btn.addEventListener('click', () => inputDigit(i));
+                row.appendChild(btn);
+            }
+
+            const eraseBtn = document.createElement('button');
+            eraseBtn.type = 'button';
+            eraseBtn.className = 'key-btn key-action';
+            eraseBtn.textContent = '⌫ Borrar';
+            eraseBtn.addEventListener('click', () => inputDigit(null));
+            row.appendChild(eraseBtn);
+        }
+
+        function startTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerSecs = 0;
+            state.isPaused = false;
+            updateTimerDisplay();
+            state.timerInterval = setInterval(() => {
+                if (!state.isPaused && !state.isCompleted) {
+                    state.timerSecs++;
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const el = document.getElementById('gameTimer');
+            if (!el) return;
+            const m = String(Math.floor(state.timerSecs / 60)).padStart(2, '0');
+            const s = String(state.timerSecs % 60).padStart(2, '0');
+            el.textContent = `${m}:${s}`;
+        }
+
+        // Construir mapa de jaulas
+        function getCageMap() {
+            const sz = state.puzzle.size;
+            const map = Array.from({ length: sz }, () => Array(sz).fill(null));
+            state.puzzle.cages.forEach((cage, cIdx) => {
+                cage.cells.forEach(([r, c]) => {
+                    map[r][c] = cIdx;
+                });
+            });
+            return map;
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('calcudokuBoard');
+            if (!boardEl || !state.puzzle) return;
+
+            const sz = state.puzzle.size;
+            boardEl.style.gridTemplateColumns = `repeat(${sz}, 1fr)`;
+            boardEl.style.gridTemplateRows = `repeat(${sz}, 1fr)`;
+            boardEl.innerHTML = '';
+
+            const cageMap = getCageMap();
+
+            // Identificar qué celda es la "top-left" de cada jaula para ponerle la etiqueta
+            const labelMap = new Map();
+            state.puzzle.cages.forEach((cg) => {
+                // Ordenar por fila y luego columna
+                const sorted = cg.cells.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+                const [topR, topC] = sorted[0];
+                const opSym = cg.op === '*' ? '×' : (cg.op === '/' ? '÷' : (cg.op || ''));
+                labelMap.set(`${topR},${topC}`, `${cg.target}${opSym}`);
+            });
+
+            for (let r = 0; r < sz; r++) {
+                for (let c = 0; c < sz; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'calcudoku-cell';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+
+                    const myCage = cageMap[r][c];
+
+                    // Bordes gruesos vs finos según si el vecino es de otra jaula
+                    if (r === 0 || cageMap[r-1][c] !== myCage) cell.classList.add('border-top-thick');
+                    else cell.classList.add('border-top-thin');
+
+                    if (r === sz - 1 || cageMap[r+1][c] !== myCage) cell.classList.add('border-bottom-thick');
+                    else cell.classList.add('border-bottom-thin');
+
+                    if (c === 0 || cageMap[r][c-1] !== myCage) cell.classList.add('border-left-thick');
+                    else cell.classList.add('border-left-thin');
+
+                    if (c === sz - 1 || cageMap[r][c+1] !== myCage) cell.classList.add('border-right-thick');
+                    else cell.classList.add('border-right-thin');
+
+                    // Etiqueta de la jaula
+                    if (labelMap.has(`${r},${c}`)) {
+                        const lbl = document.createElement('span');
+                        lbl.className = 'cage-label';
+                        lbl.textContent = labelMap.get(`${r},${c}`);
+                        cell.appendChild(lbl);
+                    }
+
+                    // Valor introducido
+                    const val = state.userGrid[r][c];
+                    if (val !== null) {
+                        const valTxt = document.createElement('span');
+                        valTxt.textContent = val;
+                        cell.appendChild(valTxt);
+                    }
+
+                    cell.addEventListener('click', () => selectCell(r, c));
+                    boardEl.appendChild(cell);
+                }
+            }
+
+            highlightBoard();
+        }
+
+        function selectCell(r, c) {
+            state.activeCell = { r, c };
+            highlightBoard();
+            updateCageHelper();
+        }
+
+        function highlightBoard() {
+            const cells = document.querySelectorAll('.calcudoku-cell');
+            cells.forEach(el => el.classList.remove('cell-active', 'cell-cage-mate', 'cell-error', 'cell-complete'));
+
+            if (!state.activeCell) return;
+            const { r, c } = state.activeCell;
+            const cageMap = getCageMap();
+            const activeCage = cageMap[r][c];
+
+            cells.forEach(el => {
+                const er = parseInt(el.dataset.r, 10);
+                const ec = parseInt(el.dataset.c, 10);
+
+                if (er === r && ec === c) {
+                    el.classList.add('cell-active');
+                } else if (cageMap[er][ec] === activeCage) {
+                    el.classList.add('cell-cage-mate');
+                }
+            });
+
+            evaluateErrors();
+        }
+
+        function evaluateErrors() {
+            const sz = state.puzzle.size;
+
+            // 1. Duplicados en filas y columnas
+            for (let r = 0; r < sz; r++) {
+                const rowVals = state.userGrid[r].filter(v => v !== null);
+                if (new Set(rowVals).size !== rowVals.length) {
+                    // marcar fila con error
+                    for (let c = 0; c < sz; c++) {
+                        if (state.userGrid[r][c] !== null) {
+                            markCellError(r, c);
+                        }
+                    }
+                }
+            }
+            for (let c = 0; c < sz; c++) {
+                const colVals = [];
+                for (let r = 0; r < sz; r++) {
+                    if (state.userGrid[r][c] !== null) colVals.push(state.userGrid[r][c]);
+                }
+                if (new Set(colVals).size !== colVals.length) {
+                    for (let r = 0; r < sz; r++) {
+                        if (state.userGrid[r][c] !== null) {
+                            markCellError(r, c);
+                        }
+                    }
+                }
+            }
+
+            // 2. Jaulas completadas: comprobar si la operación matemática es correcta
+            state.puzzle.cages.forEach(cg => {
+                const filled = cg.cells.map(([r, c]) => state.userGrid[r][c]);
+                if (filled.every(v => v !== null)) {
+                    const isMathCorrect = testCageMath(cg, filled);
+                    cg.cells.forEach(([r, c]) => {
+                        const el = document.querySelector(`.calcudoku-cell[data-r="${r}"][data-c="${c}"]`);
+                        if (el) {
+                            if (!isMathCorrect) el.classList.add('cell-error');
+                            else el.classList.add('cell-complete');
+                        }
+                    });
+                }
+            });
+        }
+
+        function testCageMath(cg, vals) {
+            const t = cg.target;
+            const op = cg.op;
+            if (vals.length === 1) return vals[0] === t;
+            if (op === '+') return vals.reduce((a, b) => a + b, 0) === t;
+            if (op === '*') return vals.reduce((a, b) => a * b, 1) === t;
+            if (op === '-') return Math.abs(vals[0] - vals[1]) === t;
+            if (op === '/') {
+                const v1 = Math.max(vals[0], vals[1]);
+                const v2 = Math.min(vals[0], vals[1]);
+                return v1 % v2 === 0 && Math.floor(v1 / v2) === t;
+            }
+            return false;
+        }
+
+        function markCellError(r, c) {
+            const el = document.querySelector(`.calcudoku-cell[data-r="${r}"][data-c="${c}"]`);
+            if (el) el.classList.add('cell-error');
+        }
+
+        function updateCageHelper() {
+            const el = document.getElementById('cageHelperText');
+            if (!el) return;
+
+            if (!state.activeCell) {
+                el.textContent = 'Toca una casilla para comenzar';
+                return;
+            }
+
+            const { r, c } = state.activeCell;
+            const cageMap = getCageMap();
+            const cIdx = cageMap[r][c];
+            const cg = state.puzzle.cages[cIdx];
+
+            let opName = 'Valor fijo';
+            if (cg.op === '+') opName = 'Suma (+)';
+            else if (cg.op === '-') opName = 'Resta (−)';
+            else if (cg.op === '*') opName = 'Multiplicación (×)';
+            else if (cg.op === '/') opName = 'División (÷)';
+
+            const filledCount = cg.cells.filter(([cr, cc]) => state.userGrid[cr][cc] !== null).length;
+            const opSym = cg.op === '*' ? '×' : (cg.op === '/' ? '÷' : (cg.op || ''));
+            el.textContent = `Jaula activa: ${cg.target}${opSym} · Operación: ${opName} · Celdas: ${filledCount}/${cg.cells.length}`;
+        }
+
+        function inputDigit(val) {
+            if (!state.activeCell || state.isCompleted) return;
+            const { r, c } = state.activeCell;
+
+            state.userGrid[r][c] = val;
+            renderBoard();
+            checkVictory();
+        }
+
+        function checkVictory() {
+            const sz = state.puzzle.size;
+
+            // 1. Comprobar que todas las celdas estén rellenas
+            for (let r = 0; r < sz; r++) {
+                for (let c = 0; c < sz; c++) {
+                    if (state.userGrid[r][c] === null) return;
+                }
+            }
+
+            // 2. Comprobar que cada fila tenga todos los dígitos 1..N sin duplicados
+            for (let r = 0; r < sz; r++) {
+                const rowSet = new Set(state.userGrid[r]);
+                if (rowSet.size !== sz) return;
+                for (let v = 1; v <= sz; v++) {
+                    if (!rowSet.has(v)) return;
+                }
+            }
+
+            // 3. Comprobar que cada columna tenga todos los dígitos 1..N sin duplicados
+            for (let c = 0; c < sz; c++) {
+                const colVals = [];
+                for (let r = 0; r < sz; r++) colVals.push(state.userGrid[r][c]);
+                const colSet = new Set(colVals);
+                if (colSet.size !== sz) return;
+                for (let v = 1; v <= sz; v++) {
+                    if (!colSet.has(v)) return;
+                }
+            }
+
+            // 4. Comprobar que todas las jaulas cumplan estrictamente su objetivo matemático
+            for (const cg of state.puzzle.cages) {
+                const vals = cg.cells.map(([r, c]) => state.userGrid[r][c]);
+                if (!testCageMath(cg, vals)) return;
+            }
+
+            // ¡Victoria legítima y matemáticamente certificada!
+            state.isCompleted = true;
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            saveVictoryStats();
+            showVictoryModal();
+        }
+
+        function giveHint() {
+            if (state.isCompleted) return;
+            const sz = state.puzzle.size;
+            const sol = state.puzzle.solution;
+
+            if (state.activeCell) {
+                const { r, c } = state.activeCell;
+                if (state.userGrid[r][c] !== sol[r][c]) {
+                    inputDigit(sol[r][c]);
+                    return;
+                }
+            }
+
+            for (let r = 0; r < sz; r++) {
+                for (let c = 0; c < sz; c++) {
+                    if (state.userGrid[r][c] !== sol[r][c]) {
+                        selectCell(r, c);
+                        inputDigit(sol[r][c]);
+                        return;
+                    }
+                }
+            }
+        }
+
+        function restartGame() {
+            if (confirm('¿Reiniciar todo el tablero de Calcudoku?')) {
+                const sz = state.puzzle.size;
+                state.userGrid = Array.from({ length: sz }, () => Array(sz).fill(null));
+                state.activeCell = null;
+                renderBoard();
+                updateCageHelper();
+            }
+        }
+
+        function togglePause() {
+            state.isPaused = !state.isPaused;
+            const btn = document.getElementById('btnPause');
+            if (btn) btn.textContent = state.isPaused ? '▶ Continuar' : '⏸ Pausa';
+            const board = document.getElementById('calcudokuBoard');
+            if (board) board.style.opacity = state.isPaused ? '0.2' : '1';
+        }
+
+        // STATS
+        const STATS_KEY = 'mr_calcudoku_stats';
+        function loadStats() {
+            try {
+                const raw = localStorage.getItem(STATS_KEY);
+                return raw ? JSON.parse(raw) : { completed: 0, streak: 0, lastDate: '', bestTime: null };
+            } catch(e) {
+                return { completed: 0, streak: 0, lastDate: '', bestTime: null };
+            }
+        }
+
+        function saveVictoryStats() {
+            const todayStr = getTodaySeedString();
+            const stats = loadStats();
+
+            stats.completed = (stats.completed || 0) + 1;
+
+            if (stats.lastDate) {
+                const last = new Date(stats.lastDate);
+                const current = new Date(todayStr);
+                const diffDays = Math.round((current - last) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) stats.streak = (stats.streak || 0) + 1;
+                else if (diffDays > 1) stats.streak = 1;
+            } else {
+                stats.streak = 1;
+            }
+            stats.lastDate = todayStr;
+
+            if (!stats.bestTime || state.timerSecs < stats.bestTime) {
+                stats.bestTime = state.timerSecs;
+            }
+
+            try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch(e) {}
+            updateStatsUI(stats);
+        }
+
+        function updateStatsUI(stats) {
+            const formatTime = (secs) => {
+                if (!secs) return '--:--';
+                const m = String(Math.floor(secs / 60)).padStart(2, '0');
+                const s = String(secs % 60).padStart(2, '0');
+                return `${m}:${s}`;
+            };
+
+            ['statCompleted', 'modalStatCompleted'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = stats.completed || 0;
+            });
+            ['statStreak', 'modalStatStreak'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = stats.streak || 0;
+            });
+            ['statBestTime', 'modalStatBestTime'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = formatTime(stats.bestTime);
+            });
+        }
+
+        function showVictoryModal() {
+            const m = Math.floor(state.timerSecs / 60);
+            const s = state.timerSecs % 60;
+            const timeStr = `${m}m ${s}s`;
+            const msg = document.getElementById('victoryTimeMsg');
+            if (msg) msg.textContent = `Has resuelto el Calcudoku del Día en ${timeStr}.`;
+
+            const stats = loadStats();
+            updateStatsUI(stats);
+            openModal('victoryModal');
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('open');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('open');
+        }
+
+        // EVENTOS
+        document.addEventListener('DOMContentLoaded', () => {
+            initCalcudoku();
+
+            document.getElementById('btnPause')?.addEventListener('click', togglePause);
+            document.getElementById('btnHint')?.addEventListener('click', giveHint);
+            document.getElementById('btnRestart')?.addEventListener('click', restartGame);
+            document.getElementById('btnStats')?.addEventListener('click', () => {
+                updateStatsUI(loadStats());
+                openModal('statsModal');
+            });
+
+            // Toggle modo 4x4 vs 5x5
+            document.querySelectorAll('#modeToggleGroup .mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#modeToggleGroup .mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.size = parseInt(btn.dataset.size, 10);
+                    initCalcudoku();
+                });
+            });
+
+            // Compartir
+            document.getElementById('btnShareVictory')?.addEventListener('click', () => {
+                const m = String(Math.floor(state.timerSecs / 60)).padStart(2, '0');
+                const s = String(state.timerSecs % 60).padStart(2, '0');
+                const shareText = `Editorial Menos Ruido · Calcudoku del Día 🧮\nHe resuelto el reto de hoy en ${m}:${s} sin prisas.\nJuega gratis en: https://www.editorialmenosruido.com/calcudoku-diario.html`;
+                
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        alert('¡Copiado al portapapeles!');
+                    });
+                } else {
+                    alert(shareText);
+                }
+            });
+
+            // Teclado físico
+            window.addEventListener('keydown', (e) => {
+                const maxVal = state.size;
+                if (e.key >= '1' && e.key <= String(maxVal)) {
+                    inputDigit(parseInt(e.key, 10));
+                } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                    inputDigit(null);
+                } else if (e.key.startsWith('Arrow') && state.activeCell) {
+                    e.preventDefault();
+                    navigateArrow(e.key);
+                }
+            });
+        });
+
+        function navigateArrow(key) {
+            const { r, c } = state.activeCell;
+            const sz = state.size;
+            let nr = r, nc = c;
+
+            if (key === 'ArrowUp') nr = Math.max(0, r - 1);
+            if (key === 'ArrowDown') nr = Math.min(sz - 1, r + 1);
+            if (key === 'ArrowLeft') nc = Math.max(0, c - 1);
+            if (key === 'ArrowRight') nc = Math.min(sz - 1, c + 1);
+
+            selectCell(nr, nc);
+        }
+    </script>
+</body>
+</html>

@@ -9,6 +9,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173
   },
+  optimizeDeps: {
+    include: ['firebase/app', 'firebase/auth', 'firebase/firestore']
+  },
   build: {
     rollupOptions: {
       input: {
@@ -42,6 +45,7 @@ export default defineConfig({
         noHacerNada: resolve(__dirname, 'aprender-a-no-hacer-nada-sin-sentirte-culpable.html'),
         ensayoCallar: resolve(__dirname, 'por-que-callar-para-no-crear-conflicto-sale-mas-caro.html'),
         ensayoGeneradores: resolve(__dirname, 'como-generar-tu-planificador-facil-y-rapido.html'),
+        ensayoSudoku: resolve(__dirname, 'por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
@@ -76,6 +80,19 @@ export default defineConfig({
         adminEmails: resolve(__dirname, 'admin-emails.html'),
         miEspacio: resolve(__dirname, 'mi-espacio.html'),
         baja: resolve(__dirname, 'baja.html'),
+        pasatiempos: resolve(__dirname, 'pasatiempos.html'),
+        generadorSudokus: resolve(__dirname, 'generador-sudokus.html'),
+        generadorSopas: resolve(__dirname, 'generador-sopas.html'),
+        sopaDiaria: resolve(__dirname, 'sopa-diaria.html'),
+        generadorCruzadas: resolve(__dirname, 'generador-cruzadas.html'),
+        cruzadasDiarias: resolve(__dirname, 'cruzadas-diarias.html'),
+        kakuroDiario: resolve(__dirname, 'kakuro-diario.html'),
+        generadorKakuro: resolve(__dirname, 'generador-kakuro.html'),
+        calcudokuDiario: resolve(__dirname, 'calcudoku-diario.html'),
+        generadorCalcudoku: resolve(__dirname, 'generador-calcudoku.html'),
+        generadorLibroPasatiempos: resolve(__dirname, 'generador-libro-pasatiempos.html'),
+        hoy: resolve(__dirname, 'hoy.html'),
+        sudokuDiario: resolve(__dirname, 'sudoku-diario.html'),
         notFound: resolve(__dirname, '404.html')
       }
     }

@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Retos del Día · Editorial Menos Ruido</title>
+    <meta name="description" content="Tus 5 pasatiempos diarios de lógica y palabras: Sudoku, Kakuro, Calcudoku, Sopa de letras y Cruzadas. Pensar y despejar la mente." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest-diario.webmanifest" />
+    <meta name="theme-color" content="#1e1916" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Menos Ruido" />
+    <link rel="canonical" href="https://www.editorialmenosruido.com/hoy.html" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./diagnostic.css" />
+
+    <style>
+        :root {
+            --bg-paper: #f8f6f0;
+            --surface-card: #ffffff;
+            --border-color: #e5dfd5;
+            --text-dark: #1e1916;
+            --text-muted: #666059;
+            --accent: #111111;
+            --color-success: #15803d;
+            --bg-success: #dcfce7;
+            --color-pending: #b45309;
+            --bg-pending: #fef3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-paper);
+            color: var(--text-dark);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            padding-bottom: 40px;
+        }
+
+        .pwa-app-wrap {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* HEADER APP */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 4px;
+        }
+
+        .app-brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-logo {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.1;
+            text-decoration: none;
+        }
+
+        .app-sub {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .app-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-header-link {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            background: #ede8df;
+            padding: 5px 10px;
+            border-radius: 6px;
+        }
+        .btn-header-link:hover { color: #111; }
+
+        /* TARJETA FECHA Y PROGRESO DIARIO */
+        .daily-summary-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .summary-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .today-date-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-transform: capitalize;
+            line-height: 1.2;
+        }
+
+        .streak-pill {
+            background: #fff1e8;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .progress-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .progress-meta strong {
+            color: var(--text-dark);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: #ede8df;
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #111111;
+            border-radius: 999px;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .progress-fill.all-done {
+            background: var(--color-success);
+        }
+
+        /* LISTA DE JUEGOS */
+        .games-section-title {
+            font-size: 0.80rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #777;
+            margin-top: 4px;
+            padding-left: 2px;
+        }
+
+        .games-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .game-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 14px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+        }
+        .game-card:active {
+            transform: scale(0.985);
+        }
+
+        .game-card-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .game-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+            background: #f7f5f0;
+            border: 1px solid #e5dfd5;
+        }
+
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .game-name {
+            font-size: 0.96rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-desc {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 1px;
+        }
+
+        .game-card-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            padding-left: 8px;
+        }
+
+        .status-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-badge.pending {
+            background: var(--bg-pending);
+            color: var(--color-pending);
+        }
+
+        .status-badge.completed {
+            background: var(--bg-success);
+            color: var(--color-success);
+        }
+
+        .chevron-arrow {
+            color: #b0aba0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        /* BANNER DE INSTALACIÓN PWA */
+        .pwa-install-banner {
+            background: #111111;
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            margin-top: 6px;
+        }
+
+        .pwa-install-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .pwa-install-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .pwa-install-desc {
+            font-size: 0.75rem;
+            color: #ccc;
+        }
+
+        .btn-install-action {
+            background: #ffffff;
+            color: #111111;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.80rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        /* GUÍA IOS */
+        .ios-guide-box {
+            background: #f1ede6;
+            border: 1px dashed #d5cfc4;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.75rem;
+            color: #555;
+            line-height: 1.4;
+            display: none;
+        }
+
+        
+        /* TARJETA SINCRONIZACIÓN Y PERFIL */
+        .user-sync-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+
+        .sync-unauth-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .sync-info-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .sync-icon {
+            font-size: 1.35rem;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .sync-text {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+        }
+
+        .sync-text strong {
+            font-size: 0.84rem;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sync-text span {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .btn-sync-action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: opacity 0.15s ease;
+        }
+        .btn-sync-action:hover {
+            opacity: 0.88;
+        }
+
+        .sync-auth-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .sync-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .sync-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #111111;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.86rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .sync-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .sync-user-meta {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .sync-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sync-name-row strong {
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+
+        .sync-badge-ok {
+            font-size: 0.62rem;
+            font-weight: 700;
+            background: #dcfce7;
+            color: #15803d;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .sync-user-email {
+            font-size: 0.70rem;
+            color: #777;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+        }
+
+        .sync-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .btn-sync-refresh {
+            background: #f1ede6;
+            border: 1px solid #dcd4c8;
+            color: var(--text-dark);
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .btn-sync-refresh:hover {
+            background: #e6e0d5;
+        }
+
+        .btn-sync-link {
+            background: var(--accent);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* PIE */
+        .app-footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.74rem;
+            color: #888;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .app-footer a {
+            color: var(--text-dark);
+            text-decoration: underline;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        <span>APP MÓVIL PWA · RETOS DIARIOS · EDITORIAL MENOS RUIDO</span>
+    </div>
+
+    <div class="pwa-app-wrap">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="app-brand">
+                <a href="/" class="app-logo">Menos Ruido</a>
+                <span class="app-sub">Pasatiempos de Hoy</span>
+            </div>
+            <div class="app-header-actions">
+                <a href="/pasatiempos.html" class="btn-header-link">Catálogo</a>
+                <a href="/mi-espacio.html" class="btn-header-link">Mi Espacio</a>
+            </div>
+        </header>
+
+                <!-- TARJETA SINCRONIZACIÓN Y PERFIL -->
+        <div class="user-sync-card" id="userSyncCard">
+            <!-- Estado Invitado (Sin sesión) -->
+            <div class="sync-unauth-box" id="syncUnauthBox">
+                <div class="sync-info-row">
+                    <span class="sync-icon">☁️</span>
+                    <div class="sync-text">
+                        <strong>Guarda tu progreso en tu perfil</strong>
+                        <span>Conserva tus rachas y mejores tiempos en la nube.</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-sync-action" id="btnSyncLogin">Registrarme / Entrar</button>
+            </div>
+
+            <!-- Estado Conectado (Con sesión activa) -->
+            <div class="sync-auth-box" id="syncAuthBox" style="display: none;">
+                <div class="sync-user-info">
+                    <div class="sync-avatar" id="syncAvatar">U</div>
+                    <div class="sync-user-meta">
+                        <div class="sync-name-row">
+                            <strong id="syncUserName">Usuario</strong>
+                            <span class="sync-badge-ok" id="syncStatusBadge">✓ Sincronizado</span>
+                        </div>
+                        <span class="sync-user-email" id="syncUserEmail">correo@ejemplo.com</span>
+                    </div>
+                </div>
+                <div class="sync-actions-row">
+                    <button type="button" class="btn-sync-refresh" id="btnManualSync" title="Sincronizar progreso ahora">↻ Sincronizar</button>
+                    <a href="/mi-espacio.html" class="btn-sync-link">Mi Espacio</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- TARJETA DE PROGRESO -->
+        <div class="daily-summary-card">
+            <div class="summary-top">
+                <div>
+                    <div class="today-date-text" id="todayDateDisplay">Cargando fecha...</div>
+                    <span style="font-size: 0.75rem; color: #777;">5 juegos nuevos cada 24 horas</span>
+                </div>
+                <div class="streak-pill" id="globalStreakPill">
+                    🔥 <span id="globalStreakVal">1 día</span>
+                </div>
+            </div>
+
+            <div class="progress-box">
+                <div class="progress-meta">
+                    <span>Progreso del día</span>
+                    <span id="progressRatioText"><strong>0</strong> de 5 resueltos</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressBarFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTA DE JUEGOS DEL DÍA -->
+        <span class="games-section-title">Los 5 Retos de Hoy</span>
+
+        <div class="games-list">
+            <!-- 1. SUDOKU -->
+            <a href="/sudoku-diario.html" class="game-card" id="cardSudoku">
+                <div class="game-card-left">
+                    <div class="game-icon-box" style="background: #f4efe9;">🧩</div>
+                    <div class="game-info">
+                        <span class="game-name">Sudoku del Día</span>
+                        <span class="game-desc">Lógica clásica 9×9 y Mini 4×4</span>
+                    </div>
+                </div>
+                <div class="game-card-right">
+                    <span class="status-badge pending" id="badgeSudoku">Pendiente</span>
+                    <span class="chevron-arrow">›</span>
+                </div>
+            </a>
+
+            <!-- 2. CALCUDOKU -->
+            <a href="/calcudoku-diario.html" class="game-card" id="cardCalcudoku">
+                <div class="game-card-left">
+                    <div class="game-icon-box" style="background: #eaf3ed;">🧮</div>
+                    <div class="game-info">
+                        <span class="game-name">Calcudoku del Día</span>
+                        <span class="game-desc">KenKen aritmético (+, −, ×, ÷)</span>
+                    </div>
+                </div>
+                <div class="game-card-right">
+                    <span class="status-badge pending" id="badgeCalcudoku">Pendiente</span>
+                    <span class="chevron-arrow">›</span>
+                </div>
+            </a>
+
+            <!-- 3. KAKURO -->
+            <a href="/kakuro-diario.html" class="game-card" id="cardKakuro">
+                <div class="game-card-left">
+                    <div class="game-icon-box" style="background: #fbf5ea;">📐</div>
+                    <div class="game-info">
+                        <span class="game-name">Kakuro del Día</span>
+                        <span class="game-desc">Crucigrama numérico de sumas</span>
+                    </div>
+                </div>
+                <div class="game-card-right">
+                    <span class="status-badge pending" id="badgeKakuro">Pendiente</span>
+                    <span class="chevron-arrow">›</span>
+                </div>
+            </a>
+
+            <!-- 4. CRUZADAS -->
+            <a href="/cruzadas-diarias.html" class="game-card" id="cardCruzadas">
+                <div class="game-card-left">
+                    <div class="game-icon-box" style="background: #ebf1f8;">🔠</div>
+                    <div class="game-info">
+                        <span class="game-name">Cruzadas del Día</span>
+                        <span class="game-desc">Word Fit deductivo por longitud</span>
+                    </div>
+                </div>
+                <div class="game-card-right">
+                    <span class="status-badge pending" id="badgeCruzadas">Pendiente</span>
+                    <span class="chevron-arrow">›</span>
+                </div>
+            </a>
+
+            <!-- 5. SOPA DE LETRAS -->
+            <a href="/sopa-diaria.html" class="game-card" id="cardSopa">
+                <div class="game-card-left">
+                    <div class="game-icon-box" style="background: #f3efe6;">🔤</div>
+                    <div class="game-info">
+                        <span class="game-name">Sopa de Letras</span>
+                        <span class="game-desc">Palabras ocultas del tema del día</span>
+                    </div>
+                </div>
+                <div class="game-card-right">
+                    <span class="status-badge pending" id="badgeSopa">Pendiente</span>
+                    <span class="chevron-arrow">›</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- BANNER INSTALACIÓN PWA -->
+        <div class="pwa-install-banner" id="pwaInstallBanner" style="display: none;">
+            <div class="pwa-install-text">
+                <span class="pwa-install-title">Instalar como App</span>
+                <span class="pwa-install-desc">Acceso directo en pantalla de inicio</span>
+            </div>
+            <button type="button" class="btn-install-action" id="btnInstallPwa">Instalar</button>
+        </div>
+
+        <div class="ios-guide-box" id="iosGuideBox">
+            💡 <strong>Instalar en iPhone / iPad:</strong> Toca el botón <em>Compartir</em> (<span style="font-size: 1.1em;">⎋</span>) en Safari y selecciona <strong>«Añadir a pantalla de inicio»</strong> para usarlo a pantalla completa sin navegador.
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p><a href="/generador-libro-pasatiempos.html" style="font-weight: 700; color: #111; text-decoration: underline;">📚 ¿Prefieres resolver en papel? Configura tu Libro Completo (120 o 180 págs)</a></p>
+            <p>Editorial Menos Ruido · Pasatiempos sin pantallas invasivas ni publicidad.</p>
+            <p><a href="/pasatiempos.html">Ver catálogo completo y generadores individuales</a></p>
+        </footer>
+    </div>
+
+    <!-- SCRIPT DE GESTIÓN Y PWA CON FIREBASE -->
+    <script type="module">
+        import { 
+            auth, 
+            db, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            onAuthStateChanged,
+            getUserEmail,
+            getUserDisplayName 
+        } from './firebase-config.js';
+        import { openAuthModal } from './auth-modal.js';
+
+        // REGISTRO DE SERVICE WORKER
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+
+        // FECHA ACTUAL (YYYY-MM-DD)
+        function getTodayString() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDisplayDate() {
+            const now = new Date();
+            const str = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // RECOLECTAR ESTADÍSTICAS LOCALES
+        function getLocalPuzzleStats(todayStr) {
+            let sudoku = {};
+            try { sudoku = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}'); } catch(e) {}
+
+            let calcudoku = {};
+            try { calcudoku = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}'); } catch(e) {}
+
+            let kakuro = {};
+            try { kakuro = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}'); } catch(e) {}
+
+            let cruzadas = {};
+            try { 
+                cruzadas = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}'); 
+            } catch(e) {}
+
+            const sopa = {
+                streak: parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10),
+                completed: parseInt(localStorage.getItem('mr_sopa_total_wins') || '0', 10),
+                bestTime: parseInt(localStorage.getItem('mr_sopa_best_time') || '0', 10),
+                lastDate: localStorage.getItem(`mr_sopa_solved_${todayStr}`) === 'true' ? todayStr : ''
+            };
+
+            return { sudoku, calcudoku, kakuro, cruzadas, sopa };
+        }
+
+        // FUSIÓN BIDIRECCIONAL INTELIGENTE (SIN PÉRDIDA DE PROGRESO)
+        function mergeStats(local, remote) {
+            if (!remote) return local;
+
+            function mergeItem(loc = {}, rem = {}) {
+                const compLoc = loc.totalCompleted || loc.completed || 0;
+                const compRem = rem.totalCompleted || rem.completed || 0;
+                const completed = Math.max(compLoc, compRem);
+
+                const streak = Math.max(loc.streak || 0, rem.streak || 0);
+
+                let bestTime = null;
+                const btLoc = loc.bestTime && loc.bestTime < 99999 ? loc.bestTime : null;
+                const btRem = rem.bestTime && rem.bestTime < 99999 ? rem.bestTime : null;
+                if (btLoc && btRem) bestTime = Math.min(btLoc, btRem);
+                else bestTime = btLoc || btRem || null;
+
+                const dLoc = loc.lastSolvedDate || loc.lastDate || '';
+                const dRem = rem.lastSolvedDate || rem.lastDate || '';
+                const lastDate = dLoc > dRem ? dLoc : dRem;
+
+                return {
+                    completed,
+                    totalCompleted: completed,
+                    streak,
+                    bestTime,
+                    lastDate,
+                    lastSolvedDate: lastDate
+                };
+            }
+
+            return {
+                sudoku: mergeItem(local.sudoku, remote.sudoku),
+                calcudoku: mergeItem(local.calcudoku, remote.calcudoku),
+                kakuro: mergeItem(local.kakuro, remote.kakuro),
+                cruzadas: mergeItem(local.cruzadas, remote.cruzadas),
+                sopa: mergeItem(local.sopa, remote.sopa)
+            };
+        }
+
+        // GUARDAR FUSIÓN EN LOCALSTORAGE
+        function saveMergedToLocal(merged, todayStr) {
+            if (!merged) return;
+            try {
+                if (merged.sudoku) {
+                    localStorage.setItem('menosruido_sudoku_stats_v1', JSON.stringify({
+                        totalCompleted: merged.sudoku.completed,
+                        streak: merged.sudoku.streak,
+                        bestTime: merged.sudoku.bestTime,
+                        lastSolvedDate: merged.sudoku.lastDate
+                    }));
+                }
+                if (merged.calcudoku) {
+                    localStorage.setItem('mr_calcudoku_stats', JSON.stringify({
+                        completed: merged.calcudoku.completed,
+                        streak: merged.calcudoku.streak,
+                        bestTime: merged.calcudoku.bestTime,
+                        lastDate: merged.calcudoku.lastDate
+                    }));
+                }
+                if (merged.kakuro) {
+                    localStorage.setItem('mr_kakuro_stats', JSON.stringify({
+                        completed: merged.kakuro.completed,
+                        streak: merged.kakuro.streak,
+                        bestTime: merged.kakuro.bestTime,
+                        lastDate: merged.kakuro.lastDate
+                    }));
+                }
+                if (merged.cruzadas) {
+                    const crzObj = {
+                        completed: merged.cruzadas.completed,
+                        streak: merged.cruzadas.streak,
+                        bestTime: merged.cruzadas.bestTime,
+                        lastSolvedDate: merged.cruzadas.lastDate
+                    };
+                    localStorage.setItem('mr_cruzadas_daily_stats', JSON.stringify(crzObj));
+                    localStorage.setItem('mr_cruzadas_stats', JSON.stringify(crzObj));
+                }
+                if (merged.sopa) {
+                    if (merged.sopa.streak) localStorage.setItem('mr_sopa_streak', String(merged.sopa.streak));
+                    if (merged.sopa.completed) localStorage.setItem('mr_sopa_total_wins', String(merged.sopa.completed));
+                    if (merged.sopa.bestTime) localStorage.setItem('mr_sopa_best_time', String(merged.sopa.bestTime));
+                    if (merged.sopa.lastDate === todayStr) localStorage.setItem(`mr_sopa_solved_${todayStr}`, 'true');
+                }
+            } catch(e) {}
+        }
+
+        // SINCRONIZACIÓN CON FIRESTORE
+        let isSyncing = false;
+        async function syncWithFirestore(user) {
+            if (!user || isSyncing) return;
+            isSyncing = true;
+            const badge = document.getElementById('syncStatusBadge');
+            if (badge) badge.textContent = '↻ Sincronizando...';
+
+            const todayStr = getTodayString();
+            const local = getLocalPuzzleStats(todayStr);
+
+            try {
+                const userRef = doc(db, 'users', user.uid);
+                const snap = await getDoc(userRef);
+                let remote = null;
+                if (snap.exists()) {
+                    remote = snap.data()?.puzzleStats || null;
+                }
+
+                const merged = mergeStats(local, remote);
+                saveMergedToLocal(merged, todayStr);
+
+                await setDoc(userRef, {
+                    puzzleStats: merged,
+                    lastPuzzleSync: new Date().toISOString()
+                }, { merge: true });
+
+                if (badge) badge.textContent = '✓ Sincronizado';
+                checkGamesStatus();
+            } catch(err) {
+                console.warn('Sync Firestore pasatiempos warning:', err);
+                if (badge) badge.textContent = '✓ Guardado local';
+            } finally {
+                isSyncing = false;
+            }
+        }
+
+        // COMPROBAR ESTADO DE CADA JUEGO HOY
+        window.checkGamesStatus = function() {
+            const todayStr = getTodayString();
+            let completedCount = 0;
+            const total = 5;
+
+            // 1. Sudoku
+            let sudokuSolved = false;
+            try {
+                const sStats = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}');
+                if (sStats.lastSolvedDate === todayStr) sudokuSolved = true;
+                const sState9 = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_classic_${todayStr}`) || '{}');
+                if (sState9.isCompleted) sudokuSolved = true;
+                const sState4 = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_mini_${todayStr}`) || '{}');
+                if (sState4.isCompleted) sudokuSolved = true;
+            } catch(e) {}
+            updateBadge('badgeSudoku', sudokuSolved);
+            if (sudokuSolved) completedCount++;
+
+            // 2. Calcudoku
+            let calcudokuSolved = false;
+            try {
+                const cStats = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}');
+                if (cStats.lastDate === todayStr) calcudokuSolved = true;
+            } catch(e) {}
+            updateBadge('badgeCalcudoku', calcudokuSolved);
+            if (calcudokuSolved) completedCount++;
+
+            // 3. Kakuro
+            let kakuroSolved = false;
+            try {
+                const kStats = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}');
+                if (kStats.lastDate === todayStr) kakuroSolved = true;
+            } catch(e) {}
+            updateBadge('badgeKakuro', kakuroSolved);
+            if (kakuroSolved) completedCount++;
+
+            // 4. Cruzadas
+            let cruzadasSolved = false;
+            try {
+                const crState = JSON.parse(localStorage.getItem(`mr_cruzadas_daily_${todayStr}`) || '{}');
+                if (crState.completed) cruzadasSolved = true;
+                const crStats = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}');
+                if (crStats.lastSolvedDate === todayStr) cruzadasSolved = true;
+            } catch(e) {}
+            updateBadge('badgeCruzadas', cruzadasSolved);
+            if (cruzadasSolved) completedCount++;
+
+            // 5. Sopa de Letras
+            let sopaSolved = false;
+            try {
+                if (localStorage.getItem(`mr_sopa_solved_${todayStr}`) === 'true') sopaSolved = true;
+            } catch(e) {}
+            updateBadge('badgeSopa', sopaSolved);
+            if (sopaSolved) completedCount++;
+
+            // Actualizar barra y texto
+            const fill = document.getElementById('progressBarFill');
+            const ratioText = document.getElementById('progressRatioText');
+            const pct = (completedCount / total) * 100;
+
+            if (fill) {
+                fill.style.width = `${pct}%`;
+                fill.classList.toggle('all-done', completedCount === total);
+            }
+
+            if (ratioText) {
+                if (completedCount === total) {
+                    ratioText.innerHTML = `<strong>¡Todos completados!</strong> 🎉`;
+                } else {
+                    ratioText.innerHTML = `<strong>${completedCount}</strong> de ${total} resueltos`;
+                }
+            }
+
+            // Calcular racha global estimada
+            updateGlobalStreak(completedCount);
+        };
+
+        function updateBadge(badgeId, isDone) {
+            const badge = document.getElementById(badgeId);
+            if (!badge) return;
+            if (isDone) {
+                badge.className = 'status-badge done';
+                badge.innerHTML = '✓ Hecho';
+            } else {
+                badge.className = 'status-badge pending';
+                badge.innerHTML = 'Pendiente';
+            }
+        }
+
+        function updateGlobalStreak(todayCount) {
+            let maxStreak = 0;
+            try {
+                const s = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}').streak || 0;
+                const c = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}').streak || 0;
+                const k = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}').streak || 0;
+                const cr = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}').streak || 0;
+                const sp = parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10);
+                maxStreak = Math.max(s, c, k, cr, sp, todayCount > 0 ? 1 : 0);
+            } catch(e) {}
+
+            const pill = document.getElementById('globalStreakVal');
+            if (pill) {
+                pill.textContent = maxStreak > 0 ? `${maxStreak} día${maxStreak > 1 ? 's' : ''}` : '0 días';
+            }
+        }
+
+        // GESTIÓN DE AUTENTICACIÓN Y SINCRONIZACIÓN DE PERFIL
+        onAuthStateChanged(auth, async (user) => {
+            const unauthBox = document.getElementById('syncUnauthBox');
+            const authBox = document.getElementById('syncAuthBox');
+            const nameEl = document.getElementById('syncUserName');
+            const emailEl = document.getElementById('syncUserEmail');
+            const avatarEl = document.getElementById('syncAvatar');
+
+            if (user) {
+                if (unauthBox) unauthBox.style.display = 'none';
+                if (authBox) authBox.style.display = 'flex';
+
+                const name = getUserDisplayName(user);
+                const email = getUserEmail(user);
+                if (nameEl) nameEl.textContent = name;
+                if (emailEl) emailEl.textContent = email;
+
+                if (avatarEl) {
+                    if (user.photoURL) {
+                        avatarEl.innerHTML = `<img src="${user.photoURL}" alt="" />`;
+                    } else {
+                        avatarEl.textContent = (name || email || 'U').charAt(0).toUpperCase();
+                    }
+                }
+
+                // Sincronizar estadísticas en segundo plano
+                await syncWithFirestore(user);
+            } else {
+                if (unauthBox) unauthBox.style.display = 'flex';
+                if (authBox) authBox.style.display = 'none';
+            }
+        });
+
+        // BOTONES DE ACCESO Y SINCRONIZACIÓN
+        document.getElementById('btnSyncLogin')?.addEventListener('click', () => {
+            openAuthModal({
+                title: 'Tu Perfil de Pasatiempos',
+                subtitle: 'Accede para sincronizar tus avances diarios, tiempos y rachas en todos tus dispositivos.'
+            });
+        });
+
+        document.getElementById('btnManualSync')?.addEventListener('click', () => {
+            if (auth.currentUser) {
+                syncWithFirestore(auth.currentUser);
+            } else {
+                openAuthModal();
+            }
+        });
+
+        // GESTIÓN DE INSTALACIÓN PWA
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const banner = document.getElementById('pwaInstallBanner');
+            if (banner) banner.style.display = 'flex';
+        });
+
+        document.getElementById('btnInstallPwa')?.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            document.getElementById('pwaInstallBanner').style.display = 'none';
+        });
+
+        // Detectar iOS Safari para mostrar guía de instalación si no es standalone
+        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+        const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+        if (isIos && !isStandalone) {
+            const iosBox = document.getElementById('iosGuideBox');
+            if (iosBox) iosBox.style.display = 'block';
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('todayDateDisplay').textContent = formatDisplayDate();
+            checkGamesStatus();
+        });
+
+        // Refrescar estado al volver a la pestaña tras jugar
+        window.addEventListener('focus', () => {
+            checkGamesStatus();
+            if (auth.currentUser) syncWithFirestore(auth.currentUser);
+        });
+        window.addEventListener('pageshow', () => {
+            checkGamesStatus();
+            if (auth.currentUser) syncWithFirestore(auth.currentUser);
+        });
+    </script>
+
+</body>
+</html>

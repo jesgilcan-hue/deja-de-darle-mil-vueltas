@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- MODO PRIVADO Y OCULTO -->
+    <meta name="robots" content="noindex, nofollow">
+    <title>Generador de Cruzadas en PDF · Editorial Menos Ruido</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-cruzadas.html">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos base -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./diagnostic.css">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #ffffff;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border-grid-thick: #111111;
+            --border-grid-thin: #b0aba0;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --accent: #87553b;
+            --accent-hover: #6f422c;
+            --cell-black: #ede6dc;
+            --cell-clue: #fdfbf7;
+            --cell-clue-border: #87553b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .dev-badge-bar {
+            background: #fef08a;
+            color: #854d0e;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 5px 12px;
+            border-bottom: 1px solid #fde047;
+            letter-spacing: 0.3px;
+        }
+
+        .generator-container-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 14px 40px;
+            flex: 1;
+        }
+
+        .top-nav {
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-link {
+            font-size: 0.82rem;
+            color: #555;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+        .back-link:hover { color: #000; }
+
+        .btn-help-tutorial {
+            background: #ffffff;
+            border: 1px solid #d1cbbf;
+            color: #443e39;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-help-tutorial:hover {
+            background: #f7f4ee;
+            border-color: #87553b;
+            color: #111;
+        }
+
+        .badge-version {
+            background: #ede6dc;
+            color: #4a443c;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 14px;
+            max-width: 820px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #111111;
+            margin-bottom: 3px;
+        }
+        .header-title-box p {
+            font-size: 0.88rem;
+            color: #555;
+        }
+
+        /* BARRA DE HERRAMIENTAS */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-right: 2px;
+        }
+
+        .btn-toggle-group {
+            display: inline-flex;
+            background: #f1ede6;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 2px;
+        }
+
+        .btn-toggle-item {
+            background: transparent;
+            border: none;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+        .btn-toggle-item.active {
+            background: #ffffff;
+            color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .theme-select {
+            padding: 5px 10px;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            background: #f7f5f0;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #333;
+            outline: none;
+            cursor: pointer;
+        }
+        .theme-select:focus {
+            border-color: var(--accent);
+            background: #fff;
+        }
+
+        .toolbar-btn {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #443e39;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .toolbar-btn:hover {
+            background: #ede7dc;
+            border-color: #c9bfb0;
+            color: #111;
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 16px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-action {
+            background: #ffffff;
+            color: #111111;
+            border: 1px solid #d1cbbf;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-secondary-action:hover {
+            border-color: #111;
+            background: #faf8f5;
+        }
+
+        /* CAJÓN TEMA LIBRE */
+        .custom-words-drawer {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: none;
+            box-sizing: border-box;
+        }
+        .custom-words-drawer.active {
+            display: block;
+        }
+        .custom-words-drawer label {
+            display: block;
+            font-size: 0.80rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .custom-words-input-wrap {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .custom-words-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 8px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-family: inherit;
+        }
+        .btn-custom-apply {
+            background: #111;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* AVISO TOAST */
+        .sheet-inline-notice {
+            width: 100%;
+            max-width: 980px;
+            min-height: 34px;
+            margin: 4px auto 10px auto;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            text-align: center;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            pointer-events: none;
+        }
+        .sheet-inline-notice.active {
+            opacity: 1;
+            visibility: visible;
+            background: #fbf8f2;
+            color: #4a3c31;
+            border: 1px solid #dfd6c7;
+            box-shadow: 0 2px 8px rgba(135, 85, 59, 0.08);
+            pointer-events: auto;
+        }
+
+        /* LIENZO 1:1 */
+        .canvas-preview-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .sheet-container {
+            width: 100%;
+            max-width: 980px;
+            aspect-ratio: 8.25 / 6;
+            background: var(--paper-color);
+            border: 1px solid #e0dbd1;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            padding: 2.8% 3.5%;
+            transition: aspect-ratio 0.2s ease, max-width 0.2s ease;
+            position: relative;
+        }
+
+        .sheet-container.format-6x9 {
+            max-width: 720px;
+            aspect-ratio: 6 / 9;
+            padding: 3.5% 4%;
+        }
+
+        /* CABECERA DE HOJA */
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--border-grid-thick);
+            padding-bottom: 6px;
+            margin-bottom: 2%;
+        }
+        .sheet-header-title {
+            font-family: var(--font-serif);
+            font-size: clamp(0.95rem, 1.8vw, 1.4rem);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #111;
+        }
+        .sheet-header-meta {
+            font-size: clamp(0.70rem, 1.1vw, 0.85rem);
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* LAYOUT DE LA HOJA: 8.25x6 (2/3 JUEGO + 1/3 PALABRAS) */
+        .sheet-body-layout {
+            flex: 1;
+            display: flex;
+            gap: 3%;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 0;
+            position: relative;
+        }
+
+        .sheet-container.format-6x9 .sheet-body-layout {
+            flex-direction: column;
+            gap: 8px;
+            justify-content: flex-start;
+            align-items: stretch;
+        }
+
+        /* CUADRÍCULA DE CRUZADAS (CASILLAS CÓMODAS PARA ESCRIBIR A MANO) */
+        .cruzadas-grid-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* 8.25x6: 15 columnas x 14 filas (Casillas grandes de 7.8 mm) */
+        .sheet-container:not(.format-6x9) .cruzadas-grid-container {
+            width: 58%;
+            max-width: 60%;
+            height: auto;
+            max-height: 90%;
+            aspect-ratio: 15 / 14;
+            flex-shrink: 0;
+            margin-top: -2px;
+        }
+
+        /* 6x9: 15 columnas x 15 filas (Cuadrado 15x15, idéntico al ~70% de ancho del PDF) */
+        .sheet-container.format-6x9 .cruzadas-grid-container {
+            width: 72%;
+            max-width: 74%;
+            height: auto;
+            max-height: 54%;
+            aspect-ratio: 1 / 1;
+            flex-shrink: 0;
+            margin: 0 auto;
+        }
+
+        .cruzadas-grid-board {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            background: #ede6dc;
+            user-select: none;
+            position: relative;
+            border: 2.5px solid #111111;
+            box-shadow: 0 0 0 1px #111111;
+            box-sizing: border-box;
+        }
+
+        .sheet-container:not(.format-6x9) .cruzadas-grid-board {
+            aspect-ratio: 15 / 14;
+        }
+
+        .sheet-container.format-6x9 .cruzadas-grid-board {
+            aspect-ratio: 1 / 1;
+        }
+
+        /* CELDAS DE CRUZADAS: BLOQUES CREMA (AHORRO DE TINTA) VS CASILLAS DE LETRA */
+        .cruzada-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: clamp(0.60rem, 1.05vw, 0.92rem);
+            line-height: 1;
+            box-sizing: border-box;
+            position: relative;
+            aspect-ratio: 1 / 1;
+        }
+
+        .sheet-container.format-6x9 .cruzada-cell {
+            font-size: clamp(0.72rem, 1.4vw, 1.1rem);
+        }
+
+        /* Celda bloqueada / crema (ahorra tinta) */
+        .cruzada-cell.cell-blocked {
+            background-color: var(--cell-black);
+            border: 0.5px solid #dcd5c7;
+        }
+
+        /* Celda activa para letra */
+        .cruzada-cell.cell-letter {
+            background-color: #ffffff;
+            color: #111111;
+            border: 1px solid var(--border-grid-thick);
+        }
+
+        /* Pista inicial (Starter clue) en Pág. 1 */
+        .cruzada-cell.cell-starter-clue {
+            background-color: var(--cell-clue) !important;
+            color: #87553b !important;
+            font-weight: 800;
+        }
+
+        /* Letras reveladas en solución (Pág. 2) */
+        .cruzada-cell.cell-solution {
+            color: #111111;
+        }
+
+        /* PANEL DE PALABRAS AGRUPADAS POR LONGITUD */
+        .cruzadas-words-container {
+            width: 38%;
+            max-width: 40%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            min-width: 0;
+            padding-left: 14px;
+            overflow: hidden;
+        }
+
+        .sheet-container.format-6x9 .cruzadas-words-container {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            flex: 1;
+            padding-left: 0;
+            margin-top: 22px; /* Separación amplia de seguridad por debajo del tablero */
+            overflow: hidden;
+        }
+
+        .words-section-title {
+            font-size: clamp(0.66rem, 0.88vw, 0.78rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #333;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #d5cfc4;
+            padding-bottom: 3px;
+            flex-shrink: 0;
+        }
+
+        .length-groups-wrap {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px 10px;
+            overflow: hidden;
+        }
+
+        .sheet-container.format-6x9 .length-groups-wrap {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px 12px;
+            overflow: hidden;
+        }
+
+        .length-group-block {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .length-group-heading {
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: #87553b;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .length-words-row {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cruzada-word-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: clamp(0.58rem, 0.78vw, 0.72rem);
+            font-weight: 600;
+            color: #222;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .word-checkbox {
+            width: 8px;
+            height: 8px;
+            border: 1.2px solid #666;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .cruzada-word-item.is-starter {
+            color: #87553b;
+            font-weight: 700;
+        }
+        .cruzada-word-item.is-starter .word-checkbox {
+            background-color: #87553b;
+            border-color: #87553b;
+        }
+
+        /* PIE DE HOJA */
+        .sheet-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e0dbd1;
+            padding-top: 4px;
+            margin-top: 2%;
+            font-size: clamp(0.58rem, 0.9vw, 0.72rem);
+            color: #777;
+        }
+
+        .download-hint {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(30, 25, 20, 0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 14px; right: 16px;
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            color: #888;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+        .modal-close-btn:hover { color: #111; }
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #1e1916;
+            margin-bottom: 6px;
+        }
+        .modal-desc {
+            font-size: 0.82rem;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+        .modal-format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f4efe6;
+            color: #6e442e;
+            border: 1px solid #e2d7c5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 16px;
+        }
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-modal-primary:hover { background: var(--accent-hover); }
+
+        .modal-email-box {
+            background: #fbf9f5;
+            border: 1px solid #e8e2d8;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .modal-email-header { margin-bottom: 10px; }
+        .modal-email-title {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #212121;
+        }
+        .modal-email-sub {
+            display: block;
+            font-size: 0.74rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        .modal-email-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-email-input {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 12px;
+            border: 1px solid #d0c8be;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            background: #ffffff;
+            color: #212121;
+            box-sizing: border-box;
+        }
+        .modal-email-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(135, 85, 59, 0.15);
+        }
+        .modal-btn-send {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+        .modal-btn-send:hover { background: var(--accent-hover); }
+        .modal-email-feedback {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 8px 12px;
+            line-height: 1.4;
+        }
+
+        /* MODAL TUTORIAL */
+        .modal-card-tutorial {
+            max-width: 580px;
+            text-align: left;
+            padding: 24px;
+        }
+        .tutorial-section {
+            background: #fbf9f6;
+            border: 1px solid #eae4d9;
+            border-radius: 10px;
+            padding: 13px 15px;
+            margin-bottom: 12px;
+        }
+        .tutorial-section h4 {
+            font-size: 0.90rem;
+            font-weight: 700;
+            color: #1e1916;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tutorial-section p {
+            font-size: 0.82rem;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+        .tutorial-section p:last-child {
+            margin-bottom: 0;
+        }
+        .tutorial-highlight-box {
+            background: #ffffff;
+            border-left: 3px solid var(--accent);
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.80rem;
+            color: #333;
+            line-height: 1.45;
+        }
+        .tutorial-step-list {
+            margin: 6px 0 0 16px;
+            font-size: 0.82rem;
+            color: #444;
+            line-height: 1.5;
+        }
+        .tutorial-step-list li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        🔒 Vista Privada de Desarrollo · Generador de Cruzadas en PDF (8.25" × 6" y 6" × 9")
+    </div>
+
+    <!-- HEADER MENOS RUIDO -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="nav-left">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;">Menos Ruido</a>
+            </div>
+            <nav>
+                <div class="nav-drawer-header">
+                    <span class="nav-drawer-title">Menos Ruido</span>
+                    <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <a href="/">Home</a>
+                <a href="/#cuadernos">Cuadernos y Planificadores</a>
+                <a href="/pasatiempos.html" style="font-weight: 600;">Pasatiempos</a>
+                <a href="/lecturas.html">Lecturas</a>
+            </nav>
+        </div>
+    </header>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
+
+    <main class="generator-container-wrap">
+        <div class="top-nav">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <a href="/pasatiempos.html" class="back-link">← Volver a Pasatiempos</a>
+                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo resolver e imprimir a doble cara">
+                    <span>📖</span> Guía de juego e impresión
+                </button>
+            </div>
+            <span class="badge-version" id="formatBadgeDisplay">Formato 8.25" × 6" · Anverso y Solución</span>
+        </div>
+
+        <div class="header-title-box">
+            <h1>Generador de Cruzadas en PDF</h1>
+            <p>Pasatiempo deductivo de encajar palabras. Cuadrícula limpia con pista inicial y reverso con la solución completa.</p>
+        </div>
+
+        <!-- BARRA DE HERRAMIENTAS -->
+        <div class="canvas-toolbar">
+            <!-- 0. FORMATO -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Formato:</span>
+                <div class="btn-toggle-group" id="formatToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-format="8.25x6">8.25" × 6" (Apaisado)</button>
+                    <button type="button" class="btn-toggle-item" data-format="6x9">6" × 9" (Vertical)</button>
+                </div>
+            </div>
+
+            <!-- 1. TEMA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Tema:</span>
+                <select class="theme-select" id="themeSelect">
+                    <option value="desconexion">Desconexión</option>
+                    <option value="deportes">Deportes y Ejercicio</option>
+                    <option value="naturaleza">Naturaleza y Senderos</option>
+                    <option value="cafe">Café y Mañanas</option>
+                    <option value="mente">Agilidad Mental</option>
+                    <option value="cocina">Gastronomía y Cocina</option>
+                    <option value="viajes">Geografía y Viajes</option>
+                    <option value="custom">✏️ Escribir mi propio tema o palabras...</option>
+                </select>
+            </div>
+
+            <!-- 2. DIFICULTAD (PISTAS INICIALES) -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Dificultad:</span>
+                <div class="btn-toggle-group" id="diffToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-diff="easy" title="1 palabra dada + 2 letras">Fácil</button>
+                    <button type="button" class="btn-toggle-item" data-diff="medium" title="1 palabra corta dada">Medio</button>
+                    <button type="button" class="btn-toggle-item" data-diff="hard" title="Solo 1 letra pista">Difícil</button>
+                </div>
+            </div>
+
+            <!-- 3. PÁGINA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Página:</span>
+                <div class="btn-toggle-group" id="pageToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-page="1">Pág. 1 (Reto)</button>
+                    <button type="button" class="btn-toggle-item" data-page="2">Pág. 2 (Solución)</button>
+                </div>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="toolbar-group">
+                <button type="button" class="btn-secondary-action" id="btnRegenerate" title="Reorganizar cruzada">
+                    ↺ Nuevas
+                </button>
+                <button type="button" class="toolbar-btn" id="btn-save-generator-design" title="Guardar diseño en Mi Espacio">
+                    <span>💾</span> Guardar en Mi Espacio
+                </button>
+                <button type="button" class="btn-download-primary" id="btnOpenDownloadModal">
+                    <span>📥</span> Descargar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- CAJÓN TEMA LIBRE -->
+        <div class="custom-words-drawer" id="customWordsDrawer">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div>
+                    <label for="customTopicInput"><strong>Opción 1: Escribe cualquier tema</strong> (se generan palabras automáticas):</label>
+                    <div class="custom-words-input-wrap">
+                        <input type="text" id="customTopicInput" class="custom-words-input" placeholder="Ej: Deportes, Animales, Espacio, Cine, Mitología..." />
+                        <button type="button" id="btnGenerateFromTopic" class="btn-custom-apply" style="background: var(--accent);">✨ Generar palabras</button>
+                    </div>
+                </div>
+                <div style="border-top: 1px dashed #e0d8cb; padding-top: 8px; margin-top: 4px;">
+                    <label for="customWordsInput"><strong>Opción 2: O escribe tus propias palabras</strong> (separadas por comas, longitudes de 3 a 8 letras):</label>
+                    <div class="custom-words-input-wrap">
+                        <input type="text" id="customWordsInput" class="custom-words-input" placeholder="Ej: SOL, LUZ, TAZA, FOCO, LIBRO, PAUSA, TINTA, RITMO, SILENCIO..." />
+                        <button type="button" id="btnApplyCustomWords" class="btn-custom-apply">Aplicar a la cruzada</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOAST -->
+        <div class="sheet-inline-notice" id="toast-notify"></div>
+
+        <!-- LIENZO 1:1 -->
+        <div class="canvas-preview-wrapper">
+            <div class="sheet-container" id="sheetPreview">
+                <!-- CABECERA -->
+                <div class="sheet-header">
+                    <div class="sheet-header-title" id="sheetTitleDisplay">MENOS RUIDO · CRUZADAS</div>
+                    <div class="sheet-header-meta" id="sheetHeaderMeta">EDITORIAL MENOS RUIDO</div>
+                </div>
+
+                <!-- CONTENIDO DINÁMICO -->
+                <div class="sheet-body-layout" id="sheetBodyLayout">
+                    <!-- Cuadrícula -->
+                    <div class="cruzadas-grid-container">
+                        <div class="cruzadas-grid-board" id="cruzadasGridBoard">
+                            <!-- Celdas dinámicas -->
+                        </div>
+                    </div>
+
+                    <!-- Panel de palabras por longitud -->
+                    <div class="cruzadas-words-container" id="cruzadasWordsContainer">
+                        <div class="words-section-title" id="wordsListTitle">PALABRAS · DESCONEXIÓN · FÁCIL</div>
+                        <div class="length-groups-wrap" id="lengthGroupsWrap">
+                            <!-- Grupos dinámicos -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PIE -->
+                <div class="sheet-footer">
+                    <span>Editorial Menos Ruido · www.editorialmenosruido.com</span>
+                    <span id="sheetFooterPage">Pág. 1 / 2</span>
+                </div>
+            </div>
+
+            <p class="download-hint">
+                💡 En la <strong>Página 2</strong> se imprime la solución con todas las palabras ya colocadas para comprobar con la hoja a contraluz.
+            </p>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="text-align: center; padding: 20px 0; color: #888; font-size: 0.85rem;">
+                <p>&copy; 2026 Editorial Menos Ruido. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE DESCARGA -->
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Cruzadas en PDF</h3>
+            <p class="modal-desc" id="modalDesc">Documento de 2 páginas a 300 DPI. La página 1 incluye el reto de encajar palabras con pistas iniciales y la página 2 contiene la solución completa.</p>
+            
+            <div class="modal-format-badge" id="modalFormatBadge">
+                <span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm) · 2 Páginas
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" id="btnExecuteDownload">
+                    <span>📥</span> Descargar archivo PDF (2 Páginas)
+                </button>
+            </div>
+
+            <!-- RECIBIR POR EMAIL -->
+            <div class="modal-email-box">
+                <div class="modal-email-header">
+                    <span class="modal-email-title">✉️ ¿Prefieres recibirlo en tu email?</span>
+                    <span class="modal-email-sub">Te enviamos el archivo PDF adjunto listo para imprimir cuando quieras.</span>
+                </div>
+                <div class="modal-email-form">
+                    <input type="email" id="modal-email-input" class="modal-email-input" placeholder="tu-correo@ejemplo.com" autocomplete="email" />
+                    <button type="button" id="btn-modal-send-email" class="modal-btn-send">
+                        <span>Enviar a mi email</span>
+                    </button>
+                </div>
+                <div id="modal-email-feedback" class="modal-email-feedback" style="display: none;"></div>
+            </div>
+
+            <!-- ENLACE AL TUTORIAL -->
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2ddd3; text-align: center;">
+                <a href="javascript:void(0)" id="linkTutorialInDownload" style="font-size: 0.80rem; color: #87553b; text-decoration: underline; font-weight: 600;">
+                    📖 ¿Dudas sobre cómo jugar o imprimir a doble cara? Ver guía rápida
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TUTORIAL -->
+    <div class="modal-overlay" id="tutorial-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card modal-card-tutorial">
+            <button type="button" class="modal-close-btn" onclick="closeTutorialModal()">✕</button>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">Guía rápida: Cruzadas (Word Fit)</h3>
+            <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
+                Cómo resolver este pasatiempo de deducción lógica y cómo imprimir a doble cara.
+            </p>
+
+            <div class="tutorial-section">
+                <h4><span>🧩</span> 1. ¿Cómo se juegan las Cruzadas?</h4>
+                <p>
+                    A diferencia de un crucigrama con definiciones, en las Cruzadas tienes la lista completa de palabras agrupadas por su número de letras (3, 4, 5, 6 letras...).
+                </p>
+                <div class="tutorial-highlight-box">
+                    <strong>Pista inicial:</strong> El tablero incluye 1 o 2 letras ya colocadas (o una palabra corta de arranque). Búscala en tu lista y colócala; a partir de ahí, encaja las palabras que crucen con sus letras.
+                </div>
+            </div>
+
+            <div class="tutorial-section">
+                <h4><span>🖨️</span> 2. Ajuste de impresión (Doble Cara)</h4>
+                <ul class="tutorial-step-list">
+                    <li>
+                        <strong>Formato 8.25" × 6" (Apaisado):</strong> Selecciona <em>Imprimir a doble cara</em> y marca <strong>«Voltear por el borde corto»</strong>.
+                    </li>
+                    <li>
+                        <strong>Formato 6" × 9" (Vertical):</strong> Selecciona <em>Imprimir a doble cara</em> y marca <strong>«Voltear por el borde largo»</strong>.
+                    </li>
+                    <li>
+                        <strong>Escala:</strong> Selecciona siempre <strong>«Tamaño real» o «100%»</strong>.
+                    </li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
+                    Entendido, volver al generador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOTOR DE GENERACIÓN Y PDF -->
+    <script>
+    (function() {
+        'use strict';
+
+        // BANCOS TEMÁTICOS CON PALABRAS DE DISTINTAS LONGITUDES (3 a 8 LETRAS)
+        const THEME_BANKS = {
+            desconexion: {
+                title: 'Desconexión',
+                words: [
+                    'LUZ', 'PAZ', 'VOZ', 'DIA', 'HOY', 'SER', 'SOL', 'MAR', 'RED',
+                    'FOCO', 'HOJA', 'TINTA', 'PASO', 'VIDA', 'AIRE', 'HORA', 'SOLO', 'NADA',
+                    'PAPEL', 'LIBRO', 'CALMA', 'PAUSA', 'RITMO', 'TRAZO', 'NOTAS', 'ORDEN', 'VERDE', 'SUAVE', 'BRISA', 'CLARO', 'PLUMA', 'ALIVIO', 'TARDE',
+                    'TIEMPO', 'DIARIO', 'ESPACIO', 'REPOSO', 'REFUGIO', 'BLANCO', 'SERENO', 'FRESCO', 'SUEÑO', 'PENSAR',
+                    'SILENCIO', 'ATENCION', 'DETALLE', 'LECTURA', 'MEMORIA', 'DESCANSO'
+                ]
+            },
+            deportes: {
+                title: 'Deportes y Ejercicio',
+                words: [
+                    'GOL', 'RED', 'TIRO', 'SURF', 'REMO', 'JUDO', 'GOLF', 'PESA', 'ARO', 'BOX',
+                    'TENIS', 'BOXEO', 'PADEL', 'ESQUI', 'RUGBY', 'BALON', 'PISTA', 'META', 'DISCO', 'DARDO', 'CANCHA', 'RING',
+                    'FUTBOL', 'EQUIPO', 'CARRERA', 'SALTO', 'MARATON', 'VELOCIDAD', 'TROFEO', 'MEDALLA', 'ENTRENO', 'PISCINA', 'TATAMI', 'CANASTA',
+                    'CICLISMO', 'VOLEIBOL', 'NATACION', 'ESCALADA', 'GIMNASIA', 'BADMINTON', 'TRIATLON'
+                ]
+            },
+            naturaleza: {
+                title: 'Naturaleza y Senderos',
+                words: [
+                    'RIO', 'SOL', 'MAR', 'PINO', 'HAYA', 'LAGO', 'ROCA', 'RAMA', 'FLOR', 'PAZ', 'AIRE',
+                    'BOSQUE', 'MONTE', 'ARBOL', 'VALLE', 'HOJAS', 'NIEVE', 'VIENTO', 'CANTO', 'TIERRA', 'VERDE', 'RAIZ', 'TRONCO', 'CRESTA',
+                    'SENDERO', 'CUMBRE', 'NIEBLA', 'PIEDRA', 'ARROYO', 'COLINA', 'CORONA', 'LLANURA', 'SIERRA', 'VEREDA', 'AURORA', 'OCASO',
+                    'HORIZONTE', 'CASCADA', 'PRADERA', 'BARRANCO', 'ROBLEDAL'
+                ]
+            },
+            cafe: {
+                title: 'Café y Mañanas',
+                words: [
+                    'SOL', 'PAZ', 'MOKA', 'TAZA', 'VASO', 'LECHE', 'CALOR', 'MESA', 'PAN', 'LUZ', 'AGUA',
+                    'AROMA', 'VAPOR', 'GRANO', 'CREMA', 'DULCE', 'NOTAS', 'SOFA', 'BARRA', 'ORIGEN', 'CACAO', 'TIBIO', 'TRAGO', 'SORBO',
+                    'MAÑANA', 'TOSTADA', 'TETERA', 'SABORES', 'GALLETA', 'MOLIDO', 'FILTRO', 'PRENSA', 'RITUAL', 'JARRA',
+                    'CAFETERA', 'DESAYUNO', 'MOLINILLO', 'CAPUCHINO', 'EXPRESO'
+                ]
+            },
+            mente: {
+                title: 'Agilidad Mental',
+                words: [
+                    'RED', 'LUZ', 'OJO', 'RETO', 'IDEA', 'DATO', 'MAPA', 'PLAN', 'PASO', 'EJE',
+                    'LOGICA', 'RAZON', 'ENFOQUE', 'JUICIO', 'CHISPA', 'METODO', 'PENSAR', 'ORDEN', 'RANGO', 'IDEAS', 'CIFRA', 'SABER', 'AGUDO',
+                    'MEMORIA', 'REFLEJO', 'DESTREZA', 'CLARIDAD', 'CALCULO', 'INGENIO', 'CRUZADA', 'PATRON', 'CODIGO', 'ASTUCIA',
+                    'ATENCION', 'AGILIDAD', 'DEDUCCION', 'CRITERIO', 'ESTRATEGIA'
+                ]
+            },
+            cocina: {
+                title: 'Gastronomía y Cocina',
+                words: [
+                    'SAL', 'AJO', 'PAN', 'OLLA', 'HORNO', 'MESA', 'FUEGO', 'CHEF', 'AGUA', 'GAS',
+                    'ACEITE', 'GUISO', 'CALDO', 'HUEVO', 'PASTA', 'ARROZ', 'SABOR', 'PLATO', 'LIMON', 'PERA', 'CARNE', 'NUEZ', 'CLAVO',
+                    'SARTEN', 'CAZUELA', 'TOMATE', 'ROMERO', 'CANELA', 'HARINA', 'SALERO', 'LAUREL', 'MANZANA', 'NARANJA',
+                    'CUCHILLO', 'PIMIENTA', 'VINAGRE', 'DELANTAL', 'POSTRES', 'VERDURA'
+                ]
+            },
+            viajes: {
+                title: 'Geografía y Viajes',
+                words: [
+                    'SOL', 'MAR', 'SUR', 'RUTA', 'TREN', 'PASO', 'ISLA', 'GUIA', 'FARO', 'PAZ',
+                    'MAPA', 'AVION', 'BARCO', 'HOTEL', 'PUEBLO', 'CALLE', 'VUELO', 'ANDEN', 'NORTE', 'RUMBO', 'MUNDO', 'TORRE', 'CALA',
+                    'MALETA', 'DESTINO', 'CIUDAD', 'PUERTO', 'PUENTE', 'PAISAJE', 'MIRADOR', 'MERCADO', 'BAZAR',
+                    'PASAPORTE', 'ESTACION', 'AVENTURA', 'EQUIPAJE', 'EXPEDICION', 'HORIZONTE'
+                ]
+            }
+        };
+
+        const SEMANTIC_TOPICS = {
+            animal: ['OSO', 'PEZ', 'LOBO', 'LEON', 'TIGRE', 'PANDA', 'ZEBRA', 'AGUILA', 'DELFIN', 'JIRAFA', 'CABALLO', 'BALLENA', 'LEOPARDO'],
+            espacio: ['SOL', 'LUNA', 'MARTE', 'ORBITA', 'COHETE', 'PLANETA', 'ESTRELLA', 'GALAXIA', 'COMETA', 'UNIVERSO', 'ASTRONAUTA'],
+            musica: ['SON', 'VOZ', 'CORO', 'PIANO', 'RITMO', 'CANTO', 'BAJO', 'VIOLIN', 'FLAUTA', 'GUITARRA', 'ACORDE', 'ARMONIA', 'CONCIERTO'],
+            cine: ['LUZ', 'ACTOR', 'GUION', 'CAMARA', 'ESCENA', 'RODAJE', 'PREMIO', 'ESTRENO', 'PANTALLA', 'PELICULA', 'DIRECTOR']
+        };
+
+        function cleanWord(w) {
+            return w.toUpperCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^A-ZÑ]/g, '');
+        }
+
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        // DIMENSIONES SEGÚN FORMATO EDITORIAL (Casillas amplias de 7.8 mm):
+        // 8.25" × 6" (Apaisado): 15 columnas × 14 filas
+        // 6" × 9" (Vertical): 15 columnas × 15 filas (Cuadrado 15x15)
+        function getGridDimensions(format) {
+            if (format === '6x9') {
+                return { cols: 15, rows: 15 };
+            }
+            return { cols: 15, rows: 14 };
+        }
+
+        const state = {
+            format: '8.25x6',
+            themeKey: 'desconexion',
+            themeTitle: 'Desconexión',
+            difficulty: 'easy', // 'easy': palabra dada + 2 letras; 'medium': palabra corta; 'hard': 1 sola letra
+            viewPage: 1, // 1: reto, 2: solución
+            grid: [],
+            cols: 15,
+            rows: 14,
+            placedWords: [], // { word, r, c, isHoriz, cells: [[r,c],...] }
+            starterClues: [] // celdas reveladas como pista inicial { r, c, char }
+        };
+
+        function generateWordsForTopic(topicQuery) {
+            const q = topicQuery.toLowerCase().trim();
+            for (const [key, wordList] of Object.entries(SEMANTIC_TOPICS)) {
+                if (q.includes(key) || key.includes(q)) return shuffle(wordList);
+            }
+            for (const t of Object.values(THEME_BANKS)) {
+                if (t.title.toLowerCase().includes(q)) return shuffle(t.words);
+            }
+            return shuffle(THEME_BANKS.desconexion.words);
+        }
+
+        // ALGORITMO GENERADOR DE CRUZADAS (WORD FIT) CON 20 PALABRAS
+        function generateCruzadas() {
+            const dims = getGridDimensions(state.format);
+            state.cols = dims.cols;
+            state.rows = dims.rows;
+            const targetWords = 20;
+
+            let pool = [];
+            if (state.themeKey === 'custom' && state.customWords && state.customWords.length >= 6) {
+                pool = state.customWords.slice();
+            } else {
+                const bank = THEME_BANKS[state.themeKey] || THEME_BANKS.desconexion;
+                state.themeTitle = bank.title;
+                pool = bank.words.slice();
+            }
+
+            const cleanPool = shuffle(pool)
+                .map(cleanWord)
+                .filter(w => w.length >= 3 && w.length <= 8);
+
+            let bestGrid = null;
+            let bestPlaced = [];
+
+            for (let tryRound = 0; tryRound < 80; tryRound++) {
+                const grid = Array.from({ length: state.rows }, () => Array(state.cols).fill(null));
+                const placed = [];
+                const wordsQueue = shuffle(cleanPool);
+
+                // 1. Colocar primera palabra en el centro
+                const first = wordsQueue.shift();
+                if (!first) break;
+                const firstHoriz = state.cols >= state.rows;
+                const startR = Math.floor(state.rows / 2);
+                const startC = Math.max(0, Math.floor((state.cols - first.length) / 2));
+
+                const firstCells = [];
+                for (let i = 0; i < first.length; i++) {
+                    const r = firstHoriz ? startR : startR + i;
+                    const c = firstHoriz ? startC + i : startC;
+                    if (r < state.rows && c < state.cols) {
+                        grid[r][c] = first[i];
+                        firstCells.push([r, c]);
+                    }
+                }
+                placed.push({ word: first, r: startR, c: startC, isHoriz: firstHoriz, cells: firstCells });
+
+                // 2. Colocar las siguientes buscando cruces válidos ortogonales
+                for (const word of wordsQueue) {
+                    if (placed.length >= targetWords) break;
+                    const len = word.length;
+                    const validPlacements = [];
+
+                    for (const existingWord of placed) {
+                        const targetHoriz = !existingWord.isHoriz;
+
+                        for (let i = 0; i < len; i++) {
+                            const char = word[i];
+                            for (let j = 0; j < existingWord.word.length; j++) {
+                                if (existingWord.word[j] === char) {
+                                    const crossR = existingWord.cells[j][0];
+                                    const crossC = existingWord.cells[j][1];
+
+                                    const candR = targetHoriz ? crossR : crossR - i;
+                                    const candC = targetHoriz ? crossC - i : crossC;
+                                    const endR = targetHoriz ? candR : candR + len - 1;
+                                    const endC = targetHoriz ? candC + len - 1 : candC;
+
+                                    if (candR >= 0 && endR < state.rows && candC >= 0 && endC < state.cols) {
+                                        let canPlace = true;
+
+                                        const prevR = targetHoriz ? candR : candR - 1;
+                                        const prevC = targetHoriz ? candC - 1 : candC;
+                                        const nextR = targetHoriz ? candR : endR + 1;
+                                        const nextC = targetHoriz ? endC + 1 : candC;
+
+                                        if (prevR >= 0 && prevR < state.rows && prevC >= 0 && prevC < state.cols && grid[prevR][prevC] !== null) canPlace = false;
+                                        if (nextR >= 0 && nextR < state.rows && nextC >= 0 && nextC < state.cols && grid[nextR][nextC] !== null) canPlace = false;
+
+                                        if (canPlace) {
+                                            const cells = [];
+                                            for (let k = 0; k < len; k++) {
+                                                const r = targetHoriz ? candR : candR + k;
+                                                const c = targetHoriz ? candC + k : candC;
+                                                const currentVal = grid[r][c];
+
+                                                if (currentVal !== null && currentVal !== word[k]) {
+                                                    canPlace = false;
+                                                    break;
+                                                }
+
+                                                if (currentVal === null) {
+                                                    const adj1R = targetHoriz ? r - 1 : r;
+                                                    const adj1C = targetHoriz ? c : c - 1;
+                                                    const adj2R = targetHoriz ? r + 1 : r;
+                                                    const adj2C = targetHoriz ? c : c + 1;
+
+                                                    if (adj1R >= 0 && adj1R < state.rows && adj1C >= 0 && adj1C < state.cols && grid[adj1R][adj1C] !== null) canPlace = false;
+                                                    if (adj2R >= 0 && adj2R < state.rows && adj2C >= 0 && adj2C < state.cols && grid[adj2R][adj2C] !== null) canPlace = false;
+                                                }
+                                                cells.push([r, c]);
+                                            }
+
+                                            if (canPlace) {
+                                                validPlacements.push({ word, r: candR, c: candC, isHoriz: targetHoriz, cells });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (validPlacements.length > 0) {
+                        const chosen = validPlacements[Math.floor(Math.random() * validPlacements.length)];
+                        for (let k = 0; k < len; k++) {
+                            const [r, c] = chosen.cells[k];
+                            grid[r][c] = word[k];
+                        }
+                        placed.push(chosen);
+                    }
+                }
+
+                if (!bestGrid || placed.length > bestPlaced.length) {
+                    bestGrid = grid;
+                    bestPlaced = placed;
+                }
+                if (bestPlaced.length >= targetWords) break;
+            }
+
+            state.grid = bestGrid;
+            state.placedWords = bestPlaced;
+
+            // Determinar pistas iniciales (Starter Clues) según dificultad
+            state.starterClues = [];
+            if (bestPlaced.length > 0) {
+                if (state.difficulty === 'easy') {
+                    const sortedByLen = bestPlaced.slice().sort((a, b) => a.word.length - b.word.length);
+                    const starterWord = sortedByLen[0];
+                    starterWord.cells.forEach(([r, c]) => {
+                        state.starterClues.push({ r, c, char: state.grid[r][c] });
+                    });
+                    const otherWord = sortedByLen[1] || bestPlaced[0];
+                    if (otherWord && otherWord.cells.length > 0) {
+                        const c1 = otherWord.cells[0];
+                        if (!state.starterClues.some(cl => cl.r === c1[0] && cl.c === c1[1])) {
+                            state.starterClues.push({ r: c1[0], c: c1[1], char: state.grid[c1[0]][c1[1]] });
+                        }
+                    }
+                } else if (state.difficulty === 'medium') {
+                    const sortedByLen = bestPlaced.slice().sort((a, b) => a.word.length - b.word.length);
+                    const starterWord = sortedByLen[0];
+                    starterWord.cells.forEach(([r, c]) => {
+                        state.starterClues.push({ r, c, char: state.grid[r][c] });
+                    });
+                } else {
+                    const firstWord = bestPlaced[0];
+                    const middleCell = firstWord.cells[Math.floor(firstWord.cells.length / 2)];
+                    state.starterClues.push({ r: middleCell[0], c: middleCell[1], char: state.grid[middleCell[0]][middleCell[1]] });
+                }
+            }
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-notify');
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 2400);
+        }
+
+        // Renderizado del lienzo
+        function renderSheet() {
+            const sheet = document.getElementById('sheetPreview');
+            const formatBadge = document.getElementById('formatBadgeDisplay');
+            const modalBadge = document.getElementById('modalFormatBadge');
+            const footerPage = document.getElementById('sheetFooterPage');
+            const wordsTitle = document.getElementById('wordsListTitle');
+
+            const is6x9 = state.format === '6x9';
+            sheet.classList.toggle('format-6x9', is6x9);
+
+            const fmtLabel = is6x9 ? 'Formato 6" × 9" (Vertical)' : 'Formato 8.25" × 6" (Apaisado)';
+            const diffLabel = state.difficulty === 'easy' ? 'FÁCIL' : (state.difficulty === 'medium' ? 'MEDIO' : 'DIFÍCIL');
+            const pageLabel = state.viewPage === 1 ? 'Pág. 1 / 2' : 'Pág. 2 / 2 (Solución)';
+
+            if (formatBadge) formatBadge.textContent = `${fmtLabel} · ${state.viewPage === 1 ? 'Anverso' : 'Solución'}`;
+            if (modalBadge) modalBadge.innerHTML = `<span>📐</span> ${fmtLabel} · 2 Páginas`;
+            if (footerPage) footerPage.textContent = pageLabel;
+
+            if (wordsTitle) {
+                const actionLabel = state.viewPage === 1 ? 'PALABRAS' : 'SOLUCIÓN COMPLETA';
+                wordsTitle.textContent = `${actionLabel} · ${state.themeTitle.toUpperCase()} · ${diffLabel}`;
+            }
+
+            // Renderizar Rejilla
+            const gridBoard = document.getElementById('cruzadasGridBoard');
+            if (gridBoard) {
+                const dims = getGridDimensions(state.format);
+                const cols = state.cols || dims.cols;
+                const rows = state.rows || dims.rows;
+                gridBoard.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                gridBoard.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+                gridBoard.innerHTML = '';
+
+                // Set de celdas iniciales dadas
+                const starterMap = new Map();
+                state.starterClues.forEach(cl => starterMap.set(`${cl.r},${cl.c}`, cl.char));
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cruzada-cell';
+                        const char = (state.grid && state.grid[r]) ? state.grid[r][c] : null;
+
+                        if (char === null) {
+                            cell.classList.add('cell-blocked');
+                        } else {
+                            cell.classList.add('cell-letter');
+                            if (state.viewPage === 2) {
+                                // Pág. 2: Solución completa
+                                cell.textContent = char;
+                                cell.classList.add('cell-solution');
+                            } else {
+                                // Pág. 1: Reto en blanco excepto pistas iniciales
+                                if (starterMap.has(`${r},${c}`)) {
+                                    cell.textContent = starterMap.get(`${r},${c}`);
+                                    cell.classList.add('cell-starter-clue');
+                                }
+                            }
+                        }
+                        gridBoard.appendChild(cell);
+                    }
+                }
+            }
+
+            // Renderizar Lista de palabras agrupadas por longitud
+            const groupsWrap = document.getElementById('lengthGroupsWrap');
+            if (groupsWrap) {
+                groupsWrap.innerHTML = '';
+
+                // Agrupar palabras colocadas por longitud
+                const groups = {};
+                state.placedWords.forEach(pw => {
+                    const len = pw.word.length;
+                    if (!groups[len]) groups[len] = [];
+                    groups[len].push(pw.word);
+                });
+
+                // Ordenar longitudes ascendente (3, 4, 5, 6, 7...)
+                const sortedLengths = Object.keys(groups).map(Number).sort((a, b) => a - b);
+
+                sortedLengths.forEach(len => {
+                    const block = document.createElement('div');
+                    block.className = 'length-group-block';
+
+                    const heading = document.createElement('div');
+                    heading.className = 'length-group-heading';
+                    heading.textContent = `${len} LETRAS (${groups[len].length}):`;
+
+                    const row = document.createElement('div');
+                    row.className = 'length-words-row';
+
+                    // Ordenar alfabéticamente dentro de cada grupo
+                    groups[len].sort().forEach(w => {
+                        const item = document.createElement('span');
+                        item.className = 'cruzada-word-item';
+
+                        const box = document.createElement('span');
+                        box.className = 'word-checkbox';
+
+                        const txt = document.createElement('span');
+                        txt.textContent = w;
+
+                        item.appendChild(box);
+                        item.appendChild(txt);
+                        row.appendChild(item);
+                    });
+
+                    block.appendChild(heading);
+                    block.appendChild(row);
+                    groupsWrap.appendChild(block);
+                });
+            }
+        }
+
+        // GENERACIÓN DE PDF VECTORIAL A 300 DPI (2 PÁGINAS)
+        function generatePdfDoc() {
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar la librería PDF.');
+                return null;
+            }
+
+            const is6x9 = state.format === '6x9';
+            const widthMm = is6x9 ? 152.4 : 209.55;
+            const heightMm = is6x9 ? 228.6 : 152.4;
+            const orientation = is6x9 ? 'portrait' : 'landscape';
+
+            const doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: [widthMm, heightMm]
+            });
+
+            const diffText = state.difficulty === 'easy' ? 'FACIL' : (state.difficulty === 'medium' ? 'MEDIO' : 'DIFICIL');
+
+            function drawPage(pageNum, isSolution) {
+                const marginX = 12;
+                const marginY = is6x9 ? 13 : 11;
+
+                // 1. CABECERA
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(is6x9 ? 11 : 12);
+                doc.setTextColor(20, 20, 20);
+                doc.text('MENOS RUIDO  ·  CRUZADAS', marginX, marginY + 4);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(90, 90, 90);
+                doc.text('EDITORIAL MENOS RUIDO', widthMm - marginX, marginY + 4, { align: 'right' });
+
+                // Línea
+                doc.setDrawColor(20, 20, 20);
+                doc.setLineWidth(0.4);
+                doc.line(marginX, marginY + 6.5, widthMm - marginX, marginY + 6.5);
+
+                const starterMap = new Map();
+                state.starterClues.forEach(cl => starterMap.set(`${cl.r},${cl.c}`, cl.char));
+
+                // 2. CUADRÍCULA Y PALABRAS
+                const dims = getGridDimensions(state.format);
+                const cols = dims.cols;
+                const rows = dims.rows;
+
+                if (!is6x9) {
+                    // LAYOUT 8.25" × 6" APAISADO (15 cols × 14 rows) - Casillas cómodas de 7.0 mm
+                    const cellSize = 7.0; // mm
+                    const gridWidth = cols * cellSize; // 15 * 7.0 = 105.0 mm
+                    const gridHeight = rows * cellSize; // 14 * 7.0 = 98.0 mm
+                    const gridX = 14.0; // mm
+                    const gridY = 23.0; // mm (5.5 mm por debajo de la línea horizontal de cabecera en 17.5 mm)
+
+                    // Dibujar celdas
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const cx = gridX + c * cellSize;
+                            const cy = gridY + r * cellSize;
+                            const char = (state.grid && state.grid[r]) ? state.grid[r][c] : null;
+
+                            if (char === null) {
+                                // Bloque crema que ahorra tinta
+                                doc.setFillColor(238, 232, 220);
+                                doc.setDrawColor(205, 198, 185);
+                                doc.setLineWidth(0.2);
+                                doc.rect(cx, cy, cellSize, cellSize, 'FD');
+                            } else {
+                                // Casilla de letra (Blanca con borde nítido)
+                                if (!isSolution && starterMap.has(`${r},${c}`)) {
+                                    doc.setFillColor(253, 251, 247); // Pista inicial suave
+                                    doc.setDrawColor(135, 85, 59);
+                                    doc.setLineWidth(0.35);
+                                    doc.rect(cx, cy, cellSize, cellSize, 'FD');
+
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setFontSize(9.5);
+                                    doc.setTextColor(135, 85, 59);
+                                    doc.text(char, cx + cellSize / 2, cy + cellSize / 2 + 1.2, { align: 'center' });
+                                } else if (isSolution) {
+                                    doc.setFillColor(255, 255, 255);
+                                    doc.setDrawColor(20, 20, 20);
+                                    doc.setLineWidth(0.35);
+                                    doc.rect(cx, cy, cellSize, cellSize, 'FD');
+
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setFontSize(9.5);
+                                    doc.setTextColor(20, 20, 20);
+                                    doc.text(char, cx + cellSize / 2, cy + cellSize / 2 + 1.2, { align: 'center' });
+                                } else {
+                                    doc.setFillColor(255, 255, 255);
+                                    doc.setDrawColor(20, 20, 20);
+                                    doc.setLineWidth(0.35);
+                                    doc.rect(cx, cy, cellSize, cellSize, 'FD');
+                                }
+                            }
+                        }
+                    }
+
+                    // Marco exterior continuo y grueso alrededor de todo el tablero
+                    doc.setDrawColor(20, 20, 20);
+                    doc.setLineWidth(0.8);
+                    doc.rect(gridX, gridY, gridWidth, gridHeight, 'D');
+
+                    // Panel de Palabras a la derecha (Perfectamente separado de la cabecera y del tablero)
+                    const wordsX = gridX + gridWidth + 8; // 14 + 105 + 8 = 127.0 mm
+                    let wordsY = 24.5; // mm (7 mm por debajo de la línea horizontal de cabecera)
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.6);
+                    doc.setTextColor(40, 40, 40);
+                    const listTitle = `${isSolution ? 'SOLUCIÓN' : 'PALABRAS'} · ${state.themeTitle.toUpperCase()}`;
+                    doc.text(listTitle, wordsX, wordsY);
+
+                    const groups = {};
+                    state.placedWords.forEach(pw => {
+                        const len = pw.word.length;
+                        if (!groups[len]) groups[len] = [];
+                        groups[len].push(pw.word);
+                    });
+
+                    const sortedLengths = Object.keys(groups).map(Number).sort((a, b) => a - b);
+                    let currentY = wordsY + 5.5;
+
+                    sortedLengths.forEach(len => {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.8);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(`${len} LETRAS:`, wordsX, currentY);
+                        currentY += 3.6;
+
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7.0);
+                        doc.setTextColor(30, 30, 30);
+
+                        const wordsArr = groups[len].sort();
+                        for (let wIdx = 0; wIdx < wordsArr.length; wIdx += 2) {
+                            const w1 = wordsArr[wIdx];
+                            const w2 = wordsArr[wIdx + 1];
+
+                            doc.setDrawColor(120, 120, 120);
+                            doc.circle(wordsX + 1.5, currentY - 0.8, 1.0, 'D');
+                            doc.text(w1, wordsX + 4.0, currentY);
+
+                            if (w2) {
+                                doc.circle(wordsX + 34.5, currentY - 0.8, 1.0, 'D');
+                                doc.text(w2, wordsX + 37.0, currentY);
+                            }
+                            currentY += 4.0;
+                        }
+                        currentY += 1.5;
+                    });
+
+                } else {
+                    // LAYOUT 6" × 9" VERTICAL (15 cols × 15 rows - Cuadrado) - Casillas cómodas de 7.0 mm
+                    const cellSize = 7.0; // mm (cómoda y clara para escribir a mano)
+                    const gridWidth = cols * cellSize; // 15 * 7.0 = 105.0 mm
+                    const gridHeight = rows * cellSize; // 15 * 7.0 = 105.0 mm
+                    const gridX = (widthMm - gridWidth) / 2; // (152.4 - 105.0) / 2 = 23.7 mm (centrado perfecto)
+                    const gridY = 23.0; // mm (3.5 mm por debajo de la línea horizontal de cabecera en 19.5 mm)
+
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const cx = gridX + c * cellSize;
+                            const cy = gridY + r * cellSize;
+                            const char = (state.grid && state.grid[r]) ? state.grid[r][c] : null;
+
+                            if (char === null) {
+                                // Bloque crema que ahorra tinta
+                                doc.setFillColor(238, 232, 220);
+                                doc.setDrawColor(205, 198, 185);
+                                doc.setLineWidth(0.2);
+                                doc.rect(cx, cy, cellSize, cellSize, 'FD');
+                            } else {
+                                if (!isSolution && starterMap.has(`${r},${c}`)) {
+                                    doc.setFillColor(253, 251, 247);
+                                    doc.setDrawColor(135, 85, 59);
+                                    doc.setLineWidth(0.35);
+                                    doc.rect(cx, cy, cellSize, cellSize, 'FD');
+
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setFontSize(9.5);
+                                    doc.setTextColor(135, 85, 59);
+                                    doc.text(char, cx + cellSize / 2, cy + cellSize / 2 + 1.2, { align: 'center' });
+                                } else if (isSolution) {
+                                    doc.setFillColor(255, 255, 255);
+                                    doc.setDrawColor(20, 20, 20);
+                                    doc.setLineWidth(0.35);
+                                    doc.rect(cx, cy, cellSize, cellSize, 'FD');
+
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setFontSize(9.5);
+                                    doc.setTextColor(20, 20, 20);
+                                    doc.text(char, cx + cellSize / 2, cy + cellSize / 2 + 1.2, { align: 'center' });
+                                } else {
+                                    doc.setFillColor(255, 255, 255);
+                                    doc.setDrawColor(20, 20, 20);
+                                    doc.setLineWidth(0.35);
+                                    doc.rect(cx, cy, cellSize, cellSize, 'FD');
+                                }
+                            }
+                        }
+                    }
+
+                    // Marco exterior continuo y grueso alrededor de todo el tablero
+                    doc.setDrawColor(20, 20, 20);
+                    doc.setLineWidth(0.8);
+                    doc.rect(gridX, gridY, gridWidth, gridHeight, 'D');
+
+                    // Panel de Palabras (DESPLAZADO CLARAMENTE POR DEBAJO DEL TABLERO: 18 mm de separación neta)
+                    const wordsY = 146.0; // mm (el tablero termina en 23 + 105 = 128 mm -> 18 mm de espacio limpio)
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.6);
+                    doc.setTextColor(40, 40, 40);
+                    const listTitle = `${isSolution ? 'SOLUCIÓN' : 'PALABRAS'} · ${state.themeTitle.toUpperCase()} · ${diffText}`;
+                    doc.text(listTitle, marginX, wordsY);
+
+                    const groups = {};
+                    state.placedWords.forEach(pw => {
+                        const len = pw.word.length;
+                        if (!groups[len]) groups[len] = [];
+                        groups[len].push(pw.word);
+                    });
+
+                    const sortedLengths = Object.keys(groups).map(Number).sort((a, b) => a - b);
+                    const colW = (widthMm - marginX * 2) / 3;
+
+                    // Distribuir grupos en 3 columnas
+                    const colTops = [wordsY + 5.5, wordsY + 5.5, wordsY + 5.5];
+
+                    sortedLengths.forEach(len => {
+                        let minCol = 0;
+                        if (colTops[1] < colTops[minCol]) minCol = 1;
+                        if (colTops[2] < colTops[minCol]) minCol = 2;
+
+                        const colX = marginX + minCol * colW;
+                        let curY = colTops[minCol];
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.8);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(`${len} LETRAS:`, colX, curY);
+                        curY += 3.6;
+
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7.0);
+                        doc.setTextColor(30, 30, 30);
+
+                        groups[len].sort().forEach(w => {
+                            doc.setDrawColor(120, 120, 120);
+                            doc.circle(colX + 1.5, curY - 0.8, 1.0, 'D');
+                            doc.text(w, colX + 4.0, curY);
+                            curY += 3.8;
+                        });
+
+                        colTops[minCol] = curY + 2.0;
+                    });
+                }
+
+                // 3. PIE
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.2);
+                doc.line(marginX, heightMm - marginY + 2, widthMm - marginX, heightMm - marginY + 2);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.8);
+                doc.setTextColor(110, 110, 110);
+                doc.text('Editorial Menos Ruido  ·  www.editorialmenosruido.com', marginX, heightMm - marginY + 5.5);
+                doc.text(`Pag. ${pageNum} / 2`, widthMm - marginX, heightMm - marginY + 5.5, { align: 'right' });
+            }
+
+            drawPage(1, false);
+            doc.addPage([widthMm, heightMm], orientation);
+            drawPage(2, true);
+
+            return doc;
+        }
+
+        // Modales y acciones
+        function openDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.add('active');
+            const emailInput = document.getElementById('modal-email-input');
+            if (emailInput && !emailInput.value) {
+                try {
+                    let prefill = '';
+                    if (window.mrAuthUserEmail) prefill = window.mrAuthUserEmail;
+                    if (!prefill) prefill = localStorage.getItem('mr_user_pdf_email') || localStorage.getItem('emailForSignIn') || '';
+                    if (!prefill) {
+                        const cached = localStorage.getItem('mr_cached_user');
+                        if (cached) prefill = JSON.parse(cached).email || '';
+                    }
+                    if (prefill) emailInput.value = prefill;
+                } catch(e) {}
+            }
+        }
+
+        function closeDownloadModal() {
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function openTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.add('active');
+        }
+
+        function closeTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target && e.target.id === 'download-modal') closeDownloadModal();
+            if (e.target && e.target.id === 'tutorial-modal') closeTutorialModal();
+        }
+
+        function executeDownload() {
+            const doc = generatePdfDoc();
+            if (!doc) return;
+            const diffText = state.difficulty === 'easy' ? 'facil' : (state.difficulty === 'medium' ? 'medio' : 'dificil');
+            const safeTheme = state.themeKey.replace(/[^a-z0-9]/gi, '-');
+            doc.save(`Menos-Ruido-Cruzadas-${state.format}-${safeTheme}-${diffText}.pdf`);
+            closeDownloadModal();
+            showToast('✓ PDF de Cruzadas descargado');
+        }
+
+        async function sendPdfViaEmail() {
+            const emailInput = document.getElementById('modal-email-input');
+            const feedback = document.getElementById('modal-email-feedback');
+            const btn = document.getElementById('btn-modal-send-email');
+            
+            const email = (emailInput ? emailInput.value : '').trim();
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'Por favor, escribe un correo electrónico válido.';
+                }
+                if (emailInput) emailInput.focus();
+                return;
+            }
+
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#eff6ff';
+                feedback.style.color = '#1e40af';
+                feedback.style.border = '1px solid #bfdbfe';
+                feedback.textContent = '⏳ Generando documento y enviando por correo...';
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.textContent = 'Enviando...';
+            }
+
+            try {
+                const doc = generatePdfDoc();
+                if (!doc) throw new Error('No se pudo generar el documento PDF.');
+                const pdfBase64 = doc.output('datauristring');
+                const diffText = state.difficulty === 'easy' ? 'Fácil' : (state.difficulty === 'medium' ? 'Medio' : 'Difícil');
+                const fmtName = state.format === '6x9' ? '6" × 9" Vertical' : '8.25" × 6" Apaisado';
+
+                const response = await fetch('/api/send-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        pdfBase64: pdfBase64,
+                        filename: `Menos-Ruido-Cruzadas-${state.format}-${state.themeKey}.pdf`,
+                        plannerName: `Cruzadas Menos Ruido · ${fmtName} (${state.themeTitle} - ${diffText})`
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error al procesar el envío del correo.');
+                }
+
+                try { localStorage.setItem('mr_user_pdf_email', email); } catch(e) {}
+
+                if (feedback) {
+                    feedback.style.background = '#f0fdf4';
+                    feedback.style.color = '#166534';
+                    feedback.style.border = '1px solid #bbf7d0';
+                    feedback.textContent = '✓ ¡Enviado! Revisa tu bandeja de entrada en unos instantes.';
+                }
+                if (btn) btn.textContent = 'Enviado';
+
+                setTimeout(() => {
+                    closeDownloadModal();
+                    showToast('✓ PDF enviado a ' + email);
+                }, 1800);
+            } catch(err) {
+                console.error('Error enviando PDF por email:', err);
+                if (feedback) {
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'No se pudo enviar el correo: ' + (err.message || 'Error de red.');
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.textContent = 'Reintentar';
+                }
+            }
+        }
+
+        function setViewPage(pageNum) {
+            state.viewPage = pageNum;
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.page, 10) === pageNum);
+            });
+        }
+
+        // Exponer globalmente
+        window.mrCruzadasState = state;
+        window.mrCruzadasRender = renderSheet;
+        window.mrCruzadasGenerate = generateCruzadas;
+        window.mrSetViewPage = setViewPage;
+        window.openDownloadModal = openDownloadModal;
+        window.closeDownloadModal = closeDownloadModal;
+        window.openTutorialModal = openTutorialModal;
+        window.closeTutorialModal = closeTutorialModal;
+        window.closeModalOnBackdrop = closeModalOnBackdrop;
+        window.executeDownload = executeDownload;
+        window.sendPdfViaEmail = sendPdfViaEmail;
+
+        function initGeneratorUI() {
+            generateCruzadas();
+            renderSheet();
+
+            // Selector Formato
+            document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.format = btn.dataset.format;
+                    setViewPage(1);
+                    generateCruzadas();
+                    renderSheet();
+                });
+            });
+
+            // Selector Tema
+            const themeSel = document.getElementById('themeSelect');
+            const customDrawer = document.getElementById('customWordsDrawer');
+            if (themeSel) {
+                themeSel.addEventListener('change', () => {
+                    const val = themeSel.value;
+                    if (val === 'custom') {
+                        if (customDrawer) customDrawer.classList.add('active');
+                        state.themeKey = 'custom';
+                        state.themeTitle = 'Tema Personalizado';
+                    } else {
+                        if (customDrawer) customDrawer.classList.remove('active');
+                        state.themeKey = val;
+                        setViewPage(1);
+                        generateCruzadas();
+                        renderSheet();
+                    }
+                });
+            }
+
+            // Generar palabras por tema libre
+            const btnTopicGen = document.getElementById('btnGenerateFromTopic');
+            const inputTopic = document.getElementById('customTopicInput');
+            const inputWords = document.getElementById('customWordsInput');
+            if (btnTopicGen && inputTopic) {
+                btnTopicGen.addEventListener('click', () => {
+                    const topicQuery = inputTopic.value.trim();
+                    if (!topicQuery) {
+                        alert('Escribe un tema (ej: Deportes, Animales, Espacio, Cine...)');
+                        return;
+                    }
+                    const generated = generateWordsForTopic(topicQuery);
+                    state.themeKey = 'custom';
+                    state.themeTitle = topicQuery.charAt(0).toUpperCase() + topicQuery.slice(1);
+                    state.customWords = generated;
+                    if (inputWords) inputWords.value = generated.join(', ');
+                    setViewPage(1);
+                    generateCruzadas();
+                    renderSheet();
+                    showToast(`✓ Palabras generadas para "${state.themeTitle}"`);
+                });
+            }
+
+            // Aplicar palabras manuales
+            const btnApplyCustom = document.getElementById('btnApplyCustomWords');
+            if (btnApplyCustom && inputWords) {
+                btnApplyCustom.addEventListener('click', () => {
+                    const raw = inputWords.value.trim();
+                    if (!raw) return;
+                    const parsed = raw.split(/[,;\n]+/)
+                        .map(w => cleanWord(w))
+                        .filter(w => w.length >= 3 && w.length <= 8);
+
+                    if (parsed.length < 5) {
+                        alert('Por favor, escribe al menos 5 palabras de entre 3 y 8 letras.');
+                        return;
+                    }
+                    state.themeKey = 'custom';
+                    state.customWords = parsed;
+                    state.themeTitle = inputTopic && inputTopic.value.trim() ? inputTopic.value.trim() : 'Personalizada';
+                    setViewPage(1);
+                    generateCruzadas();
+                    renderSheet();
+                    showToast('✓ Palabras aplicadas a la cruzada');
+                });
+            }
+
+            // Selector Dificultad
+            document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.difficulty = btn.dataset.diff;
+                    setViewPage(1);
+                    generateCruzadas();
+                    renderSheet();
+                });
+            });
+
+            // Selector Página
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.viewPage = parseInt(btn.dataset.page, 10);
+                    renderSheet();
+                });
+            });
+
+            // Regenerar
+            const btnRegen = document.getElementById('btnRegenerate');
+            if (btnRegen) {
+                btnRegen.addEventListener('click', () => {
+                    generateCruzadas();
+                    renderSheet();
+                    showToast('✓ Nuevas palabras y cruzada generadas');
+                });
+            }
+
+            // Modal Descarga
+            const btnOpenDl = document.getElementById('btnOpenDownloadModal');
+            if (btnOpenDl) btnOpenDl.addEventListener('click', openDownloadModal);
+
+            // Modal Tutorial
+            const btnOpenTut = document.getElementById('btnOpenTutorialModal');
+            if (btnOpenTut) btnOpenTut.addEventListener('click', openTutorialModal);
+
+            const linkTutDl = document.getElementById('linkTutorialInDownload');
+            if (linkTutDl) {
+                linkTutDl.addEventListener('click', () => {
+                    closeDownloadModal();
+                    openTutorialModal();
+                });
+            }
+
+            // Cerrar con Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeDownloadModal();
+                    closeTutorialModal();
+                }
+            });
+
+            const btnExecDl = document.getElementById('btnExecuteDownload');
+            if (btnExecDl) btnExecDl.addEventListener('click', executeDownload);
+
+            const btnSendMail = document.getElementById('btn-modal-send-email');
+            if (btnSendMail) btnSendMail.addEventListener('click', sendPdfViaEmail);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGeneratorUI);
+        } else {
+            initGeneratorUI();
+        }
+    })();
+    </script>
+
+    <!-- MAIN Y AUTH -->
+    <script type="module" src="./main.js"></script>
+
+    <!-- INTEGRACIÓN CON MI ESPACIO -->
+    <script type="module">
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        // Guardado en Mi Espacio
+        setupGeneratorSave('btn-save-generator-design', () => {
+            const state = window.mrCruzadasState || {};
+            const diffText = state.difficulty === 'easy' ? 'Fácil' : (state.difficulty === 'medium' ? 'Medio' : 'Difícil');
+            const fmtText = state.format === '6x9' ? '6" × 9" Vertical' : '8.25" × 6" Apaisado';
+            return {
+                name: `Cruzadas · ${state.themeTitle} (${diffText})`,
+                type: 'Cruzadas',
+                summary: `${fmtText} · ${state.themeTitle} (${diffText}) · Anverso y Solución`,
+                data: {
+                    format: state.format,
+                    themeKey: state.themeKey,
+                    themeTitle: state.themeTitle,
+                    words: state.placedWords.map(pw => pw.word),
+                    difficulty: state.difficulty,
+                    grid: state.grid,
+                    placedWords: state.placedWords,
+                    starterClues: state.starterClues
+                }
+            };
+        });
+
+        // Carga si viene con ?designId=...
+        checkAndLoadSavedDesign((savedData) => {
+            if (!savedData) return;
+            const state = window.mrCruzadasState;
+            if (!state) return;
+
+            if (savedData.format) {
+                state.format = savedData.format;
+                document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.format === state.format);
+                });
+            }
+            if (savedData.themeKey) {
+                state.themeKey = savedData.themeKey;
+                const sel = document.getElementById('themeSelect');
+                if (sel) sel.value = state.themeKey;
+            }
+            if (savedData.themeTitle) state.themeTitle = savedData.themeTitle;
+            if (savedData.difficulty) {
+                state.difficulty = savedData.difficulty;
+                document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.diff === state.difficulty);
+                });
+            }
+            if (savedData.grid) state.grid = savedData.grid;
+            if (savedData.placedWords) state.placedWords = savedData.placedWords;
+            if (savedData.starterClues) state.starterClues = savedData.starterClues;
+
+            if (typeof window.mrSetViewPage === 'function') window.mrSetViewPage(1);
+            if (typeof window.mrCruzadasRender === 'function') window.mrCruzadasRender();
+        });
+    </script>
+</body>
+</html>

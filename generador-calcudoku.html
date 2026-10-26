@@ -1,0 +1,4752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Generador de Calcudoku en PDF (8.25" × 6" y 6" × 9") · Editorial Menos Ruido</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-calcudoku.html">
+
+    <!-- jsPDF local y CDN -->
+    <script src="./jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos base -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./diagnostic.css">
+
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #ffffff;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border-grid-thick: #111111;
+            --border-grid-thin: #cfc9bd;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --accent: #2e604a; /* Verde bosque sobrio */
+            --accent-hover: #1f4233;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .dev-badge-bar {
+            background: #dcfce7;
+            color: #166534;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 5px 12px;
+            border-bottom: 1px solid #bbf7d0;
+            letter-spacing: 0.3px;
+        }
+
+        .generator-container-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 20px 48px;
+            flex: 1;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 16px;
+            max-width: 800px;
+        }
+        .header-title-box h1 {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #111111;
+            margin-bottom: 4px;
+        }
+        .header-title-box p {
+            font-size: 0.88rem;
+            color: #555;
+        }
+
+        /* BARRA DE HERRAMIENTAS */
+        .canvas-toolbar {
+            width: 100%;
+            max-width: 1050px;
+            background: #ffffff;
+            border: 1px solid #e2ddd3;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+        }
+
+        .btn-toggle-group {
+            display: inline-flex;
+            background: #f1ede6;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 2px;
+        }
+
+        .btn-toggle-item {
+            background: transparent;
+            border: none;
+            padding: 5px 12px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+        .btn-toggle-item.active {
+            background: #ffffff;
+            color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-action {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            padding: 6px 12px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #111;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-action:hover {
+            border-color: #111;
+            background: #ffffff;
+        }
+
+        .btn-download-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 7px 16px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(46, 96, 74, 0.25);
+            transition: background 0.15s ease;
+        }
+        .btn-download-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* LIENZO DE PREVISUALIZACIÓN 1:1 */
+        .canvas-preview-wrapper {
+            width: 100%;
+            max-width: 1050px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .sheet-container {
+            width: 100%;
+            max-width: 960px;
+            aspect-ratio: 8.25 / 6;
+            background: var(--paper-color);
+            border: 1px solid #e0dbd1;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            padding: 2.2% 3.2%;
+            transition: aspect-ratio 0.2s ease, max-width 0.2s ease;
+            position: relative;
+        }
+
+        .sheet-container.format-6x9 {
+            max-width: 640px;
+            aspect-ratio: 6 / 9;
+            padding: 3.5% 4.5%;
+        }
+
+        /* CABECERA HOJA */
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--border-grid-thick);
+            padding-bottom: 5px;
+            margin-bottom: 2%;
+        }
+        .sheet-header-title {
+            font-family: var(--font-serif);
+            font-size: clamp(0.95rem, 1.8vw, 1.35rem);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #111;
+        }
+        .sheet-header-meta {
+            font-size: clamp(0.70rem, 1.1vw, 0.82rem);
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* CUERPO DEL LIENZO MULTI-PUZZLE */
+        .sheet-body-layout {
+            flex: 1;
+            display: grid;
+            gap: 12px 20px;
+            min-height: 0;
+            position: relative;
+            align-content: center;
+            justify-items: center;
+        }
+
+        /* 8.25x6: 3 columnas x 2 filas = 6 puzzles */
+        .sheet-container:not(.format-6x9) .sheet-body-layout {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 14px 18px;
+        }
+
+        /* 6x9: 1 columna x 2 filas = 2 puzzles */
+        .sheet-container.format-6x9 .sheet-body-layout {
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 22px;
+        }
+
+        /* TARJETA INDIVIDUAL DE PUZZLE */
+        .calcudoku-puzzle-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+        }
+
+        .calcudoku-puzzle-tag {
+            font-size: clamp(0.68rem, 1vw, 0.78rem);
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .calcudoku-board-wrap {
+            aspect-ratio: 1 / 1;
+            height: 100%;
+            max-height: calc(100% - 20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calcudoku-board-preview {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            background: #ffffff;
+            border: 2px solid #111111;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* CELDAS CALCUDOKU */
+        .calcudoku-cell-box {
+            position: relative;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.75rem, 1.3vw, 1.15rem);
+            font-weight: 700;
+            color: #111;
+            box-sizing: border-box;
+        }
+
+        .cage-sub-label {
+            position: absolute;
+            top: 1.5px;
+            left: 2.5px;
+            font-size: clamp(0.42rem, 0.75vw, 0.60rem);
+            font-weight: 800;
+            color: #222222;
+            line-height: 1;
+            font-family: var(--font-sans);
+            pointer-events: none;
+        }
+
+        /* BORDES DE JAULA EN PREVIEW */
+        .border-top-thick { border-top: 2px solid #111; }
+        .border-top-thin { border-top: 1px dotted var(--border-grid-thin); }
+        .border-bottom-thick { border-bottom: 2px solid #111; }
+        .border-bottom-thin { border-bottom: 1px dotted var(--border-grid-thin); }
+        .border-left-thick { border-left: 2px solid #111; }
+        .border-left-thin { border-left: 1px dotted var(--border-grid-thin); }
+        .border-right-thick { border-right: 2px solid #111; }
+        .border-right-thin { border-right: 1px dotted var(--border-grid-thin); }
+
+        /* PIE DE HOJA */
+        .sheet-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #d5cfc4;
+            padding-top: 5px;
+            margin-top: 1.8%;
+            font-size: 0.72rem;
+            color: #777;
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            padding: 16px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            max-width: 440px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            color: #111;
+            margin-bottom: 6px;
+        }
+
+        .modal-desc {
+            font-size: 0.84rem;
+            color: #555;
+            margin-bottom: 16px;
+            line-height: 1.45;
+        }
+
+        .modal-format-badge {
+            background: #f7f5f0;
+            border: 1px solid #e2ddd3;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-modal-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #888;
+            cursor: pointer;
+        }
+
+        /* TOAST */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 5000;
+        }
+        .toast-notify.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-badge-bar">
+        <span>MODO EN DESARROLLO · GENERADOR DE CALCUDOKUS EN PDF · EDITORIAL MENOS RUIDO</span>
+    </div>
+
+    <header class="header">
+        <div class="container" style="max-width: 1050px; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+            <a href="/" class="logo" style="text-decoration: none; color: inherit; font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700;">Menos Ruido</a>
+            <nav style="display: flex; gap: 16px; font-size: 0.84rem; font-weight: 600;">
+                <a href="/pasatiempos.html" style="text-decoration: none; color: #555;">← Pasatiempos</a>
+                <a href="/calcudoku-diario.html" style="text-decoration: none; color: var(--accent);">Reto del Día</a>
+                <a href="/mi-espacio.html" style="text-decoration: none; color: #555;">Mi Espacio</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="generator-container-wrap">
+        <div class="header-title-box">
+            <h1>Generador de Calcudoku en PDF</h1>
+            <p>Genera hojas de Calcudoku (KenKen) a 300 DPI listas para imprimir o encuadernar. Anverso con retos matemáticos y reverso con soluciones canónicas.</p>
+        </div>
+
+        <!-- BARRA DE HERRAMIENTAS -->
+        <div class="canvas-toolbar">
+            <!-- 1. FORMATO -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Formato:</span>
+                <div class="btn-toggle-group" id="formatToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-format="8.25x6">8.25" × 6" (6 por pág.)</button>
+                    <button type="button" class="btn-toggle-item" data-format="6x9">6" × 9" (2 por pág.)</button>
+                </div>
+            </div>
+
+            <!-- 2. DIFICULTAD -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Nivel:</span>
+                <div class="btn-toggle-group" id="diffToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-diff="4x4">Rápido (4×4)</button>
+                    <button type="button" class="btn-toggle-item" data-diff="5x5">Clásico (5×5)</button>
+                </div>
+            </div>
+
+            <!-- 3. PÁGINA -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Página:</span>
+                <div class="btn-toggle-group" id="pageToggleGroup">
+                    <button type="button" class="btn-toggle-item active" data-page="1">Pág. 1 (Retos)</button>
+                    <button type="button" class="btn-toggle-item" data-page="2">Pág. 2 (Soluciones)</button>
+                </div>
+            </div>
+
+            <!-- ACCIONES -->
+            <div class="toolbar-group">
+                <button type="button" class="btn-action" id="btnRegenerate" title="Generar nuevos retos">
+                    ↺ Nuevos retos
+                </button>
+                <button type="button" class="btn-action" id="btn-save-generator-design" title="Guardar en Mi Espacio">
+                    💾 Guardar
+                </button>
+                <button type="button" class="btn-download-primary" id="btnOpenDownloadModal">
+                    📥 Descargar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- LIENZO 1:1 -->
+        <div class="canvas-preview-wrapper">
+            <div class="sheet-container" id="sheetPreview">
+                <!-- CABECERA -->
+                <div class="sheet-header">
+                    <div class="sheet-header-title">MENOS RUIDO · CALCUDOKU</div>
+                    <div class="sheet-header-meta" id="headerMetaText">EDITORIAL MENOS RUIDO · RÁPIDO (4×4) · RETOS</div>
+                </div>
+
+                <!-- CONTENIDO: CUADRÍCULA DE PUZZLES -->
+                <div class="sheet-body-layout" id="sheetBodyLayout">
+                    <!-- Celdas multi-puzzle dinámicas -->
+                </div>
+
+                <!-- PIE -->
+                <div class="sheet-footer">
+                    <span>Editorial Menos Ruido · www.editorialmenosruido.com</span>
+                    <span id="footerPageText">Pág. 1 / 2</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE DESCARGA -->
+    <div class="modal-overlay" id="downloadModal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
+            <h3 class="modal-title">Descargar Calcudoku en PDF</h3>
+            <p class="modal-desc">Documento editorial de 2 páginas a 300 DPI. Página 1 con los retos matemáticos y página 2 con las soluciones completas.</p>
+            
+            <div class="modal-format-badge" id="modalFormatBadge">
+                <span>📐</span> Formato Libro 8.25" × 6" (6 puzzles por página) · 2 Páginas
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-primary" id="btnExecuteDownload">
+                    📥 Descargar PDF a 300 DPI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-notify" id="toastNotify"></div>
+
+    <!-- Script de guardado en Mi Espacio -->
+    <script type="module" src="./save-generator-design.js"></script>
+
+    <script>
+        // BANCO DE 20 CALCUDOKUS CERTIFICADOS MATEMÁTICAMENTE
+        const PUZZLES_4X4 = [
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                1,
+                                2,
+                                4,
+                                3
+                        ],
+                        [
+                                3,
+                                4,
+                                2,
+                                1
+                        ],
+                        [
+                                4,
+                                1,
+                                3,
+                                2
+                        ],
+                        [
+                                2,
+                                3,
+                                1,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                0,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                3
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                2,
+                                1,
+                                3,
+                                4
+                        ],
+                        [
+                                4,
+                                3,
+                                2,
+                                1
+                        ],
+                        [
+                                3,
+                                4,
+                                1,
+                                2
+                        ],
+                        [
+                                1,
+                                2,
+                                4,
+                                3
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                0,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 7,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                4,
+                                3,
+                                2,
+                                1
+                        ],
+                        [
+                                3,
+                                4,
+                                1,
+                                2
+                        ],
+                        [
+                                2,
+                                1,
+                                4,
+                                3
+                        ],
+                        [
+                                1,
+                                2,
+                                3,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 7,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 12,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                3,
+                                4,
+                                1,
+                                2
+                        ],
+                        [
+                                2,
+                                1,
+                                4,
+                                3
+                        ],
+                        [
+                                4,
+                                3,
+                                2,
+                                1
+                        ],
+                        [
+                                1,
+                                2,
+                                3,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 7,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                2,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                4,
+                                2,
+                                3,
+                                1
+                        ],
+                        [
+                                2,
+                                4,
+                                1,
+                                3
+                        ],
+                        [
+                                1,
+                                3,
+                                2,
+                                4
+                        ],
+                        [
+                                3,
+                                1,
+                                4,
+                                2
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                1,
+                                3,
+                                4,
+                                2
+                        ],
+                        [
+                                2,
+                                4,
+                                1,
+                                3
+                        ],
+                        [
+                                4,
+                                2,
+                                3,
+                                1
+                        ],
+                        [
+                                3,
+                                1,
+                                2,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                3,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                2,
+                                4,
+                                3,
+                                1
+                        ],
+                        [
+                                1,
+                                3,
+                                4,
+                                2
+                        ],
+                        [
+                                3,
+                                2,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                2,
+                                3
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 7,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                0,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                4,
+                                3,
+                                2,
+                                1
+                        ],
+                        [
+                                3,
+                                4,
+                                1,
+                                2
+                        ],
+                        [
+                                2,
+                                1,
+                                4,
+                                3
+                        ],
+                        [
+                                1,
+                                2,
+                                3,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                0,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 7,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 12,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                3,
+                                2,
+                                4,
+                                1
+                        ],
+                        [
+                                4,
+                                1,
+                                3,
+                                2
+                        ],
+                        [
+                                1,
+                                4,
+                                2,
+                                3
+                        ],
+                        [
+                                2,
+                                3,
+                                1,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 7,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                0,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 4,
+                "solution": [
+                        [
+                                4,
+                                2,
+                                1,
+                                3
+                        ],
+                        [
+                                2,
+                                4,
+                                3,
+                                1
+                        ],
+                        [
+                                3,
+                                1,
+                                2,
+                                4
+                        ],
+                        [
+                                1,
+                                3,
+                                4,
+                                2
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        }
+                ]
+        }
+];
+
+        const PUZZLES_5X5 = [
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                1,
+                                5,
+                                2,
+                                4,
+                                3
+                        ],
+                        [
+                                2,
+                                3,
+                                4,
+                                5,
+                                1
+                        ],
+                        [
+                                5,
+                                4,
+                                1,
+                                3,
+                                2
+                        ],
+                        [
+                                4,
+                                1,
+                                3,
+                                2,
+                                5
+                        ],
+                        [
+                                3,
+                                2,
+                                5,
+                                1,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 12,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                3
+                                        ],
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                2,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ],
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                4,
+                                                3
+                                        ],
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                3,
+                                1,
+                                4,
+                                5,
+                                2
+                        ],
+                        [
+                                1,
+                                4,
+                                2,
+                                3,
+                                5
+                        ],
+                        [
+                                4,
+                                2,
+                                5,
+                                1,
+                                3
+                        ],
+                        [
+                                5,
+                                3,
+                                1,
+                                2,
+                                4
+                        ],
+                        [
+                                2,
+                                5,
+                                3,
+                                4,
+                                1
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 3,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 20,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                2,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ],
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ],
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                5,
+                                4,
+                                3,
+                                2,
+                                1
+                        ],
+                        [
+                                4,
+                                3,
+                                2,
+                                1,
+                                5
+                        ],
+                        [
+                                3,
+                                2,
+                                1,
+                                5,
+                                4
+                        ],
+                        [
+                                2,
+                                1,
+                                5,
+                                4,
+                                3
+                        ],
+                        [
+                                1,
+                                5,
+                                4,
+                                3,
+                                2
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 20,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 20,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ],
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ],
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                2,
+                                3,
+                                5,
+                                1,
+                                4
+                        ],
+                        [
+                                3,
+                                5,
+                                1,
+                                4,
+                                2
+                        ],
+                        [
+                                5,
+                                1,
+                                4,
+                                2,
+                                3
+                        ],
+                        [
+                                1,
+                                4,
+                                2,
+                                3,
+                                5
+                        ],
+                        [
+                                4,
+                                2,
+                                3,
+                                5,
+                                1
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ],
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ],
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                4,
+                                1,
+                                2,
+                                5,
+                                3
+                        ],
+                        [
+                                1,
+                                2,
+                                5,
+                                3,
+                                4
+                        ],
+                        [
+                                2,
+                                5,
+                                3,
+                                4,
+                                1
+                        ],
+                        [
+                                5,
+                                3,
+                                4,
+                                1,
+                                2
+                        ],
+                        [
+                                3,
+                                4,
+                                1,
+                                2,
+                                5
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                3,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 12,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ],
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ],
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                1,
+                                2,
+                                5,
+                                4,
+                                3
+                        ],
+                        [
+                                5,
+                                3,
+                                4,
+                                1,
+                                2
+                        ],
+                        [
+                                2,
+                                4,
+                                1,
+                                3,
+                                5
+                        ],
+                        [
+                                4,
+                                5,
+                                3,
+                                2,
+                                1
+                        ],
+                        [
+                                3,
+                                1,
+                                2,
+                                5,
+                                4
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 8,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 12,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                1,
+                                                1
+                                        ],
+                                        [
+                                                2,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                1
+                                        ],
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "+",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                2,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                4,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                3,
+                                                3
+                                        ],
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ],
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                3,
+                                                4
+                                        ],
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                3,
+                                1,
+                                4,
+                                5,
+                                2
+                        ],
+                        [
+                                1,
+                                4,
+                                2,
+                                3,
+                                5
+                        ],
+                        [
+                                4,
+                                2,
+                                5,
+                                1,
+                                3
+                        ],
+                        [
+                                5,
+                                3,
+                                1,
+                                2,
+                                4
+                        ],
+                        [
+                                2,
+                                5,
+                                3,
+                                4,
+                                1
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 3,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 20,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                3,
+                                                2
+                                        ],
+                                        [
+                                                4,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ],
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ],
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                5,
+                                4,
+                                3,
+                                2,
+                                1
+                        ],
+                        [
+                                4,
+                                3,
+                                2,
+                                1,
+                                5
+                        ],
+                        [
+                                3,
+                                2,
+                                1,
+                                5,
+                                4
+                        ],
+                        [
+                                2,
+                                1,
+                                5,
+                                4,
+                                3
+                        ],
+                        [
+                                1,
+                                5,
+                                4,
+                                3,
+                                2
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 20,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 20,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ],
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ],
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                2,
+                                3,
+                                5,
+                                1,
+                                4
+                        ],
+                        [
+                                3,
+                                5,
+                                1,
+                                4,
+                                2
+                        ],
+                        [
+                                5,
+                                1,
+                                4,
+                                2,
+                                3
+                        ],
+                        [
+                                1,
+                                4,
+                                2,
+                                3,
+                                5
+                        ],
+                        [
+                                4,
+                                2,
+                                3,
+                                5,
+                                1
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 6,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "/",
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ],
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ],
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        },
+        {
+                "size": 5,
+                "solution": [
+                        [
+                                4,
+                                1,
+                                2,
+                                5,
+                                3
+                        ],
+                        [
+                                1,
+                                2,
+                                5,
+                                3,
+                                4
+                        ],
+                        [
+                                2,
+                                5,
+                                3,
+                                4,
+                                1
+                        ],
+                        [
+                                5,
+                                3,
+                                4,
+                                1,
+                                2
+                        ],
+                        [
+                                3,
+                                4,
+                                1,
+                                2,
+                                5
+                        ]
+                ],
+                "cages": [
+                        {
+                                "target": 3,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                0
+                                        ],
+                                        [
+                                                1,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                0
+                                        ],
+                                        [
+                                                3,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 3,
+                                "cells": [
+                                        [
+                                                4,
+                                                0
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                1
+                                        ],
+                                        [
+                                                1,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 15,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                1
+                                        ],
+                                        [
+                                                3,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "cells": [
+                                        [
+                                                4,
+                                                1
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 10,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                2
+                                        ],
+                                        [
+                                                1,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                2,
+                                                2
+                                        ],
+                                        [
+                                                3,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 1,
+                                "cells": [
+                                        [
+                                                4,
+                                                2
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "-",
+                                "cells": [
+                                        [
+                                                0,
+                                                3
+                                        ],
+                                        [
+                                                1,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 4,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                3
+                                        ],
+                                        [
+                                                3,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "cells": [
+                                        [
+                                                4,
+                                                3
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 12,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                0,
+                                                4
+                                        ],
+                                        [
+                                                1,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 2,
+                                "op": "*",
+                                "cells": [
+                                        [
+                                                2,
+                                                4
+                                        ],
+                                        [
+                                                3,
+                                                4
+                                        ]
+                                ]
+                        },
+                        {
+                                "target": 5,
+                                "cells": [
+                                        [
+                                                4,
+                                                4
+                                        ]
+                                ]
+                        }
+                ]
+        }
+];
+
+        const state = {
+            format: '8.25x6', // '8.25x6' (6 puzzles) o '6x9' (2 puzzles)
+            difficulty: '4x4', // '4x4' o '5x5'
+            page: 1, // 1: Retos, 2: Soluciones
+            puzzles: []
+        };
+
+        function selectPuzzles() {
+            const count = state.format === '8.25x6' ? 6 : 2;
+            const bank = state.difficulty === '4x4' ? PUZZLES_4X4 : PUZZLES_5X5;
+            
+            // Barajar y tomar 'count' puzzles distintos
+            const indices = Array.from({ length: bank.length }, (_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+
+            state.puzzles = indices.slice(0, count).map(idx => bank[idx]);
+        }
+
+        // Construir mapa de jaulas
+        function getCageMap(pz) {
+            const sz = pz.size;
+            const map = Array.from({ length: sz }, () => Array(sz).fill(null));
+            pz.cages.forEach((cage, cIdx) => {
+                cage.cells.forEach(([r, c]) => {
+                    map[r][c] = cIdx;
+                });
+            });
+            return map;
+        }
+
+        function renderSheet() {
+            const sheet = document.getElementById('sheetPreview');
+            const is6x9 = state.format === '6x9';
+            sheet.classList.toggle('format-6x9', is6x9);
+
+            const metaText = document.getElementById('headerMetaText');
+            const footerText = document.getElementById('footerPageText');
+            const diffName = state.difficulty === '4x4' ? 'RÁPIDO (4×4)' : 'CLÁSICO (5×5)';
+            const pageType = state.page === 1 ? 'RETOS' : 'SOLUCIONES';
+            const pageName = state.page === 1 ? 'Pág. 1 / 2' : 'Pág. 2 / 2 (Soluciones)';
+
+            if (metaText) {
+                metaText.textContent = `EDITORIAL MENOS RUIDO · ${diffName} · ${pageType}`;
+            }
+            if (footerText) footerText.textContent = pageName;
+
+            const badge = document.getElementById('modalFormatBadge');
+            if (badge) {
+                const fmtStr = is6x9 ? 'Formato Libro 6" × 9" (2 puzzles por página)' : 'Formato Libro 8.25" × 6" (6 puzzles por página)';
+                badge.innerHTML = `<span>📐</span> ${fmtStr} · 2 Páginas`;
+            }
+
+            // Renderizar la cuadrícula de puzzles
+            const layoutEl = document.getElementById('sheetBodyLayout');
+            if (!layoutEl) return;
+            layoutEl.innerHTML = '';
+
+            const isSolution = state.page === 2;
+
+            state.puzzles.forEach((pz, pzIdx) => {
+                const card = document.createElement('div');
+                card.className = 'calcudoku-puzzle-card';
+
+                const tag = document.createElement('div');
+                tag.className = 'calcudoku-puzzle-tag';
+                tag.textContent = isSolution ? `SOLUCIÓN ${pzIdx + 1}` : `CALCUDOKU ${pzIdx + 1}`;
+                card.appendChild(tag);
+
+                const wrap = document.createElement('div');
+                wrap.className = 'calcudoku-board-wrap';
+
+                const board = document.createElement('div');
+                board.className = 'calcudoku-board-preview';
+                const sz = pz.size;
+                board.style.gridTemplateColumns = `repeat(${sz}, 1fr)`;
+                board.style.gridTemplateRows = `repeat(${sz}, 1fr)`;
+
+                const cageMap = getCageMap(pz);
+
+                // Mapa de etiquetas en top-left
+                const labelMap = new Map();
+                pz.cages.forEach((cg) => {
+                    const sorted = cg.cells.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+                    const [topR, topC] = sorted[0];
+                    const opSym = cg.op === '*' ? '×' : (cg.op === '/' ? '÷' : (cg.op || ''));
+                    labelMap.set(`${topR},${topC}`, `${cg.target}${opSym}`);
+                });
+
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'calcudoku-cell-box';
+
+                        const myCage = cageMap[r][c];
+
+                        if (r === 0 || cageMap[r-1][c] !== myCage) cell.classList.add('border-top-thick');
+                        else cell.classList.add('border-top-thin');
+
+                        if (r === sz - 1 || cageMap[r+1][c] !== myCage) cell.classList.add('border-bottom-thick');
+                        else cell.classList.add('border-bottom-thin');
+
+                        if (c === 0 || cageMap[r][c-1] !== myCage) cell.classList.add('border-left-thick');
+                        else cell.classList.add('border-left-thin');
+
+                        if (c === sz - 1 || cageMap[r][c+1] !== myCage) cell.classList.add('border-right-thick');
+                        else cell.classList.add('border-right-thin');
+
+                        if (labelMap.has(`${r},${c}`)) {
+                            const lbl = document.createElement('span');
+                            lbl.className = 'cage-sub-label';
+                            lbl.textContent = labelMap.get(`${r},${c}`);
+                            cell.appendChild(lbl);
+                        }
+
+                        if (isSolution) {
+                            const valTxt = document.createElement('span');
+                            valTxt.textContent = pz.solution[r][c];
+                            cell.appendChild(valTxt);
+                        }
+
+                        board.appendChild(cell);
+                    }
+                }
+
+                wrap.appendChild(board);
+                card.appendChild(wrap);
+                layoutEl.appendChild(card);
+            });
+        }
+
+        // GENERACIÓN DE PDF VECTORIAL A 300 DPI (2 PÁGINAS)
+        function generatePdfDoc() {
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) {
+                alert('No se pudo inicializar jsPDF.');
+                return null;
+            }
+
+            const is6x9 = state.format === '6x9';
+            const widthMm = is6x9 ? 152.4 : 209.55;
+            const heightMm = is6x9 ? 228.6 : 152.4;
+            const orientation = is6x9 ? 'portrait' : 'landscape';
+
+            const doc = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: [widthMm, heightMm]
+            });
+
+            const diffTxt = state.difficulty === '4x4' ? 'RAPIDO (4x4)' : 'CLASICO (5x5)';
+
+            function drawPage(pageNum, isSolution) {
+                const marginX = is6x9 ? 16 : 13;
+                const marginY = is6x9 ? 12 : 10;
+
+                // 1. CABECERA
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(is6x9 ? 11 : 11);
+                doc.setTextColor(20, 20, 20);
+                doc.text('MENOS RUIDO  ·  CALCUDOKU', marginX, marginY + 4);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(90, 90, 90);
+                const pageLabel = isSolution ? 'SOLUCIONES' : 'RETOS';
+                doc.text(`EDITORIAL MENOS RUIDO · ${diffTxt} · ${pageLabel}`, widthMm - marginX, marginY + 4, { align: 'right' });
+
+                // Línea superior
+                doc.setDrawColor(20, 20, 20);
+                doc.setLineWidth(0.4);
+                const headerLineY = marginY + 6.5;
+                doc.line(marginX, headerLineY, widthMm - marginX, headerLineY);
+
+                // 2. DIBUJAR LOS PUZZLES
+                if (!is6x9) {
+                    // LAYOUT 8.25" × 6" (3 columnas × 2 filas = 6 puzzles)
+                    const puzzleSizeMm = 52.0; // mm
+                    const startY = 24.0;
+                    const colWidth = (widthMm - marginX * 2) / 3;
+                    const rowHeight = 56.0;
+
+                    state.puzzles.forEach((pz, idx) => {
+                        const col = idx % 3;
+                        const row = Math.floor(idx / 3);
+                        const px = marginX + col * colWidth + (colWidth - puzzleSizeMm) / 2;
+                        const py = startY + row * rowHeight;
+
+                        // Título del puzzle
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.5);
+                        doc.setTextColor(46, 96, 74);
+                        const pzTag = isSolution ? `SOLUCION ${idx + 1}` : `CALCUDOKU ${idx + 1}`;
+                        doc.text(pzTag, px, py - 2.0);
+
+                        // Tablero
+                        const cSize = puzzleSizeMm / pz.size;
+                        drawCalcudokuGrid(doc, px, py, cSize, pz, isSolution);
+                    });
+                } else {
+                    // LAYOUT 6" × 9" (1 columna × 2 filas = 2 puzzles)
+                    const puzzleSizeMm = 82.0; // mm
+                    const px = (widthMm - puzzleSizeMm) / 2;
+                    const rowHeight = 94.0;
+                    const startY = 27.0;
+
+                    state.puzzles.forEach((pz, idx) => {
+                        const py = startY + idx * rowHeight;
+
+                        // Título
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(9.0);
+                        doc.setTextColor(46, 96, 74);
+                        const pzTag = isSolution ? `SOLUCION ${idx + 1}` : `CALCUDOKU ${idx + 1}`;
+                        doc.text(pzTag, px, py - 3.0);
+
+                        // Tablero
+                        const cSize = puzzleSizeMm / pz.size;
+                        drawCalcudokuGrid(doc, px, py, cSize, pz, isSolution);
+                    });
+                }
+
+                // 3. PIE
+                doc.setDrawColor(210, 205, 198);
+                doc.setLineWidth(0.2);
+                const footerLineY = heightMm - marginY + 2;
+                doc.line(marginX, footerLineY, widthMm - marginX, footerLineY);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.8);
+                doc.setTextColor(110, 110, 110);
+                doc.text('Editorial Menos Ruido  ·  www.editorialmenosruido.com', marginX, heightMm - marginY + 5.5);
+                doc.text(`Pag. ${pageNum} / 2`, widthMm - marginX, heightMm - marginY + 5.5, { align: 'right' });
+            }
+
+            function drawCalcudokuGrid(d, gx, gy, cSize, pz, isSol) {
+                const sz = pz.size;
+                const cageMap = getCageMap(pz);
+
+                // Mapa de etiquetas top-left
+                const labelMap = new Map();
+                pz.cages.forEach((cg) => {
+                    const sorted = cg.cells.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+                    const [topR, topC] = sorted[0];
+                    const opSym = cg.op === '*' ? 'x' : (cg.op === '/' ? '/' : (cg.op || ''));
+                    labelMap.set(`${topR},${topC}`, `${cg.target}${opSym}`);
+                });
+
+                // 1. Fondos blancos y líneas tenues interiores
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        const cx = gx + c * cSize;
+                        const cy = gy + r * cSize;
+
+                        d.setFillColor(255, 255, 255);
+                        d.rect(cx, cy, cSize, cSize, 'F');
+
+                        const myCage = cageMap[r][c];
+
+                        // Líneas internas entre celdas de la misma jaula (gris fino punteado o tenue)
+                        d.setDrawColor(200, 195, 185);
+                        d.setLineWidth(0.15);
+                        if (r > 0 && cageMap[r-1][c] === myCage) {
+                            d.line(cx, cy, cx + cSize, cy);
+                        }
+                        if (c > 0 && cageMap[r][c-1] === myCage) {
+                            d.line(cx, cy, cx, cy + cSize);
+                        }
+                    }
+                }
+
+                // 2. Bordes gruesos de jaula
+                d.setDrawColor(20, 20, 20);
+                d.setLineWidth(0.55);
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        const cx = gx + c * cSize;
+                        const cy = gy + r * cSize;
+                        const myCage = cageMap[r][c];
+
+                        if (r === 0 || cageMap[r-1][c] !== myCage) {
+                            d.line(cx, cy, cx + cSize, cy);
+                        }
+                        if (r === sz - 1 || cageMap[r+1][c] !== myCage) {
+                            d.line(cx, cy + cSize, cx + cSize, cy + cSize);
+                        }
+                        if (c === 0 || cageMap[r][c-1] !== myCage) {
+                            d.line(cx, cy, cx, cy + cSize);
+                        }
+                        if (c === sz - 1 || cageMap[r][c+1] !== myCage) {
+                            d.line(cx + cSize, cy, cx + cSize, cy + cSize);
+                        }
+                    }
+                }
+
+                // 3. Etiquetas y números de solución
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        const cx = gx + c * cSize;
+                        const cy = gy + r * cSize;
+
+                        if (labelMap.has(`${r},${c}`)) {
+                            d.setFont('helvetica', 'bold');
+                            const tagFont = cSize > 14 ? 6.2 : 5.0;
+                            d.setFontSize(tagFont);
+                            d.setTextColor(20, 20, 20);
+                            const tagDy = cSize > 14 ? 2.5 : 2.0;
+                            d.text(labelMap.get(`${r},${c}`), cx + 0.9, cy + tagDy);
+                        }
+
+                        if (isSol) {
+                            d.setFont('helvetica', 'bold');
+                            const solFont = cSize > 14 ? 12.0 : 8.5;
+                            d.setFontSize(solFont);
+                            d.setTextColor(20, 20, 20);
+                            const dy = cSize > 14 ? 1.4 : 1.0;
+                            d.text(String(pz.solution[r][c]), cx + cSize / 2, cy + cSize / 2 + dy, { align: 'center' });
+                        }
+                    }
+                }
+
+                // Marco perimetral
+                d.setDrawColor(20, 20, 20);
+                d.setLineWidth(0.7);
+                d.rect(gx, gy, sz * cSize, sz * cSize, 'D');
+            }
+
+            drawPage(1, false);
+            doc.addPage([widthMm, heightMm], orientation);
+            drawPage(2, true);
+
+            return doc;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toastNotify');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('active');
+            setTimeout(() => t.classList.remove('active'), 2500);
+        }
+
+        function openDownloadModal() {
+            const m = document.getElementById('downloadModal');
+            if (m) m.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            const m = document.getElementById('downloadModal');
+            if (m) m.classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.classList.contains('modal-overlay')) closeDownloadModal();
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            selectPuzzles();
+            renderSheet();
+
+            // Toggle Formato
+            document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.format = btn.dataset.format;
+                    selectPuzzles();
+                    renderSheet();
+                });
+            });
+
+            // Toggle Dificultad
+            document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.difficulty = btn.dataset.diff;
+                    selectPuzzles();
+                    renderSheet();
+                });
+            });
+
+            // Toggle Página
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.page = parseInt(btn.dataset.page, 10);
+                    renderSheet();
+                });
+            });
+
+            // Botón regenerar
+            document.getElementById('btnRegenerate')?.addEventListener('click', () => {
+                selectPuzzles();
+                renderSheet();
+                showToast('Nuevos Calcudokus generados con éxito');
+            });
+
+            // Modal descarga
+            document.getElementById('btnOpenDownloadModal')?.addEventListener('click', openDownloadModal);
+
+            // Descarga directa
+            document.getElementById('btnExecuteDownload')?.addEventListener('click', () => {
+                const doc = generatePdfDoc();
+                if (!doc) return;
+                const diffTxt = state.difficulty === '4x4' ? 'rapido-4x4' : 'clasico-5x5';
+                doc.save(`Menos-Ruido-Calcudoku-${state.format}-${diffTxt}.pdf`);
+                closeDownloadModal();
+                showToast('✓ PDF vectorial descargado con éxito');
+            });
+        });
+
+        // Configurar guardado en Mi Espacio
+        window.mrCalcudokuState = state;
+        if (typeof setupGeneratorSave === 'function') {
+            setupGeneratorSave('btn-save-generator-design', () => {
+                const diffText = state.difficulty === '4x4' ? 'Rápido (4×4)' : 'Clásico (5×5)';
+                const fmtText = state.format === '6x9' ? '6" × 9" Vertical (2 por pág.)' : '8.25" × 6" Apaisado (6 por pág.)';
+                return {
+                    name: `Calcudoku · ${diffText}`,
+                    type: 'Calcudoku',
+                    summary: `${fmtText} · ${state.puzzles.length} retos · Anverso y Solución`,
+                    data: {
+                        format: state.format,
+                        difficulty: state.difficulty,
+                        puzzles: state.puzzles
+                    }
+                };
+            });
+        }
+    </script>
+</body>
+</html>
