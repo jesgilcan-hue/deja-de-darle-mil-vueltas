@@ -47,6 +47,7 @@ export default defineConfig({
         ensayoGeneradores: resolve(__dirname, 'como-generar-tu-planificador-facil-y-rapido.html'),
         ensayoSudoku: resolve(__dirname, 'por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html'),
         ensayoDormir: resolve(__dirname, 'como-dejar-el-movil-antes-de-dormir.html'),
+        ensayoFamilia: resolve(__dirname, 'decir-que-no-a-la-familia-sin-sentirse-culpable.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
