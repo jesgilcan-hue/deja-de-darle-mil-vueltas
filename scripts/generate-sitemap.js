@@ -39,6 +39,7 @@ const EXCLUDED_FILES = new Set([
   'sudoku-diario.html',
   'generador-libro-pasatiempos.html',
   'por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html',
+  'como-dejar-el-movil-antes-de-dormir.html',
   'generador-bitacora-enfoque.html'
 ]);
 
