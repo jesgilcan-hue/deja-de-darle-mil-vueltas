@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta name="robots" content="noindex, nofollow" />
+    <!-- Control de acceso exclusivo para Desarrollador (Borrador privado) -->
+    <style id="mr-dev-guard-style">html, body { display: none !important; }</style>
+    <script type="module" src="./dev-guard.js"></script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Por qué hacer un sudoku en papel apaga el sobrepensamiento (y el engaño de los juegos del móvil) | Menos Ruido</title>
@@ -80,413 +85,273 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="/style.css" />
 
-    <style>
-        .article-hero {
-            padding: 4.5rem 0 2rem 0;
-            text-align: center;
-        }
-        .article-kicker {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent, #87553b);
-            font-weight: 700;
-            margin-bottom: 0.8rem;
-            display: inline-block;
-        }
-        .article-title {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: clamp(2.1rem, 4.2vw, 3.2rem);
-            line-height: 1.2;
-            color: #1a1613;
-            margin: 0.6rem 0 1.2rem;
-            letter-spacing: -0.5px;
-        }
-        .article-subtitle {
-            font-size: 1.18rem;
-            color: var(--color-text-muted, #666059);
-            max-width: 680px;
-            margin: 0 auto 1.8rem;
-            line-height: 1.6;
-            font-style: italic;
-        }
-        .article-meta {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            font-size: 0.85rem;
-            color: #7a7269;
-            flex-wrap: wrap;
-        }
-        .article-body {
-            max-width: 740px;
-            margin: 0 auto;
-            padding: 2.5rem 1.5rem 5rem;
-            font-size: 1.1rem;
-            line-height: 1.85;
-            color: #2b2520;
-        }
-        .article-body h2 {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.85rem;
-            line-height: 1.3;
-            color: #1a1613;
-            margin: 2.8rem 0 1.1rem;
-            letter-spacing: -0.3px;
-        }
-        .article-body p {
-            margin-bottom: 1.5rem;
-        }
-        .article-body strong {
-            color: #14110f;
-            font-weight: 600;
-        }
-        .article-callout {
-            background: #faf6f0;
-            border-left: 4px solid var(--accent, #87553b);
-            border-radius: 0 12px 12px 0;
-            padding: 1.5rem 1.8rem;
-            margin: 2.4rem 0;
-        }
-        .article-callout h4 {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.25rem;
-            margin: 0 0 0.8rem;
-            color: #2b1f18;
-        }
-        .article-callout p {
-            margin-bottom: 0.8rem;
-            font-size: 1.02rem;
-            line-height: 1.65;
-        }
-        .article-callout p:last-child {
-            margin-bottom: 0;
-        }
-        .article-quote {
-            margin: 2.8rem 0;
-            padding: 1.4rem 1.8rem;
-            border-left: 3px solid #b76e00;
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.35rem;
-            line-height: 1.5;
-            color: #3b2b1a;
-            font-style: italic;
-            background: #fffdf8;
-            border-radius: 0 10px 10px 0;
-        }
-        .article-img-card {
-            margin: 2.8rem 0;
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-            background: #fdfaf7;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-        }
-        .article-img-card img {
-            width: 100%;
-            height: auto;
-            display: block;
-            aspect-ratio: 16 / 9;
-            object-fit: cover;
-        }
-        .article-img-caption {
-            padding: 0.9rem 1.2rem;
-            font-size: 0.86rem;
-            color: #6e655b;
-            line-height: 1.5;
-            background: #fff;
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        .article-cta-box {
-            background: linear-gradient(180deg, #fbf7f2 0%, #f4ece2 100%);
-            border: 1.5px solid rgba(135, 85, 59, 0.25);
-            border-radius: 16px;
-            padding: 2.2rem 2rem;
-            margin: 3.5rem 0 1.5rem;
-            text-align: center;
-            box-shadow: 0 8px 24px rgba(135, 85, 59, 0.08);
-        }
-        .article-cta-box h3 {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.55rem;
-            color: #211c18;
-            margin: 0 0 0.8rem;
-        }
-        .article-cta-box p {
-            color: #5c534a;
-            font-size: 1.02rem;
-            max-width: 580px;
-            margin: 0 auto 1.6rem;
-            line-height: 1.6;
-        }
-        .article-cta-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .btn-cta-primary {
-            background: var(--accent, #87553b);
-            color: #ffffff !important;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(135, 85, 59, 0.25);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-cta-primary:hover {
-            background: #70442e;
-            transform: translateY(-1px);
-        }
-        .btn-cta-secondary {
-            background: #ffffff;
-            color: var(--accent, #87553b) !important;
-            border: 1px solid rgba(135, 85, 59, 0.35);
-            padding: 12px 22px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-cta-secondary:hover {
-            background: #faf6f0;
-            border-color: var(--accent, #87553b);
-        }
-        .back-nav {
-            padding: 18px 24px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-            background: #ffffff;
-        }
-        .back-nav-container {
-            max-width: 1040px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .back-nav-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #666059;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.15s ease;
-        }
-        .back-nav-link:hover {
-            color: var(--accent, #87553b);
-        }
-    </style>
+    <!-- Vercel Web Analytics & Speed Insights -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
 
-    <!-- NAVEGACIÓN SUPERIOR -->
-    <header class="back-nav">
-        <div class="back-nav-container">
-            <a href="/lecturas.html" class="back-nav-link">
-                <span>←</span> Volver a Lecturas
-            </a>
-            <a href="/" style="text-decoration: none; font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; color: #212121; font-weight: 600;">
-                Menos Ruido
-            </a>
+    <!-- NAVBAR PRINCIPAL -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="nav-left">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;">Menos Ruido</a>
+            </div>
+            <nav>
+                <div class="nav-drawer-header">
+                    <span class="nav-drawer-title">Menos Ruido</span>
+                    <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <a href="/" onclick="document.body.classList.remove('nav-open')">Home</a>
+                <div class="dropdown">
+                    <a href="/#cuadernos" style="cursor: default;">Cuadernos ▾</a>
+                    <div class="dropdown-content tree-dropdown">
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Cuadernos Guiados</span>
+                            <div class="tree-branch-items">
+                                <a href="/habla-claro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Habla Claro</a>
+                                <a href="/deja-de-darle-mil-vueltas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Deja de darle mil vueltas</a>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Planificadores</span>
+                            <div class="tree-branch-items">
+                                <a href="/planificador-90-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 90 Días</a>
+                                <a href="/planificador-180-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 180 Días</a>
+                                <a href="/planificador-semanal-simple.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Atemporal</a>
+                                <a href="/planificador-semanal-reversible.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Reversible</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="/generador.html" style="cursor: default;">Generadores ▾</a>
+                    <div class="dropdown-content tree-dropdown">
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Generadores</span>
+                            <div class="tree-branch-items">
+                                <a href="/generador.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Todos los generadores</a>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <span class="tree-branch-title">Planificación Semanal</span>
+                            <div class="tree-branch-items">
+                                <a href="/generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador Semanal Web</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="/lecturas.html" style="cursor: default;">Lecturas ▾</a>
+                    <div class="dropdown-content tree-dropdown">
+                        <div class="tree-group">
+                            <a href="/lecturas.html#lecturas" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Lecturas</a>
+                            <div class="tree-branch-items">
+                                <a href="/como-decir-que-no-en-el-trabajo.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Cómo decir que no en el trabajo</a>
+                                <a href="/como-dejar-de-sobrepensar-las-decisiones.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Cómo dejar de sobrepensar las decisiones</a>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <a href="/lecturas.html#guias-de-uso" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Guías de uso</a>
+                            <div class="tree-branch-items">
+                                <a href="/guia-uso-habla-claro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Guía Habla Claro</a>
+                                <a href="/guia-uso-deja-de-darle-mil-vueltas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Guía Deja de darle mil vueltas</a>
+                                <a href="/guia-uso-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Guía Planificador Semanal</a>
+                                <a href="/guia-uso-planificador-90-180-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Guía 90 & 180 Días</a>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <a href="/lecturas.html#tutoriales" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Tutoriales</a>
+                            <div class="tree-branch-items">
+                                <a href="/tutorial-generador-planificador-diario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador gratuito de planificación diaria</a>
+                                <a href="/tutorial-generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador gratuito de planificación semanal</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
         </div>
     </header>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
+
+    <!-- SUBMENÚ CONTEXTUAL DE PASATIEMPOS -->
+    <nav class="book-subnav" aria-label="Navegación de pasatiempos">
+        <div class="container book-subnav-content">
+            <span class="book-subnav-title">Pasatiempos</span>
+            <div class="book-subnav-links">
+                <a href="/pasatiempos.html">🧩 Hub de Pasatiempos</a>
+                <a href="/sudoku-diario.html">Sudoku</a>
+                <a href="/sopa-diaria.html">Sopa de Letras</a>
+                <a href="/cruzadas-diarias.html">Cruzadas</a>
+                <a href="/kakuro-diario.html">Kakuro</a>
+            </div>
+            <a href="/pasatiempos.html#libros" class="btn-primary subnav-buy">Ver Cuadernos</a>
+        </div>
+    </nav>
 
     <main>
-        <!-- CABECERA DEL ENSAYO -->
-        <header class="article-hero">
-            <div class="container" style="max-width: 820px; margin: 0 auto; padding: 0 1.5rem;">
-                <span class="article-kicker">Pasatiempos & Mente</span>
-                <h1 class="article-title">Por qué hacer un sudoku en papel apaga el sobrepensamiento (y el engaño de los juegos del móvil)</h1>
-                <p class="article-subtitle">La diferencia entre sedar la mente con hiperestimulación digital y el descanso activo: cómo una simple cuadrícula impresa y un lápiz silencian el diálogo interno rumiante.</p>
+        <article class="article-wrapper">
+            <header class="article-header">
+                <span class="reading-tag">Pasatiempos &amp; Foco</span>
+                <h1>Por qué hacer un sudoku en papel apaga el sobrepensamiento (y el engaño de los juegos del móvil)</h1>
+                <p class="article-lead">La diferencia entre sedar la mente con hiperestimulación digital y el descanso activo: cómo una simple cuadrícula impresa y un lápiz silencian el diálogo interno rumiante.</p>
                 <div class="article-meta">
-                    <span>⏱️ 6 min de lectura</span>
-                    <span>•</span>
-                    <span>🧩 Pasatiempos Analógicos & Foco</span>
-                    <span>•</span>
-                    <span>Editorial Menos Ruido</span>
+                    <div class="article-meta-info">
+                        <span>Editorial Menos Ruido</span>
+                        <span>·</span>
+                        <span>6 min de lectura</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="article-body">
+                <picture style="display: block; margin: 2rem 0; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+                    <source srcset="/images/lecturas/sudoku-papel-portada.webp" type="image/webp" />
+                    <img src="/images/lecturas/sudoku-papel-portada.jpg" alt="Persona concentrada resolviendo un pasatiempo en un cuaderno de papel con un lápiz junto a una taza y con el móvil boca abajo" style="width: 100%; height: auto; display: block;" loading="eager" />
+                </picture>
+
+                <p>Llegas a casa a las ocho de la tarde con la cabeza cargada. Tienes tres conversaciones de la oficina dándote vueltas en segundo plano, la espalda tensa y esa fatiga espesa que te deja aplastado en el sofá. En ese momento, casi por inercia automática, sacas el móvil del bolsillo. Abres ese jueguecito de conectar piezas, el pasatiempo de palabras o una app de sudokus que te descargaste el mes pasado. Te dices a ti mismo: <em>«Voy a jugar cinco minutos para desconectar»</em>.</p>
+
+                <p>Veinte minutos después, la realidad es otra muy distinta. Te has tragado cuatro anuncios ruidosos de treinta segundos sobre un casino cutre, la pantalla ha parpadeado con ofertas de vidas extra por tiempo limitado, han sonado campanitas estridentes de celebración artificial y, al bloquear el teléfono, notas los ojos más secos, la mandíbula apretada y <strong>la cabeza exactamente igual de acelerada que cuando entraste por la puerta</strong>.</p>
+
+                <p>No has descansado nada. Lo que has hecho ha sido someter a tu cerebro ya agotado a una tormenta de dopamina sintética y estímulos visuales agresivos.</p>
+
+                <p>Nos han vendido la moto de que cualquier actividad que no sea trabajar cuenta como descanso. Pero hay una diferencia abismal entre sedar la mente con estímulos y darle un respiro de verdad. Si quieres apagar el sobrepensamiento de la jornada, <strong>la solución no está en una pantalla más brillante: está en algo tan humilde, analógico y silencioso como un sudoku impreso en papel y la punta afilada de un lápiz</strong>.</p>
+
+                <h2>El espejismo del descanso digital: por qué las apps te cansan el doble</h2>
+
+                <p>El modelo de negocio de cualquier aplicación móvil gratuita se basa en retener tu atención a base de fricción calculada. Los juegos de puzzle para teléfono no están pensados para relajarte; están programados para mantenerte en alerta continua:</p>
+
+                <p><strong>1. El bombardeo publicitario constante:</strong> Cada vez que resuelves una fase, una animación ruidosa te corta el rollo para meterte un vídeo que no puedes saltar. Tu mente pasa de golpe de buscar una deducción lógica a defenderse del asalto comercial.</p>
+
+                <p><strong>2. La tiranía del temporizador:</strong> Cuentas atrás, eventos diarios que caducan en doce horas o castigos si dejas la partida a medias. Convierten el ocio en otra lista de tareas con fecha de caducidad.</p>
+
+                <p><strong>3. Luz azul a quemarropa:</strong> Tras ocho horas delante de monitores, someter tus pupilas a una pantalla OLED a treinta centímetros de la cara le manda a tu biología la señal inequívoca de que debes seguir en guardia.</p>
+
+                <p>El resultado es pura fatiga por hiperestimulación. Crees que haces una pausa, pero tu cabeza procesa miles de microdecisiones por minuto: esquivar banners, cerrar pop-ups con la cruz diminuta y soportar destellos. Al cabo de media hora no estás sereno; <strong>estás más irritable y con la atención rota</strong>.</p>
+
+                <div class="article-callout">
+                    <h4>⚡ Descanso de Pantalla vs. Descanso Activo</h4>
+                    <p><strong>• El falso descanso digital:</strong> Pantallas parpadeantes, dopamina rápida, anuncios imprevistos y notificaciones que fragmentan el foco. El cerebro no baja revoluciones; solo cambia de estrés.</p>
+                    <p style="margin-top: 0.8rem;"><strong>• El descanso activo en papel:</strong> Reglas claras, cero interrupciones, motricidad fina con lápiz y un desafío lógico que secuestra la atención hacia una sola meta tangible.</p>
+                </div>
+
+                <h2>La biología del lápiz: la mente no puede rumiar mientras deduce</h2>
+
+                <p>Para entender por qué un sudoku en papel baja las revoluciones mentales al instante, hay que acudir a una limitación biológica básica: <strong>la memoria de trabajo humana tiene un ancho de banda muy estrecho</strong>.</p>
+
+                <p>Nuestra atención funciona como una linterna de haz único: solo puede iluminar con nitidez un asunto complejo a la vez. El sobrepensamiento —ese runrún tóxico que reproduce en bucle la mala contestación de un compañero o la preocupación por las cuentas del mes— vive en la llamada red neuronal por defecto. Es el piloto automático que se dispara cuando no estamos haciendo nada concreto y la mente empieza a inventarse problemas imaginarios o a revivir fricciones pasadas.</p>
+
+                <p>La única forma eficaz de apagar ese loro parlante interno no es intentar <em>«poner la mente en blanco»</em> (algo prácticamente imposible para casi cualquiera), sino darle a la linterna un hueso sólido que roer:</p>
+
+                <p>Cuando te sientas con un papel delante, apoyas la mano sobre la mesa y buscas qué número del 1 al 9 falta en una fila, obligas a tu corteza prefrontal a una deducción secuencial limpia. Miras la columna, descartas el 4 porque ya está arriba, descartas el 7 porque se cruza por la derecha y compruebas el bloque de nueve casillas.</p>
+
+                <div class="article-quote">
+                    «El cerebro no puede rumiar sobre una bronca de trabajo mientras averigua qué número falta en una fila de nueve casillas. El foco secuencial apaga el ruido.»
+                </div>
+
+                <p>En ese momento ocurre lo importante: <strong>el cerebro no puede computar a la vez las reglas de una cuadrícula y seguir dándole vueltas a la discusión de esta mañana</strong>. La rumiación no se apaga porque pelees contra ella; se apaga por pura falta de memoria disponible. El sudoku secuestra el foco de manera limpia y no deja hueco para el ruido.</p>
+
+                <picture style="display: block; margin: 2.5rem 0; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+                    <source srcset="/images/lecturas/sudoku-papel-pausa.webp" type="image/webp" />
+                    <img src="/images/lecturas/sudoku-papel-pausa.jpg" alt="Primer plano de un cuaderno de papel abierto con cuadrícula limpia y lápiz de grafito apoyado sobre la hoja con luz natural" style="width: 100%; height: auto; display: block;" loading="lazy" />
+                </picture>
+
+                <h2>El salvavidas de las pequeñas victorias cerradas</h2>
+
+                <p>Hay otro factor psicológico decisivo que explica por qué los pasatiempos clásicos devuelven la serenidad: <strong>la necesidad humana de cerrar tareas</strong>.</p>
+
+                <p>Vivimos atrapados en procesos abiertos e interminables. En el trabajo casi ningún proyecto se concluye en un día; el correo nunca se vacía del todo, las hipotecas tardan décadas en pagarse y las incertidumbres cotidianas son difusas. Nos acostamos casi todas las noches con la sensación frustrante de haber corrido una maratón sin cruzar ninguna meta visible.</p>
+
+                <p>Frente a ese bucle abierto, una cuadrícula de papel es un territorio cerrado y predecible:</p>
+
+                <p><strong>• Reglas inmutables:</strong> No hay algoritmos que cambien las normas según sople el viento. El 5 solo puede ir en una casilla concreta y nadie te va a discutir esa certeza.</p>
+
+                <p><strong>• Un universo finito:</strong> No hay scroll infinito ni notificaciones que te desvíen. Empieza en la primera casilla y termina en la última.</p>
+
+                <p><strong>• Victoria tangible y real:</strong> Cuando anotas el último dígito con el grafito y ves la cuadrícula resuelta, tu cerebro recibe una dosis limpia de satisfacción. Tuviste un problema, aplicaste lógica paso a paso y lo cerraste. Caso resuelto.</p>
+
+                <p>Esa pequeña victoria de quince minutos no va a pagar tus facturas ni a quitarte los problemas de la vida, pero le devuelve a tu cabeza una certeza imprescindible: <strong>cuando te centras en una sola cosa, eres capaz de poner orden en el caos</strong>.</p>
+
+                <h2>Cómo incorporar el descanso activo en tu rutina diaria</h2>
+
+                <p>No hace falta que te conviertas en un maestro de la lógica ni que le eches dos horas al día. Basta con sustituir un mal hábito de consumo pasivo por un rato analógico sin pantallas:</p>
+
+                <p><strong>1. Ten siempre a mano un lápiz con goma:</strong> El tacto importa. Escribir un número sobre la textura física del papel, borrar un error y rectificar exige una coordinación manual que te ancla al presente.</p>
+
+                <p><strong>2. Deja el móvil en otra habitación:</strong> Si dejas el teléfono al lado con la pantalla hacia arriba, ante el primer atasco mental la mano se irá sola a mirarlo. Date quince minutos de tregua visual total.</p>
+
+                <p><strong>3. Elige el momento de transición:</strong> El mejor momento suele ser el puente entre el final del trabajo y la cena. Funciona como un cortafuegos perfecto para no meter las prisas de la oficina en tu casa.</p>
+
+                <p>Descansar no es quedarse anestesiado tragando vídeos en un teléfono. <strong>Descansar de verdad es terminar una pausa sintiendo que tu cabeza vuelve a estar despejada y en su sitio</strong>.</p>
+
+                <!-- CTA BOX -->
+                <div class="article-cta-box">
+                    <h3>¿Quieres entrenar el foco activo y apagar el sobrepensamiento?</h3>
+                    <p>Prueba nuestros pasatiempos lógicos gratuitos online directamente en el navegador sin anuncios ni distracciones, o descubre la colección de cuadernos físicos de bolsillo diseñados para llevar contigo.</p>
+                    <div class="article-cta-actions">
+                        <a href="/pasatiempos.html" target="_blank" rel="noopener noreferrer" class="btn-primary">Probar Pasatiempos en la Web ↗</a>
+                        <a href="/pasatiempos.html#libros" target="_blank" rel="noopener noreferrer" class="btn-secondary">Ver Cuadernos de Bolsillo</a>
+                    </div>
                 </div>
             </div>
-        </header>
-
-        <!-- CUERPO DEL ENSAYO -->
-        <article class="article-body">
-
-            <!-- FOTO DE PORTADA ARTÍSTICA -->
-            <div class="article-img-card" style="margin-top: 0;">
-                <img src="/images/lecturas/sudoku-papel-portada.webp" alt="Persona resolviendo con calma un pasatiempo en un cuaderno de papel con un lápiz junto a una taza y con el móvil boca abajo" loading="eager" />
-                <div class="article-img-caption">
-                    <span>✏️</span> <strong>Foco analógico:</strong> Una cuadrícula cerrada, un lápiz de madera y quince minutos de atención plena logran lo que tres horas de scroll jamás consiguen: serenar el sistema nervioso.
-                </div>
-            </div>
-
-            <p>
-                Llegas a casa a las ocho de la tarde con la cabeza cargada. Tienes tres conversaciones de la oficina dándote vueltas en segundo plano, la espalda tensa y esa fatiga espesa que te deja aplastado en el sofá. En ese momento, casi por inercia automática, sacas el móvil del bolsillo. Abres ese jueguecito de conectar piezas, el pasatiempo de palabras o una app de sudokus que te descargaste el mes pasado. Te dices a ti mismo: <em>«Voy a jugar cinco minutos para desconectar»</em>.
-            </p>
-
-            <p>
-                Veinte minutos después, la realidad es otra muy distinta. Te has tragado cuatro anuncios ruidosos de treinta segundos sobre un casino cutre, la pantalla ha parpadeado con ofertas de vidas extra por tiempo limitado, han sonado campanitas estridentes de celebración artificial y, al bloquear el teléfono, notas los ojos más secos, la mandíbula apretada y <strong>la cabeza exactamente igual de acelerada que cuando entraste por la puerta</strong>.
-            </p>
-
-            <p>
-                No has descansado nada. Lo que has hecho ha sido someter a tu cerebro ya agotado a una tormenta de dopamina sintética y estímulos visuales agresivos.
-            </p>
-
-            <p>
-                Nos han vendido la moto de que cualquier actividad que no sea trabajar cuenta como descanso. Pero hay una diferencia abismal entre sedar la mente con estímulos y darle un respiro de verdad. Si quieres apagar el sobrepensamiento de la jornada, <strong>la solución no está en una pantalla más brillante: está en algo tan humilde, analógico y silencioso como un sudoku impreso en papel y la punta afilada de un lápiz</strong>.
-            </p>
-
-            <h2>El espejismo del descanso digital: por qué las apps te cansan el doble</h2>
-
-            <p>
-                El modelo de negocio de cualquier aplicación móvil gratuita se basa en retener tu atención a base de fricción calculada. Los juegos de puzzle para teléfono no están pensados para relajarte; están programados para mantenerte en alerta continua:
-            </p>
-
-            <p>
-                <strong>1. El bombardeo publicitario constante:</strong> Cada vez que resuelves una fase, una animación ruidosa te corta el rollo para meterte un vídeo que no puedes saltar. Tu mente pasa de golpe de buscar una deducción lógica a defenderse del asalto comercial.
-            </p>
-
-            <p>
-                <strong>2. La tiranía del temporizador:</strong> Cuentas atrás, eventos diarios que caducan en doce horas o castigos si dejas la partida a medias. Convierten el ocio en otra lista de tareas con fecha de caducidad.
-            </p>
-
-            <p>
-                <strong>3. Luz azul a quemarropa:</strong> Tras ocho horas delante de monitores, someter tus pupilas a una pantalla OLED a treinta centímetros de la cara le manda a tu biología la señal inequívoca de que debes seguir en guardia.
-            </p>
-
-            <p>
-                El resultado es pura fatiga por hiperestimulación. Crees que haces una pausa, pero tu cabeza procesa miles de microdecisiones por minuto: esquivar banners, cerrar pop-ups con la cruz diminuta y soportar destellos. Al cabo de media hora no estás sereno; <strong>estás más irritable y con la atención rota</strong>.
-            </p>
-
-            <div class="article-callout">
-                <h4>⚡ Descanso de Pantalla vs. Descanso Activo</h4>
-                <p>
-                    <strong>El falso descanso digital:</strong> Pantallas parpadeantes, dopamina rápida, anuncios imprevistos y notificaciones que fragmentan el foco. El cerebro no baja revoluciones; solo cambia de estrés.
-                </p>
-                <p>
-                    <strong>El descanso activo en papel:</strong> Reglas claras, cero interrupciones, motricidad fina con lápiz y un desafío lógico que secuestra la atención hacia una sola meta tangible.
-                </p>
-            </div>
-
-            <h2>La biología del lápiz: la mente no puede rumiar mientras deduce</h2>
-
-            <p>
-                Para entender por qué un sudoku en papel baja las revoluciones mentales al instante, hay que acudir a una limitación biológica básica: <strong>la memoria de trabajo humana tiene un ancho de banda muy estrecho</strong>.
-            </p>
-
-            <p>
-                Nuestra atención funciona como una linterna de haz único: solo puede iluminar con nitidez un asunto complejo a la vez. El sobrepensamiento —ese runrún tóxico que reproduce en bucle la mala contestación de un compañero o la preocupación por las cuentas del mes— vive en la llamada red neuronal por defecto. Es el piloto automático que se dispara cuando no estamos haciendo nada concreto y la mente empieza a inventarse problemas imaginarios o a revivir fricciones pasadas.
-            </p>
-
-            <p>
-                La única forma eficaz de apagar ese loro parlante interno no es intentar <em>«poner la mente en blanco»</em> (algo prácticamente imposible para casi cualquiera), sino darle a la linterna un hueso sólido que roer:
-            </p>
-
-            <p>
-                Cuando te sientas con un papel delante, apoyas la mano sobre la mesa y buscas qué número del 1 al 9 falta en una fila, obligas a tu corteza prefrontal a una deducción secuencial limpia. Miras la columna, descartas el 4 porque ya está arriba, descartas el 7 porque se cruza por la derecha y compruebas el bloque de nueve casillas.
-            </p>
-
-            <div class="article-quote">
-                «El cerebro no puede rumiar sobre una bronca de trabajo mientras averigua qué número falta en una fila de nueve casillas. El foco secuencial apaga el ruido.»
-            </div>
-
-            <p>
-                En ese momento ocurre lo importante: <strong>el cerebro no puede computar a la vez las reglas de una cuadrícula y seguir dándole vueltas a la discusión de esta mañana</strong>. La rumiación no se apaga porque pelees contra ella; se apaga por pura falta de memoria disponible. El sudoku secuestra el foco de manera limpia y no deja hueco para el ruido.
-            </p>
-
-            <!-- FOTO DE APOYO / DETALLE CENITAL -->
-            <div class="article-img-card">
-                <img src="/images/lecturas/sudoku-papel-pausa.webp" alt="Primer plano de un cuaderno de papel abierto con cuadrícula limpia y lápiz de grafito apoyado sobre la hoja con luz natural" loading="lazy" />
-                <div class="article-img-caption">
-                    <span>☕</span> <strong>La textura de la pausa:</strong> La fricción del grafito sobre el papel exige una coordinación motora suave que ancla los sentidos al instante.
-                </div>
-            </div>
-
-            <h2>El salvavidas de las pequeñas victorias cerradas</h2>
-
-            <p>
-                Hay otro factor psicológico decisivo que explica por qué los pasatiempos clásicos devuelven la serenidad: <strong>la necesidad humana de cerrar tareas</strong>.
-            </p>
-
-            <p>
-                Vivimos atrapados en procesos abiertos e interminables. En el trabajo casi ningún proyecto se concluye en un día; el correo nunca se vacía del todo, las hipotecas tardan décadas en pagarse y las incertidumbres cotidianas son difusas. Nos acostamos casi todas las noches con la sensación frustrante de haber corrido una maratón sin cruzar ninguna meta visible.
-            </p>
-
-            <p>
-                Frente a ese bucle abierto, una cuadrícula de papel es un territorio cerrado y predecible:
-            </p>
-
-            <p>
-                <strong>• Reglas inmutables:</strong> No hay algoritmos que cambien las normas según sople el viento. El 5 solo puede ir en una casilla concreta y nadie te va a discutir esa certeza.
-            </p>
-
-            <p>
-                <strong>• Un universo finito:</strong> No hay scroll infinito ni notificaciones que te desvíen. Empieza en la primera casilla y termina en la última.
-            </p>
-
-            <p>
-                <strong>• Victoria tangible y real:</strong> Cuando anotas el último dígito con el grafito y ves la cuadrícula resuelta, tu cerebro recibe una dosis limpia de satisfacción. Tuviste un problema, aplicaste lógica paso a paso y lo cerraste. Caso resuelto.
-            </p>
-
-            <p>
-                Esa pequeña victoria de quince minutos no va a pagar tus facturas ni a quitarte los problemas de la vida, pero le devuelve a tu cabeza una certeza imprescindible: <strong>cuando te centras en una sola cosa, eres capaz de poner orden en el caos</strong>.
-            </p>
-
-            <h2>Cómo incorporar el descanso activo en tu rutina diaria</h2>
-
-            <p>
-                No hace falta que te conviertas en un maestro de la lógica ni que le eches dos horas al día. Basta con sustituir un mal hábito de consumo pasivo por un rato analógico sin pantallas:
-            </p>
-
-            <p>
-                <strong>1. Ten siempre a mano un lápiz con goma:</strong> El tacto importa. Escribir un número sobre la textura física del papel, borrar un error y rectificar exige una coordinación manual que te ancla al presente.
-            </p>
-
-            <p>
-                <strong>2. Deja el móvil en otra habitación:</strong> Si dejas el teléfono al lado con la pantalla hacia arriba, ante el primer atasco mental la mano se irá sola a mirarlo. Date quince minutos de tregua visual total.
-            </p>
-
-            <p>
-                <strong>3. Elige el momento de transición:</strong> El mejor momento suele ser el puente entre el final del trabajo y la cena. Funciona como un cortafuegos perfecto para no meter las prisas de la oficina en tu casa.
-            </p>
-
-            <p>
-                Descansar no es quedarse anestesiado tragando vídeos en un teléfono. <strong>Descansar de verdad es terminar una pausa sintiendo que tu cabeza vuelve a estar despejada y en su sitio</strong>.
-            </p>
-
-            <!-- CAJA OFICIAL CTA PRODUCTO MENOS RUIDO -->
-            <div class="article-cta-box">
-                <h3>¿Quieres entrenar el foco activo y apagar el ruido mental?</h3>
-                <p>
-                    Prueba nuestros pasatiempos lógicos gratuitos online directamente en la web sin anuncios ni distracciones, o descubre la nueva colección de cuadernos físicos de bolsillo diseñados para llevar contigo en la mochila.
-                </p>
-                <div class="article-cta-actions">
-                    <a href="/pasatiempos.html" target="_blank" rel="noopener noreferrer" class="btn-cta-primary">Probar Pasatiempos en la Web ↗</a>
-                    <a href="/pasatiempos.html#libros" target="_blank" rel="noopener noreferrer" class="btn-cta-secondary">Ver Cuadernos de Bolsillo</a>
-                </div>
-            </div>
-
         </article>
     </main>
 
-    <!-- FOOTER -->
-    <footer class="footer" style="margin-top: 2rem; border-top: 1px solid #e8e2d8; padding: 3rem 0; background: #fffdf9;">
-        <div class="container" style="text-align: center; font-size: 0.88rem; color: #666059;">
-            <p><strong>Editorial Menos Ruido</strong> · Cuadernos guiados, ensayos breves y herramientas analógicas para vivir con menos ruido.</p>
-            <p style="margin-top: 8px;">© 2026 Menos Ruido · Todos los derechos reservados.</p>
+    <!-- FOOTER CORPORATIVO -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem;">Menos Ruido</h3>
+                    <p style="opacity: 0.8; font-size: 0.9rem;">Cuadernos guiados y herramientas en papel para pensar con calma.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navegación</h4>
+                    <a href="/">Página Principal</a>
+                    <a href="/#cuadernos">Nuestros Cuadernos</a>
+                    <a href="/#pruebalo">Pruébalo e imprímelo</a>
+                    <a href="/lecturas.html">Lecturas</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Comunidad</h4>
+                    <a href="https://www.youtube.com/channel/UCUD4OWhpMG5OzqVQhjpeqtw" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
+                    <a href="https://www.instagram.com/editorialmenosruido/" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+                    <a href="/links.html">Enlaces Rápidos</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="mailto:contacto@editorialmenosruido.com" onclick="event.preventDefault(); navigator.clipboard.writeText('contacto@editorialmenosruido.com'); const original = this.innerText; this.innerText = '¡Copiado al portapapeles!'; setTimeout(() => this.innerText = original, 2000);" title="Haz clic para copiar el email">contacto@editorialmenosruido.com</a>
+                    <a href="./aviso-legal.html" target="_blank">Aviso Legal</a>
+                    <a href="./politica-privacidad.html" target="_blank">Política de Privacidad</a>
+                    <a href="./politica-cookies.html" target="_blank">Política de Cookies</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="year"></span> Menos Ruido. Todos los derechos reservados.</p>
+            </div>
         </div>
     </footer>
 
+    <script type="module" src="./main.js"></script>
 </body>
 </html>
