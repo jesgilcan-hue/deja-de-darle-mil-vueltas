@@ -1134,8 +1134,14 @@
                     <div class="opt-item">
                         <span class="opt-label">Páginas Totales:</span>
                         <select id="selTotalPages" class="opt-select" onchange="handlePagesChange(this.value)">
+                            <option value="48">48 Páginas</option>
+                            <option value="80">80 Páginas</option>
+                            <option value="100">100 Páginas</option>
                             <option value="120">120 Páginas</option>
+                            <option value="160">160 Páginas</option>
                             <option value="180" selected>180 Páginas (Recomendado)</option>
+                            <option value="200">200 Páginas</option>
+                            <option value="240">240 Páginas</option>
                         </select>
                     </div>
                 </div>
@@ -1378,48 +1384,51 @@
         </div>
     </footer>
 
-    <!-- MODAL DE RESUMEN Y DESCARGA -->
-    <div class="modal-overlay" id="exportModal">
-        <div class="modal-box">
-            <button type="button" class="modal-close-x" onclick="closeDownloadModal()">×</button>
-            <div style="font-size: 2.2rem; margin-bottom: 6px;">📖</div>
-            <h3 style="font-family: var(--font-serif); font-size: 1.4rem; color: #111;">Tu Libro de Pasatiempos</h3>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 4px;">Revisa las características antes de generar el archivo listo para imprimir.</p>
+    <!-- MODAL DE DESCARGA EDITORIAL MENOS RUIDO (ESTILO CUADERNO COMPLETO) -->
+    <div class="modal-overlay" id="exportModal" onclick="closeDownloadModalOnBackdrop(event)">
+        <div class="modal-box" style="max-width: 540px; text-align: center; border-radius: 14px; padding: 24px;">
+            <button type="button" class="modal-close-x" onclick="closeDownloadModal()">✕</button>
+            <h3 style="font-family: var(--font-serif); font-size: 1.35rem; color: #1e1916; margin-bottom: 4px;">Descargar Libro Completo de Pasatiempos</h3>
+            <p style="font-size: 0.82rem; color: #666; line-height: 1.45; margin-bottom: 12px;">Comprueba el índice estructurado, la cantidad de retos por juego y el tamaño estimado antes de compilar el interior listo para imprenta.</p>
 
-            <div class="modal-summary-grid">
-                <div class="summary-stat-box">
-                    <span class="summary-stat-val" id="sumModalPages">180</span>
-                    <span class="summary-stat-lbl">Páginas Totales</span>
-                </div>
-                <div class="summary-stat-box">
-                    <span class="summary-stat-val" id="sumModalFormat">8.25" × 6"</span>
-                    <span class="summary-stat-lbl">Formato</span>
-                </div>
-                <div class="summary-stat-box">
-                    <span class="summary-stat-val" id="sumModalTotalRetos">~250 retos</span>
-                    <span class="summary-stat-lbl">Total Pasatiempos</span>
-                </div>
-                <div class="summary-stat-box">
-                    <span class="summary-stat-val" id="sumModalSoluciones">Sí</span>
-                    <span class="summary-stat-lbl">Soluciones al Final</span>
-                </div>
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: #f4efe6; color: #6e442e; border: 1px solid #e2d7c5; padding: 4px 12px; border-radius: 20px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.4px; margin-bottom: 14px;" id="modalFormatBadge">
+                <span>📐</span> Formato Libro 8.25" × 6" (Apaisado)
             </div>
 
-            <div style="text-align: left; font-size: 0.78rem; color: #555; background: #fdfbf7; border: 1px dashed #dcd4c7; padding: 10px 12px; border-radius: 8px; margin-bottom: 16px; line-height: 1.45;">
-                ✓ <strong>Márgenes seguros:</strong> Respeto total de sangría y encuadernación.<br>
-                ✓ <strong>Soluciones compactas:</strong> 18 soluciones por página en juegos numéricos y soluciones completas de Cruzadas y Sopas.<br>
-                ✓ <strong>Sin pantallas:</strong> Tinta nítida optimizada para lápiz y papel.
+            <div class="compile-summary-box" id="compileSummaryBox" style="background: #fbf9f5; border: 1px solid #e7dfd2; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.82rem; color: #4b4239; text-align: left;">
+                <!-- Resumen dinámico del libro inyectado por JS -->
             </div>
 
-            <button type="button" class="btn-compile-pdf" id="btnExecutePdfGeneration" onclick="compileFullBookPdf()" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.92rem;">
-                📄 Generar y Descargar PDF
-            </button>
-            <div id="pdfProgressNotice" style="margin-top: 10px; font-size: 0.80rem; color: #87553b; font-weight: 700; display: none;">Compilando páginas...</div>
+            <!-- BARRA DE PROGRESO DE COMPILACIÓN -->
+            <div id="pdfProgressBarWrap" style="height: 8px; background: #eee8de; border-radius: 6px; overflow: hidden; margin-bottom: 10px; display: none;">
+                <div id="pdfProgressBarFill" style="height: 100%; width: 0%; background: #87553b; transition: width 0.15s ease;"></div>
+            </div>
+            <div id="pdfProgressNotice" style="font-size: 0.82rem; font-weight: 700; color: #87553b; text-align: center; margin-bottom: 12px; display: none;">Compilando páginas...</div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px;">
+                <button type="button" class="btn-compile-pdf" id="btnExecutePdfGeneration" onclick="compileFullBookPdf()" style="width: 100%; justify-content: center; padding: 12px 18px; font-size: 0.92rem; font-weight: 700; background: #87553b; color: #fff; border: none; border-radius: 8px; cursor: pointer;">
+                    📥 Descargar Libro Completo en PDF
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- DATOS Y LÓGICA DE LA APLICACIÓN -->
     <script type="module">
+        import { 
+            auth, 
+            db, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            addDoc,
+            collection,
+            serverTimestamp,
+            onAuthStateChanged 
+        } from './firebase-config.js';
+        import { openAuthModal } from './auth-modal.js';
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
         // ============================================================================
         // MOTOR INTEGRAL DE PASATIEMPOS Y BANCOS DE DATOS (SUDOKU, CALCUDOKU, KAKURO, CRUZADAS, SOPAS)
         // ============================================================================
@@ -8330,10 +8339,33 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             return 18;
         }
 
-        // CÁLCULO DE PRESUPUESTO DE PÁGINAS
+        // RESUMEN TEXTUAL DE CANTIDAD DE PASATIEMPOS
+        function getGratitudeSummaryText() {
+            const parts = [];
+            if (bookState.sections.sudoku.active) {
+                const ppp = getPuzzlesPerPage('sudoku', bookState.format);
+                parts.push(`${bookState.sections.sudoku.pages * ppp} Sudokus 9×9 (${bookState.sections.sudoku.pages} págs)`);
+            }
+            if (bookState.sections.calcudoku.active) {
+                const ppp = getPuzzlesPerPage('calcudoku', bookState.format);
+                parts.push(`${bookState.sections.calcudoku.pages * ppp} Calcudokus (${bookState.sections.calcudoku.pages} págs)`);
+            }
+            if (bookState.sections.kakuro.active) {
+                const ppp = getPuzzlesPerPage('kakuro', bookState.format);
+                parts.push(`${bookState.sections.kakuro.pages * ppp} Kakuros (${bookState.sections.kakuro.pages} págs)`);
+            }
+            if (bookState.sections.cruzadas.active) {
+                parts.push(`${bookState.sections.cruzadas.pages} Palabras Cruzadas`);
+            }
+            if (bookState.sections.sopas.active) {
+                parts.push(`${bookState.sections.sopas.pages} Sopas de Letras`);
+            }
+            return parts.join(' · ') || 'Cuaderno personalizado de pasatiempos';
+        }
+
+        // CÁLCULO DE PRESUPUESTO DE PÁGINAS (CUMPLIENDO CONDICIONES DE IMPRENTA: MÍNIMO 48 PÁGINAS, PAR Y MÚLTIPLO DE 4)
         function calculatePageBreakdown() {
             const introPages = 4; // Portada, Créditos, Índice, Reglas/Cómo Jugar
-            const closingPages = 1; // Agradecimientos y Cierre
 
             let challengePages = 0;
             let solutionPages = 0;
@@ -8353,14 +8385,27 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                 }
             });
 
-            const currentTotal = introPages + challengePages + solutionPages + closingPages;
+            // 1 página final de agradecimiento
+            let closingPages = 1;
+            let rawTotal = introPages + challengePages + solutionPages + closingPages;
+
+            // Ajuste técnico de imprenta: el total interior DEBE ser par y múltiplo de 4
+            // Añadimos páginas de notas/blanco al final para redondear al múltiplo de 4
+            const remainder = rawTotal % 4;
+            let paddingPages = 0;
+            if (remainder !== 0) {
+                paddingPages = 4 - remainder;
+            }
+
+            const currentTotal = rawTotal + paddingPages;
             return {
                 introPages,
                 challengePages,
                 solutionPages,
                 closingPages,
+                paddingPages,
                 currentTotal,
-                targetTotal: bookState.totalPages
+                targetTotal: Math.max(48, Math.round(bookState.totalPages / 4) * 4)
             };
         }
 
@@ -8393,7 +8438,17 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             }
         }
 
+        function handlePagesChange(val) {
+            let p = parseInt(val, 10) || 180;
+            // Garantizar mínimo de 48 páginas y múltiplo de 4
+            p = Math.max(48, Math.round(p / 4) * 4);
+            bookState.totalPages = p;
+            autoBalancePages();
+        }
+
         function autoBalancePages() {
+            // Asegurar siempre múltiplo de 4 y mínimo 48 páginas
+            bookState.totalPages = Math.max(48, Math.round(bookState.totalPages / 4) * 4);
             const target = bookState.totalPages;
             const activeKeys = Object.keys(bookState.sections).filter(k => bookState.sections[k].active);
 
@@ -8474,10 +8529,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             autoBalancePages();
         }
 
-        function handlePagesChange(val) {
-            bookState.totalPages = parseInt(val, 10) || 180;
-            autoBalancePages();
-        }
+
 
         function toggleSection(secKey, checked) {
             bookState.sections[secKey].active = checked;
@@ -8609,6 +8661,20 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             // PÁGINA FINAL: CIERRE Y AGRADECIMIENTOS
             plan.push({ type: 'PORTADA', title: 'Gracias por Jugar', sidebarTitle: 'Cierre del Libro', sectionKey: 'CIERRE', index: 999 });
 
+            // AJUSTE ESTRICTO DE IMPRENTA: RELLENO A MÚLTIPLO DE 4 (PÁGINAS DE NOTAS EN BLANCO)
+            const b = calculatePageBreakdown();
+            if (b.paddingPages > 0) {
+                for (let np = 1; np <= b.paddingPages; np++) {
+                    plan.push({
+                        type: 'NOTAS',
+                        title: 'Anotaciones del Jugador',
+                        sidebarTitle: 'Notas',
+                        sectionKey: 'NOTAS',
+                        index: 1000 + np
+                    });
+                }
+            }
+
             return plan;
         }
 
@@ -8618,6 +8684,18 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
         function renderPreviewPage() {
             const plan = buildFullPagePlan();
             const total = plan.length;
+
+            if (total < 48 || total % 4 !== 0) {
+                alert(`⚠️ El libro debe tener un mínimo de 48 páginas y ser múltiplo de 4 para imprenta (actual: ${total} páginas).`);
+                if (btn) btn.disabled = false;
+                if (notice) notice.style.display = 'none';
+                return;
+            }
+
+            const pBarWrap = document.getElementById('pdfProgressBarWrap');
+            const pBarFill = document.getElementById('pdfProgressBarFill');
+            if (pBarWrap) pBarWrap.style.display = 'block';
+            if (pBarFill) pBarFill.style.width = '0%';
             if (bookState.currentPage > total) bookState.currentPage = total;
             if (bookState.currentPage < 1) bookState.currentPage = 1;
 
@@ -8648,6 +8726,20 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             content.innerHTML = '';
 
             const is6x9 = bookState.format === '6x9';
+
+            // 0. PÁGINAS DE NOTAS DE CIERRE (PARA CUADRAR MÚLTIPLO DE 4 DE IMPRENTA)
+            if (cur.type === 'NOTAS') {
+                content.innerHTML = `
+                    <div style="display:flex; flex-direction:column; width:100%; height:100%; padding:14px 20px;">
+                        <div style="font-weight:800; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#666; border-bottom:1.5px solid #221f1d; padding-bottom:4px; margin-bottom:12px; display:flex; justify-content:space-between;">
+                            <span>Anotaciones & Borradores</span>
+                            <span style="font-weight:400; font-size:0.70rem; color:#888;">Espacio para cálculos y notas a lápiz</span>
+                        </div>
+                        <div style="flex:1; background-image: repeating-linear-gradient(transparent, transparent 23px, #e8e2d8 23px, #e8e2d8 24px); border-radius:4px;"></div>
+                    </div>
+                `;
+                return;
+            }
 
             // 1. PORTADA Y PRELIMINARES
             if (cur.type === 'PORTADA') {
@@ -8692,11 +8784,21 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                     content.innerHTML = `
                         <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding: 24px; width: 100%;">
                             <div style="font-size:2.2rem; margin-bottom:10px;">✨</div>
-                            <h2 style="font-family:var(--font-serif); font-size:1.5rem; color:#111; margin-bottom:8px;">Gracias por jugar sobre papel</h2>
-                            <p style="font-size:0.9rem; color:#555; max-width:360px; line-height:1.55;">
-                                Has llegado al final de este cuaderno. Esperamos que cada página te haya servido para ejercitar la mente y disfrutar del lápiz.
+                            <h2 style="font-family:var(--font-serif); font-size:1.55rem; color:#111; margin-bottom:8px;">Gracias por jugar sobre papel</h2>
+                            <p style="font-size:0.92rem; color:#555; max-width:440px; line-height:1.55; margin-bottom:12px;">
+                                Has llegado al final de este ejemplar único de <strong>${bookState.title}</strong> (${bookState.totalPages} páginas).
                             </p>
-                            <div style="margin-top:24px; font-weight:700; font-size:0.84rem; color:#111;">EDITORIAL MENOS RUIDO</div>
+                            <div style="background:#fcfaf7; border:1px solid #ebd8c8; border-radius:8px; padding:10px 18px; font-size:0.84rem; color:#443c35; max-width:400px; margin-bottom:16px; text-align:left; line-height:1.5;">
+                                ✓ <strong>Contenido completado:</strong> ${getGratitudeSummaryText()}<br>
+                                ✓ <strong>Soluciones:</strong> Incluidas al final de este mismo ejemplar.
+                            </div>
+                            <p style="font-size:0.84rem; color:#777; margin-bottom:14px;">
+                                Más cuadernos de pensamiento, planificadores analógicos y herramientas en:
+                            </p>
+                            <div style="font-weight:800; font-size:1rem; letter-spacing:0.8px; color:#87553b; margin-bottom:4px;">
+                                editorialmenosruido.com
+                            </div>
+                            <div style="font-weight:700; font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; color:#999;">EDITORIAL MENOS RUIDO</div>
                         </div>
                     `;
                 }
@@ -9134,17 +9236,84 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             const modal = document.getElementById('exportModal');
             if (!modal) return;
 
-            document.getElementById('sumModalPages').textContent = b.currentTotal;
-            document.getElementById('sumModalFormat').textContent = bookState.format === '6x9' ? 'Vertical (6" × 9")' : 'Apaisado (8.25" × 6")';
-            document.getElementById('sumModalSoluciones').textContent = b.solutionPages > 0 ? `Sí (${b.solutionPages} págs)` : 'No';
+            // Validación estricta de condiciones de imprenta: mínimo 48 páginas, par y múltiplo de 4
+            const total = b.currentTotal;
+            if (total < 48) {
+                alert(`⚠️ El libro tiene solo ${total} páginas.\n\nPara ser imprimible como libro encuadernado debe tener un mínimo de 48 páginas.\nPor favor, aumenta las páginas en el selector de la barra superior.`);
+                return;
+            }
+            if (total % 2 !== 0) {
+                alert(`⚠️ El libro tiene un número impar de páginas (${total} páginas).\n\nPara imprenta profesional, el interior debe tener un número par de páginas.`);
+                return;
+            }
+            if (total % 4 !== 0) {
+                alert(`⚠️ El libro tiene ${total} páginas (no es múltiplo de 4).\n\nLas rotativas de encuadernación en pliegos requieren que el número total sea estrictamente múltiplo de 4.`);
+                return;
+            }
 
-            let totalRetos = 0;
-            ['sudoku', 'calcudoku', 'kakuro', 'cruzadas', 'sopas'].forEach(k => {
-                if (bookState.sections[k].active) {
-                    totalRetos += bookState.sections[k].pages * getPuzzlesPerPage(k, bookState.format);
-                }
-            });
-            document.getElementById('sumModalTotalRetos').textContent = `${totalRetos} retos`;
+            const is6x9 = bookState.format === '6x9';
+            const fmtBadge = document.getElementById('modalFormatBadge');
+            if (fmtBadge) {
+                fmtBadge.innerHTML = is6x9 ? '<span>📐</span> Formato Libro 6" × 9" (Vertical · 152.4 × 228.6 mm)' : '<span>📐</span> Formato Libro 8.25" × 6" (Apaisado · 209.55 × 152.4 mm)';
+            }
+
+            // Estimación de peso del archivo PDF (~32 KB por página con gráficos vectoriales nítidos)
+            const estMb = ((total * 32) / 1024).toFixed(1);
+
+            // Conteo por tipo de pasatiempo
+            const countDetails = [];
+            let totalChallenges = 0;
+
+            if (bookState.sections.sudoku.active) {
+                const count = bookState.sections.sudoku.pages * getPuzzlesPerPage('sudoku', bookState.format);
+                totalChallenges += count;
+                countDetails.push(`<li><strong>Sudoku 9×9:</strong> ${count} retos en ${bookState.sections.sudoku.pages} páginas (${getSectionDiffLabel('sudoku')}).</li>`);
+            }
+            if (bookState.sections.calcudoku.active) {
+                const count = bookState.sections.calcudoku.pages * getPuzzlesPerPage('calcudoku', bookState.format);
+                totalChallenges += count;
+                countDetails.push(`<li><strong>Calcudoku:</strong> ${count} retos en ${bookState.sections.calcudoku.pages} páginas (${getSectionDiffLabel('calcudoku')}).</li>`);
+            }
+            if (bookState.sections.kakuro.active) {
+                const count = bookState.sections.kakuro.pages * getPuzzlesPerPage('kakuro', bookState.format);
+                totalChallenges += count;
+                countDetails.push(`<li><strong>Kakuro:</strong> ${count} retos en ${bookState.sections.kakuro.pages} páginas (${getSectionDiffLabel('kakuro')}).</li>`);
+            }
+            if (bookState.sections.cruzadas.active) {
+                const count = bookState.sections.cruzadas.pages;
+                totalChallenges += count;
+                countDetails.push(`<li><strong>Cruzadas de Palabras:</strong> ${count} retos en ${count} páginas (palabras temáticas no repetidas).</li>`);
+            }
+            if (bookState.sections.sopas.active) {
+                const count = bookState.sections.sopas.pages;
+                totalChallenges += count;
+                countDetails.push(`<li><strong>Sopas de Letras:</strong> ${count} retos en ${count} páginas (${getSectionDiffLabel('sopas')}).</li>`);
+            }
+
+            const summaryBox = document.getElementById('compileSummaryBox');
+            if (summaryBox) {
+                summaryBox.innerHTML = `
+                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px;">
+                        <span style="display:inline-flex; align-items:center; gap:5px; background:#f4eee4; border:1px solid #dfd3c3; border-radius:16px; padding:3px 10px; font-size:0.75rem; font-weight:700; color:#5c4838;">
+                            📖 ${total} páginas (Múltiplo de 4)
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:5px; background:#f4eee4; border:1px solid #dfd3c3; border-radius:16px; padding:3px 10px; font-size:0.75rem; font-weight:700; color:#5c4838;">
+                            🧩 ~${totalChallenges} pasatiempos totales
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:5px; background:#f4eee4; border:1px solid #dfd3c3; border-radius:16px; padding:3px 10px; font-size:0.75rem; font-weight:700; color:#5c4838;">
+                            💾 ~${estMb} MB estimados
+                        </span>
+                    </div>
+                    <strong style="color:#111;">Índice y Estructura del Libro a Compilar:</strong>
+                    <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.55; color: #443c35; font-size: 0.82rem;">
+                        <li><strong>Preliminares:</strong> Portada interior, Créditos editoriales, Índice general y Reglas analógicas (Págs. 1 a 4).</li>
+                        ${countDetails.join('')}
+                        <li><strong>Soluciones:</strong> ${b.solutionPages} páginas con todas las respuestas verificadas al final.</li>
+                        ${b.paddingPages > 0 ? `<li><strong>Anotaciones finales:</strong> ${b.paddingPages} página(s) de notas a lápiz para cuadre estricto de imprenta.</li>` : ''}
+                        <li><strong>Título del ejemplar:</strong> <em>«${bookState.title}»</em> ${bookState.owner ? `· Propiedad de <em>${bookState.owner}</em>` : ''}.</li>
+                    </ul>
+                `;
+            }
 
             modal.classList.add('open');
         }
@@ -9152,6 +9321,12 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
         function closeDownloadModal() {
             const modal = document.getElementById('exportModal');
             if (modal) modal.classList.remove('open');
+        }
+
+        function closeDownloadModalOnBackdrop(e) {
+            if (e.target && e.target.id === 'exportModal') {
+                closeDownloadModal();
+            }
         }
 
         // ==========================================
@@ -9195,6 +9370,10 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
                 const cur = plan[pIdx];
                 const pageNum = pIdx + 1;
+                if (notice) notice.textContent = `Compilando página ${pageNum} de ${total} (${cur.sidebarTitle || cur.type})...`;
+                if (document.getElementById('pdfProgressBarFill')) {
+                    document.getElementById('pdfProgressBarFill').style.width = `${Math.round((pageNum / total) * 100)}%`;
+                }
 
                 // 1. CABECERA
                 doc.setFont('helvetica', 'bold');
@@ -9294,13 +9473,70 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                         });
                     } else {
                         doc.setFont('times', 'bold');
-                        doc.setFontSize(17);
+                        doc.setFontSize(18);
                         doc.setTextColor(20, 20, 20);
-                        doc.text('Gracias por jugar sobre papel', centerX, heightMm / 2 - 8, { align: 'center' });
+                        doc.text('Gracias por jugar sobre papel', centerX, heightMm / 2 - 24, { align: 'center' });
+
                         doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(9);
-                        doc.setTextColor(80, 80, 80);
-                        doc.text('Esperamos que cada página te haya servido para concentrarte y disfrutar del lápiz.', centerX, heightMm / 2 + 2, { align: 'center' });
+                        doc.setFontSize(9.5);
+                        doc.setTextColor(60, 55, 50);
+                        doc.text(`Has llegado al final de este cuaderno (${total} páginas).`, centerX, heightMm / 2 - 16, { align: 'center' });
+
+                        // Recuadro con cantidad de pasatiempos incluidos
+                        const boxW = Math.min(130, contentWidth - 10);
+                        const boxH = 26;
+                        const boxX = centerX - boxW / 2;
+                        const boxY = heightMm / 2 - 8;
+                        doc.setFillColor(252, 250, 247);
+                        doc.setDrawColor(220, 212, 200);
+                        doc.setLineWidth(0.3);
+                        doc.rect(boxX, boxY, boxW, boxH, 'FD');
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.8);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text('RESUMEN DE CONTENIDO DE ESTE EJEMPLAR', boxX + 6, boxY + 6);
+
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7.5);
+                        doc.setTextColor(40, 36, 32);
+                        const linesSum = doc.splitTextToSize(getGratitudeSummaryText(), boxW - 12);
+                        doc.text(linesSum, boxX + 6, boxY + 11.5);
+
+                        // Web oficial
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(8.2);
+                        doc.setTextColor(100, 95, 90);
+                        doc.text('Más cuadernos de pensamiento, planificadores analógicos y herramientas en:', centerX, heightMm / 2 + 26, { align: 'center' });
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(11);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text('editorialmenosruido.com', centerX, heightMm / 2 + 33, { align: 'center' });
+
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7);
+                        doc.setTextColor(140, 135, 125);
+                        doc.text('EDITORIAL MENOS RUIDO · EDICIÓN 2026', centerX, heightMm / 2 + 39, { align: 'center' });
+                    }
+                } else if (cur.type === 'NOTAS') {
+                    // PÁGINA DE NOTAS PARA CUADRE MÚLTIPLO DE 4
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(50, 45, 40);
+                    doc.text('ANOTACIONES Y BORRADORES', marginX, marginY + 12);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(120, 115, 108);
+                    doc.text('Espacio para cálculos, deducciones y notas personales a lápiz.', safeRightLimit, marginY + 12, { align: 'right' });
+
+                    doc.setDrawColor(220, 215, 206);
+                    doc.setLineWidth(0.2);
+                    const lineStart = marginY + 20;
+                    const lineEnd = heightMm - 18;
+                    for (let ly = lineStart; ly <= lineEnd; ly += 7.0) {
+                        doc.line(marginX, ly, safeRightLimit, ly);
                     }
                 } else if (cur.type === 'GUIA') {
                     let gy = marginY + 16;
