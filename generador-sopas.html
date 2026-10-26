@@ -528,31 +528,35 @@
 
         .words-list-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 4px 8px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 5px 10px;
         }
 
         .sheet-container.format-6x9 .words-list-grid {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 4px 8px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 4px 6px;
         }
 
         .word-item-row {
             display: flex;
             align-items: center;
-            gap: 5px;
-            font-size: clamp(0.65rem, 0.95vw, 0.78rem);
+            gap: 4px;
+            font-size: clamp(0.60rem, 0.85vw, 0.72rem);
             font-weight: 600;
             color: #222;
-            letter-spacing: 0.3px;
+            letter-spacing: 0;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            min-width: 0;
+        }
+
+        .sheet-container.format-6x9 .word-item-row {
+            font-size: clamp(0.55rem, 0.75vw, 0.65rem);
+            gap: 3px;
         }
 
         .word-checkbox {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border: 1.5px solid #666;
             border-radius: 50%;
             flex-shrink: 0;
@@ -935,11 +939,10 @@
         <div class="top-nav">
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <a href="/pasatiempos.html" class="back-link">← Volver a Pasatiempos</a>
-                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo imprimir a doble cara y resolver">
-                    <span>📖</span> Guía de impresión y solución
+                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo usar el generador de Sopa de Letras">
+                    <span>📖</span> ¿Cómo usar el generador?
                 </button>
             </div>
-            <span class="badge-version" id="formatBadgeDisplay">Formato 8.25" × 6" · Anverso y Solución</span>
         </div>
 
         <div class="header-title-box">
@@ -1146,10 +1149,54 @@
         </div>
     </div>
 
-    <!-- MODAL TUTORIAL: IMPRESIÓN Y SOLUCIÓN -->
+    <!-- MODAL POP-UP 1: CÓMO USAR EL GENERADOR DE SOPAS DE LETRAS -->
     <div class="modal-overlay" id="tutorial-modal" onclick="closeModalOnBackdrop(event)">
         <div class="modal-card modal-card-tutorial">
             <button type="button" class="modal-close-btn" onclick="closeTutorialModal()">✕</button>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">¿Cómo funciona el generador de Sopa de Letras?</h3>
+            <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
+                Crea sopas de letras a medida con temas predefinidos, cualquier tema libre o tu propia lista de palabras.
+            </p>
+
+            <div class="tutorial-section">
+                <h4><span>✨</span> 1. Temáticas y palabras personalizadas</h4>
+                <p>
+                    Puedes elegir cualquiera de los <strong>7 temas editoriales</strong> del selector superior o seleccionar <em>«Escribir mi propio tema o palabras...»</em> para abrir dos opciones avanzadas:
+                </p>
+                <ul class="tutorial-step-list">
+                    <li>
+                        <strong>Generar 18 palabras desde un tema:</strong> Escribe cualquier palabra clave (ej. <em>Astronomía, Cine, Mitología, Jardinería</em>) y el generador seleccionará 18 términos relacionados automáticamente.
+                    </li>
+                    <li>
+                        <strong>Lista manual:</strong> Escribe tus propias palabras separadas por comas para crear una sopa 100% personalizada.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tutorial-section">
+                <h4><span>🧭</span> 2. Niveles de dificultad y formato</h4>
+                <ul class="tutorial-step-list">
+                    <li><strong>Fácil:</strong> Palabras colocadas en horizontal (de izquierda a derecha) y vertical (de arriba abajo).</li>
+                    <li><strong>Medio:</strong> Añade cruces en diagonal descendente y ascendente.</li>
+                    <li><strong>Difícil:</strong> Todas las direcciones, incluyendo palabras escritas al revés (invertidas).</li>
+                </ul>
+                <div class="tutorial-highlight-box">
+                    <strong>Reverso con soluciones:</strong> La <strong>Página 2</strong> del documento marca exactamente dónde está cada palabra para que puedas comprobarla al trasluz o girando la hoja.
+                </div>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
+                    Entendido, volver al generador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 2: GUÍA RÁPIDA DE IMPRESIÓN -->
+    <div class="modal-overlay" id="print-guide-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card modal-card-tutorial">
+            <button type="button" class="modal-close-btn" onclick="closePrintGuideModal()">✕</button>
             <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">Guía rápida: Impresión de Sopas de Letras</h3>
             <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
                 Cómo imprimir anverso y reverso para que las soluciones coincidan al milímetro por detrás.
@@ -1190,8 +1237,8 @@
             </div>
 
             <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
-                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
-                    Entendido, volver al generador
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closePrintGuideModal()">
+                    Entendido
                 </button>
             </div>
         </div>
@@ -1701,11 +1748,11 @@
                 // 2. CUADRÍCULA Y PALABRAS
                 if (!is6x9) {
                     // LAYOUT 8.25" × 6" (15 COLS × 13 ROWS APAISADO)
-                    const cellSize = 8.6; // mm
-                    const gridW = state.cols * cellSize; // 15 * 8.6 = 129 mm
-                    const gridH = state.rows * cellSize; // 13 * 8.6 = 111.8 mm
+                    const cellSize = 8.0; // mm
+                    const gridW = state.cols * cellSize; // 15 * 8.0 = 120 mm
+                    const gridH = state.rows * cellSize; // 13 * 8.0 = 104 mm
                     const gridX = marginX;
-                    const gridY = marginY + 10;
+                    const gridY = marginY + 11;
 
                     // Si es solución, sombrear las celdas
                     if (isSolution) {
@@ -1736,51 +1783,60 @@
 
                     // Letras
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(10.5);
+                    doc.setFontSize(10.0);
                     doc.setTextColor(20, 20, 20);
                     for (let r = 0; r < state.rows; r++) {
                         for (let c = 0; c < state.cols; c++) {
                             const letter = state.grid[r][c];
                             const cx = gridX + c * cellSize + cellSize / 2;
-                            const cy = gridY + r * cellSize + cellSize / 2 + 1.3;
+                            const cy = gridY + r * cellSize + cellSize / 2 + 1.25;
                             doc.text(letter, cx, cy, { align: 'center' });
                         }
                     }
 
-                    // Panel de Palabras (Derecha: 18 palabras en 2 columnas)
-                    const wordsX = gridX + gridW + 7;
-                    const wordsW = widthMm - marginX - wordsX;
-                    let currentY = gridY + 4;
+                    // Panel de Palabras (Derecha: 18 palabras en 2 columnas amplias dentro del margen)
+                    const wordsX = gridX + gridW + 6;
+                    const wordsW = widthMm - marginX - wordsX; // 59.55 mm
+                    let currentY = gridY + 3.5;
 
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7.6);
+                    doc.setFontSize(7.4);
                     doc.setTextColor(40, 40, 40);
-                    const listTitleApaisado = `${isSolution ? 'SOLUCION' : 'PALABRAS A BUSCAR'} · ${state.themeTitle.toUpperCase()} · ${diffText}`;
-                    doc.text(listTitleApaisado, wordsX, currentY);
-                    currentY += 5.5;
+                    doc.text(`${isSolution ? 'SOLUCION' : 'PALABRAS A BUSCAR'} · ${diffText}`, wordsX, currentY);
+                    currentY += 4.2;
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(135, 85, 59);
+                    doc.text(state.themeTitle.toUpperCase().slice(0, 28), wordsX, currentY);
+
+                    doc.setDrawColor(210, 205, 198);
+                    doc.setLineWidth(0.2);
+                    doc.line(wordsX, currentY + 1.8, widthMm - marginX, currentY + 1.8);
+                    currentY += 6.8;
 
                     const colCount = 2;
                     const colW = wordsW / colCount;
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(7.6);
+                    doc.setFontSize(7.0);
 
                     state.placedWords.forEach((pw, idx) => {
                         const col = idx % colCount;
                         const row = Math.floor(idx / colCount);
                         const itemX = wordsX + col * colW;
-                        const itemY = currentY + row * 6.2;
+                        const itemY = currentY + row * 6.0;
 
                         doc.setDrawColor(100, 100, 100);
                         doc.setLineWidth(0.25);
                         if (isSolution) {
                             doc.setFillColor(135, 85, 59);
-                            doc.circle(itemX + 1.8, itemY - 1.0, 1.2, 'FD');
+                            doc.circle(itemX + 1.6, itemY - 0.9, 1.1, 'FD');
                         } else {
-                            doc.circle(itemX + 1.8, itemY - 1.0, 1.2, 'D');
+                            doc.circle(itemX + 1.6, itemY - 0.9, 1.1, 'D');
                         }
 
                         doc.setTextColor(30, 30, 30);
-                        doc.text(pw.word, itemX + 5, itemY);
+                        doc.text(pw.word, itemX + 4.2, itemY);
                     });
 
                 } else {
@@ -1920,9 +1976,20 @@
             if (m) m.classList.remove('active');
         }
 
+        function openPrintGuideModal() {
+            const m = document.getElementById('print-guide-modal');
+            if (m) m.classList.add('active');
+        }
+
+        function closePrintGuideModal() {
+            const m = document.getElementById('print-guide-modal');
+            if (m) m.classList.remove('active');
+        }
+
         function closeModalOnBackdrop(e) {
             if (e.target && e.target.id === 'download-modal') closeDownloadModal();
             if (e.target && e.target.id === 'tutorial-modal') closeTutorialModal();
+            if (e.target && e.target.id === 'print-guide-modal') closePrintGuideModal();
         }
 
         function executeDownload() {
@@ -2045,6 +2112,8 @@
         window.closeDownloadModal = closeDownloadModal;
         window.openTutorialModal = openTutorialModal;
         window.closeTutorialModal = closeTutorialModal;
+        window.openPrintGuideModal = openPrintGuideModal;
+        window.closePrintGuideModal = closePrintGuideModal;
         window.closeModalOnBackdrop = closeModalOnBackdrop;
         window.executeDownload = executeDownload;
         window.executePrint = executePrint;
@@ -2177,7 +2246,7 @@
             if (linkTutDl) {
                 linkTutDl.addEventListener('click', () => {
                     closeDownloadModal();
-                    openTutorialModal();
+                    openPrintGuideModal();
                 });
             }
 
@@ -2186,6 +2255,7 @@
                 if (e.key === 'Escape') {
                     closeDownloadModal();
                     closeTutorialModal();
+                    closePrintGuideModal();
                 }
             });
 

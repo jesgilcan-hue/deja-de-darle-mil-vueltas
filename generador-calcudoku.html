@@ -436,6 +436,126 @@
             cursor: pointer;
         }
 
+        .btn-help-tutorial {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            color: var(--accent);
+            border: 1px solid #d9d0c5;
+            padding: 5px 12px;
+            border-radius: 99px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .btn-help-tutorial:hover {
+            background: #fdfbf7;
+            border-color: var(--accent);
+        }
+
+        .modal-card-tutorial {
+            max-width: 560px;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 26px 28px;
+        }
+        .tutorial-section {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #ece8df;
+        }
+        .tutorial-section h4 {
+            font-family: var(--font-sans);
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tutorial-section p, .tutorial-section li {
+            font-size: 0.83rem;
+            color: #444;
+            line-height: 1.5;
+        }
+        .tutorial-highlight-box {
+            background: #fdfaf5;
+            border-left: 3px solid var(--accent);
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 0.81rem;
+            color: #333;
+            line-height: 1.45;
+        }
+        .tutorial-step-list {
+            padding-left: 18px;
+            margin: 6px 0 0;
+        }
+        .tutorial-step-list li {
+            margin-bottom: 6px;
+        }
+
+        .modal-email-box {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #e6e3dc;
+            text-align: left;
+        }
+        .modal-email-header { margin-bottom: 10px; }
+        .modal-email-title {
+            display: block;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 2px;
+        }
+        .modal-email-sub {
+            display: block;
+            font-size: 0.76rem;
+            color: #666;
+        }
+        .modal-email-form {
+            display: flex;
+            gap: 8px;
+        }
+        .modal-email-input {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1px solid #d1cdc3;
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            color: #111;
+            background: #fff;
+            outline: none;
+        }
+        .modal-email-input:focus { border-color: var(--accent); }
+        .modal-btn-send {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+        .modal-btn-send:hover { background: var(--accent-hover); }
+        .modal-email-feedback {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 8px 12px;
+            line-height: 1.4;
+        }
+
         /* TOAST */
         .toast-notify {
             position: fixed;
@@ -586,9 +706,11 @@
         <div class="top-nav" style="width: 100%; max-width: 1050px; margin: 0 auto 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <a href="/pasatiempos.html" class="back-link" style="font-size: 0.84rem; color: #777; text-decoration: none;">← Volver a Pasatiempos</a>
+                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo funciona el Calcudoku y el generador">
+                    <span>📖</span> ¿Cómo funciona el Calcudoku?
+                </button>
                 <a href="/generador-libro-pasatiempos.html" class="back-link" style="font-size: 0.84rem; color: #87553b; font-weight: 700; text-decoration: none;">📖 Crear Libro Completo de Pasatiempos ↗</a>
             </div>
-            <span class="badge-version" style="background: #ede6dc; color: #87553b; font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; text-transform: uppercase;">Formato 8.25" × 6" y 6" × 9" · Retos y Soluciones</span>
         </div>
         <div class="header-title-box">
             <h1>Generador de Calcudoku en PDF</h1>
@@ -610,8 +732,8 @@
             <div class="toolbar-group">
                 <span class="toolbar-label">Nivel:</span>
                 <div class="btn-toggle-group" id="diffToggleGroup">
-                    <button type="button" class="btn-toggle-item active" data-diff="4x4">Rápido (4×4)</button>
-                    <button type="button" class="btn-toggle-item" data-diff="5x5">Clásico (5×5)</button>
+                    <button type="button" class="btn-toggle-item active" data-diff="4x4">Fácil</button>
+                    <button type="button" class="btn-toggle-item" data-diff="5x5">Difícil</button>
                 </div>
             </div>
 
@@ -630,7 +752,7 @@
                     ↺ Nuevos retos
                 </button>
                 <button type="button" class="btn-action" id="btn-save-generator-design" title="Guardar en Mi Espacio">
-                    💾 Guardar
+                    <span>💾</span> Guardar en Mi Espacio
                 </button>
                 <button type="button" class="btn-download-primary" id="btnOpenDownloadModal">
                     📥 Descargar PDF
@@ -644,7 +766,7 @@
                 <!-- CABECERA -->
                 <div class="sheet-header">
                     <div class="sheet-header-title">MENOS RUIDO · CALCUDOKU</div>
-                    <div class="sheet-header-meta" id="headerMetaText">EDITORIAL MENOS RUIDO · RÁPIDO (4×4) · RETOS</div>
+                    <div class="sheet-header-meta" id="headerMetaText">EDITORIAL MENOS RUIDO · FÁCIL</div>
                 </div>
 
                 <!-- CONTENIDO: CUADRÍCULA DE PUZZLES -->
@@ -698,7 +820,7 @@
     </footer>
 
     <!-- MODAL DE DESCARGA -->
-    <div class="modal-overlay" id="downloadModal" onclick="closeModalOnBackdrop(event)">
+    <div class="modal-overlay" id="download-modal" onclick="closeModalOnBackdrop(event)">
         <div class="modal-card">
             <button type="button" class="modal-close-btn" onclick="closeDownloadModal()">✕</button>
             <h3 class="modal-title">Descargar Calcudoku en PDF</h3>
@@ -710,16 +832,108 @@
 
             <div class="modal-actions">
                 <button type="button" class="btn-modal-primary" id="btnExecuteDownload">
-                    📥 Descargar PDF
+                    📥 Descargar archivo PDF (2 Páginas)
+                </button>
+            </div>
+
+            <!-- RECIBIR POR EMAIL -->
+            <div class="modal-email-box">
+                <div class="modal-email-header">
+                    <span class="modal-email-title">✉️ ¿Prefieres recibirlo en tu email?</span>
+                    <span class="modal-email-sub">Te enviamos el archivo PDF adjunto listo para imprimir cuando quieras.</span>
+                </div>
+                <div class="modal-email-form">
+                    <input type="email" id="modal-email-input" class="modal-email-input" placeholder="tu-correo@ejemplo.com" autocomplete="email" />
+                    <button type="button" id="btn-modal-send-email" class="modal-btn-send">
+                        <span>Enviar a mi email</span>
+                    </button>
+                </div>
+                <div id="modal-email-feedback" class="modal-email-feedback" style="display: none;"></div>
+            </div>
+
+            <!-- ENLACE DIRECTO A LA GUÍA DE IMPRESIÓN -->
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2ddd3; text-align: center;">
+                <a href="javascript:void(0)" id="linkTutorialInDownload" style="font-size: 0.80rem; color: #87553b; text-decoration: underline; font-weight: 600;">
+                    📖 ¿Dudas sobre cómo imprimir a doble cara? Ver guía rápida
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 1: ¿CÓMO FUNCIONA EL CALCUDOKU Y EL GENERADOR? -->
+    <div class="modal-overlay" id="tutorial-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card modal-card-tutorial">
+            <button type="button" class="modal-close-btn" onclick="closeTutorialModal()">✕</button>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">¿Cómo funciona el Calcudoku?</h3>
+            <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
+                Reglas rápidas del juego y cómo configurar tu hoja imprimible en este generador.
+            </p>
+
+            <div class="tutorial-section">
+                <h4><span>🔢</span> 1. Reglas del Calcudoku y uso del generador</h4>
+                <p>
+                    Rellena la cuadrícula con números del <strong>1 al 4</strong> (en nivel Fácil) o del <strong>1 al 5</strong> (en nivel Difícil) sin repetir ningún número en la misma fila ni en la misma columna.
+                </p>
+                <p style="margin-top: 6px;">
+                    Cada bloque o <strong>jaula</strong> delimitada por líneas gruesas tiene un número y una operación matemática (+, −, ×, ÷) en su esquina superior izquierda: los números dentro de esa jaula deben dar exactamente ese resultado.
+                </p>
+                <div class="tutorial-highlight-box">
+                    <strong>Cómo usar el generador:</strong> Elige entre formato horizontal (6 retos por cara) o vertical (2 retos grandes por cara), selecciona el nivel (Fácil o Difícil) y pulsa <em>«Nuevos retos»</em> tantas veces como quieras. La <strong>Página 2</strong> incluye siempre las soluciones completas.
+                </div>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
+                    Entendido, volver al generador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 2: GUÍA RÁPIDA DE IMPRESIÓN A DOBLE CARA -->
+    <div class="modal-overlay" id="print-guide-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card modal-card-tutorial">
+            <button type="button" class="modal-close-btn" onclick="closePrintGuideModal()">✕</button>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">Guía rápida de impresión a doble cara</h3>
+            <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
+                Cómo imprimir tu hoja de Calcudokus por delante y las soluciones por detrás sin desajustes.
+            </p>
+
+            <div class="tutorial-section">
+                <h4><span>🖨️</span> 1. Ajuste de tu impresora (Doble Cara / Duplex)</h4>
+                <ul class="tutorial-step-list">
+                    <li>
+                        <strong>Si eliges formato 8.25" × 6" (Apaisado):</strong><br>
+                        Activa <em>Imprimir a doble cara</em> y selecciona <strong>«Voltear por el borde corto»</strong>. Así el reverso con las soluciones no quedará boca abajo.
+                    </li>
+                    <li>
+                        <strong>Si eliges formato 6" × 9" (Vertical):</strong><br>
+                        Activa <em>Imprimir a doble cara</em> y selecciona <strong>«Voltear por el borde largo»</strong>.
+                    </li>
+                    <li>
+                        <strong>Escala de impresión:</strong> Marca siempre <strong>«Tamaño real» o «100%»</strong> para conservar las proporciones originales.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tutorial-section">
+                <h4><span>📄</span> 2. ¿Tu impresora es manual (1 cara cada vez)?</h4>
+                <ol class="tutorial-step-list" style="list-style-type: decimal;">
+                    <li>Imprime primero solo la <strong>Página 1</strong> (los retos).</li>
+                    <li>Vuelve a colocar esa misma hoja en la bandeja de entrada de papel.</li>
+                    <li>Imprime solo la <strong>Página 2</strong> (las soluciones) en el reverso.</li>
+                </ol>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closePrintGuideModal()">
+                    Entendido
                 </button>
             </div>
         </div>
     </div>
 
     <div class="toast-notify" id="toastNotify"></div>
-
-    <!-- Script de guardado en Mi Espacio -->
-    <script type="module" src="./save-generator-design.js"></script>
 
     <script>
         // BANCO DE 20 CALCUDOKUS CERTIFICADOS MATEMÁTICAMENTE
@@ -4507,12 +4721,13 @@
 
             const metaText = document.getElementById('headerMetaText');
             const footerText = document.getElementById('footerPageText');
-            const diffName = state.difficulty === '4x4' ? 'RÁPIDO (4×4)' : 'CLÁSICO (5×5)';
-            const pageType = state.page === 1 ? 'RETOS' : 'SOLUCIONES';
+            const diffName = state.difficulty === '4x4' ? 'FÁCIL' : 'DIFÍCIL';
             const pageName = state.page === 1 ? 'Pág. 1 / 2' : 'Pág. 2 / 2 (Soluciones)';
 
             if (metaText) {
-                metaText.textContent = `EDITORIAL MENOS RUIDO · ${diffName} · ${pageType}`;
+                metaText.textContent = state.page === 1
+                    ? `EDITORIAL MENOS RUIDO · ${diffName}`
+                    : `EDITORIAL MENOS RUIDO · ${diffName} · SOLUCIONES`;
             }
             if (footerText) footerText.textContent = pageName;
 
@@ -4619,7 +4834,7 @@
                 format: [widthMm, heightMm]
             });
 
-            const diffTxt = state.difficulty === '4x4' ? 'RAPIDO (4x4)' : 'CLASICO (5x5)';
+            const diffTxt = state.difficulty === '4x4' ? 'FACIL' : 'DIFICIL';
 
             function drawPage(pageNum, isSolution) {
                 const marginX = is6x9 ? 16 : 13;
@@ -4634,8 +4849,10 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(8);
                 doc.setTextColor(90, 90, 90);
-                const pageLabel = isSolution ? 'SOLUCIONES' : 'RETOS';
-                doc.text(`EDITORIAL MENOS RUIDO · ${diffTxt} · ${pageLabel}`, widthMm - marginX, marginY + 4, { align: 'right' });
+                const headerRightTxt = isSolution
+                    ? `EDITORIAL MENOS RUIDO · ${diffTxt} · SOLUCIONES`
+                    : `EDITORIAL MENOS RUIDO · ${diffTxt}`;
+                doc.text(headerRightTxt, widthMm - marginX, marginY + 4, { align: 'right' });
 
                 // Línea superior
                 doc.setDrawColor(20, 20, 20);
@@ -4646,10 +4863,10 @@
                 // 2. DIBUJAR LOS PUZZLES
                 if (!is6x9) {
                     // LAYOUT 8.25" × 6" (3 columnas × 2 filas = 6 puzzles)
-                    const puzzleSizeMm = 52.0; // mm
-                    const startY = 24.0;
+                    const puzzleSizeMm = 50.0; // mm
+                    const startY = 22.5;
                     const colWidth = (widthMm - marginX * 2) / 3;
-                    const rowHeight = 56.0;
+                    const rowHeight = 59.0;
 
                     state.puzzles.forEach((pz, idx) => {
                         const col = idx % 3;
@@ -4662,7 +4879,7 @@
                         doc.setFontSize(7.5);
                         doc.setTextColor(46, 96, 74);
                         const pzTag = isSolution ? `SOLUCION ${idx + 1}` : `CALCUDOKU ${idx + 1}`;
-                        doc.text(pzTag, px, py - 2.0);
+                        doc.text(pzTag, px, py - 2.2);
 
                         // Tablero
                         const cSize = puzzleSizeMm / pz.size;
@@ -4812,18 +5029,149 @@
         }
 
         function openDownloadModal() {
-            const m = document.getElementById('downloadModal');
+            const m = document.getElementById('download-modal');
             if (m) m.classList.add('active');
+            const emailInput = document.getElementById('modal-email-input');
+            if (emailInput && !emailInput.value) {
+                try {
+                    let prefill = '';
+                    if (window.mrAuthUserEmail) prefill = window.mrAuthUserEmail;
+                    if (!prefill) prefill = localStorage.getItem('mr_user_pdf_email') || localStorage.getItem('emailForSignIn') || '';
+                    if (!prefill) {
+                        const cached = localStorage.getItem('mr_cached_user');
+                        if (cached) prefill = JSON.parse(cached).email || '';
+                    }
+                    if (prefill) emailInput.value = prefill;
+                } catch(e) {}
+            }
         }
 
         function closeDownloadModal() {
-            const m = document.getElementById('downloadModal');
+            const m = document.getElementById('download-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function openTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.add('active');
+        }
+
+        function closeTutorialModal() {
+            const m = document.getElementById('tutorial-modal');
+            if (m) m.classList.remove('active');
+        }
+
+        function openPrintGuideModal() {
+            const m = document.getElementById('print-guide-modal');
+            if (m) m.classList.add('active');
+        }
+
+        function closePrintGuideModal() {
+            const m = document.getElementById('print-guide-modal');
             if (m) m.classList.remove('active');
         }
 
         function closeModalOnBackdrop(e) {
-            if (e.target.classList.contains('modal-overlay')) closeDownloadModal();
+            if (e.target && e.target.id === 'download-modal') closeDownloadModal();
+            if (e.target && e.target.id === 'tutorial-modal') closeTutorialModal();
+            if (e.target && e.target.id === 'print-guide-modal') closePrintGuideModal();
         }
+
+        async function sendPdfViaEmail() {
+            const emailInput = document.getElementById('modal-email-input');
+            const feedback = document.getElementById('modal-email-feedback');
+            const btn = document.getElementById('btn-modal-send-email');
+            
+            const email = (emailInput ? emailInput.value : '').trim();
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'Por favor, escribe un correo electrónico válido.';
+                }
+                if (emailInput) emailInput.focus();
+                return;
+            }
+
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#eff6ff';
+                feedback.style.color = '#1e40af';
+                feedback.style.border = '1px solid #bfdbfe';
+                feedback.textContent = '⏳ Generando documento y enviando por correo...';
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.textContent = 'Enviando...';
+            }
+
+            try {
+                const doc = generatePdfDoc();
+                if (!doc) throw new Error('No se pudo generar el documento PDF.');
+                const pdfBase64 = doc.output('datauristring');
+                const diffText = state.difficulty === '4x4' ? 'Fácil' : 'Difícil';
+                const fmtName = state.format === '6x9' ? '6" × 9" (2 Calcudokus)' : '8.25" × 6" (6 Calcudokus)';
+
+                const response = await fetch('/api/send-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        pdfBase64: pdfBase64,
+                        filename: `Menos-Ruido-Calcudoku-${state.format}-${state.difficulty === '4x4' ? 'facil' : 'dificil'}.pdf`,
+                        plannerName: `Calcudoku Menos Ruido · ${fmtName} (${diffText})`
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error al procesar el envío del correo.');
+                }
+
+                try { localStorage.setItem('mr_user_pdf_email', email); } catch(e) {}
+
+                if (feedback) {
+                    feedback.style.background = '#f0fdf4';
+                    feedback.style.color = '#166534';
+                    feedback.style.border = '1px solid #bbf7d0';
+                    feedback.textContent = '✓ ¡Enviado! Revisa tu bandeja de entrada en unos instantes.';
+                }
+                if (btn) btn.textContent = 'Enviado';
+
+                setTimeout(() => {
+                    closeDownloadModal();
+                    showToast('✓ PDF enviado a ' + email);
+                }, 1800);
+            } catch(err) {
+                console.error('Error enviando PDF por email:', err);
+                if (feedback) {
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.color = '#991b1b';
+                    feedback.style.border = '1px solid #fecaca';
+                    feedback.textContent = 'No se pudo enviar el correo: ' + (err.message || 'Error de red.');
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.textContent = 'Reintentar';
+                }
+            }
+        }
+
+        window.openDownloadModal = openDownloadModal;
+        window.closeDownloadModal = closeDownloadModal;
+        window.openTutorialModal = openTutorialModal;
+        window.closeTutorialModal = closeTutorialModal;
+        window.openPrintGuideModal = openPrintGuideModal;
+        window.closePrintGuideModal = closePrintGuideModal;
+        window.closeModalOnBackdrop = closeModalOnBackdrop;
+        window.sendPdfViaEmail = sendPdfViaEmail;
+        window.mrCalcudokuState = state;
+        window.mrCalcudokuRender = renderSheet;
+        window.mrCalcudokuShowToast = showToast;
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
@@ -4866,42 +5214,84 @@
             document.getElementById('btnRegenerate')?.addEventListener('click', () => {
                 selectPuzzles();
                 renderSheet();
-                showToast('Nuevos Calcudokus generados con éxito');
+                showToast('✓ Nuevos Calcudokus generados con éxito');
             });
 
-            // Modal descarga
+            // Modal descarga y tutoriales
             document.getElementById('btnOpenDownloadModal')?.addEventListener('click', openDownloadModal);
+            document.getElementById('btnOpenTutorialModal')?.addEventListener('click', openTutorialModal);
+            document.getElementById('linkTutorialInDownload')?.addEventListener('click', () => {
+                closeDownloadModal();
+                openPrintGuideModal();
+            });
+            document.getElementById('btn-modal-send-email')?.addEventListener('click', sendPdfViaEmail);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeDownloadModal();
+                    closeTutorialModal();
+                    closePrintGuideModal();
+                }
+            });
 
             // Descarga directa
             document.getElementById('btnExecuteDownload')?.addEventListener('click', () => {
                 const doc = generatePdfDoc();
                 if (!doc) return;
-                const diffTxt = state.difficulty === '4x4' ? 'rapido-4x4' : 'clasico-5x5';
+                const diffTxt = state.difficulty === '4x4' ? 'facil' : 'dificil';
                 doc.save(`Menos-Ruido-Calcudoku-${state.format}-${diffTxt}.pdf`);
                 closeDownloadModal();
-                showToast('✓ PDF vectorial descargado con éxito');
+                showToast('✓ PDF descargado con éxito');
             });
         });
-
-        // Configurar guardado en Mi Espacio
-        window.mrCalcudokuState = state;
-        if (typeof setupGeneratorSave === 'function') {
-            setupGeneratorSave('btn-save-generator-design', () => {
-                const diffText = state.difficulty === '4x4' ? 'Rápido (4×4)' : 'Clásico (5×5)';
-                const fmtText = state.format === '6x9' ? '6" × 9" Vertical (2 por pág.)' : '8.25" × 6" Apaisado (6 por pág.)';
-                return {
-                    name: `Calcudoku · ${diffText}`,
-                    type: 'Calcudoku',
-                    summary: `${fmtText} · ${state.puzzles.length} retos · Anverso y Solución`,
-                    data: {
-                        format: state.format,
-                        difficulty: state.difficulty,
-                        puzzles: state.puzzles
-                    }
-                };
-            });
-        }
     </script>
     <script type="module" src="./main.js"></script>
+    <script type="module">
+        import { setupGeneratorSave, checkAndLoadSavedDesign } from './save-generator-design.js';
+
+        setupGeneratorSave('btn-save-generator-design', () => {
+            const state = window.mrCalcudokuState || {};
+            const diffText = state.difficulty === '4x4' ? 'Fácil' : 'Difícil';
+            const fmtText = state.format === '6x9' ? '6" × 9" Vertical (2 por pág.)' : '8.25" × 6" Apaisado (6 por pág.)';
+            return {
+                name: `Calcudoku · ${diffText}`,
+                type: 'Calcudoku',
+                summary: `${fmtText} · ${(state.puzzles || []).length} retos · Anverso y Solución`,
+                data: {
+                    format: state.format,
+                    difficulty: state.difficulty,
+                    puzzles: state.puzzles
+                }
+            };
+        });
+
+        checkAndLoadSavedDesign((savedData) => {
+            if (!savedData) return;
+            const state = window.mrCalcudokuState;
+            if (!state) return;
+
+            if (savedData.format) {
+                state.format = savedData.format;
+                document.querySelectorAll('#formatToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.format === state.format);
+                });
+            }
+            if (savedData.difficulty) {
+                state.difficulty = savedData.difficulty;
+                document.querySelectorAll('#diffToggleGroup .btn-toggle-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.diff === state.difficulty);
+                });
+            }
+            if (savedData.puzzles && savedData.puzzles.length) {
+                state.puzzles = savedData.puzzles;
+            }
+            state.page = 1;
+            document.querySelectorAll('#pageToggleGroup .btn-toggle-item').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.page, 10) === 1);
+            });
+            if (typeof window.mrCalcudokuRender === 'function') window.mrCalcudokuRender();
+            if (typeof window.mrCalcudokuShowToast === 'function') window.mrCalcudokuShowToast('✓ Calcudoku cargado desde Mi Espacio');
+        });
+    </script>
 </body>
 </html>

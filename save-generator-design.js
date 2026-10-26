@@ -80,7 +80,15 @@ function initUnsavedTracking() {
       target.closest('.btn-block-action') || 
       target.closest('.td-day-cell') || 
       target.closest('.btn-shape') ||
-      target.closest('.pill-toggle')
+      target.closest('.pill-toggle') ||
+      (target.closest('.btn-toggle-item') && !target.closest('#pageToggleGroup') && !target.closest('#sideToggleGroup')) ||
+      target.closest('#btnRegenerate') ||
+      target.closest('.btn-preset') ||
+      target.closest('.btn-custom-apply') ||
+      target.closest('.btn-topic-gen') ||
+      target.closest('.game-toggle-card') ||
+      target.closest('.cover-style-card') ||
+      target.closest('.cover-color-swatch')
     ) {
       hasUnsavedChanges = true;
     }
@@ -190,8 +198,16 @@ function openUnsavedWarningModal(targetUrl) {
   let modalOverlay = document.getElementById('unsaved-warning-modal-overlay');
   if (modalOverlay) modalOverlay.remove();
 
-  const activeNameText = currentActiveDesign 
-    ? ` en <strong>${escapeHtml(currentActiveDesign.name)}</strong>` 
+  let fallbackName = '';
+  if (!currentActiveDesign && typeof currentGeneratorGetter === 'function') {
+    try {
+      const draft = currentGeneratorGetter();
+      if (draft && draft.name) fallbackName = draft.name;
+    } catch (e) {}
+  }
+  const displayName = currentActiveDesign ? currentActiveDesign.name : fallbackName;
+  const activeNameText = displayName 
+    ? ` en <strong>${escapeHtml(displayName)}</strong>` 
     : '';
 
   const html = `

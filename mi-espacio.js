@@ -134,6 +134,7 @@ const tabPanes = document.querySelectorAll('.tab-pane');
 const emptyDesignsView = document.getElementById('empty-designs-view');
 const designsGrid = document.getElementById('designs-grid');
 const countAll = document.getElementById('count-all');
+const countPasatiempos = document.getElementById('count-pasatiempos');
 const countCompleto = document.getElementById('count-completo');
 const countPortada = document.getElementById('count-portada');
 const countSemanal = document.getElementById('count-semanal');
@@ -170,6 +171,94 @@ const devPinInput = document.getElementById('dev-pin-input');
 const btnUnlockDev = document.getElementById('btn-unlock-dev');
 const devPinError = document.getElementById('dev-pin-error');
 
+function refreshEspacioHoyStats() {
+  try {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    let sudokuSolved = false;
+    try {
+      const sStats = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}');
+      if (sStats.lastSolvedDate === todayStr) sudokuSolved = true;
+      const sState9 = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_classic_${todayStr}`) || '{}');
+      if (sState9.isCompleted) sudokuSolved = true;
+      const sState4 = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_mini_${todayStr}`) || '{}');
+      if (sState4.isCompleted) sudokuSolved = true;
+    } catch (e) {}
+
+    let calcudokuSolved = false;
+    try {
+      const cStats = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}');
+      if (cStats.lastDate === todayStr) calcudokuSolved = true;
+    } catch (e) {}
+
+    let kakuroSolved = false;
+    try {
+      const kStats = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}');
+      if (kStats.lastDate === todayStr) kakuroSolved = true;
+    } catch (e) {}
+
+    let cruzadasSolved = false;
+    try {
+      const crState = JSON.parse(localStorage.getItem(`mr_cruzadas_daily_${todayStr}`) || '{}');
+      if (crState.completed) cruzadasSolved = true;
+      const crStats = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}');
+      if (crStats.lastSolvedDate === todayStr) cruzadasSolved = true;
+    } catch (e) {}
+
+    let sopaSolved = false;
+    try {
+      if (localStorage.getItem(`mr_sopa_solved_${todayStr}`) === 'true') sopaSolved = true;
+    } catch (e) {}
+
+    const setBadge = (id, done) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (done) {
+        el.textContent = '✓ Resuelto';
+        el.style.background = '#e8f5e9';
+        el.style.color = '#215c38';
+      } else {
+        el.textContent = 'Pendiente';
+        el.style.background = '#f3ece0';
+        el.style.color = '#87553b';
+      }
+    };
+
+    setBadge('espacio-badge-sudoku', sudokuSolved);
+    setBadge('espacio-badge-calcudoku', calcudokuSolved);
+    setBadge('espacio-badge-kakuro', kakuroSolved);
+    setBadge('espacio-badge-cruzadas', cruzadasSolved);
+    setBadge('espacio-badge-sopa', sopaSolved);
+
+    const solvedCount = [sudokuSolved, calcudokuSolved, kakuroSolved, cruzadasSolved, sopaSolved].filter(Boolean).length;
+    const navBadge = document.getElementById('hoy-progress-badge');
+    if (navBadge) navBadge.textContent = `${solvedCount}/5`;
+
+    const ratioEl = document.getElementById('espacio-hoy-ratio');
+    if (ratioEl) ratioEl.textContent = `${solvedCount} de 5 resueltos`;
+
+    const barEl = document.getElementById('espacio-hoy-bar');
+    if (barEl) barEl.style.width = `${(solvedCount / 5) * 100}%`;
+
+    let maxStreak = 0;
+    try {
+      const s = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}').streak || 0;
+      const c = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}').streak || 0;
+      const k = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}').streak || 0;
+      const cr = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}').streak || 0;
+      const sp = parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10) || 0;
+      maxStreak = Math.max(s, c, k, cr, sp, solvedCount > 0 ? 1 : 0);
+    } catch (e) {}
+
+    const streakEl = document.getElementById('espacio-hoy-streak');
+    if (streakEl) streakEl.textContent = `🔥 ${maxStreak} día${maxStreak === 1 ? '' : 's'}`;
+  } catch (e) {}
+}
+
 // Inicialización al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
@@ -179,6 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDeleteModal();
   setupDownloadModal();
   setupPostMessageListener();
+  refreshEspacioHoyStats();
+  window.addEventListener('focus', refreshEspacioHoyStats);
 
   // 1. Carga instantánea (0 ms) si hay datos en caché local o localStorage
   try {
@@ -361,6 +452,9 @@ function checkUrlTab(allowDevTabs = false) {
 
   if (tab === 'ajustes') {
     activateTab('tab-ajustes');
+  } else if (tab === 'hoy') {
+    refreshEspacioHoyStats();
+    activateTab('tab-hoy');
   } else if (tab === 'dev') {
     if (isDevAllowed && allowDevTabs) {
       if (tabBtnDev) tabBtnDev.style.setProperty('display', 'inline-flex', 'important');
@@ -1326,8 +1420,14 @@ async function loadUserDesigns(user) {
   renderDesignsGrid();
 }
 
+function isPasatiempoDesign(d) {
+  const t = ((d.type || '') + ' ' + (d.name || '') + ' ' + (d.editUrl || '')).toLowerCase();
+  return t.includes('sudoku') || t.includes('calcudoku') || t.includes('kakuro') || t.includes('sopa') || t.includes('cruzada') || t.includes('pasatiempo');
+}
+
 function updateDesignCounts() {
   const total = allDesigns.length;
+  const pasatiempos = allDesigns.filter(d => isPasatiempoDesign(d)).length;
   const completo = allDesigns.filter(d => {
     const t = (d.type || '').toLowerCase();
     return (t.includes('completo') || t.includes('libro')) && !t.includes('portada');
@@ -1341,6 +1441,7 @@ function updateDesignCounts() {
   const anual = allDesigns.filter(d => (d.type || '').toLowerCase().includes('anual')).length;
 
   if (countAll) countAll.textContent = total;
+  if (countPasatiempos) countPasatiempos.textContent = pasatiempos;
   if (countCompleto) countCompleto.textContent = completo;
   if (countPortada) countPortada.textContent = portada;
   if (countSemanal) countSemanal.textContent = semanal;
@@ -1360,7 +1461,9 @@ function renderDesignsGrid() {
 
   // Filtrar según píldora activa
   let filtered = allDesigns;
-  if (currentFilter === 'Completo') {
+  if (currentFilter === 'Pasatiempos') {
+    filtered = allDesigns.filter(d => isPasatiempoDesign(d));
+  } else if (currentFilter === 'Completo') {
     filtered = allDesigns.filter(d => {
       const t = (d.type || '').toLowerCase();
       return (t.includes('completo') || t.includes('libro')) && !t.includes('portada');
@@ -1423,6 +1526,12 @@ function renderDesignsGrid() {
     const typeLow = (item.type || '').toLowerCase();
     if (!rawTargetUrl) {
       if (typeLow.includes('portada')) rawTargetUrl = '/generador-portadas.html';
+      else if (typeLow.includes('pasatiempo')) rawTargetUrl = '/generador-libro-pasatiempos.html';
+      else if (typeLow.includes('sudoku')) rawTargetUrl = '/generador-sudokus.html';
+      else if (typeLow.includes('calcudoku')) rawTargetUrl = '/generador-calcudoku.html';
+      else if (typeLow.includes('kakuro')) rawTargetUrl = '/generador-kakuro.html';
+      else if (typeLow.includes('sopa')) rawTargetUrl = '/generador-sopas.html';
+      else if (typeLow.includes('cruzada')) rawTargetUrl = '/generador-cruzadas.html';
       else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) rawTargetUrl = '/generador-libro-completo.html';
       else if (typeLow.includes('diario')) rawTargetUrl = '/generador-planificador-diario.html';
       else if (typeLow.includes('mensual')) rawTargetUrl = '/generador-planificador-mensual.html';
@@ -1441,6 +1550,12 @@ function renderDesignsGrid() {
     let badgeClass = 'semanal';
     let typeLabel = 'Planificador Semanal';
     if (typeLow.includes('portada')) { badgeClass = 'portada'; typeLabel = 'Portada de Cuaderno'; }
+    else if (typeLow.includes('pasatiempo')) { badgeClass = 'completo'; typeLabel = 'Libro de Pasatiempos'; }
+    else if (typeLow.includes('sudoku')) { badgeClass = 'completo'; typeLabel = 'Sudoku Imprimible'; }
+    else if (typeLow.includes('calcudoku')) { badgeClass = 'completo'; typeLabel = 'Calcudoku Imprimible'; }
+    else if (typeLow.includes('kakuro')) { badgeClass = 'completo'; typeLabel = 'Kakuro Imprimible'; }
+    else if (typeLow.includes('sopa')) { badgeClass = 'completo'; typeLabel = 'Sopa de Letras'; }
+    else if (typeLow.includes('cruzada')) { badgeClass = 'completo'; typeLabel = 'Cruzadas de Palabras'; }
     else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) { badgeClass = 'completo'; typeLabel = 'Cuaderno Completo'; }
     else if (typeLow.includes('diario')) { badgeClass = 'diario'; typeLabel = 'Planificador Diario'; }
     else if (typeLow.includes('mensual')) { badgeClass = 'mensual'; typeLabel = 'Planificador Mensual'; }

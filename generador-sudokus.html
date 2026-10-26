@@ -848,11 +848,10 @@
         <div class="top-nav">
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <a href="/pasatiempos.html" class="back-link">← Volver a Pasatiempos</a>
-                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo imprimir a doble cara y usar el reverso">
-                    <span>📖</span> Guía de impresión y negativo
+                <button type="button" class="btn-help-tutorial" id="btnOpenTutorialModal" title="Cómo funciona el Sudoku en Negativo y el generador">
+                    <span>📖</span> ¿Cómo funciona el Sudoku en Negativo?
                 </button>
             </div>
-            <span class="badge-version" id="formatBadgeDisplay">Formato 8.25" × 6" · Anverso y Reverso</span>
         </div>
 
         <div class="header-title-box">
@@ -1030,13 +1029,13 @@
         </div>
     </div>
 
-    <!-- MODAL POP-UP TUTORIAL: GUÍA RÁPIDA DE IMPRESIÓN Y NEGATIVO -->
+    <!-- MODAL POP-UP 1: ¿CÓMO FUNCIONA EL SUDOKU EN NEGATIVO? -->
     <div class="modal-overlay" id="tutorial-modal" onclick="closeModalOnBackdrop(event)">
         <div class="modal-card modal-card-tutorial">
             <button type="button" class="modal-close-btn" onclick="closeTutorialModal()">✕</button>
-            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">Guía rápida: Impresión y Negativo</h3>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">¿Cómo funciona el Sudoku en Negativo?</h3>
             <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
-                Todo lo necesario para imprimir a doble cara haciendo coincidir las casillas y sacarle partido al sudoku en negativo.
+                Cómo sacarle partido al reverso en negativo y configurar tu hoja de sudokus.
             </p>
 
             <!-- SECCIÓN 1: QUÉ ES EL NEGATIVO -->
@@ -1056,9 +1055,36 @@
                 </p>
             </div>
 
-            <!-- SECCIÓN 2: AJUSTES DE IMPRESIÓN SEGÚN FORMATO -->
+            <!-- SECCIÓN 2: CONTROLES DEL GENERADOR -->
             <div class="tutorial-section">
-                <h4><span>🖨️</span> 2. Ajuste de tu impresora (Doble Cara / Duplex)</h4>
+                <h4><span>⚙️</span> 2. Cómo personalizar tu hoja</h4>
+                <ul class="tutorial-step-list">
+                    <li><strong>Formato y cantidad:</strong> Elige entre formato horizontal (2, 4 o 6 sudokus por cara) o formato vertical (2 sudokus grandes por cara).</li>
+                    <li><strong>Dificultad y símbolos:</strong> Alterna entre Fácil, Medio o Difícil, y juega con números (1–9) o letras (A–I).</li>
+                    <li><strong>Guardar en Mi Espacio:</strong> Guarda tu combinación para retomarla o reimprimirla cuando quieras desde tu cuenta.</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
+                    Entendido, volver al generador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 2: GUÍA RÁPIDA DE IMPRESIÓN -->
+    <div class="modal-overlay" id="print-guide-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card modal-card-tutorial">
+            <button type="button" class="modal-close-btn" onclick="closePrintGuideModal()">✕</button>
+            <h3 class="modal-title" style="text-align: left; margin-bottom: 4px;">Guía rápida de impresión a doble cara</h3>
+            <p class="modal-desc" style="text-align: left; margin-bottom: 16px;">
+                Cómo configurar tu impresora para que las casillas del anverso y del negativo coincidan por detrás.
+            </p>
+
+            <!-- SECCIÓN 1: AJUSTES DE IMPRESIÓN SEGÚN FORMATO -->
+            <div class="tutorial-section">
+                <h4><span>🖨️</span> 1. Ajuste de tu impresora (Doble Cara / Duplex)</h4>
                 <p>
                     Para que las casillas del anverso y del reverso coincidan al milímetro por detrás, abre el cuadro de impresión de tu navegador o visor de PDF y aplica estos ajustes:
                 </p>
@@ -1077,9 +1103,9 @@
                 </ul>
             </div>
 
-            <!-- SECCIÓN 3: SI NO TIENES IMPRESORA DE DOBLE CARA AUTOMÁTICA -->
+            <!-- SECCIÓN 2: SI NO TIENES IMPRESORA DE DOBLE CARA AUTOMÁTICA -->
             <div class="tutorial-section">
-                <h4><span>📄</span> 3. ¿Tu impresora es manual (1 cara cada vez)?</h4>
+                <h4><span>📄</span> 2. ¿Tu impresora es manual (1 cara cada vez)?</h4>
                 <ol class="tutorial-step-list" style="list-style-type: decimal;">
                     <li>Imprime primero solo la <strong>Página 1</strong>.</li>
                     <li>Vuelve a colocar esa misma hoja impresa en la bandeja de entrada de papel.</li>
@@ -1088,8 +1114,8 @@
             </div>
 
             <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
-                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closeTutorialModal()">
-                    Entendido, volver al generador
+                <button type="button" class="btn-modal-primary" style="padding: 10px 22px; width: 100%; justify-content: center;" onclick="closePrintGuideModal()">
+                    Entendido
                 </button>
             </div>
         </div>
@@ -1660,9 +1686,20 @@
             if (m) m.classList.remove('active');
         }
 
+        function openPrintGuideModal() {
+            const m = document.getElementById('print-guide-modal');
+            if (m) m.classList.add('active');
+        }
+
+        function closePrintGuideModal() {
+            const m = document.getElementById('print-guide-modal');
+            if (m) m.classList.remove('active');
+        }
+
         function closeModalOnBackdrop(e) {
             if (e.target && e.target.id === 'download-modal') closeDownloadModal();
             if (e.target && e.target.id === 'tutorial-modal') closeTutorialModal();
+            if (e.target && e.target.id === 'print-guide-modal') closePrintGuideModal();
         }
 
         function executeDownload() {
@@ -1781,6 +1818,8 @@
         window.closeDownloadModal = closeDownloadModal;
         window.openTutorialModal = openTutorialModal;
         window.closeTutorialModal = closeTutorialModal;
+        window.openPrintGuideModal = openPrintGuideModal;
+        window.closePrintGuideModal = closePrintGuideModal;
         window.closeModalOnBackdrop = closeModalOnBackdrop;
         window.executeDownload = executeDownload;
         window.executePrint = executePrint;
@@ -1873,12 +1912,12 @@
                 btnOpenTut.addEventListener('click', openTutorialModal);
             }
 
-            // Enlace al tutorial dentro del modal de descarga
+            // Enlace a la guía de impresión dentro del modal de descarga
             const linkTutDl = document.getElementById('linkTutorialInDownload');
             if (linkTutDl) {
                 linkTutDl.addEventListener('click', () => {
                     closeDownloadModal();
-                    openTutorialModal();
+                    openPrintGuideModal();
                 });
             }
 
@@ -1887,6 +1926,7 @@
                 if (e.key === 'Escape') {
                     closeDownloadModal();
                     closeTutorialModal();
+                    closePrintGuideModal();
                 }
             });
 
