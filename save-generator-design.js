@@ -31,22 +31,194 @@ export function getActiveDesign() {
   return currentActiveDesign;
 }
 
-export function cleanDataForFirestore(obj) {
+export function cleanDataForFirestore(obj, inArray = false) {
   if (obj === undefined) return null;
   if (obj === null || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) {
-    return obj.map(item => cleanDataForFirestore(item));
+    const mapped = obj.map(item => cleanDataForFirestore(item, true));
+    return inArray ? { __mrRow: mapped } : mapped;
   }
   const cleaned = {};
   for (const [key, val] of Object.entries(obj)) {
     if (val !== undefined) {
-      cleaned[key] = cleanDataForFirestore(val);
+      cleaned[key] = cleanDataForFirestore(val, false);
     }
   }
   return cleaned;
 }
 
+export function restoreDataFromFirestore(obj) {
+  if (obj === null || obj === undefined || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(item => restoreDataFromFirestore(item));
+  }
+  if (Object.prototype.hasOwnProperty.call(obj, '__mrRow') && Array.isArray(obj.__mrRow)) {
+    return obj.__mrRow.map(item => restoreDataFromFirestore(item));
+  }
+  const restored = {};
+  for (const [key, val] of Object.entries(obj)) {
+    restored[key] = restoreDataFromFirestore(val);
+  }
+  return restored;
+}
+
+function ensureSaveChoiceStyles() {
+  if (document.getElementById('mr-save-choice-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'mr-save-choice-styles';
+  style.textContent = `
+    .active-design-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f4efe6;
+      border: 1px solid #dcd3c6;
+      color: #3d352e;
+      padding: 5px 10px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      max-width: 240px;
+    }
+    .active-design-status-pill .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2e604a;
+      flex-shrink: 0;
+    }
+    .active-design-status-pill .pill-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 700;
+      color: #111;
+    }
+    .btn-save-as-copy {
+      background: #ffffff;
+      border: 1px solid #d5cec2;
+      color: #2f2a26;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.80rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .btn-save-as-copy:hover {
+      border-color: #111;
+      background: #f9f7f3;
+    }
+    .save-choice-card {
+      max-width: 500px !important;
+      width: 100%;
+      text-align: left !important;
+    }
+    .save-choice-body {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 14px;
+    }
+    .save-choice-section-title {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #2c2623;
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .save-new-form {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .save-new-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #d5cec2;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #111;
+      background: #faf8f5;
+      outline: none;
+    }
+    .save-new-input:focus {
+      border-color: #87553b;
+      background: #fff;
+    }
+    .btn-save-create {
+      background: #2c2623;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+    }
+    .btn-save-create:hover {
+      background: #111;
+    }
+    .save-choice-existing-section {
+      border-top: 1px solid #ebe5dc;
+      padding-top: 14px;
+    }
+    .save-choice-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .save-choice-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid #e6dfd5;
+      border-radius: 8px;
+      background: #fcfbfa;
+    }
+    .save-choice-item-info h4 {
+      margin: 0 0 2px 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #111;
+    }
+    .save-choice-item-info p {
+      margin: 0;
+      font-size: 0.76rem;
+      color: #666;
+    }
+    .btn-save-overwrite {
+      background: #f3eee6;
+      color: #2c2623;
+      border: 1px solid #d5cec2;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-save-overwrite:hover {
+      background: #87553b;
+      color: #fff;
+      border-color: #87553b;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function initUnsavedTracking() {
+  ensureSaveChoiceStyles();
   if (trackingInitialized) return;
   trackingInitialized = true;
 
@@ -119,6 +291,7 @@ function initUnsavedTracking() {
 }
 
 function updateActiveDesignUI() {
+  ensureSaveChoiceStyles();
   if (!currentSaveBtn) return;
   const parent = currentSaveBtn.parentElement;
   if (!parent) return;
@@ -316,7 +489,7 @@ export function checkAndLoadSavedDesign(applyDataFn) {
         type: item.type || ''
       };
       updateActiveDesignUI();
-      applyDataFn(item.data);
+      applyDataFn(restoreDataFromFirestore(item.data));
       setTimeout(() => { hasUnsavedChanges = false; }, 400);
       notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
       loaded = true;
@@ -339,7 +512,7 @@ export function checkAndLoadSavedDesign(applyDataFn) {
         updateActiveDesignUI();
 
         if (item.data && typeof applyDataFn === 'function' && !loaded) {
-          applyDataFn(item.data);
+          applyDataFn(restoreDataFromFirestore(item.data));
           setTimeout(() => { hasUnsavedChanges = false; }, 400);
           notifyToast(`✓ Editando "${item.name || 'Guardado'}"`);
           loaded = true;
@@ -370,7 +543,9 @@ function prefillEmailInputs(user) {
 
 async function executeSaveAction(btn, getGeneratorDataFn, user, options = {}) {
   const currentDesign = getGeneratorDataFn();
-  const cleanData = cleanDataForFirestore(currentDesign.data || {});
+  const rawData = currentDesign.data || {};
+  const cleanData = cleanDataForFirestore(rawData);
+  const localData = restoreDataFromFirestore(cleanData);
   const nowSecs = Math.floor(Date.now() / 1000);
 
   let docId = currentActiveDesign ? currentActiveDesign.id : null;
@@ -394,7 +569,7 @@ async function executeSaveAction(btn, getGeneratorDataFn, user, options = {}) {
       type: currentDesign.type || 'Planificador',
       summary: currentDesign.summary || '',
       editUrl: window.location.pathname,
-      data: cleanData,
+      data: localData,
       updatedAt: { seconds: nowSecs },
       createdAt: existingIdx >= 0 && localDesigns[existingIdx].createdAt ? localDesigns[existingIdx].createdAt : { seconds: nowSecs }
     };
@@ -674,6 +849,7 @@ export function setupGeneratorSave(btnId, getGeneratorDataFn, options = {}) {
 }
 
 async function triggerSaveFlow(btn, currentDesign, user, redirectAfterUrl = null) {
+  ensureSaveChoiceStyles();
   let originalText = btn ? btn.innerHTML : '';
   try {
     if (btn) {
@@ -682,32 +858,40 @@ async function triggerSaveFlow(btn, currentDesign, user, redirectAfterUrl = null
     }
 
     const currentType = currentDesign.type || 'Planificador Semanal';
+    const byId = new Map();
 
-    // Consultar diseños del usuario en Firestore
-    const designsRef = collection(db, 'users', user.uid, 'designs');
-    let snap = null;
+    // 1. Cargar diseños de localStorage del mismo tipo
     try {
-      snap = await getDocs(designsRef);
-    } catch (firestoreErr) {
-      console.warn('Aviso al consultar diseños existentes:', firestoreErr);
-    }
-    
-    const existingDesigns = [];
-    if (snap) {
-      snap.forEach(d => {
-        const data = d.data();
-        if (data.type === currentType) {
-          existingDesigns.push({ id: d.id, ...data });
+      const localList = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
+      localList.forEach(d => {
+        if (d && d.id && d.type === currentType) {
+          byId.set(d.id, d);
         }
       });
+    } catch (e) {}
 
-      // Ordenar por fecha descendente
-      existingDesigns.sort((a, b) => {
-        const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
-        const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
-        return timeB - timeA;
-      });
+    // 2. Consultar diseños del usuario en Firestore
+    if (user && user.uid) {
+      try {
+        const designsRef = collection(db, 'users', user.uid, 'designs');
+        const snap = await getDocs(designsRef);
+        snap.forEach(d => {
+          const data = d.data();
+          if (data.type === currentType) {
+            byId.set(d.id, { id: d.id, ...data });
+          }
+        });
+      } catch (firestoreErr) {
+        console.warn('Aviso al consultar diseños existentes:', firestoreErr);
+      }
     }
+
+    const existingDesigns = Array.from(byId.values());
+    existingDesigns.sort((a, b) => {
+      const timeA = a.updatedAt?.toMillis?.() || (a.updatedAt?.seconds ? a.updatedAt.seconds * 1000 : 0) || a.createdAt?.toMillis?.() || (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+      const timeB = b.updatedAt?.toMillis?.() || (b.updatedAt?.seconds ? b.updatedAt.seconds * 1000 : 0) || b.createdAt?.toMillis?.() || (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+      return timeB - timeA;
+    });
 
     if (btn) {
       btn.disabled = false;
@@ -728,6 +912,7 @@ async function triggerSaveFlow(btn, currentDesign, user, redirectAfterUrl = null
 }
 
 function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfterUrl = null) {
+  ensureSaveChoiceStyles();
   let modalOverlay = document.getElementById('save-choice-modal-overlay');
   if (modalOverlay) modalOverlay.remove();
 
@@ -756,7 +941,7 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
   ` : '';
 
   const html = `
-    <div id="save-choice-modal-overlay" class="auth-modal-overlay" style="display: flex;">
+    <div id="save-choice-modal-overlay" class="auth-modal-overlay" style="display: flex; z-index: 999999;">
       <div class="auth-modal-card save-choice-card">
         <button type="button" class="auth-modal-close" id="btn-close-save-choice">×</button>
         
@@ -797,45 +982,63 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
   // Evento: Guardar como nuevo
   const btnSaveNew = document.getElementById('btn-save-as-new');
   const inputNewName = document.getElementById('save-new-name-input');
+  if (inputNewName) {
+    setTimeout(() => {
+      inputNewName.focus();
+      inputNewName.select();
+    }, 60);
+  }
 
   btnSaveNew?.addEventListener('click', async () => {
-    const finalName = inputNewName.value.trim() || currentDesign.name || 'Planificador Personalizado';
+    const finalName = inputNewName.value.trim() || currentDesign.name || 'Diseño Personalizado';
     btnSaveNew.disabled = true;
     btnSaveNew.textContent = 'Guardando...';
 
     try {
-      const designsRef = collection(db, 'users', user.uid, 'designs');
-      const cleanData = cleanDataForFirestore(currentDesign.data || {});
-      const docRef = await addDoc(designsRef, {
-        name: finalName,
-        type: currentDesign.type || 'Planificador',
-        summary: currentDesign.summary || '',
-        editUrl: window.location.pathname,
-        data: cleanData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+      const rawData = currentDesign.data || {};
+      const cleanData = cleanDataForFirestore(rawData);
+      const localData = restoreDataFromFirestore(cleanData);
+      const nowSecs = Math.floor(Date.now() / 1000);
+      let newDocId = 'des_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
-      // Guardar copia local de seguridad en el navegador
+      // 1. Intentar guardar en Firestore
+      if (user && user.uid) {
+        try {
+          const designDocRef = doc(db, 'users', user.uid, 'designs', newDocId);
+          await setDoc(designDocRef, {
+            name: finalName,
+            type: currentDesign.type || 'Planificador',
+            summary: currentDesign.summary || '',
+            editUrl: window.location.pathname,
+            data: cleanData,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+        } catch (cloudErr) {
+          console.warn('Aviso guardando nuevo diseño en Firestore (guardado localmente):', cloudErr);
+        }
+      }
+
+      // 2. Guardar copia local de seguridad en el navegador
       try {
         let localDesigns = JSON.parse(localStorage.getItem('mr_local_designs') || '[]');
-        localDesigns = localDesigns.filter(d => d.id !== docRef.id);
+        localDesigns = localDesigns.filter(d => d.id !== newDocId);
         localDesigns.unshift({
-          id: docRef.id,
+          id: newDocId,
           name: finalName,
           type: currentDesign.type || 'Planificador',
           summary: currentDesign.summary || '',
           editUrl: window.location.pathname,
-          data: cleanData,
-          createdAt: { seconds: Math.floor(Date.now() / 1000) },
-          updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+          data: localData,
+          createdAt: { seconds: nowSecs },
+          updatedAt: { seconds: nowSecs }
         });
         localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
         localStorage.setItem('mr_cached_designs', JSON.stringify(localDesigns));
       } catch (e) {}
 
       currentActiveDesign = {
-        id: docRef.id,
+        id: newDocId,
         name: finalName,
         type: currentDesign.type || 'Planificador'
       };
@@ -843,7 +1046,7 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
 
       hasUnsavedChanges = false;
       modalOverlay.remove();
-      notifyToast(`✓ "${finalName}" guardado en Mi Espacio`);
+      notifyToast(`✓ "${finalName}" guardado como nuevo en Mi Espacio`);
       if (redirectAfterUrl) {
         setTimeout(() => {
           window.location.href = redirectAfterUrl;
@@ -867,14 +1070,26 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
       b.textContent = 'Actualizando...';
 
       try {
-        const designDocRef = doc(db, 'users', user.uid, 'designs', docId);
-        const cleanData = cleanDataForFirestore(currentDesign.data || {});
-        await updateDoc(designDocRef, {
-          summary: currentDesign.summary || '',
-          editUrl: window.location.pathname,
-          data: cleanData,
-          updatedAt: serverTimestamp()
-        });
+        const rawData = currentDesign.data || {};
+        const cleanData = cleanDataForFirestore(rawData);
+        const localData = restoreDataFromFirestore(cleanData);
+        const nowSecs = Math.floor(Date.now() / 1000);
+
+        if (user && user.uid) {
+          try {
+            const designDocRef = doc(db, 'users', user.uid, 'designs', docId);
+            await setDoc(designDocRef, {
+              name: targetName,
+              type: currentDesign.type || 'Planificador',
+              summary: currentDesign.summary || '',
+              editUrl: window.location.pathname,
+              data: cleanData,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+          } catch (cloudErr) {
+            console.warn('Aviso actualizando diseño en Firestore (actualizado localmente):', cloudErr);
+          }
+        }
 
         // Actualizar copia local de seguridad en el navegador
         try {
@@ -886,8 +1101,8 @@ function openSaveChoiceModal(currentDesign, existingDesigns, user, redirectAfter
             type: currentDesign.type || 'Planificador',
             summary: currentDesign.summary || '',
             editUrl: window.location.pathname,
-            data: currentDesign.data || {},
-            updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+            data: localData,
+            updatedAt: { seconds: nowSecs }
           };
           if (idx >= 0) {
             localDesigns[idx] = { ...localDesigns[idx], ...updatedItem };
@@ -946,6 +1161,9 @@ function formatDate(timestamp) {
   if (!timestamp) return 'Reciente';
   if (typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+  if (timestamp.seconds) {
+    return new Date(timestamp.seconds * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   }
   return 'Reciente';
 }

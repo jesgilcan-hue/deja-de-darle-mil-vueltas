@@ -6465,25 +6465,87 @@ export function getCalcudokuCageMap(pz) {
 }
 
 // ==========================================
-// 3. GENERADOR DE CRUZADAS (WORD FIT)
+// 3. GENERADOR DE CRUZADAS (WORD FIT) CON GRAN BANCO SIN REPETICIÓN
 // ==========================================
-export function generateCruzadaPuzzle(format = '8x6', themeKey = 'desconexion') {
+export const MASTER_CRUZADAS_WORDS = [
+    // 3 letras
+    'SOL', 'MAR', 'LUZ', 'PAZ', 'VOZ', 'DIA', 'HOY', 'SER', 'RED', 'GOL', 'ARO', 'BOX', 'RIO', 'SUR', 'SAL', 'AJO', 'PAN', 'GAS', 'OJO', 'EJE',
+    'OSO', 'PEZ', 'SON', 'ECO', 'OLA', 'UVA', 'AVE', 'REY', 'LEY', 'FIN', 'DOS', 'UNO', 'MIL', 'SUR', 'MES', 'AÑO', 'PIE', 'TIO', 'TIA', 'PAR',
+    // 4 letras
+    'FOCO', 'HOJA', 'PASO', 'VIDA', 'AIRE', 'HORA', 'SOLO', 'NADA', 'TIRO', 'SURF', 'REMO', 'JUDO', 'GOLF', 'PESA', 'PINO', 'HAYA', 'LAGO', 'ROCA',
+    'RAMA', 'FLOR', 'RAIZ', 'MOKA', 'TAZA', 'VASO', 'MESA', 'AGUA', 'SOFA', 'RETO', 'IDEA', 'DATO', 'MAPA', 'PLAN', 'OLLA', 'CHEF', 'PERA', 'NUEZ',
+    'RUTA', 'TREN', 'ISLA', 'GUIA', 'FARO', 'CALA', 'LOBO', 'LEON', 'LUNA', 'CORO', 'BAJO', 'CINE', 'ARTE', 'OBRA', 'NOTA', 'TONO', 'MODO', 'BASE',
+    'CIMA', 'VALE', 'NUBE', 'RAYO', 'GOTA', 'MIEL', 'SEDA', 'LINO', 'LANA', 'ORO', 'PLATA', 'COBRE', ' HILO', 'NUDO', 'VELA', 'PROA', 'POPA', 'TIMON',
+    'ARCO', 'BOTE', 'CUBO', 'DADO', 'FARO', 'GIRO', 'HADA', 'IMAN', 'JOYA', 'KILO', 'LUPA', 'MINA', 'NIDO', 'ONDA', 'PALA', 'RAMA', 'SOGA', 'TELA',
+    'URNA', 'VINO', 'YATE', 'ZONA', 'AULA', 'BECA', 'CITA', 'DUDA', 'EDAD', 'FASE', 'GALA', 'HITO', 'ITEM', 'JUEZ', 'LADO', 'META', 'NEXO', 'OCIO',
+    // 5 letras
+    'TINTA', 'PAPEL', 'LIBRO', 'CALMA', 'PAUSA', 'RITMO', 'TRAZO', 'NOTAS', 'ORDEN', 'VERDE', 'SUAVE', 'BRISA', 'CLARO', 'PLUMA', 'TARDE', 'SUEÑO',
+    'TENIS', 'BOXEO', 'PADEL', 'ESQUI', 'RUGBY', 'BALON', 'PISTA', 'DISCO', 'DARDO', 'MONTE', 'ARBOL', 'VALLE', 'HOJAS', 'NIEVE', 'CANTO', 'LECHE',
+    'CALOR', 'AROMA', 'VAPOR', 'GRANO', 'CREMA', 'DULCE', 'BARRA', 'CACAO', 'TIBIO', 'TRAGO', 'SORBO', 'JARRA', 'RAZON', 'RANGO', 'IDEAS', 'CIFRA',
+    'SABER', 'AGUDO', 'HORNO', 'FUEGO', 'GUISO', 'CALDO', 'HUEVO', 'PASTA', 'ARROZ', 'SABOR', 'PLATO', 'LIMON', 'CARNE', 'CLAVO', 'AVION', 'BARCO',
+    'HOTEL', 'CALLE', 'VUELO', 'ANDEN', 'NORTE', 'RUMBO', 'MUNDO', 'TORRE', 'BAZAR', 'TIGRE', 'PANDA', 'ZEBRA', 'MARTE', 'PIANO', 'ACTOR', 'GUION',
+    'CAMPO', 'PLAYA', 'COSTA', 'BAHIA', 'DELTA', 'DUNAS', 'SELVA', 'OASIS', 'PRADO', 'CERRO', 'CUEVA', 'GRUTA', 'POZO', 'FUENTE', 'CAUCE', 'CANAL',
+    'PUENTE', 'MUELLE', 'PLAZA', 'PATIO', 'TECHO', 'MURO', 'PARED', 'SUELO', 'PUERTA', 'LLAVE', 'CERRO', 'BANCO', 'SILLA', 'SILLON', 'REPISA', 'MARCO',
+    'LIENZO', 'PINCEL', 'MURAL', 'BUSTO', 'VERSO', 'PROSA', 'POEMA', 'DRAMA', 'OPERA', 'DANZA', 'BALLET', 'CORAL', 'FLAUTA', 'VIOLIN', 'TAMBOR', 'LAUD',
+    'MANGO', 'MELON', 'FRESA', 'MORAS', 'CIRUELA', 'CEREZA', 'OLIVA', 'TRIGO', 'AVENA', 'CENTENO', 'CEBADA', 'MAIZ', 'CACAO', 'MENTA', 'SALVIA', 'CEDRO',
+    // 6 letras
+    'ALIVIO', 'TIEMPO', 'DIARIO', 'REPOSO', 'BLANCO', 'SERENO', 'FRESCO', 'PENSAR', 'CANCHA', 'FUTBOL', 'EQUIPO', 'SALTO', 'TROFEO', 'TATAMI', 'BOSQUE',
+    'VIENTO', 'TIERRA', 'TRONCO', 'CRESTA', 'CUMBRE', 'NIEBLA', 'PIEDRA', 'ARROYO', 'COLINA', 'CORONA', 'SIERRA', 'VEREDA', 'AURORA', 'ORIGEN', 'MAÑANA',
+    'TETERA', 'MOLIDO', 'FILTRO', 'PRENSA', 'RITUAL', 'LOGICA', 'JUICIO', 'CHISPA', 'METODO', 'CALCULO', 'PATRON', 'CODIGO', 'ACEITE', 'SARTEN', 'TOMATE',
+    'ROMERO', 'CANELA', 'HARINA', 'SALERO', 'LAUREL', 'PUEBLO', 'MALETA', 'CIUDAD', 'PUERTO', 'AGUILA', 'DELFIN', 'JIRAFA', 'ORBITA', 'COHETE', 'COMETA',
+    'CAMARA', 'ESCENA', 'RODAJE', 'PREMIO', 'SONIDO', 'ACORDE', 'COMPAS', 'TIMBRE', 'ESCALA', 'BOCETO', 'DIBUJO', 'GRABADO', 'RELIEVE', 'ESTATUA', 'PORTAL',
+    'BALCON', 'JARDIN', 'HUERTO', 'VERGEL', 'CAMINO', 'VEREDA', 'ATAJO', ' PUERTO', 'CUMBRE', 'LADERA', 'CAÑADA', 'LAGUNA', 'RIBERA', 'ORILLA', 'MARGEN',
+    'OCEANO', 'MARINA', 'NAVIOS', 'VELERO', 'ANCLAS', 'BRUJULA', 'TIMON', 'FAROLA', 'LUCERO', 'LUCES', 'SOMBRA', 'REFLEJO', 'CRISTAL', 'ESPEJO', 'BRILLO',
+    // 7 letras
+    'ESPACIO', 'REFUGIO', 'DETALLE', 'LECTURA', 'MEMORIA', 'CARRERA', 'MARATON', 'MEDALLA', 'ENTRENO', 'PISCINA', 'CANASTA', 'SENDERO', 'LLANURA', 'CASCADA',
+    'PRADERA', 'TOSTADA', 'SABORES', 'GALLETA', 'ENFOQUE', 'REFLEJO', 'INGENIO', 'CRUZADA', 'ASTUCIA', 'CAZUELA', 'MANZANA', 'NARANJA', 'VINAGRE', 'POSTRES',
+    'VERDURA', 'DESTINO', 'PAISAJE', 'MIRADOR', 'MERCADO', 'CABALLO', 'BALLENA', 'PLANETA', 'GALAXIA', 'ESTRENO', 'ARMONIA', 'CLARIDAD', 'DESTREZA', 'ATENCION',
+    'CRITERIO', 'EQUIPAJE', 'ESTACION', 'AVENTURA', 'SENDERO', 'MIRADOR', 'PALACIO', 'CASTILLO', 'CATEDRAL', 'PORTICO', 'GALERIA', 'ARCHIVO', 'ESTUDIO', 'TALLER',
+    // 8 letras
+    'SILENCIO', 'DESCANSO', 'CICLISMO', 'VOLEIBOL', 'NATACION', 'ESCALADA', 'GIMNASIA', 'TRIATLON', 'BARRANCO', 'ROBLEDAL', 'CAFETERA', 'DESAYUNO', 'AGILIDAD',
+    'CUCHILLO', 'PIMIENTA', 'DELANTAL', 'LEOPARDO', 'ESTRELLA', 'UNIVERSO', 'GUITARRA', 'PANTALLA', 'PELICULA', 'DIRECTOR', 'CUADERNO', 'PRESENTE', 'SERENIDAD'
+];
+
+export function generateCruzadaPuzzle(format = '8x6', themeKey = 'desconexion', usedWordsSet = null, difficulty = 'easy') {
     const is6x9 = format === '6x9';
-    const cols = is6x9 ? 13 : 15;
+    const cols = 15;
     const rows = is6x9 ? 15 : 14;
+    const targetWords = 20;
 
     const theme = CRUZADAS_THEMES[themeKey] || CRUZADAS_THEMES.desconexion;
-    const cleanPool = shuffle(theme.words)
-        .map(cleanWord)
-        .filter(w => w.length >= 3 && w.length <= (is6x9 ? 8 : 9));
+    const combinedRaw = [
+        ...shuffle(theme.words),
+        ...shuffle(MASTER_CRUZADAS_WORDS)
+    ];
+
+    const seenLocal = new Set();
+    const freshPool = [];
+    const fallbackPool = [];
+
+    for (const rawW of combinedRaw) {
+        const w = cleanWord(rawW);
+        if (w.length < 3 || w.length > 8) continue;
+        if (seenLocal.has(w)) continue;
+        seenLocal.add(w);
+        if (usedWordsSet && usedWordsSet.has(w)) {
+            fallbackPool.push(w);
+        } else {
+            freshPool.push(w);
+        }
+    }
+
+    const cleanPool = [...freshPool, ...fallbackPool];
 
     let bestGrid = null;
     let bestPlaced = [];
 
-    for (let round = 0; round < 70; round++) {
+    for (let round = 0; round < 80; round++) {
         const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
         const placed = [];
-        const wordsQueue = shuffle(cleanPool);
+        const wordsQueue = [
+            ...shuffle(freshPool),
+            ...shuffle(fallbackPool)
+        ];
 
         const first = wordsQueue.shift();
         if (!first) break;
@@ -6493,86 +6555,134 @@ export function generateCruzadaPuzzle(format = '8x6', themeKey = 'desconexion') 
 
         const firstCells = [];
         for (let i = 0; i < first.length; i++) {
-            const r = firstHoriz ? startR : startR - Math.floor(first.length / 2) + i;
-            const c = firstHoriz ? startC + i : Math.floor(cols / 2);
+            const r = firstHoriz ? startR : startR + i;
+            const c = firstHoriz ? startC + i : startC;
             if (r >= 0 && r < rows && c >= 0 && c < cols) {
                 grid[r][c] = first[i];
                 firstCells.push([r, c]);
             }
         }
         if (firstCells.length === first.length) {
-            placed.push({ word: first, cells: firstCells, horizontal: firstHoriz });
+            placed.push({ word: first, r: startR, c: startC, isHoriz: firstHoriz, horizontal: firstHoriz, cells: firstCells });
         }
 
-        while (wordsQueue.length > 0 && placed.length < 20) {
-            const candidate = wordsQueue.shift();
-            let placedCand = false;
+        for (const word of wordsQueue) {
+            if (placed.length >= targetWords) break;
+            const len = word.length;
+            const validPlacements = [];
 
-            const existingShuffled = shuffle(placed.slice());
-            for (const ep of existingShuffled) {
-                if (placedCand) break;
-                const needHoriz = !ep.horizontal;
+            for (const existingWord of placed) {
+                const targetHoriz = !existingWord.isHoriz;
 
-                for (let ci = 0; ci < candidate.length; ci++) {
-                    if (placedCand) break;
-                    const char = candidate[ci];
+                for (let i = 0; i < len; i++) {
+                    const char = word[i];
+                    for (let j = 0; j < existingWord.word.length; j++) {
+                        if (existingWord.word[j] === char) {
+                            const crossR = existingWord.cells[j][0];
+                            const crossC = existingWord.cells[j][1];
 
-                    for (let ei = 0; ei < ep.word.length; ei++) {
-                        if (ep.word[ei] === char) {
-                            const intersectCell = ep.cells[ei];
-                            const ir = intersectCell[0];
-                            const ic = intersectCell[1];
+                            const candR = targetHoriz ? crossR : crossR - i;
+                            const candC = targetHoriz ? crossC - i : crossC;
+                            const endR = targetHoriz ? candR : candR + len - 1;
+                            const endC = targetHoriz ? candC + len - 1 : candC;
 
-                            const startR = needHoriz ? ir : ir - ci;
-                            const startC = needHoriz ? ic - ci : ic;
+                            if (candR >= 0 && endR < rows && candC >= 0 && endC < cols) {
+                                let canPlace = true;
 
-                            // Comprobar ajuste
-                            let fits = true;
-                            const testCells = [];
+                                const prevR = targetHoriz ? candR : candR - 1;
+                                const prevC = targetHoriz ? candC - 1 : candC;
+                                const nextR = targetHoriz ? candR : endR + 1;
+                                const nextC = targetHoriz ? endC + 1 : candC;
 
-                            for (let k = 0; k < candidate.length; k++) {
-                                const tr = needHoriz ? startR : startR + k;
-                                const tc = needHoriz ? startC + k : startC;
+                                if (prevR >= 0 && prevR < rows && prevC >= 0 && prevC < cols && grid[prevR][prevC] !== null) canPlace = false;
+                                if (nextR >= 0 && nextR < rows && nextC >= 0 && nextC < cols && grid[nextR][nextC] !== null) canPlace = false;
 
-                                if (tr < 0 || tr >= rows || tc < 0 || tc >= cols) {
-                                    fits = false; break;
-                                }
+                                if (canPlace) {
+                                    const cells = [];
+                                    for (let k = 0; k < len; k++) {
+                                        const r = targetHoriz ? candR : candR + k;
+                                        const c = targetHoriz ? candC + k : candC;
+                                        const currentVal = grid[r][c];
 
-                                const existingLetter = grid[tr][tc];
-                                if (existingLetter !== null && existingLetter !== candidate[k]) {
-                                    fits = false; break;
-                                }
+                                        if (currentVal !== null && currentVal !== word[k]) {
+                                            canPlace = false;
+                                            break;
+                                        }
 
-                                if (existingLetter === null) {
-                                    if (needHoriz) {
-                                        if (tr > 0 && grid[tr - 1][tc] !== null) { fits = false; break; }
-                                        if (tr < rows - 1 && grid[tr + 1][tc] !== null) { fits = false; break; }
-                                    } else {
-                                        if (tc > 0 && grid[tr][tc - 1] !== null) { fits = false; break; }
-                                        if (tc < cols - 1 && grid[tr][tc + 1] !== null) { fits = false; break; }
+                                        if (currentVal === null) {
+                                            const adj1R = targetHoriz ? r - 1 : r;
+                                            const adj1C = targetHoriz ? c : c - 1;
+                                            const adj2R = targetHoriz ? r + 1 : r;
+                                            const adj2C = targetHoriz ? c : c + 1;
+
+                                            if (adj1R >= 0 && adj1R < rows && adj1C >= 0 && adj1C < cols && grid[adj1R][adj1C] !== null) canPlace = false;
+                                            if (adj2R >= 0 && adj2R < rows && adj2C >= 0 && adj2C < cols && grid[adj2R][adj2C] !== null) canPlace = false;
+                                        }
+                                        cells.push([r, c]);
+                                    }
+
+                                    if (canPlace) {
+                                        validPlacements.push({ word, r: candR, c: candC, isHoriz: targetHoriz, horizontal: targetHoriz, cells });
                                     }
                                 }
-                                testCells.push([tr, tc]);
-                            }
-
-                            if (fits) {
-                                for (let k = 0; k < candidate.length; k++) {
-                                    grid[testCells[k][0]][testCells[k][1]] = candidate[k];
-                                }
-                                placed.push({ word: candidate, cells: testCells, horizontal: needHoriz });
-                                placedCand = true;
-                                break;
                             }
                         }
                     }
                 }
             }
+
+            if (validPlacements.length > 0) {
+                const chosen = validPlacements[Math.floor(Math.random() * validPlacements.length)];
+                for (let k = 0; k < len; k++) {
+                    const [r, c] = chosen.cells[k];
+                    grid[r][c] = word[k];
+                }
+                placed.push(chosen);
+            }
         }
 
-        if (placed.length > bestPlaced.length) {
-            bestPlaced = placed;
-            bestGrid = grid.map(row => row.slice());
-            if (bestPlaced.length >= 18) break;
+        if (!bestGrid || placed.length > bestPlaced.length) {
+            bestGrid = grid.map(r => r.slice());
+            bestPlaced = placed.slice();
+            if (bestPlaced.length >= targetWords) break;
+        }
+    }
+
+    if (usedWordsSet) {
+        bestPlaced.forEach(p => usedWordsSet.add(p.word));
+    }
+
+    // Determinar pistas iniciales (Starter Clues) igual que en generador-cruzadas.html
+    const starterCluesList = [];
+    const starterClues = {};
+    if (bestPlaced.length > 0) {
+        if (difficulty === 'easy') {
+            const sortedByLen = bestPlaced.slice().sort((a, b) => a.word.length - b.word.length);
+            const starterWord = sortedByLen[0];
+            starterWord.cells.forEach(([r, c]) => {
+                starterCluesList.push({ r, c, char: bestGrid[r][c] });
+                starterClues[`${r},${c}`] = bestGrid[r][c];
+            });
+            const otherWord = sortedByLen[1] || bestPlaced[0];
+            if (otherWord && otherWord.cells.length > 0) {
+                const c1 = otherWord.cells[0];
+                if (!starterClues[`${c1[0]},${c1[1]}`]) {
+                    starterCluesList.push({ r: c1[0], c: c1[1], char: bestGrid[c1[0]][c1[1]] });
+                    starterClues[`${c1[0]},${c1[1]}`] = bestGrid[c1[0]][c1[1]];
+                }
+            }
+        } else if (difficulty === 'medium') {
+            const sortedByLen = bestPlaced.slice().sort((a, b) => a.word.length - b.word.length);
+            const starterWord = sortedByLen[0];
+            starterWord.cells.forEach(([r, c]) => {
+                starterCluesList.push({ r, c, char: bestGrid[r][c] });
+                starterClues[`${r},${c}`] = bestGrid[r][c];
+            });
+        } else {
+            const firstWord = bestPlaced[0];
+            const middleCell = firstWord.cells[Math.floor(firstWord.cells.length / 2)];
+            starterCluesList.push({ r: middleCell[0], c: middleCell[1], char: bestGrid[middleCell[0]][middleCell[1]] });
+            starterClues[`${middleCell[0]},${middleCell[1]}`] = bestGrid[middleCell[0]][middleCell[1]];
         }
     }
 
@@ -6587,6 +6697,9 @@ export function generateCruzadaPuzzle(format = '8x6', themeKey = 'desconexion') 
     return {
         grid: bestGrid,
         placed: bestPlaced,
+        placedWords: bestPlaced,
+        starterClues,
+        starterCluesList,
         rows,
         cols,
         themeTitle: theme.title,
@@ -6597,28 +6710,47 @@ export function generateCruzadaPuzzle(format = '8x6', themeKey = 'desconexion') 
 // ==========================================
 // 4. GENERADOR DE SOPAS DE LETRAS
 // ==========================================
-export function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'desconexion') {
+export function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'desconexion', usedWordsSet = null) {
     const is6x9 = format === '6x9';
     const cols = is6x9 ? 13 : 15;
     const rows = is6x9 ? 15 : 13;
 
     const theme = SOPAS_THEMES[themeKey] || SOPAS_THEMES.desconexion;
-    const cleanWordList = shuffle(theme.words)
-        .map(cleanWord)
-        .filter(w => w.length >= 3 && w.length <= Math.max(rows, cols))
-        .sort((a, b) => b.length - a.length)
-        .slice(0, 18);
+    const allThemeWords = [
+        ...shuffle(theme.words),
+        ...shuffle(MASTER_CRUZADAS_WORDS)
+    ];
+
+    const seenLocal = new Set();
+    const freshWords = [];
+    const fallbackWords = [];
+    const maxLen = Math.min(rows, cols) - 1;
+
+    for (const rawW of allThemeWords) {
+        const w = cleanWord(rawW);
+        if (w.length < 4 || w.length > maxLen) continue;
+        if (seenLocal.has(w)) continue;
+        seenLocal.add(w);
+        if (usedWordsSet && usedWordsSet.has(w)) {
+            fallbackWords.push(w);
+        } else {
+            freshWords.push(w);
+        }
+    }
+
+    const candidateList = [...freshWords, ...fallbackWords].slice(0, 32);
 
     const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
     const placedWords = [];
     const dirs = DIR_DEFINITIONS[difficulty] || DIR_DEFINITIONS.easy;
 
-    for (const word of cleanWordList) {
+    for (const word of candidateList) {
+        if (placedWords.length >= 18) break;
         const len = word.length;
         let placed = false;
         const shuffledDirs = shuffle(dirs);
 
-        for (let attempt = 0; attempt < 80 && !placed; attempt++) {
+        for (let attempt = 0; attempt < 100 && !placed; attempt++) {
             const dir = shuffledDirs[attempt % shuffledDirs.length];
             const startR = Math.floor(Math.random() * rows);
             const startC = Math.floor(Math.random() * cols);
@@ -6647,7 +6779,16 @@ export function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey
                     grid[r][c] = word[i];
                     cells.push([r, c]);
                 }
-                placedWords.push({ word, cells, dir: dir.name });
+                placedWords.push({
+                    word,
+                    cells,
+                    r: startR,
+                    c: startC,
+                    dr: dir.dr,
+                    dc: dir.dc,
+                    len
+                });
+                if (usedWordsSet) usedWordsSet.add(word);
                 placed = true;
             }
         }
@@ -6670,6 +6811,7 @@ export function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey
         grid,
         solutionGrid,
         placedWords,
+        solutions: placedWords,
         rows,
         cols,
         themeTitle: theme.title,
