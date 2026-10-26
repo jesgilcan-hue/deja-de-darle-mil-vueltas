@@ -25,6 +25,19 @@ const EXCLUDED_FILES = new Set([
   'admin-emails.html',
   'baja.html',
   '404.html',
+  'pasatiempos.html',
+  'generador-sudokus.html',
+  'generador-sopas.html',
+  'sopa-diaria.html',
+  'generador-cruzadas.html',
+  'cruzadas-diarias.html',
+  'kakuro-diario.html',
+  'generador-kakuro.html',
+  'calcudoku-diario.html',
+  'generador-calcudoku.html',
+  'hoy.html',
+  'sudoku-diario.html',
+  'como-generar-tu-planificador-facil-y-rapido.html',
   'generador-bitacora-enfoque.html'
 ]);
 
