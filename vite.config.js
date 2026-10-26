@@ -46,6 +46,7 @@ export default defineConfig({
         ensayoCallar: resolve(__dirname, 'por-que-callar-para-no-crear-conflicto-sale-mas-caro.html'),
         ensayoGeneradores: resolve(__dirname, 'como-generar-tu-planificador-facil-y-rapido.html'),
         ensayoSudoku: resolve(__dirname, 'por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html'),
+        ensayoDormir: resolve(__dirname, 'como-dejar-el-movil-antes-de-dormir.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
