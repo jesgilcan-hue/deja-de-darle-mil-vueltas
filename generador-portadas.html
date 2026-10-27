@@ -1311,72 +1311,123 @@
                 </div>
             </div>
 
-            <!-- PESTAÑA 2: SUBIDA Y AJUSTE DE FOTOGRAFÍA -->
+                        <!-- PESTAÑA 2: SUBIDA Y AJUSTE DE FOTOGRAFÍA (PORTADA Y CONTRAPORTADA INDEPENDIENTES) -->
             <div class="tab-section" id="tabSec-photo">
                 <div class="control-card">
-                    <div class="control-card-title">
-                        <span>Fotografía Personal en Portada</span>
-                        <span id="photoStatusBadge" style="font-size:0.68rem; color:#777;">Sin foto</span>
+                    <div class="control-card-title" style="flex-wrap: wrap; gap: 6px;">
+                        <span>Fotografía Personal</span>
+                        <!-- Selector de cara donde editar/ver la foto (arriba a la derecha) -->
+                        <div style="display:inline-flex; background:#e9e2d6; border-radius:999px; padding:2px; gap:2px; border:1px solid #d5cbbd;">
+                            <button type="button" id="btnPhotoTargetFront" onclick="selectPhotoSide('front')" style="border:none; background:#211c18; color:#ffffff; font-size:0.67rem; font-weight:800; padding:3px 9px; border-radius:999px; cursor:pointer; transition:all 0.15s;">
+                                📖 Portada <span id="badgePhotoFrontStatus" style="opacity:0.85;"></span>
+                            </button>
+                            <button type="button" id="btnPhotoTargetBack" onclick="selectPhotoSide('back')" style="border:none; background:transparent; color:#5a5248; font-size:0.67rem; font-weight:700; padding:3px 9px; border-radius:999px; cursor:pointer; transition:all 0.15s;">
+                                📘 Contraportada <span id="badgePhotoBackStatus" style="opacity:0.85;"></span>
+                            </button>
+                        </div>
                     </div>
 
-                    <label class="photo-upload-zone" for="photoFileInput">
-                        <input type="file" id="photoFileInput" accept="image/*" onchange="handlePhotoUpload(event)">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:#665e54; margin-top:-2px;">
+                        <span id="lblActivePhotoSideTitle" style="font-weight:700; color:#2b2520;">Editando: Portada (Delantera)</span>
+                        <span id="photoStatusBadge" style="font-size:0.68rem; color:#777;">Sin foto en esta cara</span>
+                    </div>
+
+                    <!-- Input de archivo oculto -->
+                    <input type="file" id="photoFileInput" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
+
+                    <!-- Zona de clic para subir que pregunta si quiere en Portada o Contraportada -->
+                    <div class="photo-upload-zone" onclick="openPhotoSideChoicePrompt()">
                         <div style="font-size: 1.5rem; margin-bottom: 4px;">📷</div>
-                        <div style="font-size: 0.84rem; font-weight: 700; color: #2b2520;">Haz clic para subir una foto</div>
-                        <div style="font-size: 0.72rem; color: #776f65; margin-top: 2px;">JPG, PNG o WebP · Listo para imprenta</div>
-                    </label>
+                        <div style="font-size: 0.84rem; font-weight: 700; color: #2b2520;" id="lblPhotoUploadMainText">Haz clic para subir una foto</div>
+                        <div style="font-size: 0.72rem; color: #776f65; margin-top: 2px;">Elige al subir si ponerla en Portada, en Contraportada o en ambas</div>
+                    </div>
+
+                    <!-- Mini selector emergente al pulsar "Haz clic para subir una foto" -->
+                    <div id="photoSideChoiceBox" style="display:none; background:#faf6ef; border:1.5px solid #87553b; border-radius:9px; padding:11px 12px; flex-direction:column; gap:8px; box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.76rem; font-weight:800; color:#211c18;">¿Dónde quieres colocar esta foto?</span>
+                            <button type="button" onclick="closePhotoSideChoicePrompt()" style="border:none; background:transparent; color:#776f65; cursor:pointer; font-size:0.85rem; font-weight:700;">✕</button>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <button type="button" onclick="triggerPhotoFileDialog('front')" style="background:#211c18; color:#fff; border:none; border-radius:7px; padding:9px 8px; font-size:0.76rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <span style="font-size:1.1rem;">📖</span>
+                                <span>En la Portada</span>
+                                <span style="font-size:0.65rem; opacity:0.8; font-weight:500;">Cara delantera</span>
+                            </button>
+                            <button type="button" onclick="triggerPhotoFileDialog('back')" style="background:#87553b; color:#fff; border:none; border-radius:7px; padding:9px 8px; font-size:0.76rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <span style="font-size:1.1rem;">📘</span>
+                                <span>En Contraportada</span>
+                                <span style="font-size:0.65rem; opacity:0.85; font-weight:500;">Cara trasera</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <div id="photoControlsWrap" style="display: none; flex-direction: column; gap: 10px; margin-top: 4px;">
                         <div class="field-group">
-                            <label for="photoLayoutSelect">Disposición de la Foto en Portada:</label>
-                            <select id="photoLayoutSelect" onchange="updateConfigFromUI()">
+                            <label for="photoLayoutSelect" id="lblPhotoLayoutSelect">Disposición de la Foto:</label>
+                            <select id="photoLayoutSelect" onchange="updatePhotoLayoutFromUI()">
                                 <option value="window">🖼️ Ventana Editorial Derecha/Inferior</option>
                                 <option value="center_card">🎴 Recuadro Central Enmarcado</option>
                                 <option value="circle">⭕ Medallón Circular Clásico</option>
-                                <option value="full_front">🌅 Portada Delantera Completa (Con velo de lectura)</option>
+                                <option value="full_front">🌅 Cara Completa al 100%</option>
                             </select>
                         </div>
 
                         <div class="field-group">
-                            <label for="photoFilterSelect">Filtro Estético Menos Ruido:</label>
+                            <label for="photoFilterSelect">Filtro de Color e Iluminación:</label>
                             <select id="photoFilterSelect" onchange="applyPhotoFilterAndRender()">
-                                <option value="none">🎨 Color Original</option>
+                                <option value="none">🎨 Color Original Nítido (100% Natural)</option>
+                                <option value="vivid">✨ Vivo y Luminoso (+Luz y +Color)</option>
                                 <option value="bw">🖤 Blanco y Negro Editorial (Alto Contraste)</option>
-                                <option value="sepia">📜 Sepia Cálido Analógico</option>
-                                <option value="soft">🌿 Mate Suave Desaturado</option>
+                                <option value="sepia">📜 Sepia Cálido Clásico</option>
+                                <option value="soft">🌿 Mate Suave</option>
                             </select>
                         </div>
 
                         <div class="field-group">
-                            <label><span>Zoom de la imagen</span> <span id="lblPhotoZoom">100%</span></label>
+                            <label><span>☀️ Luz y Brillo</span> <span id="lblPhotoBrightness">100%</span></label>
+                            <div class="range-slider-row">
+                                <input type="range" id="rngPhotoBrightness" min="60" max="160" value="100" oninput="updatePhotoLightAndColor()">
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label><span>🌈 Intensidad de Color (Saturación)</span> <span id="lblPhotoSaturation">100%</span></label>
+                            <div class="range-slider-row">
+                                <input type="range" id="rngPhotoSaturation" min="0" max="200" value="100" oninput="updatePhotoLightAndColor()">
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label><span>🔍 Zoom de la imagen</span> <span id="lblPhotoZoom">100%</span></label>
                             <div class="range-slider-row">
                                 <input type="range" id="rngPhotoZoom" min="100" max="260" value="100" oninput="updatePhotoTransform()">
                             </div>
                         </div>
 
                         <div class="field-group">
-                            <label><span>Encuadre Horizontal (X)</span> <span id="lblPhotoX">0%</span></label>
+                            <label><span>↔️ Encuadre Horizontal (X)</span> <span id="lblPhotoX">0%</span></label>
                             <div class="range-slider-row">
                                 <input type="range" id="rngPhotoX" min="-100" max="100" value="0" oninput="updatePhotoTransform()">
                             </div>
                         </div>
 
                         <div class="field-group">
-                            <label><span>Encuadre Vertical (Y)</span> <span id="lblPhotoY">0%</span></label>
+                            <label><span>↕️ Encuadre Vertical (Y)</span> <span id="lblPhotoY">0%</span></label>
                             <div class="range-slider-row">
                                 <input type="range" id="rngPhotoY" min="-100" max="100" value="0" oninput="updatePhotoTransform()">
                             </div>
                         </div>
 
                         <div class="field-group" id="fullBleedOverlayGroup" style="display:none;">
-                            <label><span>Oscurecer fondo para leer texto</span> <span id="lblOverlayAlpha">45%</span></label>
+                            <label><span>Oscurecer foto con velo (0% = luz y color al 100%)</span> <span id="lblOverlayAlpha">0%</span></label>
                             <div class="range-slider-row">
-                                <input type="range" id="rngOverlayAlpha" min="10" max="85" value="45" oninput="updatePhotoTransform()">
+                                <input type="range" id="rngOverlayAlpha" min="0" max="85" value="0" oninput="updatePhotoTransform()">
                             </div>
                         </div>
 
-                        <button type="button" class="btn-action-secondary" style="width:100%; justify-content:center; color:#991b1b; border-color:#fecaca; background:#fef2f2;" onclick="removeUploadedPhoto()">
-                            🗑️ Quitar fotografía de la portada
+                        <button type="button" id="btnRemoveActivePhoto" class="btn-action-secondary" style="width:100%; justify-content:center; color:#991b1b; border-color:#fecaca; background:#fef2f2;" onclick="removeUploadedPhoto()">
+                            🗑️ Quitar fotografía de esta cara
                         </button>
                     </div>
                 </div>
@@ -1413,60 +1464,73 @@
                 </div>
 
                 <div class="control-card">
-                    <div class="control-card-title">
+                    <div class="control-card-title" style="flex-wrap:wrap; gap:6px;">
                         <span>Portada Delantera</span>
+                        <button type="button" onclick="resetAllSectionTextColors()" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.66rem; font-weight:700; border-radius:6px; padding:3px 8px; cursor:pointer;">↺ Colores de paleta</button>
                     </div>
                     <div class="field-group">
-                        <label for="inpKicker">Sello Superior / Colección:</label>
+                        <label for="inpKicker"><span>Sello Superior y Pie Editorial:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_frontBranding" value="#ffffff" oninput="setSectionTextColor('frontBranding', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('frontBranding')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpKicker" value="MENOS RUIDO" readonly disabled>
                     </div>
                     <div class="field-group">
-                        <label for="inpTitle">Título Principal:</label>
+                        <label for="inpTitle"><span>Título Principal:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_title" value="#ffffff" oninput="setSectionTextColor('title', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('title')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpTitle" value="Planificador anual" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBadge">Cintillo en Acento:</label>
+                        <label for="inpBadge"><span>Cintillo en Acento:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_badge" value="#ffffff" oninput="setSectionTextColor('badge', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('badge')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpBadge" value="52 SEMANAS, 12 MESES Y HABIT TRACKER" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpSubtitle">Subtítulo:</label>
-                        <input type="text" id="inpSubtitle" value="52 semanas, 12 meses y hábitos de perseverancia silenciosa" oninput="updateConfigFromUI()">
+                        <label for="inpSubtitle"><span>Subtítulo:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_subtitle" value="#ffffff" oninput="setSectionTextColor('subtitle', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('subtitle')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <input type="text" id="inpSubtitle" value="52 semanas, 12 meses y seguimiento de hábitos" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpFrontDesc">Descripción delantera:</label>
+                        <label for="inpFrontDesc"><span>Descripción delantera:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_frontDesc" value="#ffffff" oninput="setSectionTextColor('frontDesc', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('frontDesc')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <textarea id="inpFrontDesc" rows="2" oninput="updateConfigFromUI()">Saca las ideas de la cabeza. Estructura tus meses, diseña tus hábitos y organiza tus semanas con claridad y enfoque.</textarea>
                     </div>
                     <div class="field-group">
-                        <label for="inpAuthor">Propietario / Pie de portada:</label>
+                        <label for="inpAuthor"><span>Propietario / Pie de portada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_author" value="#ffffff" oninput="setSectionTextColor('author', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('author')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpAuthor" value="Edición Personalizada · Planificador anual" oninput="updateConfigFromUI()">
                     </div>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.76rem; color:#4b433b; cursor:pointer; margin-top:4px; padding-top:6px; border-top:1px dashed #e2d9cc;">
+                        <input type="checkbox" id="chkHideFrontBranding" onchange="updateConfigFromUI()">
+                        <span>Ocultar sello superior y pie fijo en portada (dejar solo mis textos o solo mi foto)</span>
+                    </label>
                 </div>
 
                 <div class="control-card">
-                    <div class="control-card-title">
+                    <div class="control-card-title" style="flex-wrap:wrap; gap:6px;">
                         <span>Contraportada y Lomo</span>
+                        <span style="font-size:0.66rem; color:#776f65; font-weight:600;">🎨 Color por sección</span>
                     </div>
                     <div class="field-group">
-                        <label for="inpSpineText">Texto del Lomo (Solo Tapa Blanda / Tapa Dura):</label>
+                        <label for="inpSpineText"><span>Texto del Lomo (Tapa Blanda / Dura):</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_spineText" value="#ffffff" oninput="setSectionTextColor('spineText', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('spineText')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpSpineText" value="MENOS RUIDO  •  PLANIFICADOR ANUAL" disabled oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBackTitle">Título de Contraportada:</label>
+                        <label><span>Sello y Pie Web Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backBranding" value="#ffffff" oninput="setSectionTextColor('backBranding', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backBranding')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                    </div>
+                    <div class="field-group">
+                        <label for="inpBackTitle"><span>Título de Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backTitle" value="#ffffff" oninput="setSectionTextColor('backTitle', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backTitle')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpBackTitle" value="Pensar en Papel" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBackIntro">Párrafo de Contraportada:</label>
+                        <label for="inpBackIntro"><span>Párrafo de Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backIntro" value="#ffffff" oninput="setSectionTextColor('backIntro', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backIntro')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <textarea id="inpBackIntro" rows="3" oninput="updateConfigFromUI()">Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.</textarea>
                     </div>
                     <div class="field-group">
-                        <label for="inpBackBullets">Lista de Contenidos:</label>
-                        <textarea id="inpBackBullets" rows="5" readonly disabled>Calendario panorámico de 12 meses
+                        <label for="inpBackBullets"><span>Lista de Contenidos (Editable):</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backBullets" value="#ffffff" oninput="setSectionTextColor('backBullets', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backBullets')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <textarea id="inpBackBullets" rows="5" oninput="updateBulletsFromUI()">Calendario panorámico de 12 meses
 Planificador anual por trimestres (1 pág.)
 Planificador mensual estructurado (12 meses)
 Rastreador de hábitos de 31 días (12 meses)
 Planificador semanal de foco (52 semanas)
 Sección de notas libres (10 páginas)</textarea>
                     </div>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.76rem; color:#4b433b; cursor:pointer; margin-top:4px; padding-top:6px; border-top:1px dashed #e2d9cc;">
+                        <input type="checkbox" id="chkHideBackBranding" onchange="updateConfigFromUI()">
+                        <span>Ocultar sello, encabezado «Estructura del cuaderno» y pie web en contraportada</span>
+                    </label>
                 </div>
             </div>
 
@@ -2126,16 +2190,47 @@ Sección de notas libres (10 páginas)</textarea>
             backTitle: 'Pensar en Papel',
             backIntro: 'Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.',
             backBullets: [...PLANNER_COVER_PRESETS.anual.backBullets],
+            hideFrontBranding: false,
+            hideBackBranding: false,
+            textColors: {
+                frontBranding: '',
+                title: '',
+                badge: '',
+                subtitle: '',
+                frontDesc: '',
+                author: '',
+                spineText: '',
+                backBranding: '',
+                backTitle: '',
+                backIntro: '',
+                backBullets: ''
+            },
+            activePhotoSide: 'front',
             photo: {
                 originalImage: null,
                 processedImage: null,
                 filteredDataUrl: null,
                 layout: 'window',      // 'window' | 'center_card' | 'circle' | 'full_front'
-                filter: 'none',        // 'none' | 'bw' | 'sepia' | 'soft'
+                filter: 'none',        // 'none' | 'vivid' | 'bw' | 'sepia' | 'soft'
+                brightness: 100,
+                saturation: 100,
                 zoom: 100,
                 offsetX: 0,
                 offsetY: 0,
-                overlayAlpha: 45
+                overlayAlpha: 0
+            },
+            photoBack: {
+                originalImage: null,
+                processedImage: null,
+                filteredDataUrl: null,
+                layout: 'window',      // 'window' | 'center_card' | 'circle' | 'full_front'
+                filter: 'none',        // 'none' | 'vivid' | 'bw' | 'sepia' | 'soft'
+                brightness: 100,
+                saturation: 100,
+                zoom: 100,
+                offsetX: 0,
+                offsetY: 0,
+                overlayAlpha: 0
             }
         };
 
@@ -3130,6 +3225,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
         function setTemplate(tpl) {
             coverState.template = tpl;
+            if (typeof syncTextColorPickersUI === 'function') syncTextColorPickersUI();
             document.querySelectorAll('.style-card-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-template') === tpl);
             });
@@ -3139,6 +3235,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
         function setPalette(pal) {
             coverState.palette = pal;
+            if (typeof syncTextColorPickersUI === 'function') syncTextColorPickersUI();
             document.querySelectorAll('.palette-circle').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-palette') === pal);
             });
@@ -3169,18 +3266,35 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             coverState.backTitle = document.getElementById('inpBackTitle').value;
             coverState.backIntro = document.getElementById('inpBackIntro').value;
 
+            const chkFrontBrand = document.getElementById('chkHideFrontBranding');
+            const chkBackBrand = document.getElementById('chkHideBackBranding');
+            coverState.hideFrontBranding = chkFrontBrand ? chkFrontBrand.checked : false;
+            coverState.hideBackBranding = chkBackBrand ? chkBackBrand.checked : false;
+
+            const bulletsEl = document.getElementById('inpBackBullets');
+            if (bulletsEl) {
+                coverState.backBullets = bulletsEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+            }
+
             // Formato fijo a 8.25" x 6" del Cuaderno Completo
             coverState.trimFormat = 'landscape_825_6';
             coverState.paperThicknessMm = parseFloat(document.getElementById('selPaperWeight').value) || 0.0635;
 
-            const photoLayout = document.getElementById('photoLayoutSelect').value;
-            coverState.photo.layout = photoLayout;
-            document.getElementById('fullBleedOverlayGroup').style.display = (photoLayout === 'full_front') ? 'flex' : 'none';
+            if (typeof syncPhotoPanelUI === 'function') syncPhotoPanelUI();
+            if (typeof syncTextColorPickersUI === 'function') syncTextColorPickersUI();
 
             if (triggerCartDirty) markCartModified();
             updateSpecsLabels();
             renderCoverPreview();
         }
+
+        function updateBulletsFromUI() {
+            const raw = document.getElementById('inpBackBullets').value || '';
+            coverState.backBullets = raw.split('\n').map(s => s.trim()).filter(Boolean);
+            markCartModified();
+            renderCoverPreview();
+        }
+        window.updateBulletsFromUI = updateBulletsFromUI;
 
         function getCalculatedSpineMm() {
             if (coverState.bindingType === 'coil') return 0;
@@ -3265,22 +3379,276 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
         }
 
         // =====================================================================
-        // GESTIÓN DE FOTOGRAFÍA DEL USUARIO Y FILTROS EN MEMORIA
+        // COLORES DE TEXTO PERSONALIZADOS POR SECCIÓN
         // =====================================================================
+        function getDefaultSectionColors() {
+            const pal = PALETTES[coverState.palette] || PALETTES.forest;
+            const tpl = coverState.template;
+            let fMain = pal.textOnDark;
+            let fMuted = pal.mutedOnDark;
+            let bMain = pal.textOnDark;
+            let bMuted = pal.mutedOnDark;
+            const accent = pal.accent;
+
+            if (tpl === 'organico' || tpl === 'marco') {
+                fMain = pal.textOnLight;
+                fMuted = pal.mutedOnLight;
+                bMain = pal.textOnLight;
+                bMuted = pal.mutedOnLight;
+            } else if (tpl === 'bicolor') {
+                fMain = pal.textOnLight;
+                fMuted = pal.mutedOnLight;
+                bMain = pal.textOnDark;
+                bMuted = pal.mutedOnDark;
+            }
+
+            if (coverState.photo && (coverState.photo.processedImage || coverState.photo.originalImage) && coverState.photo.layout === 'full_front') {
+                fMain = '#f7f4ee';
+                fMuted = '#dfd8ce';
+            }
+            if (coverState.photoBack && (coverState.photoBack.processedImage || coverState.photoBack.originalImage) && coverState.photoBack.layout === 'full_front') {
+                bMain = '#f7f4ee';
+                bMuted = '#dfd8ce';
+            }
+
+            return {
+                frontBranding: fMain,
+                title: fMain,
+                badge: accent,
+                subtitle: fMain,
+                frontDesc: fMuted,
+                author: fMuted,
+                spineText: pal.textOnDark,
+                backBranding: bMain,
+                backTitle: bMain,
+                backIntro: bMuted,
+                backBullets: bMuted
+            };
+        }
+
+        function syncTextColorPickersUI() {
+            const defaults = getDefaultSectionColors();
+            const tc = coverState.textColors || {};
+            Object.keys(defaults).forEach(key => {
+                const inp = document.getElementById('col_' + key);
+                if (inp) {
+                    inp.value = tc[key] || defaults[key] || '#211c18';
+                }
+            });
+        }
+        window.syncTextColorPickersUI = syncTextColorPickersUI;
+
+        function setSectionTextColor(key, hexVal) {
+            if (!coverState.textColors) coverState.textColors = {};
+            coverState.textColors[key] = hexVal;
+            markCartModified();
+            renderCoverPreview();
+        }
+        window.setSectionTextColor = setSectionTextColor;
+
+        function resetSectionTextColor(key) {
+            if (coverState.textColors) coverState.textColors[key] = '';
+            syncTextColorPickersUI();
+            markCartModified();
+            renderCoverPreview();
+        }
+        window.resetSectionTextColor = resetSectionTextColor;
+
+        function resetAllSectionTextColors() {
+            if (coverState.textColors) {
+                Object.keys(coverState.textColors).forEach(k => { coverState.textColors[k] = ''; });
+            }
+            syncTextColorPickersUI();
+            markCartModified();
+            renderCoverPreview();
+        }
+        window.resetAllSectionTextColors = resetAllSectionTextColors;
+
+        // =====================================================================
+        // GESTIÓN DE FOTOGRAFÍA INDEPENDIENTE EN PORTADA Y CONTRAPORTADA
+        // =====================================================================
+        function getActivePhotoObj(side) {
+            const target = side || coverState.activePhotoSide || 'front';
+            return target === 'back' ? coverState.photoBack : coverState.photo;
+        }
+
+        function openPhotoSideChoicePrompt() {
+            const box = document.getElementById('photoSideChoiceBox');
+            if (box) box.style.display = 'flex';
+        }
+        window.openPhotoSideChoicePrompt = openPhotoSideChoicePrompt;
+
+        function closePhotoSideChoicePrompt() {
+            const box = document.getElementById('photoSideChoiceBox');
+            if (box) box.style.display = 'none';
+        }
+        window.closePhotoSideChoicePrompt = closePhotoSideChoicePrompt;
+
+        function triggerPhotoFileDialog(side) {
+            closePhotoSideChoicePrompt();
+            selectPhotoSide(side);
+            const inp = document.getElementById('photoFileInput');
+            if (inp) {
+                inp.value = '';
+                inp.click();
+            }
+        }
+        window.triggerPhotoFileDialog = triggerPhotoFileDialog;
+
+        function selectPhotoSide(side) {
+            coverState.activePhotoSide = (side === 'back') ? 'back' : 'front';
+            if (coverState.bindingType === 'coil' && coverState.coilPreviewMode !== 'spread') {
+                setCoilPreviewMode(coverState.activePhotoSide);
+            }
+            syncPhotoPanelUI();
+        }
+        window.selectPhotoSide = selectPhotoSide;
+
+        function syncPhotoPanelUI() {
+            const isBack = coverState.activePhotoSide === 'back';
+            const pObj = getActivePhotoObj();
+            const hasFront = !!coverState.photo.originalImage;
+            const hasBack = !!coverState.photoBack.originalImage;
+
+            const btnF = document.getElementById('btnPhotoTargetFront');
+            const btnB = document.getElementById('btnPhotoTargetBack');
+            const statusF = document.getElementById('badgePhotoFrontStatus');
+            const statusB = document.getElementById('badgePhotoBackStatus');
+
+            if (statusF) statusF.textContent = hasFront ? '✓' : '';
+            if (statusB) statusB.textContent = hasBack ? '✓' : '';
+
+            if (btnF) {
+                btnF.style.background = !isBack ? '#211c18' : 'transparent';
+                btnF.style.color = !isBack ? '#ffffff' : '#5a5248';
+                btnF.style.fontWeight = !isBack ? '800' : '700';
+            }
+            if (btnB) {
+                btnB.style.background = isBack ? '#87553b' : 'transparent';
+                btnB.style.color = isBack ? '#ffffff' : '#5a5248';
+                btnB.style.fontWeight = isBack ? '800' : '700';
+            }
+
+            const lblSide = document.getElementById('lblActivePhotoSideTitle');
+            if (lblSide) {
+                lblSide.textContent = isBack ? 'Editando: Contraportada (Trasera)' : 'Editando: Portada (Delantera)';
+            }
+
+            const badge = document.getElementById('photoStatusBadge');
+            const wrap = document.getElementById('photoControlsWrap');
+            const lblUpload = document.getElementById('lblPhotoUploadMainText');
+            const btnRem = document.getElementById('btnRemoveActivePhoto');
+            const lblLayout = document.getElementById('lblPhotoLayoutSelect');
+
+            if (lblLayout) {
+                lblLayout.textContent = isBack ? 'Disposición de la Foto en Contraportada:' : 'Disposición de la Foto en Portada:';
+            }
+            if (btnRem) {
+                btnRem.innerHTML = isBack ? '🗑️ Quitar fotografía de la contraportada' : '🗑️ Quitar fotografía de la portada';
+            }
+
+            if (pObj.originalImage) {
+                if (wrap) wrap.style.display = 'flex';
+                if (badge) {
+                    badge.textContent = isBack ? '✓ Foto en Contraportada' : '✓ Foto en Portada';
+                    badge.style.color = '#2b7a4b';
+                }
+                if (lblUpload) lblUpload.textContent = 'Haz clic para subir o cambiar foto (Portada / Contraportada)';
+            } else {
+                if (wrap) wrap.style.display = 'none';
+                if (badge) {
+                    badge.textContent = 'Sin foto en esta cara';
+                    badge.style.color = '#777';
+                }
+                if (lblUpload) lblUpload.textContent = 'Haz clic para subir una foto';
+            }
+
+            const selLayout = document.getElementById('photoLayoutSelect');
+            if (selLayout) selLayout.value = pObj.layout || 'window';
+            const selFilter = document.getElementById('photoFilterSelect');
+            if (selFilter) selFilter.value = pObj.filter || 'none';
+
+            const rngBri = document.getElementById('rngPhotoBrightness');
+            const rngSat = document.getElementById('rngPhotoSaturation');
+            const rngZ = document.getElementById('rngPhotoZoom');
+            const rngX = document.getElementById('rngPhotoX');
+            const rngY = document.getElementById('rngPhotoY');
+            const rngA = document.getElementById('rngOverlayAlpha');
+
+            const briVal = pObj.brightness !== undefined ? pObj.brightness : 100;
+            const satVal = pObj.saturation !== undefined ? pObj.saturation : 100;
+            const alphaVal = pObj.overlayAlpha !== undefined ? pObj.overlayAlpha : 0;
+
+            if (rngBri) rngBri.value = briVal;
+            if (rngSat) rngSat.value = satVal;
+            if (rngZ) rngZ.value = pObj.zoom || 100;
+            if (rngX) rngX.value = pObj.offsetX || 0;
+            if (rngY) rngY.value = pObj.offsetY || 0;
+            if (rngA) rngA.value = alphaVal;
+
+            const lblBri = document.getElementById('lblPhotoBrightness');
+            const lblSat = document.getElementById('lblPhotoSaturation');
+            const lblZ = document.getElementById('lblPhotoZoom');
+            const lblX = document.getElementById('lblPhotoX');
+            const lblY = document.getElementById('lblPhotoY');
+            const lblA = document.getElementById('lblOverlayAlpha');
+
+            if (lblBri) lblBri.textContent = briVal + '%';
+            if (lblSat) lblSat.textContent = satVal + '%';
+            if (lblZ) lblZ.textContent = (pObj.zoom || 100) + '%';
+            if (lblX) lblX.textContent = (pObj.offsetX || 0) + '%';
+            if (lblY) lblY.textContent = (pObj.offsetY || 0) + '%';
+            if (lblA) lblA.textContent = alphaVal + '%';
+
+            const overlayGrp = document.getElementById('fullBleedOverlayGroup');
+            if (overlayGrp) {
+                overlayGrp.style.display = (pObj.layout === 'full_front') ? 'flex' : 'none';
+            }
+        }
+        window.syncPhotoPanelUI = syncPhotoPanelUI;
+
+        function updatePhotoLayoutFromUI() {
+            const pObj = getActivePhotoObj();
+            const layout = document.getElementById('photoLayoutSelect').value;
+            pObj.layout = layout;
+            const overlayGrp = document.getElementById('fullBleedOverlayGroup');
+            if (overlayGrp) overlayGrp.style.display = (layout === 'full_front') ? 'flex' : 'none';
+            syncTextColorPickersUI();
+            markCartModified();
+            renderCoverPreview();
+        }
+        window.updatePhotoLayoutFromUI = updatePhotoLayoutFromUI;
+
+        function updatePhotoLightAndColor() {
+            const pObj = getActivePhotoObj();
+            const bri = parseInt(document.getElementById('rngPhotoBrightness').value, 10);
+            const sat = parseInt(document.getElementById('rngPhotoSaturation').value, 10);
+            pObj.brightness = isNaN(bri) ? 100 : bri;
+            pObj.saturation = isNaN(sat) ? 100 : sat;
+            const lblBri = document.getElementById('lblPhotoBrightness');
+            const lblSat = document.getElementById('lblPhotoSaturation');
+            if (lblBri) lblBri.textContent = pObj.brightness + '%';
+            if (lblSat) lblSat.textContent = pObj.saturation + '%';
+            applyPhotoFilterAndRender(coverState.activePhotoSide || 'front');
+        }
+        window.updatePhotoLightAndColor = updatePhotoLightAndColor;
+
         function handlePhotoUpload(event) {
             const file = event.target.files && event.target.files[0];
             if (!file) return;
+
+            const targetSide = coverState.activePhotoSide || 'front';
+            const pObj = getActivePhotoObj(targetSide);
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    coverState.photo.originalImage = img;
-                    document.getElementById('photoControlsWrap').style.display = 'flex';
-                    document.getElementById('photoStatusBadge').textContent = '✓ Foto activa';
-                    document.getElementById('photoStatusBadge').style.color = '#2b7a4b';
+                    pObj.originalImage = img;
+                    syncPhotoPanelUI();
+                    syncTextColorPickersUI();
                     markCartModified();
-                    applyPhotoFilterAndRender();
+                    applyPhotoFilterAndRender(targetSide);
                 };
                 img.src = e.target.result;
             };
@@ -3288,27 +3656,29 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
         }
 
         function removeUploadedPhoto() {
-            coverState.photo.originalImage = null;
-            coverState.photo.processedImage = null;
-            coverState.photo.filteredDataUrl = null;
+            const pObj = getActivePhotoObj();
+            pObj.originalImage = null;
+            pObj.processedImage = null;
+            pObj.filteredDataUrl = null;
             document.getElementById('photoFileInput').value = '';
-            document.getElementById('photoControlsWrap').style.display = 'none';
-            document.getElementById('photoStatusBadge').textContent = 'Sin foto';
-            document.getElementById('photoStatusBadge').style.color = '#777';
+            syncPhotoPanelUI();
+            syncTextColorPickersUI();
             markCartModified();
             renderCoverPreview();
         }
 
         function updatePhotoTransform() {
+            const pObj = getActivePhotoObj();
             const zoom = parseInt(document.getElementById('rngPhotoZoom').value, 10) || 100;
             const ox = parseInt(document.getElementById('rngPhotoX').value, 10) || 0;
             const oy = parseInt(document.getElementById('rngPhotoY').value, 10) || 0;
-            const alpha = parseInt(document.getElementById('rngOverlayAlpha').value, 10) || 45;
+            const alphaVal = parseInt(document.getElementById('rngOverlayAlpha').value, 10);
+            const alpha = isNaN(alphaVal) ? 0 : alphaVal;
 
-            coverState.photo.zoom = zoom;
-            coverState.photo.offsetX = ox;
-            coverState.photo.offsetY = oy;
-            coverState.photo.overlayAlpha = alpha;
+            pObj.zoom = zoom;
+            pObj.offsetX = ox;
+            pObj.offsetY = oy;
+            pObj.overlayAlpha = alpha;
 
             document.getElementById('lblPhotoZoom').textContent = zoom + '%';
             document.getElementById('lblPhotoX').textContent = ox + '%';
@@ -3319,21 +3689,34 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             renderCoverPreview();
         }
 
-        function applyPhotoFilterAndRender() {
-            const filter = document.getElementById('photoFilterSelect').value;
-            coverState.photo.filter = filter;
+        function applyPhotoFilterAndRender(explicitSide) {
+            const side = explicitSide || coverState.activePhotoSide || 'front';
+            const pObj = getActivePhotoObj(side);
+            if (!explicitSide || explicitSide === coverState.activePhotoSide) {
+                const selF = document.getElementById('photoFilterSelect');
+                if (selF) pObj.filter = selF.value;
+            }
+            const filter = pObj.filter || 'none';
+            const briPct = pObj.brightness !== undefined ? pObj.brightness : 100;
+            const satPct = pObj.saturation !== undefined ? pObj.saturation : 100;
             markCartModified();
 
-            const img = coverState.photo.originalImage;
+            const img = pObj.originalImage;
             if (!img) {
-                coverState.photo.processedImage = null;
+                pObj.processedImage = null;
                 renderCoverPreview();
                 return;
             }
 
-            // Procesar imagen en canvas auxiliar para filtros (garantiza paridad 100% entre vista previa y PDF)
+            // Si está en Color Original sin alteración de brillo ni saturación, usar la imagen nativa directa (máxima nitidez y luz)
+            if (filter === 'none' && briPct === 100 && satPct === 100) {
+                pObj.processedImage = img;
+                renderCoverPreview();
+                return;
+            }
+
             const offCanvas = document.createElement('canvas');
-            const maxDim = 1800; // Alta resolución para 300 DPI sin saturar RAM
+            const maxDim = 2000;
             let w = img.width;
             let h = img.height;
             if (w > maxDim || h > maxDim) {
@@ -3345,41 +3728,78 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             const ctx = offCanvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
 
-            if (filter !== 'none') {
-                const imgData = ctx.getImageData(0, 0, w, h);
-                const d = imgData.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    const r = d[i], g = d[i + 1], b = d[i + 2];
-                    if (filter === 'bw') {
-                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                        const c = Math.min(255, Math.max(0, (lum - 128) * 1.08 + 128));
-                        d[i] = d[i + 1] = d[i + 2] = c;
-                    } else if (filter === 'sepia') {
-                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                        d[i]     = Math.min(255, lum * 1.08 + 22);
-                        d[i + 1] = Math.min(255, lum * 0.96 + 10);
-                        d[i + 2] = Math.min(255, lum * 0.82);
-                    } else if (filter === 'soft') {
-                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                        d[i]     = Math.round(r * 0.65 + lum * 0.35 + 8);
-                        d[i + 1] = Math.round(g * 0.65 + lum * 0.35 + 6);
-                        d[i + 2] = Math.round(b * 0.65 + lum * 0.35 + 4);
-                    }
-                }
-                ctx.putImageData(imgData, 0, 0);
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const d = imgData.data;
+
+            // Factores combinados de Luz (Brillo), Contraste y Color (Saturación)
+            let briFactor = briPct / 100;
+            let satFactor = satPct / 100;
+            let contrastFactor = 1.0;
+
+            if (filter === 'vivid') {
+                briFactor *= 1.08;
+                satFactor *= 1.32;
+                contrastFactor = 1.08;
             }
+
+            for (let i = 0; i < d.length; i += 4) {
+                let r = d[i], g = d[i + 1], b = d[i + 2];
+
+                // 1. Filtro base
+                if (filter === 'bw') {
+                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                    const c = (lum - 128) * 1.08 + 128;
+                    r = g = b = c;
+                } else if (filter === 'sepia') {
+                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                    r = lum * 1.08 + 22;
+                    g = lum * 0.96 + 10;
+                    b = lum * 0.82;
+                } else if (filter === 'soft') {
+                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                    r = r * 0.65 + lum * 0.35 + 8;
+                    g = g * 0.65 + lum * 0.35 + 6;
+                    b = b * 0.65 + lum * 0.35 + 4;
+                }
+
+                // 2. Luz / Brillo
+                if (briFactor !== 1.0) {
+                    r *= briFactor;
+                    g *= briFactor;
+                    b *= briFactor;
+                }
+
+                // 3. Saturación (Color)
+                if (satFactor !== 1.0 && filter !== 'bw') {
+                    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                    r = gray + (r - gray) * satFactor;
+                    g = gray + (g - gray) * satFactor;
+                    b = gray + (b - gray) * satFactor;
+                }
+
+                // 4. Contraste suave para Vivo
+                if (contrastFactor !== 1.0) {
+                    r = (r - 128) * contrastFactor + 128;
+                    g = (g - 128) * contrastFactor + 128;
+                    b = (b - 128) * contrastFactor + 128;
+                }
+
+                d[i]     = r < 0 ? 0 : (r > 255 ? 255 : r);
+                d[i + 1] = g < 0 ? 0 : (g > 255 ? 255 : g);
+                d[i + 2] = b < 0 ? 0 : (b > 255 ? 255 : b);
+            }
+            ctx.putImageData(imgData, 0, 0);
 
             const processedImg = new Image();
             processedImg.onload = function() {
-                // Verificar que no se haya borrado la foto mientras cargaba
-                if (!coverState.photo.originalImage) {
-                    coverState.photo.processedImage = null;
+                if (!pObj.originalImage) {
+                    pObj.processedImage = null;
                     return;
                 }
-                coverState.photo.processedImage = processedImg;
+                pObj.processedImage = processedImg;
                 renderCoverPreview();
             };
-            processedImg.src = offCanvas.toDataURL('image/jpeg', 0.92);
+            processedImg.src = offCanvas.toDataURL('image/jpeg', 0.96);
         }
 
         // =====================================================================
@@ -3390,6 +3810,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             const pal = PALETTES[coverState.palette] || PALETTES.forest;
             const tpl = coverState.template;
             const B = coverState.bleedMm;
+            const tc = coverState.textColors || {};
 
             ctx.save();
             ctx.translate(xMm * pxPerMm, yMm * pxPerMm);
@@ -3444,65 +3865,87 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
             // 3. Si es la PORTADA DELANTERA ('front')
             if (side === 'front') {
-                const imgToDraw = coverState.photo.processedImage || coverState.photo.originalImage;
-                const pLayout = coverState.photo.layout;
+                const pFront = coverState.photo;
+                const imgToDraw = pFront.processedImage || pFront.originalImage;
+                const pLayout = pFront.layout;
 
                 // Si la foto ocupa toda la portada delantera (full_front)
                 if (imgToDraw && pLayout === 'full_front') {
-                    drawCroppedPhotoInBox(ctx, imgToDraw, 0, 0, wMm, hMm, 'rect');
-                    // Velo de contraste para lectura nítida
-                    ctx.fillStyle = `rgba(20, 18, 16, ${coverState.photo.overlayAlpha / 100})`;
-                    ctx.fillRect(0, 0, wMm, hMm);
+                    drawCroppedPhotoInBox(ctx, imgToDraw, 0, 0, wMm, hMm, 'rect', pFront);
+                    if (pFront.overlayAlpha > 0) {
+                        ctx.fillStyle = `rgba(20, 18, 16, ${pFront.overlayAlpha / 100})`;
+                        ctx.fillRect(0, 0, wMm, hMm);
+                    }
                     txtMain = '#f7f4ee';
                     txtMuted = '#dfd8ce';
                 }
 
-                // Margen izquierdo seguro (si es anillas, dejamos más margen a la izquierda para los agujeros)
                 const safeLeft = B + (coverState.bindingType === 'coil' ? 18 : 16);
                 const safeRight = wMm - B - 15;
                 const contentW = safeRight - safeLeft;
 
-                // Sello superior (Kicker)
-                ctx.fillStyle = txtMain;
-                ctx.font = `700 3.3px "Inter", Arial, sans-serif`;
-                ctx.textAlign = 'left';
-                ctx.fillText('MENOS RUIDO', safeLeft, B + 18);
+                const colFrontBrand = tc.frontBranding || txtMain;
+                const colTitle = tc.title || txtMain;
+                const colBadge = tc.badge || accentCol;
+                const colSubtitle = tc.subtitle || txtMain;
+                const colFrontDesc = tc.frontDesc || txtMuted;
+                const colAuthor = tc.author || txtMuted;
 
-                // Título Principal (Soporta salto automático en 1 o 2 líneas grandes)
-                ctx.fillStyle = txtMain;
-                ctx.font = `400 13.5px "Playfair Display", Georgia, serif`;
-                const titleMaxW = (imgToDraw && (pLayout === 'window' || pLayout === 'circle')) ? contentW * 0.58 : contentW * 0.9;
-                const titleLines = wrapCanvasText(ctx, coverState.title || 'Planificador anual', titleMaxW);
+                // Sello superior (Kicker)
+                if (!coverState.hideFrontBranding) {
+                    ctx.fillStyle = colFrontBrand;
+                    ctx.font = `700 3.3px "Inter", Arial, sans-serif`;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('MENOS RUIDO', safeLeft, B + 18);
+                }
+
+                // Título Principal
                 let curY = B + 33;
-                titleLines.slice(0, 3).forEach(line => {
-                    ctx.fillText(line, safeLeft, curY);
-                    curY += 14.2;
-                });
+                const rawTitle = (coverState.title || '').trim();
+                if (rawTitle) {
+                    ctx.fillStyle = colTitle;
+                    ctx.font = `400 13.5px "Playfair Display", Georgia, serif`;
+                    const titleMaxW = (imgToDraw && (pLayout === 'window' || pLayout === 'circle')) ? contentW * 0.58 : contentW * 0.9;
+                    const titleLines = wrapCanvasText(ctx, rawTitle, titleMaxW);
+                    titleLines.slice(0, 3).forEach(line => {
+                        ctx.fillText(line, safeLeft, curY);
+                        curY += 14.2;
+                    });
+                    curY -= 4.5;
+                }
 
                 // Cintillo en acento (Badge)
-                curY -= 4.5;
-                ctx.fillStyle = accentCol;
-                ctx.font = `800 3.6px "Inter", Arial, sans-serif`;
-                ctx.fillText((coverState.badge || '').toUpperCase(), safeLeft, curY);
+                const rawBadge = (coverState.badge || '').trim();
+                if (rawBadge) {
+                    ctx.fillStyle = colBadge;
+                    ctx.font = `800 3.6px "Inter", Arial, sans-serif`;
+                    ctx.fillText(rawBadge.toUpperCase(), safeLeft, curY);
+                    curY += 9.5;
+                }
 
                 // Subtítulo en serif
-                curY += 9.5;
-                ctx.fillStyle = txtMain;
-                ctx.font = `400 5.4px "Playfair Display", Georgia, serif`;
-                ctx.fillText(coverState.subtitle || '', safeLeft, curY);
+                const rawSub = (coverState.subtitle || '').trim();
+                if (rawSub) {
+                    ctx.fillStyle = colSubtitle;
+                    ctx.font = `400 5.4px "Playfair Display", Georgia, serif`;
+                    ctx.fillText(rawSub, safeLeft, curY);
+                    curY += 8.5;
+                }
 
                 // Descripción corta delantera
-                curY += 8.5;
-                ctx.fillStyle = txtMuted;
-                ctx.font = `400 3.5px "Inter", Arial, sans-serif`;
-                const descMaxW = (imgToDraw && (pLayout === 'window' || pLayout === 'circle')) ? contentW * 0.54 : contentW * 0.78;
-                const descLines = wrapCanvasText(ctx, coverState.frontDesc || '', descMaxW);
-                descLines.slice(0, 4).forEach(line => {
-                    ctx.fillText(line, safeLeft, curY);
-                    curY += 5.0;
-                });
+                const rawDesc = (coverState.frontDesc || '').trim();
+                if (rawDesc) {
+                    ctx.fillStyle = colFrontDesc;
+                    ctx.font = `400 3.5px "Inter", Arial, sans-serif`;
+                    const descMaxW = (imgToDraw && (pLayout === 'window' || pLayout === 'circle')) ? contentW * 0.54 : contentW * 0.78;
+                    const descLines = wrapCanvasText(ctx, rawDesc, descMaxW);
+                    descLines.slice(0, 4).forEach(line => {
+                        ctx.fillText(line, safeLeft, curY);
+                        curY += 5.0;
+                    });
+                }
 
-                // Dibujar Fotografía si está en modo ventana, tarjeta central o círculo
+                // Dibujar Fotografía en Portada si está en modo ventana, tarjeta central o círculo
                 if (imgToDraw && pLayout !== 'full_front') {
                     const trimW = wMm - B * 2;
                     const trimH = hMm - B * 2;
@@ -3511,88 +3954,162 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                         const ph = trimH * 0.58;
                         const px = wMm - B - 16 - pw;
                         const py = B + 20;
-                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, pw, ph, 'rounded');
+                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, pw, ph, 'rounded', pFront);
                     } else if (pLayout === 'circle') {
                         const diam = Math.min(trimW, trimH) * 0.44;
                         const px = wMm - B - 16 - diam;
                         const py = B + (trimH - diam) / 2 - 2;
-                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, diam, diam, 'circle');
+                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, diam, diam, 'circle', pFront);
                     } else if (pLayout === 'center_card') {
                         const pw = trimW * 0.37;
                         const ph = trimH * 0.36;
                         const px = wMm - B - 16 - pw;
                         const py = hMm - B - 16 - ph;
-                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, pw, ph, 'rounded');
+                        drawCroppedPhotoInBox(ctx, imgToDraw, px, py, pw, ph, 'rounded', pFront);
                     }
                 } else if (!imgToDraw && coverState.showBotanical) {
-                    // Ilustración botánica minimalista a línea en la esquina inferior derecha
                     drawBotanicalIllustration(ctx, wMm - B - 38, hMm - B - 36, 26, accentCol);
                 }
 
                 // Pie de portada delantera (Editorial + Autor/Propietario)
                 const footY = hMm - B - 22;
-                ctx.fillStyle = txtMain;
-                ctx.font = `700 3.1px "Inter", Arial, sans-serif`;
-                ctx.fillText('MENOS RUIDO', safeLeft, footY);
+                if (!coverState.hideFrontBranding) {
+                    ctx.fillStyle = colFrontBrand;
+                    ctx.font = `700 3.1px "Inter", Arial, sans-serif`;
+                    ctx.fillText('MENOS RUIDO', safeLeft, footY);
 
-                ctx.fillStyle = txtMuted;
-                ctx.font = `400 3.2px "Inter", Arial, sans-serif`;
-                ctx.fillText('La calma de tener tu tiempo bajo control.', safeLeft, footY + 4.8);
+                    ctx.fillStyle = tc.frontBranding || txtMuted;
+                    ctx.font = `400 3.2px "Inter", Arial, sans-serif`;
+                    ctx.fillText('Organización clara y enfoque diario en papel.', safeLeft, footY + 4.8);
+                }
 
-                ctx.font = `italic 3.2px "Playfair Display", Georgia, serif`;
-                ctx.fillText(coverState.author || 'Un cuaderno de escritura para pensar en papel.', safeLeft, footY + 9.4);
+                const rawAuthor = (coverState.author || '').trim();
+                if (rawAuthor) {
+                    ctx.fillStyle = colAuthor;
+                    ctx.font = `italic 3.2px "Playfair Display", Georgia, serif`;
+                    ctx.fillText(rawAuthor, safeLeft, footY + 9.4);
+                }
             }
 
             // 4. Si es la CONTRAPORTADA ('back')
             if (side === 'back') {
+                const pBack = coverState.photoBack;
+                const imgBack = pBack.processedImage || pBack.originalImage;
+                const bLayout = pBack.layout;
+
+                if (imgBack && bLayout === 'full_front') {
+                    drawCroppedPhotoInBox(ctx, imgBack, 0, 0, wMm, hMm, 'rect', pBack);
+                    if (pBack.overlayAlpha > 0) {
+                        ctx.fillStyle = `rgba(20, 18, 16, ${pBack.overlayAlpha / 100})`;
+                        ctx.fillRect(0, 0, wMm, hMm);
+                    }
+                    txtMain = '#f7f4ee';
+                    txtMuted = '#dfd8ce';
+                }
+
                 const safeLeft = B + 16;
-                // Si es anillas, el borde derecho de la contraportada lleva las perforaciones
                 const safeRight = wMm - B - (coverState.bindingType === 'coil' ? 18 : 16);
                 const contentW = safeRight - safeLeft;
+                const hasSidePhoto = !!(imgBack && (bLayout === 'window' || bLayout === 'circle'));
+                const textMaxW = hasSidePhoto ? contentW * 0.54 : contentW * 0.88;
 
-                ctx.fillStyle = txtMain;
-                ctx.font = `700 3.3px "Inter", Arial, sans-serif`;
-                ctx.textAlign = 'left';
-                ctx.fillText('MENOS RUIDO', safeLeft, B + 18);
+                const colBackBrand = tc.backBranding || txtMain;
+                const colBackTitle = tc.backTitle || txtMain;
+                const colBackIntro = tc.backIntro || txtMuted;
+                const colBackBullets = tc.backBullets || txtMuted;
 
-                ctx.font = `400 10.2px "Playfair Display", Georgia, serif`;
-                ctx.fillText(coverState.backTitle || 'Pensar en Papel', safeLeft, B + 32);
+                if (!coverState.hideBackBranding) {
+                    ctx.fillStyle = colBackBrand;
+                    ctx.font = `700 3.3px "Inter", Arial, sans-serif`;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('MENOS RUIDO', safeLeft, B + 18);
+                }
 
-                ctx.fillStyle = txtMuted;
-                ctx.font = `400 3.7px "Inter", Arial, sans-serif`;
-                let curY = B + 41;
-                const introLines = wrapCanvasText(ctx, coverState.backIntro || '', contentW * 0.88);
-                introLines.slice(0, 4).forEach(line => {
-                    ctx.fillText(line, safeLeft, curY);
-                    curY += 5.2;
-                });
+                let curY = B + 32;
+                const rawBackTitle = (coverState.backTitle || '').trim();
+                if (rawBackTitle) {
+                    ctx.fillStyle = colBackTitle;
+                    ctx.font = `400 10.2px "Playfair Display", Georgia, serif`;
+                    const bTitleLines = wrapCanvasText(ctx, rawBackTitle, textMaxW);
+                    bTitleLines.slice(0, 2).forEach(line => {
+                        ctx.fillText(line, safeLeft, curY);
+                        curY += 10.8;
+                    });
+                    curY -= 1.8;
+                } else {
+                    curY = B + 28;
+                }
 
-                curY += 6.5;
-                ctx.fillStyle = accentCol;
-                ctx.font = `700 3.5px "Inter", Arial, sans-serif`;
-                ctx.fillText(`Estructura del cuaderno (${coverState.pageCount} páginas):`, safeLeft, curY);
+                const rawBackIntro = (coverState.backIntro || '').trim();
+                if (rawBackIntro) {
+                    ctx.fillStyle = colBackIntro;
+                    ctx.font = `400 3.7px "Inter", Arial, sans-serif`;
+                    const introLines = wrapCanvasText(ctx, rawBackIntro, textMaxW);
+                    introLines.slice(0, 5).forEach(line => {
+                        ctx.fillText(line, safeLeft, curY);
+                        curY += 5.2;
+                    });
+                    curY += 4.5;
+                }
 
-                curY += 6.2;
-                ctx.fillStyle = txtMuted;
-                ctx.font = `400 3.4px "Inter", Arial, sans-serif`;
-                (coverState.backBullets || []).slice(0, 8).forEach(b => {
-                    ctx.fillText(`•  ${b}`, safeLeft + 1, curY);
-                    curY += 5.0;
-                });
+                const activeBullets = (coverState.backBullets || []).map(b => b.trim()).filter(Boolean);
+                if (activeBullets.length > 0) {
+                    if (!coverState.hideBackBranding) {
+                        ctx.fillStyle = tc.backBullets || accentCol;
+                        ctx.font = `700 3.5px "Inter", Arial, sans-serif`;
+                        ctx.fillText(`Estructura del cuaderno (${coverState.pageCount} páginas):`, safeLeft, curY);
+                        curY += 6.2;
+                    }
+                    ctx.fillStyle = colBackBullets;
+                    ctx.font = `400 3.4px "Inter", Arial, sans-serif`;
+                    activeBullets.slice(0, 8).forEach(b => {
+                        const bLines = wrapCanvasText(ctx, `•  ${b}`, textMaxW);
+                        bLines.slice(0, 2).forEach(bl => {
+                            ctx.fillText(bl, safeLeft + 1, curY);
+                            curY += 4.8;
+                        });
+                    });
+                }
+
+                // Dibujar Fotografía en Contraportada si está en modo ventana, tarjeta central o círculo
+                if (imgBack && bLayout !== 'full_front') {
+                    const trimW = wMm - B * 2;
+                    const trimH = hMm - B * 2;
+                    if (bLayout === 'window') {
+                        const pw = trimW * 0.34;
+                        const ph = trimH * 0.58;
+                        const px = safeRight - pw;
+                        const py = B + 20;
+                        drawCroppedPhotoInBox(ctx, imgBack, px, py, pw, ph, 'rounded', pBack);
+                    } else if (bLayout === 'circle') {
+                        const diam = Math.min(trimW, trimH) * 0.44;
+                        const px = safeRight - diam;
+                        const py = B + (trimH - diam) / 2 - 2;
+                        drawCroppedPhotoInBox(ctx, imgBack, px, py, diam, diam, 'circle', pBack);
+                    } else if (bLayout === 'center_card') {
+                        const pw = trimW * 0.37;
+                        const ph = trimH * 0.36;
+                        const px = safeRight - pw;
+                        const py = hMm - B - 16 - ph;
+                        drawCroppedPhotoInBox(ctx, imgBack, px, py, pw, ph, 'rounded', pBack);
+                    }
+                }
 
                 // Pie web
-                const footY = hMm - B - 16;
-                ctx.fillStyle = txtMain;
-                ctx.font = `700 3.2px "Inter", Arial, sans-serif`;
-                ctx.fillText('www.editorialmenosruido.com', safeLeft, footY);
-                ctx.fillStyle = txtMuted;
-                ctx.font = `italic 3.1px "Playfair Display", Georgia, serif`;
-                ctx.fillText('Un cuaderno diseñado para pensar despacio.', safeLeft, footY + 4.8);
+                if (!coverState.hideBackBranding) {
+                    const footY = hMm - B - 16;
+                    ctx.fillStyle = colBackBrand;
+                    ctx.font = `700 3.2px "Inter", Arial, sans-serif`;
+                    ctx.fillText('www.editorialmenosruido.com', safeLeft, footY);
+                    ctx.fillStyle = tc.backBranding || txtMuted;
+                    ctx.font = `italic 3.1px "Playfair Display", Georgia, serif`;
+                    ctx.fillText('Cuadernos y herramientas en papel para pensar con claridad.', safeLeft, footY + 4.8);
+                }
 
                 // Reserva opcional de código de barras ISBN
                 if (coverState.showBarcode) {
-                    const bw = 50.8; // 2 inches
-                    const bh = 30.5; // 1.2 inches
+                    const bw = 50.8;
+                    const bh = 30.5;
                     const bx = safeRight - bw;
                     const by = hMm - B - 14 - bh;
                     ctx.fillStyle = '#ffffff';
@@ -3608,7 +4125,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                 }
             }
 
-            // 5. Guías técnicas de corte y anillas (solo en vista previa si el checkbox está activo)
+            // 5. Guías técnicas de corte y anillas
             if (includeGuides) {
                 ctx.save();
                 ctx.strokeStyle = 'rgba(220, 60, 60, 0.55)';
@@ -3743,7 +4260,8 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             ctx.restore();
         }
 
-        function drawCroppedPhotoInBox(ctx, img, x, y, w, h, shape) {
+        function drawCroppedPhotoInBox(ctx, img, x, y, w, h, shape, photoObj) {
+            const p = photoObj || coverState.photo;
             ctx.save();
             ctx.beginPath();
             if (shape === 'circle') {
@@ -3760,7 +4278,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             }
             ctx.clip();
 
-            const zoom = (coverState.photo.zoom || 100) / 100;
+            const zoom = (p.zoom || 100) / 100;
             const imgAspect = img.width / img.height;
             const boxAspect = w / h;
 
@@ -3775,8 +4293,8 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
             const maxPanX = Math.max(10, (drawW - w) / 2 + w * 0.25);
             const maxPanY = Math.max(10, (drawH - h) / 2 + h * 0.25);
-            const dx = x + (w - drawW) / 2 + (coverState.photo.offsetX / 100) * maxPanX;
-            const dy = y + (h - drawH) / 2 + (coverState.photo.offsetY / 100) * maxPanY;
+            const dx = x + (w - drawW) / 2 + ((p.offsetX || 0) / 100) * maxPanX;
+            const dy = y + (h - drawH) / 2 + ((p.offsetY || 0) / 100) * maxPanY;
 
             ctx.drawImage(img, dx, dy, drawW, drawH);
             ctx.restore();
@@ -3818,6 +4336,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
         // Renderizado del Lienzo Principal de Vista Previa
         function renderCoverPreview() {
+            if (typeof syncTextColorPickersUI === 'function') syncTextColorPickersUI();
             const canvas = document.getElementById('coverPreviewCanvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
@@ -3907,7 +4426,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                 ctx.save();
                 ctx.translate(spineX + spineMm / 2, totalH / 2);
                 ctx.rotate(Math.PI / 2);
-                ctx.fillStyle = pal.textOnDark;
+                ctx.fillStyle = (coverState.textColors && coverState.textColors.spineText) ? coverState.textColors.spineText : pal.textOnDark;
                 const fontSize = Math.min(3.2, spineMm * 0.55);
                 ctx.font = `700 ${fontSize}px "Inter", Arial, sans-serif`;
                 ctx.textAlign = 'center';
@@ -4171,7 +4690,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                     spineText: coverState.spineText || '',
                     backTitle: coverState.backTitle || '',
                     backIntro: coverState.backIntro || '',
-                    backBullets: Array.isArray(coverState.backBullets) ? coverState.backBullets : []
+                    backBullets: Array.isArray(coverState.backBullets) ? coverState.backBullets : [], hideFrontBranding: !!coverState.hideFrontBranding, hideBackBranding: !!coverState.hideBackBranding, textColors: { ...(coverState.textColors || {}) }
                 }
             };
         }
@@ -4194,6 +4713,19 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             if (savedData.spineText !== undefined) document.getElementById('inpSpineText').value = savedData.spineText;
             if (savedData.backTitle !== undefined) document.getElementById('inpBackTitle').value = savedData.backTitle;
             if (savedData.backIntro !== undefined) document.getElementById('inpBackIntro').value = savedData.backIntro;
+            if (Array.isArray(savedData.backBullets) && document.getElementById('inpBackBullets')) {
+                coverState.backBullets = savedData.backBullets;
+                document.getElementById('inpBackBullets').value = savedData.backBullets.join('\n');
+            }
+            if (savedData.hideFrontBranding !== undefined && document.getElementById('chkHideFrontBranding')) {
+                document.getElementById('chkHideFrontBranding').checked = !!savedData.hideFrontBranding;
+            }
+            if (savedData.hideBackBranding !== undefined && document.getElementById('chkHideBackBranding')) {
+                document.getElementById('chkHideBackBranding').checked = !!savedData.hideBackBranding;
+            }
+            if (savedData.textColors && typeof savedData.textColors === 'object') {
+                coverState.textColors = { ...coverState.textColors, ...savedData.textColors };
+            }
 
             updateConfigFromUI(false);
         }
