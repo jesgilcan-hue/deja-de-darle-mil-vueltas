@@ -1150,7 +1150,7 @@
                     <button type="button" class="btn-action-secondary" id="btn-save-generator-design">
                         <span>💾</span> Guardar en Mi Espacio
                     </button>
-                    <a href="/generador-portadas.html" class="btn-action-secondary" target="_blank">
+                    <a href="/generador-portadas-pasatiempos.html?from=interior" class="btn-action-secondary" onclick="if(typeof persistPuzzleBookDraftToLocalStorage==='function') persistPuzzleBookDraftToLocalStorage();">
                         🎨 Diseñar Portada
                     </a>
                     <button type="button" class="btn-action-primary" onclick="openDownloadModal()">
@@ -8436,7 +8436,26 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                 bar.style.width = `${pct}%`;
                 bar.style.background = b.currentTotal > b.targetTotal ? '#c62828' : '#111111';
             }
+            persistPuzzleBookDraftToLocalStorage();
         }
+
+        function persistPuzzleBookDraftToLocalStorage() {
+            try {
+                const b = calculatePageBreakdown();
+                const payload = {
+                    format: bookState.format,
+                    totalPages: b.currentTotal,
+                    pageCount: b.currentTotal,
+                    title: bookState.title,
+                    subtitle: bookState.subtitle,
+                    owner: bookState.owner,
+                    sections: bookState.sections,
+                    updatedAt: Date.now()
+                };
+                localStorage.setItem('mr_puzzle_book_config', JSON.stringify(payload));
+            } catch (e) {}
+        }
+        window.persistPuzzleBookDraftToLocalStorage = persistPuzzleBookDraftToLocalStorage;
 
         function handlePagesChange(val) {
             let p = parseInt(val, 10) || 180;
@@ -8559,16 +8578,19 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
         function handleTitleInput(val) {
             bookState.title = val;
+            persistPuzzleBookDraftToLocalStorage();
             renderPreviewPage();
         }
 
         function handleSubtitleInput(val) {
             bookState.subtitle = val;
+            persistPuzzleBookDraftToLocalStorage();
             renderPreviewPage();
         }
 
         function handleOwnerInput(val) {
             bookState.owner = val;
+            persistPuzzleBookDraftToLocalStorage();
             renderPreviewPage();
         }
 

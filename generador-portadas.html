@@ -1142,8 +1142,18 @@
 
     <main class="generator-container-wrap">
     <!-- ENLACE DE VUELTA / ACCESO RÁPIDO -->
-    <div class="top-nav" style="justify-content: space-between; max-width: 1400px; margin: 12px auto 0; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 10px;">
-        <a href="/tutorial-generador-portadas.html" class="back-link">📖 Guía y Tutorial paso a paso ↗</a>
+    <div class="top-nav" style="justify-content: space-between; align-items: center; max-width: 1400px; margin: 12px auto 0; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <a href="/tutorial-generador-portadas.html" class="back-link">📖 Guía y Tutorial paso a paso ↗</a>
+            <div id="devCoverModeSwitcher" style="display: none !important; background: #e8e1d5; padding: 3px; border-radius: 99px; border: 1px solid #d5cbbd; gap: 4px;">
+                <a href="/generador-portadas.html" style="font-size: 0.78rem; font-weight: 800; color: #ffffff; background: #211c18; padding: 6px 14px; border-radius: 99px; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                    📅 Portadas de Planificadores
+                </a>
+                <a href="/generador-portadas-pasatiempos.html" style="font-size: 0.78rem; font-weight: 700; color: #5a5248; padding: 6px 14px; border-radius: 99px; text-decoration: none; transition: all 0.15s;">
+                    🧩 Portadas de Pasatiempos
+                </a>
+            </div>
+        </div>
         <a href="/generador-libro-completo.html" class="back-link" style="background:#eaf5ee; color:#215c38; border-color:#a7d7b8;">📐 Ir al Constructor de Interior (Libro Completo) →</a>
     </div>
 
@@ -4096,6 +4106,11 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
         import { auth, db, isDeveloper, isTestCustomer, collection, getDocs, onAuthStateChanged } from './firebase-config.js';
 
         onAuthStateChanged(auth, async (user) => {
+            // Selector hacia Portadas de Pasatiempos: solo visible para el desarrollador
+            const devSwitcher = document.getElementById('devCoverModeSwitcher');
+            if (devSwitcher) {
+                devSwitcher.style.setProperty('display', (!!user && isDeveloper(user)) ? 'inline-flex' : 'none', 'important');
+            }
             // Botón «Añadir a la cesta»: solo cuentas de prueba mientras la tienda está en modo prueba
             const cartWrapper = document.getElementById('devCartWrapper');
             if (cartWrapper) {

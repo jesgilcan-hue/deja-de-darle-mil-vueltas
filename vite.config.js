@@ -94,6 +94,7 @@ export default defineConfig({
         calcudokuDiario: resolve(__dirname, 'calcudoku-diario.html'),
         generadorCalcudoku: resolve(__dirname, 'generador-calcudoku.html'),
         generadorLibroPasatiempos: resolve(__dirname, 'generador-libro-pasatiempos.html'),
+        generadorPortadasPasatiempos: resolve(__dirname, 'generador-portadas-pasatiempos.html'),
         hoy: resolve(__dirname, 'hoy.html'),
         sudokuDiario: resolve(__dirname, 'sudoku-diario.html'),
         notFound: resolve(__dirname, '404.html')

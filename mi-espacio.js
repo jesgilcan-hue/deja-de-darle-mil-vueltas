@@ -1525,7 +1525,8 @@ function renderDesignsGrid() {
     let rawTargetUrl = item.editUrl;
     const typeLow = (item.type || '').toLowerCase();
     if (!rawTargetUrl) {
-      if (typeLow.includes('portada')) rawTargetUrl = '/generador-portadas.html';
+      if (typeLow.includes('portada') && typeLow.includes('pasatiempo')) rawTargetUrl = '/generador-portadas-pasatiempos.html';
+      else if (typeLow.includes('portada')) rawTargetUrl = '/generador-portadas.html';
       else if (typeLow.includes('pasatiempo')) rawTargetUrl = '/generador-libro-pasatiempos.html';
       else if (typeLow.includes('sudoku')) rawTargetUrl = '/generador-sudokus.html';
       else if (typeLow.includes('calcudoku')) rawTargetUrl = '/generador-calcudoku.html';
@@ -1549,7 +1550,8 @@ function renderDesignsGrid() {
 
     let badgeClass = 'semanal';
     let typeLabel = 'Planificador Semanal';
-    if (typeLow.includes('portada')) { badgeClass = 'portada'; typeLabel = 'Portada de Cuaderno'; }
+    if (typeLow.includes('portada') && typeLow.includes('pasatiempo')) { badgeClass = 'portada'; typeLabel = 'Portada de Pasatiempos'; }
+    else if (typeLow.includes('portada')) { badgeClass = 'portada'; typeLabel = 'Portada de Cuaderno'; }
     else if (typeLow.includes('pasatiempo')) { badgeClass = 'completo'; typeLabel = 'Libro de Pasatiempos'; }
     else if (typeLow.includes('sudoku')) { badgeClass = 'completo'; typeLabel = 'Sudoku Imprimible'; }
     else if (typeLow.includes('calcudoku')) { badgeClass = 'completo'; typeLabel = 'Calcudoku Imprimible'; }
