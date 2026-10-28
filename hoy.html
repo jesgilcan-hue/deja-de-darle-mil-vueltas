@@ -22,7 +22,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="./style.css" />
     <link rel="stylesheet" href="./diagnostic.css" />
@@ -32,13 +32,24 @@
             --bg-paper: #f8f6f0;
             --surface-card: #ffffff;
             --border-color: #e5dfd5;
+            --border-grid: #2c2523;
             --text-dark: #1e1916;
             --text-muted: #666059;
             --accent: #111111;
+            --accent-hover: #2a2421;
             --color-success: #15803d;
             --bg-success: #dcfce7;
-            --color-pending: #b45309;
-            --bg-pending: #fef3c7;
+            --color-error: #dc2626;
+            --bg-error: #fee2e2;
+
+            /* Resaltados de celdas */
+            --cell-bg: #ffffff;
+            --cell-active: #fef08a;
+            --cell-highlight: #fef9c3;
+            --cell-related: #f5f0ea;
+            --cell-clue-bg: #ebe5dc;
+            --cell-selected: #bfdbfe;
+            --cell-found: #dcfce7;
         }
 
         * {
@@ -56,7 +67,7 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            padding-bottom: 40px;
+            padding-bottom: 50px;
         }
 
         .dev-badge-bar {
@@ -72,12 +83,12 @@
 
         .pwa-app-wrap {
             width: 100%;
-            max-width: 580px;
+            max-width: 540px;
             margin: 0 auto;
-            padding: 14px 14px 28px;
+            padding: 12px 14px 28px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
 
         /* HEADER APP */
@@ -85,7 +96,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 4px;
+            padding-top: 2px;
         }
 
         .app-brand {
@@ -103,7 +114,7 @@
         }
 
         .app-sub {
-            font-size: 0.72rem;
+            font-size: 0.70rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.6px;
@@ -125,250 +136,35 @@
             background: #ede8df;
             padding: 5px 10px;
             border-radius: 6px;
+            transition: all 0.15s ease;
         }
-        .btn-header-link:hover { color: #111; }
-
-        /* TARJETA FECHA Y PROGRESO DIARIO */
-        .daily-summary-card {
-            background: var(--surface-card);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 14px 16px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .summary-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .today-date-text {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            text-transform: capitalize;
-            line-height: 1.2;
-        }
-
-        .streak-pill {
-            background: #fff1e8;
-            color: #c2410c;
-            border: 1px solid #fed7aa;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.76rem;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-
-        .progress-box {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .progress-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .progress-meta strong {
-            color: var(--text-dark);
-        }
-
-        .progress-track {
-            width: 100%;
-            height: 8px;
-            background: #ede8df;
-            border-radius: 999px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #111111;
-            border-radius: 999px;
-            width: 0%;
-            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .progress-fill.all-done {
-            background: var(--color-success);
-        }
-
-        /* NAVEGACIÓN DE PESTAÑAS (LOS 5 JUEGOS EN UNA PÁGINA) */
-        .today-tabs-container {
-            position: sticky;
-            top: 0;
-            z-index: 80;
-            background: var(--bg-paper);
-            padding: 4px 0 6px;
-            margin: 0 -4px;
-        }
-
-        .today-game-nav {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-            padding: 4px;
-            background: #ede7dc;
-            border-radius: 12px;
-            border: 1px solid #e2ddd3;
-        }
-        .today-game-nav::-webkit-scrollbar {
-            display: none;
-        }
-
-        .today-tab-btn {
-            flex: 1;
-            min-width: max-content;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            padding: 7px 11px;
-            font-size: 0.76rem;
-            font-weight: 700;
-            color: #554e46;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            transition: all 0.18s ease;
-            white-space: nowrap;
-            user-select: none;
-        }
-        .today-tab-btn:hover {
-            color: #111111;
-            background: rgba(255,255,255,0.45);
-        }
-        .today-tab-btn.active {
-            background: #111111;
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        }
-
-        .tab-emoji {
-            font-size: 0.95rem;
-            line-height: 1;
-        }
-
-        .tab-check-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #22c55e;
-            display: none;
-            margin-left: 1px;
-        }
-        .tab-check-dot.visible {
-            display: inline-block;
-        }
-
-        /* CONTENEDOR DEL JUEGO ACTIVO */
-        .today-game-stage {
-            background: var(--surface-card);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.03);
-            overflow: hidden;
-            position: relative;
-            min-height: 580px;
-        }
-
-        .game-frame-wrapper {
-            display: none;
-            width: 100%;
-            position: relative;
-        }
-        .game-frame-wrapper.active {
-            display: block;
-        }
-
-        .today-game-iframe {
-            width: 100%;
-            border: none;
-            display: block;
-            min-height: 580px;
-            background: transparent;
-            overflow: hidden;
-        }
-
-        /* AVISO FLOTANTE DE VICTORIA Y SIGUIENTE RETO */
-        .victory-toast-banner {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(120%);
-            background: #1e3d29;
-            color: #ffffff;
-            padding: 12px 18px;
-            border-radius: 999px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 99999;
-            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            white-space: nowrap;
-            max-width: 90%;
-        }
-        .victory-toast-banner.show {
-            transform: translateX(-50%) translateY(0);
-        }
-        .btn-toast-next {
-            background: #ffffff;
-            color: #1e3d29;
-            border: none;
-            border-radius: 999px;
-            padding: 5px 12px;
-            font-size: 0.76rem;
-            font-weight: 800;
-            cursor: pointer;
-        }
+        .btn-header-link:hover { color: #111; background: #e2ddd3; }
 
         /* TARJETA SINCRONIZACIÓN Y PERFIL */
         .user-sync-card {
             background: var(--surface-card);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 12px 14px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.02);
-            transition: all 0.2s ease;
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
-        .sync-unauth-box {
+        .sync-unauth-box, .sync-auth-box {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 10px;
         }
 
         .sync-info-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             min-width: 0;
         }
 
         .sync-icon {
-            font-size: 1.35rem;
-            flex-shrink: 0;
+            font-size: 1.25rem;
             line-height: 1;
         }
 
@@ -378,56 +174,33 @@
             gap: 1px;
             min-width: 0;
         }
-
         .sync-text strong {
-            font-size: 0.84rem;
+            font-size: 0.82rem;
             color: var(--text-dark);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         .sync-text span {
-            font-size: 0.72rem;
+            font-size: 0.70rem;
             color: var(--text-muted);
-            line-height: 1.3;
         }
 
         .btn-sync-action {
             background: var(--accent);
             color: #ffffff;
             border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 0.78rem;
+            border-radius: 7px;
+            padding: 6px 11px;
+            font-size: 0.76rem;
             font-weight: 700;
             cursor: pointer;
-            text-align: center;
             white-space: nowrap;
-            flex-shrink: 0;
-            transition: opacity 0.15s ease;
-        }
-        .btn-sync-action:hover {
-            opacity: 0.88;
-        }
-
-        .sync-auth-box {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .sync-user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
         }
 
         .sync-avatar {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: #111;
             color: #fff;
@@ -435,147 +208,882 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 0.90rem;
             overflow: hidden;
             flex-shrink: 0;
         }
-        .sync-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .sync-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         .sync-user-meta {
             display: flex;
             flex-direction: column;
             min-width: 0;
         }
-
         .sync-name-row {
             display: flex;
             align-items: center;
             gap: 6px;
         }
-
         .sync-name-row strong {
-            font-size: 0.84rem;
-            color: var(--text-dark);
+            font-size: 0.82rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 140px;
         }
-
         .sync-badge-ok {
             background: #dcfce7;
             color: #166534;
             font-size: 0.65rem;
             font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
+            padding: 1px 5px;
+            border-radius: 8px;
         }
-
         .sync-user-email {
-            font-size: 0.70rem;
+            font-size: 0.68rem;
             color: #777;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 170px;
+            max-width: 160px;
         }
 
-        .sync-actions-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-
-        .btn-sync-refresh {
-            background: #f1ede6;
-            border: 1px solid #dcd4c8;
-            color: var(--text-dark);
-            border-radius: 6px;
-            padding: 6px 8px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-        .btn-sync-refresh:hover {
-            background: #e6e0d5;
-        }
-
-        .btn-sync-link {
-            background: var(--accent);
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        /* BANNER DE INSTALACIÓN PWA */
-        .pwa-install-banner {
-            background: #111111;
-            color: #ffffff;
+        /* TARJETA FECHA Y PROGRESO DIARIO */
+        .daily-summary-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 14px 16px;
+            padding: 12px 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .summary-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-            margin-top: 6px;
         }
 
-        .pwa-install-text {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .pwa-install-title {
-            font-size: 0.88rem;
+        .today-date-text {
+            font-size: 1.05rem;
             font-weight: 700;
+            color: var(--text-dark);
+            text-transform: capitalize;
         }
 
-        .pwa-install-desc {
-            font-size: 0.75rem;
-            color: #ccc;
-        }
-
-        .btn-install-action {
-            background: #ffffff;
-            color: #111111;
-            border: none;
-            padding: 7px 14px;
-            border-radius: 8px;
-            font-size: 0.80rem;
+        .streak-pill {
+            background: #fff1e8;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 0.74rem;
             font-weight: 700;
-            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             white-space: nowrap;
         }
 
-        .ios-guide-box {
+        .progress-box {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 7px;
+            background: #ede8df;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #111111;
+            border-radius: 999px;
+            width: 0%;
+            transition: width 0.35s ease;
+        }
+        .progress-fill.all-done {
+            background: var(--color-success);
+        }
+
+        /* BARRA NAVEGACIÓN DE PESTAÑAS */
+        .today-tabs-container {
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            background: var(--bg-paper);
+            padding: 4px 0;
+            margin: 0 -4px;
+        }
+
+        .today-game-nav {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding: 4px;
+            background: #ede7dc;
+            border-radius: 12px;
+            border: 1px solid #e2ddd3;
+        }
+        .today-game-nav::-webkit-scrollbar { display: none; }
+
+        .today-tab-btn {
+            flex: 1;
+            min-width: max-content;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #554e46;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .today-tab-btn:hover {
+            color: #111111;
+            background: rgba(255,255,255,0.5);
+        }
+        .today-tab-btn.active {
+            background: #111111;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        .tab-emoji { font-size: 0.95rem; line-height: 1; }
+        .tab-check-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            display: none;
+            margin-left: 2px;
+        }
+        .today-tab-btn.solved .tab-check-dot { display: inline-block; }
+
+        /* ==============================================================
+           BARRA EXTERNA UNIFICADA (FUERA DE LA PANTALLA QUE CAMBIA)
+           ============================================================== */
+        .unified-game-shell {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 1. BARRA SUPERIOR DE HERRAMIENTAS Y TIEMPO */
+        .outer-game-toolbar {
+            background: #ffffff;
+            border-bottom: 1px solid #eee8df;
+            padding: 9px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-left-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .game-mode-toggles {
+            display: inline-flex;
             background: #f1ede6;
-            border: 1px dashed #d5cfc4;
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 0.75rem;
-            color: #555;
-            line-height: 1.4;
+            border-radius: 7px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .mode-chip-btn {
+            background: transparent;
+            border: none;
+            border-radius: 5px;
+            padding: 4px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #554e46;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+        .mode-chip-btn.active {
+            background: #111111;
+            color: #ffffff;
+        }
+
+        .theme-badge-pill {
+            background: #e8ecf4;
+            color: #2b4c7e;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 9px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
             display: none;
         }
 
-        /* PIE */
+        .outer-timer-box {
+            font-size: 0.90rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-variant-numeric: tabular-nums;
+            background: #faf8f5;
+            border: 1px solid #e0d8cc;
+            border-radius: 6px;
+            padding: 3px 8px;
+        }
+
+        .toolbar-right-actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-outer-tool {
+            background: #f7f5f0;
+            border: 1px solid #dcd7ce;
+            border-radius: 6px;
+            padding: 5px 9px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.12s ease;
+            user-select: none;
+        }
+        .btn-outer-tool:hover { background: #ede7dc; }
+
+        /* HELPER STRIP DINÁMICO (Debajo de la barra de herramientas) */
+        .outer-helper-strip {
+            background: #faf8f5;
+            border-bottom: 1px solid #eee8df;
+            padding: 6px 14px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 32px;
+        }
+        .helper-text-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .helper-text-right {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+        }
+
+        /* ==============================================================
+           2. VIEWPORT CENTRAL: SOLO CAMBIA EL TABLERO DEL JUEGO ACTIVO
+           ============================================================== */
+        .game-board-viewport {
+            width: 100%;
+            min-height: 380px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 8px;
+            background: #ffffff;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .board-stage-pane {
+            display: none;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+        .board-stage-pane.active {
+            display: flex;
+        }
+
+        /* OVERLAY DE PAUSA DIRECTO SOBRE EL TABLERO */
+        .board-pause-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(248, 246, 240, 0.94);
+            backdrop-filter: blur(4px);
+            z-index: 30;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .board-pause-overlay.active {
+            display: flex;
+        }
+        .board-pause-overlay h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: #111;
+        }
+        .board-pause-overlay p {
+            font-size: 0.82rem;
+            color: #666;
+            max-width: 280px;
+        }
+        .btn-resume-overlay {
+            background: #111111;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        /* --- ESTILOS NATIVOS TABLERO SUDOKU --- */
+        .sudoku-board {
+            display: grid;
+            width: min(360px, 92vw);
+            height: min(360px, 92vw);
+            border: 3px solid var(--border-grid);
+            background: var(--border-grid);
+            gap: 1px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        }
+        .sudoku-board.size-9 {
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+        }
+        .sudoku-board.size-4 {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            width: min(300px, 80vw);
+            height: min(300px, 80vw);
+        }
+
+        .sudoku-cell {
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.05rem, 4.5vw, 1.45rem);
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            position: relative;
+            transition: background 0.1s ease;
+        }
+        .sudoku-cell.clue {
+            background: var(--cell-clue-bg);
+            font-weight: 800;
+            cursor: default;
+        }
+        .sudoku-cell.selected {
+            background: var(--cell-active) !important;
+        }
+        .sudoku-cell.highlight {
+            background: var(--cell-highlight);
+        }
+        .sudoku-cell.related {
+            background: var(--cell-related);
+        }
+        .sudoku-cell.error {
+            background: var(--bg-error) !important;
+            color: var(--color-error) !important;
+        }
+
+        /* Bordes gruesos de regiones Sudoku */
+        .sudoku-board.size-9 .sudoku-cell:nth-child(3n) { border-right: 2px solid var(--border-grid); }
+        .sudoku-board.size-9 .sudoku-cell:nth-child(9n) { border-right: none; }
+        .sudoku-board.size-9 .sudoku-cell[data-r="2"],
+        .sudoku-board.size-9 .sudoku-cell[data-r="5"] { border-bottom: 2px solid var(--border-grid); }
+
+        .sudoku-board.size-4 .sudoku-cell:nth-child(2n) { border-right: 2px solid var(--border-grid); }
+        .sudoku-board.size-4 .sudoku-cell:nth-child(4n) { border-right: none; }
+        .sudoku-board.size-4 .sudoku-cell[data-r="1"] { border-bottom: 2px solid var(--border-grid); }
+
+        /* --- ESTILOS NATIVOS TABLERO CALCUDOKU --- */
+        .calcudoku-board {
+            display: grid;
+            width: min(360px, 92vw);
+            height: min(360px, 92vw);
+            border: 3px solid var(--border-grid);
+            background: #ffffff;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            position: relative;
+        }
+        .calcudoku-cell {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.15rem, 4.8vw, 1.55rem);
+            font-weight: 700;
+            color: var(--text-dark);
+            border: 1px solid #d4cebe;
+            cursor: pointer;
+            box-sizing: border-box;
+            background: #ffffff;
+            transition: background 0.1s ease;
+        }
+        .calcudoku-cell.selected { background: var(--cell-active) !important; }
+        .calcudoku-cell.highlight { background: var(--cell-highlight); }
+        .calcudoku-cell.error { background: var(--bg-error) !important; color: var(--color-error) !important; }
+
+        .calcudoku-cell .cage-label {
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            font-size: clamp(0.60rem, 2.3vw, 0.72rem);
+            font-weight: 800;
+            color: #111111;
+            line-height: 1;
+            pointer-events: none;
+            letter-spacing: -0.2px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .cage-border-top { border-top: 2.5px solid var(--border-grid) !important; }
+        .cage-border-right { border-right: 2.5px solid var(--border-grid) !important; }
+        .cage-border-bottom { border-bottom: 2.5px solid var(--border-grid) !important; }
+        .cage-border-left { border-left: 2.5px solid var(--border-grid) !important; }
+
+        /* --- ESTILOS NATIVOS TABLERO KAKURO --- */
+        .kakuro-board {
+            display: grid;
+            width: min(360px, 92vw);
+            height: min(360px, 92vw);
+            border: 2px solid var(--border-grid);
+            background: #ede6dc;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        }
+        .kakuro-cell {
+            position: relative;
+            box-sizing: border-box;
+            border: 0.5px solid #dcd5c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .kakuro-cell.block { background: #ede6dc; }
+        .kakuro-cell.clue-cell {
+            background: #dfd7cb;
+            overflow: hidden;
+        }
+        .kakuro-cell.clue-cell svg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .kakuro-cell.clue-cell .clue-across {
+            position: absolute;
+            top: 2px; right: 3px;
+            font-size: clamp(0.55rem, 2.2vw, 0.70rem);
+            font-weight: 800;
+            color: #111;
+            line-height: 1;
+        }
+        .kakuro-cell.clue-cell .clue-down {
+            position: absolute;
+            bottom: 2px; left: 3px;
+            font-size: clamp(0.55rem, 2.2vw, 0.70rem);
+            font-weight: 800;
+            color: #111;
+            line-height: 1;
+        }
+        .kakuro-cell.white-cell {
+            background: #ffffff;
+            cursor: pointer;
+            font-size: clamp(1.10rem, 4.4vw, 1.45rem);
+            font-weight: 700;
+            color: var(--text-dark);
+            transition: background 0.1s ease;
+        }
+        .kakuro-cell.white-cell.selected { background: var(--cell-active) !important; }
+        .kakuro-cell.white-cell.highlight { background: var(--cell-highlight); }
+        .kakuro-cell.white-cell.error { background: var(--bg-error) !important; color: var(--color-error) !important; }
+
+        /* --- ESTILOS NATIVOS TABLERO CRUZADAS --- */
+        .cruzadas-grid {
+            display: grid;
+            width: min(360px, 92vw);
+            height: min(360px, 92vw);
+            border: 2px solid var(--border-grid);
+            background: #ede6dc;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        }
+        .cruzadas-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.95rem, 4.2vw, 1.25rem);
+            font-weight: 700;
+            color: #111111;
+            box-sizing: border-box;
+            background: #ffffff;
+            border: 0.5px solid #d4cebe;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.1s ease;
+        }
+        .cruzadas-cell.cell-black {
+            background: #ede6dc !important;
+            border: 0.5px solid #dcd5c7;
+            cursor: default;
+        }
+        .cruzadas-cell.in-slot { background: var(--cell-related); }
+        .cruzadas-cell.selected {
+            background: var(--cell-active) !important;
+            box-shadow: inset 0 0 0 2px var(--accent);
+        }
+        .cruzadas-cell.starter-clue {
+            background: #e8ecf4;
+            color: #2b4c7e;
+            font-weight: 800;
+        }
+        .cruzadas-cell.conflict {
+            color: var(--color-error) !important;
+            background: var(--bg-error) !important;
+        }
+
+        /* --- ESTILOS NATIVOS TABLERO SOPA DE LETRAS --- */
+        .sopa-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            width: min(360px, 92vw);
+            height: min(360px, 92vw);
+            border: 2px solid var(--border-grid);
+            background: #ffffff;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            touch-action: none; /* Crucial para arrastre suave */
+        }
+        .sopa-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.95rem, 4.2vw, 1.25rem);
+            font-weight: 700;
+            color: #111111;
+            border: 0.5px solid #eae5dc;
+            box-sizing: border-box;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.1s ease;
+        }
+        .sopa-cell.selecting {
+            background: var(--cell-selected) !important;
+            color: #111;
+        }
+        .sopa-cell.found-cell {
+            background: var(--cell-found);
+            color: #166534;
+            font-weight: 800;
+        }
+
+        /* ==============================================================
+           3. DOCK EXTERNO DE TECLADO / ENTRADA (FUERA DEL TABLERO)
+           ============================================================== */
+        .outer-input-dock {
+            background: #ffffff;
+            border-top: 1px solid #eee8df;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* TECLADO NUMÉRICO */
+        .dock-numeric-keypad {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            justify-content: center;
+        }
+        .key-num-btn {
+            flex: 1;
+            height: 44px;
+            max-width: 48px;
+            background: #faf8f5;
+            border: 1px solid #dcd7ce;
+            border-radius: 8px;
+            font-size: 1.20rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+        .key-num-btn:active { background: #e2ddd3; transform: scale(0.95); }
+        .key-num-btn.key-backspace {
+            font-size: 0.95rem;
+            background: #f1ece4;
+            color: #555;
+            max-width: 56px;
+        }
+
+        /* DOCK PALABRAS CRUZADAS */
+        .dock-cruzadas-words {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+        .cruzadas-group-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .cruzadas-len-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 2px 5px;
+            border-radius: 4px;
+            min-width: 48px;
+            text-align: center;
+        }
+        .cruzadas-chips-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex: 1;
+        }
+        .word-chip {
+            background: #f7f5f0;
+            border: 1px solid #e0d8cc;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .word-chip:hover { border-color: var(--accent); background: #f0ebe1; }
+        .word-chip.found {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+            text-decoration: line-through;
+            opacity: 0.65;
+        }
+
+        /* TECLADO QWERTY PARA CRUZADAS */
+        .dock-qwerty-keypad {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+        .qwerty-row {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            width: 100%;
+        }
+        .qwerty-key {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            color: #111111;
+            font-size: 0.88rem;
+            font-weight: 700;
+            height: 36px;
+            flex: 1;
+            max-width: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .qwerty-key:active { background: #e2e8f0; transform: scale(0.95); }
+        .qwerty-key.qwerty-action {
+            max-width: 50px;
+            flex: 1.4;
+            font-size: 0.75rem;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        /* DOCK PALABRAS SOPA */
+        .dock-sopa-words {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+        .sopa-chips-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        /* ==============================================================
+           4. TIRA DE ESTADÍSTICAS Y REGLA RÁPIDA (FUERA DE LA PANTALLA)
+           ============================================================== */
+        .outer-game-footer {
+            background: #faf8f5;
+            border-top: 1px solid #eee8df;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .outer-stats-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            text-align: center;
+        }
+        .stat-box {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 7px;
+            padding: 6px 4px;
+        }
+        .stat-box-val {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .stat-box-lbl {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .outer-game-rule-hint {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        /* TOAST FLOTANTE DE NOTIFICACIÓN */
+        .game-toast-notice {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            background: #1e1916;
+            color: #ffffff;
+            padding: 9px 18px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 5000;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+            white-space: nowrap;
+        }
+        .game-toast-notice.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* MODALES */
+        .app-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 6000;
+            padding: 16px;
+        }
+        .app-modal-overlay.open { display: flex; }
+
+        .app-modal-box {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 420px;
+            width: 100%;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .app-modal-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.4rem;
+            color: #111;
+            margin-bottom: 6px;
+        }
+        .app-modal-desc {
+            font-size: 0.86rem;
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+        .modal-btn-primary {
+            background: #111111;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* FOOTER EDITORIAL */
         .app-footer {
             margin-top: 10px;
             text-align: center;
@@ -595,11 +1103,11 @@
 <body>
 
     <div class="dev-badge-bar">
-        <span>APP MÓVIL PWA · 5 RETOS EN UNA PÁGINA · EDITORIAL MENOS RUIDO</span>
+        <span>APP MÓVIL PWA · 5 RETOS EN UNA PÁGINA NATIVA · EDITORIAL MENOS RUIDO</span>
     </div>
 
     <div class="pwa-app-wrap">
-        <!-- HEADER -->
+        <!-- HEADER APP -->
         <header class="app-header">
             <div class="app-brand">
                 <a href="/" class="app-logo">Menos Ruido</a>
@@ -619,7 +1127,7 @@
                     <span class="sync-icon">☁️</span>
                     <div class="sync-text">
                         <strong>Guarda tu progreso en tu perfil</strong>
-                        <span>Conserva tus rachas y mejores tiempos en la nube.</span>
+                        <span>Conserva tus rachas y tiempos en la nube.</span>
                     </div>
                 </div>
                 <button type="button" class="btn-sync-action" id="btnSyncLogin">Registrarme / Entrar</button>
@@ -627,7 +1135,7 @@
 
             <!-- Estado Conectado (Con sesión activa) -->
             <div class="sync-auth-box" id="syncAuthBox" style="display: none;">
-                <div class="sync-user-info">
+                <div class="sync-info-row">
                     <div class="sync-avatar" id="syncAvatar">U</div>
                     <div class="sync-user-meta">
                         <div class="sync-name-row">
@@ -637,10 +1145,7 @@
                         <span class="sync-user-email" id="syncUserEmail">correo@ejemplo.com</span>
                     </div>
                 </div>
-                <div class="sync-actions-row">
-                    <button type="button" class="btn-sync-refresh" id="btnManualSync" title="Sincronizar progreso ahora">↻ Sincronizar</button>
-                    <a href="/mi-espacio.html" class="btn-sync-link">Mi Espacio</a>
-                </div>
+                <button type="button" class="btn-sync-action" id="btnManualSync" style="background: #f1ede6; color: #111; border: 1px solid #dcd4c8;">↻ Sincronizar</button>
             </div>
         </div>
 
@@ -649,7 +1154,7 @@
             <div class="summary-top">
                 <div>
                     <div class="today-date-text" id="todayDateDisplay">Cargando fecha...</div>
-                    <span style="font-size: 0.75rem; color: #777;">5 retos diarios en una sola pantalla</span>
+                    <span style="font-size: 0.72rem; color: #777;">5 retos diarios en una sola pantalla</span>
                 </div>
                 <div class="streak-pill" id="globalStreakPill">
                     🔥 <span id="globalStreakVal">0 días</span>
@@ -667,554 +1172,216 @@
             </div>
         </div>
 
-        <!-- SELECTOR DE PESTAÑAS (LOS 5 JUEGOS SIN SALIR DE LA PÁGINA) -->
+        <!-- BARRA SELECTORA DE JUEGOS (PESTAÑAS) -->
         <div class="today-tabs-container">
             <nav class="today-game-nav" id="gameNavTabs" aria-label="Juegos del día">
-                <button type="button" class="today-tab-btn active" data-game="sudoku" onclick="switchGameTab('sudoku')">
+                <button type="button" class="today-tab-btn active" data-game="sudoku">
                     <span class="tab-emoji">🧩</span>
                     <span>Sudoku</span>
-                    <span class="tab-check-dot" id="dotSudoku"></span>
+                    <span class="tab-check-dot"></span>
                 </button>
-                <button type="button" class="today-tab-btn" data-game="calcudoku" onclick="switchGameTab('calcudoku')">
+                <button type="button" class="today-tab-btn" data-game="calcudoku">
                     <span class="tab-emoji">🧮</span>
                     <span>Calcudoku</span>
-                    <span class="tab-check-dot" id="dotCalcudoku"></span>
+                    <span class="tab-check-dot"></span>
                 </button>
-                <button type="button" class="today-tab-btn" data-game="kakuro" onclick="switchGameTab('kakuro')">
+                <button type="button" class="today-tab-btn" data-game="kakuro">
                     <span class="tab-emoji">📐</span>
                     <span>Kakuro</span>
-                    <span class="tab-check-dot" id="dotKakuro"></span>
+                    <span class="tab-check-dot"></span>
                 </button>
-                <button type="button" class="today-tab-btn" data-game="cruzadas" onclick="switchGameTab('cruzadas')">
+                <button type="button" class="today-tab-btn" data-game="cruzadas">
                     <span class="tab-emoji">🔠</span>
                     <span>Cruzadas</span>
-                    <span class="tab-check-dot" id="dotCruzadas"></span>
+                    <span class="tab-check-dot"></span>
                 </button>
-                <button type="button" class="today-tab-btn" data-game="sopa" onclick="switchGameTab('sopa')">
+                <button type="button" class="today-tab-btn" data-game="sopa">
                     <span class="tab-emoji">🔤</span>
                     <span>Sopa</span>
-                    <span class="tab-check-dot" id="dotSopa"></span>
+                    <span class="tab-check-dot"></span>
                 </button>
             </nav>
         </div>
 
-        <!-- ESCENARIO PRINCIPAL: LOS 5 JUEGOS EMBEBIDOS EN TIEMPO REAL -->
-        <main class="today-game-stage">
-            <div class="game-frame-wrapper active" id="wrap-sudoku">
-                <iframe src="/sudoku-diario.html?embedded=1" class="today-game-iframe" id="frame-sudoku" loading="eager" title="Sudoku del Día"></iframe>
-            </div>
-            <div class="game-frame-wrapper" id="wrap-calcudoku">
-                <iframe src="/calcudoku-diario.html?embedded=1" class="today-game-iframe" id="frame-calcudoku" loading="lazy" title="Calcudoku del Día"></iframe>
-            </div>
-            <div class="game-frame-wrapper" id="wrap-kakuro">
-                <iframe src="/kakuro-diario.html?embedded=1" class="today-game-iframe" id="frame-kakuro" loading="lazy" title="Kakuro del Día"></iframe>
-            </div>
-            <div class="game-frame-wrapper" id="wrap-cruzadas">
-                <iframe src="/cruzadas-diarias.html?embedded=1" class="today-game-iframe" id="frame-cruzadas" loading="lazy" title="Cruzadas del Día"></iframe>
-            </div>
-            <div class="game-frame-wrapper" id="wrap-sopa">
-                <iframe src="/sopa-diaria.html?embedded=1" class="today-game-iframe" id="frame-sopa" loading="lazy" title="Sopa de Letras del Día"></iframe>
-            </div>
-        </main>
+        <!-- ==============================================================
+             CONTENEDOR UNIFICADO NATIVO (CERO IFRAMES, CERO VELO DE INICIO)
+             ============================================================== -->
+        <div class="unified-game-shell">
 
-        <!-- BANNER DE INSTALACIÓN PWA -->
-        <div class="pwa-install-banner" id="pwaInstallBanner" style="display: none;">
-            <div class="pwa-install-text">
-                <span class="pwa-install-title">Instalar como App</span>
-                <span class="pwa-install-desc">Acceso directo en pantalla de inicio</span>
+            <!-- 1. BARRA SUPERIOR EXTERNA (COMÚN) -->
+            <div class="outer-game-toolbar">
+                <div class="toolbar-left-group">
+                    <!-- Selector de variante (Sudoku, Calcudoku, Kakuro) -->
+                    <div class="game-mode-toggles" id="outerModeToggles">
+                        <!-- Botones de variante dinámicos según juego activo -->
+                    </div>
+                    <!-- Etiqueta temática (Cruzadas y Sopa) -->
+                    <span class="theme-badge-pill" id="outerThemeBadge"></span>
+                    <!-- Cronómetro común del juego activo -->
+                    <div class="outer-timer-box">
+                        ⏱ <span id="outerGameTimer">00:00</span>
+                    </div>
+                </div>
+                <div class="toolbar-right-actions">
+                    <button type="button" class="btn-outer-tool" id="btnOuterPause" title="Pausar reto">⏸ Pausa</button>
+                    <button type="button" class="btn-outer-tool" id="btnOuterHint" title="Pista en casilla seleccionada">💡 Pista</button>
+                    <button type="button" class="btn-outer-tool" id="btnOuterRestart" title="Reiniciar tablero">↺</button>
+                    <button type="button" class="btn-outer-tool" id="btnOuterStats" title="Estadísticas">📊</button>
+                </div>
             </div>
-            <button type="button" class="btn-install-action" id="btnInstallPwa">Instalar</button>
-        </div>
 
-        <div class="ios-guide-box" id="iosGuideBox">
-            💡 <strong>Instalar en iPhone / iPad:</strong> Toca el botón <em>Compartir</em> (<span style="font-size: 1.1em;">⎋</span>) en Safari y selecciona <strong>«Añadir a pantalla de inicio»</strong> para usarlo a pantalla completa sin navegador.
+            <!-- SUB-BARRA DINÁMICA DE AYUDA / ESTADO -->
+            <div class="outer-helper-strip" id="outerHelperStrip">
+                <div class="helper-text-left" id="helperLeftText">
+                    <span>Toca una casilla para empezar</span>
+                </div>
+                <div class="helper-text-right" id="helperRightText"></div>
+            </div>
+
+            <!-- 2. VIEWPORT CENTRAL: SOLO CAMBIA EL TABLERO DEL JUEGO ACTIVO -->
+            <div class="game-board-viewport" id="gameBoardViewport">
+                <!-- Overlay de pausa cuando se pulsa Pausa -->
+                <div class="board-pause-overlay" id="boardPauseOverlay">
+                    <h3>Partida en pausa</h3>
+                    <p>El cronómetro se encuentra detenido. Pulsa para reanudar el juego.</p>
+                    <button type="button" class="btn-resume-overlay" id="btnResumeOverlay">▶ Continuar jugando</button>
+                </div>
+
+                <!-- TABLERO 1: SUDOKU -->
+                <div class="board-stage-pane active" id="pane-sudoku">
+                    <div class="sudoku-board size-9" id="sudokuGrid"></div>
+                </div>
+
+                <!-- TABLERO 2: CALCUDOKU -->
+                <div class="board-stage-pane" id="pane-calcudoku">
+                    <div class="calcudoku-board" id="calcudokuGrid"></div>
+                </div>
+
+                <!-- TABLERO 3: KAKURO -->
+                <div class="board-stage-pane" id="pane-kakuro">
+                    <div class="kakuro-board" id="kakuroGrid"></div>
+                </div>
+
+                <!-- TABLERO 4: CRUZADAS -->
+                <div class="board-stage-pane" id="pane-cruzadas">
+                    <div class="cruzadas-grid" id="cruzadasGrid"></div>
+                </div>
+
+                <!-- TABLERO 5: SOPA DE LETRAS -->
+                <div class="board-stage-pane" id="pane-sopa">
+                    <div class="sopa-grid" id="sopaGrid"></div>
+                </div>
+            </div>
+
+            <!-- 3. DOCK EXTERNO DE TECLADO / ENTRADA -->
+            <div class="outer-input-dock" id="outerInputDock">
+                <!-- Teclado Numérico para Sudoku, Calcudoku y Kakuro -->
+                <div class="dock-numeric-keypad" id="dockNumericKeypad">
+                    <!-- Botones 1..9 dinámicos -->
+                </div>
+
+                <!-- Entrada para Cruzadas: Palabras a encajar + QWERTY -->
+                <div class="dock-cruzadas-words" id="dockCruzadasWords" style="display: none;">
+                    <div id="cruzadasWordGroups"></div>
+                    <div class="dock-qwerty-keypad" id="dockQwertyKeypad">
+                        <div class="qwerty-row" id="qwertyRow1"></div>
+                        <div class="qwerty-row" id="qwertyRow2"></div>
+                        <div class="qwerty-row" id="qwertyRow3"></div>
+                    </div>
+                </div>
+
+                <!-- Entrada para Sopa de Letras: Pastillas de palabras -->
+                <div class="dock-sopa-words" id="dockSopaWords" style="display: none;">
+                    <div class="sopa-chips-grid" id="sopaChipsGrid"></div>
+                </div>
+            </div>
+
+            <!-- 4. TIRA DE ESTADÍSTICAS Y REGLAS EXTERNAS -->
+            <div class="outer-game-footer">
+                <div class="outer-stats-strip">
+                    <div class="stat-box">
+                        <div class="stat-box-val" id="statValCompleted">0</div>
+                        <div class="stat-box-lbl">Resueltos</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-val" id="statValStreak">0 días</div>
+                        <div class="stat-box-lbl">Racha</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-val" id="statValBestTime">--:--</div>
+                        <div class="stat-box-lbl">Mejor Tiempo</div>
+                    </div>
+                </div>
+                <div class="outer-game-rule-hint" id="outerRuleHintText">
+                    Rellena cada fila, columna y región sin repetir ningún número.
+                </div>
+            </div>
+
         </div>
 
         <!-- FOOTER -->
         <footer class="app-footer">
-            <p><a href="/generador-libro-pasatiempos.html" style="font-weight: 700; color: #111; text-decoration: underline;">📚 ¿Prefieres resolver en papel? Configura tu Libro Completo (120 o 180 págs)</a></p>
+            <p><a href="/generador-libro-pasatiempos.html">📚 ¿Prefieres resolver en papel? Configura tu Libro Completo</a></p>
             <p>Editorial Menos Ruido · Pasatiempos sin pantallas invasivas ni publicidad.</p>
             <p><a href="/pasatiempos.html">Ver catálogo completo y generadores individuales</a></p>
         </footer>
     </div>
 
-    <!-- TOAST NOTIFICACIÓN DE VICTORIA Y SIGUIENTE JUEGO -->
-    <div class="victory-toast-banner" id="victoryToast">
-        <span id="victoryToastText">🎉 ¡Reto completado!</span>
-        <button type="button" class="btn-toast-next" id="btnToastNext" onclick="goToNextGameFromToast()">Siguiente reto →</button>
+    <!-- TOAST NOTIFICACIÓN -->
+    <div class="game-toast-notice" id="gameToastNotice"></div>
+
+    <!-- MODAL DE ESTADÍSTICAS -->
+    <div class="app-modal-overlay" id="statsModalOverlay">
+        <div class="app-modal-box">
+            <h3 class="app-modal-title" id="statsModalGameTitle">Estadísticas</h3>
+            <p class="app-modal-desc">Progreso guardado automáticamente en tu navegador y en la nube.</p>
+            <div class="outer-stats-strip" style="margin-bottom: 16px;">
+                <div class="stat-box">
+                    <div class="stat-box-val" id="modalStatCompleted">0</div>
+                    <div class="stat-box-lbl">Resueltos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-val" id="modalStatStreak">0</div>
+                    <div class="stat-box-lbl">Racha Días</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-val" id="modalStatBestTime">--:--</div>
+                    <div class="stat-box-lbl">Mejor Tiempo</div>
+                </div>
+            </div>
+            <button type="button" class="modal-btn-primary" id="btnCloseStatsModal">Cerrar</button>
+        </div>
     </div>
 
-    <!-- LÓGICA DE CONTROL, AUTENTICACIÓN Y SINCRONIZACIÓN -->
-    <script type="module">
-        import { 
-            auth, 
-            db, 
-            doc, 
-            getDoc, 
-            setDoc, 
-            onAuthStateChanged,
-            getUserEmail, 
-            getUserDisplayName 
-        } from './firebase-config.js';
-        import { openAuthModal } from './auth-modal.js';
+    <!-- MODAL DE VICTORIA -->
+    <div class="app-modal-overlay" id="victoryModalOverlay">
+        <div class="app-modal-box">
+            <div style="font-size: 2.2rem; margin-bottom: 6px;">✨</div>
+            <h3 class="app-modal-title" id="victoryModalTitle">¡Reto Completado!</h3>
+            <p class="app-modal-desc" id="victoryModalDesc">Has completado el juego del día con éxito.</p>
+            <div class="outer-stats-strip" style="margin-bottom: 18px;">
+                <div class="stat-box">
+                    <div class="stat-box-val" id="vicStatCompleted">1</div>
+                    <div class="stat-box-lbl">Resueltos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-val" id="vicStatStreak">1</div>
+                    <div class="stat-box-lbl">Racha Días</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-val" id="vicStatTime">00:00</div>
+                    <div class="stat-box-lbl">Tiempo</div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="modal-btn-primary" id="btnNextGameModal">Siguiente reto →</button>
+                <button type="button" class="btn-outer-tool" id="btnCloseVictoryModal" style="justify-content: center; padding: 8px;">Quedarme aquí</button>
+            </div>
+        </div>
+    </div>
 
-        // REGISTRO DE SERVICE WORKER
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {});
-            });
-        }
-
-        // LISTA DE JUEGOS Y SECUENCIA
-        const GAME_KEYS = ['sudoku', 'calcudoku', 'kakuro', 'cruzadas', 'sopa'];
-        const GAME_NAMES = {
-            sudoku: 'Sudoku',
-            calcudoku: 'Calcudoku',
-            kakuro: 'Kakuro',
-            cruzadas: 'Cruzadas',
-            sopa: 'Sopa de Letras'
-        };
-
-        let currentGameKey = 'sudoku';
-
-        function getTodayString() {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const d = String(now.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        function formatDisplayDate() {
-            const now = new Date();
-            const str = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-
-        // CAMBIO DE PESTAÑA ENTRE JUEGOS
-        function switchGameTab(targetKey) {
-            if (!GAME_KEYS.includes(targetKey)) return;
-            currentGameKey = targetKey;
-
-            // Pestañas
-            document.querySelectorAll('.today-tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.game === targetKey);
-            });
-
-            // Envoltorios de iframe
-            document.querySelectorAll('.game-frame-wrapper').forEach(wrap => {
-                wrap.classList.toggle('active', wrap.id === `wrap-${targetKey}`);
-            });
-
-            // Actualizar URL hash sin saltar
-            try {
-                history.replaceState(null, '', `#juego-${targetKey}`);
-            } catch(e) {}
-        }
-        window.switchGameTab = switchGameTab;
-
-        function getNextUnfinishedGame(currentKey) {
-            const todayStr = getTodayString();
-            const startIdx = GAME_KEYS.indexOf(currentKey);
-            for (let i = 1; i <= GAME_KEYS.length; i++) {
-                const checkKey = GAME_KEYS[(startIdx + i) % GAME_KEYS.length];
-                if (!isGameSolvedToday(checkKey, todayStr)) {
-                    return checkKey;
-                }
-            }
-            // Si todos están hechos, salta al siguiente en orden
-            return GAME_KEYS[(startIdx + 1) % GAME_KEYS.length];
-        }
-
-        function isGameSolvedToday(key, todayStr) {
-            try {
-                if (key === 'sudoku') {
-                    const sStats = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}');
-                    if (sStats.lastSolvedDate === todayStr) return true;
-                    const s9 = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_classic_${todayStr}`) || '{}');
-                    if (s9.isCompleted) return true;
-                    const s4 = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_mini_${todayStr}`) || '{}');
-                    if (s4.isCompleted) return true;
-                } else if (key === 'calcudoku') {
-                    const cStats = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}');
-                    if (cStats.lastDate === todayStr) return true;
-                } else if (key === 'kakuro') {
-                    const kStats = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}');
-                    if (kStats.lastDate === todayStr) return true;
-                } else if (key === 'cruzadas') {
-                    const crState = JSON.parse(localStorage.getItem(`mr_cruzadas_daily_${todayStr}`) || '{}');
-                    if (crState.completed) return true;
-                    const crStats = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}');
-                    if (crStats.lastSolvedDate === todayStr) return true;
-                } else if (key === 'sopa') {
-                    if (localStorage.getItem(`mr_sopa_solved_${todayStr}`) === 'true') return true;
-                }
-            } catch(e) {}
-            return false;
-        }
-
-        let nextTargetFromToast = null;
-        function showVictoryToast(completedGameKey) {
-            const nextKey = getNextUnfinishedGame(completedGameKey);
-            nextTargetFromToast = nextKey;
-            const toast = document.getElementById('victoryToast');
-            const textEl = document.getElementById('victoryToastText');
-            const btnEl = document.getElementById('btnToastNext');
-
-            const compName = GAME_NAMES[completedGameKey] || 'Juego';
-            const nextName = GAME_NAMES[nextKey] || 'Siguiente';
-
-            if (textEl) textEl.textContent = `🎉 ¡${compName} completado!`;
-            if (btnEl) btnEl.textContent = `Jugar a ${nextName} →`;
-
-            if (toast) {
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 6000);
-            }
-        }
-
-        function goToNextGameFromToast() {
-            const toast = document.getElementById('victoryToast');
-            if (toast) toast.classList.remove('show');
-            if (nextTargetFromToast) {
-                switchGameTab(nextTargetFromToast);
-            }
-        }
-        window.goToNextGameFromToast = goToNextGameFromToast;
-
-        // COMUNICACIÓN CON LOS JUEGOS EMBEBIDOS (AUTO-ALTURA Y VICTORIA)
-        window.addEventListener('message', (e) => {
-            if (!e.data || typeof e.data !== 'object') return;
-
-            // 1. Auto-ajuste de altura de iframe
-            if (e.data.type === 'MR_FRAME_HEIGHT' && e.data.game) {
-                const frame = document.getElementById(`frame-${e.data.game}`);
-                if (frame && e.data.height) {
-                    const cleanH = Math.max(540, e.data.height + 15);
-                    frame.style.height = `${cleanH}px`;
-                }
-            }
-
-            // 2. Notificación de victoria de cualquier juego
-            if (e.data.type === 'MR_PUZZLE_COMPLETED' && e.data.game) {
-                checkGamesStatus();
-                showVictoryToast(e.data.game);
-                if (auth.currentUser) {
-                    syncWithFirestore(auth.currentUser);
-                }
-            }
-
-            // 3. Salto directo al siguiente reto desde el modal de victoria
-            if (e.data.type === 'MR_GO_NEXT_PUZZLE') {
-                const currentKey = e.data.current || currentGameKey;
-                const nextKey = getNextUnfinishedGame(currentKey);
-                switchGameTab(nextKey);
-            }
-        });
-
-        // RECOLECTAR ESTADÍSTICAS LOCALES
-        function getLocalPuzzleStats(todayStr) {
-            let sudoku = {};
-            try { sudoku = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}'); } catch(e) {}
-
-            let calcudoku = {};
-            try { calcudoku = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}'); } catch(e) {}
-
-            let kakuro = {};
-            try { kakuro = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}'); } catch(e) {}
-
-            let cruzadas = {};
-            try { 
-                cruzadas = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}'); 
-            } catch(e) {}
-
-            const sopa = {
-                streak: parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10),
-                completed: parseInt(localStorage.getItem('mr_sopa_total_wins') || '0', 10),
-                bestTime: parseInt(localStorage.getItem('mr_sopa_best_time') || '0', 10),
-                lastDate: localStorage.getItem(`mr_sopa_solved_${todayStr}`) === 'true' ? todayStr : ''
-            };
-
-            return { sudoku, calcudoku, kakuro, cruzadas, sopa };
-        }
-
-        // FUSIÓN BIDIRECCIONAL INTELIGENTE
-        function mergeStats(local, remote) {
-            if (!remote) return local;
-
-            function mergeItem(loc = {}, rem = {}) {
-                const compLoc = loc.totalCompleted || loc.completed || 0;
-                const compRem = rem.totalCompleted || rem.completed || 0;
-                const completed = Math.max(compLoc, compRem);
-                const streak = Math.max(loc.streak || 0, rem.streak || 0);
-
-                let bestTime = null;
-                const btLoc = loc.bestTime && loc.bestTime < 99999 ? loc.bestTime : null;
-                const btRem = rem.bestTime && rem.bestTime < 99999 ? rem.bestTime : null;
-                if (btLoc && btRem) bestTime = Math.min(btLoc, btRem);
-                else bestTime = btLoc || btRem || null;
-
-                const dLoc = loc.lastSolvedDate || loc.lastDate || '';
-                const dRem = rem.lastSolvedDate || rem.lastDate || '';
-                const lastDate = dLoc > dRem ? dLoc : dRem;
-
-                return {
-                    completed,
-                    totalCompleted: completed,
-                    streak,
-                    bestTime,
-                    lastDate,
-                    lastSolvedDate: lastDate
-                };
-            }
-
-            return {
-                sudoku: mergeItem(local.sudoku, remote.sudoku),
-                calcudoku: mergeItem(local.calcudoku, remote.calcudoku),
-                kakuro: mergeItem(local.kakuro, remote.kakuro),
-                cruzadas: mergeItem(local.cruzadas, remote.cruzadas),
-                sopa: mergeItem(local.sopa, remote.sopa)
-            };
-        }
-
-        function saveMergedToLocal(merged, todayStr) {
-            if (!merged) return;
-            try {
-                if (merged.sudoku) {
-                    localStorage.setItem('menosruido_sudoku_stats_v1', JSON.stringify({
-                        totalCompleted: merged.sudoku.completed,
-                        streak: merged.sudoku.streak,
-                        bestTime: merged.sudoku.bestTime,
-                        lastSolvedDate: merged.sudoku.lastDate
-                    }));
-                }
-                if (merged.calcudoku) {
-                    localStorage.setItem('mr_calcudoku_stats', JSON.stringify({
-                        completed: merged.calcudoku.completed,
-                        streak: merged.calcudoku.streak,
-                        bestTime: merged.calcudoku.bestTime,
-                        lastDate: merged.calcudoku.lastDate
-                    }));
-                }
-                if (merged.kakuro) {
-                    localStorage.setItem('mr_kakuro_stats', JSON.stringify({
-                        completed: merged.kakuro.completed,
-                        streak: merged.kakuro.streak,
-                        bestTime: merged.kakuro.bestTime,
-                        lastDate: merged.kakuro.lastDate
-                    }));
-                }
-                if (merged.cruzadas) {
-                    const crzObj = {
-                        completed: merged.cruzadas.completed,
-                        streak: merged.cruzadas.streak,
-                        bestTime: merged.cruzadas.bestTime,
-                        lastSolvedDate: merged.cruzadas.lastDate
-                    };
-                    localStorage.setItem('mr_cruzadas_daily_stats', JSON.stringify(crzObj));
-                    localStorage.setItem('mr_cruzadas_stats', JSON.stringify(crzObj));
-                }
-                if (merged.sopa) {
-                    if (merged.sopa.streak) localStorage.setItem('mr_sopa_streak', String(merged.sopa.streak));
-                    if (merged.sopa.completed) localStorage.setItem('mr_sopa_total_wins', String(merged.sopa.completed));
-                    if (merged.sopa.bestTime) localStorage.setItem('mr_sopa_best_time', String(merged.sopa.bestTime));
-                    if (merged.sopa.lastDate === todayStr) localStorage.setItem(`mr_sopa_solved_${todayStr}`, 'true');
-                }
-            } catch(e) {}
-        }
-
-        // SINCRONIZACIÓN CON FIRESTORE
-        let isSyncing = false;
-        async function syncWithFirestore(user) {
-            if (!user || isSyncing) return;
-            isSyncing = true;
-            const badge = document.getElementById('syncStatusBadge');
-            if (badge) badge.textContent = '↻ Sincronizando...';
-
-            const todayStr = getTodayString();
-            const local = getLocalPuzzleStats(todayStr);
-
-            try {
-                const userRef = doc(db, 'users', user.uid);
-                const snap = await getDoc(userRef);
-                let remote = null;
-                if (snap.exists()) {
-                    remote = snap.data()?.puzzleStats || null;
-                }
-
-                const merged = mergeStats(local, remote);
-                saveMergedToLocal(merged, todayStr);
-
-                await setDoc(userRef, {
-                    puzzleStats: merged,
-                    lastPuzzleSync: new Date().toISOString()
-                }, { merge: true });
-
-                if (badge) badge.textContent = '✓ Sincronizado';
-                checkGamesStatus();
-            } catch(err) {
-                console.warn('Sync Firestore pasatiempos warning:', err);
-                if (badge) badge.textContent = '✓ Guardado local';
-            } finally {
-                isSyncing = false;
-            }
-        }
-
-        // COMPROBAR ESTADO DE CADA JUEGO HOY
-        window.checkGamesStatus = function() {
-            const todayStr = getTodayString();
-            let completedCount = 0;
-            const total = 5;
-
-            GAME_KEYS.forEach(k => {
-                const solved = isGameSolvedToday(k, todayStr);
-                const cap = k.charAt(0).toUpperCase() + k.slice(1);
-                const dot = document.getElementById(`dot${cap}`);
-                if (dot) dot.classList.toggle('visible', solved);
-                if (solved) completedCount++;
-            });
-
-            // Actualizar barra y texto
-            const fill = document.getElementById('progressBarFill');
-            const ratioText = document.getElementById('progressRatioText');
-            const pct = (completedCount / total) * 100;
-
-            if (fill) {
-                fill.style.width = `${pct}%`;
-                fill.classList.toggle('all-done', completedCount === total);
-            }
-
-            if (ratioText) {
-                if (completedCount === total) {
-                    ratioText.innerHTML = `<strong>¡Todos los retos completados!</strong> 🎉`;
-                } else {
-                    ratioText.innerHTML = `<strong>${completedCount}</strong> de ${total} resueltos`;
-                }
-            }
-
-            updateGlobalStreak(completedCount);
-        };
-
-        function updateGlobalStreak(todayCount) {
-            let maxStreak = 0;
-            try {
-                const s = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}').streak || 0;
-                const c = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}').streak || 0;
-                const k = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}').streak || 0;
-                const cr = JSON.parse(localStorage.getItem('mr_cruzadas_daily_stats') || localStorage.getItem('mr_cruzadas_stats') || '{}').streak || 0;
-                const sp = parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10);
-                maxStreak = Math.max(s, c, k, cr, sp, todayCount > 0 ? 1 : 0);
-            } catch(e) {}
-
-            const pill = document.getElementById('globalStreakVal');
-            if (pill) {
-                pill.textContent = maxStreak > 0 ? `${maxStreak} día${maxStreak > 1 ? 's' : ''}` : '0 días';
-            }
-        }
-
-        // GESTIÓN DE AUTENTICACIÓN
-        onAuthStateChanged(auth, async (user) => {
-            const unauthBox = document.getElementById('syncUnauthBox');
-            const authBox = document.getElementById('syncAuthBox');
-            const nameEl = document.getElementById('syncUserName');
-            const emailEl = document.getElementById('syncUserEmail');
-            const avatarEl = document.getElementById('syncAvatar');
-
-            if (user) {
-                if (unauthBox) unauthBox.style.display = 'none';
-                if (authBox) authBox.style.display = 'flex';
-
-                const name = getUserDisplayName(user);
-                const email = getUserEmail(user);
-                if (nameEl) nameEl.textContent = name;
-                if (emailEl) emailEl.textContent = email;
-
-                if (avatarEl) {
-                    if (user.photoURL) {
-                        avatarEl.innerHTML = `<img src="${user.photoURL}" alt="" />`;
-                    } else {
-                        avatarEl.textContent = (name || email || 'U').charAt(0).toUpperCase();
-                    }
-                }
-                await syncWithFirestore(user);
-            } else {
-                if (unauthBox) unauthBox.style.display = 'flex';
-                if (authBox) authBox.style.display = 'none';
-            }
-        });
-
-        // BOTONES DE LOGIN Y SYNC
-        document.getElementById('btnSyncLogin')?.addEventListener('click', () => {
-            openAuthModal({
-                title: 'Tu Perfil de Pasatiempos',
-                subtitle: 'Accede para sincronizar tus avances diarios, tiempos y rachas en todos tus dispositivos.'
-            });
-        });
-
-        document.getElementById('btnManualSync')?.addEventListener('click', () => {
-            if (auth.currentUser) {
-                syncWithFirestore(auth.currentUser);
-            } else {
-                openAuthModal();
-            }
-        });
-
-        // INSTALACIÓN PWA
-        let deferredPrompt = null;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const banner = document.getElementById('pwaInstallBanner');
-            if (banner) banner.style.display = 'flex';
-        });
-
-        document.getElementById('btnInstallPwa')?.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            document.getElementById('pwaInstallBanner').style.display = 'none';
-        });
-
-        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-        const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-        if (isIos && !isStandalone) {
-            const iosBox = document.getElementById('iosGuideBox');
-            if (iosBox) iosBox.style.display = 'block';
-        }
-
-        // INICIALIZACIÓN
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('todayDateDisplay').textContent = formatDisplayDate();
-            checkGamesStatus();
-
-            // Detectar si venimos con hash de juego directo (#juego-calcudoku, etc.)
-            const hash = window.location.hash.replace('#', '').replace('juego-', '').toLowerCase();
-            const query = new URLSearchParams(window.location.search).get('juego');
-            const target = query || hash;
-            if (target && GAME_KEYS.includes(target)) {
-                switchGameTab(target);
-            } else {
-                // Activar el primer juego no completado si sudoku ya está hecho
-                const todayStr = getTodayString();
-                if (isGameSolvedToday('sudoku', todayStr)) {
-                    const firstUnsolved = getNextUnfinishedGame('sudoku');
-                    if (firstUnsolved !== 'sudoku') {
-                        switchGameTab(firstUnsolved);
-                    }
-                }
-            }
-        });
-
-        window.addEventListener('focus', () => {
-            checkGamesStatus();
-            if (auth.currentUser) syncWithFirestore(auth.currentUser);
-        });
-        window.addEventListener('pageshow', () => {
-            checkGamesStatus();
-            if (auth.currentUser) syncWithFirestore(auth.currentUser);
-        });
-    </script>
-
+    <!-- LÓGICA DE CONTROL COMPLETA EN UN SOLO MOTOR NATIVO -->
+    <script type="module" src="./hoy.js"></script>
+    <script type="module" src="./main.js"></script>
 </body>
 </html>

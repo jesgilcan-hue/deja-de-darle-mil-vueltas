@@ -2,112 +2,7 @@
 <html lang="es">
 <head>
     <!-- Control de acceso exclusivo para Desarrollador -->
-    <style id="mr-dev-guard-style">html, body { display: none !important; }
-        /* VELO DE INICIO Y PAUSA (EDITORIAL MENOS RUIDO) */
-        .daily-start-veil {
-            position: absolute;
-            inset: 0;
-            z-index: 100;
-            background: rgba(248, 246, 240, 0.94);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            border-radius: 12px;
-            transition: opacity 0.22s ease, visibility 0.22s ease;
-        }
-        .daily-start-veil.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-        .veil-card {
-            background: #ffffff;
-            border: 1.5px solid var(--border-color);
-            border-radius: 14px;
-            padding: 24px 22px;
-            text-align: center;
-            max-width: 320px;
-            width: 100%;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-        .veil-icon {
-            font-size: 2.2rem;
-            line-height: 1;
-            margin-bottom: 2px;
-        }
-        .veil-title {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin: 0;
-        }
-        .veil-desc {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-            margin: 0;
-        }
-        .veil-stats-row {
-            display: flex;
-            justify-content: center;
-            gap: 14px;
-            font-size: 0.75rem;
-            color: #444;
-            background: #f7f5f0;
-            padding: 6px 12px;
-            border-radius: 8px;
-            margin: 4px 0 8px;
-            width: 100%;
-        }
-        .btn-veil-action {
-            background: #111111;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            padding: 11px 20px;
-            font-size: 0.88rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-            transition: transform 0.1s ease, background 0.15s ease;
-            width: 100%;
-        }
-        .btn-veil-action:hover { background: #222; }
-        .btn-veil-action:active { transform: scale(0.98); }
-
-        /* MODO EMBEBIDO EN HOY.HTML (LIMPIO SIN CABECERAS REDUNDANTES) */
-        body.is-embedded .dev-badge-bar,
-        body.is-embedded .app-header,
-        body.is-embedded .game-nav-bar,
-        body.is-embedded .app-footer,
-        body.is-embedded .challenge-header {
-            display: none !important;
-        }
-        body.is-embedded {
-            background: transparent !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            min-height: auto !important;
-            overflow-y: visible !important;
-        }
-        body.is-embedded .sudoku-daily-wrap,
-        body.is-embedded .calcudoku-daily-wrap,
-        body.is-embedded .kakuro-daily-wrap,
-        body.is-embedded .cruzadas-daily-wrap,
-        body.is-embedded .sopa-daily-wrap {
-            padding: 4px 6px 14px !important;
-            max-width: 100% !important;
-        }
-
-    </style>
+    <style id="mr-dev-guard-style">html, body { display: none !important; }</style>
     <script type="module" src="./dev-guard.js"></script>
 
     <meta charset="UTF-8" />
@@ -173,7 +68,6 @@
         }
 
         .calcudoku-daily-wrap {
-            position: relative; min-height: 540px;
             flex: 1;
             width: 100%;
             max-width: 520px;
@@ -597,21 +491,6 @@
     </div>
 
     <div class="calcudoku-daily-wrap">
-
-        <!-- VELO DE INICIO Y PAUSA -->
-        <div class="daily-start-veil" id="gameStartVeil">
-            <div class="veil-card">
-                <div class="veil-icon">🧮</div>
-                <h3 class="veil-title" id="veilTitle">Calcudoku del Día</h3>
-                <p class="veil-desc" id="veilDesc">Lógica matemática KenKen: llena la cuadrícula respetando las operaciones y resultados de cada jaula. El tiempo empezará al pulsar el botón.</p>
-                <div class="veil-stats-row">
-                    <span>🏆 Mejor: <strong id="veilBestTime">--:--</strong></span>
-                    <span>🔥 Racha: <strong id="veilStreak">0</strong></span>
-                </div>
-                <button type="button" class="btn-veil-action" id="btnVeilStart">▶ Empezar reto</button>
-            </div>
-        </div>
-
 
         <!-- NAVEGACIÓN SUPERIOR -->
         <header class="game-nav-bar">
@@ -2659,13 +2538,7 @@
             state.isCompleted = false;
 
             buildKeypad();
-            updateVeilStats();
-            if (state.isCompleted) {
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                hideVeil();
-            } else {
-                showVeil();
-            }
+            startTimer();
             renderBoard();
             updateCageHelper();
             loadStats();
