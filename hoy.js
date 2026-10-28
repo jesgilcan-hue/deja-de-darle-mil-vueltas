@@ -957,16 +957,35 @@ import {
             };
         })();
 
-        /* ==============================================================
+                /* ==============================================================
            4. MOTOR NATIVO: CRUZADAS (WORD FIT)
            ============================================================== */
         const CruzadasEngine = (function() {
             const THEMES = [
-                { theme: "Desconexión", words: ["PAUSA", "CALMA", "PAPEL", "RITMO", "SILENCIO", "LENTO", "TIEMPO", "AIRE", "SOL", "LIBRO", "MENTE", "FOCO", "SERENO"] },
-                { theme: "Naturaleza", words: ["BOSQUE", "SENDERO", "ARBOL", "HOJA", "RAMA", "BARRO", "RIO", "FLOR", "LAGO", "VIENTO", "PIEDRA", "VERDE", "TIERRA"] },
-                { theme: "Café y Mañanas", words: ["AROMA", "GRANO", "MOLINO", "TAZA", "LECHE", "CALOR", "VAPOR", "SABOR", "ORIGEN", "AGUA", "NEGRO", "TOSTADO"] },
-                { theme: "Agilidad Mental", words: ["LOGICA", "ENIGMA", "PISTA", "CLAVE", "RETO", "IDEAS", "FOCO", "MEMORIA", "ORDEN", "PASO", "RANGO", "CRUZADA"] },
-                { theme: "Lectura y Papel", words: ["PAGINA", "PLUMA", "TEXTO", "TINTA", "LETRA", "VERSO", "AUTOR", "HOJA", "LIBRO", "PROSA", "LECTURA", "OBRA"] }
+                {
+                    theme: "Bosque y Senderos",
+                    words: ["BOSQUE", "SENDERO", "ARBOL", "HOJA", "RAMA", "BARRO", "RIO", "FLOR", "LAGO", "VIENTO", "PIEDRA", "VERDE", "TIERRA", "MONTE"]
+                },
+                {
+                    theme: "Café y Mañanas",
+                    words: ["AROMA", "GRANO", "MOLINO", "TAZA", "LECHE", "CALOR", "VAPOR", "SABOR", "ORIGEN", "AGUA", "NEGRO", "TOSTADO", "PAN", "BAR"]
+                },
+                {
+                    theme: "Agilidad Mental",
+                    words: ["LOGICA", "ENIGMA", "PISTA", "CLAVE", "RETO", "IDEAS", "FOCO", "MEMORIA", "DEDUCCION", "ORDEN", "PASO", "RANGO", "CRUZADA"]
+                },
+                {
+                    theme: "Lectura y Papel",
+                    words: ["PAGINA", "PLUMA", "TEXTO", "TINTA", "LETRA", "VERSO", "AUTOR", "HOJA", "LIBRO", "PROSA", "LECTURA", "OBRA", "RED", "POEMA"]
+                },
+                {
+                    theme: "Casa y Refugio",
+                    words: ["HOGAR", "SILLON", "MESA", "VENTANA", "TECHO", "SUELO", "PARED", "PUERTA", "COCINA", "JARDIN", "SOMBRA", "RUTINA", "REPOSO"]
+                },
+                {
+                    theme: "Viajes y Senderos",
+                    words: ["MAPA", "CAMINO", "NORTE", "RUMBO", "VIAJE", "FARO", "MALETA", "TREN", "PASO", "GUIA", "VUELO", "HORIZONTE", "RUTA", "DESTINO"]
+                }
             ];
 
             let currentPuzzle = null;
@@ -987,15 +1006,18 @@ import {
             function generateDailyLayout(themeObj, seed) {
                 const GRID_DIM = 10;
                 const prng = createPRNG(seed);
-                const cleanWords = themeObj.words.map(w => w.toUpperCase().trim()).filter(w => w.length >= 3 && w.length <= 8);
+                const cleanWords = themeObj.words
+                    .map(w => w.toUpperCase().trim())
+                    .filter(w => w.length >= 3 && w.length <= 8);
 
                 let bestGrid = null;
                 let bestPlaced = [];
 
-                for (let attempt = 0; attempt < 16; attempt++) {
+                for (let attempt = 0; attempt < 25; attempt++) {
                     const grid = Array.from({ length: GRID_DIM }, () => Array(GRID_DIM).fill(null));
                     const placed = [];
                     const pool = cleanWords.slice().sort(() => prng() - 0.5);
+
                     const first = pool.find(w => w.length >= 5 && w.length <= 7) || pool[0];
                     if (!first) continue;
 
@@ -1019,26 +1041,58 @@ import {
 
                         for (const p of placed) {
                             const targetHoriz = !p.isHoriz;
+
                             for (let i = 0; i < len; i++) {
+                                const charToMatch = word[i];
                                 for (let j = 0; j < p.word.length; j++) {
-                                    if (p.word[j] === word[i]) {
+                                    if (p.word[j] === charToMatch) {
                                         const intersectR = p.isHoriz ? p.r : p.r + j;
                                         const intersectC = p.isHoriz ? p.c + j : p.c;
+
                                         const candR = targetHoriz ? intersectR : intersectR - i;
                                         const candC = targetHoriz ? intersectC - i : intersectC;
+
                                         const candEndR = targetHoriz ? candR : candR + len - 1;
                                         const candEndC = targetHoriz ? candC + len - 1 : candC;
 
                                         if (candR >= 0 && candEndR < GRID_DIM && candC >= 0 && candEndC < GRID_DIM) {
                                             let canPlace = true;
                                             const cells = [];
-                                            for (let k = 0; k < len; k++) {
-                                                const r = targetHoriz ? candR : candR + k;
-                                                const c = targetHoriz ? candC + k : candC;
-                                                if (grid[r][c] !== null && grid[r][c] !== word[k]) { canPlace = false; break; }
-                                                cells.push([r, c]);
+
+                                            const beforeR = targetHoriz ? candR : candR - 1;
+                                            const beforeC = targetHoriz ? candC - 1 : candC;
+                                            const afterR = targetHoriz ? candR : candEndR + 1;
+                                            const afterC = targetHoriz ? candEndC + 1 : candC;
+
+                                            if (beforeR >= 0 && beforeR < GRID_DIM && beforeC >= 0 && beforeC < GRID_DIM && grid[beforeR][beforeC] !== null) canPlace = false;
+                                            if (afterR >= 0 && afterR < GRID_DIM && afterC >= 0 && afterC < GRID_DIM && grid[afterR][afterC] !== null) canPlace = false;
+
+                                            if (canPlace) {
+                                                for (let k = 0; k < len; k++) {
+                                                    const r = targetHoriz ? candR : candR + k;
+                                                    const c = targetHoriz ? candC + k : candC;
+
+                                                    if (grid[r][c] !== null && grid[r][c] !== word[k]) {
+                                                        canPlace = false;
+                                                        break;
+                                                    }
+
+                                                    if (grid[r][c] === null) {
+                                                        const adj1R = targetHoriz ? r - 1 : r;
+                                                        const adj1C = targetHoriz ? c : c - 1;
+                                                        const adj2R = targetHoriz ? r + 1 : r;
+                                                        const adj2C = targetHoriz ? c : c + 1;
+
+                                                        if (adj1R >= 0 && adj1R < GRID_DIM && adj1C >= 0 && adj1C < GRID_DIM && grid[adj1R][adj1C] !== null) canPlace = false;
+                                                        if (adj2R >= 0 && adj2R < GRID_DIM && adj2C >= 0 && adj2C < GRID_DIM && grid[adj2R][adj2C] !== null) canPlace = false;
+                                                    }
+                                                    cells.push([r, c]);
+                                                }
+
+                                                if (canPlace) {
+                                                    validPlacements.push({ word, r: candR, c: candC, isHoriz: targetHoriz, cells });
+                                                }
                                             }
-                                            if (canPlace) validPlacements.push({ word, r: candR, c: candC, isHoriz: targetHoriz, cells });
                                         }
                                     }
                                 }
@@ -1061,13 +1115,21 @@ import {
                     }
                 }
 
-                // Pistas iniciales
+                // Generar pistas iniciales (1 palabra corta + 2 letras)
                 const starterClues = [];
                 if (bestPlaced.length > 0) {
                     const sorted = bestPlaced.slice().sort((a,b) => a.word.length - b.word.length);
-                    sorted[0].cells.forEach(([r, c]) => {
+                    const starterWord = sorted[0];
+                    starterWord.cells.forEach(([r, c]) => {
                         starterClues.push({ row: r, col: c, letter: bestGrid[r][c] });
                     });
+                    const otherWord = sorted[1] || bestPlaced[0];
+                    if (otherWord && otherWord.cells.length > 0) {
+                        const mid = otherWord.cells[Math.floor(otherWord.cells.length / 2)];
+                        if (!starterClues.some(cl => cl.row === mid[0] && cl.col === mid[1])) {
+                            starterClues.push({ row: mid[0], col: mid[1], letter: bestGrid[mid[0]][mid[1]] });
+                        }
+                    }
                 }
 
                 const words = bestPlaced.map(p => ({
@@ -1127,6 +1189,43 @@ import {
                 render();
                 renderWordBank();
                 buildQwerty();
+                selectFirstPlayableCell();
+            }
+
+            function selectFirstPlayableCell() {
+                const N = currentPuzzle.size;
+                for (let r = 0; r < N; r++) {
+                    for (let c = 0; c < N; c++) {
+                        if (!isBlackGrid[r][c] && !isStarterGrid[r][c]) {
+                            selectCell(r, c);
+                            return;
+                        }
+                    }
+                }
+                for (let r = 0; r < N; r++) {
+                    for (let c = 0; c < N; c++) {
+                        if (!isBlackGrid[r][c]) {
+                            selectCell(r, c);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            function selectCell(r, c, forceDir = null) {
+                if (isBlackGrid[r][c]) return;
+                selectedRow = r;
+                selectedCol = c;
+                if (forceDir) {
+                    currentDir = forceDir;
+                } else {
+                    const hasHoriz = (c > 0 && !isBlackGrid[r][c-1]) || (c < currentPuzzle.size - 1 && !isBlackGrid[r][c+1]);
+                    const hasVert = (r > 0 && !isBlackGrid[r-1][c]) || (r < currentPuzzle.size - 1 && !isBlackGrid[r+1][c]);
+                    if (!hasHoriz && hasVert) currentDir = "V";
+                    else if (!hasVert && hasHoriz) currentDir = "H";
+                }
+                updateHighlights();
+                updateHelperText();
             }
 
             function render() {
@@ -1252,7 +1351,6 @@ import {
                         chip.id = `crz-chip-${word}`;
                         chip.textContent = word;
                         chip.addEventListener('click', () => {
-                            ensureActiveTimerRunning();
                             fitWordToSlot(word);
                         });
                         chipsBox.appendChild(chip);
@@ -1265,22 +1363,51 @@ import {
             }
 
             function fitWordToSlot(word) {
-                if (selectedRow < 0 || selectedCol < 0) return;
-                const slotCells = getSlotCells(selectedRow, selectedCol, currentDir);
-                if (slotCells.length === word.length) {
-                    slotCells.forEach((pos, i) => {
+                if (!word) return;
+                ensureActiveTimerRunning();
+
+                const wLen = word.length;
+                let targetSlot = null;
+
+                // 1. Si la celda seleccionada actual tiene un slot de esta misma longitud, usarlo
+                if (selectedRow >= 0 && selectedCol >= 0) {
+                    const curSlot = getSlotCells(selectedRow, selectedCol, currentDir);
+                    if (curSlot.length === wLen) {
+                        targetSlot = { cells: curSlot, row: curSlot[0].r, col: curSlot[0].c, dir: currentDir };
+                    }
+                }
+
+                // 2. Si no coincide, buscar el slot exacto correspondiente en el puzle
+                if (!targetSlot) {
+                    const exact = currentPuzzle.words.find(w => w.word.toUpperCase() === word.toUpperCase());
+                    if (exact) {
+                        targetSlot = exact;
+                    } else {
+                        const candidates = currentPuzzle.words.filter(w => w.word.length === wLen);
+                        if (candidates.length > 0) targetSlot = candidates[0];
+                    }
+                }
+
+                if (targetSlot) {
+                    selectedRow = targetSlot.row !== undefined ? targetSlot.row : targetSlot.cells[0].r;
+                    selectedCol = targetSlot.col !== undefined ? targetSlot.col : targetSlot.cells[0].c;
+                    currentDir = targetSlot.dir || (targetSlot.cells.length > 1 && targetSlot.cells[0].r === targetSlot.cells[1].r ? "H" : "V");
+
+                    targetSlot.cells.forEach((pos, i) => {
                         if (!isStarterGrid[pos.r][pos.c]) {
                             currentGrid[pos.r][pos.c] = word[i];
                             const el = document.querySelector(`.cruzadas-cell[data-r="${pos.r}"][data-c="${pos.c}"]`);
                             if (el) el.textContent = word[i];
                         }
                     });
+
                     saveProgress();
                     updateHighlights();
                     updateWordChipsState();
+                    updateHelperText();
                     checkVictory();
                 } else {
-                    showToast(`La palabra tiene ${word.length} letras y el hueco tiene ${slotCells.length}`);
+                    showToast(`No se encontró un hueco para la palabra de ${wLen} letras`);
                 }
             }
 
@@ -1306,8 +1433,9 @@ import {
             }
 
             function handleLetterInput(letter) {
-                if (selectedRow < 0 || selectedCol < 0 || gameStates.cruzadas.isCompleted || gameStates.cruzadas.isPaused) return;
-                if (isBlackGrid[selectedRow][selectedCol]) return;
+                if (gameStates.cruzadas.isCompleted || gameStates.cruzadas.isPaused) return;
+                if (selectedRow < 0 || selectedCol < 0) selectFirstPlayableCell();
+                if (selectedRow < 0 || selectedCol < 0 || isBlackGrid[selectedRow][selectedCol]) return;
 
                 ensureActiveTimerRunning();
                 if (!isStarterGrid[selectedRow][selectedCol]) {
@@ -1316,7 +1444,6 @@ import {
                     if (el) el.textContent = letter.toUpperCase();
                 }
 
-                // Avanzar cursor en el slot
                 advanceCursor();
                 saveProgress();
                 updateHighlights();
@@ -1330,11 +1457,43 @@ import {
                 let nc = selectedCol;
                 if (currentDir === "H") {
                     nc++;
-                    if (nc < N && !isBlackGrid[nr][nc]) selectedCol = nc;
+                    while (nc < N && !isBlackGrid[nr][nc]) {
+                        selectedCol = nc;
+                        if (!isStarterGrid[nr][nc] || nc === N - 1 || isBlackGrid[nr][nc + 1]) break;
+                        nc++;
+                    }
                 } else {
                     nr++;
-                    if (nr < N && !isBlackGrid[nr][nc]) selectedRow = nr;
+                    while (nr < N && !isBlackGrid[nr][nc]) {
+                        selectedRow = nr;
+                        if (!isStarterGrid[nr][nc] || nr === N - 1 || isBlackGrid[nr + 1][nc]) break;
+                        nr++;
+                    }
                 }
+                updateHighlights();
+                updateHelperText();
+            }
+
+            function retreatCursor() {
+                let pr = selectedRow;
+                let pc = selectedCol;
+                if (currentDir === "H") {
+                    pc--;
+                    while (pc >= 0 && !isBlackGrid[pr][pc]) {
+                        selectedCol = pc;
+                        if (!isStarterGrid[pr][pc] || pc === 0 || isBlackGrid[pr][pc - 1]) break;
+                        pc--;
+                    }
+                } else {
+                    pr--;
+                    while (pr >= 0 && !isBlackGrid[pr][pc]) {
+                        selectedRow = pr;
+                        if (!isStarterGrid[pr][pc] || pr === 0 || isBlackGrid[pr - 1][pc]) break;
+                        pr--;
+                    }
+                }
+                updateHighlights();
+                updateHelperText();
             }
 
             function handleBackspace() {
@@ -1346,9 +1505,7 @@ import {
                     const el = document.querySelector(`.cruzadas-cell[data-r="${selectedRow}"][data-c="${selectedCol}"]`);
                     if (el) el.textContent = "";
                 } else {
-                    // Retroceder cursor
-                    if (currentDir === "H" && selectedCol > 0 && !isBlackGrid[selectedRow][selectedCol-1]) selectedCol--;
-                    else if (currentDir === "V" && selectedRow > 0 && !isBlackGrid[selectedRow-1][selectedCol]) selectedRow--;
+                    retreatCursor();
                     if (!isStarterGrid[selectedRow][selectedCol]) {
                         currentGrid[selectedRow][selectedCol] = "";
                         const el = document.querySelector(`.cruzadas-cell[data-r="${selectedRow}"][data-c="${selectedCol}"]`);
@@ -1358,6 +1515,30 @@ import {
                 saveProgress();
                 updateHighlights();
                 updateWordChipsState();
+            }
+
+            function moveCursor(dr, dc) {
+                if (selectedRow < 0 || selectedCol < 0) {
+                    selectFirstPlayableCell();
+                    return;
+                }
+                const N = currentPuzzle.size;
+                let nr = selectedRow + dr;
+                let nc = selectedCol + dc;
+                while (nr >= 0 && nr < N && nc >= 0 && nc < N) {
+                    if (!isBlackGrid[nr][nc]) {
+                        selectCell(nr, nc, dr !== 0 ? "V" : (dc !== 0 ? "H" : currentDir));
+                        return;
+                    }
+                    nr += dr;
+                    nc += dc;
+                }
+            }
+
+            function toggleDirection() {
+                currentDir = currentDir === "H" ? "V" : "H";
+                updateHighlights();
+                updateHelperText();
             }
 
             function buildQwerty() {
@@ -1383,14 +1564,14 @@ import {
                     });
                 });
 
-                document.getElementById('btnToggleDir')?.addEventListener('click', () => {
-                    currentDir = currentDir === "H" ? "V" : "H";
-                    updateHighlights();
-                    updateHelperText();
+                document.getElementById('btnToggleDir')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleDirection();
                 });
             }
 
             function hint() {
+                if (selectedRow < 0 || selectedCol < 0) selectFirstPlayableCell();
                 if (selectedRow < 0 || selectedCol < 0 || gameStates.cruzadas.isCompleted) return;
                 ensureActiveTimerRunning();
                 const sol = solutionGrid[selectedRow][selectedCol];
@@ -1421,6 +1602,7 @@ import {
                 gameStates.cruzadas.timerRunning = false;
                 saveProgress();
                 render();
+                selectFirstPlayableCell();
                 updateWordChipsState();
                 updateTimerDisplay();
                 showToast('↺ Cruzadas reiniciadas');
@@ -1462,13 +1644,26 @@ import {
                 }
             }
 
+            function onActivate() {
+                if (selectedRow < 0 || selectedCol < 0) {
+                    selectFirstPlayableCell();
+                } else {
+                    updateHighlights();
+                }
+                updateHelperText();
+                updateWordChipsState();
+            }
+
             return {
                 init,
                 render,
                 handleLetterInput,
                 handleBackspace,
+                moveCursor,
+                toggleDirection,
                 hint,
                 restart,
+                onActivate,
                 getTheme: () => currentPuzzle?.theme || 'Deducción'
             };
         })();
@@ -1478,7 +1673,7 @@ import {
            ============================================================== */
         const SopaEngine = (function() {
             const THEMES = [
-                { name: 'Desconexión', words: ['PAPEL', 'TINTA', 'LIBRO', 'CALMA', 'PAUSA', 'FOCO', 'RITMO', 'TRAZO'] },
+                { name: 'Desconexión', words: ['PAPEL', 'TINTA', 'LIBRO', 'LETRAS', 'ORDEN', 'FOCO', 'RITMO', 'TRAZO'] },
                 { name: 'Naturaleza', words: ['BOSQUE', 'MONTE', 'RIO', 'ARBOL', 'VIENTO', 'VALLE', 'HOJAS', 'PIEDRA'] },
                 { name: 'Café y Mañanas', words: ['AROMA', 'TAZA', 'MAÑANA', 'VAPOR', 'GRANOS', 'LECHE', 'CALOR', 'MESA'] },
                 { name: 'Agilidad Mental', words: ['LOGICA', 'MEMORIA', 'ENFOQUE', 'REFLEJO', 'ATENCION', 'AGILIDAD', 'RAZON', 'INGENIO'] },
@@ -1869,6 +2064,9 @@ import {
 
             // 10. Actualizar texto de ayuda
             updateActiveGameHelper();
+            if (targetGame === 'cruzadas' && typeof CruzadasEngine !== 'undefined' && CruzadasEngine.onActivate) {
+                CruzadasEngine.onActivate();
+            }
 
             // Guardar hash en URL
             try { history.replaceState(null, '', `#juego-${targetGame}`); } catch(e) {}
@@ -2391,7 +2589,25 @@ import {
                 if (e.key >= '1' && e.key <= '9') KakuroEngine.setNumber(parseInt(e.key, 10));
                 else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') KakuroEngine.setNumber(0);
             } else if (activeGame === 'cruzadas') {
-                if (/^[a-zA-ZñÑ]$/.test(e.key)) CruzadasEngine.handleLetterInput(e.key);
+                if (e.key === ' ' || e.code === 'Space') {
+                    e.preventDefault();
+                    CruzadasEngine.toggleDirection();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    CruzadasEngine.moveCursor(-1, 0);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    CruzadasEngine.moveCursor(1, 0);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    CruzadasEngine.moveCursor(0, -1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    CruzadasEngine.moveCursor(0, 1);
+                } else if (/^[a-zA-ZñÑáéíóúÁÉÍÓÚüÜ]$/.test(e.key)) {
+                    const norm = e.key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+                    CruzadasEngine.handleLetterInput(norm || e.key.toUpperCase());
+                }
                 else if (e.key === 'Backspace') CruzadasEngine.handleBackspace();
             }
         });
