@@ -79,6 +79,13 @@ import {
             cruzadas: 'Cruzadas del Día',
             sopa: 'Sopa de Letras del Día'
         };
+        const GAME_EMOJIS = {
+            sudoku: '🧩',
+            calcudoku: '🧮',
+            kakuro: '📐',
+            cruzadas: '🔠',
+            sopa: '🔤'
+        };
 
         const GAME_RULES = {
             sudoku: 'Rellena cada fila, columna y región sin repetir ningún número.',
@@ -2485,6 +2492,7 @@ import {
            ============================================================== */
         function isGameSolvedToday(key, todayStr) {
             try {
+                if (gameStates[key]?.isCompleted) return true;
                 if (key === 'sudoku') {
                     const s = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}');
                     if (s.lastSolvedDate === todayStr) return true;
@@ -2518,6 +2526,40 @@ import {
             return false;
         }
 
+        function getGameTodayTime(gameKey, todayStr) {
+            try {
+                const direct = localStorage.getItem(`mr_${gameKey}_time_${todayStr}`);
+                if (direct) return parseInt(direct, 10);
+
+                if (gameKey === 'sudoku') {
+                    const sc = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_classic_${todayStr}`) || '{}');
+                    if (sc.secondsElapsed) return sc.secondsElapsed;
+                    const sm = JSON.parse(localStorage.getItem(`menosruido_sudoku_state_v1_mini_${todayStr}`) || '{}');
+                    if (sm.secondsElapsed) return sm.secondsElapsed;
+                    if (gameStates.sudoku.timerSecs > 0) return gameStates.sudoku.timerSecs;
+                } else if (gameKey === 'calcudoku') {
+                    const c4 = JSON.parse(localStorage.getItem(`mr_calcudoku_state_4_${todayStr}`) || '{}');
+                    if (c4.timerSeconds) return c4.timerSeconds;
+                    const c5 = JSON.parse(localStorage.getItem(`mr_calcudoku_state_5_${todayStr}`) || '{}');
+                    if (c5.timerSeconds) return c5.timerSeconds;
+                    if (gameStates.calcudoku.timerSecs > 0) return gameStates.calcudoku.timerSecs;
+                } else if (gameKey === 'kakuro') {
+                    const k6 = JSON.parse(localStorage.getItem(`mr_kakuro_state_6_${todayStr}`) || '{}');
+                    if (k6.timerSeconds) return k6.timerSeconds;
+                    const k7 = JSON.parse(localStorage.getItem(`mr_kakuro_state_7_${todayStr}`) || '{}');
+                    if (k7.timerSeconds) return k7.timerSeconds;
+                    if (gameStates.kakuro.timerSecs > 0) return gameStates.kakuro.timerSecs;
+                } else if (gameKey === 'cruzadas') {
+                    const cr = JSON.parse(localStorage.getItem(`mr_cruzadas_daily_${todayStr}`) || '{}');
+                    if (cr.timerSeconds) return cr.timerSeconds;
+                    if (gameStates.cruzadas.timerSecs > 0) return gameStates.cruzadas.timerSecs;
+                } else if (gameKey === 'sopa') {
+                    if (gameStates.sopa.timerSecs > 0) return gameStates.sopa.timerSecs;
+                }
+            } catch(e) {}
+            return null;
+        }
+
         function updateGlobalDailyProgress() {
             const todayStr = getTodayString();
             let done = 0;
@@ -2532,15 +2574,21 @@ import {
             const fill = document.getElementById('progressBarFill');
             const ratioText = document.getElementById('progressRatioText');
             const pct = (done / GAME_KEYS.length) * 100;
+            const allDone = done === GAME_KEYS.length;
 
             if (fill) {
                 fill.style.width = `${pct}%`;
-                fill.classList.toggle('all-done', done === GAME_KEYS.length);
+                fill.classList.toggle('all-done', allDone);
             }
 
             if (ratioText) {
-                if (done === GAME_KEYS.length) ratioText.innerHTML = `<strong>¡Todos los retos completados!</strong> 🎉`;
+                if (allDone) ratioText.innerHTML = `<strong>¡Pleno del día!</strong> 🏆`;
                 else ratioText.innerHTML = `<strong>${done}</strong> de ${GAME_KEYS.length} resueltos`;
+            }
+
+            const sumBtn = document.getElementById('btnOpenDailySummary');
+            if (sumBtn) {
+                sumBtn.textContent = allDone ? 'Ver Pleno 🏆' : 'Resumen 🏆';
             }
 
             // Actualizar racha global
@@ -2602,6 +2650,9 @@ import {
             const todayStr = getTodayString();
 
             try {
+                // Guardar tiempo específico del día para este juego
+                localStorage.setItem(`mr_${gameKey}_time_${todayStr}`, timeSecs.toString());
+
                 if (gameKey === 'sudoku') {
                     const st = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}');
                     const comp = (st.totalCompleted || 0) + 1;
@@ -2657,16 +2708,176 @@ import {
         }
 
         function showVictoryModal(gameKey, timeSecs) {
+            const todayStr = getTodayString();
+            const solvedCount = GAME_KEYS.filter(k => isGameSolvedToday(k, todayStr)).length;
+            const allCompleted = (solvedCount === GAME_KEYS.length);
+
+            // Si el usuario ya ha completado todos los retos de hoy, abrimos directamente el resumen completo del día
+            if (allCompleted) {
+                showDailySummaryModal();
+                return;
+            }
+
             const modal = document.getElementById('victoryModalOverlay');
             const title = document.getElementById('victoryModalTitle');
             const desc = document.getElementById('victoryModalDesc');
             const timeEl = document.getElementById('vicStatTime');
+            const nextBtn = document.getElementById('btnNextGameModal');
 
             if (title) title.textContent = `¡${GAME_TITLES[gameKey]} Resuelto!`;
             if (desc) desc.textContent = `Has completado el reto diario en ${formatTime(timeSecs)}.`;
             if (timeEl) timeEl.textContent = formatTime(timeSecs);
 
+            const nextKey = getNextUnfinishedGame(gameKey);
+            if (nextBtn) {
+                nextBtn.textContent = `Siguiente reto: ${GAME_TITLES[nextKey]} →`;
+            }
+
             if (modal) modal.classList.add('open');
+        }
+
+        function showDailySummaryModal() {
+            // Cerrar cualquier otro modal que pudiera estar abierto
+            document.getElementById('victoryModalOverlay')?.classList.remove('open');
+            document.getElementById('statsModalOverlay')?.classList.remove('open');
+
+            const todayStr = getTodayString();
+            const dateObj = new Date();
+            const dateFmt = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            const modal = document.getElementById('dailySummaryModalOverlay');
+            const dateSub = document.getElementById('dailySummaryDateSubtitle');
+            const badge = document.getElementById('dailySummaryBadge');
+            const list = document.getElementById('dailySummaryList');
+            const totalTimeEl = document.getElementById('dailySummaryTotalTime');
+            const streakEl = document.getElementById('dailySummaryStreak');
+
+            if (dateSub) {
+                dateSub.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
+            }
+
+            let solvedCount = 0;
+            let totalSeconds = 0;
+            let listHtml = '';
+
+            GAME_KEYS.forEach(key => {
+                const isSolved = isGameSolvedToday(key, todayStr);
+                const timeSecs = getGameTodayTime(key, todayStr);
+                const emoji = GAME_EMOJIS[key] || '🎮';
+                const title = GAME_TITLES[key] || key;
+
+                if (isSolved) {
+                    solvedCount++;
+                    if (timeSecs) totalSeconds += timeSecs;
+                    listHtml += `
+                        <div class="daily-summary-row solved">
+                            <div class="daily-summary-game">
+                                <span class="daily-summary-game-emoji">${emoji}</span>
+                                <span>${title}</span>
+                            </div>
+                            <div class="daily-summary-status done">
+                                <span>✓ Resuelto</span>
+                                <span>${timeSecs ? formatTime(timeSecs) : ''}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    listHtml += `
+                        <div class="daily-summary-row">
+                            <div class="daily-summary-game">
+                                <span class="daily-summary-game-emoji">${emoji}</span>
+                                <span>${title}</span>
+                            </div>
+                            <div class="daily-summary-status pending">
+                                <span>Pendiente</span>
+                                <button type="button" class="daily-summary-play-link" data-goto="${key}">Jugar →</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (list) list.innerHTML = listHtml;
+
+            // Enlazar botones para jugar los pendientes
+            list?.querySelectorAll('.daily-summary-play-link').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal?.classList.remove('open');
+                    switchGame(btn.dataset.goto);
+                });
+            });
+
+            const allDone = (solvedCount === GAME_KEYS.length);
+            if (badge) {
+                badge.className = `daily-summary-badge ${allDone ? 'all-done' : ''}`;
+                badge.textContent = allDone
+                    ? `🏆 ¡Pleno del día! 5 de 5 retos completados`
+                    : `${solvedCount} de ${GAME_KEYS.length} retos completados hoy`;
+            }
+
+            if (totalTimeEl) {
+                totalTimeEl.textContent = formatTime(totalSeconds);
+            }
+
+            // Racha global
+            let globalStreak = 1;
+            try {
+                const s1 = JSON.parse(localStorage.getItem('menosruido_sudoku_stats_v1') || '{}').streak || 0;
+                const s2 = JSON.parse(localStorage.getItem('mr_calcudoku_stats') || '{}').streak || 0;
+                const s3 = JSON.parse(localStorage.getItem('mr_kakuro_stats') || '{}').streak || 0;
+                const s4 = JSON.parse(localStorage.getItem('mr_cruzadas_stats') || localStorage.getItem('mr_cruzadas_daily_stats') || '{}').streak || 0;
+                const s5 = parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10);
+                globalStreak = Math.max(s1, s2, s3, s4, s5, 1);
+            } catch(e) {}
+
+            if (streakEl) {
+                streakEl.textContent = `🔥 ${globalStreak} ${globalStreak === 1 ? 'día' : 'días'}`;
+            }
+
+            if (modal) modal.classList.add('open');
+        }
+
+        function shareDailySummary() {
+            const todayStr = getTodayString();
+            const dateObj = new Date();
+            const dateFmt = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+
+            let solvedCount = 0;
+            let totalSeconds = 0;
+            let lines = [];
+
+            GAME_KEYS.forEach(key => {
+                const isSolved = isGameSolvedToday(key, todayStr);
+                const timeSecs = getGameTodayTime(key, todayStr);
+                const emoji = GAME_EMOJIS[key] || '🎮';
+                const title = GAME_TITLES[key] || key;
+
+                if (isSolved) {
+                    solvedCount++;
+                    if (timeSecs) totalSeconds += timeSecs;
+                    lines.push(`${emoji} ${title}: ${timeSecs ? formatTime(timeSecs) : '✓'}`);
+                } else {
+                    lines.push(`${emoji} ${title}: ⏳ Pendiente`);
+                }
+            });
+
+            const shareText = [
+                `Editorial Menos Ruido · Retos del Día (${dateFmt})`,
+                `${solvedCount}/${GAME_KEYS.length} retos completados ${solvedCount === 5 ? '🏆' : '✨'}`,
+                ...lines,
+                `⏱️ Tiempo total: ${formatTime(totalSeconds)}`,
+                `https://www.editorialmenosruido.com/hoy`
+            ].join('\n');
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showToast('📋 ¡Resumen copiado al portapapeles!');
+                }).catch(() => {
+                    showToast('📋 Resultados listos');
+                });
+            } else {
+                showToast('📋 Resultados listos');
+            }
         }
 
         function getNextUnfinishedGame(currentKey) {
@@ -2829,10 +3040,34 @@ import {
             document.getElementById('victoryModalOverlay')?.classList.remove('open');
         });
 
+        document.getElementById('btnVictoryToSummary')?.addEventListener('click', () => {
+            document.getElementById('victoryModalOverlay')?.classList.remove('open');
+            showDailySummaryModal();
+        });
+
         document.getElementById('btnNextGameModal')?.addEventListener('click', () => {
             document.getElementById('victoryModalOverlay')?.classList.remove('open');
-            const nextKey = getNextUnfinishedGame(activeGame);
-            switchGame(nextKey);
+            const todayStr = getTodayString();
+            const solvedCount = GAME_KEYS.filter(k => isGameSolvedToday(k, todayStr)).length;
+            if (solvedCount === GAME_KEYS.length) {
+                showDailySummaryModal();
+            } else {
+                const nextKey = getNextUnfinishedGame(activeGame);
+                switchGame(nextKey);
+            }
+        });
+
+        document.getElementById('btnCloseDailySummary')?.addEventListener('click', () => {
+            document.getElementById('dailySummaryModalOverlay')?.classList.remove('open');
+        });
+
+        document.getElementById('btnShareDailySummary')?.addEventListener('click', shareDailySummary);
+
+        document.getElementById('btnOpenDailySummary')?.addEventListener('click', showDailySummaryModal);
+
+        document.getElementById('dailyProgressBox')?.addEventListener('click', (e) => {
+            if (e.target.closest('#btnOpenDailySummary')) return;
+            showDailySummaryModal();
         });
 
         // Tabs click
@@ -2998,6 +3233,16 @@ import {
 
             // Actualizar progreso general del día
             updateGlobalDailyProgress();
+
+            // Si el usuario ya tiene todos los retos de hoy completados al entrar, le mostramos su resumen diario
+            const todayStr = getTodayString();
+            const doneCount = GAME_KEYS.filter(k => isGameSolvedToday(k, todayStr)).length;
+            if (doneCount === GAME_KEYS.length && !sessionStorage.getItem(`mr_summary_shown_${todayStr}`)) {
+                sessionStorage.setItem(`mr_summary_shown_${todayStr}`, 'true');
+                setTimeout(() => {
+                    showDailySummaryModal();
+                }, 450);
+            }
         }
 
         if (document.readyState === 'loading') {

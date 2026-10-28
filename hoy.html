@@ -1108,6 +1108,133 @@
             width: 100%;
         }
 
+        /* ESTILOS DEL MODAL DE RESUMEN DIARIO */
+        .summary-modal-box {
+            max-width: 440px;
+            padding: 24px 20px;
+        }
+        .daily-summary-badge {
+            display: inline-block;
+            background: #eef6ee;
+            color: #1e692f;
+            border: 1px solid #cce5cf;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-bottom: 14px;
+        }
+        .daily-summary-badge.all-done {
+            background: #fbf5e7;
+            color: #946200;
+            border-color: #ebd7a3;
+        }
+        .daily-summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        .daily-summary-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 12px;
+            background: #faf8f5;
+            border: 1px solid #e9e4dc;
+            border-radius: 9px;
+            font-size: 0.88rem;
+            transition: all 0.15s ease;
+        }
+        .daily-summary-row.solved {
+            background: #fbfdfa;
+            border-color: #c9e2cd;
+        }
+        .daily-summary-game {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .daily-summary-game-emoji {
+            font-size: 1.15rem;
+        }
+        .daily-summary-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        .daily-summary-status.done {
+            color: #1e692f;
+        }
+        .daily-summary-status.pending {
+            color: #8c8275;
+            font-family: inherit;
+            font-weight: 500;
+        }
+        .daily-summary-play-link {
+            background: #111111;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 9px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .daily-summary-play-link:hover {
+            background: #333333;
+        }
+        .daily-summary-total-strip {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: #f4eee5;
+            border: 1px solid #dfd8cc;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 14px;
+        }
+        .daily-summary-total-strip .total-lbl {
+            display: block;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #7a7062;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .daily-summary-total-strip .total-val {
+            font-size: 1.05rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            color: #111111;
+        }
+        .btn-summary-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #f2ebe2;
+            border: 1px solid #ded5c8;
+            color: #3e3831;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-summary-pill:hover {
+            background: #e6ded3;
+            border-color: #cbbfaf;
+        }
+
         /* FOOTER EDITORIAL */
         .app-footer {
             margin-top: 10px;
@@ -1186,9 +1313,12 @@
                 </div>
             </div>
 
-            <div class="progress-box">
+            <div class="progress-box" id="dailyProgressBox" style="cursor: pointer;" title="Toca para ver el resumen de tus retos de hoy">
                 <div class="progress-meta">
-                    <span>Progreso del día</span>
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                        <span>Progreso del día</span>
+                        <button type="button" class="btn-summary-pill" id="btnOpenDailySummary" style="padding: 2px 9px; font-size: 0.68rem; font-weight: 700;">Resumen 🏆</button>
+                    </span>
                     <span id="progressRatioText"><strong>0</strong> de 5 resueltos</span>
                 </div>
                 <div class="progress-track">
@@ -1400,7 +1530,45 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <button type="button" class="modal-btn-primary" id="btnNextGameModal">Siguiente reto →</button>
+                <button type="button" class="btn-outer-tool" id="btnVictoryToSummary" style="justify-content: center; padding: 8px; font-weight: 700; color: #111;">Ver resumen de hoy 🏆</button>
                 <button type="button" class="btn-outer-tool" id="btnCloseVictoryModal" style="justify-content: center; padding: 8px;">Quedarme aquí</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RESUMEN DIARIO (PLENO DEL DÍA) -->
+    <div class="app-modal-overlay" id="dailySummaryModalOverlay">
+        <div class="app-modal-box summary-modal-box">
+            <div style="font-size: 2.3rem; margin-bottom: 6px;">🏆</div>
+            <h3 class="app-modal-title" id="dailySummaryTitle">Resumen de Retos de Hoy</h3>
+            <p class="app-modal-desc" id="dailySummaryDateSubtitle" style="margin-bottom: 10px;">Cargando fecha...</p>
+
+            <div class="daily-summary-badge" id="dailySummaryBadge">
+                Cargando retos...
+            </div>
+
+            <div class="daily-summary-list" id="dailySummaryList">
+                <!-- Se rellena dinámicamente -->
+            </div>
+
+            <div class="daily-summary-total-strip">
+                <div>
+                    <span class="total-lbl">Tiempo total invertido</span>
+                    <strong class="total-val" id="dailySummaryTotalTime">00:00</strong>
+                </div>
+                <div>
+                    <span class="total-lbl">Racha diaria</span>
+                    <strong class="total-val" id="dailySummaryStreak">🔥 1 día</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="modal-btn-primary" id="btnShareDailySummary">
+                    📋 Compartir mis resultados
+                </button>
+                <button type="button" class="btn-outer-tool" id="btnCloseDailySummary" style="justify-content: center; padding: 9px; font-weight: 600;">
+                    Cerrar
+                </button>
             </div>
         </div>
     </div>
