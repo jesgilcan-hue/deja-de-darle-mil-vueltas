@@ -596,67 +596,33 @@ import {
             let currentGrid = [];
             let selectedCell = null;
 
-            const PUZZLES_4X4 = [
-                {
-                    size: 4,
-                    solution: [[1, 2, 4, 3], [3, 4, 2, 1], [4, 1, 3, 2], [2, 3, 1, 4]],
-                    cages: [
-                        { target: 4, op: "+", cells: [[0, 0], [1, 0]] },
-                        { target: 8, op: "*", cells: [[0, 1], [0, 2]] },
-                        { target: 3, cells: [[0, 3]] },
-                        { target: 2, op: "/", cells: [[1, 1], [1, 2]] },
-                        { target: 1, op: "-", cells: [[1, 3], [2, 3]] },
-                        { target: 2, op: "/", cells: [[2, 0], [3, 0]] },
-                        { target: 2, op: "-", cells: [[2, 1], [3, 1]] },
-                        { target: 4, op: "+", cells: [[2, 2], [3, 2]] },
-                        { target: 4, cells: [[3, 3]] }
-                    ]
-                },
-                {
-                    size: 4,
-                    solution: [[2, 1, 3, 4], [4, 3, 2, 1], [3, 4, 1, 2], [1, 2, 4, 3]],
-                    cages: [
-                        { target: 2, cells: [[0, 0]] },
-                        { target: 4, op: "+", cells: [[0, 1], [0, 2]] },
-                        { target: 7, op: "+", cells: [[0, 3], [1, 3], [2, 3]] },
-                        { target: 1, op: "-", cells: [[1, 0], [2, 0]] },
-                        { target: 12, op: "*", cells: [[1, 1], [1, 2], [2, 2]] },
-                        { target: 1, cells: [[3, 0]] },
-                        { target: 8, op: "*", cells: [[2, 1], [3, 1], [3, 2]] },
-                        { target: 3, cells: [[3, 3]] }
-                    ]
-                }
-            ];
+            const PUZZLES_4X4 = [{"size":4,"solution":[[4,3,2,1],[3,4,1,2],[2,1,4,3],[1,2,3,4]],"cages":[{"target":1,"op":"-","cells":[[0,0],[0,1]]},{"target":2,"op":"/","cells":[[0,2],[0,3]]},{"target":1,"op":"-","cells":[[1,0],[2,0]]},{"target":4,"cells":[[1,1]]},{"target":2,"op":"*","cells":[[1,2],[1,3]]},{"target":1,"cells":[[3,0]]},{"target":1,"op":"-","cells":[[2,1],[3,1]]},{"target":7,"op":"+","cells":[[2,2],[3,2]]},{"target":12,"op":"*","cells":[[2,3],[3,3]]}]},{"size":4,"solution":[[3,4,1,2],[2,1,4,3],[4,3,2,1],[1,2,3,4]],"cages":[{"target":7,"op":"+","cells":[[0,0],[0,1]]},{"target":2,"op":"/","cells":[[0,2],[0,3]]},{"target":2,"op":"/","cells":[[1,0],[2,0]]},{"target":3,"op":"-","cells":[[1,1],[1,2]]},{"target":3,"cells":[[1,3]]},{"target":5,"op":"+","cells":[[2,1],[2,2]]},{"target":3,"op":"-","cells":[[2,3],[3,3]]},{"target":2,"op":"/","cells":[[3,0],[3,1]]},{"target":3,"cells":[[3,2]]}]},{"size":4,"solution":[[4,2,3,1],[2,4,1,3],[1,3,2,4],[3,1,4,2]],"cages":[{"target":2,"op":"/","cells":[[0,0],[1,0]]},{"target":2,"cells":[[0,1]]},{"target":2,"op":"-","cells":[[0,2],[0,3]]},{"target":4,"cells":[[1,1]]},{"target":3,"op":"*","cells":[[1,2],[1,3]]},{"target":3,"op":"*","cells":[[2,0],[3,0]]},{"target":2,"op":"-","cells":[[2,1],[3,1]]},{"target":8,"op":"*","cells":[[2,2],[2,3]]},{"target":2,"op":"/","cells":[[3,2],[3,3]]}]},{"size":4,"solution":[[1,2,4,3],[3,4,2,1],[4,1,3,2],[2,3,1,4]],"cages":[{"target":4,"op":"+","cells":[[0,0],[1,0]]},{"target":8,"op":"*","cells":[[0,1],[0,2]]},{"target":3,"cells":[[0,3]]},{"target":2,"op":"/","cells":[[1,1],[1,2]]},{"target":1,"op":"-","cells":[[1,3],[2,3]]},{"target":2,"op":"/","cells":[[2,0],[3,0]]},{"target":2,"op":"-","cells":[[2,1],[3,1]]},{"target":4,"op":"+","cells":[[2,2],[3,2]]},{"target":4,"cells":[[3,3]]}]},{"size":4,"solution":[[2,1,3,4],[4,3,2,1],[3,4,1,2],[1,2,4,3]],"cages":[{"target":2,"cells":[[0,0]]},{"target":4,"op":"+","cells":[[0,1],[0,2]]},{"target":7,"op":"+","cells":[[0,3],[1,3],[2,3]]},{"target":1,"op":"-","cells":[[1,0],[2,0]]},{"target":6,"op":"*","cells":[[1,1],[1,2]]},{"target":1,"cells":[[3,0]]},{"target":8,"op":"*","cells":[[2,1],[3,1]]},{"target":3,"op":"-","cells":[[2,2],[3,2]]},{"target":3,"cells":[[3,3]]}]}];
 
-            const PUZZLES_5X5 = [
-                {
-                    size: 5,
-                    solution: [
-                        [1, 2, 3, 4, 5],
-                        [3, 4, 5, 1, 2],
-                        [2, 3, 1, 5, 4],
-                        [5, 1, 4, 2, 3],
-                        [4, 5, 2, 3, 1]
-                    ],
-                    cages: [
-                        { target: 2, op: "/", cells: [[0, 0], [1, 0]] },
-                        { target: 5, op: "+", cells: [[0, 1], [0, 2]] },
-                        { target: 20, op: "*", cells: [[0, 3], [0, 4]] },
-                        { target: 20, op: "*", cells: [[1, 1], [1, 2]] },
-                        { target: 2, cells: [[1, 4]] },
-                        { target: 1, op: "-", cells: [[1, 3], [2, 3]] },
-                        { target: 6, op: "*", cells: [[2, 0], [2, 1]] },
-                        { target: 1, cells: [[2, 2]] },
-                        { target: 12, op: "*", cells: [[2, 4], [3, 4]] },
-                        { target: 5, cells: [[3, 0]] },
-                        { target: 3, op: "-", cells: [[3, 1], [4, 1]] },
-                        { target: 2, op: "/", cells: [[3, 2], [3, 3]] },
-                        { target: 4, cells: [[4, 0]] },
-                        { target: 6, op: "+", cells: [[4, 2], [4, 3]] },
-                        { target: 1, cells: [[4, 4]] }
-                    ]
+            const PUZZLES_5X5 = [{"size":5,"solution":[[1,5,2,4,3],[2,3,4,5,1],[5,4,1,3,2],[4,1,3,2,5],[3,2,5,1,4]],"cages":[{"target":5,"op":"*","cells":[[0,0],[0,1]]},{"target":8,"op":"*","cells":[[0,2],[0,3]]},{"target":3,"cells":[[0,4]]},{"target":2,"cells":[[1,0]]},{"target":12,"op":"*","cells":[[1,1],[1,2]]},{"target":5,"op":"*","cells":[[1,3],[1,4]]},{"target":1,"op":"-","cells":[[2,0],[2,1]]},{"target":4,"op":"+","cells":[[2,2],[3,2]]},{"target":1,"op":"-","cells":[[2,3],[2,4]]},{"target":4,"cells":[[3,0]]},{"target":1,"cells":[[3,1]]},{"target":10,"op":"*","cells":[[3,3],[3,4]]},{"target":6,"op":"*","cells":[[4,0],[4,1]]},{"target":5,"cells":[[4,2]]},{"target":3,"op":"-","cells":[[4,3],[4,4]]}]},{"size":5,"solution":[[3,1,4,5,2],[1,4,2,3,5],[4,2,5,1,3],[5,3,1,2,4],[2,5,3,4,1]],"cages":[{"target":3,"op":"*","cells":[[0,0],[0,1]]},{"target":20,"op":"*","cells":[[0,2],[0,3]]},{"target":2,"cells":[[0,4]]},{"target":4,"op":"*","cells":[[1,0],[1,1]]},{"target":6,"op":"*","cells":[[1,2],[1,3]]},{"target":5,"cells":[[1,4]]},{"target":2,"op":"/","cells":[[2,0],[2,1]]},{"target":5,"cells":[[2,2]]},{"target":2,"op":"-","cells":[[2,3],[2,4]]},{"target":15,"op":"*","cells":[[3,0],[3,1]]},{"target":2,"op":"*","cells":[[3,2],[3,3]]},{"target":4,"cells":[[3,4]]},{"target":10,"op":"*","cells":[[4,0],[4,1]]},{"target":1,"op":"-","cells":[[4,2],[4,3]]},{"target":1,"cells":[[4,4]]}]},{"size":5,"solution":[[5,4,3,2,1],[4,3,2,1,5],[3,2,1,5,4],[2,1,5,4,3],[1,5,4,3,2]],"cages":[{"target":20,"op":"*","cells":[[0,0],[0,1]]},{"target":6,"op":"*","cells":[[0,2],[0,3]]},{"target":1,"cells":[[0,4]]},{"target":1,"op":"-","cells":[[1,0],[1,1]]},{"target":2,"op":"/","cells":[[1,2],[1,3]]},{"target":5,"cells":[[1,4]]},{"target":1,"op":"-","cells":[[2,0],[2,1]]},{"target":5,"op":"*","cells":[[2,2],[2,3]]},{"target":4,"cells":[[2,4]]},{"target":2,"op":"/","cells":[[3,0],[3,1]]},{"target":20,"op":"*","cells":[[3,2],[3,3]]},{"target":3,"cells":[[3,4]]},{"target":5,"op":"*","cells":[[4,0],[4,1]]},{"target":1,"op":"-","cells":[[4,2],[4,3]]},{"target":2,"cells":[[4,4]]}]},{"size":5,"solution":[[2,3,5,1,4],[3,5,1,4,2],[5,1,4,2,3],[1,4,2,3,5],[4,2,3,5,1]],"cages":[{"target":6,"op":"*","cells":[[0,0],[0,1]]},{"target":5,"op":"*","cells":[[0,2],[0,3]]},{"target":4,"cells":[[0,4]]},{"target":15,"op":"*","cells":[[1,0],[1,1]]},{"target":4,"op":"*","cells":[[1,2],[1,3]]},{"target":2,"cells":[[1,4]]},{"target":4,"op":"-","cells":[[2,0],[2,1]]},{"target":2,"op":"/","cells":[[2,2],[2,3]]},{"target":3,"cells":[[2,4]]},{"target":4,"op":"*","cells":[[3,0],[3,1]]},{"target":6,"op":"*","cells":[[3,2],[3,3]]},{"target":5,"cells":[[3,4]]},{"target":2,"op":"/","cells":[[4,0],[4,1]]},{"target":15,"op":"*","cells":[[4,2],[4,3]]},{"target":1,"cells":[[4,4]]}]},{"size":5,"solution":[[4,1,2,5,3],[1,2,5,3,4],[2,5,3,4,1],[5,3,4,1,2],[3,4,1,2,5]],"cages":[{"target":3,"op":"-","cells":[[0,0],[0,1]]},{"target":10,"op":"*","cells":[[0,2],[0,3]]},{"target":3,"cells":[[0,4]]},{"target":2,"op":"*","cells":[[1,0],[1,1]]},{"target":15,"op":"*","cells":[[1,2],[1,3]]},{"target":4,"cells":[[1,4]]},{"target":10,"op":"*","cells":[[2,0],[2,1]]},{"target":1,"op":"-","cells":[[2,2],[2,3]]},{"target":1,"cells":[[2,4]]},{"target":2,"op":"-","cells":[[3,0],[3,1]]},{"target":4,"op":"*","cells":[[3,2],[3,3]]},{"target":2,"cells":[[3,4]]},{"target":12,"op":"*","cells":[[4,0],[4,1]]},{"target":2,"op":"*","cells":[[4,2],[4,3]]},{"target":5,"cells":[[4,4]]}]}];
+
+            function getDailyIndex(seedStr, max) {
+                let hash = 0;
+                for (let i = 0; i < seedStr.length; i++) {
+                    hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+                    hash |= 0;
                 }
-            ];
+                return Math.abs(hash) % max;
+            }
+
+            function testCageMath(cg, vals) {
+                const t = cg.target;
+                const op = cg.op;
+                if (vals.length === 1) return vals[0] === t;
+                if (op === '+') return vals.reduce((a, b) => a + b, 0) === t;
+                if (op === '*') return vals.reduce((a, b) => a * b, 1) === t;
+                if (op === '-') return Math.abs(vals[0] - vals[1]) === t;
+                if (op === '/') {
+                    const v1 = Math.max(vals[0], vals[1]);
+                    const v2 = Math.min(vals[0], vals[1]);
+                    return v2 > 0 && v1 % v2 === 0 && Math.floor(v1 / v2) === t;
+                }
+                return false;
+            }
 
             function init(size = 4) {
                 currentSize = size;
@@ -672,13 +638,20 @@ import {
                 if (savedRaw) {
                     try {
                         const saved = JSON.parse(savedRaw);
-                        currentGrid = saved.grid || currentGrid;
+                        if (Array.isArray(saved.grid) && saved.grid.length === currentSize) {
+                            currentGrid = saved.grid;
+                        }
                         gameStates.calcudoku.timerSecs = saved.timerSeconds || 0;
                         gameStates.calcudoku.isCompleted = !!saved.isCompleted;
                     } catch(e) {}
                 }
 
                 render();
+                onCellClick(0, 0);
+
+                if (!gameStates.calcudoku.isCompleted) {
+                    checkVictory();
+                }
             }
 
             function render() {
@@ -696,7 +669,7 @@ import {
                         cell.dataset.c = c;
 
                         // Encontrar la jaula
-                        const cage = currentPuzzle.cages.find(cg => cg.cells.some(([cr, cc]) => cr === r && cc === c));
+                        const cage = currentPuzzle ? currentPuzzle.cages.find(cg => cg.cells.some(([cr, cc]) => cr === r && cc === c)) : null;
                         if (cage) {
                             // Bordes gruesos de la jaula
                             const hasTop = cage.cells.some(([cr, cc]) => cr === r - 1 && cc === c);
@@ -720,7 +693,7 @@ import {
                             }
                         }
 
-                        const val = currentGrid[r][c];
+                        const val = parseInt(currentGrid[r][c], 10) || 0;
                         const valSpan = document.createElement('span');
                         valSpan.className = 'calcudoku-val';
                         valSpan.textContent = val !== 0 ? val : '';
@@ -734,6 +707,7 @@ import {
                     }
                 }
                 updateHighlights();
+                checkConflicts();
             }
 
             function onCellClick(r, c) {
@@ -742,13 +716,23 @@ import {
                 updateHelperText();
             }
 
+            function moveCursor(dr, dc) {
+                if (!selectedCell) {
+                    onCellClick(0, 0);
+                    return;
+                }
+                const nr = Math.max(0, Math.min(currentSize - 1, selectedCell.r + dr));
+                const nc = Math.max(0, Math.min(currentSize - 1, selectedCell.c + dc));
+                onCellClick(nr, nc);
+            }
+
             function updateHighlights() {
                 const cells = document.querySelectorAll('.calcudoku-cell');
                 cells.forEach(el => el.classList.remove('selected', 'highlight'));
 
                 if (!selectedCell) return;
                 const { r, c } = selectedCell;
-                const cage = currentPuzzle.cages.find(cg => cg.cells.some(([cr, cc]) => cr === r && cc === c));
+                const cage = currentPuzzle ? currentPuzzle.cages.find(cg => cg.cells.some(([cr, cc]) => cr === r && cc === c)) : null;
 
                 cells.forEach(el => {
                     const er = parseInt(el.dataset.r, 10);
@@ -766,10 +750,11 @@ import {
                 const { r, c } = selectedCell;
 
                 ensureActiveTimerRunning();
-                currentGrid[r][c] = num;
+                const parsed = parseInt(num, 10) || 0;
+                currentGrid[r][c] = (parsed >= 1 && parsed <= currentSize) ? parsed : 0;
 
                 const cellEl = document.querySelector(`.calcudoku-cell[data-r="${r}"][data-c="${c}"] .calcudoku-val`);
-                if (cellEl) cellEl.textContent = num !== 0 ? num : '';
+                if (cellEl) cellEl.textContent = currentGrid[r][c] !== 0 ? currentGrid[r][c] : '';
 
                 saveProgress();
                 checkConflicts();
@@ -778,24 +763,40 @@ import {
 
             function checkConflicts() {
                 const cells = document.querySelectorAll('.calcudoku-cell');
-                cells.forEach(el => el.classList.remove('error'));
+                cells.forEach(el => el.classList.remove('error', 'cage-complete'));
 
                 for (let r = 0; r < currentSize; r++) {
                     for (let c = 0; c < currentSize; c++) {
-                        const val = currentGrid[r][c];
-                        if (val !== 0) {
+                        const val = parseInt(currentGrid[r][c], 10);
+                        if (val > 0) {
                             for (let c2 = 0; c2 < currentSize; c2++) {
-                                if (c2 !== c && currentGrid[r][c2] === val) {
+                                if (c2 !== c && parseInt(currentGrid[r][c2], 10) === val) {
                                     markError(r, c); markError(r, c2);
                                 }
                             }
                             for (let r2 = 0; r2 < currentSize; r2++) {
-                                if (r2 !== r && currentGrid[r2][c] === val) {
+                                if (r2 !== r && parseInt(currentGrid[r2][c], 10) === val) {
                                     markError(r, c); markError(r2, c);
                                 }
                             }
                         }
                     }
+                }
+
+                if (currentPuzzle && currentPuzzle.cages) {
+                    currentPuzzle.cages.forEach(cg => {
+                        const filled = cg.cells.map(([r, c]) => parseInt(currentGrid[r][c], 10));
+                        if (filled.every(v => v > 0)) {
+                            const isCorrect = testCageMath(cg, filled);
+                            cg.cells.forEach(([r, c]) => {
+                                const el = document.querySelector(`.calcudoku-cell[data-r="${r}"][data-c="${c}"]`);
+                                if (el) {
+                                    if (!isCorrect) el.classList.add('error');
+                                    else el.classList.add('cage-complete');
+                                }
+                            });
+                        }
+                    });
                 }
             }
 
@@ -805,11 +806,28 @@ import {
             }
 
             function hint() {
-                if (!selectedCell || gameStates.calcudoku.isCompleted) return;
-                const { r, c } = selectedCell;
+                if (gameStates.calcudoku.isCompleted) return;
                 ensureActiveTimerRunning();
-                setNumber(currentPuzzle.solution[r][c]);
-                showToast(`💡 Pista revelada: ${currentPuzzle.solution[r][c]}`);
+
+                if (selectedCell) {
+                    const { r, c } = selectedCell;
+                    if (parseInt(currentGrid[r][c], 10) !== currentPuzzle.solution[r][c]) {
+                        setNumber(currentPuzzle.solution[r][c]);
+                        showToast(`💡 Pista revelada: ${currentPuzzle.solution[r][c]}`);
+                        return;
+                    }
+                }
+
+                for (let r = 0; r < currentSize; r++) {
+                    for (let c = 0; c < currentSize; c++) {
+                        if (parseInt(currentGrid[r][c], 10) !== currentPuzzle.solution[r][c]) {
+                            onCellClick(r, c);
+                            setNumber(currentPuzzle.solution[r][c]);
+                            showToast(`💡 Pista revelada: ${currentPuzzle.solution[r][c]}`);
+                            return;
+                        }
+                    }
+                }
             }
 
             function restart() {
@@ -822,20 +840,72 @@ import {
                 selectedCell = null;
                 saveProgress();
                 render();
+                onCellClick(0, 0);
                 updateTimerDisplay();
                 showToast('↺ Calcudoku reiniciado');
             }
 
             function checkVictory() {
-                for (let r = 0; r < currentSize; r++) {
-                    for (let c = 0; c < currentSize; c++) {
-                        if (currentGrid[r][c] !== currentPuzzle.solution[r][c]) return;
+                if (!currentPuzzle || gameStates.calcudoku.isCompleted) return false;
+                const sz = currentSize;
+
+                // 1. Todas las celdas deben estar rellenas (1..sz)
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        const val = parseInt(currentGrid[r][c], 10);
+                        if (!val || val < 1 || val > sz) return false;
                     }
                 }
+
+                // 2. Comprobar que cada fila tenga todos los dígitos 1..N sin duplicados
+                for (let r = 0; r < sz; r++) {
+                    const rowSet = new Set();
+                    for (let c = 0; c < sz; c++) {
+                        rowSet.add(parseInt(currentGrid[r][c], 10));
+                    }
+                    if (rowSet.size !== sz) return false;
+                }
+
+                // 3. Comprobar que cada columna tenga todos los dígitos 1..N sin duplicados
+                for (let c = 0; c < sz; c++) {
+                    const colSet = new Set();
+                    for (let r = 0; r < sz; r++) {
+                        colSet.add(parseInt(currentGrid[r][c], 10));
+                    }
+                    if (colSet.size !== sz) return false;
+                }
+
+                // 4. Comprobar que todas las jaulas cumplan estrictamente su objetivo matemático
+                let allCagesValid = true;
+                for (const cg of currentPuzzle.cages) {
+                    const vals = cg.cells.map(([r, c]) => parseInt(currentGrid[r][c], 10));
+                    if (!testCageMath(cg, vals)) {
+                        allCagesValid = false;
+                        break;
+                    }
+                }
+
+                // Fallback de comparación directa con la solución prevista
+                if (!allCagesValid) {
+                    let matchesSol = true;
+                    for (let r = 0; r < sz; r++) {
+                        for (let c = 0; c < sz; c++) {
+                            if (parseInt(currentGrid[r][c], 10) !== currentPuzzle.solution[r][c]) {
+                                matchesSol = false;
+                                break;
+                            }
+                        }
+                        if (!matchesSol) break;
+                    }
+                    if (!matchesSol) return false;
+                }
+
+                // ¡Victoria legítima!
                 gameStates.calcudoku.isCompleted = true;
                 gameStates.calcudoku.timerRunning = false;
                 saveProgress();
                 onGameComplete('calcudoku', gameStates.calcudoku.timerSecs);
+                return true;
             }
 
             function saveProgress() {
@@ -857,7 +927,7 @@ import {
                     return;
                 }
                 const { r, c } = selectedCell;
-                const cage = currentPuzzle.cages.find(cg => cg.cells.some(([cr, cc]) => cr === r && cc === c));
+                const cage = currentPuzzle ? currentPuzzle.cages.find(cg => cg.cells.some(([cr, cc]) => cr === r && cc === c)) : null;
                 if (cage) {
                     const op = cage.op ? cage.op.replace('*', '×').replace('/', '÷') : '';
                     left.innerHTML = `<span>Jaula objetivo: <strong>${cage.target}${op}</strong> (${cage.cells.length} casillas)</span>`;
@@ -868,8 +938,10 @@ import {
                 init,
                 render,
                 setNumber,
+                moveCursor,
                 hint,
                 restart,
+                checkVictory,
                 getSize: () => currentSize
             };
         })();
@@ -944,6 +1016,40 @@ import {
                 }
 
                 render();
+                selectFirstPlayableCell();
+                if (!gameStates.kakuro.isCompleted) {
+                    checkVictory();
+                }
+            }
+
+            function selectFirstPlayableCell() {
+                for (let r = 0; r < currentSize; r++) {
+                    for (let c = 0; c < currentSize; c++) {
+                        const cellData = currentPuzzle.grid[r][c];
+                        if (cellData && cellData.val !== undefined) {
+                            onCellClick(r, c);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            function moveCursor(dr, dc) {
+                if (!selectedCell) {
+                    selectFirstPlayableCell();
+                    return;
+                }
+                let nr = selectedCell.r + dr;
+                let nc = selectedCell.c + dc;
+                while (nr >= 0 && nr < currentSize && nc >= 0 && nc < currentSize) {
+                    const item = currentPuzzle.grid[nr][nc];
+                    if (item && item.val !== undefined) {
+                        onCellClick(nr, nc);
+                        return;
+                    }
+                    nr += dr;
+                    nc += dc;
+                }
             }
 
             function render() {
@@ -1107,8 +1213,10 @@ import {
                 init,
                 render,
                 setNumber,
+                moveCursor,
                 hint,
                 restart,
+                checkVictory,
                 getSize: () => currentSize
             };
         })();
@@ -2760,11 +2868,42 @@ import {
                     SudokuEngine.moveCursor(0, 1);
                 }
             } else if (activeGame === 'calcudoku') {
-                if (e.key >= '1' && e.key <= '5') CalcudokuEngine.setNumber(parseInt(e.key, 10));
-                else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') CalcudokuEngine.setNumber(0);
+                const max = CalcudokuEngine.getSize();
+                if (e.key >= '1' && e.key <= String(max)) {
+                    CalcudokuEngine.setNumber(parseInt(e.key, 10));
+                } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                    CalcudokuEngine.setNumber(0);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    CalcudokuEngine.moveCursor(-1, 0);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    CalcudokuEngine.moveCursor(1, 0);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    CalcudokuEngine.moveCursor(0, -1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    CalcudokuEngine.moveCursor(0, 1);
+                }
             } else if (activeGame === 'kakuro') {
-                if (e.key >= '1' && e.key <= '9') KakuroEngine.setNumber(parseInt(e.key, 10));
-                else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') KakuroEngine.setNumber(0);
+                if (e.key >= '1' && e.key <= '9') {
+                    KakuroEngine.setNumber(parseInt(e.key, 10));
+                } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                    KakuroEngine.setNumber(0);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    KakuroEngine.moveCursor(-1, 0);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    KakuroEngine.moveCursor(1, 0);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    KakuroEngine.moveCursor(0, -1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    KakuroEngine.moveCursor(0, 1);
+                }
             } else if (activeGame === 'cruzadas') {
                 if (e.key === ' ' || e.code === 'Space') {
                     e.preventDefault();
