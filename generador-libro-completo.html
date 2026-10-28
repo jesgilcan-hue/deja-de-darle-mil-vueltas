@@ -2396,6 +2396,7 @@
 
         // CONFIGURACIÓN GLOBAL Y PARÁMETROS DE DISEÑO POR SECCIÓN
         let bookConfig = {
+            presetKey: "anual",
             title: "Planificador anual",
             subtitle: "52 semanas, 12 meses y hábitos de perseverancia silenciosa",
             colophon: "Herramientas en papel para pensar con claridad",
@@ -2884,6 +2885,7 @@
                     : (bookConfig.pageCount || 0);
 
                 localStorage.setItem('mr_complete_book_config', JSON.stringify({
+                    presetKey: bookConfig.presetKey || 'anual',
                     title: bookConfig.title,
                     subtitle: bookConfig.subtitle,
                     colophon: bookConfig.colophon,
@@ -2906,6 +2908,12 @@
                 const saved = localStorage.getItem('mr_complete_book_config');
                 if (saved) {
                     const parsed = JSON.parse(saved);
+                    if (parsed.presetKey) {
+                        bookConfig.presetKey = parsed.presetKey;
+                        document.querySelectorAll('.btn-preset').forEach(b => {
+                            b.classList.toggle('active', b.getAttribute('data-preset') === parsed.presetKey);
+                        });
+                    }
                     if (parsed.title) bookConfig.title = parsed.title;
                     if (parsed.subtitle) bookConfig.subtitle = parsed.subtitle;
                     if (parsed.colophon !== undefined) bookConfig.colophon = parsed.colophon;
@@ -3196,6 +3204,7 @@
                 b.classList.toggle('active', b.getAttribute('data-preset') === presetKey);
             });
 
+            bookConfig.presetKey = presetKey;
             bookConfig.title = p.title;
             bookConfig.subtitle = p.subtitle;
             bookConfig.layoutMode = p.layoutMode || "blocks";
@@ -3209,9 +3218,10 @@
                 }
             });
 
-            saveCompleteBookConfigLocally();
             renderSectionsList();
             recalcPages();
+            bookConfig.pageCount = generatedPageList.length;
+            saveCompleteBookConfigLocally();
             currentPreviewPageIndex = 0;
             renderPreviewPage();
         }
@@ -7550,6 +7560,7 @@
                     await setDoc(docRef, {
                         name: customTitle || (bookData.title ? `Libro Completo · ${bookData.title}` : 'Libro Completo Personalizado'),
                         type: 'Cuaderno Completo',
+                        presetKey: bookConfig.presetKey || 'anual',
                         summary: `${totalPages} págs · ${isValidated ? '✓ Validado para imprenta' : '⚠️ Borrador sin validar'}`,
                         validated: isValidated,
                         totalPages: totalPages,

@@ -1145,14 +1145,6 @@
     <div class="top-nav" style="justify-content: space-between; align-items: center; max-width: 1400px; margin: 12px auto 0; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <a href="/tutorial-generador-portadas.html" class="back-link">📖 Guía y Tutorial paso a paso ↗</a>
-            <div id="devCoverModeSwitcher" style="display: none !important; background: #e8e1d5; padding: 3px; border-radius: 99px; border: 1px solid #d5cbbd; gap: 4px;">
-                <a href="/generador-portadas.html" style="font-size: 0.78rem; font-weight: 800; color: #ffffff; background: #211c18; padding: 6px 14px; border-radius: 99px; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-                    📅 Portadas de Planificadores
-                </a>
-                <a href="/generador-portadas-pasatiempos.html" style="font-size: 0.78rem; font-weight: 700; color: #5a5248; padding: 6px 14px; border-radius: 99px; text-decoration: none; transition: all 0.15s;">
-                    🧩 Portadas de Pasatiempos
-                </a>
-            </div>
         </div>
         <a href="/generador-libro-completo.html" class="back-link" style="background:#eaf5ee; color:#215c38; border-color:#a7d7b8;">📐 Ir al Constructor de Interior (Libro Completo) →</a>
     </div>
@@ -2443,8 +2435,9 @@ Sección de notas libres (10 páginas)</textarea>
                 if (rawDraft) {
                     const parsed = JSON.parse(rawDraft);
                     if (parsed && typeof parsed === 'object') {
-                        const calc = calculatePagesFromSections(parsed.sections);
-                        const pages = calc ? calc.totalPages : 143;
+                        const realP = parseInt(parsed.pageCount, 10);
+                        const calc = calculatePagesFromSections(parsed.sections, parsed.layoutMode);
+                        const pages = (realP && realP >= 24) ? realP : (calc ? calc.totalPages : 144);
                         const bookTitle = parsed.title || 'Planificador anual';
                         const ownerTag = (parsed.owner && parsed.owner.trim()) ? ` · ${parsed.owner.trim()}` : '';
                         list.push({
@@ -2460,18 +2453,24 @@ Sección de notas libres (10 páginas)</textarea>
                 }
             } catch (e) {}
 
-            // 2. Libros guardados en Mi Espacio (Firestore + LocalStorage)
+            // 2. Libros guardados en Mi Espacio (Firestore + LocalStorage) - EXCLUSIVO PLANIFICADORES
             const mergeDesignList = (arr, sourceTag) => {
                 if (!Array.isArray(arr)) return;
                 arr.forEach(item => {
                     if (!item || !item.id || seenIds.has(item.id)) return;
-                    const isCompleteBook = item.type === 'Cuaderno Completo' ||
-                        (item.editUrl && item.editUrl.includes('generador-libro-completo')) ||
+                    const typeLow = (item.type || '').toLowerCase();
+                    const urlLow = (item.editUrl || '').toLowerCase();
+                    const isPuzzle = typeLow.includes('pasatiempo') || urlLow.includes('pasatiempo') || (item.data && item.data.sections && !Array.isArray(item.data.sections) && item.data.sections.sudoku);
+                    if (isPuzzle) return; // RECHAZO ESTRICTO DE PASATIEMPOS
+
+                    const isCompleteBook = (item.type === 'Cuaderno Completo') ||
+                        (urlLow.includes('generador-libro-completo')) ||
                         (item.data && Array.isArray(item.data.sections));
                     if (!isCompleteBook) return;
                     seenIds.add(item.id);
-                    const calc = calculatePagesFromSections(item.data?.sections);
-                    const pages = calc ? calc.totalPages : 143;
+                    const realP = parseInt(item.totalPages || item.data?.pageCount || item.data?.totalPages, 10);
+                    const calc = calculatePagesFromSections(item.data?.sections, item.data?.layoutMode);
+                    const pages = (realP && realP >= 24) ? realP : (calc ? calc.totalPages : 144);
                     const displayName = item.name || item.data?.title || 'Cuaderno Completo Guardado';
                     list.push({
                         id: item.id,
@@ -2507,46 +2506,57 @@ Sección de notas libres (10 páginas)</textarea>
             if (!bookObj || !bookObj.data) return;
             const saved = bookObj.data;
             coverState.syncedBookId = bookObj.id;
-            coverState.syncedBookName = `${bookObj.shortName || bookObj.name} (${bookObj.pages} págs)`;
 
             const detectedKey = saved.presetKey || detectPlannerKeyFromTitle(saved.title || bookObj.name);
             applyPlannerPreset(detectedKey, false);
 
             if (saved.title) {
                 coverState.title = saved.title;
-                document.getElementById('inpTitle').value = saved.title;
+                const inpT = document.getElementById('inpTitle');
+                if (inpT) inpT.value = saved.title;
             }
             if (saved.subtitle) {
                 coverState.subtitle = saved.subtitle;
-                document.getElementById('inpSubtitle').value = saved.subtitle;
+                const inpS = document.getElementById('inpSubtitle');
+                if (inpS) inpS.value = saved.subtitle;
             }
             if (saved.owner && saved.owner.trim()) {
                 coverState.author = `${saved.title || coverState.title} · ${saved.owner.trim()}`;
-                document.getElementById('inpAuthor').value = coverState.author;
+                const inpA = document.getElementById('inpAuthor');
+                if (inpA) inpA.value = coverState.author;
             } else {
                 coverState.author = `Edición Personalizada · ${coverState.title}`;
-                document.getElementById('inpAuthor').value = coverState.author;
+                const inpA = document.getElementById('inpAuthor');
+                if (inpA) inpA.value = coverState.author;
             }
             if (saved.dedication && saved.dedication.trim()) {
                 coverState.frontDesc = saved.dedication.trim();
-                document.getElementById('inpFrontDesc').value = coverState.frontDesc;
+                const inpD = document.getElementById('inpFrontDesc');
+                if (inpD) inpD.value = coverState.frontDesc;
             }
 
+            const realPages = parseInt(saved.pageCount || bookObj.pages, 10);
             const calc = calculatePagesFromSections(saved.sections, saved.layoutMode);
-            if (calc) {
-                coverState.pageCount = calc.totalPages;
-                document.getElementById('inpPageCount').value = calc.totalPages;
-                if (calc.bullets.length > 0) {
-                    coverState.backBullets = calc.bullets;
-                    document.getElementById('inpBackBullets').value = calc.bullets.join('\n');
-                }
+            const finalPages = (realPages && realPages >= 24) ? realPages : (calc ? calc.totalPages : 144);
+            coverState.pageCount = finalPages;
+            const inpP = document.getElementById('inpPageCount');
+            if (inpP) inpP.value = finalPages;
+
+            if (calc && calc.bullets && calc.bullets.length > 0) {
+                coverState.backBullets = calc.bullets;
+                const inpB = document.getElementById('inpBackBullets');
+                if (inpB) inpB.value = calc.bullets.join('\n');
             }
 
+            coverState.syncedBookName = `${bookObj.shortName || bookObj.name} (${finalPages} págs)`;
             coverState.spineText = `MENOS RUIDO  •  ${(coverState.title || 'PLANIFICADOR').toUpperCase()}`;
-            document.getElementById('inpSpineText').value = coverState.spineText;
+            const inpSpine = document.getElementById('inpSpineText');
+            if (inpSpine) inpSpine.value = coverState.spineText;
 
             updateConfigFromUI(markDirty);
             updateSyncedBookLabels();
+            updateSpecsLabels();
+            renderCoverPreview();
         }
         window.applyInteriorBookObject = applyInteriorBookObject;
 
@@ -2708,21 +2718,16 @@ Sección de notas libres (10 páginas)</textarea>
                     document.getElementById('inpFrontDesc').value = coverState.frontDesc;
                 }
 
-                // 3. Calcular número exacto de páginas y lista de contenidos real
-                // Si el libro guardó su número de páginas exacto, usarlo prioritariamente
-                if (saved.pageCount && parseInt(saved.pageCount, 10) > 0) {
-                    coverState.pageCount = parseInt(saved.pageCount, 10);
-                    document.getElementById('inpPageCount').value = coverState.pageCount;
-                } else {
-                    const calc = calculatePagesFromSections(saved.sections);
-                    if (calc) {
-                        coverState.pageCount = calc.totalPages;
-                        document.getElementById('inpPageCount').value = calc.totalPages;
-                        if (calc.bullets.length > 0) {
-                            coverState.backBullets = calc.bullets;
-                            document.getElementById('inpBackBullets').value = calc.bullets.join('\n');
-                        }
-                    }
+                // 3. Calcular número exacto de páginas y lista de contenidos real pasando layoutMode
+                const realPages = parseInt(saved.pageCount, 10);
+                const calc = calculatePagesFromSections(saved.sections, saved.layoutMode);
+                const finalPages = (realPages && realPages >= 24) ? realPages : (calc ? calc.totalPages : 144);
+                coverState.pageCount = finalPages;
+                document.getElementById('inpPageCount').value = finalPages;
+
+                if (calc && calc.bullets && calc.bullets.length > 0) {
+                    coverState.backBullets = calc.bullets;
+                    document.getElementById('inpBackBullets').value = calc.bullets.join('\n');
                 }
                 if (saved.validated !== undefined) {
                     coverState.syncedBookValidated = !!saved.validated;
@@ -3274,6 +3279,12 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             const bulletsEl = document.getElementById('inpBackBullets');
             if (bulletsEl) {
                 coverState.backBullets = bulletsEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+            }
+
+            const pageInp = document.getElementById('inpPageCount');
+            if (pageInp && pageInp.value) {
+                const pVal = parseInt(pageInp.value, 10);
+                if (pVal >= 24) coverState.pageCount = pVal;
             }
 
             // Formato fijo a 8.25" x 6" del Cuaderno Completo
@@ -4625,12 +4636,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
         import { auth, db, isDeveloper, isTestCustomer, collection, getDocs, onAuthStateChanged } from './firebase-config.js';
 
         onAuthStateChanged(auth, async (user) => {
-            // Selector hacia Portadas de Pasatiempos: solo visible para el desarrollador
-            const devSwitcher = document.getElementById('devCoverModeSwitcher');
-            if (devSwitcher) {
-                devSwitcher.style.setProperty('display', (!!user && isDeveloper(user)) ? 'inline-flex' : 'none', 'important');
-            }
-            // Botón «Añadir a la cesta»: solo cuentas de prueba mientras la tienda está en modo prueba
+                        // Botón «Añadir a la cesta»: solo cuentas de prueba mientras la tienda está en modo prueba
             const cartWrapper = document.getElementById('devCartWrapper');
             if (cartWrapper) {
                 const canBuy = !!user && (isDeveloper(user) || isTestCustomer(user));
@@ -4642,7 +4648,9 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                 const books = [];
                 snap.forEach(d => {
                     const data = d.data();
-                    if (data.type === 'Cuaderno Completo' || (data.editUrl && data.editUrl.includes('generador-libro-completo'))) {
+                    const tLow = (data.type || '').toLowerCase();
+                    const isPuzz = tLow.includes('pasatiempo') || (data.editUrl && data.editUrl.includes('pasatiempo'));
+                    if (!isPuzz && (data.type === 'Cuaderno Completo' || (data.editUrl && data.editUrl.includes('generador-libro-completo')))) {
                         books.push({ id: d.id, ...data });
                     }
                 });

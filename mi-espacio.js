@@ -2963,8 +2963,13 @@ async function checkAndHandleStripeCheckoutReturn() {
 function handleBasketCoverPdfClick(id) {
   const item = getBasketItemById(id);
   if (!item) return;
+  const isPuzzle = (item.title && item.title.toLowerCase().includes('pasatiempo')) ||
+                   (item.subtitle && item.subtitle.toLowerCase().includes('pasatiempo')) ||
+                   (item.data && (item.data.coverType === 'puzzle' || item.data.isPuzzle));
+
   try {
     localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+      coverType: isPuzzle ? 'puzzle' : 'planner',
       title: item.title,
       bindingType: item.bindingType,
       pageCount: item.pageCount,
@@ -2975,24 +2980,42 @@ function handleBasketCoverPdfClick(id) {
   } catch (e) {}
 
   showToast('⏳ Preparando y descargando Portada en PDF...');
-  window.open(`/generador-portadas.html?download_direct=1&ts=${Date.now()}`, '_blank');
+  const targetCoverUrl = isPuzzle ? '/generador-portadas-pasatiempos.html' : '/generador-portadas.html';
+  window.open(`${targetCoverUrl}?download_direct=1&ts=${Date.now()}`, '_blank');
 }
 
 function handleBasketInteriorPdfClick(id) {
   const item = getBasketItemById(id);
   if (!item) return;
-  try {
-    localStorage.setItem('mr_complete_book_config', JSON.stringify({
-      title: item.title,
-      subtitle: item.subtitle,
-      pageCount: item.pageCount,
-      bindingType: item.bindingType,
-      data: item.data || {}
-    }));
-  } catch (e) {}
+  const isPuzzle = (item.title && item.title.toLowerCase().includes('pasatiempo')) ||
+                   (item.subtitle && item.subtitle.toLowerCase().includes('pasatiempo')) ||
+                   (item.data && (item.data.coverType === 'puzzle' || item.data.isPuzzle));
 
-  showToast('⏳ Preparando y descargando Interior Completo en PDF...');
-  window.open(`/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`, '_blank');
+  if (isPuzzle) {
+    try {
+      localStorage.setItem('mr_puzzle_book_config', JSON.stringify({
+        title: item.title,
+        subtitle: item.subtitle,
+        pageCount: item.pageCount,
+        bindingType: item.bindingType,
+        data: item.data || {}
+      }));
+    } catch (e) {}
+    showToast('⏳ Preparando y descargando Interior de Pasatiempos en PDF...');
+    window.open(`/generador-libro-pasatiempos.html?download_direct=1&ts=${Date.now()}`, '_blank');
+  } else {
+    try {
+      localStorage.setItem('mr_complete_book_config', JSON.stringify({
+        title: item.title,
+        subtitle: item.subtitle,
+        pageCount: item.pageCount,
+        bindingType: item.bindingType,
+        data: item.data || {}
+      }));
+    } catch (e) {}
+    showToast('⏳ Preparando y descargando Interior Completo en PDF...');
+    window.open(`/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`, '_blank');
+  }
 }
 
 // Delegación global de clicks (inmune a re-renderizados del contenedor)
@@ -3482,22 +3505,37 @@ function renderClientOrdersAndBasketViews(user) {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-download-pdf-interior');
         const ord = clientProfileOrders.find(o => o.id === id);
+        let isPuzz = false;
         if (ord) {
-          try {
-            localStorage.setItem('mr_complete_book_config', JSON.stringify({
-              title: ord.book?.title,
-              subtitle: ord.book?.subtitle,
-              pageCount: ord.book?.pageCount || 143,
-              bindingType: ord.book?.bindingType || 'softcover'
-            }));
-          } catch (e) {}
+          isPuzz = (ord.book?.title && ord.book.title.toLowerCase().includes('pasatiempo')) ||
+                   (ord.book?.type && ord.book.type.toLowerCase().includes('pasatiempo'));
+          if (isPuzz) {
+            try {
+              localStorage.setItem('mr_puzzle_book_config', JSON.stringify({
+                title: ord.book?.title,
+                subtitle: ord.book?.subtitle,
+                pageCount: ord.book?.pageCount || 180,
+                bindingType: ord.book?.bindingType || 'softcover'
+              }));
+            } catch (e) {}
+          } else {
+            try {
+              localStorage.setItem('mr_complete_book_config', JSON.stringify({
+                title: ord.book?.title,
+                subtitle: ord.book?.subtitle,
+                pageCount: ord.book?.pageCount || 143,
+                bindingType: ord.book?.bindingType || 'softcover'
+              }));
+            } catch (e) {}
+          }
         }
         showToast('⏳ Preparando y descargando Interior en PDF...');
+        const targetInterior = isPuzz ? '/generador-libro-pasatiempos.html' : '/generador-libro-completo.html';
         const iframe = document.getElementById('headless-pdf-frame');
         if (iframe) {
-          iframe.src = `/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`;
+          iframe.src = `${targetInterior}?download_direct=1&ts=${Date.now()}`;
         } else {
-          window.open(`/generador-libro-completo.html?download_direct=1`, '_blank');
+          window.open(`${targetInterior}?download_direct=1`, '_blank');
         }
       });
     });
@@ -3506,9 +3544,13 @@ function renderClientOrdersAndBasketViews(user) {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-download-pdf-cover');
         const ord = clientProfileOrders.find(o => o.id === id);
+        let isPuzz = false;
         if (ord) {
+          isPuzz = (ord.book?.title && ord.book.title.toLowerCase().includes('pasatiempo')) ||
+                   (ord.book?.type && ord.book.type.toLowerCase().includes('pasatiempo'));
           try {
             localStorage.setItem('mr_cart_cover_item', JSON.stringify({
+              coverType: isPuzz ? 'puzzle' : 'planner',
               title: ord.book?.title,
               bindingType: ord.book?.bindingType,
               pageCount: ord.book?.pageCount || 143,
@@ -3517,11 +3559,12 @@ function renderClientOrdersAndBasketViews(user) {
           } catch (e) {}
         }
         showToast('⏳ Preparando y descargando Portada en PDF...');
+        const targetCover = isPuzz ? '/generador-portadas-pasatiempos.html' : '/generador-portadas.html';
         const iframe = document.getElementById('headless-pdf-frame');
         if (iframe) {
-          iframe.src = `/generador-portadas.html?download_direct=1&ts=${Date.now()}`;
+          iframe.src = `${targetCover}?download_direct=1&ts=${Date.now()}`;
         } else {
-          window.open(`/generador-portadas.html?download_direct=1`, '_blank');
+          window.open(`${targetCover}?download_direct=1`, '_blank');
         }
       });
     });

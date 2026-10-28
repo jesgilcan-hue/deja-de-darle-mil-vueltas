@@ -1146,14 +1146,7 @@
     <div class="top-nav" style="justify-content: space-between; align-items: center; max-width: 1400px; margin: 12px auto 0; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <a href="/pasatiempos.html" class="back-link">← Portal de Pasatiempos</a>
-            <div style="display: inline-flex; background: #e8e1d5; padding: 3px; border-radius: 99px; border: 1px solid #d5cbbd; gap: 4px;">
-                <a href="/generador-portadas.html" style="font-size: 0.78rem; font-weight: 700; color: #5a5248; padding: 6px 14px; border-radius: 99px; text-decoration: none; transition: all 0.15s;">
-                    📅 Portadas de Planificadores
-                </a>
-                <a href="/generador-portadas-pasatiempos.html" style="font-size: 0.78rem; font-weight: 800; color: #ffffff; background: #211c18; padding: 6px 14px; border-radius: 99px; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-                    🧩 Portadas de Pasatiempos
-                </a>
-            </div>
+
         </div>
         <a href="/generador-libro-pasatiempos.html" class="back-link" style="background:#eaf5ee; color:#215c38; border-color:#a7d7b8;">📐 Ir al Constructor de Interior (Libro de Pasatiempos) →</a>
     </div>
@@ -2361,6 +2354,11 @@ Soluciones completas verificadas al final del libro</textarea>
                 if (!Array.isArray(arr)) return;
                 arr.forEach(item => {
                     if (!item || !item.id || seenIds.has(item.id)) return;
+                    const isPlanner = (item.type === 'Cuaderno Completo') ||
+                        (item.editUrl && item.editUrl.includes('generador-libro-completo')) ||
+                        (item.data && Array.isArray(item.data.sections));
+                    if (isPlanner) return; // RECHAZO TOTAL DE PLANIFICADORES
+
                     const isPuzzleBook = item.type === 'Libro Completo de Pasatiempos' ||
                         (item.editUrl && item.editUrl.includes('generador-libro-pasatiempos')) ||
                         (item.data && item.data.sections && !Array.isArray(item.data.sections) && item.data.sections.sudoku);
@@ -2850,6 +2848,7 @@ Soluciones completas verificadas al final del libro</textarea>
             }
 
             const currentCoverItem = {
+                coverType: 'puzzle',
                 title: coverState.title || 'Libro de Pasatiempos Personalizado',
                 bindingType: coverState.bindingType,
                 pageCount: coverState.pageCount,
@@ -4527,7 +4526,8 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                 const books = [];
                 snap.forEach(d => {
                     const data = d.data();
-                    if (data.type === 'Libro Completo de Pasatiempos' || (data.editUrl && data.editUrl.includes('generador-libro-pasatiempos'))) {
+                    const isPlan = data.type === 'Cuaderno Completo' || (data.editUrl && data.editUrl.includes('generador-libro-completo'));
+                    if (!isPlan && (data.type === 'Libro Completo de Pasatiempos' || (data.editUrl && data.editUrl.includes('generador-libro-pasatiempos')))) {
                         books.push({ id: d.id, ...data });
                     }
                 });
