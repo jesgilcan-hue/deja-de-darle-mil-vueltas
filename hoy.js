@@ -136,7 +136,7 @@ import {
         }
 
         /* ==============================================================
-           1. MOTOR NATIVO: SUDOKU
+           1. MOTOR NATIVO: SUDOKU (CLÁSICO 9x9 Y MINI 4x4)
            ============================================================== */
         const SudokuEngine = (function() {
             let mode = 'classic'; // 'classic' (9x9) | 'mini' (4x4)
@@ -234,12 +234,16 @@ import {
                     initialGrid = createPuzzle4(solution, rng);
                 }
 
-                // Cargar progreso guardado
+                // Cargar progreso guardado con validación estricta de dimensiones
                 const savedRaw = localStorage.getItem(`menosruido_sudoku_state_v1_${mode}_${todayStr}`);
                 if (savedRaw) {
                     try {
                         const saved = JSON.parse(savedRaw);
-                        currentGrid = saved.current || initialGrid.map(r => r.slice());
+                        if (Array.isArray(saved.current) && saved.current.length === size && Array.isArray(saved.current[0]) && saved.current[0].length === size) {
+                            currentGrid = saved.current;
+                        } else {
+                            currentGrid = initialGrid.map(r => r.slice());
+                        }
                         gameStates.sudoku.timerSecs = saved.secondsElapsed || 0;
                         gameStates.sudoku.isCompleted = !!saved.isCompleted;
                     } catch(e) {
@@ -250,6 +254,33 @@ import {
                 }
 
                 render();
+                selectFirstPlayableCell();
+            }
+
+            function selectFirstPlayableCell() {
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (initialGrid[r][c] === 0 && currentGrid[r][c] === 0) {
+                            selectCell(r, c);
+                            return;
+                        }
+                    }
+                }
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (initialGrid[r][c] === 0) {
+                            selectCell(r, c);
+                            return;
+                        }
+                    }
+                }
+                selectCell(0, 0);
+            }
+
+            function selectCell(r, c) {
+                selectedCell = { r, c };
+                updateHighlights();
+                updateHelperText();
             }
 
             function render() {
@@ -265,29 +296,34 @@ import {
                         cell.dataset.r = r;
                         cell.dataset.c = c;
                         const isClue = initialGrid[r][c] !== 0;
-                        if (isClue) cell.classList.add('clue');
                         const val = currentGrid[r][c];
-                        cell.textContent = val !== 0 ? val : '';
+
+                        if (isClue) {
+                            cell.classList.add('clue');
+                            cell.textContent = val !== 0 ? val : '';
+                        } else {
+                            if (val !== 0) {
+                                cell.classList.add('user-digit');
+                                cell.textContent = val;
+                            } else {
+                                cell.textContent = '';
+                            }
+                        }
 
                         cell.addEventListener('click', () => {
                             ensureActiveTimerRunning();
-                            onCellClick(r, c);
+                            selectCell(r, c);
                         });
                         board.appendChild(cell);
                     }
                 }
                 updateHighlights();
-            }
-
-            function onCellClick(r, c) {
-                selectedCell = { r, c };
-                updateHighlights();
-                updateHelperText();
+                checkConflicts();
             }
 
             function updateHighlights() {
                 const cells = document.querySelectorAll('.sudoku-cell');
-                cells.forEach(el => el.classList.remove('selected', 'highlight', 'related', 'error'));
+                cells.forEach(el => el.classList.remove('selected', 'highlight', 'related'));
 
                 if (!selectedCell) return;
                 const { r, c } = selectedCell;
@@ -313,20 +349,110 @@ import {
             }
 
             function setNumber(num) {
-                if (!selectedCell || gameStates.sudoku.isCompleted || gameStates.sudoku.isPaused) return;
+                if (gameStates.sudoku.isCompleted) {
+                    showToast('¡El Sudoku de hoy ya está resuelto! Pulsa ↺ para reiniciar si quieres repetir.');
+                    return;
+                }
+                if (gameStates.sudoku.isPaused) return;
+
+                if (!selectedCell) {
+                    selectFirstPlayableCell();
+                }
+                if (!selectedCell) return;
+
                 const { r, c } = selectedCell;
-                if (initialGrid[r][c] !== 0) return; // Clue fija
+                if (initialGrid[r][c] !== 0) {
+                    showToast('Esta casilla es una pista inicial fija. Toca una casilla vacía para escribir.');
+                    return;
+                }
 
                 ensureActiveTimerRunning();
                 currentGrid[r][c] = num;
 
                 const cellEl = document.querySelector(`.sudoku-cell[data-r="${r}"][data-c="${c}"]`);
-                if (cellEl) cellEl.textContent = num !== 0 ? num : '';
+                if (cellEl) {
+                    if (num !== 0) {
+                        cellEl.classList.add('user-digit');
+                        cellEl.textContent = num;
+                    } else {
+                        cellEl.classList.remove('user-digit');
+                        cellEl.textContent = '';
+                    }
+                }
 
                 saveProgress();
                 updateHighlights();
                 checkConflicts();
                 checkVictory();
+
+                if (num !== 0 && !gameStates.sudoku.isCompleted) {
+                    advanceCursor();
+                }
+            }
+
+            function advanceCursor() {
+                if (!selectedCell) return;
+                const { r, c } = selectedCell;
+                let nextR = r;
+                let nextC = c + 1;
+                while (nextR < size) {
+                    while (nextC < size) {
+                        if (initialGrid[nextR][nextC] === 0 && currentGrid[nextR][nextC] === 0) {
+                            selectCell(nextR, nextC);
+                            return;
+                        }
+                        nextC++;
+                    }
+                    nextC = 0;
+                    nextR++;
+                }
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        if (initialGrid[row][col] === 0 && currentGrid[row][col] === 0) {
+                            selectCell(row, col);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            function moveCursor(dr, dc) {
+                if (!selectedCell) {
+                    selectFirstPlayableCell();
+                    return;
+                }
+                let nr = Math.max(0, Math.min(size - 1, selectedCell.r + dr));
+                let nc = Math.max(0, Math.min(size - 1, selectedCell.c + dc));
+                selectCell(nr, nc);
+            }
+
+            function handleBackspace() {
+                if (gameStates.sudoku.isCompleted || gameStates.sudoku.isPaused) return;
+                if (!selectedCell) {
+                    selectFirstPlayableCell();
+                    return;
+                }
+                const { r, c } = selectedCell;
+                if (initialGrid[r][c] !== 0) return;
+
+                if (currentGrid[r][c] !== 0) {
+                    setNumber(0);
+                } else {
+                    let prevR = r;
+                    let prevC = c - 1;
+                    while (prevR >= 0) {
+                        while (prevC >= 0) {
+                            if (initialGrid[prevR][prevC] === 0) {
+                                selectCell(prevR, prevC);
+                                setNumber(0);
+                                return;
+                            }
+                            prevC--;
+                        }
+                        prevC = size - 1;
+                        prevR--;
+                    }
+                }
             }
 
             function checkConflicts() {
@@ -337,18 +463,26 @@ import {
                     for (let c = 0; c < size; c++) {
                         const val = currentGrid[r][c];
                         if (val !== 0) {
-                            // Comprobar fila
                             for (let col2 = 0; col2 < size; col2++) {
                                 if (col2 !== c && currentGrid[r][col2] === val) {
                                     markError(r, c);
                                     markError(r, col2);
                                 }
                             }
-                            // Comprobar columna
                             for (let row2 = 0; row2 < size; row2++) {
                                 if (row2 !== r && currentGrid[row2][c] === val) {
                                     markError(r, c);
                                     markError(row2, c);
+                                }
+                            }
+                            const startR = Math.floor(r / subgrid) * subgrid;
+                            const startC = Math.floor(c / subgrid) * subgrid;
+                            for (let br = startR; br < startR + subgrid; br++) {
+                                for (let bc = startC; bc < startC + subgrid; bc++) {
+                                    if ((br !== r || bc !== c) && currentGrid[br][bc] === val) {
+                                        markError(r, c);
+                                        markError(br, bc);
+                                    }
                                 }
                             }
                         }
@@ -362,9 +496,13 @@ import {
             }
 
             function hint() {
+                if (!selectedCell) selectFirstPlayableCell();
                 if (!selectedCell || gameStates.sudoku.isCompleted) return;
                 const { r, c } = selectedCell;
-                if (initialGrid[r][c] !== 0) return;
+                if (initialGrid[r][c] !== 0) {
+                    showToast('Esta casilla ya es una pista fija.');
+                    return;
+                }
                 ensureActiveTimerRunning();
                 setNumber(solution[r][c]);
                 showToast(`💡 Pista revelada: ${solution[r][c]}`);
@@ -380,6 +518,7 @@ import {
                 selectedCell = null;
                 saveProgress();
                 render();
+                selectFirstPlayableCell();
                 updateTimerDisplay();
                 showToast('↺ Sudoku reiniciado');
             }
@@ -390,7 +529,6 @@ import {
                         if (currentGrid[r][c] !== solution[r][c]) return;
                     }
                 }
-                // ¡Victoria!
                 gameStates.sudoku.isCompleted = true;
                 gameStates.sudoku.timerRunning = false;
                 saveProgress();
@@ -411,21 +549,39 @@ import {
             function updateHelperText() {
                 const left = document.getElementById('helperLeftText');
                 if (!left) return;
+                if (gameStates.sudoku.isCompleted) {
+                    left.innerHTML = `<span>🏆 ¡Sudoku completado! Pulsa ↺ para reiniciar</span>`;
+                    return;
+                }
                 if (!selectedCell) {
-                    left.innerHTML = `<span>Toca una celda para colocar un número</span>`;
+                    left.innerHTML = `<span>Toca una casilla para colocar un número</span>`;
                 } else {
                     const { r, c } = selectedCell;
                     const isFixed = initialGrid[r][c] !== 0;
-                    left.innerHTML = `<span>Fila ${r+1}, Columna ${c+1} ${isFixed ? '(Pista inicial)' : ''}</span>`;
+                    if (isFixed) {
+                        left.innerHTML = `<span>Fila ${r+1}, Columna ${c+1} · Pista fija (no editable)</span>`;
+                    } else {
+                        const cur = currentGrid[r][c];
+                        left.innerHTML = `<span>Fila ${r+1}, Columna ${c+1} ${cur !== 0 ? `(Número ${cur})` : '· Elige un número (1 al ' + size + ')'}</span>`;
+                    }
                 }
+            }
+
+            function onActivate() {
+                if (!selectedCell) selectFirstPlayableCell();
+                else updateHighlights();
+                updateHelperText();
             }
 
             return {
                 init,
                 render,
                 setNumber,
+                moveCursor,
+                handleBackspace,
                 hint,
                 restart,
+                onActivate,
                 getMode: () => mode,
                 getSize: () => size
             };
@@ -2064,6 +2220,9 @@ import {
 
             // 10. Actualizar texto de ayuda
             updateActiveGameHelper();
+            if (targetGame === 'sudoku' && typeof SudokuEngine !== 'undefined' && SudokuEngine.onActivate) {
+                SudokuEngine.onActivate();
+            }
             if (targetGame === 'cruzadas' && typeof CruzadasEngine !== 'undefined' && CruzadasEngine.onActivate) {
                 CruzadasEngine.onActivate();
             }
@@ -2580,8 +2739,26 @@ import {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
             if (activeGame === 'sudoku') {
-                if (e.key >= '1' && e.key <= '9') SudokuEngine.setNumber(parseInt(e.key, 10));
-                else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') SudokuEngine.setNumber(0);
+                if (e.key >= '1' && e.key <= '9') {
+                    SudokuEngine.setNumber(parseInt(e.key, 10));
+                } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    SudokuEngine.handleBackspace();
+                } else if (e.key === '0') {
+                    SudokuEngine.setNumber(0);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    SudokuEngine.moveCursor(-1, 0);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    SudokuEngine.moveCursor(1, 0);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    SudokuEngine.moveCursor(0, -1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    SudokuEngine.moveCursor(0, 1);
+                }
             } else if (activeGame === 'calcudoku') {
                 if (e.key >= '1' && e.key <= '5') CalcudokuEngine.setNumber(parseInt(e.key, 10));
                 else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') CalcudokuEngine.setNumber(0);
