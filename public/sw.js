@@ -1,12 +1,8 @@
-const CACHE_NAME = 'menos-ruido-v2';
+const CACHE_NAME = 'menos-ruido-v3';
 const STATIC_ASSETS = [
   '/',
+  '/hoy',
   '/hoy.html',
-  '/sudoku-diario.html',
-  '/sopa-diaria.html',
-  '/cruzadas-diarias.html',
-  '/kakuro-diario.html',
-  '/calcudoku-diario.html',
   '/style.css',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

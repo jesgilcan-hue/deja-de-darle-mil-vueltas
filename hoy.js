@@ -3074,6 +3074,7 @@ import {
         document.querySelectorAll('.today-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 switchGame(btn.dataset.game);
+                history.replaceState(null, '', `#${btn.dataset.game}`);
             });
         });
 
@@ -3218,12 +3219,22 @@ import {
             CruzadasEngine.init();
             SopaEngine.init();
 
-            // Revisar si la URL traía hash
-            const hash = window.location.hash;
-            if (hash && hash.startsWith('#juego-')) {
-                const reqGame = hash.replace('#juego-', '');
-                if (GAME_KEYS.includes(reqGame)) activeGame = reqGame;
+            // Revisar si la URL traía hash (soporta tanto #juego-[game] como #[game])
+            function getGameFromHash(h) {
+                if (!h) return null;
+                const clean = h.replace(/^#juego-/, '').replace(/^#/, '').toLowerCase();
+                return GAME_KEYS.includes(clean) ? clean : null;
             }
+
+            const initialReqGame = getGameFromHash(window.location.hash);
+            if (initialReqGame) activeGame = initialReqGame;
+
+            window.addEventListener('hashchange', () => {
+                const req = getGameFromHash(window.location.hash);
+                if (req && req !== activeGame) {
+                    switchGame(req);
+                }
+            });
 
             // Iniciar ticker del cronómetro
             startGlobalTicker();
