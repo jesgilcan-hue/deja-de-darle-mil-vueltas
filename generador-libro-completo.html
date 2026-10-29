@@ -2908,6 +2908,11 @@
         }
 
         function loadSavedCompleteBookConfig() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('load')) {
+                // Si estamos editando un diseño guardado desde Mi Espacio, no cargar el borrador local
+                return;
+            }
             try {
                 const saved = localStorage.getItem('mr_complete_book_config');
                 if (saved) {
@@ -3588,6 +3593,7 @@
                 currentPreviewPageIndex = Math.max(0, total - 1);
             }
             renderBookIndex();
+            window.generatedPageList = generatedPageList;
         }
 
         // RENDERIZAR LISTA DE SECCIONES CON AJUSTES ESPECÍFICOS DE DISEÑO
@@ -7474,17 +7480,52 @@
 
         function applyCompleteBookData(data) {
             if (!data) return;
-            if (data.title) bookConfig.title = data.title;
-            if (data.subtitle) bookConfig.subtitle = data.subtitle;
-            if (data.owner !== undefined) bookConfig.owner = data.owner;
-            if (data.dedication !== undefined) bookConfig.dedication = data.dedication;
-            if (data.layoutMode) bookConfig.layoutMode = data.layoutMode;
-            if (data.dateMode) bookConfig.dateMode = data.dateMode;
-            if (data.year) bookConfig.year = data.year;
-            if (Array.isArray(data.sections)) {
-                data.sections.forEach(savedSec => {
+            const d = (data && data.data) ? data.data : data;
+            if (d.title) {
+                bookConfig.title = d.title;
+                const inpT = document.getElementById('bookTitle');
+                if (inpT) inpT.value = d.title;
+            }
+            if (d.subtitle) {
+                bookConfig.subtitle = d.subtitle;
+                const inpS = document.getElementById('bookSubtitle');
+                if (inpS) inpS.value = d.subtitle;
+            }
+            if (d.owner !== undefined) {
+                bookConfig.owner = d.owner;
+                const inpO = document.getElementById('bookOwner');
+                if (inpO) inpO.value = d.owner;
+            }
+            if (d.dedication !== undefined) {
+                bookConfig.dedication = d.dedication;
+                const inpD = document.getElementById('bookDedication');
+                if (inpD) inpD.value = d.dedication;
+            }
+            if (d.layoutMode) bookConfig.layoutMode = d.layoutMode;
+            if (d.dateMode) bookConfig.dateMode = d.dateMode;
+            if (d.year) bookConfig.year = d.year;
+            if (d.presetKey) {
+                bookConfig.presetKey = d.presetKey;
+                document.querySelectorAll('.btn-preset').forEach(b => {
+                    b.classList.toggle('active', b.getAttribute('data-preset') === d.presetKey);
+                });
+            }
+            if (Array.isArray(d.sections)) {
+                d.sections.forEach(savedSec => {
                     const sec = bookConfig.sections.find(s => s.id === savedSec.id);
                     if (sec) {
+                        if (savedSec.active !== undefined) sec.active = savedSec.active;
+                        if (savedSec.pages !== undefined) sec.pages = savedSec.pages;
+                        if (savedSec.design && typeof savedSec.design === 'object') {
+                            sec.design = { ...(sec.design || {}), ...savedSec.design };
+                        }
+                    }
+                });
+            } else if (d.sections && typeof d.sections === 'object') {
+                Object.keys(d.sections).forEach(secId => {
+                    const savedSec = d.sections[secId];
+                    const sec = bookConfig.sections.find(s => s.id === secId);
+                    if (sec && savedSec) {
                         if (savedSec.active !== undefined) sec.active = savedSec.active;
                         if (savedSec.pages !== undefined) sec.pages = savedSec.pages;
                         if (savedSec.design && typeof savedSec.design === 'object') {
@@ -7501,6 +7542,8 @@
             renderSectionsList();
             renderPreviewPage();
         }
+
+        window.generateBookPdfDocument = generateBookPdfDocument;
         window.applyCompleteBookData = applyCompleteBookData;
         window.bookConfig = bookConfig;
         window.generatedPageList = generatedPageList;
@@ -7576,6 +7619,27 @@
                     // Guardar también copia local sincronizada
                     localStorage.setItem('mr_active_book_design_id', designId);
                     localStorage.setItem('mr_active_book_validated', isValidated ? 'true' : 'false');
+
+                    try {
+                        const rawLocal = localStorage.getItem('mr_local_designs');
+                        const localDesigns = rawLocal ? JSON.parse(rawLocal) : [];
+                        const existingIdx = localDesigns.findIndex(d => d.id === designId);
+                        const localItem = {
+                            id: designId,
+                            name: customTitle || (bookData.title ? `Interior · ${bookData.title}` : 'Interior Personalizado'),
+                            type: 'Cuaderno Completo',
+                            presetKey: bookConfig.presetKey || 'anual',
+                            summary: `${totalPages} págs · ${isValidated ? '✓ Validado para imprenta' : '⚠️ Borrador sin validar'}`,
+                            validated: isValidated,
+                            totalPages: totalPages,
+                            editUrl: '/generador-libro-completo.html',
+                            data: cleanData,
+                            updatedAt: Date.now()
+                        };
+                        if (existingIdx >= 0) localDesigns[existingIdx] = localItem;
+                        else localDesigns.unshift(localItem);
+                        localStorage.setItem('mr_local_designs', JSON.stringify(localDesigns));
+                    } catch(e) {}
 
                     const statusMsg = isValidated ? 'Validado para imprenta y guardado con éxito' : 'Guardado como borrador con éxito';
                     alert(`✓ ${statusMsg} en Mi Espacio.`);

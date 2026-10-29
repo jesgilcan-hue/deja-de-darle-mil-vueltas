@@ -2237,10 +2237,17 @@ Sección de notas libres (10 páginas)</textarea>
         // =====================================================================
         function initCoverGenerator() {
             isInitializing = true;
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('load')) {
+                refreshAvailableInteriorBooks();
+                updateSyncedBookLabels();
+                updateBindingAvailability();
+                updateSpecsLabels();
+                isInitializing = false;
+                return;
+            }
             applyPlannerPreset('anual', false);
             refreshAvailableInteriorBooks();
-
-            const urlParams = new URLSearchParams(window.location.search);
             const fromInterior = urlParams.get('from') === 'interior';
 
             // Comprobar si venimos con un cuaderno configurado desde la cesta o visor de pedido
@@ -2290,14 +2297,18 @@ Sección de notas libres (10 páginas)</textarea>
             }
 
             if (!hasLoadedCartItem) {
-                const hasLocalDraft = !!localStorage.getItem('mr_complete_book_config');
-                // Si viene de pulsar "Diseñar Portada" o hay borrador local, manda el libro recién editado
-                if (fromInterior || hasLocalDraft) {
-                    syncFromBookBuilder(false);
-                } else if (window.availableInteriorBooks.length > 0) {
-                    applyInteriorBookObject(window.availableInteriorBooks[0], false);
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('load')) {
+                    // Si se está abriendo un diseño guardado de Mi Espacio, respetar la configuración cargada
                 } else {
-                    syncFromBookBuilder(false);
+                    const hasLocalDraft = !!localStorage.getItem('mr_complete_book_config');
+                    if (fromInterior || hasLocalDraft) {
+                        syncFromBookBuilder(false);
+                    } else if (window.availableInteriorBooks.length > 0) {
+                        applyInteriorBookObject(window.availableInteriorBooks[0], false);
+                    } else {
+                        syncFromBookBuilder(false);
+                    }
                 }
             }
 
@@ -4639,6 +4650,18 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             }
         }
 
+        window.coverState = coverState;
+        window.compileHighResCoverPdf = compileHighResCoverPdf;
+        window.syncFromBookBuilder = syncFromBookBuilder;
+        window.applyPlannerPreset = applyPlannerPreset;
+        window.setBindingType = setBindingType;
+        window.getCalculatedSpineMm = getCalculatedSpineMm;
+        function getCurrentTrimFormat() {
+            return TRIM_FORMATS.landscape_825_6;
+        }
+        window.getCurrentTrimFormat = getCurrentTrimFormat;
+        window.downloadCoverPdf = downloadCoverPdf;
+
         window.addEventListener('DOMContentLoaded', initCoverGenerator);
     </script>
 
@@ -4691,16 +4714,17 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             return {
                 name: coverTitle ? `Portada · ${coverTitle}` : 'Portada de Cuaderno',
                 type: 'Portada de Cuaderno',
+                editUrl: '/generador-portadas.html',
                 summary: `${coverTitle || 'Portada'} · ${bindLabel} (${coverState.pageCount || 143} págs)`,
                 data: {
                     plannerKey: coverState.plannerKey || 'diario_90',
                     syncedBookId: coverState.syncedBookId || null,
                     syncedBookName: coverState.syncedBookName || '',
-                    bindingType: coverState.bindingType || 'paperback',
+                    bindingType: coverState.bindingType || 'perfect',
                     template: coverState.template || 'minimal',
                     palette: coverState.palette || 'forest',
                     pageCount: coverState.pageCount || 143,
-                    paperThicknessMm: coverState.paperThicknessMm || 0.057,
+                    paperThicknessMm: coverState.paperThicknessMm || 0.0635,
                     showBotanical: !!coverState.showBotanical,
                     botanicalType: coverState.botanicalType === 'loto' ? 'loto' : 'olivo',
                     showBarcode: !!coverState.showBarcode,
@@ -4712,45 +4736,142 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                     spineText: coverState.spineText || '',
                     backTitle: coverState.backTitle || '',
                     backIntro: coverState.backIntro || '',
-                    backBullets: Array.isArray(coverState.backBullets) ? coverState.backBullets : [], hideFrontBranding: !!coverState.hideFrontBranding, hideBackBranding: !!coverState.hideBackBranding, textColors: { ...(coverState.textColors || {}) }
+                    backBullets: Array.isArray(coverState.backBullets) ? coverState.backBullets : [],
+                    hideFrontBranding: !!coverState.hideFrontBranding,
+                    hideBackBranding: !!coverState.hideBackBranding,
+                    textColors: { ...(coverState.textColors || {}) },
+                    photoFront: coverState.photo ? {
+                        layout: coverState.photo.layout,
+                        filter: coverState.photo.filter,
+                        brightness: coverState.photo.brightness,
+                        saturation: coverState.photo.saturation,
+                        zoom: coverState.photo.zoom,
+                        offsetX: coverState.photo.offsetX,
+                        offsetY: coverState.photo.offsetY,
+                        processedDataUrl: (coverState.photo.filteredDataUrl && coverState.photo.filteredDataUrl.length < 500000)
+                            ? coverState.photo.filteredDataUrl
+                            : (coverState.photo.processedImage && typeof coverState.photo.processedImage.src === 'string' && coverState.photo.processedImage.src.startsWith('data:') && coverState.photo.processedImage.src.length < 500000 ? coverState.photo.processedImage.src : null)
+                    } : null,
+                    photoBack: coverState.photoBack ? {
+                        layout: coverState.photoBack.layout,
+                        filter: coverState.photoBack.filter,
+                        brightness: coverState.photoBack.brightness,
+                        saturation: coverState.photoBack.saturation,
+                        zoom: coverState.photoBack.zoom,
+                        offsetX: coverState.photoBack.offsetX,
+                        offsetY: coverState.photoBack.offsetY,
+                        processedDataUrl: (coverState.photoBack.filteredDataUrl && coverState.photoBack.filteredDataUrl.length < 500000)
+                            ? coverState.photoBack.filteredDataUrl
+                            : (coverState.photoBack.processedImage && typeof coverState.photoBack.processedImage.src === 'string' && coverState.photoBack.processedImage.src.startsWith('data:') && coverState.photoBack.processedImage.src.length < 500000 ? coverState.photoBack.processedImage.src : null)
+                    } : null
                 }
             };
         }
 
         function applySavedCoverDesign(savedData) {
             if (!savedData) return;
-            if (savedData.plannerKey) applyPlannerPreset(savedData.plannerKey, false);
-            if (savedData.bindingType) setBindingType(savedData.bindingType);
-            if (savedData.template) setTemplate(savedData.template);
-            if (savedData.palette) setPalette(savedData.palette);
-            if (savedData.botanicalType && document.getElementById('selBotanicalType')) {
-                document.getElementById('selBotanicalType').value = (savedData.botanicalType === 'loto') ? 'loto' : 'olivo';
+            const d = (savedData && savedData.data) ? savedData.data : savedData;
+            if (d.plannerKey) applyPlannerPreset(d.plannerKey, false);
+            if (d.bindingType) setBindingType(d.bindingType);
+            if (d.template) setTemplate(d.template);
+            if (d.palette) setPalette(d.palette);
+            if (d.botanicalType && document.getElementById('selBotanicalType')) {
+                document.getElementById('selBotanicalType').value = (d.botanicalType === 'loto') ? 'loto' : 'olivo';
+            }
+            if (d.pageCount) {
+                coverState.pageCount = parseInt(d.pageCount, 10) || 143;
+                const pageInp = document.getElementById('pageCount') || document.getElementById('inpPageCount');
+                if (pageInp) pageInp.value = coverState.pageCount;
             }
 
-            if (savedData.title !== undefined) document.getElementById('inpTitle').value = savedData.title;
-            if (savedData.badge !== undefined) document.getElementById('inpBadge').value = savedData.badge;
-            if (savedData.subtitle !== undefined) document.getElementById('inpSubtitle').value = savedData.subtitle;
-            if (savedData.frontDesc !== undefined) document.getElementById('inpFrontDesc').value = savedData.frontDesc;
-            if (savedData.author !== undefined) document.getElementById('inpAuthor').value = savedData.author;
-            if (savedData.spineText !== undefined) document.getElementById('inpSpineText').value = savedData.spineText;
-            if (savedData.backTitle !== undefined) document.getElementById('inpBackTitle').value = savedData.backTitle;
-            if (savedData.backIntro !== undefined) document.getElementById('inpBackIntro').value = savedData.backIntro;
-            if (Array.isArray(savedData.backBullets) && document.getElementById('inpBackBullets')) {
-                coverState.backBullets = savedData.backBullets;
-                document.getElementById('inpBackBullets').value = savedData.backBullets.join('\n');
+            if (d.title !== undefined) {
+                coverState.title = d.title;
+                const inpT = document.getElementById('coverTitle') || document.getElementById('inpTitle');
+                if (inpT) inpT.value = d.title;
             }
-            if (savedData.hideFrontBranding !== undefined && document.getElementById('chkHideFrontBranding')) {
-                document.getElementById('chkHideFrontBranding').checked = !!savedData.hideFrontBranding;
+            if (d.badge !== undefined) {
+                coverState.badge = d.badge;
+                const inpB = document.getElementById('coverBadge') || document.getElementById('inpBadge');
+                if (inpB) inpB.value = d.badge;
             }
-            if (savedData.hideBackBranding !== undefined && document.getElementById('chkHideBackBranding')) {
-                document.getElementById('chkHideBackBranding').checked = !!savedData.hideBackBranding;
+            if (d.subtitle !== undefined) {
+                coverState.subtitle = d.subtitle;
+                const inpS = document.getElementById('coverSubtitle') || document.getElementById('inpSubtitle');
+                if (inpS) inpS.value = d.subtitle;
             }
-            if (savedData.textColors && typeof savedData.textColors === 'object') {
-                coverState.textColors = { ...coverState.textColors, ...savedData.textColors };
+            if (d.frontDesc !== undefined) {
+                coverState.frontDesc = d.frontDesc;
+                const inpFD = document.getElementById('coverFrontDesc') || document.getElementById('inpFrontDesc');
+                if (inpFD) inpFD.value = d.frontDesc;
+            }
+            if (d.author !== undefined) {
+                coverState.author = d.author;
+                const inpA = document.getElementById('coverAuthor') || document.getElementById('inpAuthor');
+                if (inpA) inpA.value = d.author;
+            }
+            if (d.spineText !== undefined) {
+                coverState.spineText = d.spineText;
+                const inpSp = document.getElementById('spineText') || document.getElementById('inpSpineText');
+                if (inpSp) inpSp.value = d.spineText;
+            }
+            if (d.backTitle !== undefined) {
+                coverState.backTitle = d.backTitle;
+                const inpBT = document.getElementById('coverBackTitle') || document.getElementById('inpBackTitle');
+                if (inpBT) inpBT.value = d.backTitle;
+            }
+            if (d.backIntro !== undefined) {
+                coverState.backIntro = d.backIntro;
+                const inpBI = document.getElementById('coverBackIntro') || document.getElementById('inpBackIntro');
+                if (inpBI) inpBI.value = d.backIntro;
+            }
+            if (Array.isArray(d.backBullets)) {
+                coverState.backBullets = d.backBullets;
+                const inpB = document.getElementById('coverBackBullets') || document.getElementById('inpBackBullets');
+                if (inpB) inpB.value = d.backBullets.join('\n');
+            }
+            if (d.hideFrontBranding !== undefined && document.getElementById('chkHideFrontBranding')) {
+                document.getElementById('chkHideFrontBranding').checked = !!d.hideFrontBranding;
+            }
+            if (d.hideBackBranding !== undefined && document.getElementById('chkHideBackBranding')) {
+                document.getElementById('chkHideBackBranding').checked = !!d.hideBackBranding;
+            }
+            if (d.textColors && typeof d.textColors === 'object') {
+                coverState.textColors = { ...coverState.textColors, ...d.textColors };
+            }
+
+            if (d.photoFront && coverState.photo) {
+                Object.assign(coverState.photo, d.photoFront);
+                if (d.photoFront.processedDataUrl) {
+                    const img = new Image();
+                    img.onload = () => {
+                        coverState.photo.processedImage = img;
+                        coverState.photo.originalImage = img;
+                        renderCoverPreview();
+                    };
+                    img.src = d.photoFront.processedDataUrl;
+                }
+            }
+            if (d.photoBack && coverState.photoBack) {
+                Object.assign(coverState.photoBack, d.photoBack);
+                if (d.photoBack.processedDataUrl) {
+                    const img = new Image();
+                    img.onload = () => {
+                        coverState.photoBack.processedImage = img;
+                        coverState.photoBack.originalImage = img;
+                        renderCoverPreview();
+                    };
+                    img.src = d.photoBack.processedDataUrl;
+                }
             }
 
             updateConfigFromUI(false);
+            updateBindingAvailability();
+            updateSpecsLabels();
+            renderCoverPreview();
         }
+
+        window.getCoverGeneratorData = getCoverGeneratorData;
+        window.applySavedCoverDesign = applySavedCoverDesign;
 
         setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData, { isPremium: true, generatorType: 'cover' });
         checkAndLoadSavedDesign(applySavedCoverDesign);
