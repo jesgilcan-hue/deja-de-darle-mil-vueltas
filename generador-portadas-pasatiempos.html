@@ -2223,10 +2223,19 @@ Soluciones completas verificadas al final del libro</textarea>
             }
         };
 
+        window.coverState = coverState;
         let isInitializing = true;
 
         function initCoverGenerator() {
             const params = new URLSearchParams(window.location.search);
+            if (params.get('load')) {
+                refreshAvailableInteriorBooks();
+                updateSyncedBookLabels();
+                updateBindingAvailability();
+                updateSpecsLabels();
+                isInitializing = false;
+                return;
+            }
             const rawBook = localStorage.getItem('mr_puzzle_book_config');
 
             if (params.get('from') === 'interior' || rawBook) {
@@ -2278,7 +2287,7 @@ Soluciones completas verificadas al final del libro</textarea>
                 challengePages += pages;
 
                 const isWord = (k === 'cruzadas' || k === 'sopas');
-                const ppp = isWord ? 1 : (fmt === '6x9' ? 4 : 6);
+                const ppp = isWord ? 1 : (fmt === '6x9' ? 2 : 6);
                 const totalPuzzles = pages * ppp;
 
                 if (k === 'sudoku') {
@@ -2311,7 +2320,9 @@ Soluciones completas verificadas al final del libro</textarea>
             const rawTotal = introPages + challengePages + solutionPages + closingPages;
             const rem = rawTotal % 4;
             const padding = rem === 0 ? 0 : (4 - rem);
-            const totalPages = Math.max(48, rawTotal + padding);
+            const totalPages = (bookData && bookData.totalPages && bookData.totalPages % 4 === 0)
+                ? bookData.totalPages
+                : Math.max(48, rawTotal + padding);
 
             return { totalPages, bullets, format: fmt };
         }
@@ -4506,6 +4517,14 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             }
         }
 
+                window.compileHighResCoverPdf = compileHighResCoverPdf;
+        window.syncFromBookBuilder = syncFromBookBuilder;
+        window.applyPlannerPreset = applyPlannerPreset;
+        window.setBindingType = setBindingType;
+        window.getCalculatedSpineMm = getCalculatedSpineMm;
+        window.getCurrentTrimFormat = getCurrentTrimFormat;
+        window.downloadCoverPdf = downloadCoverPdf;
+
         window.addEventListener('DOMContentLoaded', initCoverGenerator);
     </script>
 
@@ -4580,47 +4599,147 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                     spineText: coverState.spineText || '',
                     backTitle: coverState.backTitle || '',
                     backIntro: coverState.backIntro || '',
-                    backBullets: Array.isArray(coverState.backBullets) ? coverState.backBullets : [], hideFrontBranding: !!coverState.hideFrontBranding, hideBackBranding: !!coverState.hideBackBranding, textColors: { ...(coverState.textColors || {}) }
+                    backBullets: Array.isArray(coverState.backBullets) ? coverState.backBullets : [],
+                    hideFrontBranding: !!coverState.hideFrontBranding,
+                    hideBackBranding: !!coverState.hideBackBranding,
+                    textColors: { ...(coverState.textColors || {}) },
+                    photoFront: coverState.photo ? {
+                        layout: coverState.photo.layout,
+                        filter: coverState.photo.filter,
+                        brightness: coverState.photo.brightness,
+                        saturation: coverState.photo.saturation,
+                        zoom: coverState.photo.zoom,
+                        offsetX: coverState.photo.offsetX,
+                        offsetY: coverState.photo.offsetY,
+                        processedDataUrl: (coverState.photo.filteredDataUrl && coverState.photo.filteredDataUrl.length < 500000)
+                            ? coverState.photo.filteredDataUrl
+                            : (coverState.photo.processedImage && typeof coverState.photo.processedImage.src === 'string' && coverState.photo.processedImage.src.startsWith('data:') && coverState.photo.processedImage.src.length < 500000 ? coverState.photo.processedImage.src : null)
+                    } : null,
+                    photoBack: coverState.photoBack ? {
+                        layout: coverState.photoBack.layout,
+                        filter: coverState.photoBack.filter,
+                        brightness: coverState.photoBack.brightness,
+                        saturation: coverState.photoBack.saturation,
+                        zoom: coverState.photoBack.zoom,
+                        offsetX: coverState.photoBack.offsetX,
+                        offsetY: coverState.photoBack.offsetY,
+                        processedDataUrl: (coverState.photoBack.filteredDataUrl && coverState.photoBack.filteredDataUrl.length < 500000)
+                            ? coverState.photoBack.filteredDataUrl
+                            : (coverState.photoBack.processedImage && typeof coverState.photoBack.processedImage.src === 'string' && coverState.photoBack.processedImage.src.startsWith('data:') && coverState.photoBack.processedImage.src.length < 500000 ? coverState.photoBack.processedImage.src : null)
+                    } : null
                 }
             };
         }
 
         function applySavedCoverDesign(savedData) {
             if (!savedData) return;
-            if (savedData.plannerKey) applyPlannerPreset(savedData.plannerKey, false);
-            if (savedData.trimFormat) {
-                coverState.trimFormat = savedData.trimFormat;
+            const d = (savedData && savedData.data) ? savedData.data : savedData;
+            if (d.plannerKey) applyPlannerPreset(d.plannerKey, false);
+            if (d.trimFormat) {
+                coverState.trimFormat = d.trimFormat;
                 const selFmt = document.getElementById('selTrimFormat');
-                if (selFmt) selFmt.value = savedData.trimFormat;
+                if (selFmt) selFmt.value = d.trimFormat;
             }
-            if (savedData.pageCount) {
-                coverState.pageCount = parseInt(savedData.pageCount, 10) || 180;
+            if (d.pageCount) {
+                coverState.pageCount = parseInt(d.pageCount, 10) || 180;
                 const inpP = document.getElementById('inpPageCount');
                 if (inpP) inpP.value = coverState.pageCount;
             }
-            if (savedData.hideFrontBranding !== undefined && document.getElementById('chkHideFrontBranding')) document.getElementById('chkHideFrontBranding').checked = !!savedData.hideFrontBranding; if (savedData.hideBackBranding !== undefined && document.getElementById('chkHideBackBranding')) document.getElementById('chkHideBackBranding').checked = !!savedData.hideBackBranding; if (savedData.textColors && typeof savedData.textColors === 'object') { coverState.textColors = { ...coverState.textColors, ...savedData.textColors }; } if (Array.isArray(savedData.backBullets)) {
-                coverState.backBullets = savedData.backBullets;
-                const inpB = document.getElementById('inpBackBullets');
-                if (inpB) inpB.value = savedData.backBullets.join('\n');
+            if (d.hideFrontBranding !== undefined && document.getElementById('chkHideFrontBranding')) {
+                document.getElementById('chkHideFrontBranding').checked = !!d.hideFrontBranding;
             }
-            if (savedData.bindingType) setBindingType(savedData.bindingType);
-            if (savedData.template) setTemplate(savedData.template);
-            if (savedData.palette) setPalette(savedData.palette);
-            if (savedData.botanicalType && document.getElementById('selBotanicalType')) {
-                document.getElementById('selBotanicalType').value = (savedData.botanicalType === 'loto') ? 'loto' : 'olivo';
+            if (d.hideBackBranding !== undefined && document.getElementById('chkHideBackBranding')) {
+                document.getElementById('chkHideBackBranding').checked = !!d.hideBackBranding;
+            }
+            if (d.textColors && typeof d.textColors === 'object') {
+                coverState.textColors = { ...coverState.textColors, ...d.textColors };
+            }
+            if (Array.isArray(d.backBullets)) {
+                coverState.backBullets = d.backBullets;
+                const inpB = document.getElementById('inpBackBullets');
+                if (inpB) inpB.value = d.backBullets.join('\\n');
+            }
+            if (d.bindingType) setBindingType(d.bindingType);
+            if (d.template) setTemplate(d.template);
+            if (d.palette) setPalette(d.palette);
+            if (d.botanicalType && document.getElementById('selBotanicalType')) {
+                document.getElementById('selBotanicalType').value = (d.botanicalType === 'loto') ? 'loto' : 'olivo';
             }
 
-            if (savedData.title !== undefined) document.getElementById('inpTitle').value = savedData.title;
-            if (savedData.badge !== undefined) document.getElementById('inpBadge').value = savedData.badge;
-            if (savedData.subtitle !== undefined) document.getElementById('inpSubtitle').value = savedData.subtitle;
-            if (savedData.frontDesc !== undefined) document.getElementById('inpFrontDesc').value = savedData.frontDesc;
-            if (savedData.author !== undefined) document.getElementById('inpAuthor').value = savedData.author;
-            if (savedData.spineText !== undefined) document.getElementById('inpSpineText').value = savedData.spineText;
-            if (savedData.backTitle !== undefined) document.getElementById('inpBackTitle').value = savedData.backTitle;
-            if (savedData.backIntro !== undefined) document.getElementById('inpBackIntro').value = savedData.backIntro;
+            if (d.title !== undefined) {
+                coverState.title = d.title;
+                const inpT = document.getElementById('inpTitle');
+                if (inpT) inpT.value = d.title;
+            }
+            if (d.badge !== undefined) {
+                coverState.badge = d.badge;
+                const inpB = document.getElementById('inpBadge');
+                if (inpB) inpB.value = d.badge;
+            }
+            if (d.subtitle !== undefined) {
+                coverState.subtitle = d.subtitle;
+                const inpS = document.getElementById('inpSubtitle');
+                if (inpS) inpS.value = d.subtitle;
+            }
+            if (d.frontDesc !== undefined) {
+                coverState.frontDesc = d.frontDesc;
+                const inpFD = document.getElementById('inpFrontDesc');
+                if (inpFD) inpFD.value = d.frontDesc;
+            }
+            if (d.author !== undefined) {
+                coverState.author = d.author;
+                const inpA = document.getElementById('inpAuthor');
+                if (inpA) inpA.value = d.author;
+            }
+            if (d.spineText !== undefined) {
+                coverState.spineText = d.spineText;
+                const inpSp = document.getElementById('inpSpineText');
+                if (inpSp) inpSp.value = d.spineText;
+            }
+            if (d.backTitle !== undefined) {
+                coverState.backTitle = d.backTitle;
+                const inpBT = document.getElementById('inpBackTitle');
+                if (inpBT) inpBT.value = d.backTitle;
+            }
+            if (d.backIntro !== undefined) {
+                coverState.backIntro = d.backIntro;
+                const inpBI = document.getElementById('inpBackIntro');
+                if (inpBI) inpBI.value = d.backIntro;
+            }
+
+            if (d.photoFront && coverState.photo) {
+                Object.assign(coverState.photo, d.photoFront);
+                if (d.photoFront.processedDataUrl) {
+                    const img = new Image();
+                    img.onload = () => {
+                        coverState.photo.processedImage = img;
+                        coverState.photo.originalImage = img;
+                        renderCoverPreview();
+                    };
+                    img.src = d.photoFront.processedDataUrl;
+                }
+            }
+            if (d.photoBack && coverState.photoBack) {
+                Object.assign(coverState.photoBack, d.photoBack);
+                if (d.photoBack.processedDataUrl) {
+                    const img = new Image();
+                    img.onload = () => {
+                        coverState.photoBack.processedImage = img;
+                        coverState.photoBack.originalImage = img;
+                        renderCoverPreview();
+                    };
+                    img.src = d.photoBack.processedDataUrl;
+                }
+            }
 
             updateConfigFromUI(false);
+            updateBindingAvailability();
+            updateSpecsLabels();
+            renderCoverPreview();
         }
+
+        window.getCoverGeneratorData = getCoverGeneratorData;
+        window.applySavedCoverDesign = applySavedCoverDesign;
 
         setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData, { isPremium: true, generatorType: 'cover' });
         checkAndLoadSavedDesign(applySavedCoverDesign);
