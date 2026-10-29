@@ -42,7 +42,8 @@ const EXCLUDED_FILES = new Set([
   'como-dejar-el-movil-antes-de-dormir.html',
   'decir-que-no-a-la-familia-sin-sentirse-culpable.html',
   'como-generar-tu-libro-de-pasatiempos-para-imprimir.html',
-  'generador-bitacora-enfoque.html'
+  'generador-bitacora-enfoque.html',
+  'extra-pasatiempos.html'
 ]);
 
 // Configuración de prioridades y frecuencias según el tipo de página

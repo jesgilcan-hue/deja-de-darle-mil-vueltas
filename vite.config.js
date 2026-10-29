@@ -99,6 +99,7 @@ export default defineConfig({
         generadorPortadasPasatiempos: resolve(__dirname, 'generador-portadas-pasatiempos.html'),
         hoy: resolve(__dirname, 'hoy.html'),
         sudokuDiario: resolve(__dirname, 'sudoku-diario.html'),
+        extraPasatiempos: resolve(__dirname, 'extra-pasatiempos.html'),
         notFound: resolve(__dirname, '404.html')
       }
     }
