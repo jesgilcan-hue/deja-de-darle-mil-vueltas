@@ -8713,16 +8713,9 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             const total = plan.length;
 
             if (total < 48 || total % 4 !== 0) {
-                alert(`⚠️ El libro debe tener un mínimo de 48 páginas y ser múltiplo de 4 para imprenta (actual: ${total} páginas).`);
-                if (btn) btn.disabled = false;
-                if (notice) notice.style.display = 'none';
+                console.warn(`[Pasatiempos] El total debe ser múltiplo de 4 y mínimo 48 (actual: ${total}).`);
                 return;
             }
-
-            const pBarWrap = document.getElementById('pdfProgressBarWrap');
-            const pBarFill = document.getElementById('pdfProgressBarFill');
-            if (pBarWrap) pBarWrap.style.display = 'block';
-            if (pBarFill) pBarFill.style.width = '0%';
             if (bookState.currentPage > total) bookState.currentPage = total;
             if (bookState.currentPage < 1) bookState.currentPage = 1;
 
@@ -9369,8 +9362,12 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
             const btn = document.getElementById('btnExecutePdfGeneration');
             const notice = document.getElementById('pdfProgressNotice');
+            const pBarWrap = document.getElementById('pdfProgressBarWrap');
+            const pBarFill = document.getElementById('pdfProgressBarFill');
             if (btn) btn.disabled = true;
             if (notice) notice.style.display = 'block';
+            if (pBarWrap) pBarWrap.style.display = 'block';
+            if (pBarFill) pBarFill.style.width = '0%';
 
             const is6x9 = bookState.format === '6x9';
             const widthMm = is6x9 ? 152.4 : 209.55;
@@ -9400,6 +9397,9 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                 if (notice) notice.textContent = `Compilando página ${pageNum} de ${total} (${cur.sidebarTitle || cur.type})...`;
                 if (document.getElementById('pdfProgressBarFill')) {
                     document.getElementById('pdfProgressBarFill').style.width = `${Math.round((pageNum / total) * 100)}%`;
+                }
+                if (pIdx % 4 === 0) {
+                    await new Promise(r => setTimeout(r, 0));
                 }
 
                 // 1. CABECERA
@@ -10076,6 +10076,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             }
 
             if (notice) notice.style.display = 'none';
+            if (pBarWrap) pBarWrap.style.display = 'none';
             if (btn) btn.disabled = false;
 
             doc.save(`${bookState.title.replace(/[^a-zA-Z0-9]/g, '_')}_${bookState.format}_${total}pags.pdf`);
@@ -10098,6 +10099,11 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
         window.openDownloadModal = openDownloadModal;
         window.closeDownloadModal = closeDownloadModal;
         window.compileFullBookPdf = compileFullBookPdf;
+        window.buildFullPagePlan = buildFullPagePlan;
+        window.calculatePageBreakdown = calculatePageBreakdown;
+        window.getPuzzlesPerPage = getPuzzlesPerPage;
+        window.getSolutionsPerPage = getSolutionsPerPage;
+        window.bookState = bookState;
 
         function initBookGenerator() {
             applyPreset('mix');
