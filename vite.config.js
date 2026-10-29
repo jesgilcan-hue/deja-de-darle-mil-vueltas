@@ -77,6 +77,7 @@ export default defineConfig({
         tutorialGeneradorHabitos: resolve(__dirname, 'tutorial-generador-planificador-habitos.html'),
         tutorialGeneradorLibroCompleto: resolve(__dirname, 'tutorial-generador-libro-completo.html'),
         tutorialCrearPlanificadorCompleto: resolve(__dirname, 'tutorial-crear-planificador-completo.html'),
+        tutorialCrearLibroPasatiempos: resolve(__dirname, 'tutorial-crear-libro-pasatiempos.html'),
         tutorialGeneradorPortadas: resolve(__dirname, 'tutorial-generador-portadas.html'),
         generadorLibroCompleto: resolve(__dirname, 'generador-libro-completo.html'),
         generadorPortadas: resolve(__dirname, 'generador-portadas.html'),
