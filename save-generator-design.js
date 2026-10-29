@@ -701,9 +701,9 @@ function interceptDownloadActions(options, getGeneratorDataFn) {
           } catch (e) {}
 
           openAuthModal({
-            title: 'Descarga tu Cuaderno Completo en PDF',
-            subtitle: 'Accede a tu cuenta para compilar y descargar tu libro completo listo para imprimir.',
-            badge: 'Cuaderno Completo',
+            title: 'Descarga tu Interior de Planificador en PDF',
+            subtitle: 'Accede a tu cuenta para compilar y descargar tu interior listo para imprimir.',
+            badge: 'Interior del Planificador',
             actionContext: 'download',
             isPremium: true,
             onSuccess: (loggedUser) => {

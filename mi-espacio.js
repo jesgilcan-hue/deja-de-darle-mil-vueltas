@@ -1558,7 +1558,7 @@ function renderDesignsGrid() {
     else if (typeLow.includes('kakuro')) { badgeClass = 'completo'; typeLabel = 'Kakuro Imprimible'; }
     else if (typeLow.includes('sopa')) { badgeClass = 'completo'; typeLabel = 'Sopa de Letras'; }
     else if (typeLow.includes('cruzada')) { badgeClass = 'completo'; typeLabel = 'Cruzadas de Palabras'; }
-    else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) { badgeClass = 'completo'; typeLabel = 'Cuaderno Completo'; }
+    else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) { badgeClass = 'completo'; typeLabel = 'Interior del Planificador'; }
     else if (typeLow.includes('diario')) { badgeClass = 'diario'; typeLabel = 'Planificador Diario'; }
     else if (typeLow.includes('mensual')) { badgeClass = 'mensual'; typeLabel = 'Planificador Mensual'; }
     else if (typeLow.includes('habito')) { badgeClass = 'habitos'; typeLabel = 'Planificador de Hábitos'; }

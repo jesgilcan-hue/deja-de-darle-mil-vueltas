@@ -542,8 +542,8 @@ if ('serviceWorker' in navigator) {
           </a>
           <a href="/generador-libro-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
             <div class="mobile-book-info">
-              <span class="mobile-book-title">Cuaderno Completo</span>
-              <span class="mobile-book-subtitle">Compilador de libro continuo</span>
+              <span class="mobile-book-title">Interior del Planificador</span>
+              <span class="mobile-book-subtitle">Constructor de páginas interiores</span>
             </div>
           </a>
           <a href="/generador-planificador-diario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
@@ -706,6 +706,24 @@ if ('serviceWorker' in navigator) {
         <!-- Subsección: Tutoriales -->
         <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 8px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Tutoriales de generadores</div>
         <div class="mobile-scrollable-sublist">
+          <a href="/tutorial-crear-planificador-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Tutorial Planificador Completo</span>
+              <span class="mobile-book-subtitle">Interior + Portada paso a paso</span>
+            </div>
+          </a>
+          <a href="/tutorial-generador-portadas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Tutorial Diseñador de Portadas</span>
+              <span class="mobile-book-subtitle">Cálculo de lomo y sangría</span>
+            </div>
+          </a>
+          <a href="/tutorial-generador-libro-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
+            <div class="mobile-book-info">
+              <span class="mobile-book-title">Tutorial Interior del Planificador</span>
+              <span class="mobile-book-subtitle">Ensamblado del libro</span>
+            </div>
+          </a>
           <a href="/tutorial-generador-planificador-diario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
             <div class="mobile-book-info">
               <span class="mobile-book-title">Tutorial Planificador Diario</span>
@@ -742,21 +760,9 @@ if ('serviceWorker' in navigator) {
               <span class="mobile-book-subtitle">Gestión horaria</span>
             </div>
           </a>
-          <a href="/tutorial-generador-portadas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Diseñador de Portadas</span>
-              <span class="mobile-book-subtitle">Cálculo de lomo y sangría</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-libro-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Cuaderno Completo</span>
-              <span class="mobile-book-subtitle">Ensamblado de libro 86 págs</span>
-            </div>
-          </a>
         </div>
         <a href="/lecturas.html#tutoriales" class="site-drawer-link" style="font-size: 0.85rem; padding: 4px 8px 10px; color: var(--color-accent); font-weight: 700;" onclick="document.body.classList.remove('nav-open')">
-          Ver todos los tutoriales (8) &rarr;
+          Ver todos los tutoriales (9) &rarr;
         </a>
       </div>
     </div>
@@ -806,7 +812,7 @@ function setupUnifiedNavDropdowns() {
             <span class="tree-branch-title">Generadores Web (8)</span>
             <div class="tree-branch-items tree-branch-generadores-list">
               <a href="/generador-portadas.html" class="tree-item">Diseñador de Portadas</a>
-              <a href="/generador-libro-completo.html" class="tree-item">Cuaderno Completo</a>
+              <a href="/generador-libro-completo.html" class="tree-item">Interior del Planificador</a>
               <a href="/generador-planificador-diario.html" class="tree-item">Planificador Diario (Hoy)</a>
               <a href="/generador-planificador-semanal.html" class="tree-item">Planificador Semanal</a>
               <a href="/generador-planificador-mensual.html" class="tree-item">Planificador Mensual</a>
@@ -852,16 +858,17 @@ function setupUnifiedNavDropdowns() {
           <div class="tree-group">
             <a href="/lecturas.html#tutoriales" class="tree-branch-title">Tutoriales de generadores</a>
             <div class="tree-branch-items tree-branch-scrollable">
+              <a href="/tutorial-crear-planificador-completo.html" class="tree-item">Tutorial Planificador Completo</a>
+              <a href="/tutorial-generador-portadas.html" class="tree-item">Tutorial Diseñador Portadas</a>
+              <a href="/tutorial-generador-libro-completo.html" class="tree-item">Tutorial Interior del Planificador</a>
               <a href="/tutorial-generador-planificador-diario.html" class="tree-item">Tutorial Planificador Diario</a>
               <a href="/tutorial-generador-planificador-semanal.html" class="tree-item">Tutorial Planificador Semanal</a>
               <a href="/tutorial-generador-planificador-mensual.html" class="tree-item">Tutorial Planificador Mensual</a>
               <a href="/tutorial-generador-planificador-anual.html" class="tree-item">Tutorial Planificador Anual</a>
               <a href="/tutorial-generador-planificador-habitos.html" class="tree-item">Tutorial Rastreador Hábitos</a>
               <a href="/tutorial-generador-planificador-horario.html" class="tree-item">Tutorial Bloques Horarios</a>
-              <a href="/tutorial-generador-portadas.html" class="tree-item">Tutorial Diseñador Portadas</a>
-              <a href="/tutorial-generador-libro-completo.html" class="tree-item">Tutorial Cuaderno Completo</a>
             </div>
-            <a href="/lecturas.html#tutoriales" class="tree-view-all-link">Ver todos los tutoriales (8)</a>
+            <a href="/lecturas.html#tutoriales" class="tree-view-all-link">Ver todos los tutoriales (9)</a>
           </div>
         `;
       }
