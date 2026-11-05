@@ -16,6 +16,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        cuadernos: resolve(__dirname, 'cuadernos.html'),
+        crearPlanificadorCompleto: resolve(__dirname, 'crear-planificador-completo.html'),
+        crearLibroPasatiempos: resolve(__dirname, 'crear-libro-pasatiempos.html'),
         habla: resolve(__dirname, 'habla-claro.html'),
         deja: resolve(__dirname, 'deja-de-darle-mil-vueltas.html'),
         p90: resolve(__dirname, 'planificador-90-dias.html'),

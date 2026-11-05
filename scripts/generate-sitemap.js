@@ -12,12 +12,10 @@ const sitemapPath = path.resolve(publicDir, 'sitemap.xml');
 const BASE_URL = 'https://www.editorialmenosruido.com';
 const TODAY = new Date().toISOString().split('T')[0];
 
-// Páginas privadas / internas que NUNCA deben indexarse en Google
+// Páginas privadas / internas o redirecciones que NUNCA deben indexarse en Google
 const EXCLUDED_FILES = new Set([
   'apps.html',
-  'generador-libro-completo.html',
   'generador-libro-completo-v1.html',
-  'generador-portadas.html',
   'pre-lecturas.html',
   'presentacion-generador-planificador-semanal.html',
   'mi-espacio.html',
@@ -25,23 +23,11 @@ const EXCLUDED_FILES = new Set([
   'admin-emails.html',
   'baja.html',
   '404.html',
-  'pasatiempos.html',
-  'generador-sudokus.html',
-  'generador-sopas.html',
   'sopa-diaria.html',
-  'generador-cruzadas.html',
   'cruzadas-diarias.html',
   'kakuro-diario.html',
-  'generador-kakuro.html',
   'calcudoku-diario.html',
-  'generador-calcudoku.html',
-  'hoy.html',
   'sudoku-diario.html',
-  'generador-libro-pasatiempos.html',
-  'por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html',
-  'como-dejar-el-movil-antes-de-dormir.html',
-  'decir-que-no-a-la-familia-sin-sentirse-culpable.html',
-  'como-generar-tu-libro-de-pasatiempos-para-imprimir.html',
   'generador-bitacora-enfoque.html',
   'extra-pasatiempos.html'
 ]);
@@ -54,8 +40,17 @@ function getPageMeta(filename) {
 
   const cleanSlug = filename.replace(/\.html$/, '');
 
-  // Páginas principales de libros
+  // Reto de Hoy (se actualiza a diario)
+  if (filename === 'hoy.html') {
+    return { priority: '0.95', changefreq: 'daily', loc: `${BASE_URL}/${cleanSlug}` };
+  }
+
+  // Páginas principales de libros y portal de pasatiempos
   if ([
+    'pasatiempos.html',
+    'cuadernos.html',
+    'crear-planificador-completo.html',
+    'crear-libro-pasatiempos.html',
     'habla-claro.html',
     'deja-de-darle-mil-vueltas.html',
     'planificador-semanal-simple.html',
@@ -66,8 +61,8 @@ function getPageMeta(filename) {
     return { priority: '0.95', changefreq: 'weekly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
-  // Generadores interactivos
-  if (filename.startsWith('generador-planificador-') || filename === 'generador.html') {
+  // Generadores interactivos (planificadores y pasatiempos)
+  if (filename.startsWith('generador-') || filename === 'generador.html') {
     return { priority: '0.90', changefreq: 'weekly', loc: `${BASE_URL}/${cleanSlug}` };
   }
 
@@ -75,6 +70,7 @@ function getPageMeta(filename) {
   if (
     filename === 'lecturas.html' ||
     filename.startsWith('como-') ||
+    filename.startsWith('decir-') ||
     filename.startsWith('la-') ||
     filename.startsWith('por-que-') ||
     filename.startsWith('el-sindrome-') ||

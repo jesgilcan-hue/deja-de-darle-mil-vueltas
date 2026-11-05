@@ -382,10 +382,10 @@ if ('serviceWorker' in navigator) {
     const contextBox = document.createElement('div');
     contextBox.className = 'nav-drawer-context';
 
-    const titleText = titleEl ? titleEl.textContent.trim() : 'Este Cuaderno';
+    const titleText = titleEl ? titleEl.textContent.trim() : 'Estás viendo';
     contextBox.innerHTML = `
       <div class="nav-drawer-context-header">
-        <span class="nav-drawer-context-badge">Estás viendo</span>
+        <span class="nav-drawer-context-badge">En esta página</span>
         <h3 class="nav-drawer-context-title">${titleText}</h3>
       </div>
       <div class="nav-drawer-context-links"></div>
@@ -425,10 +425,10 @@ if ('serviceWorker' in navigator) {
     if (btnBuy) {
       const cloneBuy = document.createElement('a');
       cloneBuy.href = btnBuy.getAttribute('href');
-      cloneBuy.target = '_blank';
+      if (btnBuy.getAttribute('target')) cloneBuy.target = btnBuy.getAttribute('target');
       cloneBuy.rel = 'noopener noreferrer';
       cloneBuy.className = 'btn-primary nav-drawer-context-btn-buy';
-      cloneBuy.textContent = btnBuy.textContent ? btnBuy.textContent.trim() : 'Comprar en Amazon';
+      cloneBuy.textContent = btnBuy.textContent ? btnBuy.textContent.trim() : 'Ver más';
       cloneBuy.addEventListener('click', () => {
         document.body.classList.remove('nav-open');
       });
@@ -436,336 +436,129 @@ if ('serviceWorker' in navigator) {
     }
 
     drawerBody.appendChild(contextBox);
-
-    // Scrollspy para sincronizar la sección activa en el submenú del drawer
-    const drawerLinks = linksContainer.querySelectorAll('.nav-drawer-context-link');
-    const sections = document.querySelectorAll('section[id], header[id]');
-    if (drawerLinks.length && sections.length) {
-      window.addEventListener('scroll', () => {
-        let current = '';
-        const scrollPos = window.scrollY + 140;
-        sections.forEach(s => {
-          const top = s.offsetTop;
-          const height = s.offsetHeight;
-          if (scrollPos >= top && scrollPos < top + height) {
-            current = '#' + s.getAttribute('id');
-          }
-        });
-        drawerLinks.forEach(l => {
-          if (l.getAttribute('href') === current) {
-            l.classList.add('active');
-          } else {
-            l.classList.remove('active');
-          }
-        });
-      }, { passive: true });
-    }
   }
 
-  // Navegación principal del sitio dentro del drawer
+  // Navegación principal del sitio dentro del drawer (Simplificada y sin saturación)
   const siteNav = document.createElement('div');
   siteNav.className = 'site-drawer-nav';
   siteNav.innerHTML = `
     <div id="drawer-user-card-wrap" class="drawer-user-card-wrap"></div>
     <a href="/" class="site-drawer-link" onclick="document.body.classList.remove('nav-open')">Home</a>
-    <div class="site-drawer-section-title">Cuadernos</div>
+    <a href="/hoy.html" class="site-drawer-link" style="display:flex; align-items:center; justify-content:space-between; background:#f5efe6; border:1px solid #dfd3c3; border-radius:8px; padding:10px 12px; margin:6px 0 10px; font-weight:700; color:#111;" onclick="document.body.classList.remove('nav-open')">
+      <span>🎯 Reto de hoy</span>
+      <span style="font-size:0.7rem; background:#111; color:#fff; padding:2px 7px; border-radius:10px;">5 juegos</span>
+    </a>
+
+    <!-- 1. CUADERNOS & PLANIFICADORES -->
+    <div class="site-drawer-section-title">Cuadernos &amp; Planificadores</div>
     <div class="mobile-bookshelf">
-      <!-- Habla Claro -->
-      <a href="/habla-claro.html" class="mobile-book-card" onclick="document.body.classList.remove('nav-open')">
-        <img src="/cover_habla.jpg" alt="Habla Claro" class="mobile-book-thumb" loading="lazy" />
-        <div class="mobile-book-info">
-          <span class="mobile-book-title">Habla Claro</span>
-          <span class="mobile-book-subtitle">Comunicación y límites</span>
+      <!-- Bloque 1A: Crea tu propio cuaderno -->
+      <div style="background:#faf8f5; border:1px solid #e6dfd3; border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+        <a href="/generador.html" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--color-accent, #87553b); text-decoration:none; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          <span>Crea tu propio cuaderno</span>
+          <span>&rarr;</span>
+        </a>
+        <a href="/crear-planificador-completo.html" style="display:block; font-size:0.9rem; font-weight:700; color:#111; text-decoration:none; padding:6px 8px; background:#fff; border:1px solid #e2dacd; border-radius:7px; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          📚 Crea tu planificador completo
+        </a>
+        <div class="mobile-planners-accordion" style="margin:0;">
+          <button type="button" class="mobile-planners-toggle" style="padding:6px 8px; font-size:0.82rem;">
+            <span>▸ Desplegar generadores (6)</span>
+            <span class="toggle-icon">▾</span>
+          </button>
+          <div class="mobile-planners-list">
+            <a href="/generador-planificador-diario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador Diario</span></div></a>
+            <a href="/generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador Semanal</span></div></a>
+            <a href="/generador-planificador-mensual.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador Mensual</span></div></a>
+            <a href="/generador-planificador-anual.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador Anual</span></div></a>
+            <a href="/generador-planificador-habitos.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Seguimiento de Hábitos</span></div></a>
+            <a href="/generador-planificador-horario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Bloques Horarios</span></div></a>
+          </div>
         </div>
-      </a>
-      <!-- Deja de darle mil vueltas -->
-      <a href="/deja-de-darle-mil-vueltas.html" class="mobile-book-card" onclick="document.body.classList.remove('nav-open')">
-        <img src="/cover_deja.jpg" alt="Deja de darle mil vueltas" class="mobile-book-thumb" loading="lazy" />
-        <div class="mobile-book-info">
-          <span class="mobile-book-title">Deja de darle mil vueltas</span>
-          <span class="mobile-book-subtitle">Toma de decisiones</span>
-        </div>
-      </a>
-      <!-- Planificadores Desplegables -->
-      <div class="mobile-planners-accordion">
-        <button type="button" class="mobile-planners-toggle">
-          <span>Planificadores</span>
-          <span class="toggle-icon">▾</span>
-        </button>
-        <div class="mobile-planners-list">
-          <a href="/planificador-90-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <img src="/cover_90.jpg" alt="Planificador 90 Días" class="mobile-book-thumb" loading="lazy" />
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Planificador 90 Días</span>
-              <span class="mobile-book-subtitle">Enfoque trimestral</span>
-            </div>
-          </a>
-          <a href="/planificador-180-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <img src="/cover_180.jpg" alt="Planificador 180 Días" class="mobile-book-thumb" loading="lazy" />
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Planificador 180 Días</span>
-              <span class="mobile-book-subtitle">Hábito semestral</span>
-            </div>
-          </a>
-          <a href="/planificador-semanal-simple.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <img src="/cover_semanal_simple.jpg" alt="Planificador Semanal Simple" class="mobile-book-thumb" loading="lazy" />
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Semanal Atemporal</span>
-              <span class="mobile-book-subtitle">Edición simple</span>
-            </div>
-          </a>
-          <a href="/planificador-semanal-reversible.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <img src="/cover_semanal_reversible.jpg" alt="Planificador Semanal Reversible" class="mobile-book-thumb" loading="lazy" />
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Semanal Reversible</span>
-              <span class="mobile-book-subtitle">Edición doble entrada</span>
-            </div>
-          </a>
+      </div>
+
+      <!-- Bloque 1B: Cuadernos y planificadores -->
+      <div style="background:#faf8f5; border:1px solid #e6dfd3; border-radius:10px; padding:10px 12px;">
+        <a href="/cuadernos.html" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--color-accent, #87553b); text-decoration:none; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          <span>Cuadernos y planificadores</span>
+          <span>&rarr;</span>
+        </a>
+        <a href="/cuadernos.html" style="display:block; font-size:0.9rem; font-weight:700; color:#111; text-decoration:none; padding:6px 8px; background:#fff; border:1px solid #e2dacd; border-radius:7px; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          📖 Compra el tuyo
+        </a>
+        <div class="mobile-planners-accordion" style="margin:0;">
+          <button type="button" class="mobile-planners-toggle" style="padding:6px 8px; font-size:0.82rem;">
+            <span>▸ Desplegar cuadernos (6)</span>
+            <span class="toggle-icon">▾</span>
+          </button>
+          <div class="mobile-planners-list">
+            <a href="/habla-claro.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Habla Claro (Límites)</span></div></a>
+            <a href="/deja-de-darle-mil-vueltas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Deja de darle mil vueltas</span></div></a>
+            <a href="/planificador-90-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador de 90 Días</span></div></a>
+            <a href="/planificador-180-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador de 180 Días</span></div></a>
+            <a href="/planificador-semanal-simple.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador Semanal Simple</span></div></a>
+            <a href="/planificador-semanal-reversible.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador Semanal Reversible</span></div></a>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Generadores Desplegable -->
-    <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Generadores Web (8)</div>
-    <div class="mobile-planners-accordion">
-      <button type="button" class="mobile-planners-toggle">
-        <span>Generadores Web</span>
-        <span class="toggle-icon">▾</span>
-      </button>
-      <div class="mobile-planners-list">
-        <div class="mobile-scrollable-sublist">
-          <a href="/generador-portadas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Diseñador de Portadas</span>
-              <span class="mobile-book-subtitle">Lomo y pliego exacto</span>
-            </div>
-          </a>
-          <a href="/generador-libro-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Interior del Planificador</span>
-              <span class="mobile-book-subtitle">Constructor de páginas interiores</span>
-            </div>
-          </a>
-          <a href="/generador-planificador-diario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Planificador Diario (Hoy)</span>
-              <span class="mobile-book-subtitle">Formato vertical 6" × 9"</span>
-            </div>
-          </a>
-          <a href="/generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Planificador Semanal</span>
-              <span class="mobile-book-subtitle">Formato apaisado 8.25" × 6"</span>
-            </div>
-          </a>
-          <a href="/generador-planificador-mensual.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Planificador Mensual</span>
-              <span class="mobile-book-subtitle">Vista mes a doble página</span>
-            </div>
-          </a>
-          <a href="/generador-planificador-anual.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Planificador Anual</span>
-              <span class="mobile-book-subtitle">Visión estratégica 12 meses</span>
-            </div>
-          </a>
-          <a href="/generador-planificador-habitos.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Rastreador de Hábitos</span>
-              <span class="mobile-book-subtitle">Matriz mensual analógica</span>
-            </div>
-          </a>
-          <a href="/generador-planificador-horario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Bloques Horarios</span>
-              <span class="mobile-book-subtitle">Time blocking diario</span>
-            </div>
-          </a>
-        </div>
-        <a href="/generador.html" class="site-drawer-link" style="font-size: 0.85rem; padding: 6px 8px 10px; color: var(--color-accent); font-weight: 700; display: block;" onclick="document.body.classList.remove('nav-open')">
-          Ver todos los generadores (8) &rarr;
+    <!-- 2. PASATIEMPOS -->
+    <div class="site-drawer-section-title" style="margin-top: 0.8rem; display:flex; align-items:center; gap:6px;">
+      <span>Pasatiempos</span>
+      <span style="background:#111; color:#fff; font-size:0.62rem; padding:1px 6px; border-radius:4px; text-transform:uppercase;">Nuevo</span>
+    </div>
+    <div class="mobile-bookshelf">
+      <!-- Bloque 2A: Crea tu propio pasatiempo -->
+      <div style="background:#faf8f5; border:1px solid #e6dfd3; border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+        <a href="/pasatiempos.html#imprimibles" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--color-accent, #87553b); text-decoration:none; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          <span>Crea tu propio pasatiempo</span>
+          <span>&rarr;</span>
         </a>
+        <a href="/crear-libro-pasatiempos.html" style="display:block; font-size:0.9rem; font-weight:700; color:#111; text-decoration:none; padding:6px 8px; background:#fff; border:1px solid #e2dacd; border-radius:7px; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          📚 Crea tu libro de pasatiempos completo
+        </a>
+        <div class="mobile-planners-accordion" style="margin:0;">
+          <button type="button" class="mobile-planners-toggle" style="padding:6px 8px; font-size:0.82rem;">
+            <span>▸ Desplegar generadores (5)</span>
+            <span class="toggle-icon">▾</span>
+          </button>
+          <div class="mobile-planners-list">
+            <a href="/generador-sudokus.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Generador de Sudokus</span></div></a>
+            <a href="/generador-sopas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Generador de Sopas de Letras</span></div></a>
+            <a href="/generador-cruzadas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Generador de Palabras Cruzadas</span></div></a>
+            <a href="/generador-kakuro.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Generador de Kakuro</span></div></a>
+            <a href="/generador-calcudoku.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Generador de Calcudoku</span></div></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque 2B: Libros de pasatiempos -->
+      <div style="background:#faf8f5; border:1px solid #e6dfd3; border-radius:10px; padding:10px 12px;">
+        <a href="/pasatiempos.html#catalogo" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--color-accent, #87553b); text-decoration:none; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          <span>Libros de pasatiempos</span>
+          <span>&rarr;</span>
+        </a>
+        <a href="/pasatiempos.html#catalogo" style="display:block; font-size:0.9rem; font-weight:700; color:#111; text-decoration:none; padding:6px 8px; background:#fff; border:1px solid #e2dacd; border-radius:7px; margin-bottom:6px;" onclick="document.body.classList.remove('nav-open')">
+          📖 Compra el tuyo
+        </a>
+        <div class="mobile-planners-accordion" style="margin:0;">
+          <button type="button" class="mobile-planners-toggle" style="padding:6px 8px; font-size:0.82rem;">
+            <span>▸ Desplegar libros (4)</span>
+            <span class="toggle-icon">▾</span>
+          </button>
+          <div class="mobile-planners-list">
+            <a href="/pasatiempos.html#libro-abuelos" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">El Gran Cuaderno de los Abuel@s</span></div></a>
+            <a href="/pasatiempos.html#libro-enfermeria" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Turno de Noche: Enfermería</span></div></a>
+            <a href="/pasatiempos.html#libro-docentes" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">El Gran Libro de los Docentes</span></div></a>
+            <a href="/pasatiempos.html#libro-navidad" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Pasatiempos de Navidad</span></div></a>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Lecturas Desplegable -->
-    <div class="site-drawer-section-title" style="margin-top: 0.8rem;">Lecturas & Recursos</div>
-    <div class="mobile-planners-accordion">
-      <button type="button" class="mobile-planners-toggle">
-        <span>Lecturas & Guías</span>
-        <span class="toggle-icon">▾</span>
-      </button>
-      <div class="mobile-planners-list">
-        <!-- Subsección: Lecturas -->
-        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 6px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Lecturas para pensar</div>
-        <div class="mobile-scrollable-sublist">
-          <a href="/como-decir-que-no-en-el-trabajo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Cómo decir que no en el trabajo</span>
-              <span class="mobile-book-subtitle">Comunicación & Límites</span>
-            </div>
-          </a>
-          <a href="/como-dejar-de-sobrepensar-las-decisiones.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Cómo dejar de sobrepensar</span>
-              <span class="mobile-book-subtitle">Decisiones & Claridad</span>
-            </div>
-          </a>
-          <a href="/por-que-el-papel-ordena-lo-que-la-pantalla-satura.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">El papel vs la pantalla</span>
-              <span class="mobile-book-subtitle">Salud mental analógica</span>
-            </div>
-          </a>
-          <a href="/la-trampa-de-las-listas-infinitas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Listas infinitas</span>
-              <span class="mobile-book-subtitle">La trampa del hacer por hacer</span>
-            </div>
-          </a>
-          <a href="/la-fatiga-por-decision.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">La fatiga por decisión</span>
-              <span class="mobile-book-subtitle">Por qué cansa elegir tanto</span>
-            </div>
-          </a>
-          <a href="/por-que-los-calendarios-milimetrados-te-generan-ansiedad.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Calendarios milimetrados</span>
-              <span class="mobile-book-subtitle">Productividad tóxica</span>
-            </div>
-          </a>
-          <a href="/el-sindrome-de-la-bandeja-de-entrada-vacia.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">La bandeja vacía</span>
-              <span class="mobile-book-subtitle">La obsesión del cero tareas</span>
-            </div>
-          </a>
-          <a href="/la-falsa-urgencia-y-el-mensaje-inmediato.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">La falsa urgencia</span>
-              <span class="mobile-book-subtitle">El mensaje inmediato</span>
-            </div>
-          </a>
-          <a href="/comprar-cosas-a-las-once-de-la-noche.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Comprar a las 23:00</span>
-              <span class="mobile-book-subtitle">Consumo y cansancio mental</span>
-            </div>
-          </a>
-          <a href="/por-que-callar-para-no-crear-conflicto-sale-mas-caro.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Callar sale caro</span>
-              <span class="mobile-book-subtitle">Límites y resolución</span>
-            </div>
-          </a>
-          <a href="/aprender-a-no-hacer-nada-sin-sentirte-culpable.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Aprender a no hacer nada</span>
-              <span class="mobile-book-subtitle">Descanso real</span>
-            </div>
-          </a>
-        </div>
-        <a href="/lecturas.html#lecturas" class="site-drawer-link" style="font-size: 0.85rem; padding: 4px 8px 10px; color: var(--color-accent); font-weight: 700;" onclick="document.body.classList.remove('nav-open')">
-          Ver todas las lecturas (11) &rarr;
-        </a>
-
-        <!-- Subsección: Guías de uso -->
-        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 8px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Guías de uso</div>
-        <div class="mobile-scrollable-sublist">
-          <a href="/guia-uso-habla-claro.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Guía Habla Claro</span>
-              <span class="mobile-book-subtitle">Conversaciones difíciles</span>
-            </div>
-          </a>
-          <a href="/guia-uso-deja-de-darle-mil-vueltas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Guía Deja de darle mil vueltas</span>
-              <span class="mobile-book-subtitle">Filtro de 5 minutos</span>
-            </div>
-          </a>
-          <a href="/guia-uso-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Guía Planificador Semanal</span>
-              <span class="mobile-book-subtitle">Método horizontal 8.25" × 6"</span>
-            </div>
-          </a>
-          <a href="/guia-uso-planificador-90-180-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Guía 90 & 180 Días</span>
-              <span class="mobile-book-subtitle">Ciclos trimestrales y semestrales</span>
-            </div>
-          </a>
-        </div>
-        <a href="/lecturas.html#guias-de-uso" class="site-drawer-link" style="font-size: 0.85rem; padding: 4px 8px 10px; color: var(--color-accent); font-weight: 700;" onclick="document.body.classList.remove('nav-open')">
-          Ver todas las guías de uso &rarr;
-        </a>
-
-        <!-- Subsección: Tutoriales -->
-        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent); font-weight: 700; padding: 8px 8px 2px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px;">Tutoriales de generadores</div>
-        <div class="mobile-scrollable-sublist">
-          <a href="/tutorial-crear-planificador-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Planificador Completo</span>
-              <span class="mobile-book-subtitle">Interior + Portada paso a paso</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-portadas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Diseñador de Portadas</span>
-              <span class="mobile-book-subtitle">Cálculo de lomo y sangría</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-libro-completo.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Interior del Planificador</span>
-              <span class="mobile-book-subtitle">Ensamblado del libro</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-planificador-diario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Planificador Diario</span>
-              <span class="mobile-book-subtitle">Configuración y bloques</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-planificador-semanal.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Planificador Semanal</span>
-              <span class="mobile-book-subtitle">Impresión apaisada</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-planificador-mensual.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Planificador Mensual</span>
-              <span class="mobile-book-subtitle">Calendario a doble página</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-planificador-anual.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Planificador Anual</span>
-              <span class="mobile-book-subtitle">Matriz anual</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-planificador-habitos.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Rastreador de Hábitos</span>
-              <span class="mobile-book-subtitle">Matriz de hábitos</span>
-            </div>
-          </a>
-          <a href="/tutorial-generador-planificador-horario.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')">
-            <div class="mobile-book-info">
-              <span class="mobile-book-title">Tutorial Bloques Horarios</span>
-              <span class="mobile-book-subtitle">Gestión horaria</span>
-            </div>
-          </a>
-        </div>
-        <a href="/lecturas.html#tutoriales" class="site-drawer-link" style="font-size: 0.85rem; padding: 4px 8px 10px; color: var(--color-accent); font-weight: 700;" onclick="document.body.classList.remove('nav-open')">
-          Ver todos los tutoriales (9) &rarr;
-        </a>
-      </div>
-    </div>
+    <!-- 3. LECTURAS -->
+    <a href="/lecturas.html" class="site-drawer-link" style="margin-top: 0.6rem; font-weight: 700;" onclick="document.body.classList.remove('nav-open')">Lecturas</a>
   `;
 
   // Toggles de acordeones (sin cerrar el drawer)
@@ -789,91 +582,212 @@ if ('serviceWorker' in navigator) {
     }
   });
 
-  // Sincronizar y estandarizar los menús desplegables del header en escritorio
+  // Sincronizar y estandarizar el menú superior en escritorio y el selector rápido de generadores
   setupUnifiedNavDropdowns();
+  initGeneratorQuickSwitcher();
 })();
 
-// Estandariza los desplegables del menú superior en escritorio con scroll de 3 visibles
+// Estandariza la barra de navegación superior (.navbar nav) en toda la web (5 elementos limpios + Mi Espacio)
 function setupUnifiedNavDropdowns() {
   const desktopNav = document.querySelector('.navbar nav');
   if (!desktopNav) return;
 
-  const dropdowns = desktopNav.querySelectorAll('.dropdown');
-  dropdowns.forEach(drop => {
-    const trigger = drop.querySelector('a');
-    if (!trigger) return;
-    const text = (trigger.textContent || '').toLowerCase();
+  const path = window.location.pathname.toLowerCase();
+  const isHoy = path.includes('hoy');
+  const isPasatiempos = path.includes('pasatiempo') || path.includes('sudoku') || path.includes('sopa') || path.includes('cruzada') || path.includes('kakuro') || path.includes('calcudoku');
+  const isLecturas = path.includes('lectura') || path.includes('tutorial') || path.includes('guia-uso');
 
-    if (text.includes('generador')) {
-      const content = drop.querySelector('.dropdown-content');
-      if (content) {
-        content.innerHTML = `
-          <div class="tree-group tree-group-generadores">
-            <span class="tree-branch-title">Generadores Web (8)</span>
-            <div class="tree-branch-items tree-branch-generadores-list">
-              <a href="/generador-portadas.html" class="tree-item">Diseñador de Portadas</a>
-              <a href="/generador-libro-completo.html" class="tree-item">Interior del Planificador</a>
-              <a href="/generador-planificador-diario.html" class="tree-item">Planificador Diario (Hoy)</a>
-              <a href="/generador-planificador-semanal.html" class="tree-item">Planificador Semanal</a>
-              <a href="/generador-planificador-mensual.html" class="tree-item">Planificador Mensual</a>
-              <a href="/generador-planificador-anual.html" class="tree-item">Planificador Anual</a>
-              <a href="/generador-planificador-habitos.html" class="tree-item">Rastreador de Hábitos</a>
-              <a href="/generador-planificador-horario.html" class="tree-item">Bloques Horarios</a>
+  desktopNav.innerHTML = `
+    <div class="nav-drawer-header">
+      <span class="nav-drawer-title">Menos Ruido</span>
+      <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 1. HOME -->
+    <a href="/" onclick="document.body.classList.remove('nav-open')">Home</a>
+
+    <!-- 2. RETO DE HOY -->
+    <a href="/hoy.html" onclick="document.body.classList.remove('nav-open')" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: ${isHoy ? 'var(--color-accent, #87553b)' : '#111111'};">
+      <span>🎯</span> Reto de hoy
+    </a>
+
+    <!-- 3. CUADERNOS & PLANIFICADORES -->
+    <div class="dropdown">
+      <a href="/cuadernos.html" style="cursor: pointer;">Cuadernos &amp; Planificadores ▾</a>
+      <div class="dropdown-content tree-dropdown">
+        <div class="tree-group">
+          <a href="/generador.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Crea tu propio cuaderno</a>
+          <div class="tree-branch-items">
+            <a href="/crear-planificador-completo.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📚 Crea tu planificador completo</a>
+            <button type="button" class="tree-sub-toggle">▸ Desplegar generadores (6)</button>
+            <div class="tree-sub-collapsible" style="display: none;">
+              <a href="/generador-planificador-diario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Diario</a>
+              <a href="/generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal</a>
+              <a href="/generador-planificador-mensual.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Mensual</a>
+              <a href="/generador-planificador-anual.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Anual</a>
+              <a href="/generador-planificador-habitos.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Seguimiento de Hábitos</a>
+              <a href="/generador-planificador-horario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Bloques Horarios</a>
             </div>
-            <a href="/generador.html" class="tree-view-all-link">Ver todos los generadores (8) &rarr;</a>
           </div>
-        `;
-      }
-    } else if (text.includes('lectura')) {
-      const content = drop.querySelector('.dropdown-content');
-      if (content) {
-        content.innerHTML = `
-          <div class="tree-group">
-            <a href="/lecturas.html#lecturas" class="tree-branch-title">Lecturas para pensar</a>
-            <div class="tree-branch-items tree-branch-scrollable">
-              <a href="/como-decir-que-no-en-el-trabajo.html" class="tree-item">Cómo decir que no en el trabajo</a>
-              <a href="/como-dejar-de-sobrepensar-las-decisiones.html" class="tree-item">Cómo dejar de sobrepensar las decisiones</a>
-              <a href="/por-que-el-papel-ordena-lo-que-la-pantalla-satura.html" class="tree-item">El papel ordena la pantalla</a>
-              <a href="/la-trampa-de-las-listas-infinitas.html" class="tree-item">La trampa de las listas infinitas</a>
-              <a href="/la-fatiga-por-decision.html" class="tree-item">La fatiga por decisión</a>
-              <a href="/por-que-los-calendarios-milimetrados-te-generan-ansiedad.html" class="tree-item">Calendarios milimetrados</a>
-              <a href="/el-sindrome-de-la-bandeja-de-entrada-vacia.html" class="tree-item">La bandeja de entrada vacía</a>
-              <a href="/la-falsa-urgencia-y-el-mensaje-inmediato.html" class="tree-item">La falsa urgencia</a>
-              <a href="/comprar-cosas-a-las-once-de-la-noche.html" class="tree-item">Comprar a las 23:00</a>
-              <a href="/por-que-callar-para-no-crear-conflicto-sale-mas-caro.html" class="tree-item">Callar sale caro</a>
-              <a href="/aprender-a-no-hacer-nada-sin-sentirte-culpable.html" class="tree-item">Aprender a no hacer nada</a>
+        </div>
+        <div class="tree-group">
+          <a href="/cuadernos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Cuadernos y planificadores</a>
+          <div class="tree-branch-items">
+            <a href="/cuadernos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📖 Compra el tuyo</a>
+            <button type="button" class="tree-sub-toggle">▸ Desplegar cuadernos (6)</button>
+            <div class="tree-sub-collapsible" style="display: none;">
+              <a href="/habla-claro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Habla Claro (Límites)</a>
+              <a href="/deja-de-darle-mil-vueltas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Deja de darle mil vueltas</a>
+              <a href="/planificador-90-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 90 Días</a>
+              <a href="/planificador-180-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 180 Días</a>
+              <a href="/planificador-semanal-simple.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Simple</a>
+              <a href="/planificador-semanal-reversible.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Reversible</a>
             </div>
-            <a href="/lecturas.html#lecturas" class="tree-view-all-link">Ver todas las lecturas (11)</a>
           </div>
-          <div class="tree-group">
-            <a href="/lecturas.html#guias-de-uso" class="tree-branch-title">Guías de uso</a>
-            <div class="tree-branch-items tree-branch-scrollable">
-              <a href="/guia-uso-habla-claro.html" class="tree-item">Guía Habla Claro</a>
-              <a href="/guia-uso-deja-de-darle-mil-vueltas.html" class="tree-item">Guía Deja de darle mil vueltas</a>
-              <a href="/guia-uso-planificador-semanal.html" class="tree-item">Guía Planificador Semanal</a>
-              <a href="/guia-uso-planificador-90-180-dias.html" class="tree-item">Guía 90 & 180 Días</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PASATIEMPOS -->
+    <div class="dropdown">
+      <a href="/pasatiempos.html" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; ${isPasatiempos ? 'font-weight:700;' : ''}">
+        Pasatiempos <span style="background: #111111; color: #ffffff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;">Nuevo</span> ▾
+      </a>
+      <div class="dropdown-content tree-dropdown">
+        <div class="tree-group">
+          <a href="/pasatiempos.html#imprimibles" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Crea tu propio pasatiempo</a>
+          <div class="tree-branch-items">
+            <a href="/crear-libro-pasatiempos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📚 Crea tu libro de pasatiempos completo</a>
+            <button type="button" class="tree-sub-toggle">▸ Desplegar generadores (5)</button>
+            <div class="tree-sub-collapsible" style="display: none;">
+              <a href="/generador-sudokus.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Sudokus</a>
+              <a href="/generador-sopas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Sopas de Letras</a>
+              <a href="/generador-cruzadas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Palabras Cruzadas</a>
+              <a href="/generador-kakuro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Kakuro</a>
+              <a href="/generador-calcudoku.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Calcudoku</a>
             </div>
-            <a href="/lecturas.html#guias-de-uso" class="tree-view-all-link">Ver todas las guías de uso</a>
           </div>
-          <div class="tree-group">
-            <a href="/lecturas.html#tutoriales" class="tree-branch-title">Tutoriales de generadores</a>
-            <div class="tree-branch-items tree-branch-scrollable">
-              <a href="/tutorial-crear-planificador-completo.html" class="tree-item">Tutorial Planificador Completo</a>
-              <a href="/tutorial-generador-portadas.html" class="tree-item">Tutorial Diseñador Portadas</a>
-              <a href="/tutorial-generador-libro-completo.html" class="tree-item">Tutorial Interior del Planificador</a>
-              <a href="/tutorial-generador-planificador-diario.html" class="tree-item">Tutorial Planificador Diario</a>
-              <a href="/tutorial-generador-planificador-semanal.html" class="tree-item">Tutorial Planificador Semanal</a>
-              <a href="/tutorial-generador-planificador-mensual.html" class="tree-item">Tutorial Planificador Mensual</a>
-              <a href="/tutorial-generador-planificador-anual.html" class="tree-item">Tutorial Planificador Anual</a>
-              <a href="/tutorial-generador-planificador-habitos.html" class="tree-item">Tutorial Rastreador Hábitos</a>
-              <a href="/tutorial-generador-planificador-horario.html" class="tree-item">Tutorial Bloques Horarios</a>
+        </div>
+        <div class="tree-group">
+          <a href="/pasatiempos.html#catalogo" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Libros de pasatiempos</a>
+          <div class="tree-branch-items">
+            <a href="/pasatiempos.html#catalogo" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📖 Compra el tuyo</a>
+            <button type="button" class="tree-sub-toggle">▸ Desplegar libros (4)</button>
+            <div class="tree-sub-collapsible" style="display: none;">
+              <a href="/pasatiempos.html#libro-abuelos" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Cuaderno de los Abuel@s</a>
+              <a href="/pasatiempos.html#libro-enfermeria" class="tree-item" onclick="document.body.classList.remove('nav-open')">Turno de Noche: Enfermería</a>
+              <a href="/pasatiempos.html#libro-docentes" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Libro de los Docentes</a>
+              <a href="/pasatiempos.html#libro-navidad" class="tree-item" onclick="document.body.classList.remove('nav-open')">Pasatiempos de Navidad</a>
             </div>
-            <a href="/lecturas.html#tutoriales" class="tree-view-all-link">Ver todos los tutoriales (9)</a>
           </div>
-        `;
-      }
-    }
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. LECTURAS -->
+    <a href="/lecturas.html" onclick="document.body.classList.remove('nav-open')" style="${isLecturas ? 'font-weight:700;' : ''}">Lecturas</a>
+  `;
+
+  // Re-bind dropdown click toggles for touch/desktop
+  desktopNav.querySelectorAll('.dropdown > a').forEach(toggle => {
+    toggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const parent = toggle.closest('.dropdown');
+      document.querySelectorAll('.dropdown').forEach(d => {
+        if (d !== parent) d.classList.remove('open');
+      });
+      parent.classList.toggle('open');
+    });
+  });
+
+  // Bind internal collapsible sub-menus (.tree-sub-toggle) inside the dropdown
+  desktopNav.querySelectorAll('.tree-sub-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const box = btn.nextElementSibling;
+      if (!box) return;
+      const isHidden = box.style.display === 'none' || !box.style.display;
+      box.style.display = isHidden ? 'block' : 'none';
+      btn.textContent = isHidden
+        ? btn.textContent.replace('▸', '▾')
+        : btn.textContent.replace('▾', '▸');
+      btn.classList.toggle('is-open', isHidden);
+    });
   });
 }
 
+// Selector rápido de salto entre los 15 generadores PDF en el subheader (.top-nav / .top-nav-bar)
+function initGeneratorQuickSwitcher() {
+  const path = window.location.pathname.toLowerCase();
+  if (!path.includes('generador-')) return;
 
+  const topNav = document.querySelector('.top-nav, .top-nav-bar');
+  if (!topNav || document.getElementById('mr-gen-quick-select')) return;
+
+  const generators = [
+    { group: 'Planificadores y Cuadernos (8)', label: '📚 Interior del Planificador (Libro)', url: '/generador-libro-completo.html', match: 'generador-libro-completo' },
+    { group: 'Planificadores y Cuadernos (8)', label: '🎨 Diseñador de Portadas (Planificador)', url: '/generador-portadas.html', match: 'generador-portadas.html' },
+    { group: 'Planificadores y Cuadernos (8)', label: '☀️ Planificador Diario (6"×9")', url: '/generador-planificador-diario.html', match: 'generador-planificador-diario' },
+    { group: 'Planificadores y Cuadernos (8)', label: '🗓️ Planificador Semanal (8.25"×6")', url: '/generador-planificador-semanal.html', match: 'generador-planificador-semanal' },
+    { group: 'Planificadores y Cuadernos (8)', label: '📅 Planificador Mensual', url: '/generador-planificador-mensual.html', match: 'generador-planificador-mensual' },
+    { group: 'Planificadores y Cuadernos (8)', label: '🧭 Planificador Anual', url: '/generador-planificador-anual.html', match: 'generador-planificador-anual' },
+    { group: 'Planificadores y Cuadernos (8)', label: '✨ Seguimiento de Hábitos', url: '/generador-planificador-habitos.html', match: 'generador-planificador-habitos' },
+    { group: 'Planificadores y Cuadernos (8)', label: '⏱️ Bloques Horarios', url: '/generador-planificador-horario.html', match: 'generador-planificador-horario' },
+    { group: 'Pasatiempos en PDF (7)', label: '📚 Libro Completo de Pasatiempos', url: '/generador-libro-pasatiempos.html', match: 'generador-libro-pasatiempos' },
+    { group: 'Pasatiempos en PDF (7)', label: '🎨 Diseñador de Portadas (Pasatiempos)', url: '/generador-portadas-pasatiempos.html', match: 'generador-portadas-pasatiempos' },
+    { group: 'Pasatiempos en PDF (7)', label: '🧩 Generador de Sudokus en PDF', url: '/generador-sudokus.html', match: 'generador-sudokus' },
+    { group: 'Pasatiempos en PDF (7)', label: '🔍 Generador de Sopas de Letras en PDF', url: '/generador-sopas.html', match: 'generador-sopas' },
+    { group: 'Pasatiempos en PDF (7)', label: '🔤 Generador de Cruzadas en PDF', url: '/generador-cruzadas.html', match: 'generador-cruzadas' },
+    { group: 'Pasatiempos en PDF (7)', label: '🔢 Generador de Kakuro en PDF', url: '/generador-kakuro.html', match: 'generador-kakuro' },
+    { group: 'Pasatiempos en PDF (7)', label: '🧮 Generador de Calcudoku en PDF', url: '/generador-calcudoku.html', match: 'generador-calcudoku' }
+  ];
+
+  const wrap = document.createElement('div');
+  wrap.className = 'mr-gen-switcher-wrap';
+  wrap.style.cssText = 'display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto;';
+
+  const label = document.createElement('label');
+  label.setAttribute('for', 'mr-gen-quick-select');
+  label.style.cssText = 'font-size: 0.76rem; font-weight: 700; color: #665e54; text-transform: uppercase; letter-spacing: 0.5px;';
+  label.textContent = 'Herramienta:';
+
+  const select = document.createElement('select');
+  select.id = 'mr-gen-quick-select';
+  select.style.cssText = 'background: #ffffff; border: 1px solid #d4ccbf; border-radius: 7px; padding: 6px 10px; font-size: 0.82rem; font-weight: 600; color: #1f1c19; cursor: pointer; max-width: 90vw;';
+
+  const groups = {};
+  generators.forEach(g => {
+    if (!groups[g.group]) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = g.group;
+      groups[g.group] = optgroup;
+      select.appendChild(optgroup);
+    }
+    const opt = document.createElement('option');
+    opt.value = g.url;
+    opt.textContent = g.label;
+    if (path.includes('generador-portadas-pasatiempos')) {
+      if (g.match === 'generador-portadas-pasatiempos') opt.selected = true;
+    } else if (path.includes('generador-portadas')) {
+      if (g.match === 'generador-portadas.html') opt.selected = true;
+    } else if (path.includes(g.match)) {
+      opt.selected = true;
+    }
+    groups[g.group].appendChild(opt);
+  });
+
+  select.addEventListener('change', () => {
+    if (select.value) window.location.href = select.value;
+  });
+
+  wrap.appendChild(label);
+  wrap.appendChild(select);
+  topNav.appendChild(wrap);
+}

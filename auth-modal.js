@@ -260,7 +260,7 @@ export function setupNavbarAuth() {
     userWrap.id = 'header-user-btn-wrap';
     userWrap.className = 'header-user-btn-wrap';
 
-    const container = document.querySelector('header .container') || document.querySelector('header');
+    const container = document.querySelector('header .container') || document.querySelector('header') || document.querySelector('.mr-gen-topbar-right') || document.querySelector('.top-nav') || document.querySelector('.top-nav-bar');
     if (container) {
       container.appendChild(userWrap);
     }
@@ -410,6 +410,10 @@ export function setupNavbarAuth() {
             <a href="/mi-espacio.html?tab=disenos" class="dropdown-user-item">
               <span class="item-icon">📐</span>
               <span>Mis Plantillas y Diseños</span>
+            </a>
+            <a href="/mi-espacio.html?tab=hoy" class="dropdown-user-item">
+              <span class="item-icon">🎯</span>
+              <span>Retos de Hoy</span>
             </a>
             ${canSeeOrders ? `
             <a href="/mi-espacio.html?tab=pedidos" class="dropdown-user-item">

@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {}
 
   // Cargar inmediatamente pedidos y cesta local
-  initClientOrdersAndBasketModule(null);
+  // Pedidos solo para dev / test customer
 
   // 2. Comprobación en segundo plano con Firebase
   onAuthStateChanged(auth, async (user) => {
@@ -382,7 +382,7 @@ function renderCachedView(cached) {
   if (devUnlockedContent) devUnlockedContent.style.display = 'none';
 
   const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
-  if (tabBtnPedidos) tabBtnPedidos.style.removeProperty('display');
+  if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
 }
 
 // Soporte de navegación por pestañas y lectura de query params (?tab=disenos, ?tab=ajustes, ?tab=dev)
@@ -443,7 +443,7 @@ function checkUrlTab(allowDevTabs = false) {
     }, 300);
   }
 
-  if (tab === 'pedidos' || isOrderReturn) {
+  if ((tab === 'pedidos' || isOrderReturn) && (isDevAllowed || isCustomer)) {
     const btnPed = document.getElementById('tab-btn-pedidos');
     if (btnPed) btnPed.style.setProperty('display', 'inline-flex', 'important');
     activateTab('tab-pedidos');
@@ -1108,7 +1108,9 @@ function renderAuthenticatedView(user) {
         if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
         if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
         const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
-        if (tabBtnPedidos) { tabBtnPedidos.style.removeProperty('display'); tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important'); }
+        if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
+        const addrCard = document.getElementById('ajustes-address-card');
+        if (addrCard) addrCard.style.setProperty('display', 'none', 'important');
         const activeBtn = document.querySelector('.tab-btn.active');
         if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras' || activeBtn.id === 'tab-btn-pedidos')) {
           activateTab('tab-disenos');
@@ -1137,6 +1139,11 @@ function renderAuthenticatedView(user) {
       if (tabBtnPedidos) {
         tabBtnPedidos.style.removeProperty('display');
         tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+      }
+      const addrCardDev = document.getElementById('ajustes-address-card');
+      if (addrCardDev) {
+        addrCardDev.style.removeProperty('display');
+        addrCardDev.style.setProperty('display', 'block', 'important');
       }
       if (devLockedView) devLockedView.style.display = 'none';
       if (devUnlockedContent) devUnlockedContent.style.display = 'block';
@@ -1184,17 +1191,31 @@ function renderAuthenticatedView(user) {
     if (tabBtnFuturas) tabBtnFuturas.style.setProperty('display', 'none', 'important');
     if (tabFuturasPane) tabFuturasPane.style.setProperty('display', 'none', 'important');
 
+    const canBuy = isTestCustomer(user);
     const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
     if (tabBtnPedidos) {
-      tabBtnPedidos.style.removeProperty('display');
-      tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+      if (canBuy) {
+        tabBtnPedidos.style.removeProperty('display');
+        tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+      } else {
+        tabBtnPedidos.style.setProperty('display', 'none', 'important');
+      }
+    }
+    const addrCardClient = document.getElementById('ajustes-address-card');
+    if (addrCardClient) {
+      if (canBuy) {
+        addrCardClient.style.removeProperty('display');
+        addrCardClient.style.setProperty('display', 'block', 'important');
+      } else {
+        addrCardClient.style.setProperty('display', 'none', 'important');
+      }
     }
     const activeBtn = document.querySelector('.tab-btn.active');
-    if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras')) {
+    if (activeBtn && (activeBtn.id === 'tab-btn-dev' || activeBtn.id === 'tab-btn-futuras' || (!canBuy && activeBtn.id === 'tab-btn-pedidos'))) {
       activateTab('tab-disenos');
     }
     checkUrlTab(false);
-    initClientOrdersAndBasketModule(user);
+    if (canBuy) initClientOrdersAndBasketModule(user);
   }
 
   // Guardar datos básicos en caché local (NUNCA guardar flags de desarrollador)
@@ -1225,7 +1246,7 @@ function renderGuestLocalView() {
   if (authContainer) authContainer.style.display = 'block';
 
   const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
-  if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'inline-flex', 'important');
+  if (tabBtnPedidos) tabBtnPedidos.style.setProperty('display', 'none', 'important');
 
   if (userNameDisplay) {
     const titleText = userNameDisplay.querySelector('.user-name-text');
@@ -2009,7 +2030,12 @@ function calcDynamicPriceForProfile(bindingType = 'coil', pageCount = 143, paper
 }
 
 async function initClientOrdersAndBasketModule(user) {
-  // Inicializar siempre para escuchar pedidos y cesta del usuario
+  // Inicializar solo para desarrollador o cliente de prueba autorizado
+  if (!user || (!isDeveloper(user) && !isTestCustomer(user))) {
+    const btnP = document.getElementById('tab-btn-pedidos');
+    if (btnP) btnP.style.setProperty('display', 'none', 'important');
+    return;
+  }
   const tabBtnPedidos = document.getElementById('tab-btn-pedidos');
   if (tabBtnPedidos) {
     tabBtnPedidos.style.removeProperty('display');
