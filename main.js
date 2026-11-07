@@ -791,3 +791,70 @@ function initGeneratorQuickSwitcher() {
   wrap.appendChild(select);
   topNav.appendChild(wrap);
 }
+
+// Bloqueo universal de descarga/impresión de PDF sin registro (Simuladores y Generadores)
+(function setupGlobalPdfAuthGate() {
+  const getCurrentUser = () => {
+    if (window.auth && window.auth.currentUser) return window.auth.currentUser;
+    try {
+      if (window.parent && window.parent !== window && window.parent.auth && window.parent.auth.currentUser) {
+        return window.parent.auth.currentUser;
+      }
+    } catch (e) {}
+    return null;
+  };
+
+  const triggerLoginForPdf = (onSuccessFn) => {
+    const modalOpts = {
+      title: 'Descarga o imprime tu PDF gratis',
+      subtitle: 'Inicia sesión o crea tu cuenta gratuita en un clic para descargar e imprimir tus fichas y plantillas en PDF.',
+      badge: 'Descarga en PDF',
+      actionContext: 'download',
+      onSuccess: (user) => {
+        if (typeof onSuccessFn === 'function') onSuccessFn(user);
+      }
+    };
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.openAuthModal === 'function') {
+        window.parent.openAuthModal(modalOpts);
+        return;
+      }
+    } catch (e) {}
+    if (typeof window.openAuthModal === 'function') {
+      window.openAuthModal(modalOpts);
+    }
+  };
+
+  const wrapPrintPage = () => {
+    if (typeof window.printPage === 'function' && !window.printPage.__mrAuthWrapped) {
+      const origPrint = window.printPage;
+      const wrapped = function(...args) {
+        if (!getCurrentUser()) {
+          triggerLoginForPdf(() => origPrint.apply(this, args));
+          return;
+        }
+        return origPrint.apply(this, args);
+      };
+      wrapped.__mrAuthWrapped = true;
+      window.printPage = wrapped;
+    }
+  };
+
+  wrapPrintPage();
+  setTimeout(wrapPrintPage, 300);
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target && e.target.closest && e.target.closest('[onclick*="printPage"], [onclick*="window.print"], #btnOpenDownloadModal, #btnExecuteDownload, #btnExecutePrint');
+    if (!btn) return;
+    if (!getCurrentUser()) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+      triggerLoginForPdf(() => {
+        if (typeof window.openDownloadModal === 'function' && btn.id === 'btnOpenDownloadModal') {
+          window.openDownloadModal();
+        }
+      });
+    }
+  }, true);
+})();

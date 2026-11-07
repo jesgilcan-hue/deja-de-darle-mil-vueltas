@@ -740,14 +740,15 @@ function interceptDownloadActions(options, getGeneratorDataFn) {
 
   // 4. Captura defensiva de clics en botones de descarga, impresión o envío
   document.addEventListener('click', (e) => {
-    const target = e.target && e.target.closest && e.target.closest('.btn-download-primary, .btn-download-send, .btn-compile-pdf, .btn-modal-primary, .btn-modal-secondary, #btn-modal-send-email');
+    const target = e.target && e.target.closest && e.target.closest('.btn-download-primary, .btn-download-send, .btn-compile-pdf, .btn-primary-action, .btn-compile, .btn-modal-primary, .btn-modal-secondary, #btnOpenDownloadModal, #btnExecuteDownload, #btnExecutePrint, #btn-modal-send-email, #btnCompileBook, #btnStartCompilePdf, #btnModalDownloadPdf, #btnModalPrintPdf, [onclick*="openDownloadModal"], [onclick*="openCompileModal"], [onclick*="executeDownload"], [onclick*="executePrint"], [onclick*="generatePdf"]');
     if (!target) return;
-    if (target.id === 'btn-save-generator-design' || target.id === 'btn-save-as-copy' || target.getAttribute('href')) return;
+    if (target.id === 'btn-save-generator-design' || target.id === 'btn-save-as-copy' || target.id === 'btnOpenTutorialModal' || target.id === 'btnRegenerate' || target.getAttribute('href')) return;
 
     let user = auth.currentUser;
     if (!user) {
       e.preventDefault();
       e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
 
       try {
         const currentDesign = getGeneratorDataFn ? getGeneratorDataFn() : null;

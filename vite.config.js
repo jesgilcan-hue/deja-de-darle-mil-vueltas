@@ -52,6 +52,7 @@ export default defineConfig({
         ensayoDormir: resolve(__dirname, 'como-dejar-el-movil-antes-de-dormir.html'),
         ensayoFamilia: resolve(__dirname, 'decir-que-no-a-la-familia-sin-sentirse-culpable.html'),
         ensayoLibroPasatiempos: resolve(__dirname, 'como-generar-tu-libro-de-pasatiempos-para-imprimir.html'),
+        ensayoEstimulacionMayores: resolve(__dirname, 'estimulacion-cognitiva-para-personas-mayores-en-papel.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
