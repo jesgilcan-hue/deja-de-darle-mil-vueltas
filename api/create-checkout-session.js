@@ -176,7 +176,8 @@ export default async function handler(req, res) {
         const itBinding = it.bindingType || 'softcover';
         const itPages = parseInt(it.pageCount || 144, 10);
         const itQty = Math.max(1, parseInt(it.quantity || 1, 10));
-        const itPrice = parseFloat(it.price || it.unitPrice || calculateDynamicRetailPrice(itBinding, itPages, it.paperThicknessMm || it.paperType));
+        // BLINDAJE ANTI-HACKER: El precio unitario se calcula SIEMPRE en servidor (se ignora cualquier precio manipulado en cliente)
+        const itPrice = calculateDynamicRetailPrice(itBinding, itPages, it.paperThicknessMm || it.paperType);
         const itAmountCents = Math.round(itPrice * 100);
 
         params.append(`line_items[${i}][price_data][currency]`, 'eur');

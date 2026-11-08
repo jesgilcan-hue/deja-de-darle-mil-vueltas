@@ -241,19 +241,31 @@ export default async function handler(req, res) {
       ]
     };
 
+    let alreadyProcessed = false;
     if (isPaid) {
       try {
-        await setDoc(doc(firestoreDb, 'orders', orderNumber), orderDoc, { merge: true });
-        if (metadata.customer_uid) {
-          await setDoc(doc(firestoreDb, 'users', metadata.customer_uid, 'orders', orderNumber), orderDoc, { merge: true });
+        const existingSnap = await getDoc(doc(firestoreDb, 'orders', orderNumber));
+        if (existingSnap.exists()) {
+          alreadyProcessed = true;
+          const existingData = existingSnap.data();
+          orderDoc.status = existingData.status || orderDoc.status;
+          orderDoc.shipping = existingData.shipping || orderDoc.shipping;
+          orderDoc.luluJob = existingData.luluJob || orderDoc.luluJob;
+          orderDoc.comms = existingData.comms || orderDoc.comms;
+          orderDoc.timeline = existingData.timeline || orderDoc.timeline;
+        } else {
+          await setDoc(doc(firestoreDb, 'orders', orderNumber), orderDoc, { merge: true });
+          if (metadata.customer_uid) {
+            await setDoc(doc(firestoreDb, 'users', metadata.customer_uid, 'orders', orderNumber), orderDoc, { merge: true });
+          }
+          console.log('? Pedido #' + orderNumber + ' guardado directamente en Firestore desde el servidor.');
         }
-        console.log('✓ Pedido #' + orderNumber + ' guardado directamente en Firestore desde el servidor.');
       } catch(dbErr) {
         console.error('Error persistiendo pedido en Firestore desde servidor:', dbErr);
       }
     }
 
-    if (isPaid) {
+    if (isPaid && !alreadyProcessed) {
       const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
       const adminOrderUrl = `https://www.editorialmenosruido.com/admin-pedidos.html?orderId=${encodeURIComponent(orderNumber)}`;
 
