@@ -54,6 +54,7 @@ export default defineConfig({
         ensayoLibroPasatiempos: resolve(__dirname, 'como-generar-tu-libro-de-pasatiempos-para-imprimir.html'),
         ensayoEstimulacionMayores: resolve(__dirname, 'estimulacion-cognitiva-para-personas-mayores-en-papel.html'),
         ensayoSopasLetras: resolve(__dirname, 'sopas-de-letras-agilidad-verbal-beneficios-cerebro.html'),
+        ensayoMurdle: resolve(__dirname, 'murdle-murdoku-pasatiempos-logica-amazon.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
