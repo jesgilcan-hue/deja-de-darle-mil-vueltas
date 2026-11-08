@@ -361,6 +361,9 @@ export function setupNavbarAuth() {
         isDev = !!devDeviceCheck.allowed;
       }
       const canSeeOrders = isDev || isTestCustomer(user);
+      document.querySelectorAll('[data-dev-only]').forEach(el => {
+        el.style.display = isDev ? (el.getAttribute('data-dev-display') || 'inline-flex') : 'none';
+      });
       const initial = (name || email || 'U').charAt(0).toUpperCase();
 
       // Guardar en caché para carga ultrarrápida (nunca cachear permisos dev en aparatos no autorizados)

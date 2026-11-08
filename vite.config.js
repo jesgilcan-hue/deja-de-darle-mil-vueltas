@@ -105,6 +105,10 @@ export default defineConfig({
         hoy: resolve(__dirname, 'hoy.html'),
         sudokuDiario: resolve(__dirname, 'sudoku-diario.html'),
         extraPasatiempos: resolve(__dirname, 'extra-pasatiempos.html'),
+        libroPasatiemposAbuelos: resolve(__dirname, 'libro-pasatiempos-abuelos.html'),
+        libroPasatiemposEnfermeria: resolve(__dirname, 'libro-pasatiempos-enfermeria.html'),
+        libroPasatiemposDocentes: resolve(__dirname, 'libro-pasatiempos-docentes.html'),
+        libroPasatiemposNavidad: resolve(__dirname, 'libro-pasatiempos-navidad.html'),
         notFound: resolve(__dirname, '404.html')
       }
     }
