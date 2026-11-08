@@ -548,10 +548,10 @@ if ('serviceWorker' in navigator) {
             <span class="toggle-icon">▾</span>
           </button>
           <div class="mobile-planners-list">
-            <a href="/pasatiempos.html#libro-abuelos" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">El Gran Cuaderno de los Abuel@s</span></div></a>
-            <a href="/pasatiempos.html#libro-enfermeria" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Turno de Noche: Enfermería</span></div></a>
-            <a href="/pasatiempos.html#libro-docentes" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">El Gran Libro de los Docentes</span></div></a>
-            <a href="/pasatiempos.html#libro-navidad" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Pasatiempos de Navidad</span></div></a>
+            <a href="/libro-pasatiempos-abuelos.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">El Gran Cuaderno de los Abuel@s</span></div></a>
+            <a href="/libro-pasatiempos-enfermeria.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Turno de Noche: Enfermería</span></div></a>
+            <a href="/libro-pasatiempos-docentes.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">El Gran Libro de los Docentes</span></div></a>
+            <a href="/libro-pasatiempos-navidad.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Pasatiempos de Navidad</span></div></a>
           </div>
         </div>
       </div>
@@ -679,10 +679,10 @@ function setupUnifiedNavDropdowns() {
             <a href="/pasatiempos.html#catalogo" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📖 Compra el tuyo</a>
             <button type="button" class="tree-sub-toggle">▸ Desplegar libros (4)</button>
             <div class="tree-sub-collapsible" style="display: none;">
-              <a href="/pasatiempos.html#libro-abuelos" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Cuaderno de los Abuel@s</a>
-              <a href="/pasatiempos.html#libro-enfermeria" class="tree-item" onclick="document.body.classList.remove('nav-open')">Turno de Noche: Enfermería</a>
-              <a href="/pasatiempos.html#libro-docentes" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Libro de los Docentes</a>
-              <a href="/pasatiempos.html#libro-navidad" class="tree-item" onclick="document.body.classList.remove('nav-open')">Pasatiempos de Navidad</a>
+              <a href="/libro-pasatiempos-abuelos.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Cuaderno de los Abuel@s</a>
+              <a href="/libro-pasatiempos-enfermeria.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Turno de Noche: Enfermería</a>
+              <a href="/libro-pasatiempos-docentes.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Libro de los Docentes</a>
+              <a href="/libro-pasatiempos-navidad.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Pasatiempos de Navidad</a>
             </div>
           </div>
         </div>

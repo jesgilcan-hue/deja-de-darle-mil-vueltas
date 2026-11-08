@@ -29,11 +29,7 @@ const EXCLUDED_FILES = new Set([
   'calcudoku-diario.html',
   'sudoku-diario.html',
   'generador-bitacora-enfoque.html',
-  'extra-pasatiempos.html',
-  'libro-pasatiempos-abuelos.html',
-  'libro-pasatiempos-enfermeria.html',
-  'libro-pasatiempos-docentes.html',
-  'libro-pasatiempos-navidad.html'
+  'extra-pasatiempos.html'
 ]);
 
 // Configuración de prioridades y frecuencias según el tipo de página
@@ -60,7 +56,11 @@ function getPageMeta(filename) {
     'planificador-semanal-simple.html',
     'planificador-semanal-reversible.html',
     'planificador-90-dias.html',
-    'planificador-180-dias.html'
+    'planificador-180-dias.html',
+    'libro-pasatiempos-abuelos.html',
+    'libro-pasatiempos-enfermeria.html',
+    'libro-pasatiempos-docentes.html',
+    'libro-pasatiempos-navidad.html'
   ].includes(filename)) {
     return { priority: '0.95', changefreq: 'weekly', loc: `${BASE_URL}/${cleanSlug}` };
   }
