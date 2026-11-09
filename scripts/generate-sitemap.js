@@ -32,6 +32,7 @@ const EXCLUDED_FILES = new Set([
   'extra-pasatiempos.html',
   'regalar-planificador-o-libro-pasatiempos-personalizado.html',
   'afirmaciones-diarias.html',
+  'guia-uso-afirmaciones-diarias.html',
   'visor-afirmaciones-diarias.html'
 ]);
 
