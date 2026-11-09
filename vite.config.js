@@ -78,6 +78,7 @@ export default defineConfig({
         guiaUso90180: resolve(__dirname, 'guia-uso-planificador-90-180-dias.html'),
         guiaUsoDeja: resolve(__dirname, 'guia-uso-deja-de-darle-mil-vueltas.html'),
         guiaUsoHabla: resolve(__dirname, 'guia-uso-habla-claro.html'),
+        guiaUsoAfirmaciones: resolve(__dirname, 'guia-uso-afirmaciones-diarias.html'),
         tutorialGeneradorSemanal: resolve(__dirname, 'tutorial-generador-planificador-semanal.html'),
         tutorialGeneradorDiario: resolve(__dirname, 'tutorial-generador-planificador-diario.html'),
         tutorialGeneradorMensual: resolve(__dirname, 'tutorial-generador-planificador-mensual.html'),
