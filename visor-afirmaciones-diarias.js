@@ -66,10 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!bookEl) return;
 
-    // Calculate dynamic base dimensions for PageFlip to guarantee it never overflows laptop screens
+    // Calculate dynamic base dimensions for PageFlip to guarantee it scales generously without overflowing
     const isMobile = window.innerWidth < 768;
-    const availH = Math.max(380, window.innerHeight - 130);
-    const maxPageH = Math.min(680, Math.round(availH * 0.96));
+    const availH = Math.max(380, window.innerHeight - 120);
+    const maxPageH = isMobile ? Math.min(620, Math.round(availH * 0.94)) : Math.min(800, Math.round(availH * 0.96));
     const maxPageW = Math.round(maxPageH * (440 / 660));
 
     const pageFlip = new PageFlip(bookEl, {
