@@ -21,6 +21,8 @@ export default defineConfig({
         crearLibroPasatiempos: resolve(__dirname, 'crear-libro-pasatiempos.html'),
         habla: resolve(__dirname, 'habla-claro.html'),
         deja: resolve(__dirname, 'deja-de-darle-mil-vueltas.html'),
+        afirmaciones: resolve(__dirname, 'afirmaciones-diarias.html'),
+        visorAfirmaciones: resolve(__dirname, 'visor-afirmaciones-diarias.html'),
         p90: resolve(__dirname, 'planificador-90-dias.html'),
         p180: resolve(__dirname, 'planificador-180-dias.html'),
         planificadorSimple: resolve(__dirname, 'planificador-semanal-simple.html'),

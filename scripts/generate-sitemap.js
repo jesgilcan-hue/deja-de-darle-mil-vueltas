@@ -30,7 +30,9 @@ const EXCLUDED_FILES = new Set([
   'sudoku-diario.html',
   'generador-bitacora-enfoque.html',
   'extra-pasatiempos.html',
-  'regalar-planificador-o-libro-pasatiempos-personalizado.html'
+  'regalar-planificador-o-libro-pasatiempos-personalizado.html',
+  'afirmaciones-diarias.html',
+  'visor-afirmaciones-diarias.html'
 ]);
 
 // Configuración de prioridades y frecuencias según el tipo de página
