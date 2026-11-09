@@ -55,6 +55,7 @@ export default defineConfig({
         ensayoEstimulacionMayores: resolve(__dirname, 'estimulacion-cognitiva-para-personas-mayores-en-papel.html'),
         ensayoSopasLetras: resolve(__dirname, 'sopas-de-letras-agilidad-verbal-beneficios-cerebro.html'),
         ensayoMurdle: resolve(__dirname, 'murdle-murdoku-pasatiempos-logica-amazon.html'),
+        ensayoRegalos: resolve(__dirname, 'regalar-planificador-o-libro-pasatiempos-personalizado.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
