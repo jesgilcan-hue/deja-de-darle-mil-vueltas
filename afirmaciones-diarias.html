@@ -38,41 +38,74 @@
     </script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
 
-    <!-- ESTILOS VISOR 3D FÍSICO INCRUSTADO Y LIGHTBOX -->
+    <!-- ESTILOS HERO 3D MOCKUP Y MODAL UNIFICADO HOJEAR EN 3D -->
     <style>
-        /* Visor 3D incrustado directamente en la web sin marco */
-        .hero-3d-embed {
-            flex: 1.25;
+        /* Mockup 3D Hero: Carga ultra rápida sin iframe */
+        .hero-image {
+            flex: 1.1;
             display: flex;
-            justify-content: center;
             align-items: center;
-            width: 100%;
+            justify-content: center;
             position: relative;
         }
-        .cuaderno-3d-wrapper {
-            width: 100%;
-            max-width: 580px;
-            height: 520px;
+        .cuaderno-cover-card {
+            cursor: pointer;
             position: relative;
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            overflow: visible;
-        }
-        .cuaderno-3d-wrapper iframe {
+            max-width: 460px;
             width: 100%;
-            height: 100%;
-            border: none !important;
-            background: transparent !important;
+            text-align: center;
+            transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .cuaderno-cover-card:hover {
+            transform: translateY(-6px) scale(1.02);
+        }
+        .hero-book-img {
+            width: 100%;
+            height: auto;
+            max-height: 490px;
+            object-fit: contain;
+            filter: drop-shadow(0 24px 40px rgba(0,0,0,0.18));
+            transition: filter 0.3s ease;
             display: block;
+            margin: 0 auto;
+        }
+        .cuaderno-cover-card:hover .hero-book-img {
+            filter: drop-shadow(0 30px 48px rgba(0,0,0,0.25));
+        }
+        .hero-3d-badge-pill {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 24, 22, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #f5f2eb;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            pointer-events: none;
+            white-space: nowrap;
+            transition: background 0.25s ease, transform 0.25s ease;
+        }
+        .cuaderno-cover-card:hover .hero-3d-badge-pill {
+            background: #87553b;
+            color: #ffffff;
+            transform: translateX(-50%) scale(1.05);
         }
 
-        /* Modal Lightbox 3D en Grande: Oculto por defecto para no interferir con clicks ni menú */
-        .modal-3d-backdrop {
+        /* Modal Unificado Hojear en 3D (Oculto al 100% por defecto para no interferir con clicks) */
+        .book-modal-backdrop {
             display: none !important;
             position: fixed;
             inset: 0;
-            background: rgba(18, 16, 14, 0.85);
+            background: rgba(18, 16, 14, 0.88);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
             z-index: 100000;
@@ -80,76 +113,65 @@
             justify-content: center;
             padding: 24px;
         }
-        .modal-3d-backdrop.is-open {
+        .book-modal-backdrop.is-open {
             display: flex !important;
         }
-        .modal-3d-dialog {
+        .book-modal-window {
             position: relative;
             width: 100%;
-            max-width: 980px;
-            height: 82vh;
-            height: 82dvh;
+            max-width: 1080px;
+            height: 86vh;
+            height: 86dvh;
             background: #141414;
-            border-radius: 20px;
+            border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65);
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
-        .modal-3d-iframe {
+        .book-modal-iframe {
             width: 100%;
             height: 100%;
             border: none;
             display: block;
             background: #141414;
         }
-        .modal-3d-close-btn {
+        .book-modal-close-btn {
             position: absolute;
-            top: 16px;
-            right: 18px;
-            z-index: 20;
-            width: 44px;
-            height: 44px;
+            top: 14px;
+            right: 14px;
+            z-index: 50;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            color: #ffffff;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            color: #111111;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
             transition: all 0.2s ease;
         }
-        .modal-3d-close-btn:hover {
-            background: #87553b;
-            border-color: #87553b;
+        .book-modal-close-btn:hover {
+            background: #ffffff;
+            color: #c47c5d;
             transform: scale(1.08);
         }
 
-        @media (max-width: 992px) {
-            .cuaderno-3d-wrapper {
-                height: 480px;
+        @media (max-width: 768px) {
+            .book-modal-backdrop {
+                padding: 0;
+            }
+            .book-modal-window {
+                max-width: 100vw;
+                height: 100vh;
+                height: 100dvh;
+                border-radius: 0;
+                border: none;
+            }
+            .hero-image {
                 margin-top: 1.5rem;
-            }
-        }
-        @media (max-width: 600px) {
-            .cuaderno-3d-wrapper {
-                height: 420px;
-            }
-            .modal-3d-backdrop {
-                padding: 12px;
-            }
-            .modal-3d-dialog {
-                height: 90vh;
-                height: 90dvh;
-                border-radius: 14px;
-            }
-            .modal-3d-close-btn {
-                top: 10px;
-                right: 10px;
-                width: 38px;
-                height: 38px;
             }
         }
     </style>
@@ -316,9 +338,12 @@
                     </div>
                 </div>
 
-                <div class="hero-3d-embed fade-in delay-3">
-                    <div class="cuaderno-3d-wrapper">
-                        <iframe id="cuaderno-3d-frame" src="/visor-3d-cuaderno-afirmaciones.html" title="Visor 3D Interactivo · Afirmaciones Diarias" allow="fullscreen" loading="eager"></iframe>
+                <div class="hero-image fade-in delay-3">
+                    <div class="cuaderno-cover-card" onclick="openBookModal()" title="Haz clic para hojear y rotar en 3D">
+                        <img src="/images/libros/afirmaciones-diarias/cuaderno-afirmaciones-3d-hero.webp" alt="Cuaderno Afirmaciones Diarias (376 páginas, lomo 2.15 cm, 6x9 pulgadas)" class="hero-book-img" width="540" height="540" loading="eager" />
+                        <div class="hero-3d-badge-pill">
+                            <span>📖</span> Hojear en 3D
+                        </div>
                     </div>
                 </div>
             </div>
@@ -417,6 +442,11 @@
                         </div>
                     </div>
                 </div>
+                    <div style="text-align: center; margin-top: 1.75rem;">
+                        <button type="button" onclick="openBookModal('interior')" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.6rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; border: none; box-shadow: 0 4px 15px rgba(196, 124, 93, 0.35);">
+                            <span>📖</span> Hojear en 3D
+                        </button>
+                    </div>
 
                 <script>
                     (function() {
@@ -477,7 +507,7 @@
                     </div>
                     <div>
                         <button type="button" onclick="openBookModal()" class="btn-primary" style="background: var(--color-accent); color: #ffffff; padding: 0.85rem 1.6rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(196, 124, 93, 0.4); transition: all 0.2s ease;">
-                            <span>📖</span> Abrir Visor 3D del Libro
+                            <span>📖</span> Hojear en 3D
                         </button>
                     </div>
                 </div>
@@ -675,74 +705,25 @@
     </footer>
 
     
-    <!-- MODAL LIGHTBOX 3D EN GRANDE -->
-    <div id="modal-3d-lightbox" class="modal-3d-backdrop" onclick="handle3DBackdropClick(event)" aria-hidden="true" role="dialog">
-        <button type="button" class="modal-3d-close-btn" onclick="close3DModal()" aria-label="Cerrar visor 3D" title="Cerrar (Esc)">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-        <div class="modal-3d-dialog" onclick="event.stopPropagation()">
-            <iframe id="modal-3d-frame" class="modal-3d-iframe" title="Visor 3D en grande" src="about:blank" loading="lazy"></iframe>
-        </div>
-    </div>
-
-    <!-- MODAL POP-UP VISOR 3D -->
+    <!-- MODAL POP-UP VISOR UNIFICADO (3D + HOJEAR) -->
     <div id="book-modal" class="book-modal-backdrop" onclick="handleModalBackdropClick(event)" aria-hidden="true" role="dialog">
-        <div class="book-modal-window">
-            <button type="button" class="book-modal-close-btn" onclick="closeBookModal()" aria-label="Cerrar visor">✕</button>
-            <iframe id="book-modal-frame" class="book-modal-iframe" title="Visor 3D del cuaderno" loading="lazy"></iframe>
+        <div class="book-modal-window" onclick="event.stopPropagation()">
+            <button type="button" class="book-modal-close-btn" onclick="closeBookModal()" aria-label="Cerrar visor" title="Cerrar (Esc)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <iframe id="book-modal-frame" class="book-modal-iframe" title="Visor 3D y muestra de páginas" src="about:blank" loading="lazy"></iframe>
         </div>
     </div>
 
     <script>
-        
-        // Control del Modal Lightbox 3D en Grande
-        function open3DModal() {
-            const modal = document.getElementById('modal-3d-lightbox');
-            const frame = document.getElementById('modal-3d-frame');
-            if (modal && frame) {
-                frame.src = '/visor-3d-cuaderno-afirmaciones.html';
-                modal.classList.add('is-open');
-                modal.setAttribute('aria-hidden', 'false');
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function close3DModal() {
-            const modal = document.getElementById('modal-3d-lightbox');
-            const frame = document.getElementById('modal-3d-frame');
-            if (modal) {
-                modal.classList.remove('is-open');
-                modal.setAttribute('aria-hidden', 'true');
-                document.body.style.overflow = '';
-                if (frame) {
-                    frame.src = 'about:blank';
-                }
-            }
-        }
-
-        function handle3DBackdropClick(event) {
-            if (event.target.id === 'modal-3d-lightbox') {
-                close3DModal();
-            }
-        }
-
-        window.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                close3DModal();
-            }
-        });
-
-        window.addEventListener('message', function(e) {
-            if (e.data && e.data.type === 'open3DModal') {
-                open3DModal();
-            }
-        });
-
-        function openBookModal() {
+        function openBookModal(mode = '3d') {
             const modal = document.getElementById('book-modal');
             const frame = document.getElementById('book-modal-frame');
             if (modal && frame) {
-                frame.src = '/visor-afirmaciones-diarias.html';
+                const targetSrc = mode === 'interior' 
+                    ? '/visor-3d-cuaderno-afirmaciones.html?mode=interior' 
+                    : '/visor-3d-cuaderno-afirmaciones.html';
+                frame.src = targetSrc;
                 modal.classList.add('is-open');
                 modal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
@@ -768,80 +749,9 @@
             }
         }
 
-        window.addEventListener('keydown', (e) => {
+        window.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeBookModal();
-            }
-        });
-
-        // FAQs Toggle All
-        function toggleAllFaqs(btn) {
-            const details = document.querySelectorAll('#faq details.faq-item');
-            if (!details.length) return;
-            const allOpen = Array.from(details).every(d => d.open);
-            const newState = !allOpen;
-            details.forEach(d => d.open = newState);
-            updateFaqButtonState(btn, newState);
-        }
-
-        function updateFaqButtonState(btn, allOpen) {
-            if (!btn) btn = document.getElementById('faq-toggle-btn');
-            if (!btn) return;
-            const icon = btn.querySelector('.faq-toggle-icon');
-            const text = btn.querySelector('.faq-toggle-text');
-            if (allOpen) {
-                if (icon) icon.textContent = '−';
-                if (text) text.textContent = 'Cerrar todas';
-            } else {
-                if (icon) icon.textContent = '+';
-                if (text) text.textContent = 'Abrir todas';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const details = document.querySelectorAll('#faq details.faq-item');
-            const btn = document.getElementById('faq-toggle-btn');
-            if (details.length && btn) {
-                details.forEach(d => {
-                    d.addEventListener('toggle', () => {
-                        const allOpen = Array.from(details).every(item => item.open);
-                        updateFaqButtonState(btn, allOpen);
-                    });
-                });
-            }
-
-            // Scrollspy para submenú contextual
-            const navLinks = document.querySelectorAll('.book-subnav-links a');
-            const sectionIds = ['el-cuaderno', 'estructura', 'interior', 'faq', 'lecturas-asociadas'];
-            const sections = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
-
-            if (navLinks.length && sections.length) {
-                const onScroll = () => {
-                    const scrollPos = window.scrollY + 160;
-                    let currentId = '';
-                    sections.forEach(sec => {
-                        const top = sec.offsetTop;
-                        const height = sec.offsetHeight;
-                        if (scrollPos >= top && scrollPos < top + height) {
-                            currentId = sec.id;
-                        }
-                    });
-                    if (!currentId && sections.length) {
-                        if (window.scrollY < sections[0].offsetTop) currentId = sections[0].id;
-                        else currentId = sections[sections.length - 1].id;
-                    }
-                    navLinks.forEach(link => {
-                        const href = link.getAttribute('href');
-                        if (href === '#' + currentId) {
-                            link.classList.add('active');
-                        } else {
-                            link.classList.remove('active');
-                        }
-                    });
-                };
-
-                window.addEventListener('scroll', onScroll, { passive: true });
-                onScroll();
             }
         });
     </script>

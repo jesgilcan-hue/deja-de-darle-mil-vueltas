@@ -90,6 +90,43 @@
             scrollbar-width: none;
         }
         .toolbar::-webkit-scrollbar { display: none; }
+        .top-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 50;
+        }
+        .btn-close-viewer {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: #111111;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+        }
+        .btn-close-viewer:hover {
+            background: #ffffff;
+            color: #c47c5d;
+            transform: scale(1.08);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+        }
+        #interior-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 8;
+            background: radial-gradient(circle at 50% 40%, #292521 0%, #171513 100%);
+        }
         .top-expand {
             position: absolute;
             top: 14px;
@@ -183,7 +220,12 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
-    <div class="top-expand">
+    <div class="top-close">
+        <button class="btn-close-viewer" onclick="closeViewer()" aria-label="Cerrar visor" title="Cerrar (Esc)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+    <div class="top-expand" style="display:none;">
         <button type="button" class="btn-expand" onclick="if(window.parent!==window){window.parent.postMessage({type:'open3DModal'},'*');}else{if(!document.fullscreenElement){document.documentElement.requestFullscreen();}else{document.exitFullscreen();}};" title="Ver en grande" aria-label="Ver en pantalla completa">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
@@ -218,7 +260,12 @@
         <button class="btn" id="btn-spine" onclick="lookAt('spine')">Lomo</button>
         <button class="btn" id="btn-back" onclick="lookAt('back')">Contraportada</button>
         <button class="btn" id="btn-persp" onclick="lookAt('persp')">Perspectiva</button>
+        <button class="btn" id="btn-interior" onclick="lookAt('interior')" style="color: #87553b; font-weight: 700;">📖 Interior</button>
         <button class="btn active" id="btn-rotate" onclick="toggleAutoRotate()">Auto-Giro</button>
+    </div>
+
+    <div id="interior-container" style="display:none;">
+        <iframe id="interior-frame" src="about:blank" style="width:100%; height:100%; border:none;" allow="autoplay" title="Interior del Cuaderno"></iframe>
     </div>
 
     <div id="canvas-container"></div>
@@ -408,12 +455,37 @@
 
         function lookAt(view) {
             document.querySelectorAll('.toolbar .btn').forEach(b => b.classList.remove('active'));
+            const interiorContainer = document.getElementById('interior-container');
+            const canvasContainer = document.getElementById('canvas-container');
+            const hint = document.getElementById('hint-text');
+
+            if (view === 'interior') {
+                document.getElementById('btn-interior').classList.add('active');
+                controls.autoRotate = false;
+                document.getElementById('btn-rotate').classList.remove('active');
+                
+                if (interiorContainer) {
+                    interiorContainer.style.display = 'block';
+                    const frame = document.getElementById('interior-frame');
+                    if (frame && (frame.src === 'about:blank' || !frame.src)) {
+                        frame.src = '/visor-afirmaciones-diarias.html?embedded=true';
+                    }
+                }
+                if (canvasContainer) canvasContainer.style.visibility = 'hidden';
+                if (hint) hint.textContent = 'Pasa las páginas arrastrando o usando las flechas';
+                return;
+            }
+
+            if (interiorContainer) interiorContainer.style.display = 'none';
+            if (canvasContainer) canvasContainer.style.visibility = 'visible';
+            if (hint) hint.textContent = 'Arrastra con el ratón para rotar en 360° · Rueda para zoom';
+
             if (view === 'front') {
                 document.getElementById('btn-front').classList.add('active');
                 smoothMoveCamera({ x: 0, y: 0, z: 13.5 });
             } else if (view === 'pages') {
                 document.getElementById('btn-pages').classList.add('active');
-                smoothMoveCamera({ x: 11.5, y: 1.0, z: 4.5 }); // Detailed angle on the pages
+                smoothMoveCamera({ x: 11.5, y: 1.0, z: 4.5 });
             } else if (view === 'spine') {
                 document.getElementById('btn-spine').classList.add('active');
                 smoothMoveCamera({ x: -13.5, y: 0, z: 0.1 });
@@ -424,6 +496,26 @@
                 document.getElementById('btn-persp').classList.add('active');
                 smoothMoveCamera({ x: 6.8, y: 3.8, z: 10.5 });
             }
+        }
+
+        function closeViewer() {
+            if (window.parent && window.parent !== window && typeof window.parent.closeBookModal === 'function') {
+                window.parent.closeBookModal();
+            } else {
+                window.location.href = '/afirmaciones-diarias.html';
+            }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeViewer();
+            }
+        });
+
+        // Check if opened directly in interior mode
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'interior') {
+            lookAt('interior');
         }
 
         function toggleAutoRotate() {
