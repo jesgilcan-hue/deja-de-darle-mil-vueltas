@@ -23,6 +23,7 @@ export default defineConfig({
         deja: resolve(__dirname, 'deja-de-darle-mil-vueltas.html'),
         afirmaciones: resolve(__dirname, 'afirmaciones-diarias.html'),
         visorAfirmaciones: resolve(__dirname, 'visor-afirmaciones-diarias.html'),
+        visor3dAfirmaciones: resolve(__dirname, 'visor-3d-cuaderno-afirmaciones.html'),
         p90: resolve(__dirname, 'planificador-90-dias.html'),
         p180: resolve(__dirname, 'planificador-180-dias.html'),
         planificadorSimple: resolve(__dirname, 'planificador-semanal-simple.html'),
