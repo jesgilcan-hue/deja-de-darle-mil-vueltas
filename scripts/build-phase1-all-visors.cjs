@@ -5,6 +5,28 @@ const webDir = 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/web/web-menos-ruid
 
 const books = [
     {
+        id: 'afirmaciones-diarias',
+        slug: 'afirmaciones-diarias',
+        name: 'Afirmaciones Diarias',
+        title: 'Afirmaciones Diarias',
+        modalSubtitle: 'Muestra de lectura interior · 14 páginas',
+        formatText: 'Formato 6" × 9" (15,24 × 22,86 cm)',
+        pagesText: '376 Páginas (188 hojas)',
+        spineText: 'Lomo 2.15 cm (0.847")',
+        coverTypeText: 'Tapa Blanda',
+        bookW: 6.0,
+        bookH: 9.0,
+        bookD: 0.847,
+        isLandscape: false,
+        pageWidth: 550,
+        pageHeight: 825,
+        localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Afirmaciones diarias/output/3D-Completo',
+        sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/web/web-menos-ruido/public/books/afirmaciones-diarias/3d',
+        webVisorFile: 'visor-afirmaciones-diarias.html',
+        webProductPage: 'afirmaciones-diarias.html',
+        texExt: 'webp'
+    },
+    {
         id: 'habla-claro',
         slug: 'habla-claro',
         name: 'Habla Claro',
@@ -23,7 +45,8 @@ const books = [
         localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Habla_Claro/output/3D-Completo',
         sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Habla_Claro/output/3D/textures',
         webVisorFile: 'visor-habla-claro.html',
-        webProductPage: 'habla-claro.html'
+        webProductPage: 'habla-claro.html',
+        texExt: 'jpg'
     },
     {
         id: 'deja-de-darle-mil-vueltas',
@@ -44,7 +67,8 @@ const books = [
         localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/deja-de-darle-mil-vueltas/output/3D-Completo',
         sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/deja-de-darle-mil-vueltas/output/3D/textures',
         webVisorFile: 'visor-deja-de-darle-mil-vueltas.html',
-        webProductPage: 'deja-de-darle-mil-vueltas.html'
+        webProductPage: 'deja-de-darle-mil-vueltas.html',
+        texExt: 'jpg'
     },
     {
         id: 'planificador-90-dias',
@@ -65,7 +89,8 @@ const books = [
         localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-90-Completo',
         sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-90/textures',
         webVisorFile: 'visor-planificador-90-dias.html',
-        webProductPage: 'planificador-90-dias.html'
+        webProductPage: 'planificador-90-dias.html',
+        texExt: 'jpg'
     },
     {
         id: 'planificador-180-dias',
@@ -86,7 +111,8 @@ const books = [
         localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-180-Completo',
         sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-180/textures',
         webVisorFile: 'visor-planificador-180-dias.html',
-        webProductPage: 'planificador-180-dias.html'
+        webProductPage: 'planificador-180-dias.html',
+        texExt: 'jpg'
     },
     {
         id: 'planificador-semanal-simple',
@@ -107,7 +133,8 @@ const books = [
         localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal_Simple/output/3D-Completo',
         sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal_Simple/output/3D/textures',
         webVisorFile: 'visor-planificador-semanal-simple.html',
-        webProductPage: 'planificador-semanal-simple.html'
+        webProductPage: 'planificador-semanal-simple.html',
+        texExt: 'jpg'
     },
     {
         id: 'planificador-semanal-reversible',
@@ -128,7 +155,8 @@ const books = [
         localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal/output/3D-Completo',
         sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal/output/3D/textures',
         webVisorFile: 'visor-planificador-semanal-reversible.html',
-        webProductPage: 'planificador-semanal-reversible.html'
+        webProductPage: 'planificador-semanal-reversible.html',
+        texExt: 'jpg'
     }
 ];
 
@@ -136,17 +164,42 @@ function generateViewerHtml(cfg, isWeb = true) {
     const texPrefix = isWeb ? `/books/${cfg.slug}/3d` : 'textures';
     const pagesPrefix = isWeb ? `/books/${cfg.slug}` : 'pages';
     const jsPrefix = isWeb ? '' : '.';
+    const ext = cfg.texExt || 'jpg';
 
-    // 16 pages
+    // Count available webp sample pages in public/books/<slug>
+    const webPublicPagesDir = path.join(webDir, 'public/books', cfg.slug);
+    const availablePages = fs.existsSync(webPublicPagesDir)
+        ? fs.readdirSync(webPublicPagesDir).filter(f => f.endsWith('.webp')).sort()
+        : [];
+
+    const pageCount = availablePages.length || (cfg.id === 'afirmaciones-diarias' ? 14 : 16);
+
     const pageSheets = [];
-    for (let i = 1; i <= 16; i++) {
-        const numStr = String(i).padStart(2, '0');
-        const isCover = (i === 1 || i === 16);
-        const densityAttr = isCover ? ' data-density="hard"' : '';
-        const sideClass = (i % 2 === 0) ? '--left' : '--right';
-        pageSheets.push(`                    <div class="page-sheet ${sideClass}"${densityAttr}>
+    if (cfg.id === 'afirmaciones-diarias') {
+        const afirmPages = [
+            'cover_front.webp', 'page_blank.webp', 'page_01.webp', 'page_02.webp',
+            'page_03.webp', 'page_04.webp', 'page_05.webp', 'page_06.webp',
+            'page_07.webp', 'page_08.webp', 'page_09.webp', 'page_10.webp',
+            'page_blank.webp', 'cover_back.webp'
+        ];
+        afirmPages.forEach((p, idx) => {
+            const isCover = (idx === 0 || idx === afirmPages.length - 1);
+            const densityAttr = isCover ? ' data-density="hard"' : '';
+            const sideClass = (idx % 2 === 0) ? '--right' : '--left';
+            pageSheets.push(`                    <div class="page-sheet ${sideClass}"${densityAttr}>
+                        <img src="${pagesPrefix}/${p}" alt="Página ${idx + 1} de ${cfg.title}" loading="lazy" />
+                    </div>`);
+        });
+    } else {
+        for (let i = 1; i <= pageCount; i++) {
+            const numStr = String(i).padStart(2, '0');
+            const isCover = (i === 1 || i === pageCount);
+            const densityAttr = isCover ? ' data-density="hard"' : '';
+            const sideClass = (i % 2 === 0) ? '--left' : '--right';
+            pageSheets.push(`                    <div class="page-sheet ${sideClass}"${densityAttr}>
                         <img src="${pagesPrefix}/page_${numStr}.webp" alt="Página ${i} de ${cfg.title}" loading="lazy" />
                     </div>`);
+        }
     }
 
     return `<!DOCTYPE html>
@@ -330,7 +383,7 @@ function generateViewerHtml(cfg, isWeb = true) {
         .theme-gold { background: #231C14; border: 1px solid #C29B38; }
         .theme-light { background: #EFEAE1; border: 1px solid #CCC; }
 
-        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERIOR (MODAL INTEGRADO A PANTALLA COMPLETA) --- */
+        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERIOR --- */
         #flipbook-modal {
             position: fixed;
             top: 0;
@@ -398,7 +451,6 @@ function generateViewerHtml(cfg, isWeb = true) {
             text-transform: uppercase;
         }
 
-        /* Escenario generoso a toda la pantalla */
         .viewer-stage {
             flex: 1;
             display: flex;
@@ -447,7 +499,6 @@ function generateViewerHtml(cfg, isWeb = true) {
             border-radius: 4px;
         }
 
-        /* Hojas del Flipbook */
         .page-sheet {
             background-color: #FAF7F2;
             width: 100%;
@@ -467,8 +518,6 @@ function generateViewerHtml(cfg, isWeb = true) {
             display: block;
             pointer-events: none;
         }
-
-        /* Efecto de curvatura y costura del lomo interior */
         .page-sheet.--left::after {
             content: "";
             position: absolute;
@@ -493,7 +542,6 @@ function generateViewerHtml(cfg, isWeb = true) {
             box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
         }
 
-        /* Barra de navegación inferior completa con zoom */
         .flipbook-toolbar {
             display: flex;
             align-items: center;
@@ -546,7 +594,6 @@ function generateViewerHtml(cfg, isWeb = true) {
             background: rgba(255, 255, 255, 0.14);
         }
 
-        /* Controles de Zoom */
         .zoom-controls {
             display: flex;
             align-items: center;
@@ -655,10 +702,8 @@ function generateViewerHtml(cfg, isWeb = true) {
             }
         }
     </style>
-    <!-- Three.js para el modelo 3D orbital exterior -->
     <script src="${jsPrefix}/three.min.js"></script>
     <script src="${jsPrefix}/orbit-controls.js"></script>
-    <!-- StPageFlip para el hojear interior realista -->
     <script src="${jsPrefix}/page-flip.browser.js"></script>
     <script>
         if (typeof window.St === 'undefined') {
@@ -694,7 +739,7 @@ function generateViewerHtml(cfg, isWeb = true) {
 
         <div class="toolbar">
             <button class="btn btn-open-book" onclick="openFlipbook()">
-                <span>📖</span> Hojear interior (16 págs muestra)
+                <span>📖</span> Hojear interior (${pageCount} págs)
             </button>
             <div class="tool-divider"></div>
             <button class="btn" id="btn-front" onclick="lookAt('front')">Portada</button>
@@ -763,7 +808,7 @@ ${pageSheets.join('\n')}
 
     <script>
         /* =========================================================================
-           1. THREE.JS MOTOR 3D CERRADO ORBITAL
+           1. THREE.JS MOTOR 3D CERRADO ORBITAL CON TRANSICIÓN ESFÉRICA PERFECCIONADA
            ========================================================================= */
         const BOOK_W = ${cfg.bookW};
         const BOOK_H = ${cfg.bookH};
@@ -772,7 +817,10 @@ ${pageSheets.join('\n')}
         let scene, camera, renderer, controls, bookMesh;
         let isAutoRotating = true;
         let isTransitioning = false;
-        let targetCamPos = null, targetLookAt = null;
+        
+        // Coordenadas esféricas suaves: la cámara órbita SIEMPRE alrededor del libro sin atravesarlo jamás
+        let currentSpherical = new THREE.Spherical();
+        let targetTheta = 0, targetPhi = Math.PI / 2, targetRadius = 20;
 
         const container = document.getElementById('canvas-container');
 
@@ -781,7 +829,7 @@ ${pageSheets.join('\n')}
 
         const aspect = window.innerWidth / window.innerHeight;
         camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
-        camera.position.set(0, 0, ${cfg.isLandscape ? 18 : 22});
+        camera.position.set(0, 0, ${cfg.isLandscape ? 17 : 20});
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -794,13 +842,18 @@ ${pageSheets.join('\n')}
 
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+        controls.dampingFactor = 0.08;
         controls.maxDistance = 45;
         controls.minDistance = 6;
         controls.autoRotate = true;
         controls.autoRotateSpeed = 1.4;
 
-        // Iluminación de Estudio Fotográfico
+        // Si el usuario toca o arrastra, cancelamos cualquier animación automática
+        controls.addEventListener('start', () => {
+            isTransitioning = false;
+        });
+
+        // Iluminación
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
         scene.add(ambientLight);
 
@@ -822,7 +875,7 @@ ${pageSheets.join('\n')}
         rimLight.position.set(0, -10, -15);
         scene.add(rimLight);
 
-        // Plano de sombra suave en el suelo
+        // Suelo con sombra
         const shadowPlaneGeo = new THREE.PlaneGeometry(35, 35);
         const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.28 });
         const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
@@ -842,15 +895,14 @@ ${pageSheets.join('\n')}
             return t;
         }
 
-        const texFront = loadTex('${texPrefix}/front.jpg', true);
-        const texSpine = loadTex('${texPrefix}/spine.jpg', true);
-        const texBack = loadTex('${texPrefix}/back.jpg', true);
-        const texEdge = loadTex('${texPrefix}/pages_edge.jpg', true);
-        const bumpEdge = loadTex('${texPrefix}/pages_bump.jpg', false);
-        const texTop = loadTex('${texPrefix}/pages_top.jpg', true);
-        const bumpTop = loadTex('${texPrefix}/pages_top_bump.jpg', false);
+        const texFront = loadTex('${texPrefix}/front.${ext}', true);
+        const texSpine = loadTex('${texPrefix}/spine.${ext}', true);
+        const texBack = loadTex('${texPrefix}/back.${ext}', true);
+        const texEdge = loadTex('${texPrefix}/pages_edge.${ext}', true);
+        const bumpEdge = loadTex('${texPrefix}/pages_bump.${ext}', false);
+        const texTop = loadTex('${texPrefix}/pages_top.${ext}', true);
+        const bumpTop = loadTex('${texPrefix}/pages_top_bump.${ext}', false);
 
-        // Materiales de cada cara
         const matEdge = new THREE.MeshStandardMaterial({
             map: texEdge,
             bumpMap: bumpEdge,
@@ -883,12 +935,12 @@ ${pageSheets.join('\n')}
         });
 
         const materials = [
-            matEdge,    // +X (Corte de hojas derecho)
+            matEdge,    // +X (Corte derecho)
             matSpine,   // -X (Lomo izquierdo)
             matTop,     // +Y (Corte superior)
             matBottom,  // -Y (Corte inferior)
-            matFront,   // +Z (Portada delantera)
-            matBack     // -Z (Contraportada trasera)
+            matFront,   // +Z (Portada)
+            matBack     // -Z (Contraportada)
         ];
 
         const geometry = new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D, 4, 8, 4);
@@ -897,7 +949,7 @@ ${pageSheets.join('\n')}
         bookMesh.receiveShadow = true;
         scene.add(bookMesh);
 
-        // Click en el libro 3D abre el flipbook interior
+        // Click en libro abre interior
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         let mouseDownPos = { x: 0, y: 0 };
@@ -921,15 +973,28 @@ ${pageSheets.join('\n')}
             }
         });
 
+        // Bucle de render y animación esférica suave
         function animate() {
             requestAnimationFrame(animate);
 
-            if (isTransitioning && targetCamPos) {
-                camera.position.lerp(targetCamPos, 0.065);
-                controls.target.lerp(targetLookAt, 0.065);
-                if (camera.position.distanceTo(targetCamPos) < 0.05) {
-                    camera.position.copy(targetCamPos);
-                    controls.target.copy(targetLookAt);
+            if (isTransitioning) {
+                // Cálculo de camino angular más corto (evita dar toda la vuelta o cortar por dentro)
+                let dTheta = targetTheta - currentSpherical.theta;
+                while (dTheta > Math.PI) dTheta -= Math.PI * 2;
+                while (dTheta < -Math.PI) dTheta += Math.PI * 2;
+
+                currentSpherical.theta += dTheta * 0.12;
+                currentSpherical.phi += (targetPhi - currentSpherical.phi) * 0.12;
+                currentSpherical.radius += (targetRadius - currentSpherical.radius) * 0.12;
+
+                const offset = new THREE.Vector3().setFromSpherical(currentSpherical);
+                camera.position.copy(controls.target).add(offset);
+                camera.lookAt(controls.target);
+
+                if (Math.abs(dTheta) < 0.003 && Math.abs(targetPhi - currentSpherical.phi) < 0.003 && Math.abs(targetRadius - currentSpherical.radius) < 0.05) {
+                    currentSpherical.theta = targetTheta;
+                    currentSpherical.phi = targetPhi;
+                    currentSpherical.radius = targetRadius;
                     isTransitioning = false;
                 }
             } else {
@@ -946,33 +1011,44 @@ ${pageSheets.join('\n')}
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Controles de cámara presets
+        // Controles de cámara con órbita esférica garantizada
         window.lookAt = function(view) {
             setActiveButton('btn-' + view);
             controls.autoRotate = false;
             document.getElementById('btn-rotate').classList.remove('active');
-            isTransitioning = true;
-            targetLookAt = new THREE.Vector3(0, 0, 0);
+
+            // Capturamos el vector actual de la cámara respecto al centro del libro
+            const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
+            currentSpherical.setFromVector3(offset);
 
             const dist = ${cfg.isLandscape ? 17 : 20};
+            targetRadius = dist;
+
             switch(view) {
                 case 'front':
-                    targetCamPos = new THREE.Vector3(0, 0, dist);
+                    targetTheta = 0;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'back':
-                    targetCamPos = new THREE.Vector3(0, 0, -dist);
+                    targetTheta = Math.PI;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'spine':
-                    targetCamPos = new THREE.Vector3(-dist, 0, 0);
+                    targetTheta = -Math.PI / 2;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'pages':
-                    targetCamPos = new THREE.Vector3(dist, 0, 0);
+                    targetTheta = Math.PI / 2;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'persp':
                 default:
-                    targetCamPos = new THREE.Vector3(12, 8, 14);
+                    targetTheta = 0.72;
+                    targetPhi = 1.15;
+                    targetRadius = dist * 1.05;
                     break;
             }
+            isTransitioning = true;
         };
 
         window.toggleAutoRotate = function() {
@@ -995,7 +1071,7 @@ ${pageSheets.join('\n')}
         };
 
         /* =========================================================================
-           2. STPAGEFLIP MOTOR HOJEABLE REALISTA (INTERIOR A PANTALLA COMPLETA)
+           2. STPAGEFLIP MOTOR HOJEABLE REALISTA
            ========================================================================= */
         let pageFlip = null;
         let audioCtx = null;
@@ -1049,8 +1125,6 @@ ${pageSheets.join('\n')}
             if (pageFlip) return;
 
             const container = document.getElementById('book-container');
-            const isMob = window.innerWidth < 768;
-
             const baseW = ${cfg.pageWidth};
             const baseH = ${cfg.pageHeight};
 
@@ -1197,7 +1271,7 @@ ${pageSheets.join('\n')}
 </html>`;
 }
 
-console.log("=== COMPILING ALL 6 CUADERNOS HYBRID 3D VIEWERS ===");
+console.log("=== COMPILING ALL 7 CUADERNOS HYBRID 3D VIEWERS WITH SMOOTH SPHERICAL ORBIT ===");
 
 for (const cfg of books) {
     console.log(`\nProcessing: ${cfg.name}`);
@@ -1216,16 +1290,20 @@ for (const cfg of books) {
     }
 
     // Copy textures to local output
-    const texFiles = fs.readdirSync(cfg.sourceTexturesDir);
-    for (const f of texFiles) {
-        fs.copyFileSync(path.join(cfg.sourceTexturesDir, f), path.join(localTexturesDir, f));
+    if (fs.existsSync(cfg.sourceTexturesDir)) {
+        const texFiles = fs.readdirSync(cfg.sourceTexturesDir);
+        for (const f of texFiles) {
+            fs.copyFileSync(path.join(cfg.sourceTexturesDir, f), path.join(localTexturesDir, f));
+        }
     }
 
     // Copy webp sample pages to local output
     const webPublicPagesDir = path.join(webDir, 'public/books', cfg.slug);
-    const pageFiles = fs.readdirSync(webPublicPagesDir).filter(f => f.endsWith('.webp'));
-    for (const p of pageFiles) {
-        fs.copyFileSync(path.join(webPublicPagesDir, p), path.join(localPagesDir, p));
+    if (fs.existsSync(webPublicPagesDir)) {
+        const pageFiles = fs.readdirSync(webPublicPagesDir).filter(f => f.endsWith('.webp'));
+        for (const p of pageFiles) {
+            fs.copyFileSync(path.join(webPublicPagesDir, p), path.join(localPagesDir, p));
+        }
     }
 
     // Copy standalone libraries
@@ -1236,50 +1314,13 @@ for (const cfg of books) {
     // Write local standalone index.html
     const localHtml = generateViewerHtml(cfg, false);
     fs.writeFileSync(path.join(cfg.localOutputDir, 'index.html'), localHtml, 'utf-8');
-    console.log(`  ✓ Local standalone built in: ${cfg.localOutputDir}`);
+    console.log(`  ✓ Local standalone built: ${cfg.localOutputDir}`);
 
     // 2. Build web production visor: web-menos-ruido/visor-<slug>.html
     const webHtml = generateViewerHtml(cfg, true);
     const webVisorPath = path.join(webDir, cfg.webVisorFile);
     fs.writeFileSync(webVisorPath, webHtml, 'utf-8');
     console.log(`  ✓ Web visor built: ${cfg.webVisorFile} (${webHtml.length} bytes)`);
-
-    // 3. Update web product page modal to point to visor-<slug>.html and support ?mode=interior
-    const prodPagePath = path.join(webDir, cfg.webProductPage);
-    if (fs.existsSync(prodPagePath)) {
-        let pContent = fs.readFileSync(prodPagePath, 'utf-8');
-
-        // Ensure openBookModal has mode parameter
-        const oldOpenFnRegex = /function\s+openBookModal\s*\([^)]*\)\s*\{[\s\S]*?frame\.src\s*=\s*['"][^'"]+['"][\s\S]*?\}/;
-        const newOpenFn = `function openBookModal(mode = '3d') {
-            const modal = document.getElementById('book-modal');
-            const frame = document.getElementById('book-modal-frame');
-            if (modal && frame) {
-                const targetSrc = mode === 'interior' 
-                    ? './${cfg.webVisorFile}?mode=interior' 
-                    : './${cfg.webVisorFile}';
-                frame.src = targetSrc;
-                modal.classList.add('is-open');
-                modal.setAttribute('aria-hidden', 'false');
-                document.body.style.overflow = 'hidden';
-            }
-        }`;
-
-        if (oldOpenFnRegex.test(pContent)) {
-            pContent = pContent.replace(oldOpenFnRegex, newOpenFn);
-        }
-
-        // Ensure modal window has max-width: 1240px and 90vh
-        if (!pContent.includes('max-width: 1240px;')) {
-            pContent = pContent.replace(/max-width:\s*[0-9]+px;/, 'max-width: 1240px;');
-        }
-        if (!pContent.includes('height: 90vh;')) {
-            pContent = pContent.replace(/height:\s*[0-9]+vh;/, 'height: 90vh;');
-        }
-
-        fs.writeFileSync(prodPagePath, pContent, 'utf-8');
-        console.log(`  ✓ Product page modal updated: ${cfg.webProductPage}`);
-    }
 }
 
-console.log("\nAll 6 Cuadernos built successfully!");
+console.log("\nAll 7 visors compiled with flawless spherical camera transitions!");

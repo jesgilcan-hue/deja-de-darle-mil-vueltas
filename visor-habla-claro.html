@@ -179,7 +179,7 @@
         .theme-gold { background: #231C14; border: 1px solid #C29B38; }
         .theme-light { background: #EFEAE1; border: 1px solid #CCC; }
 
-        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERIOR (MODAL INTEGRADO A PANTALLA COMPLETA) --- */
+        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERIOR --- */
         #flipbook-modal {
             position: fixed;
             top: 0;
@@ -247,7 +247,6 @@
             text-transform: uppercase;
         }
 
-        /* Escenario generoso a toda la pantalla */
         .viewer-stage {
             flex: 1;
             display: flex;
@@ -296,7 +295,6 @@
             border-radius: 4px;
         }
 
-        /* Hojas del Flipbook */
         .page-sheet {
             background-color: #FAF7F2;
             width: 100%;
@@ -316,8 +314,6 @@
             display: block;
             pointer-events: none;
         }
-
-        /* Efecto de curvatura y costura del lomo interior */
         .page-sheet.--left::after {
             content: "";
             position: absolute;
@@ -342,7 +338,6 @@
             box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
         }
 
-        /* Barra de navegación inferior completa con zoom */
         .flipbook-toolbar {
             display: flex;
             align-items: center;
@@ -395,7 +390,6 @@
             background: rgba(255, 255, 255, 0.14);
         }
 
-        /* Controles de Zoom */
         .zoom-controls {
             display: flex;
             align-items: center;
@@ -504,10 +498,8 @@
             }
         }
     </style>
-    <!-- Three.js para el modelo 3D orbital exterior -->
     <script src="/three.min.js"></script>
     <script src="/orbit-controls.js"></script>
-    <!-- StPageFlip para el hojear interior realista -->
     <script src="/page-flip.browser.js"></script>
     <script>
         if (typeof window.St === 'undefined') {
@@ -543,7 +535,7 @@
 
         <div class="toolbar">
             <button class="btn btn-open-book" onclick="openFlipbook()">
-                <span>📖</span> Hojear interior (16 págs muestra)
+                <span>📖</span> Hojear interior (16 págs)
             </button>
             <div class="tool-divider"></div>
             <button class="btn" id="btn-front" onclick="lookAt('front')">Portada</button>
@@ -659,7 +651,7 @@
 
     <script>
         /* =========================================================================
-           1. THREE.JS MOTOR 3D CERRADO ORBITAL
+           1. THREE.JS MOTOR 3D CERRADO ORBITAL CON TRANSICIÓN ESFÉRICA PERFECCIONADA
            ========================================================================= */
         const BOOK_W = 6;
         const BOOK_H = 9;
@@ -668,7 +660,10 @@
         let scene, camera, renderer, controls, bookMesh;
         let isAutoRotating = true;
         let isTransitioning = false;
-        let targetCamPos = null, targetLookAt = null;
+        
+        // Coordenadas esféricas suaves: la cámara órbita SIEMPRE alrededor del libro sin atravesarlo jamás
+        let currentSpherical = new THREE.Spherical();
+        let targetTheta = 0, targetPhi = Math.PI / 2, targetRadius = 20;
 
         const container = document.getElementById('canvas-container');
 
@@ -677,7 +672,7 @@
 
         const aspect = window.innerWidth / window.innerHeight;
         camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
-        camera.position.set(0, 0, 22);
+        camera.position.set(0, 0, 20);
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -690,13 +685,18 @@
 
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+        controls.dampingFactor = 0.08;
         controls.maxDistance = 45;
         controls.minDistance = 6;
         controls.autoRotate = true;
         controls.autoRotateSpeed = 1.4;
 
-        // Iluminación de Estudio Fotográfico
+        // Si el usuario toca o arrastra, cancelamos cualquier animación automática
+        controls.addEventListener('start', () => {
+            isTransitioning = false;
+        });
+
+        // Iluminación
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
         scene.add(ambientLight);
 
@@ -718,7 +718,7 @@
         rimLight.position.set(0, -10, -15);
         scene.add(rimLight);
 
-        // Plano de sombra suave en el suelo
+        // Suelo con sombra
         const shadowPlaneGeo = new THREE.PlaneGeometry(35, 35);
         const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.28 });
         const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
@@ -746,7 +746,6 @@
         const texTop = loadTex('/books/habla-claro/3d/pages_top.jpg', true);
         const bumpTop = loadTex('/books/habla-claro/3d/pages_top_bump.jpg', false);
 
-        // Materiales de cada cara
         const matEdge = new THREE.MeshStandardMaterial({
             map: texEdge,
             bumpMap: bumpEdge,
@@ -779,12 +778,12 @@
         });
 
         const materials = [
-            matEdge,    // +X (Corte de hojas derecho)
+            matEdge,    // +X (Corte derecho)
             matSpine,   // -X (Lomo izquierdo)
             matTop,     // +Y (Corte superior)
             matBottom,  // -Y (Corte inferior)
-            matFront,   // +Z (Portada delantera)
-            matBack     // -Z (Contraportada trasera)
+            matFront,   // +Z (Portada)
+            matBack     // -Z (Contraportada)
         ];
 
         const geometry = new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D, 4, 8, 4);
@@ -793,7 +792,7 @@
         bookMesh.receiveShadow = true;
         scene.add(bookMesh);
 
-        // Click en el libro 3D abre el flipbook interior
+        // Click en libro abre interior
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         let mouseDownPos = { x: 0, y: 0 };
@@ -817,15 +816,28 @@
             }
         });
 
+        // Bucle de render y animación esférica suave
         function animate() {
             requestAnimationFrame(animate);
 
-            if (isTransitioning && targetCamPos) {
-                camera.position.lerp(targetCamPos, 0.065);
-                controls.target.lerp(targetLookAt, 0.065);
-                if (camera.position.distanceTo(targetCamPos) < 0.05) {
-                    camera.position.copy(targetCamPos);
-                    controls.target.copy(targetLookAt);
+            if (isTransitioning) {
+                // Cálculo de camino angular más corto (evita dar toda la vuelta o cortar por dentro)
+                let dTheta = targetTheta - currentSpherical.theta;
+                while (dTheta > Math.PI) dTheta -= Math.PI * 2;
+                while (dTheta < -Math.PI) dTheta += Math.PI * 2;
+
+                currentSpherical.theta += dTheta * 0.12;
+                currentSpherical.phi += (targetPhi - currentSpherical.phi) * 0.12;
+                currentSpherical.radius += (targetRadius - currentSpherical.radius) * 0.12;
+
+                const offset = new THREE.Vector3().setFromSpherical(currentSpherical);
+                camera.position.copy(controls.target).add(offset);
+                camera.lookAt(controls.target);
+
+                if (Math.abs(dTheta) < 0.003 && Math.abs(targetPhi - currentSpherical.phi) < 0.003 && Math.abs(targetRadius - currentSpherical.radius) < 0.05) {
+                    currentSpherical.theta = targetTheta;
+                    currentSpherical.phi = targetPhi;
+                    currentSpherical.radius = targetRadius;
                     isTransitioning = false;
                 }
             } else {
@@ -842,33 +854,44 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Controles de cámara presets
+        // Controles de cámara con órbita esférica garantizada
         window.lookAt = function(view) {
             setActiveButton('btn-' + view);
             controls.autoRotate = false;
             document.getElementById('btn-rotate').classList.remove('active');
-            isTransitioning = true;
-            targetLookAt = new THREE.Vector3(0, 0, 0);
+
+            // Capturamos el vector actual de la cámara respecto al centro del libro
+            const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
+            currentSpherical.setFromVector3(offset);
 
             const dist = 20;
+            targetRadius = dist;
+
             switch(view) {
                 case 'front':
-                    targetCamPos = new THREE.Vector3(0, 0, dist);
+                    targetTheta = 0;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'back':
-                    targetCamPos = new THREE.Vector3(0, 0, -dist);
+                    targetTheta = Math.PI;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'spine':
-                    targetCamPos = new THREE.Vector3(-dist, 0, 0);
+                    targetTheta = -Math.PI / 2;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'pages':
-                    targetCamPos = new THREE.Vector3(dist, 0, 0);
+                    targetTheta = Math.PI / 2;
+                    targetPhi = Math.PI / 2;
                     break;
                 case 'persp':
                 default:
-                    targetCamPos = new THREE.Vector3(12, 8, 14);
+                    targetTheta = 0.72;
+                    targetPhi = 1.15;
+                    targetRadius = dist * 1.05;
                     break;
             }
+            isTransitioning = true;
         };
 
         window.toggleAutoRotate = function() {
@@ -891,7 +914,7 @@
         };
 
         /* =========================================================================
-           2. STPAGEFLIP MOTOR HOJEABLE REALISTA (INTERIOR A PANTALLA COMPLETA)
+           2. STPAGEFLIP MOTOR HOJEABLE REALISTA
            ========================================================================= */
         let pageFlip = null;
         let audioCtx = null;
@@ -945,8 +968,6 @@
             if (pageFlip) return;
 
             const container = document.getElementById('book-container');
-            const isMob = window.innerWidth < 768;
-
             const baseW = 550;
             const baseH = 825;
 

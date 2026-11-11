@@ -3,56 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visor 3D Completo · Afirmaciones Diarias (376 págs - 6x9") | Editorial Menos Ruido</title>
+    <title>Visor 3D Completo · Afirmaciones Diarias | Editorial Menos Ruido</title>
     <style>
+        :root {
+            --bg-color: #141414;
+            --text-main: #FFFFFF;
+            --text-muted: #CBD5E1;
+            --accent-gold: #C29B38;
+            --accent-hover: #D4AF37;
+        }
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
         }
-        :root {
-            --bg-dark: #141414;
-            --accent-gold: #C29B38;
-            --accent-warm: #c47c5d;
-            --text-main: #F8FAFC;
-            --text-muted: #94A3B8;
-        }
-        body {
-            background: var(--bg-dark);
-            color: #E8E4DD;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        body, html {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
         }
 
-        /* --- VISTA 1: 3D THREE.JS (EXTERIOR DEL LIBRO) --- */
+        /* --- VISTA 1: 3D MODELO CERRADO --- */
         #view-3d {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        #view-3d.dimmed {
-            opacity: 0.12;
-            pointer-events: none;
-            filter: blur(10px);
-            transform: scale(0.95);
+            z-index: 1;
         }
         #canvas-container {
             width: 100%;
             height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: grab;
-        }
-        #canvas-container:active {
-            cursor: grabbing;
+            display: block;
         }
         .header {
             position: absolute;
@@ -66,32 +54,35 @@
             letter-spacing: 0.15em;
             text-transform: uppercase;
             color: var(--accent-gold);
-            margin-bottom: 6px;
-        }
-        .title {
-            font-size: 22px;
-            font-weight: 500;
-            letter-spacing: -0.01em;
-            color: var(--text-main);
+            font-weight: 600;
             margin-bottom: 4px;
         }
+        .title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #FFFFFF;
+        }
         .specs {
-            font-size: 13px;
+            font-size: 12px;
             color: #CBD5E1;
+            margin-top: 4px;
             display: flex;
-            gap: 12px;
+            gap: 8px;
             align-items: center;
+        }
+        .specs span {
+            color: #CBD5E1;
         }
         .badge {
             display: inline-block;
-            background: rgba(194, 155, 56, 0.15);
-            color: #CBD5E1;
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
             font-size: 11px;
             letter-spacing: 0.05em;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #CBD5E1;
         }
         .toolbar::-webkit-scrollbar { display: none; }
         .toolbar {
@@ -126,6 +117,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         .btn:hover {
             background: rgba(255, 255, 255, 0.12);
@@ -187,7 +179,7 @@
         .theme-gold { background: #231C14; border: 1px solid #C29B38; }
         .theme-light { background: #EFEAE1; border: 1px solid #CCC; }
 
-        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERIOR (MODAL INTEGRADO A PANTALLA COMPLETA) --- */
+        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERIOR --- */
         #flipbook-modal {
             position: fixed;
             top: 0;
@@ -255,7 +247,6 @@
             text-transform: uppercase;
         }
 
-        /* Escenario generoso a toda la pantalla */
         .viewer-stage {
             flex: 1;
             display: flex;
@@ -304,7 +295,6 @@
             border-radius: 4px;
         }
 
-        /* Hojas del Flipbook */
         .page-sheet {
             background-color: #FAF7F2;
             width: 100%;
@@ -324,8 +314,6 @@
             display: block;
             pointer-events: none;
         }
-
-        /* Efecto de curvatura y costura del lomo interior */
         .page-sheet.--left::after {
             content: "";
             position: absolute;
@@ -350,7 +338,6 @@
             box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
         }
 
-        /* Barra de navegación inferior completa con zoom */
         .flipbook-toolbar {
             display: flex;
             align-items: center;
@@ -403,7 +390,6 @@
             background: rgba(255, 255, 255, 0.14);
         }
 
-        /* Controles de Zoom */
         .zoom-controls {
             display: flex;
             align-items: center;
@@ -470,9 +456,6 @@
             .modal-book-subtitle {
                 display: none;
             }
-        }
-    
-        @media (max-width: 768px) {
             .toolbar {
                 bottom: 14px !important;
                 left: 50% !important;
@@ -515,13 +498,10 @@
             }
         }
     </style>
-    <!-- Three.js para el modelo 3D orbital exterior -->
     <script src="/three.min.js"></script>
     <script src="/orbit-controls.js"></script>
-    <!-- StPageFlip para el hojear interior realista -->
     <script src="/page-flip.browser.js"></script>
     <script>
-        // Fallback CDN si page-flip.browser.js local no estuviera presente
         if (typeof window.St === 'undefined') {
             const s = document.createElement('script');
             s.src = 'https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js';
@@ -530,9 +510,7 @@
     </script>
 </head>
 <body>
-    <!-- ========================================================================= -->
-    <!-- 1. VISTA 3D ORBITAL EXTERIOR (MODELO FÍSICO CERRADO)                       -->
-    <!-- ========================================================================= -->
+    <!-- 1. VISTA 3D ORBITAL EXTERIOR -->
     <div id="view-3d">
         <div class="header">
             <div class="brand">Colección Menos Ruido</div>
@@ -557,7 +535,7 @@
 
         <div class="toolbar">
             <button class="btn btn-open-book" onclick="openFlipbook()">
-                <span>📖</span> Hojear interior (14 págs muestra)
+                <span>📖</span> Hojear interior (13 págs)
             </button>
             <div class="tool-divider"></div>
             <button class="btn" id="btn-front" onclick="lookAt('front')">Portada</button>
@@ -571,9 +549,7 @@
         <div id="canvas-container"></div>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- 2. VISTA FLIPBOOK HOJEABLE INTERIOR (MODAL INTERACTIVO)                   -->
-    <!-- ========================================================================= -->
+    <!-- 2. VISTA FLIPBOOK HOJEABLE INTERIOR -->
     <div id="flipbook-modal">
         <header class="modal-header">
             <button class="btn-close-flipbook" onclick="closeFlipbook()" title="Volver al modelo 3D (Esc)">
@@ -594,47 +570,47 @@
             <div class="stage-spotlight"></div>
             <div class="book-wrapper">
                 <div id="book-container">
-                    <div class="page-sheet" data-density="hard">
-                        <img src="/books/afirmaciones-diarias/cover_front.webp" alt="Portada exterior de Afirmaciones Diarias" />
+                    <div class="page-sheet --right" data-density="hard">
+                        <img src="/books/afirmaciones-diarias/cover_front.webp" alt="Página 1 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_blank.webp" alt="Página de cortesía en blanco" />
+                    <div class="page-sheet --left">
+                        <img src="/books/afirmaciones-diarias/page_blank.webp" alt="Página 2 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_01.webp" alt="Página 1: Portadilla interior" />
+                    <div class="page-sheet --right">
+                        <img src="/books/afirmaciones-diarias/page_01.webp" alt="Página 3 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_02.webp" alt="Página 2: Créditos y copyright" />
+                    <div class="page-sheet --left">
+                        <img src="/books/afirmaciones-diarias/page_02.webp" alt="Página 4 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_03.webp" alt="Página 3: Manifiesto Menos Ruido" />
+                    <div class="page-sheet --right">
+                        <img src="/books/afirmaciones-diarias/page_03.webp" alt="Página 5 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_04.webp" alt="Página 4: El antídoto al positivismo tóxico" />
+                    <div class="page-sheet --left">
+                        <img src="/books/afirmaciones-diarias/page_04.webp" alt="Página 6 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_05.webp" alt="Página 5: El método diario de 5 minutos" />
+                    <div class="page-sheet --right">
+                        <img src="/books/afirmaciones-diarias/page_05.webp" alt="Página 7 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_06.webp" alt="Página 6: Matriz anual de seguimiento de 365 días" />
+                    <div class="page-sheet --left">
+                        <img src="/books/afirmaciones-diarias/page_06.webp" alt="Página 8 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_07.webp" alt="Página 7: Calibración inicial I" />
+                    <div class="page-sheet --right">
+                        <img src="/books/afirmaciones-diarias/page_07.webp" alt="Página 9 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_08.webp" alt="Página 8: Calibración inicial II" />
+                    <div class="page-sheet --left">
+                        <img src="/books/afirmaciones-diarias/page_08.webp" alt="Página 10 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_09.webp" alt="Página 9: Ficha completa del Día 1" />
+                    <div class="page-sheet --right">
+                        <img src="/books/afirmaciones-diarias/page_09.webp" alt="Página 11 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_10.webp" alt="Página 10: Ficha completa del Día 2" />
+                    <div class="page-sheet --left">
+                        <img src="/books/afirmaciones-diarias/page_10.webp" alt="Página 12 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet">
-                        <img src="/books/afirmaciones-diarias/page_blank.webp" alt="Hoja final en blanco" />
+                    <div class="page-sheet --right">
+                        <img src="/books/afirmaciones-diarias/page_blank.webp" alt="Página 13 de Afirmaciones Diarias" loading="lazy" />
                     </div>
-                    <div class="page-sheet" data-density="hard">
-                        <img src="/books/afirmaciones-diarias/cover_back.webp" alt="Contraportada exterior con código de barras" />
+                    <div class="page-sheet --left" data-density="hard">
+                        <img src="/books/afirmaciones-diarias/cover_back.webp" alt="Página 14 de Afirmaciones Diarias" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -642,117 +618,119 @@
 
         <footer class="flipbook-toolbar">
             <div class="nav-controls">
-                <button id="btn-prev" class="flip-btn" aria-label="Página anterior" title="Página anterior (←)">‹</button>
-                <div id="page-indicator" class="page-counter">Cargando...</div>
-                <button id="btn-next" class="flip-btn" aria-label="Página siguiente" title="Página siguiente (→)">›</button>
+                <button class="flip-btn" id="btn-prev" title="Página anterior (←)">‹</button>
+                <div class="page-counter" id="page-counter">Cargando...</div>
+                <button class="flip-btn" id="btn-next" title="Página siguiente (→)">›</button>
             </div>
 
             <div class="tool-divider"></div>
 
-            <div class="zoom-controls" title="Ajustar tamaño de lectura">
-                <button id="btn-zoom-out" class="zoom-btn" title="Reducir (−)">−</button>
-                <span id="zoom-level" class="zoom-level" title="Restablecer tamaño (100%)">100%</span>
-                <button id="btn-zoom-in" class="zoom-btn" title="Aumentar (+)">+</button>
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="btn-zoom-out" title="Reducir zoom (−)">−</button>
+                <span class="zoom-level" id="zoom-label" title="Restablecer tamaño">100%</span>
+                <button class="zoom-btn" id="btn-zoom-in" title="Aumentar zoom (+)">+</button>
             </div>
-
-            <button id="btn-fullscreen" class="flip-btn" style="width:34px; height:34px; font-size:1rem;" title="Pantalla completa">⛶</button>
 
             <div class="tool-divider"></div>
 
             <div class="kbd-hint">
-                <span>Navega con</span>
                 <span class="kbd-key">←</span>
                 <span class="kbd-key">→</span>
-                <span>o arrastrando páginas</span>
-                <span>·</span>
-                <span class="kbd-key">Esc</span>
-                <span>para volver</span>
+                <span>Navegar</span>
+                <span class="kbd-key" style="margin-left: 6px;">Esc</span>
+                <span>Cerrar</span>
             </div>
         </footer>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- 3. LÓGICA INTEGRADA (THREE.JS + FLIPBOOK + WEB AUDIO API + ZOOM)          -->
-    <!-- ========================================================================= -->
     <script>
-        // Proporciones físicas de Afirmaciones Diarias (6 x 9 in, lomo 0.8468 in)
-        const BOOK_W = 6.0;
-        const BOOK_H = 9.0;
-        const BOOK_D = 0.8468;
+        /* =========================================================================
+           1. THREE.JS MOTOR 3D CERRADO ORBITAL CON TRANSICIÓN ESFÉRICA PERFECCIONADA
+           ========================================================================= */
+        const BOOK_W = 6;
+        const BOOK_H = 9;
+        const BOOK_D = 0.847;
+
+        let scene, camera, renderer, controls, bookMesh;
+        let isAutoRotating = true;
+        let isTransitioning = false;
+        
+        // Coordenadas esféricas suaves: la cámara órbita SIEMPRE alrededor del libro sin atravesarlo jamás
+        let currentSpherical = new THREE.Spherical();
+        let targetTheta = 0, targetPhi = Math.PI / 2, targetRadius = 20;
 
         const container = document.getElementById('canvas-container');
-        const hint = document.getElementById('hint-text');
 
-        // Scene, Camera & Renderer Three.js
-        const scene = new THREE.Scene();
+        scene = new THREE.Scene();
         scene.background = new THREE.Color(0x141414);
 
-        const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(5.5, 3.2, 14.5);
+        const aspect = window.innerWidth / window.innerHeight;
+        camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
+        camera.position.set(0, 0, 20);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.toneMapping = THREE.NoToneMapping;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
         container.appendChild(renderer.domElement);
 
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.minDistance = 5;
-        controls.maxDistance = 25;
-        controls.maxPolarAngle = Math.PI / 2 + 0.12;
-        controls.target.set(0, 0, 0);
+        controls.dampingFactor = 0.08;
+        controls.maxDistance = 45;
+        controls.minDistance = 6;
         controls.autoRotate = true;
-        controls.autoRotateSpeed = 1.0;
+        controls.autoRotateSpeed = 1.4;
 
+        // Si el usuario toca o arrastra, cancelamos cualquier animación automática
         controls.addEventListener('start', () => {
-            hint.style.opacity = '0';
+            isTransitioning = false;
         });
 
-        // Luces calibradas
-        const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.25);
+        // Iluminación
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
         scene.add(ambientLight);
 
-        const keyLight = new THREE.DirectionalLight(0xFFFFFF, 0.85);
-        keyLight.position.set(5, 10, 8);
+        const keyLight = new THREE.DirectionalLight(0xfff6ea, 1.25);
+        keyLight.position.set(12, 18, 14);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
-        keyLight.shadow.bias = -0.0004;
-        const d = 10;
-        keyLight.shadow.camera.left = -d;
-        keyLight.shadow.camera.right = d;
-        keyLight.shadow.camera.top = d;
-        keyLight.shadow.camera.bottom = -d;
+        keyLight.shadow.camera.near = 1;
+        keyLight.shadow.camera.far = 40;
+        keyLight.shadow.bias = -0.0001;
         scene.add(keyLight);
 
-        const rakingLight = new THREE.DirectionalLight(0xFFFFFF, 0.45);
-        rakingLight.position.set(10, 1, 2);
-        scene.add(rakingLight);
+        const fillLight = new THREE.DirectionalLight(0xe8f0ff, 0.6);
+        fillLight.position.set(-14, 8, 10);
+        scene.add(fillLight);
 
-        // Suelo receptor de sombra suave
-        const floorGeo = new THREE.PlaneGeometry(45, 45);
-        const floorMat = new THREE.ShadowMaterial({ opacity: 0.38 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = - (BOOK_H / 2) - 0.02;
-        floor.receiveShadow = true;
-        scene.add(floor);
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        rimLight.position.set(0, -10, -15);
+        scene.add(rimLight);
 
-        // Texturas Base64 1:1
-        const loader = new THREE.TextureLoader();
-        const loadTex = (b64, isColor = true) => {
-            const t = loader.load(b64);
-            if (isColor) t.encoding = THREE.sRGBEncoding;
+        // Suelo con sombra
+        const shadowPlaneGeo = new THREE.PlaneGeometry(35, 35);
+        const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.28 });
+        const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
+        shadowPlane.rotation.x = -Math.PI / 2;
+        shadowPlane.position.y = - (BOOK_H / 2) - 0.05;
+        shadowPlane.receiveShadow = true;
+        scene.add(shadowPlane);
+
+        // Texturas
+        const texLoader = new THREE.TextureLoader();
+        function loadTex(url, srgb = true) {
+            const t = texLoader.load(url, () => renderer.render(scene, camera));
+            if (srgb) t.encoding = THREE.sRGBEncoding;
             t.generateMipmaps = true;
             t.minFilter = THREE.LinearMipmapLinearFilter;
             t.magFilter = THREE.LinearFilter;
             return t;
-        };
+        }
 
         const texFront = loadTex('/books/afirmaciones-diarias/3d/front.webp', true);
         const texSpine = loadTex('/books/afirmaciones-diarias/3d/spine.webp', true);
@@ -762,40 +740,104 @@
         const texTop = loadTex('/books/afirmaciones-diarias/3d/pages_top.webp', true);
         const bumpTop = loadTex('/books/afirmaciones-diarias/3d/pages_top_bump.webp', false);
 
-        const pagesMatLateral = new THREE.MeshStandardMaterial({
+        const matEdge = new THREE.MeshStandardMaterial({
             map: texEdge,
             bumpMap: bumpEdge,
-            bumpScale: 0.035,
+            bumpScale: 0.03,
             roughness: 0.85,
-            metalness: 0.01
+            metalness: 0.02
         });
-
-        const pagesMatTop = new THREE.MeshStandardMaterial({
+        const matSpine = new THREE.MeshStandardMaterial({
+            map: texSpine,
+            roughness: 0.5,
+            metalness: 0.05
+        });
+        const matTop = new THREE.MeshStandardMaterial({
             map: texTop,
             bumpMap: bumpTop,
-            bumpScale: 0.035,
+            bumpScale: 0.025,
             roughness: 0.85,
-            metalness: 0.01
+            metalness: 0.02
+        });
+        const matBottom = matTop;
+        const matFront = new THREE.MeshStandardMaterial({
+            map: texFront,
+            roughness: 0.45,
+            metalness: 0.04
+        });
+        const matBack = new THREE.MeshStandardMaterial({
+            map: texBack,
+            roughness: 0.45,
+            metalness: 0.04
         });
 
         const materials = [
-            pagesMatLateral,                                   // +X: Corte lateral
-            new THREE.MeshBasicMaterial({ map: texSpine }), // -X: Lomo 1:1
-            pagesMatTop,                                       // +Y: Corte superior
-            pagesMatTop,                                       // -Y: Corte inferior
-            new THREE.MeshBasicMaterial({ map: texFront }), // +Z: Portada 1:1
-            new THREE.MeshBasicMaterial({ map: texBack })   // -Z: Contraportada 1:1
+            matEdge,    // +X (Corte derecho)
+            matSpine,   // -X (Lomo izquierdo)
+            matTop,     // +Y (Corte superior)
+            matBottom,  // -Y (Corte inferior)
+            matFront,   // +Z (Portada)
+            matBack     // -Z (Contraportada)
         ];
 
-        const bookGeometry = new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D, 4, 8, 4);
-        const bookMesh = new THREE.Mesh(bookGeometry, materials);
+        const geometry = new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D, 4, 8, 4);
+        bookMesh = new THREE.Mesh(geometry, materials);
         bookMesh.castShadow = true;
         bookMesh.receiveShadow = true;
         scene.add(bookMesh);
 
+        // Click en libro abre interior
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let mouseDownPos = { x: 0, y: 0 };
+
+        window.addEventListener('pointerdown', (e) => {
+            mouseDownPos = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            const dx = Math.abs(e.clientX - mouseDownPos.x);
+            const dy = Math.abs(e.clientY - mouseDownPos.y);
+            if (dx > 6 || dy > 6) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObject(bookMesh);
+            if (intersects.length > 0) {
+                openFlipbook();
+            }
+        });
+
+        // Bucle de render y animación esférica suave
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
+
+            if (isTransitioning) {
+                // Cálculo de camino angular más corto (evita dar toda la vuelta o cortar por dentro)
+                let dTheta = targetTheta - currentSpherical.theta;
+                while (dTheta > Math.PI) dTheta -= Math.PI * 2;
+                while (dTheta < -Math.PI) dTheta += Math.PI * 2;
+
+                currentSpherical.theta += dTheta * 0.12;
+                currentSpherical.phi += (targetPhi - currentSpherical.phi) * 0.12;
+                currentSpherical.radius += (targetRadius - currentSpherical.radius) * 0.12;
+
+                const offset = new THREE.Vector3().setFromSpherical(currentSpherical);
+                camera.position.copy(controls.target).add(offset);
+                camera.lookAt(controls.target);
+
+                if (Math.abs(dTheta) < 0.003 && Math.abs(targetPhi - currentSpherical.phi) < 0.003 && Math.abs(targetRadius - currentSpherical.radius) < 0.05) {
+                    currentSpherical.theta = targetTheta;
+                    currentSpherical.phi = targetPhi;
+                    currentSpherical.radius = targetRadius;
+                    isTransitioning = false;
+                }
+            } else {
+                controls.update();
+            }
+
             renderer.render(scene, camera);
         }
         animate();
@@ -806,101 +848,77 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Raycaster para abrir el libro al hacer clic directamente en él
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let mouseDownPos = { x: 0, y: 0 };
-
-        window.addEventListener('mousedown', (e) => {
-            mouseDownPos = { x: e.clientX, y: e.clientY };
-        });
-
-        window.addEventListener('mouseup', (e) => {
-            const dist = Math.hypot(e.clientX - mouseDownPos.x, e.clientY - mouseDownPos.y);
-            if (dist < 6 && e.target === renderer.domElement) {
-                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObject(bookMesh);
-                if (intersects.length > 0) {
-                    openFlipbook();
-                }
-            }
-        });
-
-        // Controles de cámara suave
-        function smoothMoveCamera(targetPos, targetLookAt = { x: 0, y: 0, z: 0 }) {
+        // Controles de cámara con órbita esférica garantizada
+        window.lookAt = function(view) {
+            setActiveButton('btn-' + view);
             controls.autoRotate = false;
             document.getElementById('btn-rotate').classList.remove('active');
-            const startPos = camera.position.clone();
-            const endPos = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z);
-            let startTime = performance.now();
-            const duration = 750;
 
-            function step(now) {
-                const elapsed = now - startTime;
-                const t = Math.min(1, elapsed / duration);
-                const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-                camera.position.lerpVectors(startPos, endPos, ease);
-                controls.target.set(targetLookAt.x, targetLookAt.y, targetLookAt.z);
-                controls.update();
-                if (t < 1) requestAnimationFrame(step);
+            // Capturamos el vector actual de la cámara respecto al centro del libro
+            const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
+            currentSpherical.setFromVector3(offset);
+
+            const dist = 20;
+            targetRadius = dist;
+
+            switch(view) {
+                case 'front':
+                    targetTheta = 0;
+                    targetPhi = Math.PI / 2;
+                    break;
+                case 'back':
+                    targetTheta = Math.PI;
+                    targetPhi = Math.PI / 2;
+                    break;
+                case 'spine':
+                    targetTheta = -Math.PI / 2;
+                    targetPhi = Math.PI / 2;
+                    break;
+                case 'pages':
+                    targetTheta = Math.PI / 2;
+                    targetPhi = Math.PI / 2;
+                    break;
+                case 'persp':
+                default:
+                    targetTheta = 0.72;
+                    targetPhi = 1.15;
+                    targetRadius = dist * 1.05;
+                    break;
             }
-            requestAnimationFrame(step);
-        }
+            isTransitioning = true;
+        };
 
-        function lookAt(view) {
-            document.querySelectorAll('.toolbar .btn').forEach(b => b.classList.remove('active'));
-            if (view === 'front') {
-                document.getElementById('btn-front').classList.add('active');
-                smoothMoveCamera({ x: 0, y: 0, z: 14.5 });
-            } else if (view === 'pages') {
-                document.getElementById('btn-pages').classList.add('active');
-                smoothMoveCamera({ x: 12.5, y: 0.8, z: 4.2 });
-            } else if (view === 'spine') {
-                document.getElementById('btn-spine').classList.add('active');
-                smoothMoveCamera({ x: -14.5, y: 0, z: 0.1 });
-            } else if (view === 'back') {
-                document.getElementById('btn-back').classList.add('active');
-                smoothMoveCamera({ x: 0, y: 0, z: -14.5 });
-            } else if (view === 'persp') {
-                document.getElementById('btn-persp').classList.add('active');
-                smoothMoveCamera({ x: 6.8, y: 3.5, z: 11.5 });
-            }
-        }
-
-        function toggleAutoRotate() {
+        window.toggleAutoRotate = function() {
             controls.autoRotate = !controls.autoRotate;
-            const btn = document.getElementById('btn-rotate');
-            btn.classList.toggle('active', controls.autoRotate);
+            document.getElementById('btn-rotate').classList.toggle('active', controls.autoRotate);
+        };
+
+        function setActiveButton(id) {
+            document.querySelectorAll('.toolbar .btn').forEach(b => {
+                if (b.id !== 'btn-rotate' && !b.classList.contains('btn-open-book')) {
+                    b.classList.remove('active');
+                }
+            });
+            const el = document.getElementById(id);
+            if (el) el.classList.add('active');
         }
 
-        function setBg(bgHex) {
-            scene.background = new THREE.Color(bgHex);
-            document.body.style.background = bgHex;
-            if (bgHex === '#EFEAE1') {
-                document.querySelector('.header .title').style.color = '#1A1A1A';
-                document.querySelector('.header .brand').style.color = '#7A756D';
-                document.querySelector('.header .specs').style.color = '#5C5750';
-                floorMat.opacity = 0.22;
-            } else {
-                document.querySelector('.header .title').style.color = '#F8FAFC';
-                document.querySelector('.header .brand').style.color = 'var(--accent-gold)';
-                document.querySelector('.header .specs').style.color = '#CBD5E1';
-                floorMat.opacity = 0.38;
-            }
-        }
+        window.setBg = function(hex) {
+            scene.background.set(hex);
+        };
 
-        // =========================================================================
-        // MOTOR DE SONIDO SINTÉTICO DE PAPEL (WEB AUDIO API)
-        // =========================================================================
+        /* =========================================================================
+           2. STPAGEFLIP MOTOR HOJEABLE REALISTA
+           ========================================================================= */
+        let pageFlip = null;
         let audioCtx = null;
         let soundEnabled = true;
+        let currentZoom = 1.0;
 
         function initAudio() {
             if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (AudioContext) audioCtx = new AudioContext();
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) audioCtx = new AC();
             }
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -909,212 +927,180 @@
 
         function playPaperSound() {
             if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
             try {
-                initAudio();
-                if (!audioCtx) return;
-                const bufferSize = audioCtx.sampleRate * 0.18; // 180ms
+                const now = audioCtx.currentTime;
+                const bufferSize = audioCtx.sampleRate * 0.18;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
-                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.8);
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
                 }
                 const noise = audioCtx.createBufferSource();
                 noise.buffer = buffer;
+
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
-                filter.Q.setValueAtTime(1.2, audioCtx.currentTime);
+                filter.frequency.setValueAtTime(800 + Math.random() * 400, now);
+                filter.Q.setValueAtTime(1.8, now);
 
-                const gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.28, audioCtx.currentTime + 0.03);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.exponentialRampToValueAtTime(0.28, now + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
 
                 noise.connect(filter);
-                filter.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                noise.start();
-            } catch (e) {
-                console.warn('Audio playback error:', e);
-            }
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start(now);
+            } catch (err) {}
         }
 
-        const soundToggle = document.getElementById('btn-sound-toggle');
-        const soundIcon = document.getElementById('sound-icon');
-        soundToggle.addEventListener('click', () => {
+        function initPageFlip() {
+            if (pageFlip) return;
+
+            const container = document.getElementById('book-container');
+            const baseW = 550;
+            const baseH = 825;
+
+            pageFlip = new St.PageFlip(container, {
+                width: baseW,
+                height: baseH,
+                size: 'stretch',
+                minWidth: 260,
+                maxWidth: 900,
+                minHeight: 380,
+                maxHeight: 900,
+                showCover: true,
+                maxShadowOpacity: 0.5,
+                usePortrait: true,
+                mobileScrollSupport: false,
+                drawShadow: true,
+                autoSize: true,
+                swipeDistance: 25
+            });
+
+            const sheets = container.querySelectorAll('.page-sheet');
+            pageFlip.loadFromHTML(sheets);
+
+            pageFlip.on('flip', (e) => {
+                playPaperSound();
+                updateCounter(e.data);
+            });
+
+            pageFlip.on('init', () => {
+                updateCounter(0);
+            });
+        }
+
+        function updateCounter(pageIdx) {
+            const counter = document.getElementById('page-counter');
+            if (!counter || !pageFlip) return;
+            const total = pageFlip.getPageCount();
+            const curr = (pageIdx !== undefined) ? pageIdx : pageFlip.getCurrentPageIndex();
+
+            if (curr === 0) {
+                counter.innerText = 'Portada Exterior';
+            } else if (curr === total - 1) {
+                counter.innerText = 'Contraportada';
+            } else {
+                counter.innerText = `Página ${curr} de ${total - 2}`;
+            }
+
+            document.getElementById('btn-prev').disabled = (curr === 0);
+            document.getElementById('btn-next').disabled = (curr >= total - 1);
+        }
+
+        window.openFlipbook = function() {
             initAudio();
-            soundEnabled = !soundEnabled;
-            soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
-            soundToggle.title = soundEnabled ? 'Silenciar sonido' : 'Activar sonido de papel';
-            if (soundEnabled) playPaperSound();
+            controls.autoRotate = false;
+            document.getElementById('btn-rotate').classList.remove('active');
+
+            const modal = document.getElementById('flipbook-modal');
+            modal.classList.add('visible');
+            initPageFlip();
+
+            setTimeout(() => {
+                if (pageFlip) {
+                    pageFlip.update();
+                    updateCounter();
+                }
+            }, 80);
+        };
+
+        window.closeFlipbook = function() {
+            const modal = document.getElementById('flipbook-modal');
+            modal.classList.remove('visible');
+            controls.autoRotate = isAutoRotating;
+            document.getElementById('btn-rotate').classList.toggle('active', isAutoRotating);
+        };
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            initAudio();
+            if (pageFlip) pageFlip.flipPrev();
+        });
+        document.getElementById('btn-next').addEventListener('click', () => {
+            initAudio();
+            if (pageFlip) pageFlip.flipNext();
         });
 
-        // =========================================================================
-        // MOTOR DE HOJEAR INTERIOR (PAGE-FLIP CON TAMAÑO GENEROSO)
-        // =========================================================================
-        let pageFlipInstance = null;
-        let isFlipbookInitialized = false;
+        // Zoom Controls
+        const bookWrapper = document.querySelector('.book-wrapper');
+        const zoomLabel = document.getElementById('zoom-label');
 
-        function initFlipbook() {
-            if (isFlipbookInitialized) return;
-            const bookEl = document.getElementById('book-container');
-            const FlipClass = (window.St && window.St.PageFlip) ? window.St.PageFlip : (window.PageFlip || null);
+        function setZoom(val) {
+            currentZoom = Math.min(1.4, Math.max(0.75, val));
+            bookWrapper.style.transform = `scale(${currentZoom})`;
+            zoomLabel.innerText = Math.round(currentZoom * 100) + '%';
+        }
 
-            if (!FlipClass) {
-                console.warn('St.PageFlip no está disponible');
+        document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(currentZoom + 0.1));
+        document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(currentZoom - 0.1));
+        zoomLabel.addEventListener('click', () => setZoom(1.0));
+
+        // Sonido toggle
+        const soundBtn = document.getElementById('btn-sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundIcon.innerText = soundEnabled ? '🔊' : '🔇';
+            soundBtn.title = soundEnabled ? 'Sonido de papel activado' : 'Sonido desactivado';
+        });
+
+        // Teclado
+        window.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('flipbook-modal');
+            if (!modal.classList.contains('visible')) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    openFlipbook();
+                }
                 return;
             }
 
-            // Cálculo dinámico para ocupar toda la pantalla con tamaño idéntico a la web
-            const isMobile = window.innerWidth < 768;
-            const availH = Math.max(450, window.innerHeight - 120);
-            const maxPageH = isMobile ? Math.min(640, Math.round(availH * 0.94)) : Math.min(840, Math.round(availH * 0.96));
-            const maxPageW = Math.round(maxPageH * (550 / 825));
-
-            pageFlipInstance = new FlipClass(bookEl, {
-                width: 550,
-                height: 825,
-                size: 'stretch',
-                minWidth: 260,
-                maxWidth: maxPageW,
-                minHeight: 390,
-                maxHeight: maxPageH,
-                showCover: true,
-                maxShadowOpacity: 0.45,
-                showPageCorners: true,
-                usePortrait: true,
-                startPage: 0,
-                flippingTime: 700,
-                useMouseEvents: true,
-                swipeDistance: 30,
-                mobileScrollSupport: false
-            });
-
-            const pageElements = document.querySelectorAll('.page-sheet');
-            pageFlipInstance.loadFromHTML(pageElements);
-
-            function updatePageIndicator() {
-                const total = pageFlipInstance.getPageCount();
-                const current = pageFlipInstance.getCurrentPageIndex();
-                const orientation = pageFlipInstance.getOrientation();
-                const pageLabel = document.getElementById('page-indicator');
-                const prevBtn = document.getElementById('btn-prev');
-                const nextBtn = document.getElementById('btn-next');
-
-                if (current === 0) {
-                    pageLabel.textContent = 'Portada';
-                    prevBtn.disabled = true;
-                    nextBtn.disabled = false;
-                } else if (current >= total - 1) {
-                    pageLabel.textContent = 'Contraportada';
-                    prevBtn.disabled = false;
-                    nextBtn.disabled = true;
-                } else {
-                    prevBtn.disabled = false;
-                    nextBtn.disabled = false;
-                    if (orientation === 'landscape') {
-                        const left = current;
-                        const right = current + 1 <= total - 1 ? current + 1 : current;
-                        pageLabel.textContent = `${left} - ${right} de ${total}`;
-                    } else {
-                        pageLabel.textContent = `${current + 1} de ${total}`;
-                    }
-                }
-            }
-
-            pageFlipInstance.on('flip', (e) => {
-                playPaperSound();
-                updatePageIndicator();
-            });
-
-            pageFlipInstance.on('changeState', (state) => {
-                if (state === 'read') updatePageIndicator();
-            });
-
-            pageFlipInstance.on('init', () => {
-                updatePageIndicator();
-            });
-
-            document.getElementById('btn-prev').addEventListener('click', () => {
-                initAudio();
-                pageFlipInstance.flipPrev();
-            });
-
-            document.getElementById('btn-next').addEventListener('click', () => {
-                initAudio();
-                pageFlipInstance.flipNext();
-            });
-
-            // Controles de Zoom fluido
-            let currentZoom = 1.0;
-            const zoomStep = 0.15;
-            const minZoom = 0.70;
-            const maxZoom = 1.45;
-
-            const zoomOutBtn = document.getElementById('btn-zoom-out');
-            const zoomInBtn = document.getElementById('btn-zoom-in');
-            const zoomLevelLabel = document.getElementById('zoom-level');
-            const wrapperEl = document.querySelector('.book-wrapper');
-
-            function applyZoom(newZoom) {
-                currentZoom = Math.min(maxZoom, Math.max(minZoom, Math.round(newZoom * 100) / 100));
-                if (wrapperEl) {
-                    wrapperEl.style.transform = `scale(${currentZoom})`;
-                    wrapperEl.style.transformOrigin = 'center center';
-                }
-                if (zoomLevelLabel) zoomLevelLabel.textContent = `${Math.round(currentZoom * 100)}%`;
-                if (zoomOutBtn) zoomOutBtn.disabled = currentZoom <= minZoom;
-                if (zoomInBtn) zoomInBtn.disabled = currentZoom >= maxZoom;
-            }
-
-            if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => applyZoom(currentZoom - zoomStep));
-            if (zoomInBtn) zoomInBtn.addEventListener('click', () => applyZoom(currentZoom + zoomStep));
-            if (zoomLevelLabel) zoomLevelLabel.addEventListener('click', () => applyZoom(1.0));
-
-            // Fullscreen
-            const fsBtn = document.getElementById('btn-fullscreen');
-            if (fsBtn) {
-                fsBtn.addEventListener('click', () => {
-                    if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().catch(() => {});
-                    } else if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    }
-                });
-            }
-
-            isFlipbookInitialized = true;
-        }
-
-        function openFlipbook() {
-            initAudio();
-            document.getElementById('view-3d').classList.add('dimmed');
-            document.getElementById('flipbook-modal').classList.add('visible');
-            controls.autoRotate = false;
-            document.getElementById('btn-rotate').classList.remove('active');
-            if (!isFlipbookInitialized) {
-                setTimeout(initFlipbook, 60);
-            }
-        }
-
-        function closeFlipbook() {
-            document.getElementById('flipbook-modal').classList.remove('visible');
-            document.getElementById('view-3d').classList.remove('dimmed');
-        }
-
-        // Teclado global
-        window.addEventListener('keydown', (e) => {
-            const isModalOpen = document.getElementById('flipbook-modal').classList.contains('visible');
-            if (e.key === 'Escape' && isModalOpen) {
+            if (e.key === 'Escape') {
                 closeFlipbook();
-            } else if (isModalOpen) {
-                if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-                    initAudio();
-                    if (pageFlipInstance) pageFlipInstance.flipNext();
-                } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-                    initAudio();
-                    if (pageFlipInstance) pageFlipInstance.flipPrev();
-                }
+            } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                initAudio();
+                if (pageFlip) pageFlip.flipNext();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                initAudio();
+                if (pageFlip) pageFlip.flipPrev();
+            } else if (e.key === '+' || e.key === '=') {
+                setZoom(currentZoom + 0.1);
+            } else if (e.key === '-' || e.key === '_') {
+                setZoom(currentZoom - 0.1);
+            } else if (e.key === '0') {
+                setZoom(1.0);
+            }
+        });
+
+        // Auto-abrir interior si viene parámetro ?mode=interior
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'interior') {
+                setTimeout(openFlipbook, 150);
             }
         });
     </script>
