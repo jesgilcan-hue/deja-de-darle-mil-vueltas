@@ -1,0 +1,1285 @@
+const fs = require('fs');
+const path = require('path');
+
+const webDir = 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/web/web-menos-ruido';
+
+const books = [
+    {
+        id: 'habla-claro',
+        slug: 'habla-claro',
+        name: 'Habla Claro',
+        title: 'Habla Claro',
+        modalSubtitle: 'Muestra de lectura interior · 16 páginas',
+        formatText: 'Formato 6" × 9" (15,24 × 22,86 cm)',
+        pagesText: '128 Páginas (64 hojas)',
+        spineText: 'Lomo 0.81 cm (0.32")',
+        coverTypeText: 'Tapa Blanda',
+        bookW: 6.0,
+        bookH: 9.0,
+        bookD: 0.320,
+        isLandscape: false,
+        pageWidth: 550,
+        pageHeight: 825,
+        localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Habla_Claro/output/3D-Completo',
+        sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Habla_Claro/output/3D/textures',
+        webVisorFile: 'visor-habla-claro.html',
+        webProductPage: 'habla-claro.html'
+    },
+    {
+        id: 'deja-de-darle-mil-vueltas',
+        slug: 'deja-de-darle-mil-vueltas',
+        name: 'Deja de darle mil vueltas',
+        title: 'Deja de Darle Mil Vueltas',
+        modalSubtitle: 'Muestra de lectura interior · 16 páginas',
+        formatText: 'Formato 6" × 9" (15,24 × 22,86 cm)',
+        pagesText: '101 Páginas (51 hojas)',
+        spineText: 'Lomo 0.75 cm (0.295")',
+        coverTypeText: 'Tapa Blanda',
+        bookW: 6.0,
+        bookH: 9.0,
+        bookD: 0.295,
+        isLandscape: false,
+        pageWidth: 550,
+        pageHeight: 825,
+        localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/deja-de-darle-mil-vueltas/output/3D-Completo',
+        sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/deja-de-darle-mil-vueltas/output/3D/textures',
+        webVisorFile: 'visor-deja-de-darle-mil-vueltas.html',
+        webProductPage: 'deja-de-darle-mil-vueltas.html'
+    },
+    {
+        id: 'planificador-90-dias',
+        slug: 'planificador-90-dias',
+        name: 'Planificador de 90 Días',
+        title: 'Planificador 90 Días',
+        modalSubtitle: 'Muestra de lectura interior · 16 páginas',
+        formatText: 'Formato 6" × 9" (15,24 × 22,86 cm)',
+        pagesText: '149 Páginas (75 hojas)',
+        spineText: 'Lomo 0.85 cm (0.336")',
+        coverTypeText: 'Tapa Blanda',
+        bookW: 6.0,
+        bookH: 9.0,
+        bookD: 0.3355,
+        isLandscape: false,
+        pageWidth: 550,
+        pageHeight: 825,
+        localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-90-Completo',
+        sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-90/textures',
+        webVisorFile: 'visor-planificador-90-dias.html',
+        webProductPage: 'planificador-90-dias.html'
+    },
+    {
+        id: 'planificador-180-dias',
+        slug: 'planificador-180-dias',
+        name: 'Planificador de 180 Días',
+        title: 'Planificador 180 Días',
+        modalSubtitle: 'Muestra de lectura interior · 16 páginas',
+        formatText: 'Formato 6" × 9" (15,24 × 22,86 cm)',
+        pagesText: '278 Páginas (139 hojas)',
+        spineText: 'Lomo 1.59 cm (0.626")',
+        coverTypeText: 'Tapa Blanda',
+        bookW: 6.0,
+        bookH: 9.0,
+        bookD: 0.6261,
+        isLandscape: false,
+        pageWidth: 550,
+        pageHeight: 825,
+        localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-180-Completo',
+        sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador/output/3D-180/textures',
+        webVisorFile: 'visor-planificador-180-dias.html',
+        webProductPage: 'planificador-180-dias.html'
+    },
+    {
+        id: 'planificador-semanal-simple',
+        slug: 'planificador-semanal-simple',
+        name: 'Planificador Semanal Simple',
+        title: 'Planificador Semanal Simple',
+        modalSubtitle: 'Muestra de lectura interior · 16 páginas',
+        formatText: 'Formato 8.25" × 6.00" (Apaisado)',
+        pagesText: '108 Páginas (54 hojas)',
+        spineText: 'Lomo 0.62 cm (0.243")',
+        coverTypeText: 'Tapa Blanda',
+        bookW: 8.25,
+        bookH: 6.0,
+        bookD: 0.2432,
+        isLandscape: true,
+        pageWidth: 550,
+        pageHeight: 400,
+        localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal_Simple/output/3D-Completo',
+        sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal_Simple/output/3D/textures',
+        webVisorFile: 'visor-planificador-semanal-simple.html',
+        webProductPage: 'planificador-semanal-simple.html'
+    },
+    {
+        id: 'planificador-semanal-reversible',
+        slug: 'planificador-semanal-reversible',
+        name: 'Planificador Semanal Reversible',
+        title: 'Planificador Semanal Reversible',
+        modalSubtitle: 'Muestra de lectura interior · 16 páginas',
+        formatText: 'Formato 8.25" × 6.00" (Apaisado)',
+        pagesText: '108 Páginas (54 hojas)',
+        spineText: 'Lomo 0.62 cm (0.243")',
+        coverTypeText: 'Tapa Blanda',
+        bookW: 8.25,
+        bookH: 6.0,
+        bookD: 0.2432,
+        isLandscape: true,
+        pageWidth: 550,
+        pageHeight: 400,
+        localOutputDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal/output/3D-Completo',
+        sourceTexturesDir: 'C:/Users/IA/Documents/Antigravity/MENOS RUIDO/Planificador_Semanal/output/3D/textures',
+        webVisorFile: 'visor-planificador-semanal-reversible.html',
+        webProductPage: 'planificador-semanal-reversible.html'
+    }
+];
+
+function generateViewerHtml(cfg, isWeb = true) {
+    const texPrefix = isWeb ? `/books/${cfg.slug}/3d` : 'textures';
+    const pagesPrefix = isWeb ? `/books/${cfg.slug}` : 'pages';
+    const jsPrefix = isWeb ? '' : '.';
+
+    // 16 pages
+    const pageSheets = [];
+    for (let i = 1; i <= 16; i++) {
+        const numStr = String(i).padStart(2, '0');
+        const isCover = (i === 1 || i === 16);
+        const densityAttr = isCover ? ' data-density="hard"' : '';
+        const sideClass = (i % 2 === 0) ? '--left' : '--right';
+        pageSheets.push(`                    <div class="page-sheet ${sideClass}"${densityAttr}>
+                        <img src="${pagesPrefix}/page_${numStr}.webp" alt="Página ${i} de ${cfg.title}" loading="lazy" />
+                    </div>`);
+    }
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 3D Completo · ${cfg.title} | Editorial Menos Ruido</title>
+    <style>
+        :root {
+            --bg-color: #141414;
+            --text-main: #FFFFFF;
+            --text-muted: #CBD5E1;
+            --accent-gold: #C29B38;
+            --accent-hover: #D4AF37;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+        }
+
+        /* --- VISTA 1: 3D MODELO CERRADO --- */
+        #view-3d {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .header {
+            position: absolute;
+            top: 24px;
+            left: 28px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .brand {
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #FFFFFF;
+        }
+        .specs {
+            font-size: 12px;
+            color: #CBD5E1;
+            margin-top: 4px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .specs span {
+            color: #CBD5E1;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #CBD5E1;
+        }
+        .toolbar::-webkit-scrollbar { display: none; }
+        .toolbar {
+            max-width: calc(100vw - 32px);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            background: rgba(20, 20, 20, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 6px 10px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+        }
+        .btn {
+            background: transparent;
+            border: none;
+            color: #E2E8F0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+        }
+        .btn.active {
+            background: var(--accent-gold);
+            color: #141414;
+            font-weight: 600;
+        }
+        .btn-open-book {
+            background: linear-gradient(135deg, #C29B38 0%, #D4AF37 100%) !important;
+            color: #141414 !important;
+            font-weight: 700 !important;
+            padding: 8px 18px !important;
+            box-shadow: 0 2px 14px rgba(194, 155, 56, 0.5);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-open-book:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 18px rgba(194, 155, 56, 0.75);
+        }
+        .hint {
+            position: absolute;
+            bottom: 84px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            font-size: 12px;
+            color: var(--text-muted);
+            pointer-events: none;
+            letter-spacing: 0.03em;
+            transition: opacity 0.5s ease;
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 24px;
+            right: 28px;
+            z-index: 10;
+            display: flex;
+            gap: 6px;
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(16px);
+            padding: 4px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .theme-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .theme-dark { background: #141414; border: 1px solid #444; }
+        .theme-gold { background: #231C14; border: 1px solid #C29B38; }
+        .theme-light { background: #EFEAE1; border: 1px solid #CCC; }
+
+        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERIOR (MODAL INTEGRADO A PANTALLA COMPLETA) --- */
+        #flipbook-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 1000;
+            background: radial-gradient(circle at 50% 40%, rgba(36, 32, 28, 0.97) 0%, rgba(18, 16, 14, 0.99) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+        #flipbook-modal.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.5rem;
+            background: rgba(20, 18, 16, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 50;
+            flex-shrink: 0;
+        }
+        .btn-close-flipbook {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #CBD5E1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 0.45rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-close-flipbook:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        .modal-title-box {
+            text-align: center;
+        }
+        .modal-book-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #F8FAFC;
+            letter-spacing: -0.01em;
+        }
+        .modal-book-subtitle {
+            font-size: 0.78rem;
+            color: var(--accent-gold);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* Escenario generoso a toda la pantalla */
+        .viewer-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 0.5rem 1rem;
+            min-height: 0;
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+        }
+        .stage-spotlight {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 90%;
+            max-width: 1400px;
+            max-height: 950px;
+            background: radial-gradient(ellipse at center, rgba(255, 240, 220, 0.06) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .book-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            max-width: 1500px;
+            max-height: calc(100vh - 120px);
+            max-height: calc(100dvh - 120px);
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform-origin: center center;
+        }
+        #book-container {
+            margin: auto;
+            max-height: 100%;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.65), 0 6px 20px rgba(0,0,0,0.4);
+            border-radius: 4px;
+        }
+
+        /* Hojas del Flipbook */
+        .page-sheet {
+            background-color: #FAF7F2;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            user-select: none;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.03);
+        }
+        .page-sheet img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Efecto de curvatura y costura del lomo interior */
+        .page-sheet.--left::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 32px;
+            height: 100%;
+            background: linear-gradient(to left, rgba(0,0,0,0.14), rgba(0,0,0,0));
+            pointer-events: none;
+        }
+        .page-sheet.--right::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.14), rgba(0,0,0,0));
+            pointer-events: none;
+        }
+        .page-sheet[data-density="hard"] {
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+        }
+
+        /* Barra de navegación inferior completa con zoom */
+        .flipbook-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(20, 18, 16, 0.9);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 50;
+            flex-shrink: 0;
+        }
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .flip-btn {
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #E2E8F0;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .flip-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #FFFFFF;
+        }
+        .flip-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .page-counter {
+            font-size: 0.88rem;
+            color: #CBD5E1;
+            min-width: 140px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+        .tool-divider {
+            width: 1px;
+            height: 22px;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        /* Controles de Zoom */
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 2px 4px;
+        }
+        .zoom-btn {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: #CBD5E1;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .zoom-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+        }
+        .zoom-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .zoom-level {
+            font-size: 0.78rem;
+            color: #94A3B8;
+            min-width: 42px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            cursor: pointer;
+        }
+        .zoom-level:hover {
+            color: #FFFFFF;
+        }
+
+        .kbd-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .kbd-key {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            font-size: 0.7rem;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            .kbd-hint, .tool-divider:nth-of-type(2) {
+                display: none;
+            }
+            .modal-book-subtitle {
+                display: none;
+            }
+            .toolbar {
+                bottom: 14px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                max-width: calc(100vw - 20px) !important;
+                width: max-content !important;
+                box-sizing: border-box !important;
+                padding: 6px 8px !important;
+                gap: 6px !important;
+                border-radius: 30px !important;
+            }
+            .btn {
+                padding: 7px 12px !important;
+                font-size: 11px !important;
+            }
+            .btn-open-book {
+                padding: 7px 14px !important;
+                font-size: 11px !important;
+            }
+            .hint {
+                bottom: 64px !important;
+                font-size: 11px !important;
+                width: 90% !important;
+                text-align: center !important;
+                white-space: normal !important;
+            }
+            .specs {
+                display: none !important;
+            }
+            .header {
+                top: 14px !important;
+                left: 14px !important;
+            }
+            .title {
+                font-size: 16px !important;
+            }
+            .theme-toggle {
+                top: 14px !important;
+                right: 14px !important;
+            }
+        }
+    </style>
+    <!-- Three.js para el modelo 3D orbital exterior -->
+    <script src="${jsPrefix}/three.min.js"></script>
+    <script src="${jsPrefix}/orbit-controls.js"></script>
+    <!-- StPageFlip para el hojear interior realista -->
+    <script src="${jsPrefix}/page-flip.browser.js"></script>
+    <script>
+        if (typeof window.St === 'undefined') {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js';
+            document.head.appendChild(s);
+        }
+    </script>
+</head>
+<body>
+    <!-- 1. VISTA 3D ORBITAL EXTERIOR -->
+    <div id="view-3d">
+        <div class="header">
+            <div class="brand">Colección Menos Ruido</div>
+            <div class="title">${cfg.title}</div>
+            <div class="specs">
+                <span>${cfg.formatText}</span>
+                <span>·</span>
+                <span>${cfg.pagesText}</span>
+                <span>·</span>
+                <span class="badge">${cfg.spineText}</span>
+                <span class="badge">${cfg.coverTypeText}</span>
+            </div>
+        </div>
+
+        <div class="theme-toggle">
+            <button class="theme-btn theme-dark" title="Fondo Oscuro Estudio" onclick="setBg('#141414')"></button>
+            <button class="theme-btn theme-gold" title="Fondo Cálido Menos Ruido" onclick="setBg('#231C14')"></button>
+            <button class="theme-btn theme-light" title="Fondo Claro Galería" onclick="setBg('#EFEAE1')"></button>
+        </div>
+
+        <div class="hint" id="hint-text">Arrastra para rotar 360° · Rueda para zoom · Haz clic en el libro o en "Hojear interior"</div>
+
+        <div class="toolbar">
+            <button class="btn btn-open-book" onclick="openFlipbook()">
+                <span>📖</span> Hojear interior (16 págs muestra)
+            </button>
+            <div class="tool-divider"></div>
+            <button class="btn" id="btn-front" onclick="lookAt('front')">Portada</button>
+            <button class="btn" id="btn-pages" onclick="lookAt('pages')">Hojas / Corte</button>
+            <button class="btn" id="btn-spine" onclick="lookAt('spine')">Lomo</button>
+            <button class="btn" id="btn-back" onclick="lookAt('back')">Contraportada</button>
+            <button class="btn" id="btn-persp" onclick="lookAt('persp')">Perspectiva</button>
+            <button class="btn active" id="btn-rotate" onclick="toggleAutoRotate()">Auto-Giro</button>
+        </div>
+
+        <div id="canvas-container"></div>
+    </div>
+
+    <!-- 2. VISTA FLIPBOOK HOJEABLE INTERIOR -->
+    <div id="flipbook-modal">
+        <header class="modal-header">
+            <button class="btn-close-flipbook" onclick="closeFlipbook()" title="Volver al modelo 3D (Esc)">
+                <span>✕</span> Volver al 3D exterior
+            </button>
+            <div class="modal-title-box">
+                <div class="modal-book-title">${cfg.title}</div>
+                <div class="modal-book-subtitle">${cfg.modalSubtitle}</div>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <button class="btn-close-flipbook" id="btn-sound-toggle" title="Sonido de papel" style="padding:0.45rem 0.75rem;">
+                    <span id="sound-icon">🔊</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="viewer-stage">
+            <div class="stage-spotlight"></div>
+            <div class="book-wrapper">
+                <div id="book-container">
+${pageSheets.join('\n')}
+                </div>
+            </div>
+        </main>
+
+        <footer class="flipbook-toolbar">
+            <div class="nav-controls">
+                <button class="flip-btn" id="btn-prev" title="Página anterior (←)">‹</button>
+                <div class="page-counter" id="page-counter">Cargando...</div>
+                <button class="flip-btn" id="btn-next" title="Página siguiente (→)">›</button>
+            </div>
+
+            <div class="tool-divider"></div>
+
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="btn-zoom-out" title="Reducir zoom (−)">−</button>
+                <span class="zoom-level" id="zoom-label" title="Restablecer tamaño">100%</span>
+                <button class="zoom-btn" id="btn-zoom-in" title="Aumentar zoom (+)">+</button>
+            </div>
+
+            <div class="tool-divider"></div>
+
+            <div class="kbd-hint">
+                <span class="kbd-key">←</span>
+                <span class="kbd-key">→</span>
+                <span>Navegar</span>
+                <span class="kbd-key" style="margin-left: 6px;">Esc</span>
+                <span>Cerrar</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        /* =========================================================================
+           1. THREE.JS MOTOR 3D CERRADO ORBITAL
+           ========================================================================= */
+        const BOOK_W = ${cfg.bookW};
+        const BOOK_H = ${cfg.bookH};
+        const BOOK_D = ${cfg.bookD};
+
+        let scene, camera, renderer, controls, bookMesh;
+        let isAutoRotating = true;
+        let isTransitioning = false;
+        let targetCamPos = null, targetLookAt = null;
+
+        const container = document.getElementById('canvas-container');
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x141414);
+
+        const aspect = window.innerWidth / window.innerHeight;
+        camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
+        camera.position.set(0, 0, ${cfg.isLandscape ? 18 : 22});
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+        container.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 45;
+        controls.minDistance = 6;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.4;
+
+        // Iluminación de Estudio Fotográfico
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        scene.add(ambientLight);
+
+        const keyLight = new THREE.DirectionalLight(0xfff6ea, 1.25);
+        keyLight.position.set(12, 18, 14);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 2048;
+        keyLight.shadow.mapSize.height = 2048;
+        keyLight.shadow.camera.near = 1;
+        keyLight.shadow.camera.far = 40;
+        keyLight.shadow.bias = -0.0001;
+        scene.add(keyLight);
+
+        const fillLight = new THREE.DirectionalLight(0xe8f0ff, 0.6);
+        fillLight.position.set(-14, 8, 10);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        rimLight.position.set(0, -10, -15);
+        scene.add(rimLight);
+
+        // Plano de sombra suave en el suelo
+        const shadowPlaneGeo = new THREE.PlaneGeometry(35, 35);
+        const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.28 });
+        const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
+        shadowPlane.rotation.x = -Math.PI / 2;
+        shadowPlane.position.y = - (BOOK_H / 2) - 0.05;
+        shadowPlane.receiveShadow = true;
+        scene.add(shadowPlane);
+
+        // Texturas
+        const texLoader = new THREE.TextureLoader();
+        function loadTex(url, srgb = true) {
+            const t = texLoader.load(url, () => renderer.render(scene, camera));
+            if (srgb) t.encoding = THREE.sRGBEncoding;
+            t.generateMipmaps = true;
+            t.minFilter = THREE.LinearMipmapLinearFilter;
+            t.magFilter = THREE.LinearFilter;
+            return t;
+        }
+
+        const texFront = loadTex('${texPrefix}/front.jpg', true);
+        const texSpine = loadTex('${texPrefix}/spine.jpg', true);
+        const texBack = loadTex('${texPrefix}/back.jpg', true);
+        const texEdge = loadTex('${texPrefix}/pages_edge.jpg', true);
+        const bumpEdge = loadTex('${texPrefix}/pages_bump.jpg', false);
+        const texTop = loadTex('${texPrefix}/pages_top.jpg', true);
+        const bumpTop = loadTex('${texPrefix}/pages_top_bump.jpg', false);
+
+        // Materiales de cada cara
+        const matEdge = new THREE.MeshStandardMaterial({
+            map: texEdge,
+            bumpMap: bumpEdge,
+            bumpScale: 0.03,
+            roughness: 0.85,
+            metalness: 0.02
+        });
+        const matSpine = new THREE.MeshStandardMaterial({
+            map: texSpine,
+            roughness: 0.5,
+            metalness: 0.05
+        });
+        const matTop = new THREE.MeshStandardMaterial({
+            map: texTop,
+            bumpMap: bumpTop,
+            bumpScale: 0.025,
+            roughness: 0.85,
+            metalness: 0.02
+        });
+        const matBottom = matTop;
+        const matFront = new THREE.MeshStandardMaterial({
+            map: texFront,
+            roughness: 0.45,
+            metalness: 0.04
+        });
+        const matBack = new THREE.MeshStandardMaterial({
+            map: texBack,
+            roughness: 0.45,
+            metalness: 0.04
+        });
+
+        const materials = [
+            matEdge,    // +X (Corte de hojas derecho)
+            matSpine,   // -X (Lomo izquierdo)
+            matTop,     // +Y (Corte superior)
+            matBottom,  // -Y (Corte inferior)
+            matFront,   // +Z (Portada delantera)
+            matBack     // -Z (Contraportada trasera)
+        ];
+
+        const geometry = new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D, 4, 8, 4);
+        bookMesh = new THREE.Mesh(geometry, materials);
+        bookMesh.castShadow = true;
+        bookMesh.receiveShadow = true;
+        scene.add(bookMesh);
+
+        // Click en el libro 3D abre el flipbook interior
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let mouseDownPos = { x: 0, y: 0 };
+
+        window.addEventListener('pointerdown', (e) => {
+            mouseDownPos = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            const dx = Math.abs(e.clientX - mouseDownPos.x);
+            const dy = Math.abs(e.clientY - mouseDownPos.y);
+            if (dx > 6 || dy > 6) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObject(bookMesh);
+            if (intersects.length > 0) {
+                openFlipbook();
+            }
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isTransitioning && targetCamPos) {
+                camera.position.lerp(targetCamPos, 0.065);
+                controls.target.lerp(targetLookAt, 0.065);
+                if (camera.position.distanceTo(targetCamPos) < 0.05) {
+                    camera.position.copy(targetCamPos);
+                    controls.target.copy(targetLookAt);
+                    isTransitioning = false;
+                }
+            } else {
+                controls.update();
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Controles de cámara presets
+        window.lookAt = function(view) {
+            setActiveButton('btn-' + view);
+            controls.autoRotate = false;
+            document.getElementById('btn-rotate').classList.remove('active');
+            isTransitioning = true;
+            targetLookAt = new THREE.Vector3(0, 0, 0);
+
+            const dist = ${cfg.isLandscape ? 17 : 20};
+            switch(view) {
+                case 'front':
+                    targetCamPos = new THREE.Vector3(0, 0, dist);
+                    break;
+                case 'back':
+                    targetCamPos = new THREE.Vector3(0, 0, -dist);
+                    break;
+                case 'spine':
+                    targetCamPos = new THREE.Vector3(-dist, 0, 0);
+                    break;
+                case 'pages':
+                    targetCamPos = new THREE.Vector3(dist, 0, 0);
+                    break;
+                case 'persp':
+                default:
+                    targetCamPos = new THREE.Vector3(12, 8, 14);
+                    break;
+            }
+        };
+
+        window.toggleAutoRotate = function() {
+            controls.autoRotate = !controls.autoRotate;
+            document.getElementById('btn-rotate').classList.toggle('active', controls.autoRotate);
+        };
+
+        function setActiveButton(id) {
+            document.querySelectorAll('.toolbar .btn').forEach(b => {
+                if (b.id !== 'btn-rotate' && !b.classList.contains('btn-open-book')) {
+                    b.classList.remove('active');
+                }
+            });
+            const el = document.getElementById(id);
+            if (el) el.classList.add('active');
+        }
+
+        window.setBg = function(hex) {
+            scene.background.set(hex);
+        };
+
+        /* =========================================================================
+           2. STPAGEFLIP MOTOR HOJEABLE REALISTA (INTERIOR A PANTALLA COMPLETA)
+           ========================================================================= */
+        let pageFlip = null;
+        let audioCtx = null;
+        let soundEnabled = true;
+        let currentZoom = 1.0;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) audioCtx = new AC();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playPaperSound() {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const now = audioCtx.currentTime;
+                const bufferSize = audioCtx.sampleRate * 0.18;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(800 + Math.random() * 400, now);
+                filter.Q.setValueAtTime(1.8, now);
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.exponentialRampToValueAtTime(0.28, now + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start(now);
+            } catch (err) {}
+        }
+
+        function initPageFlip() {
+            if (pageFlip) return;
+
+            const container = document.getElementById('book-container');
+            const isMob = window.innerWidth < 768;
+
+            const baseW = ${cfg.pageWidth};
+            const baseH = ${cfg.pageHeight};
+
+            pageFlip = new St.PageFlip(container, {
+                width: baseW,
+                height: baseH,
+                size: 'stretch',
+                minWidth: 260,
+                maxWidth: 900,
+                minHeight: ${cfg.isLandscape ? 240 : 380},
+                maxHeight: 900,
+                showCover: true,
+                maxShadowOpacity: 0.5,
+                usePortrait: true,
+                mobileScrollSupport: false,
+                drawShadow: true,
+                autoSize: true,
+                swipeDistance: 25
+            });
+
+            const sheets = container.querySelectorAll('.page-sheet');
+            pageFlip.loadFromHTML(sheets);
+
+            pageFlip.on('flip', (e) => {
+                playPaperSound();
+                updateCounter(e.data);
+            });
+
+            pageFlip.on('init', () => {
+                updateCounter(0);
+            });
+        }
+
+        function updateCounter(pageIdx) {
+            const counter = document.getElementById('page-counter');
+            if (!counter || !pageFlip) return;
+            const total = pageFlip.getPageCount();
+            const curr = (pageIdx !== undefined) ? pageIdx : pageFlip.getCurrentPageIndex();
+
+            if (curr === 0) {
+                counter.innerText = 'Portada Exterior';
+            } else if (curr === total - 1) {
+                counter.innerText = 'Contraportada';
+            } else {
+                counter.innerText = \`Página \${curr} de \${total - 2}\`;
+            }
+
+            document.getElementById('btn-prev').disabled = (curr === 0);
+            document.getElementById('btn-next').disabled = (curr >= total - 1);
+        }
+
+        window.openFlipbook = function() {
+            initAudio();
+            controls.autoRotate = false;
+            document.getElementById('btn-rotate').classList.remove('active');
+
+            const modal = document.getElementById('flipbook-modal');
+            modal.classList.add('visible');
+            initPageFlip();
+
+            setTimeout(() => {
+                if (pageFlip) {
+                    pageFlip.update();
+                    updateCounter();
+                }
+            }, 80);
+        };
+
+        window.closeFlipbook = function() {
+            const modal = document.getElementById('flipbook-modal');
+            modal.classList.remove('visible');
+            controls.autoRotate = isAutoRotating;
+            document.getElementById('btn-rotate').classList.toggle('active', isAutoRotating);
+        };
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            initAudio();
+            if (pageFlip) pageFlip.flipPrev();
+        });
+        document.getElementById('btn-next').addEventListener('click', () => {
+            initAudio();
+            if (pageFlip) pageFlip.flipNext();
+        });
+
+        // Zoom Controls
+        const bookWrapper = document.querySelector('.book-wrapper');
+        const zoomLabel = document.getElementById('zoom-label');
+
+        function setZoom(val) {
+            currentZoom = Math.min(1.4, Math.max(0.75, val));
+            bookWrapper.style.transform = \`scale(\${currentZoom})\`;
+            zoomLabel.innerText = Math.round(currentZoom * 100) + '%';
+        }
+
+        document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(currentZoom + 0.1));
+        document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(currentZoom - 0.1));
+        zoomLabel.addEventListener('click', () => setZoom(1.0));
+
+        // Sonido toggle
+        const soundBtn = document.getElementById('btn-sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundIcon.innerText = soundEnabled ? '🔊' : '🔇';
+            soundBtn.title = soundEnabled ? 'Sonido de papel activado' : 'Sonido desactivado';
+        });
+
+        // Teclado
+        window.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('flipbook-modal');
+            if (!modal.classList.contains('visible')) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    openFlipbook();
+                }
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                closeFlipbook();
+            } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                initAudio();
+                if (pageFlip) pageFlip.flipNext();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                initAudio();
+                if (pageFlip) pageFlip.flipPrev();
+            } else if (e.key === '+' || e.key === '=') {
+                setZoom(currentZoom + 0.1);
+            } else if (e.key === '-' || e.key === '_') {
+                setZoom(currentZoom - 0.1);
+            } else if (e.key === '0') {
+                setZoom(1.0);
+            }
+        });
+
+        // Auto-abrir interior si viene parámetro ?mode=interior
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'interior') {
+                setTimeout(openFlipbook, 150);
+            }
+        });
+    </script>
+</body>
+</html>`;
+}
+
+console.log("=== COMPILING ALL 6 CUADERNOS HYBRID 3D VIEWERS ===");
+
+for (const cfg of books) {
+    console.log(`\nProcessing: ${cfg.name}`);
+
+    // 1. Prepare local standalone output folder: output/3D-Completo
+    if (!fs.existsSync(cfg.localOutputDir)) {
+        fs.mkdirSync(cfg.localOutputDir, { recursive: true });
+    }
+    const localTexturesDir = path.join(cfg.localOutputDir, 'textures');
+    if (!fs.existsSync(localTexturesDir)) {
+        fs.mkdirSync(localTexturesDir, { recursive: true });
+    }
+    const localPagesDir = path.join(cfg.localOutputDir, 'pages');
+    if (!fs.existsSync(localPagesDir)) {
+        fs.mkdirSync(localPagesDir, { recursive: true });
+    }
+
+    // Copy textures to local output
+    const texFiles = fs.readdirSync(cfg.sourceTexturesDir);
+    for (const f of texFiles) {
+        fs.copyFileSync(path.join(cfg.sourceTexturesDir, f), path.join(localTexturesDir, f));
+    }
+
+    // Copy webp sample pages to local output
+    const webPublicPagesDir = path.join(webDir, 'public/books', cfg.slug);
+    const pageFiles = fs.readdirSync(webPublicPagesDir).filter(f => f.endsWith('.webp'));
+    for (const p of pageFiles) {
+        fs.copyFileSync(path.join(webPublicPagesDir, p), path.join(localPagesDir, p));
+    }
+
+    // Copy standalone libraries
+    fs.copyFileSync(path.join(webDir, 'page-flip.browser.js'), path.join(cfg.localOutputDir, 'page-flip.browser.js'));
+    fs.copyFileSync(path.join(webDir, 'three.min.js'), path.join(cfg.localOutputDir, 'three.min.js'));
+    fs.copyFileSync(path.join(webDir, 'orbit-controls.js'), path.join(cfg.localOutputDir, 'orbit-controls.js'));
+
+    // Write local standalone index.html
+    const localHtml = generateViewerHtml(cfg, false);
+    fs.writeFileSync(path.join(cfg.localOutputDir, 'index.html'), localHtml, 'utf-8');
+    console.log(`  ✓ Local standalone built in: ${cfg.localOutputDir}`);
+
+    // 2. Build web production visor: web-menos-ruido/visor-<slug>.html
+    const webHtml = generateViewerHtml(cfg, true);
+    const webVisorPath = path.join(webDir, cfg.webVisorFile);
+    fs.writeFileSync(webVisorPath, webHtml, 'utf-8');
+    console.log(`  ✓ Web visor built: ${cfg.webVisorFile} (${webHtml.length} bytes)`);
+
+    // 3. Update web product page modal to point to visor-<slug>.html and support ?mode=interior
+    const prodPagePath = path.join(webDir, cfg.webProductPage);
+    if (fs.existsSync(prodPagePath)) {
+        let pContent = fs.readFileSync(prodPagePath, 'utf-8');
+
+        // Ensure openBookModal has mode parameter
+        const oldOpenFnRegex = /function\s+openBookModal\s*\([^)]*\)\s*\{[\s\S]*?frame\.src\s*=\s*['"][^'"]+['"][\s\S]*?\}/;
+        const newOpenFn = `function openBookModal(mode = '3d') {
+            const modal = document.getElementById('book-modal');
+            const frame = document.getElementById('book-modal-frame');
+            if (modal && frame) {
+                const targetSrc = mode === 'interior' 
+                    ? './${cfg.webVisorFile}?mode=interior' 
+                    : './${cfg.webVisorFile}';
+                frame.src = targetSrc;
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+        }`;
+
+        if (oldOpenFnRegex.test(pContent)) {
+            pContent = pContent.replace(oldOpenFnRegex, newOpenFn);
+        }
+
+        // Ensure modal window has max-width: 1240px and 90vh
+        if (!pContent.includes('max-width: 1240px;')) {
+            pContent = pContent.replace(/max-width:\s*[0-9]+px;/, 'max-width: 1240px;');
+        }
+        if (!pContent.includes('height: 90vh;')) {
+            pContent = pContent.replace(/height:\s*[0-9]+vh;/, 'height: 90vh;');
+        }
+
+        fs.writeFileSync(prodPagePath, pContent, 'utf-8');
+        console.log(`  ✓ Product page modal updated: ${cfg.webProductPage}`);
+    }
+}
+
+console.log("\nAll 6 Cuadernos built successfully!");
