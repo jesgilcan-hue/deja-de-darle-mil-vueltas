@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Visor 3D Físico · Afirmaciones Diarias (376 págs - 6x9")</title>
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            background: #F5F2EB;
+            color: #1A1A1A;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            touch-action: pan-y;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+        }
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* Top Overlay Header */
+        .header {
+            position: absolute;
+            top: 16px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .brand {
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #87553b;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        .specs {
+            font-size: 12px;
+            color: #5C5750;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(135, 85, 59, 0.1);
+            color: #87553b;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* Fullscreen & Theme Control in Top Right */
+        .top-actions {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-toggle {
+            display: flex;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 4px 6px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .theme-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .theme-btn:hover {
+            transform: scale(1.15);
+        }
+        .theme-light { background: #F5F2EB; border: 1px solid #D0C9BE; }
+        .theme-warm  { background: #231F1D; border: 1px solid #4A423E; }
+        .theme-dark  { background: #141414; border: 1px solid #333333; }
+
+        .btn-fullscreen {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.92);
+            color: #222222;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+        }
+        .btn-fullscreen:hover {
+            background: #ffffff;
+            color: #87553b;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
+        }
+        .btn-fullscreen svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.2;
+        }
+
+        /* Floating Toolbar */
+        .toolbar {
+            position: absolute;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 5px 8px;
+            border-radius: 36px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            max-width: 95vw;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .toolbar::-webkit-scrollbar {
+            display: none;
+        }
+        .btn {
+            background: transparent;
+            border: none;
+            color: #555555;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            background: rgba(135, 85, 59, 0.08);
+            color: #87553b;
+        }
+        .btn.active {
+            background: #87553b;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(135, 85, 59, 0.35);
+        }
+
+        /* Interaction hint */
+        .hint {
+            position: absolute;
+            bottom: 66px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            font-size: 11px;
+            color: #7A756D;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 3px 10px;
+            border-radius: 12px;
+            pointer-events: none;
+            letter-spacing: 0.02em;
+            transition: opacity 0.5s ease;
+            white-space: nowrap;
+        }
+
+        /* Dark mode overrides */
+        body.mode-dark {
+            background: #141414;
+            color: #E8E4DD;
+        }
+        body.mode-dark .brand { color: #c48e72; }
+        body.mode-dark .specs { color: #A39E95; }
+        body.mode-dark .badge { background: rgba(255, 255, 255, 0.1); color: #E8E4DD; }
+        body.mode-dark .theme-toggle { background: rgba(24, 24, 24, 0.85); border-color: rgba(255, 255, 255, 0.12); }
+        body.mode-dark .btn-fullscreen { background: rgba(24, 24, 24, 0.88); color: #E8E4DD; border-color: rgba(255, 255, 255, 0.14); }
+        body.mode-dark .btn-fullscreen:hover { background: #282828; color: #FFFFFF; }
+        body.mode-dark .toolbar { background: rgba(24, 24, 24, 0.88); border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+        body.mode-dark .btn { color: #C2BCB3; }
+        body.mode-dark .btn:hover { background: rgba(255, 255, 255, 0.12); color: #FFFFFF; }
+        body.mode-dark .btn.active { background: #E8E4DD; color: #141414; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        body.mode-dark .hint { color: #A39E95; background: rgba(20, 20, 20, 0.75); }
+
+        body.mode-warm {
+            background: #231F1D;
+            color: #F0ECE4;
+        }
+        body.mode-warm .brand { color: #d69b7e; }
+        body.mode-warm .specs { color: #B3ADA6; }
+        body.mode-warm .badge { background: rgba(255, 255, 255, 0.1); color: #F0ECE4; }
+        body.mode-warm .theme-toggle { background: rgba(35, 31, 29, 0.85); border-color: rgba(255, 255, 255, 0.12); }
+        body.mode-warm .btn-fullscreen { background: rgba(35, 31, 29, 0.88); color: #F0ECE4; border-color: rgba(255, 255, 255, 0.14); }
+        body.mode-warm .btn-fullscreen:hover { background: #352E2B; color: #FFFFFF; }
+        body.mode-warm .toolbar { background: rgba(35, 31, 29, 0.88); border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+        body.mode-warm .btn { color: #C9C4BC; }
+        body.mode-warm .btn:hover { background: rgba(255, 255, 255, 0.12); color: #FFFFFF; }
+        body.mode-warm .btn.active { background: #E8E4DD; color: #231F1D; }
+        body.mode-warm .hint { color: #B3ADA6; background: rgba(35, 31, 29, 0.75); }
+
+        @media (max-width: 600px) {
+            .header { top: 12px; left: 14px; }
+            .brand { font-size: 10px; }
+            .specs { font-size: 11px; }
+            .top-actions { top: 10px; right: 12px; }
+            .btn-fullscreen span { display: none; }
+            .btn-fullscreen { padding: 6px 8px; }
+            .toolbar { bottom: 12px; gap: 4px; padding: 4px 6px; }
+            .btn { padding: 5px 9px; font-size: 11px; }
+            .hint { bottom: 56px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand">Menos Ruido · 3D Real</div>
+        <div class="specs">
+            <span>6" × 9" (15 × 23 cm)</span>
+            <span>·</span>
+            <span>376 Páginas</span>
+            <span>·</span>
+            <span class="badge">Lomo 2.15 cm</span>
+        </div>
+    </div>
+
+    <div class="top-actions">
+        <div class="theme-toggle" title="Cambiar fondo de estudio">
+            <button class="theme-btn theme-light" title="Fondo Claro" onclick="setBg('#F5F2EB')"></button>
+            <button class="theme-btn theme-warm" title="Fondo Cálido" onclick="setBg('#231F1D')"></button>
+            <button class="theme-btn theme-dark" title="Fondo Oscuro" onclick="setBg('#141414')"></button>
+        </div>
+        <button type="button" class="btn-fullscreen" id="btn-fullscreen-toggle" onclick="requestParentFullscreen()" title="Ver en pantalla completa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+            <span>Ver en grande</span>
+        </button>
+    </div>
+
+    <div class="hint" id="hint-text">Gira con el ratón o desliza con el dedo · Rueda para zoom</div>
+
+    <div class="toolbar">
+        <button class="btn" id="btn-front" onclick="lookAt('front')">Portada</button>
+        <button class="btn" id="btn-pages" onclick="lookAt('pages')">Hojas / Corte</button>
+        <button class="btn" id="btn-spine" onclick="lookAt('spine')">Lomo</button>
+        <button class="btn" id="btn-back" onclick="lookAt('back')">Contraportada</button>
+        <button class="btn" id="btn-persp" onclick="lookAt('persp')">Perspectiva</button>
+        <button class="btn active" id="btn-rotate" onclick="toggleAutoRotate()">Auto-Giro</button>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <!-- Three.js + OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+        const hint = document.getElementById('hint-text');
+
+        // Proporciones físicas reales: 6 x 9 pulgadas, lomo = 376 * 0.002252 = 0.8468 pulgadas
+        const BOOK_W = 6.0;
+        const BOOK_H = 9.0;
+        const BOOK_D = 0.8468;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xF5F2EB);
+
+        const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(6.0, 3.5, 13.5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.08;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 25;
+        controls.maxPolarAngle = Math.PI / 2 + 0.12;
+        controls.target.set(0, 0, 0);
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0;
+
+        // Ocultar hint tras primer toque o click
+        const hideHint = () => { if (hint) hint.style.opacity = '0'; };
+        controls.addEventListener('start', hideHint);
+
+        // Iluminación de estudio
+        const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.72);
+        scene.add(ambientLight);
+
+        // Luz principal cálida con sombras suaves
+        const keyLight = new THREE.DirectionalLight(0xFFFAF2, 1.35);
+        keyLight.position.set(9, 13, 11);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 2048;
+        keyLight.shadow.mapSize.height = 2048;
+        keyLight.shadow.camera.near = 1;
+        keyLight.shadow.camera.far = 32;
+        keyLight.shadow.bias = -0.0004;
+        const d = 10;
+        keyLight.shadow.camera.left = -d;
+        keyLight.shadow.camera.right = d;
+        keyLight.shadow.camera.top = d;
+        keyLight.shadow.camera.bottom = -d;
+        scene.add(keyLight);
+
+        // Luz rasante para el corte de hojas (+X)
+        const rakingLight = new THREE.DirectionalLight(0xFFFFFF, 0.65);
+        rakingLight.position.set(12, 1, 3);
+        scene.add(rakingLight);
+
+        // Luz de relleno neutra
+        const fillLight = new THREE.DirectionalLight(0xE5EDFF, 0.45);
+        fillLight.position.set(-9, 6, -9);
+        scene.add(fillLight);
+
+        // Plano del suelo receptor de sombras
+        const floorGeo = new THREE.PlaneGeometry(45, 45);
+        const floorMat = new THREE.ShadowMaterial({ opacity: 0.18 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = - (BOOK_H / 2) - 0.02;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Carga de texturas reales optimizadas
+        const loader = new THREE.TextureLoader();
+        const loadTex = (url) => {
+            const t = loader.load(url);
+            t.generateMipmaps = true;
+            t.minFilter = THREE.LinearMipmapLinearFilter;
+            t.magFilter = THREE.LinearFilter;
+            return t;
+        };
+
+        const texFront = loadTex('/textures/afirmaciones-3d/front.jpg');
+        const texSpine = loadTex('/textures/afirmaciones-3d/spine.jpg');
+        const texBack  = loadTex('/textures/afirmaciones-3d/back.jpg');
+        const texEdge  = loadTex('/textures/afirmaciones-3d/pages_edge.jpg');
+        const bumpEdge = loadTex('/textures/afirmaciones-3d/pages_bump.jpg');
+        const texTop   = loadTex('/textures/afirmaciones-3d/pages_top.jpg');
+        const bumpTop  = loadTex('/textures/afirmaciones-3d/pages_top_bump.jpg');
+
+        const pagesMaterialLateral = new THREE.MeshStandardMaterial({
+            map: texEdge,
+            bumpMap: bumpEdge,
+            bumpScale: 0.035,
+            roughness: 0.85,
+            metalness: 0.01
+        });
+
+        const pagesMaterialTop = new THREE.MeshStandardMaterial({
+            map: texTop,
+            bumpMap: bumpTop,
+            bumpScale: 0.035,
+            roughness: 0.85,
+            metalness: 0.01
+        });
+
+        const coverProps = {
+            roughness: 0.55,
+            metalness: 0.03,
+        };
+
+        // Caras BoxGeometry: [+X (hojas lateral), -X (lomo), +Y (hojas arriba), -Y (hojas abajo), +Z (portada), -Z (contraportada)]
+        const materials = [
+            pagesMaterialLateral,
+            new THREE.MeshStandardMaterial({ ...coverProps, map: texSpine }),
+            pagesMaterialTop,
+            pagesMaterialTop,
+            new THREE.MeshStandardMaterial({ ...coverProps, map: texFront }),
+            new THREE.MeshStandardMaterial({ ...coverProps, map: texBack })
+        ];
+
+        const bookGeometry = new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D, 4, 8, 4);
+        const bookMesh = new THREE.Mesh(bookGeometry, materials);
+        bookMesh.castShadow = true;
+        bookMesh.receiveShadow = true;
+        scene.add(bookMesh);
+
+        // Bucle de animación
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive Resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Movimiento de cámara suave entre presets
+        function smoothMoveCamera(targetPos, targetLookAt = { x: 0, y: 0, z: 0 }) {
+            controls.autoRotate = false;
+            document.getElementById('btn-rotate').classList.remove('active');
+            const startPos = camera.position.clone();
+            const endPos = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z);
+            let startTime = performance.now();
+            const duration = 750;
+
+            function step(now) {
+                const elapsed = now - startTime;
+                const t = Math.min(1, elapsed / duration);
+                const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                camera.position.lerpVectors(startPos, endPos, ease);
+                controls.target.set(targetLookAt.x, targetLookAt.y, targetLookAt.z);
+                controls.update();
+                if (t < 1) {
+                    requestAnimationFrame(step);
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function lookAt(view) {
+            document.querySelectorAll('.toolbar .btn').forEach(b => b.classList.remove('active'));
+            if (view === 'front') {
+                document.getElementById('btn-front').classList.add('active');
+                smoothMoveCamera({ x: 0, y: 0, z: 13.5 });
+            } else if (view === 'pages') {
+                document.getElementById('btn-pages').classList.add('active');
+                smoothMoveCamera({ x: 11.5, y: 1.0, z: 4.5 });
+            } else if (view === 'spine') {
+                document.getElementById('btn-spine').classList.add('active');
+                smoothMoveCamera({ x: -13.5, y: 0, z: 0.1 });
+            } else if (view === 'back') {
+                document.getElementById('btn-back').classList.add('active');
+                smoothMoveCamera({ x: 0, y: 0, z: -13.5 });
+            } else if (view === 'persp') {
+                document.getElementById('btn-persp').classList.add('active');
+                smoothMoveCamera({ x: 6.8, y: 3.8, z: 10.5 });
+            }
+        }
+
+        function toggleAutoRotate() {
+            controls.autoRotate = !controls.autoRotate;
+            const btn = document.getElementById('btn-rotate');
+            btn.classList.toggle('active', controls.autoRotate);
+        }
+
+        function setBg(bgHex) {
+            scene.background = new THREE.Color(bgHex);
+            document.body.classList.remove('mode-dark', 'mode-warm');
+            if (bgHex === '#141414') {
+                document.body.classList.add('mode-dark');
+                floorMat.opacity = 0.38;
+            } else if (bgHex === '#231F1D') {
+                document.body.classList.add('mode-warm');
+                floorMat.opacity = 0.35;
+            } else {
+                floorMat.opacity = 0.18;
+            }
+        }
+
+        // Pantalla completa in-page
+        function requestParentFullscreen() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'toggle3DFullscreen' }, '*');
+            } else {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen().catch(() => {});
+                }
+            }
+        }
+
+        // Recibir resize del iframe desde el padre
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'resizeViewer') {
+                setTimeout(onWindowResize, 50);
+            }
+        });
+    </script>
+</body>
+</html>
