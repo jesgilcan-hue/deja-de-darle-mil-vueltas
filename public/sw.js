@@ -1,4 +1,4 @@
-const CACHE_NAME = 'menos-ruido-v4';
+const CACHE_NAME = 'menos-ruido-v5';
 const STATIC_ASSETS = [
   '/',
   '/hoy',
