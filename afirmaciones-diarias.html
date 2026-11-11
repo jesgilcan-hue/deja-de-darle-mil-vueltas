@@ -49,15 +49,14 @@
             position: relative;
         }
         .cuaderno-cover-card {
-            cursor: pointer;
             position: relative;
-            max-width: 460px;
+            max-width: 520px;
             width: 100%;
             text-align: center;
             transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .cuaderno-cover-card:hover {
-            transform: translateY(-6px) scale(1.02);
+            transform: translateY(-4px) scale(1.015);
         }
         .hero-book-img {
             width: 100%;
@@ -70,34 +69,7 @@
             margin: 0 auto;
         }
         .cuaderno-cover-card:hover .hero-book-img {
-            filter: drop-shadow(0 30px 48px rgba(0,0,0,0.25));
-        }
-        .hero-3d-badge-pill {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(26, 24, 22, 0.92);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: #f5f2eb;
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid rgba(255,255,255,0.18);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            pointer-events: none;
-            white-space: nowrap;
-            transition: background 0.25s ease, transform 0.25s ease;
-        }
-        .cuaderno-cover-card:hover .hero-3d-badge-pill {
-            background: #87553b;
-            color: #ffffff;
-            transform: translateX(-50%) scale(1.05);
+            filter: drop-shadow(0 30px 48px rgba(0,0,0,0.24));
         }
 
         /* Modal Unificado Hojear en 3D (Oculto al 100% por defecto para no interferir con clicks) */
@@ -339,11 +311,8 @@
                 </div>
 
                 <div class="hero-image fade-in delay-3">
-                    <div class="cuaderno-cover-card" onclick="openBookModal()" title="Haz clic para hojear y rotar en 3D">
-                        <img src="/images/libros/afirmaciones-diarias/cuaderno-afirmaciones-3d-hero.webp" alt="Cuaderno Afirmaciones Diarias (376 páginas, lomo 2.15 cm, 6x9 pulgadas)" class="hero-book-img" width="540" height="540" loading="eager" />
-                        <div class="hero-3d-badge-pill">
-                            <span>📖</span> Hojear en 3D
-                        </div>
+                    <div class="cuaderno-cover-card">
+                        <img src="/images/libros/afirmaciones-diarias/cuaderno-afirmaciones-real-hero.webp?v=8" alt="Cuaderno Afirmaciones Diarias (376 páginas, lomo 2.15 cm, 6x9 pulgadas)" class="hero-book-img" width="540" height="400" loading="eager" />
                     </div>
                 </div>
             </div>
@@ -705,13 +674,109 @@
     </footer>
 
     
+    <!-- MODAL DIAGNÓSTICO INTERACTIVO -->
+    <div id="diagnostic-modal-overlay" class="diagnostic-overlay">
+        <div class="diagnostic-modal">
+            <div class="diagnostic-header">
+                <button type="button" class="diagnostic-close" id="diagnostic-close-btn" aria-label="Cerrar">×</button>
+                <div class="diagnostic-progress-wrap">
+                    <span class="diagnostic-step-tag" id="diagnostic-step-tag">Paso 1 de 5</span>
+                </div>
+                <div class="diagnostic-progress-bar">
+                    <div class="diagnostic-progress-fill" id="diagnostic-progress-fill"></div>
+                </div>
+            </div>
+            <div class="diagnostic-body" id="diagnostic-body"></div>
+            <div class="diagnostic-footer" id="diagnostic-footer">
+                <button type="button" class="diagnostic-btn-back" id="diagnostic-btn-back" disabled>← Anterior</button>
+                <button type="button" class="diagnostic-btn-early-exit" id="diagnostic-btn-early-exit" style="display: none;">
+                    ⚡ ¿Tienes prisa? Mostrar mi recomendación ya →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+    <script type="module" src="./diagnostic.js"></script>
+
+    <script>
+        function toggleAllFaqs(btn) {
+            const details = document.querySelectorAll('#faq details.faq-item');
+            if (!details.length) return;
+            const allOpen = Array.from(details).every(d => d.open);
+            const newState = !allOpen;
+            details.forEach(d => d.open = newState);
+            updateFaqButtonState(btn, newState);
+        }
+
+        function updateFaqButtonState(btn, allOpen) {
+            if (!btn) btn = document.getElementById('faq-toggle-btn');
+            if (!btn) return;
+            const icon = btn.querySelector('.faq-toggle-icon');
+            const text = btn.querySelector('.faq-toggle-text');
+            if (allOpen) {
+                if (icon) icon.textContent = '−';
+                if (text) text.textContent = 'Cerrar todas';
+            } else {
+                if (icon) icon.textContent = '+';
+                if (text) text.textContent = 'Abrir todas';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const details = document.querySelectorAll('#faq details.faq-item');
+            const btn = document.getElementById('faq-toggle-btn');
+            if (details.length && btn) {
+                details.forEach(d => {
+                    d.addEventListener('toggle', () => {
+                        const allOpen = Array.from(details).every(item => item.open);
+                        updateFaqButtonState(btn, allOpen);
+                    });
+                });
+            }
+
+            const navLinks = document.querySelectorAll('.book-subnav-links a');
+            const sectionIds = ['el-cuaderno', 'estructura', 'interior', 'faq', 'lecturas-asociadas'];
+            const sections = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
+
+            if (navLinks.length && sections.length) {
+                const onScroll = () => {
+                    const scrollPos = window.scrollY + 160;
+                    let currentId = '';
+                    sections.forEach(sec => {
+                        const top = sec.offsetTop;
+                        const height = sec.offsetHeight;
+                        if (scrollPos >= top && scrollPos < top + height) {
+                            currentId = sec.id;
+                        }
+                    });
+                    if (!currentId && sections.length) {
+                        if (window.scrollY < sections[0].offsetTop) currentId = sections[0].id;
+                        else currentId = sections[sections.length - 1].id;
+                    }
+                    navLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentId) {
+                            link.classList.add('active');
+                        } else {
+                            link.classList.remove('active');
+                        }
+                    });
+                };
+
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+            }
+        });
+    </script>
+
     <!-- MODAL POP-UP VISOR UNIFICADO (3D + HOJEAR) -->
     <div id="book-modal" class="book-modal-backdrop" onclick="handleModalBackdropClick(event)" aria-hidden="true" role="dialog">
         <div class="book-modal-window" onclick="event.stopPropagation()">
             <button type="button" class="book-modal-close-btn" onclick="closeBookModal()" aria-label="Cerrar visor" title="Cerrar (Esc)">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
-            <iframe id="book-modal-frame" class="book-modal-iframe" title="Visor 3D y muestra de páginas" src="about:blank" loading="lazy"></iframe>
+            <iframe id="book-modal-frame" class="book-modal-iframe" title="Visor 3D y muestra de páginas" src="about:blank"></iframe>
         </div>
     </div>
 
