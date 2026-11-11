@@ -96,6 +96,7 @@ export default defineConfig({
         miEspacio: resolve(__dirname, 'mi-espacio.html'),
         baja: resolve(__dirname, 'baja.html'),
         pasatiempos: resolve(__dirname, 'pasatiempos.html'),
+        generadorPasatiempos: resolve(__dirname, 'generador-pasatiempos.html'),
         generadorSudokus: resolve(__dirname, 'generador-sudokus.html'),
         generadorSopas: resolve(__dirname, 'generador-sopas.html'),
         sopaDiaria: resolve(__dirname, 'sopa-diaria.html'),

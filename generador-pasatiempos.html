@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crea tu Propio Libro de Pasatiempos Gratis | Menos Ruido</title>
+    <meta name="description" content="Configura gratis tu propio libro de pasatiempos en PDF listo para encuadernar (120 o 180 páginas con interior y portada) o genera Sudokus, Sopas, Cruzadas, Kakuros y Calcudokus sueltos para imprimir en casa.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.editorialmenosruido.com/generador-pasatiempos.html">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="./style.css">
+    
+    <style>
+        .gen-hero {
+            text-align: center;
+            padding: 85px 20px 45px;
+            background: var(--color-bg, #f9f8f6);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .gen-hero .badge-pill {
+            display: inline-block;
+            background: rgba(135, 85, 59, 0.1);
+            color: var(--color-accent, #87553b);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+        }
+
+        .gen-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.3rem, 5vw, 3.4rem);
+            line-height: 1.15;
+            color: var(--color-text, #111111);
+            max-width: 850px;
+            margin: 0 auto 16px;
+        }
+
+        .gen-hero p {
+            font-size: 1.12rem;
+            color: var(--color-text-muted, #555555);
+            max-width: 660px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .generators-section {
+            padding: 55px 20px 90px;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .section-intro-bar {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-intro-bar h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #111;
+            margin-bottom: 8px;
+        }
+
+        .section-intro-bar p {
+            color: #666;
+            font-size: 1.05rem;
+        }
+
+        .gen-grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 28px;
+        }
+
+        .gen-card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .gen-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.07);
+        }
+
+        .gen-status-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-available {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .btn-gen-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #111111;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.92rem;
+            transition: background 0.2s ease;
+        }
+
+        .btn-gen-action:hover {
+            background: var(--color-accent, #87553b);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f4f1ea;
+            color: #222;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e7dfd2;
+        }
+
+        @media (max-width: 768px) {
+            .gen-hero { padding: 65px 15px 35px; }
+            .gen-grid-2col { grid-template-columns: 1fr; }
+        }
+    </style>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+</head>
+<body>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
+
+    <!-- NAVBAR OFICIAL -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="nav-left">
+                <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#111111">
+                        <rect x="2" y="4.5" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="10.75" width="20" height="2.5" rx="1.25"></rect>
+                        <rect x="2" y="17" width="20" height="2.5" rx="1.25"></rect>
+                    </svg>
+                </button>
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;">Menos Ruido</a>
+            </div>
+            <nav>
+                <div class="nav-drawer-header">
+                    <span class="nav-drawer-title">Menos Ruido</span>
+                    <button class="nav-close" aria-label="Cerrar menú" onclick="document.body.classList.remove('nav-open')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 1. HOME -->
+                <a href="/" onclick="document.body.classList.remove('nav-open')">Home</a>
+
+                <!-- 2. RETO DE HOY -->
+                <a href="/hoy.html" onclick="document.body.classList.remove('nav-open')" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: #111111;">
+                    <span>⚡</span> Reto de hoy
+                </a>
+
+                <!-- 3. CUADERNOS & PLANIFICADORES -->
+                <div class="dropdown">
+                    <a href="/cuadernos.html" style="cursor: pointer;">Cuadernos &amp; Planificadores ▾</a>
+                    <div class="dropdown-content tree-dropdown">
+                        <div class="tree-group">
+                            <a href="/generador.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Crea tu propio cuaderno</a>
+                            <div class="tree-branch-items">
+                                <a href="/crear-planificador-completo.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">★ Crea tu planificador completo</a>
+                                <button type="button" class="tree-sub-toggle">▸ Desplegar generadores (6)</button>
+                                <div class="tree-sub-collapsible" style="display: none;">
+                                    <a href="/afirmaciones-diarias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Afirmaciones Diarias</a>
+                                    <a href="/generador-planificador-diario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Diario</a>
+                                    <a href="/generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal</a>
+                                    <a href="/generador-planificador-mensual.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Mensual</a>
+                                    <a href="/generador-planificador-anual.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Anual</a>
+                                    <a href="/generador-planificador-habitos.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Seguimiento de Hábitos</a>
+                                    <a href="/generador-planificador-horario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Bloques Horarios</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <a href="/cuadernos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Cuadernos y planificadores</a>
+                            <div class="tree-branch-items">
+                                <a href="/cuadernos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">🛒 Compra el tuyo</a>
+                                <button type="button" class="tree-sub-toggle">▸ Desplegar cuadernos (7)</button>
+                                <div class="tree-sub-collapsible" style="display: none;">
+                                    <a href="/afirmaciones-diarias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Afirmaciones Diarias</a>
+                                    <a href="/habla-claro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Habla Claro (Límites)</a>
+                                    <a href="/deja-de-darle-mil-vueltas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Deja de darle mil vueltas</a>
+                                    <a href="/planificador-90-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 90 Días</a>
+                                    <a href="/planificador-180-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 180 Días</a>
+                                    <a href="/planificador-semanal-simple.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Simple</a>
+                                    <a href="/planificador-semanal-reversible.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal Reversible</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. PASATIEMPOS -->
+                <div class="dropdown">
+                    <a href="/pasatiempos.html" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        Pasatiempos <span style="background: #111111; color: #ffffff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;">Nuevo</span> ▾
+                    </a>
+                    <div class="dropdown-content tree-dropdown">
+                        <div class="tree-group">
+                            <a href="/generador-pasatiempos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Crea tu propio pasatiempo</a>
+                            <div class="tree-branch-items">
+                                <a href="/crear-libro-pasatiempos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">★ Crea tu libro de pasatiempos completo</a>
+                                <button type="button" class="tree-sub-toggle">▸ Desplegar generadores (5)</button>
+                                <div class="tree-sub-collapsible" style="display: none;">
+                                    <a href="/generador-sudokus.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Sudokus</a>
+                                    <a href="/generador-sopas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Sopas de Letras</a>
+                                    <a href="/generador-cruzadas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Palabras Cruzadas</a>
+                                    <a href="/generador-kakuro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Kakuro</a>
+                                    <a href="/generador-calcudoku.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Calcudoku</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tree-group">
+                            <a href="/pasatiempos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Libros de pasatiempos</a>
+                            <div class="tree-branch-items">
+                                <a href="/pasatiempos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">🛒 Compra el tuyo</a>
+                                <button type="button" class="tree-sub-toggle">▸ Desplegar libros (4)</button>
+                                <div class="tree-sub-collapsible" style="display: none;">
+                                    <a href="/libro-pasatiempos-abuelos.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Cuaderno de los Abuel@s</a>
+                                    <a href="/libro-pasatiempos-enfermeria.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Turno de Noche: Enfermera</a>
+                                    <a href="/libro-pasatiempos-docentes.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Libro de los Docentes</a>
+                                    <a href="/libro-pasatiempos-navidad.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Pasatiempos de Navidad</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. LECTURAS -->
+                <a href="/lecturas.html" onclick="document.body.classList.remove('nav-open')">Lecturas</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- HERO PRINCIPAL (IDÉNTICO A GENERADOR.HTML) -->
+        <section class="gen-hero">
+            <div class="container">
+                <span class="badge-pill">Herramientas en PDF · 100% Gratuitas</span>
+                <h1>Crea tu propio pasatiempo. <span style="color: var(--color-accent, #87553b); font-style: italic;">Es gratis.</span></h1>
+                <p>Configura un libro completo de pasatiempos (interior + portada) con soluciones verificadas listo para encuadernar, o descarga pasatiempos sueltos en PDF de alta resolución para imprimir y resolver a lápiz.</p>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE GENERADORES -->
+        <section class="generators-section">
+            
+            <!-- TARJETA DESTACADA SUPERIOR: CREA TU PROPIO LIBRO COMPLETO -->
+            <div style="margin-bottom: 3.5rem;">
+                <article style="background: #ffffff; border: 1.5px solid #dcd3c4; border-top: 5px solid #111111; border-radius: 16px; padding: 2.2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; align-items: center;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 0.65rem;">
+                                <span style="background: #111111; color: #ffffff; font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">★ Generador Avanzado KDP</span>
+                                <span class="gen-status-badge status-available">120 o 180 Páginas</span>
+                            </div>
+                            <h2 style="font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 0.8rem; color: #111;">
+                                Crea tu propio Libro de Pasatiempos Completo
+                            </h2>
+                            <p style="color: #555; font-size: 1rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                                Diseña tu tomo a medida en dos pasos: configura primero el <strong>interior</strong> combinando Sudokus, Sopas de Letras con mensaje oculto, Palabras Cruzadas, Kakuros y Calcudokus (con portadilla, índice, uñero lateral y solucionario al final), y personaliza después la <strong>portada completa</strong> lista para imprimir en casa o encuadernar en copistería.
+                            </p>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                                <a href="/crear-libro-pasatiempos.html" class="btn-gen-action" style="padding: 12px 24px; font-size: 1rem;">
+                                    Abrir Generador de Libro Completo →
+                                </a>
+                                <a href="/tutorial-crear-libro-pasatiempos.html" class="btn-secondary" style="padding: 12px 18px;">
+                                    📖 Ver Guía Paso a Paso
+                                </a>
+                            </div>
+                        </div>
+                        <div style="text-align: center; background: #faf8f5; border: 1px solid #ebd9c8; border-radius: 12px; padding: 1.8rem; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <div style="display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 50%; background: rgba(135, 85, 59, 0.12); color: var(--color-accent, #87553b); font-size: 2rem; margin-bottom: 1rem;">
+                                🧩
+                            </div>
+                            <h3 style="font-size: 1.15rem; margin-bottom: 0.4rem; color: #111;">Interior + Portada Listos</h3>
+                            <p style="font-size: 0.88rem; color: #666; margin: 0; max-width: 280px; line-height: 1.5;">
+                                Documento PDF vectorial calibrado a 300 DPI con sangría KDP y márgenes de seguridad garantizados.
+                            </p>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- ENCABEZADO DE HERRAMIENTAS SUELTAS -->
+            <div class="section-intro-bar">
+                <h2>Generadores de pasatiempos individuales (5)</h2>
+                <p>Genera retos matemáticos, lógicos y verbales ilimitados en PDF de alta resolución para imprimir en casa.</p>
+            </div>
+
+            <!-- GRID DE LOS 5 GENERADORES INDIVIDUALES -->
+            <div class="gen-grid-2col">
+                
+                <!-- 1. SUDOKUS -->
+                <article class="gen-card" style="border-top: 4px solid #2d4a3e;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #2d4a3e; text-transform: uppercase; letter-spacing: 1px;">Lógica Numérica · 9×9</span>
+                        <span class="gen-status-badge status-available">Gratis en PDF</span>
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.6rem; color: #111;">
+                        <a href="/generador-sudokus.html" style="text-decoration: none; color: inherit;">Generador de Sudokus</a>
+                    </h3>
+                    <p style="color: #666; font-size: 0.95rem; line-height: 1.55; margin-bottom: 1.25rem; flex-grow: 1;">
+                        Genera cuadrículas clásicas de 9×9 con simetría rotacional y solución única garantizada. Elige entre 3 niveles de dificultad (Fácil, Medio y Difícil) con tipografía de alto contraste y hoja de soluciones.
+                    </p>
+                    <div style="border-top: 1px solid #f0f0f0; padding-top: 1rem; margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.82rem; color: #777;">Fácil / Medio / Difícil</span>
+                        <a href="/generador-sudokus.html" class="btn-gen-action">Abrir generador</a>
+                    </div>
+                </article>
+
+                <!-- 2. SOPAS DE LETRAS -->
+                <article class="gen-card" style="border-top: 4px solid var(--color-accent, #87553b);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-accent, #87553b); text-transform: uppercase; letter-spacing: 1px;">Agilidad Verbal · Con Mensaje</span>
+                        <span class="gen-status-badge status-available">Gratis en PDF</span>
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.6rem; color: #111;">
+                        <a href="/generador-sopas.html" style="text-decoration: none; color: inherit;">Generador de Sopas de Letras</a>
+                    </h3>
+                    <p style="color: #666; font-size: 0.95rem; line-height: 1.55; margin-bottom: 1.25rem; flex-grow: 1;">
+                        Crea sopas temáticas personalizadas con palabras en 8 direcciones. Incluye la exclusiva mecánica Menos Ruido: las letras no utilizadas forman un <strong>mensaje oculto o refrán secreto</strong> al terminar.
+                    </p>
+                    <div style="border-top: 1px solid #f0f0f0; padding-top: 1rem; margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.82rem; color: #777;">Palabras + Mensaje Oculto</span>
+                        <a href="/generador-sopas.html" class="btn-gen-action">Abrir generador</a>
+                    </div>
+                </article>
+
+                <!-- 3. PALABRAS CRUZADAS -->
+                <article class="gen-card" style="border-top: 4px solid #1a365d;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #1a365d; text-transform: uppercase; letter-spacing: 1px;">Vocabulario Deductivo</span>
+                        <span class="gen-status-badge status-available">Gratis en PDF</span>
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.6rem; color: #111;">
+                        <a href="/generador-cruzadas.html" style="text-decoration: none; color: inherit;">Generador de Palabras Cruzadas</a>
+                    </h3>
+                    <p style="color: #666; font-size: 0.95rem; line-height: 1.55; margin-bottom: 1.25rem; flex-grow: 1;">
+                        Crucigramas de encaje de palabras (tipo Criss-Cross) organizadas por número de letras. Incluye palabra inicial sombreada como pista de arranque y cuadrícula de alta legibilidad para resolver a lápiz.
+                    </p>
+                    <div style="border-top: 1px solid #f0f0f0; padding-top: 1rem; margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.82rem; color: #777;">Longitud 3 a 10 letras</span>
+                        <a href="/generador-cruzadas.html" class="btn-gen-action">Abrir generador</a>
+                    </div>
+                </article>
+
+                <!-- 4. KAKURO -->
+                <article class="gen-card" style="border-top: 4px solid #7c2d12;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #7c2d12; text-transform: uppercase; letter-spacing: 1px;">Aritmética Cruzada (Cross Sums)</span>
+                        <span class="gen-status-badge status-available">Gratis en PDF</span>
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.6rem; color: #111;">
+                        <a href="/generador-kakuro.html" style="text-decoration: none; color: inherit;">Generador de Kakuro</a>
+                    </h3>
+                    <p style="color: #666; font-size: 0.95rem; line-height: 1.55; margin-bottom: 1.25rem; flex-grow: 1;">
+                        El crucigrama de sumas numéricas: descompón las pistas en números del 1 al 9 sin repetir dígitos por partición. Validación formal matemática para garantizar solución única sin callejones ciegos.
+                    </p>
+                    <div style="border-top: 1px solid #f0f0f0; padding-top: 1rem; margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.82rem; color: #777;">Cuadrículas 6×6 a 9×9</span>
+                        <a href="/generador-kakuro.html" class="btn-gen-action">Abrir generador</a>
+                    </div>
+                </article>
+
+                <!-- 5. CALCUDOKU (KENKEN) -->
+                <article class="gen-card" style="border-top: 4px solid #4a2828;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #4a2828; text-transform: uppercase; letter-spacing: 1px;">Cálculo Mental y Bloques</span>
+                        <span class="gen-status-badge status-available">Gratis en PDF</span>
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.6rem; color: #111;">
+                        <a href="/generador-calcudoku.html" style="text-decoration: none; color: inherit;">Generador de Calcudoku (KenKen)</a>
+                    </h3>
+                    <p style="color: #666; font-size: 0.95rem; line-height: 1.55; margin-bottom: 1.25rem; flex-grow: 1;">
+                        Rellena las casillas de manera que cada fila y columna contenga dígitos sin repetir, resolviendo las operaciones matemáticas (suma, resta, multiplicación, división) indicadas en cada jaula.
+                    </p>
+                    <div style="border-top: 1px solid #f0f0f0; padding-top: 1rem; margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.82rem; color: #777;">Tamaños 4×4, 5×5 y 6×6</span>
+                        <a href="/generador-calcudoku.html" class="btn-gen-action">Abrir generador</a>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER OFICIAL MENOS RUIDO -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-col">
+                <span class="logo">Menos Ruido</span>
+                <p>Papelería analógica para desconectar de las pantallas, poner orden mental y recuperar la calma en el día a día.</p>
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #888;">contacto@editorialmenosruido.com</p>
+            </div>
+            <div class="footer-col">
+                <p class="footer-title">Cuadernos</p>
+                <a href="/cuadernos.html">Catálogo Completo</a>
+                <a href="/afirmaciones-diarias.html">Afirmaciones Diarias</a>
+                <a href="/habla-claro.html">Habla Claro</a>
+                <a href="/deja-de-darle-mil-vueltas.html">Deja de darle mil vueltas</a>
+                <a href="/planificador-90-dias.html">Planificador de 90 Días</a>
+            </div>
+            <div class="footer-col">
+                <p class="footer-title">Pasatiempos</p>
+                <a href="/pasatiempos.html">Libros de Pasatiempos</a>
+                <a href="/generador-pasatiempos.html">Crea tu propio pasatiempo</a>
+                <a href="/crear-libro-pasatiempos.html">Libro Completo en PDF</a>
+                <a href="/libro-pasatiempos-abuelos.html">Edición Abuel@s</a>
+                <a href="/libro-pasatiempos-navidad.html">Edición Navidad</a>
+            </div>
+            <div class="footer-col">
+                <p class="footer-title">Legal &amp; Información</p>
+                <a href="/aviso-legal.html">Aviso Legal</a>
+                <a href="/politica-privacidad.html">Política de Privacidad</a>
+                <a href="/politica-cookies.html">Política de Cookies</a>
+                <a href="/baja.html">Dar de baja suscripción</a>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            <p>&copy; 2026 Editorial Menos Ruido. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Tree dropdown toggle for mobile
+        document.querySelectorAll('.tree-sub-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const coll = btn.nextElementSibling;
+                if (coll) {
+                    const isVisible = coll.style.display !== 'none';
+                    coll.style.display = isVisible ? 'none' : 'block';
+                    btn.textContent = isVisible ? '▸ Desplegar generadores (5)' : '▾ Ocultar generadores (5)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

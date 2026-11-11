@@ -1,459 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="index, follow" />
-    <title>Pasatiempos de Lógica y Misterio · Editorial Menos Ruido</title>
-    <meta name="description" content="Pasatiempos diarios online, generadores imprimibles en PDF para casa y libros de lógica y misterio de Editorial Menos Ruido." />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="canonical" href="https://www.editorialmenosruido.com/pasatiempos.html" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libros de Pasatiempos en Papel | Editorial Menos Ruido</title>
+    <meta name="description" content="Catálogo oficial de libros de pasatiempos temáticos encuadernados en papel de Editorial Menos Ruido: Abuel@s, Enfermería (Turno de Noche), Docentes y Navidad. Más de 100 retos ilustrados por volumen para desconectar de las pantallas a lápiz.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.editorialmenosruido.com/pasatiempos.html">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="./diagnostic.css" />
-
-    <style>
-        :root {
-            --bg-paper: #fcfbf9;
-            --border-dark: #111111;
-            --cell-size-9: min(42px, 9.8vw);
-            --cell-size-4: min(72px, 18vw);
-            --color-conflict: #ef4444;
-            --color-user-digit: #1d4ed8;
-            --color-same-digit: #e0e7ff;
-            --color-highlight: #f3f4f6;
-            --color-selected: #dbeafe;
-        }
-
-        body {
-            background-color: var(--bg-paper);
-            color: #111111;
-            font-family: 'Inter', -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* HEADER DE 2 GRANDES RAMAS: BADGES Y ESTILOS */
-        .nav-badge-new {
-            background: #111111;
-            color: #ffffff;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .active-branch {
-            font-weight: 600 !important;
-            border-bottom: 2px solid #111111;
-        }
-
-        /* BANNER SECRETO DE MODO DESARROLLO */
-        .dev-badge-bar {
-            background: #fef08a;
-            color: #854d0e;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-align: center;
-            padding: 6px 12px;
-            border-bottom: 1px solid #fde047;
-            letter-spacing: 0.3px;
-        }
-
-        /* HERO SECCIÓN */
-        .hero-pasatiempos {
-            text-align: center;
-            max-width: 820px;
-            margin: 0 auto;
-            padding: 2.5rem 1rem 1.5rem;
-        }
-        .hero-pasatiempos h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.2rem;
-            margin-bottom: 0.8rem;
-            line-height: 1.25;
-            color: #111111;
-        }
-        .hero-pasatiempos p {
-            font-size: 1.05rem;
-            color: #4b5563;
-            line-height: 1.6;
-            max-width: 650px;
-            margin: 0 auto 1.5rem;
-        }
-
-        /* ANCLAJES RÁPIDOS */
-        .quick-subnav {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
-        .quick-subnav a {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #374151;
-            text-decoration: none;
-            padding: 6px 14px;
-            border-radius: 20px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            transition: all 0.15s ease;
-        }
-        .quick-subnav a:hover {
-            border-color: #111111;
-            color: #111111;
-        }
-
-        /* ================= SUDOKU CONTAINER ================= */
-        .sudoku-section {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            max-width: 680px;
-            margin: 0 auto 3rem;
-            padding: 1.5rem 1rem 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-        }
-
-        .sudoku-top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #f3f4f6;
-            margin-bottom: 1rem;
-        }
-
-        .sudoku-date-info {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .sudoku-tabs {
-            display: flex;
-            gap: 6px;
-            background: #f3f4f6;
-            padding: 3px;
-            border-radius: 8px;
-        }
-        .sudoku-tab-btn {
-            background: transparent;
-            border: none;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #4b5563;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .sudoku-tab-btn.active {
-            background: #ffffff;
-            color: #111111;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        /* CONTROLES Y CRONÓMETRO */
-        .sudoku-controls-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.25rem;
-            padding: 0 4px;
-        }
-        .timer-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: monospace;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #111111;
-            background: #f9fafb;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-        }
-        .btn-game-action {
-            background: #f9fafb;
-            border: 1px solid #d1d5db;
-            color: #374151;
-            font-size: 0.82rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .btn-game-action:hover {
-            border-color: #111111;
-            color: #111111;
-            background: #ffffff;
-        }
-
-        /* TABLERO SUDOKU */
-        .sudoku-board-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto 1.5rem;
-            touch-action: manipulation;
-        }
-
-        .sudoku-grid-board {
-            display: grid;
-            border: 2.5px solid var(--border-dark);
-            background: #ffffff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            user-select: none;
-        }
-
-        .sudoku-grid-board.size-9 {
-            grid-template-columns: repeat(9, var(--cell-size-9));
-            grid-template-rows: repeat(9, var(--cell-size-9));
-        }
-
-        .sudoku-grid-board.size-4 {
-            grid-template-columns: repeat(4, var(--cell-size-4));
-            grid-template-rows: repeat(4, var(--cell-size-4));
-        }
-
-        .sudoku-cell {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(1rem, 4vw, 1.35rem);
-            font-weight: 600;
-            color: #111111;
-            cursor: pointer;
-            outline: none;
-            padding: 0;
-            margin: 0;
-            transition: background 0.1s ease;
-        }
-
-        .sudoku-grid-board.size-4 .sudoku-cell {
-            font-size: clamp(1.6rem, 7vw, 2.2rem);
-        }
-
-        /* BORDES GRUESOS DE BLOQUES */
-        .sudoku-cell.border-right-thick {
-            border-right: 2.5px solid var(--border-dark);
-        }
-        .sudoku-cell.border-bottom-thick {
-            border-bottom: 2.5px solid var(--border-dark);
-        }
-
-        /* ESTADOS DE CASILLA */
-        .sudoku-cell.cell-initial {
-            background: #fdfdfd;
-            font-weight: 700;
-            color: #000000;
-        }
-        .sudoku-cell.cell-user {
-            color: var(--color-user-digit);
-            font-weight: 600;
-        }
-        .sudoku-cell.highlighted {
-            background: var(--color-highlight);
-        }
-        .sudoku-cell.same-digit {
-            background: var(--color-same-digit);
-        }
-        .sudoku-cell.selected {
-            background: var(--color-selected) !important;
-            box-shadow: inset 0 0 0 2px #3b82f6;
-        }
-        .sudoku-cell.conflict {
-            color: var(--color-conflict) !important;
-            background: #fee2e2 !important;
-        }
-
-        .board-paused {
-            filter: blur(8px);
-            pointer-events: none;
-        }
-
-        /* TECLADO VIRTUAL */
-        .sudoku-keypad-wrapper {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            max-width: 460px;
-            margin: 0 auto;
-        }
-        .keypad-btn {
-            background: #f9fafb;
-            border: 1px solid #d1d5db;
-            color: #111111;
-            font-size: 1.15rem;
-            font-weight: 700;
-            width: clamp(36px, 9vw, 44px);
-            height: clamp(42px, 10vw, 48px);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.12s ease;
-        }
-        .keypad-btn:hover {
-            background: #111111;
-            color: #ffffff;
-            border-color: #111111;
-        }
-        .keypad-btn:active {
-            transform: scale(0.95);
-        }
-        .keypad-erase, .keypad-hint {
-            background: #ffffff;
-            color: #4b5563;
-        }
-
-        /* STATS PIE SUDOKU */
-        .sudoku-stats-summary {
-            display: flex;
-            justify-content: space-around;
-            background: #f9fafb;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 1.5rem;
-            text-align: center;
-            border: 1px solid #f3f4f6;
-        }
-        .stat-item-val {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #111111;
-        }
-        .stat-item-lbl {
-            font-size: 0.72rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
-
-        /* SECCIONES COMPLEMENTARIAS: GENERADORES Y CATÁLOGO */
-        .section-pasatiempos {
-            max-width: 1040px;
-            margin: 0 auto 3.5rem;
-            padding: 0 1rem;
-        }
-        .section-header-clean {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .section-header-clean h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-            color: #111111;
-        }
-        .section-header-clean p {
-            color: #4b5563;
-            font-size: 0.95rem;
-            max-width: 580px;
-            margin: 0 auto;
-        }
-
-        .cards-grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .feature-box {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .feature-badge {
-            align-self: flex-start;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin-bottom: 0.8rem;
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-        .feature-badge.badge-soon {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .feature-box h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.3rem;
-            margin: 0 0 0.5rem;
-            color: #111111;
-        }
-        .feature-box p {
-            font-size: 0.9rem;
-            color: #4b5563;
-            line-height: 1.5;
-            margin-bottom: 1.25rem;
-        }
-
-        /* MODALES */
-        .sudoku-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            padding: 1rem;
-        }
-        .sudoku-modal.open {
-            display: flex;
-        }
-        .modal-content-card {
-            background: #ffffff;
-            border-radius: 12px;
-            max-width: 420px;
-            width: 100%;
-            padding: 2rem 1.5rem;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            position: relative;
-        }
-        .modal-content-card h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.6rem;
-            margin-top: 0;
-            margin-bottom: 0.5rem;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="./style.css">
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
+    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
 
-    <!-- AVISO DE SECCIÓN PRIVADA EN DESARROLLO -->
-
-    <!-- NUEVO HEADER DE 2 GRANDES RAMAS (Web 8) -->
-            <header class="navbar">
+    <!-- NAVBAR OFICIAL -->
+    <header class="navbar">
         <div class="container nav-content">
             <div class="nav-left">
                 <button class="nav-toggle" aria-label="Abrir menú" onclick="document.body.classList.toggle('nav-open')">
@@ -481,7 +50,7 @@
 
                 <!-- 2. RETO DE HOY -->
                 <a href="/hoy.html" onclick="document.body.classList.remove('nav-open')" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: #111111;">
-                    <span>🎯</span> Reto de hoy
+                    <span>⚡</span> Reto de hoy
                 </a>
 
                 <!-- 3. CUADERNOS & PLANIFICADORES -->
@@ -491,10 +60,10 @@
                         <div class="tree-group">
                             <a href="/generador.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Crea tu propio cuaderno</a>
                             <div class="tree-branch-items">
-                                <a href="/crear-planificador-completo.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📚 Crea tu planificador completo</a>
+                                <a href="/crear-planificador-completo.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">★ Crea tu planificador completo</a>
                                 <button type="button" class="tree-sub-toggle">▸ Desplegar generadores (6)</button>
                                 <div class="tree-sub-collapsible" style="display: none;">
-                                    <a href="/afirmaciones-diarias.html" class="tree-item" onclick="document.body.classList.remove(\'nav-open\')">Afirmaciones Diarias</a>
+                                    <a href="/afirmaciones-diarias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Afirmaciones Diarias</a>
                                     <a href="/generador-planificador-diario.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Diario</a>
                                     <a href="/generador-planificador-semanal.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Semanal</a>
                                     <a href="/generador-planificador-mensual.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador Mensual</a>
@@ -507,9 +76,10 @@
                         <div class="tree-group">
                             <a href="/cuadernos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Cuadernos y planificadores</a>
                             <div class="tree-branch-items">
-                                <a href="/cuadernos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📖 Compra el tuyo</a>
+                                <a href="/cuadernos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">🛒 Compra el tuyo</a>
                                 <button type="button" class="tree-sub-toggle">▸ Desplegar cuadernos (7)</button>
                                 <div class="tree-sub-collapsible" style="display: none;">
+                                    <a href="/afirmaciones-diarias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Afirmaciones Diarias</a>
                                     <a href="/habla-claro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Habla Claro (Límites)</a>
                                     <a href="/deja-de-darle-mil-vueltas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Deja de darle mil vueltas</a>
                                     <a href="/planificador-90-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 90 Días</a>
@@ -529,9 +99,9 @@
                     </a>
                     <div class="dropdown-content tree-dropdown">
                         <div class="tree-group">
-                            <a href="/pasatiempos.html#imprimibles" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Crea tu propio pasatiempo</a>
+                            <a href="/generador-pasatiempos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Crea tu propio pasatiempo</a>
                             <div class="tree-branch-items">
-                                <a href="/crear-libro-pasatiempos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📚 Crea tu libro de pasatiempos completo</a>
+                                <a href="/crear-libro-pasatiempos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">★ Crea tu libro de pasatiempos completo</a>
                                 <button type="button" class="tree-sub-toggle">▸ Desplegar generadores (5)</button>
                                 <div class="tree-sub-collapsible" style="display: none;">
                                     <a href="/generador-sudokus.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Generador de Sudokus</a>
@@ -543,13 +113,13 @@
                             </div>
                         </div>
                         <div class="tree-group">
-                            <a href="/pasatiempos.html#catalogo" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Libros de pasatiempos</a>
+                            <a href="/pasatiempos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Libros de pasatiempos</a>
                             <div class="tree-branch-items">
-                                <a href="/pasatiempos.html#catalogo" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📖 Compra el tuyo</a>
+                                <a href="/pasatiempos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">🛒 Compra el tuyo</a>
                                 <button type="button" class="tree-sub-toggle">▸ Desplegar libros (4)</button>
                                 <div class="tree-sub-collapsible" style="display: none;">
                                     <a href="/libro-pasatiempos-abuelos.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Cuaderno de los Abuel@s</a>
-                                    <a href="/libro-pasatiempos-enfermeria.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Turno de Noche: Enfermería</a>
+                                    <a href="/libro-pasatiempos-enfermeria.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Turno de Noche: Enfermera</a>
                                     <a href="/libro-pasatiempos-docentes.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">El Gran Libro de los Docentes</a>
                                     <a href="/libro-pasatiempos-navidad.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Pasatiempos de Navidad</a>
                                 </div>
@@ -563,263 +133,244 @@
             </nav>
         </div>
     </header>
-    <div class="nav-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
 
     <main>
-        <!-- HERO -->
-        <section class="hero-pasatiempos">
-            <h1>Pasatiempos en papel y lógica diaria.</h1>
-            <p>Crea gratis tus propios libros y hojas de pasatiempos en PDF para resolver a lápiz, o descubre nuestras ediciones temáticas encuadernadas.</p>
-            <div class="quick-subnav">
-                <a href="#imprimibles" style="background: #111111; color: #ffffff; font-weight: 700;">📚 Crea tu propio pasatiempo (PDF)</a>
-                <a href="#catalogo">📖 Libros de pasatiempos (4)</a>
-                <a href="/hoy.html">🎯 Ir al Reto de hoy (Online)</a>
+        <!-- HERO PRINCIPAL (IDÉNTICO EN ESTILO Y PROPORCIÓN A CUADERNOS.HTML) -->
+        <section style="padding: 3.5rem 1.25rem 2.2rem; text-align: center; background: linear-gradient(180deg, #faf8f5 0%, #ffffff 100%); border-bottom: 1px solid rgba(0,0,0,0.06);">
+            <div style="max-width: 820px; margin: 0 auto;">
+                <span style="display: inline-block; background: rgba(135,85,59,0.12); color: var(--color-accent, #87553b); font-size: 0.78rem; font-weight: 700; padding: 4px 14px; border-radius: 999px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.6rem;">Ediciones Encuadernadas en Papel</span>
+                <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.1rem, 4vw, 3rem); color: #111111; margin-bottom: 0.8rem; line-height: 1.15;">
+                    Libros de Pasatiempos
+                </h1>
+                <p style="font-size: 1.08rem; color: #555555; line-height: 1.6; margin: 0 auto; max-width: 650px;">
+                    Ediciones temáticas encuadernadas con capítulos ilustrados, humor cotidiano y más de 100 retos originales para poner a prueba el ingenio y desconectar de las pantallas a lápiz.
+                </p>
             </div>
         </section>
 
-        <!-- SECCIÓN 1: CREA TU PROPIO LIBRO DE PASATIEMPOS Y GENERADORES EN PDF -->
-        <section id="imprimibles" class="section-pasatiempos">
-            <div class="section-header-clean">
-                <h2>Crea tu propio libro de pasatiempos en PDF</h2>
-                <p>Configura un libro completo de 120 o 180 páginas (interior + portada) o genera hojas sueltas con soluciones en el reverso.</p>
-            </div>
+        <!-- SECCIÓN CATÁLOGO (GRID DE PRODUCTOS IDÉNTICA A CUADERNOS.HTML) -->
+        <section id="catalogo-pasatiempos" class="section" style="padding: 55px 0;">
+            <div class="container">
+                <div class="product-grid">
 
-            <div class="cards-grid-2">
-                <!-- TARJETA DESTACADA ARRIBA: CREA TU LIBRO DE PASATIEMPOS COMPLETO -->
-                <div class="feature-box" style="border-left: 5px solid #111111; background: #faf8f4; grid-column: 1 / -1; margin-bottom: 1.5rem; box-shadow: 0 6px 22px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
-                        <div>
-                            <span class="feature-badge" style="background: #111111; color: #ffffff;">⭐ Libro Completo (Interior + Portada)</span>
-                            <h3 style="font-size: 1.45rem; margin-top: 4px;">Crea tu Libro de Pasatiempos Completo (120 o 180 páginas)</h3>
-                            <p style="max-width: 840px; font-size: 0.95rem; color: #444; line-height: 1.6; margin-top: 6px;">
-                                Diseña tu tomo en 2 pasos: empieza configurando el <strong>interior</strong> combinando a tu medida <strong>Sudokus, Calcudokus, Kakuros, Palabras Cruzadas y Sopas de Letras</strong> (con portadilla, guía de reglas, uñero lateral y solucionario) y pasa después al <strong>diseñador de portadas</strong>.
-                            </p>
-                        </div>
-                    </div>
-                    <div style="padding-top: 1.2rem; border-top: 1px solid #e7dfd2; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 10px;">
-                        <div style="display: flex; align-items: center; gap: 12px; font-size: 0.84rem; color: #555; flex-wrap: wrap;">
-                            <a href="/generador-libro-pasatiempos.html" style="color: #111; font-weight: 700; text-decoration: underline;">Paso 1: Interior</a>
-                            <span>·</span>
-                            <a href="/generador-portadas-pasatiempos.html" style="color: #87553b; font-weight: 700; text-decoration: underline;">Paso 2: Portadas (si ya tienes interior)</a>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <a href="/tutorial-crear-libro-pasatiempos.html" style="background: #ffffff; color: #215c38; border: 1.5px solid #a7d7b8; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-                                📘 Tutorial paso a paso ↗
-                            </a>
-                            <a href="/crear-libro-pasatiempos.html" style="background: #111111; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-                                📚 Crear mi libro completo &rarr;
+                    <!-- 1. EL GRAN CUADERNO DE LOS ABUEL@S -->
+                    <div class="product-card fade-in-up">
+                        <div class="product-image">
+                            <a href="/libro-pasatiempos-abuelos.html" style="display: block;">
+                                <img src="/cover_abuelos_card.webp" alt="El Gran Cuaderno de los Abuel@s - Libro de pasatiempos familiar" loading="lazy" style="cursor: pointer; width: 100%; display: block;">
                             </a>
                         </div>
+                        <div class="product-info">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #2d4a3e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; display: block;">Edición Familiar · Más de 150 Retos</span>
+                            <h3>El Gran Cuaderno de los Abuel@s</h3>
+                            <p>11 capítulos temáticos y más de 150 retos de memoria con letra grande y alta visibilidad: palabras y números cruzados de ayer, sopas con mensaje secreto, sudokus calibrados, candados lógicos y el capítulo especial sobre la jerga de los nietos.</p>
+                            <a href="/libro-pasatiempos-abuelos.html" class="btn-full" style="background: #2d4a3e;">Ver Libro</a>
+                            <div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding-top: 10px; font-size: 0.82rem;">
+                                <a href="/libro-pasatiempos-abuelos.html#interior" style="color: #2d4a3e; font-weight: 600; text-decoration: none;">📖 Ver interior</a>
+                                <a href="/images/libros-pasatiempos/muestra-abuelos.pdf" target="_blank" style="color: #555; font-weight: 600; text-decoration: none;">📥 Muestra PDF gratis</a>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- LOS 5 GENERADORES INDIVIDUALES DEBAJO -->
-                <div class="feature-box" style="border-left: 4px solid #111111;">
-                    <div>
-                        <span class="feature-badge" style="background: #dcfce7; color: #166534;">Hojas Sueltas en PDF</span>
-                        <h3>Generador de Sudokus</h3>
-                        <p>Maqueta <strong>2 o 3 Sudokus en formato apaisado (8.25" × 6")</strong> con selector de dificultad (Fácil, Medio, Difícil o Progresivo) y reverso con soluciones para doble cara.</p>
+                    <!-- 2. TURNO DE NOCHE: ENFERMERA -->
+                    <div class="product-card fade-in-up">
+                        <div class="product-image">
+                            <a href="/libro-pasatiempos-enfermeria.html" style="display: block;">
+                                <img src="/cover_enfermeria_card.webp" alt="Turno de Noche: Enfermera - Cuaderno de pasatiempos sanitarios" loading="lazy" style="cursor: pointer; width: 100%; display: block;">
+                            </a>
+                        </div>
+                        <div class="product-info">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #1a365d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; display: block;">Edición Sanitaria · 10 Capítulos</span>
+                            <h3>Turno de Noche: Enfermera</h3>
+                            <p>El cuaderno de guardia para sobrevivir a la noche entre avisos de cabecero, timbres de la 204, rondas de constantes, analíticas de las seis, carros de medicación y relevos matinales. Humor sanitario real y lógica hospitalaria sin filtros.</p>
+                            <a href="/libro-pasatiempos-enfermeria.html" class="btn-full" style="background: #1a365d;">Ver Libro</a>
+                            <div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding-top: 10px; font-size: 0.82rem;">
+                                <a href="/libro-pasatiempos-enfermeria.html#interior" style="color: #1a365d; font-weight: 600; text-decoration: none;">📖 Ver interior</a>
+                                <a href="/images/libros-pasatiempos/muestra-enfermeria.pdf" target="_blank" style="color: #555; font-weight: 600; text-decoration: none;">📥 Muestra PDF gratis</a>
+                            </div>
+                        </div>
                     </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <span style="font-size: 0.84rem; font-weight: 600; color: #6b7280;">Retos + Soluciones</span>
-                        <a href="/generador-sudokus.html" style="background: #111111; color: #ffffff; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 0.84rem; font-weight: 600;">Abrir generador &rarr;</a>
-                    </div>
-                </div>
 
-                <div class="feature-box" style="border-left: 4px solid #87553b;">
-                    <div>
-                        <span class="feature-badge" style="background: #dcfce7; color: #166534;">Hojas Sueltas en PDF</span>
-                        <h3>Generador de Sopa de Letras</h3>
-                        <p>Genera sopas de letras en <strong>8.25" × 6"</strong> y <strong>6" × 9"</strong> con temáticas predefinidas o tus propias palabras, control de direcciones y soluciones en el reverso.</p>
+                    <!-- 3. EL GRAN LIBRO DE LOS DOCENTES -->
+                    <div class="product-card fade-in-up">
+                        <div class="product-image">
+                            <a href="/libro-pasatiempos-docentes.html" style="display: block;">
+                                <img src="/cover_docentes_card.webp" alt="El Gran Libro de los Docentes - Pasatiempos de claustro" loading="lazy" style="cursor: pointer; width: 100%; display: block;">
+                            </a>
+                        </div>
+                        <div class="product-info">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #7c2d12; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; display: block;">Edición Docente · 10 Capítulos</span>
+                            <h3>El Gran Libro de los Docentes</h3>
+                            <p>El cuaderno de claustro y sala de profesores para desconectar entre fotocopiadoras atascadas, corrección de exámenes a bolígrafo rojo, guardias de patio, tutorías familiares y juntas de evaluación. Creado por y para profes con vocación y café.</p>
+                            <a href="/libro-pasatiempos-docentes.html" class="btn-full" style="background: #7c2d12;">Ver Libro</a>
+                            <div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding-top: 10px; font-size: 0.82rem;">
+                                <a href="/libro-pasatiempos-docentes.html#interior" style="color: #7c2d12; font-weight: 600; text-decoration: none;">📖 Ver interior</a>
+                                <a href="/images/libros-pasatiempos/muestra-docentes.pdf" target="_blank" style="color: #555; font-weight: 600; text-decoration: none;">📥 Muestra PDF gratis</a>
+                            </div>
+                        </div>
                     </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <span style="font-size: 0.84rem; font-weight: 600; color: #6b7280;">Retos + Soluciones</span>
-                        <a href="/generador-sopas.html" style="background: #87553b; color: #ffffff; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 0.84rem; font-weight: 600;">Abrir generador &rarr;</a>
-                    </div>
-                </div>
 
-                <div class="feature-box" style="border-left: 4px solid #2b4c7e;">
-                    <div>
-                        <span class="feature-badge" style="background: #dcfce7; color: #166534;">Hojas Sueltas en PDF</span>
-                        <h3>Generador de Palabras Cruzadas</h3>
-                        <p>Cuadrícula deductiva de palabras cruzadas agrupadas por longitud en <strong>8.25" × 6"</strong> y <strong>6" × 9"</strong>, con pistas iniciales y solución completa en el reverso.</p>
+                    <!-- 4. PASATIEMPOS DE NAVIDAD -->
+                    <div class="product-card fade-in-up">
+                        <div class="product-image">
+                            <a href="/libro-pasatiempos-navidad.html" style="display: block;">
+                                <img src="/cover_navidad_card.webp" alt="Pasatiempos de Navidad - Edición sobremesa familiar" loading="lazy" style="cursor: pointer; width: 100%; display: block;">
+                            </a>
+                        </div>
+                        <div class="product-info">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #831818; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; display: block;">Edición Festiva · 10 Capítulos</span>
+                            <h3>Pasatiempos de Navidad</h3>
+                            <p>Humor, tradición, sobremesas familiares y retos a lápiz para sobrevivir (y disfrutar) de las fiestas: de la Lotería de Navidad y el amigo invisible a la Nochevieja, los polvorones eternos y la Noche de Reyes. Más de 100 pasatiempos para toda la familia.</p>
+                            <a href="/libro-pasatiempos-navidad.html" class="btn-full" style="background: #831818;">Ver Libro</a>
+                            <div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding-top: 10px; font-size: 0.82rem;">
+                                <a href="/libro-pasatiempos-navidad.html#interior" style="color: #831818; font-weight: 600; text-decoration: none;">📖 Ver interior</a>
+                                <a href="/images/libros-pasatiempos/muestra-navidad.pdf" target="_blank" style="color: #555; font-weight: 600; text-decoration: none;">📥 Muestra PDF gratis</a>
+                            </div>
+                        </div>
                     </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <span style="font-size: 0.84rem; font-weight: 600; color: #6b7280;">Retos + Soluciones</span>
-                        <a href="/generador-cruzadas.html" style="background: #2b4c7e; color: #ffffff; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 0.84rem; font-weight: 600;">Abrir generador &rarr;</a>
-                    </div>
-                </div>
 
-                <div class="feature-box" style="border-left: 4px solid #92400e;">
-                    <div>
-                        <span class="feature-badge" style="background: #dcfce7; color: #166534;">Hojas Sueltas en PDF</span>
-                        <h3>Generador de Kakuro</h3>
-                        <p>Genera hojas de Kakuro (Cross Sums) en <strong>8.25" × 6" (6 por pág.)</strong> y <strong>6" × 9" (2 por pág.)</strong> con pistas diagonales nítidas y soluciones en el reverso.</p>
-                    </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <span style="font-size: 0.84rem; font-weight: 600; color: #6b7280;">Retos + Soluciones</span>
-                        <a href="/generador-kakuro.html" style="background: #87553b; color: #ffffff; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 0.84rem; font-weight: 600;">Abrir generador &rarr;</a>
-                    </div>
-                </div>
-
-                <div class="feature-box" style="border-left: 4px solid #2e604a;">
-                    <div>
-                        <span class="feature-badge" style="background: #dcfce7; color: #166534;">Hojas Sueltas en PDF</span>
-                        <h3>Generador de Calcudoku</h3>
-                        <p>Genera hojas de Calcudoku (KenKen) en <strong>8.25" × 6"</strong> y <strong>6" × 9"</strong> con jaulas aritméticas (+, −, ×, ÷), bordes gruesos de imprenta y soluciones completas.</p>
-                    </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <span style="font-size: 0.84rem; font-weight: 600; color: #6b7280;">Retos + Soluciones</span>
-                        <a href="/generador-calcudoku.html" style="background: #2e604a; color: #ffffff; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 0.84rem; font-weight: 600;">Abrir generador &rarr;</a>
-                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- SECCIÓN 2: LOS 4 LIBROS DE PASATIEMPOS EN PAPEL -->
-        <section id="catalogo" class="section-pasatiempos">
-            <div class="section-header-clean">
-                <h2>Libros de Pasatiempos en Papel</h2>
-                <p>Nuestras 4 ediciones temáticas encuadernadas con capítulos ilustrados, humor cotidiano y más de un centenar de retos originales para resolver a lápiz.</p>
-            </div>
+        <!-- SECCIÓN: GUÍA DE ELECCIÓN RÁPIDA (EQUIVALENTE AL DIAGNÓSTICO DE CUADERNOS.HTML) -->
+        <section id="guia-eleccion" class="section" style="padding: 3.5rem 0; background: #faf9f6; border-top: 1px solid rgba(0,0,0,0.06);">
+            <div class="container" style="text-align: center; max-width: 820px;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-accent, #87553b); text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 0.5rem;">Guía de Elección</span>
+                <h2 style="font-size: 1.85rem; margin-bottom: 0.75rem; font-family: 'Playfair Display', serif;">¿Para quién es el libro de pasatiempos?</h2>
+                <p style="color: var(--color-text-muted, #555555); font-size: 1rem; margin-bottom: 2.2rem; line-height: 1.6;">
+                    Cada cuaderno está concebido para una realidad, un oficio o un momento compartido. Encuentra la edición idónea para ti o para regalar:
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; text-align: left;">
+                    
+                    <div style="background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column;">
+                        <span style="font-weight: 700; color: #2d4a3e; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;">Mayores &amp; Familia</span>
+                        <strong style="color: #111; font-size: 1.05rem; display: block; margin-bottom: 0.5rem;">El Gran Cuaderno de los Abuel@s</strong>
+                        <p style="font-size: 0.88rem; color: #555; margin: 0 0 1rem; line-height: 1.5; flex-grow: 1;">Letra grande, estimulación cognitiva sin pantallas y recuerdos para compartir con los nietos.</p>
+                        <a href="/libro-pasatiempos-abuelos.html" style="color: #2d4a3e; font-weight: 700; font-size: 0.85rem; text-decoration: none;">Ver detalles &rarr;</a>
+                    </div>
 
-            <div class="cards-grid-2">
-                <!-- 1. EL GRAN CUADERNO DE LOS ABUEL@S -->
-                <div class="feature-box" id="libro-abuelos" style="border-left: 4px solid #2d4a3e;">
-                    <div>
-                        <span class="feature-badge" style="background: rgba(45, 74, 62, 0.1); color: #2d4a3e;">Edición Familiar · 154 Pasatiempos</span>
-                        <h3><a href="/libro-pasatiempos-abuelos.html" style="text-decoration: none; color: inherit;">El Gran Cuaderno de los Abuel@s</a></h3>
-                        <p>11 capítulos temáticos y 154 retos de memoria con letra grande, palabras cruzadas, sopas con mensaje oculto, sudokus, candados lógicos y el capítulo especial sobre la jerga de los nietos.</p>
+                    <div style="background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column;">
+                        <span style="font-weight: 700; color: #1a365d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;">Personal Sanitario</span>
+                        <strong style="color: #111; font-size: 1.05rem; display: block; margin-bottom: 0.5rem;">Turno de Noche: Enfermera</strong>
+                        <p style="font-size: 0.88rem; color: #555; margin: 0 0 1rem; line-height: 1.5; flex-grow: 1;">Humor de guardia hospitalaria, timbres de planta y pausas de café en el office.</p>
+                        <a href="/libro-pasatiempos-enfermeria.html" style="color: #1a365d; font-weight: 700; font-size: 0.85rem; text-decoration: none;">Ver detalles &rarr;</a>
                     </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <a href="/libro-pasatiempos-abuelos.html#prueba-y-descarga" style="font-size: 0.84rem; font-weight: 600; color: #2d4a3e; text-decoration: none;">🖨️ Prueba el libro gratis</a>
-                        <a href="/libro-pasatiempos-abuelos.html" style="background: #2d4a3e; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 0.86rem; font-weight: 700;">Ver Libro &rarr;</a>
-                    </div>
-                </div>
 
-                <!-- 2. TURNO DE NOCHE: ENFERMERÍA -->
-                <div class="feature-box" id="libro-enfermeria" style="border-left: 4px solid #1a365d;">
-                    <div>
-                        <span class="feature-badge" style="background: rgba(26, 54, 93, 0.1); color: #1a365d;">Edición Sanitaria · 10 Capítulos</span>
-                        <h3><a href="/libro-pasatiempos-enfermeria.html" style="text-decoration: none; color: inherit;">Turno de Noche: Enfermería</a></h3>
-                        <p>El cuaderno de pasatiempos de guardia para sobrevivir a la noche entre avisos de cabecero, timbres, rondas de constantes, carros de medicación y relevos a las ocho de la mañana.</p>
+                    <div style="background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column;">
+                        <span style="font-weight: 700; color: #7c2d12; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;">Profes &amp; Maestros</span>
+                        <strong style="color: #111; font-size: 1.05rem; display: block; margin-bottom: 0.5rem;">El Gran Libro de los Docentes</strong>
+                        <p style="font-size: 0.88rem; color: #555; margin: 0 0 1rem; line-height: 1.5; flex-grow: 1;">Claustros, fotocopiadoras, correcciones a bolígrafo rojo y descanso en la sala de profesores.</p>
+                        <a href="/libro-pasatiempos-docentes.html" style="color: #7c2d12; font-weight: 700; font-size: 0.85rem; text-decoration: none;">Ver detalles &rarr;</a>
                     </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <a href="/libro-pasatiempos-enfermeria.html#prueba-y-descarga" style="font-size: 0.84rem; font-weight: 600; color: #1a365d; text-decoration: none;">🖨️ Prueba el libro gratis</a>
-                        <a href="/libro-pasatiempos-enfermeria.html" style="background: #1a365d; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 0.86rem; font-weight: 700;">Ver Libro &rarr;</a>
-                    </div>
-                </div>
 
-                <!-- 3. EL GRAN LIBRO DE LOS DOCENTES -->
-                <div class="feature-box" id="libro-docentes" style="border-left: 4px solid #1b3b6f;">
-                    <div>
-                        <span class="feature-badge" style="background: rgba(27, 59, 111, 0.1); color: #1b3b6f;">Edición Claustro · 10 Capítulos</span>
-                        <h3><a href="/libro-pasatiempos-docentes.html" style="text-decoration: none; color: inherit;">El Gran Libro de los Docentes</a></h3>
-                        <p>10 capítulos de ingenio, humor de sala de profesores y desconexión en papel para sobrevivir entre fotocopiadoras atascadas, guardias de patio, evaluaciones y claustros eternos.</p>
+                    <div style="background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column;">
+                        <span style="font-weight: 700; color: #831818; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;">Sobremesa &amp; Fiestas</span>
+                        <strong style="color: #111; font-size: 1.05rem; display: block; margin-bottom: 0.5rem;">Pasatiempos de Navidad</strong>
+                        <p style="font-size: 0.88rem; color: #555; margin: 0 0 1rem; line-height: 1.5; flex-grow: 1;">La guía de supervivencia navideña: polvorones, anécdotas, uvas y retos para toda la mesa.</p>
+                        <a href="/libro-pasatiempos-navidad.html" style="color: #831818; font-weight: 700; font-size: 0.85rem; text-decoration: none;">Ver detalles &rarr;</a>
                     </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <a href="/libro-pasatiempos-docentes.html#prueba-y-descarga" style="font-size: 0.84rem; font-weight: 600; color: #1b3b6f; text-decoration: none;">🖨️ Prueba el libro gratis</a>
-                        <a href="/libro-pasatiempos-docentes.html" style="background: #1b3b6f; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 0.86rem; font-weight: 700;">Ver Libro &rarr;</a>
-                    </div>
-                </div>
 
-                <!-- 4. PASATIEMPOS DE NAVIDAD -->
-                <div class="feature-box" id="libro-navidad" style="border-left: 4px solid #a83823;">
-                    <div>
-                        <span class="feature-badge" style="background: rgba(168, 56, 35, 0.1); color: #a83823;">Edición Festiva · 10 Capítulos</span>
-                        <h3><a href="/libro-pasatiempos-navidad.html" style="text-decoration: none; color: inherit;">Pasatiempos de Navidad</a></h3>
-                        <p>10 capítulos con todo el humor de las cenas de Nochebuena, el amigo invisible, la lotería del trabajo, las doce uvas y las sobremesas interminables para compartir en familia.</p>
-                    </div>
-                    <div style="padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <a href="/libro-pasatiempos-navidad.html#prueba-y-descarga" style="font-size: 0.84rem; font-weight: 600; color: #a83823; text-decoration: none;">🖨️ Prueba el libro gratis</a>
-                        <a href="/libro-pasatiempos-navidad.html" style="background: #a83823; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 0.86rem; font-weight: 700;">Ver Libro &rarr;</a>
-                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- SECCIÓN 3: LECTURAS SOBRE PASATIEMPOS -->
-        <section id="lecturas" class="section-pasatiempos">
-            <div class="section-header-clean">
-                <h2>Lecturas y guías sobre pasatiempos en papel</h2>
-                <p>Por qué entrenar la lógica fuera de las pantallas cambia tu atención y cómo fabricar tus propios cuadernos.</p>
-            </div>
-            <div class="readings-grid">
-                <div class="reading-card" style="display: flex; flex-direction: column; justify-content: space-between; cursor: default; border-top: 4px solid #111111; background: linear-gradient(180deg, #ffffff 0%, #fdfaf7 100%);">
-                    <div>
-                        <a href="/por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html" class="reading-card-thumb" style="text-decoration: none;">
-                            <img src="/images/lecturas/sudoku-papel-portada.webp" alt="Por qué hacer un sudoku en papel apaga el sobrepensamiento" loading="lazy">
-                        </a>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; align-items: center;">
-                            <span class="reading-tag" style="margin-bottom: 0;">Atención y Foco · 6 min</span>
-                        </div>
-                        <h3 style="margin-top: 0.2rem;"><a href="/por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html" style="text-decoration: none; color: inherit;">Por qué hacer un sudoku en papel apaga el sobrepensamiento mejor que meditar</a></h3>
-                        <p>Cuando tienes la cabeza a mil revoluciones, cerrar los ojos suele empeorar el bucle. Tu cerebro necesita una tarea lógica en papel donde las reglas estén cerradas.</p>
-                    </div>
-                    <div class="reading-footer" style="margin-top: 1.25rem;">
-                        <span>6 min de lectura</span>
-                        <a href="/por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html" class="read-more" style="text-decoration: none;">Leer &rarr;</a>
-                    </div>
+        <!-- SECCIÓN: LECTURAS Y GUÍAS EDITORIALES -->
+        <section id="lecturas-pasatiempos" class="section" style="padding: 4rem 0;">
+            <div class="container" style="max-width: 960px;">
+                <div style="text-align: center; margin-bottom: 2.5rem;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-accent, #87553b); text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 0.5rem;">Lecturas &amp; Ensayos</span>
+                    <h2 style="font-size: 1.85rem; font-family: 'Playfair Display', serif; color: #111;">La lógica en papel frente a las pantallas</h2>
+                    <p style="color: #666; font-size: 1rem; max-width: 600px; margin: 0.5rem auto 0;">Por qué resolver a lápiz calma el sobrepensamiento y estimula la atención profunda.</p>
                 </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <article style="background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 1.6rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-accent, #87553b); text-transform: uppercase;">Enfoque Mental</span>
+                        <h3 style="font-size: 1.15rem; margin: 0.5rem 0 0.6rem; line-height: 1.4;">
+                            <a href="/por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html" style="text-decoration: none; color: inherit;">Por qué hacer un sudoku en papel apaga el sobrepensamiento</a>
+                        </h3>
+                        <p style="font-size: 0.9rem; color: #666; line-height: 1.55; margin-bottom: 1rem;">
+                            Un análisis sobre cómo las reglas cerradas y el tacto del grafito cortan el bucle de la mente errante de forma inmediata.
+                        </p>
+                        <a href="/por-que-hacer-un-sudoku-en-papel-apaga-el-sobrepensamiento.html" style="font-weight: 600; color: var(--color-accent, #87553b); font-size: 0.85rem; text-decoration: none;">Leer artículo &rarr;</a>
+                    </article>
 
-                <div class="reading-card" style="display: flex; flex-direction: column; justify-content: space-between; cursor: default; border-top: 4px solid #87553b; background: linear-gradient(180deg, #ffffff 0%, #fdfaf7 100%);">
-                    <div>
-                        <a href="/como-generar-tu-libro-de-pasatiempos-para-imprimir.html" class="reading-card-thumb" style="text-decoration: none;">
-                            <img src="/images/lecturas/sudoku-papel-pausa.webp" alt="Cómo generar tu propio libro de pasatiempos en PDF" loading="lazy">
-                        </a>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; align-items: center;">
-                            <span class="reading-tag" style="margin-bottom: 0;">Guía Práctica · 6 min</span>
-                        </div>
-                        <h3 style="margin-top: 0.2rem;"><a href="/como-generar-tu-libro-de-pasatiempos-para-imprimir.html" style="text-decoration: none; color: inherit;">Cómo generar tu propio libro de pasatiempos en PDF para imprimir en casa</a></h3>
-                        <p>De los quioscos de verano a tu impresora: cómo configurar un tomo de 120 o 180 páginas combinando Sudokus, Kakuros, Calcudokus, Cruzadas y Sopas a tu medida.</p>
-                    </div>
-                    <div class="reading-footer" style="margin-top: 1.25rem;">
-                        <a href="/tutorial-crear-libro-pasatiempos.html" style="font-size: 0.85rem; font-weight: 700; color: #215c38; text-decoration: none;">📘 Ver tutorial</a>
-                        <a href="/como-generar-tu-libro-de-pasatiempos-para-imprimir.html" class="read-more" style="text-decoration: none;">Leer artículo &rarr;</a>
-                    </div>
+                    <article style="background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 1.6rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #2d4a3e; text-transform: uppercase;">Estimulación Senior</span>
+                        <h3 style="font-size: 1.15rem; margin: 0.5rem 0 0.6rem; line-height: 1.4;">
+                            <a href="/estimulacion-cognitiva-para-personas-mayores-en-papel.html" style="text-decoration: none; color: inherit;">Estimulación cognitiva para personas mayores en papel</a>
+                        </h3>
+                        <p style="font-size: 0.9rem; color: #666; line-height: 1.55; margin-bottom: 1rem;">
+                            La importancia de la tipografía legible, el contraste visual y la ausencia de pantallas en la agilidad de los abuelos.
+                        </p>
+                        <a href="/estimulacion-cognitiva-para-personas-mayores-en-papel.html" style="font-weight: 600; color: #2d4a3e; font-size: 0.85rem; text-decoration: none;">Leer artículo &rarr;</a>
+                    </article>
+
+                    <article style="background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 1.6rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #1a365d; text-transform: uppercase;">Impresión en Casa</span>
+                        <h3 style="font-size: 1.15rem; margin: 0.5rem 0 0.6rem; line-height: 1.4;">
+                            <a href="/como-generar-tu-libro-de-pasatiempos-para-imprimir.html" style="text-decoration: none; color: inherit;">Cómo generar tu propio libro de pasatiempos en PDF</a>
+                        </h3>
+                        <p style="font-size: 0.9rem; color: #666; line-height: 1.55; margin-bottom: 1rem;">
+                            Guía para utilizar nuestros generadores gratuitos, combinar cuadrículas y montar tu cuaderno en casa.
+                        </p>
+                        <a href="/como-generar-tu-libro-de-pasatiempos-para-imprimir.html" style="font-weight: 600; color: #1a365d; font-size: 0.85rem; text-decoration: none;">Leer artículo &rarr;</a>
+                    </article>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- FOOTER CORPORATIVO -->
-            <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-col">
-                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem;">Menos Ruido</h3>
-                    <p style="opacity: 0.82; font-size: 0.9rem; line-height: 1.55;">Cuadernos guiados, planificadores y pasatiempos en papel para pensar con claridad y desconectar de la pantalla.</p>
-                </div>
-                <div class="footer-col">
-                    <h4>Cuadernos &amp; Planificadores</h4>
-                    <a href="/crear-planificador-completo.html">Crea tu planificador completo</a>
-                    <a href="/generador.html">Crea tu propio cuaderno (PDF)</a>
-                    <a href="/cuadernos.html">Compra el tuyo (En papel)</a>
-                    <a href="/cuadernos.html#diagnostico">Test recomendador</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Pasatiempos y Reto de Hoy</h4>
-                    <a href="/hoy.html">🎯 Reto de hoy (5 juegos online)</a>
-                    <a href="/crear-libro-pasatiempos.html">Crea tu libro de pasatiempos</a>
-                    <a href="/pasatiempos.html#imprimibles">Generadores de pasatiempos PDF</a>
-                    <a href="/pasatiempos.html#catalogo">Libros de pasatiempos en papel</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Editorial y Legal</h4>
-                    <a href="/lecturas.html">Lecturas y Ensayos</a>
-                    <a href="mailto:contacto@editorialmenosruido.com" title="contacto@editorialmenosruido.com">contacto@editorialmenosruido.com</a>
-                    <a href="/aviso-legal.html">Aviso Legal</a>
-                    <a href="/politica-privacidad.html">Política de Privacidad</a>
-                    <a href="/politica-cookies.html">Política de Cookies</a>
-                </div>
+    <!-- FOOTER OFICIAL MENOS RUIDO -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-col">
+                <span class="logo">Menos Ruido</span>
+                <p>Papelería analógica para desconectar de las pantallas, poner orden mental y recuperar la calma en el día a día.</p>
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #888;">contacto@editorialmenosruido.com</p>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; <span id="year">2026</span> Editorial Menos Ruido. Todos los derechos reservados.</p>
+            <div class="footer-col">
+                <p class="footer-title">Cuadernos</p>
+                <a href="/cuadernos.html">Catálogo Completo</a>
+                <a href="/afirmaciones-diarias.html">Afirmaciones Diarias</a>
+                <a href="/habla-claro.html">Habla Claro</a>
+                <a href="/deja-de-darle-mil-vueltas.html">Deja de darle mil vueltas</a>
+                <a href="/planificador-90-dias.html">Planificador de 90 Días</a>
             </div>
+            <div class="footer-col">
+                <p class="footer-title">Pasatiempos</p>
+                <a href="/pasatiempos.html">Libros de Pasatiempos</a>
+                <a href="/generador-pasatiempos.html">Crea tu propio pasatiempo</a>
+                <a href="/crear-libro-pasatiempos.html">Libro Completo en PDF</a>
+                <a href="/libro-pasatiempos-abuelos.html">Edición Abuel@s</a>
+                <a href="/libro-pasatiempos-navidad.html">Edición Navidad</a>
+            </div>
+            <div class="footer-col">
+                <p class="footer-title">Legal &amp; Información</p>
+                <a href="/aviso-legal.html">Aviso Legal</a>
+                <a href="/politica-privacidad.html">Política de Privacidad</a>
+                <a href="/politica-cookies.html">Política de Cookies</a>
+                <a href="/baja.html">Dar de baja suscripción</a>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            <p>&copy; 2026 Editorial Menos Ruido. Todos los derechos reservados.</p>
         </div>
     </footer>
 
-    <!-- SCRIPT DEL PASATIEMPO DEL DÍA -->
-    <script type="module" src="./main.js"></script>
+    <script>
+        // Tree dropdown toggle for mobile
+        document.querySelectorAll('.tree-sub-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const coll = btn.nextElementSibling;
+                if (coll) {
+                    const isVisible = coll.style.display !== 'none';
+                    coll.style.display = isVisible ? 'none' : 'block';
+                    btn.textContent = isVisible ? '▸ Desplegar generadores (5)' : '▾ Ocultar generadores (5)';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
