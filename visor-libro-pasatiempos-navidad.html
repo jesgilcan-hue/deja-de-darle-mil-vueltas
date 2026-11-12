@@ -660,8 +660,9 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.15;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.LinearToneMapping;
+        renderer.toneMappingExposure = 1.0;
         container.appendChild(renderer.domElement);
 
         controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -677,11 +678,11 @@
             isTransitioning = false;
         });
 
-        // Iluminación
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.90);
+        // Iluminación calibrada para fidelidad de color editorial (papel mate sin saturación)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
         scene.add(ambientLight);
 
-        const keyLight = new THREE.DirectionalLight(0xfff6ea, 1.35);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.65);
         keyLight.position.set(12, 18, 14);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
@@ -691,11 +692,11 @@
         keyLight.shadow.bias = -0.0001;
         scene.add(keyLight);
 
-        const fillLight = new THREE.DirectionalLight(0xe8f0ff, 0.70);
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
         fillLight.position.set(-14, 8, 10);
         scene.add(fillLight);
 
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.85);
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.40);
         rimLight.position.set(0, -10, -15);
         scene.add(rimLight);
 
@@ -738,13 +739,13 @@
             bumpMap: bumpEdge,
             bumpScale: 0.03,
             roughness: 0.85,
-            metalness: 0.02
+            metalness: 0.01
         });
         const matSpine = new THREE.MeshStandardMaterial({
             color: 0xffffff,
             map: texSpine,
-            roughness: 0.42,
-            metalness: 0.02
+            roughness: 0.80,
+            metalness: 0.01
         });
         const matTop = new THREE.MeshStandardMaterial({
             color: 0xFAF7F2,
@@ -752,20 +753,20 @@
             bumpMap: bumpTop,
             bumpScale: 0.025,
             roughness: 0.85,
-            metalness: 0.02
+            metalness: 0.01
         });
         const matBottom = matTop;
         const matFront = new THREE.MeshStandardMaterial({
             color: 0xffffff,
             map: texFront,
-            roughness: 0.42,
-            metalness: 0.02
+            roughness: 0.80,
+            metalness: 0.01
         });
         const matBack = new THREE.MeshStandardMaterial({
             color: 0xffffff,
             map: texBack,
-            roughness: 0.42,
-            metalness: 0.02
+            roughness: 0.80,
+            metalness: 0.01
         });
 
         const materials = [
