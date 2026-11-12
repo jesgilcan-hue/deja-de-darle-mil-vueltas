@@ -808,7 +808,7 @@ ${pageSheets.join('\n')}
 
     <script>
         /* =========================================================================
-           1. THREE.JS MOTOR 3D CERRADO ORBITAL CON TRANSICIÓN ESFÉRICA PERFECCIONADA
+           1. THREE.JS MOTOR 3D CERRADO ORBITAL CON TRANSICIÓN CILÍNDRICA Y RESIZEOBSERVER
            ========================================================================= */
         const BOOK_W = ${cfg.bookW};
         const BOOK_H = ${cfg.bookH};
@@ -818,22 +818,30 @@ ${pageSheets.join('\n')}
         let isAutoRotating = true;
         let isTransitioning = false;
         
-        // Coordenadas esféricas suaves: la cámara órbita SIEMPRE alrededor del libro sin atravesarlo jamás
-        let currentSpherical = new THREE.Spherical();
-        let targetTheta = 0, targetPhi = Math.PI / 2, targetRadius = 20;
+        // Parámetros de transición orbital cilíndrica (garantía matemática de no cortar el centro jamás)
+        let transStartAngle = 0;
+        let transDiffAngle = 0;
+        let transStartY = 0;
+        let transTargetY = 0;
+        let transStartRadius = ${cfg.isLandscape ? 17 : 20};
+        let transTargetRadius = ${cfg.isLandscape ? 17 : 20};
+        let transStartTime = 0;
+        const TRANS_DURATION = 420; // ms
 
         const container = document.getElementById('canvas-container');
 
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x141414);
 
-        const aspect = window.innerWidth / window.innerHeight;
+        const initW = Math.max(container.clientWidth || window.innerWidth, 300);
+        const initH = Math.max(container.clientHeight || window.innerHeight, 200);
+        const aspect = initW / initH;
         camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
         camera.position.set(0, 0, ${cfg.isLandscape ? 17 : 20});
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(initW, initH);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -884,10 +892,15 @@ ${pageSheets.join('\n')}
         shadowPlane.receiveShadow = true;
         scene.add(shadowPlane);
 
-        // Texturas
+        // Texturas con callback y colores base seguros
         const texLoader = new THREE.TextureLoader();
         function loadTex(url, srgb = true) {
-            const t = texLoader.load(url, () => renderer.render(scene, camera));
+            const t = texLoader.load(
+                url,
+                () => renderer.render(scene, camera),
+                undefined,
+                (err) => console.warn('Textura no cargada:', url, err)
+            );
             if (srgb) t.encoding = THREE.sRGBEncoding;
             t.generateMipmaps = true;
             t.minFilter = THREE.LinearMipmapLinearFilter;
@@ -904,6 +917,7 @@ ${pageSheets.join('\n')}
         const bumpTop = loadTex('${texPrefix}/pages_top_bump.${ext}', false);
 
         const matEdge = new THREE.MeshStandardMaterial({
+            color: 0xFAF7F2,
             map: texEdge,
             bumpMap: bumpEdge,
             bumpScale: 0.03,
@@ -911,11 +925,13 @@ ${pageSheets.join('\n')}
             metalness: 0.02
         });
         const matSpine = new THREE.MeshStandardMaterial({
+            color: 0x222222,
             map: texSpine,
             roughness: 0.5,
             metalness: 0.05
         });
         const matTop = new THREE.MeshStandardMaterial({
+            color: 0xFAF7F2,
             map: texTop,
             bumpMap: bumpTop,
             bumpScale: 0.025,
@@ -924,11 +940,13 @@ ${pageSheets.join('\n')}
         });
         const matBottom = matTop;
         const matFront = new THREE.MeshStandardMaterial({
+            color: 0x2A2A2A,
             map: texFront,
             roughness: 0.45,
             metalness: 0.04
         });
         const matBack = new THREE.MeshStandardMaterial({
+            color: 0x2A2A2A,
             map: texBack,
             roughness: 0.45,
             metalness: 0.04
@@ -973,28 +991,28 @@ ${pageSheets.join('\n')}
             }
         });
 
-        // Bucle de render y animación esférica suave
-        function animate() {
+        // Bucle de render y animación orbital cilíndrica garantizada
+        function animate(now) {
             requestAnimationFrame(animate);
 
             if (isTransitioning) {
-                // Cálculo de camino angular más corto (evita dar toda la vuelta o cortar por dentro)
-                let dTheta = targetTheta - currentSpherical.theta;
-                while (dTheta > Math.PI) dTheta -= Math.PI * 2;
-                while (dTheta < -Math.PI) dTheta += Math.PI * 2;
+                const elapsed = (now || performance.now()) - transStartTime;
+                const p = Math.min(1, Math.max(0, elapsed / TRANS_DURATION));
+                const ease = 1 - Math.pow(1 - p, 3); // Cubic ease-out
 
-                currentSpherical.theta += dTheta * 0.12;
-                currentSpherical.phi += (targetPhi - currentSpherical.phi) * 0.12;
-                currentSpherical.radius += (targetRadius - currentSpherical.radius) * 0.12;
+                const currentAngle = transStartAngle + transDiffAngle * ease;
+                const currentRadius = transStartRadius + (transTargetRadius - transStartRadius) * ease;
+                const currentY = transStartY + (transTargetY - transStartY) * ease;
 
-                const offset = new THREE.Vector3().setFromSpherical(currentSpherical);
-                camera.position.copy(controls.target).add(offset);
-                camera.lookAt(controls.target);
+                camera.position.x = Math.sin(currentAngle) * currentRadius;
+                camera.position.z = Math.cos(currentAngle) * currentRadius;
+                camera.position.y = currentY;
 
-                if (Math.abs(dTheta) < 0.003 && Math.abs(targetPhi - currentSpherical.phi) < 0.003 && Math.abs(targetRadius - currentSpherical.radius) < 0.05) {
-                    currentSpherical.theta = targetTheta;
-                    currentSpherical.phi = targetPhi;
-                    currentSpherical.radius = targetRadius;
+                controls.target.set(0, 0, 0);
+                camera.lookAt(0, 0, 0);
+                controls.update();
+
+                if (p >= 1) {
                     isTransitioning = false;
                 }
             } else {
@@ -1003,51 +1021,85 @@ ${pageSheets.join('\n')}
 
             renderer.render(scene, camera);
         }
-        animate();
+        requestAnimationFrame(animate);
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        // Redimensionamiento robusto con ResizeObserver
+        function handleResize() {
+            const w = container.clientWidth || window.innerWidth;
+            const h = container.clientHeight || window.innerHeight;
+            if (w > 10 && h > 10) {
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            }
+        }
 
-        // Controles de cámara con órbita esférica garantizada
+        window.addEventListener('resize', handleResize);
+        if (typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(handleResize);
+            ro.observe(container);
+            ro.observe(document.body);
+        }
+        setTimeout(handleResize, 100);
+        setTimeout(handleResize, 350);
+
+        // Controles de cámara con órbita cilíndrica exterior (el libro NUNCA desaparece ni corta por dentro)
         window.lookAt = function(view) {
             setActiveButton('btn-' + view);
             controls.autoRotate = false;
-            document.getElementById('btn-rotate').classList.remove('active');
-
-            // Capturamos el vector actual de la cámara respecto al centro del libro
-            const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
-            currentSpherical.setFromVector3(offset);
+            const btnRotate = document.getElementById('btn-rotate');
+            if (btnRotate) btnRotate.classList.remove('active');
 
             const dist = ${cfg.isLandscape ? 17 : 20};
-            targetRadius = dist;
+            let targetAngle = 0;
+            let targetY = 0;
+            let targetRadius = dist;
 
             switch(view) {
                 case 'front':
-                    targetTheta = 0;
-                    targetPhi = Math.PI / 2;
+                    targetAngle = 0;
+                    targetY = 0;
+                    targetRadius = dist;
                     break;
                 case 'back':
-                    targetTheta = Math.PI;
-                    targetPhi = Math.PI / 2;
+                    targetAngle = Math.PI;
+                    targetY = 0;
+                    targetRadius = dist;
                     break;
                 case 'spine':
-                    targetTheta = -Math.PI / 2;
-                    targetPhi = Math.PI / 2;
+                    targetAngle = -Math.PI / 2;
+                    targetY = 0;
+                    targetRadius = dist;
                     break;
                 case 'pages':
-                    targetTheta = Math.PI / 2;
-                    targetPhi = Math.PI / 2;
+                    targetAngle = Math.PI / 2;
+                    targetY = 0;
+                    targetRadius = dist;
                     break;
                 case 'persp':
                 default:
-                    targetTheta = 0.72;
-                    targetPhi = 1.15;
-                    targetRadius = dist * 1.05;
+                    targetAngle = -0.55;
+                    targetY = dist * 0.28;
+                    targetRadius = dist;
                     break;
             }
+
+            const currX = camera.position.x;
+            const currZ = camera.position.z;
+            const currHorizRadius = Math.max(0.5, Math.sqrt(currX * currX + currZ * currZ));
+
+            transStartAngle = Math.atan2(currX, currZ);
+            let diff = targetAngle - transStartAngle;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+
+            transDiffAngle = diff;
+            transStartY = camera.position.y;
+            transTargetY = targetY;
+            transStartRadius = currHorizRadius;
+            transTargetRadius = targetRadius;
+            transStartTime = performance.now();
             isTransitioning = true;
         };
 
@@ -1321,6 +1373,32 @@ for (const cfg of books) {
     const webVisorPath = path.join(webDir, cfg.webVisorFile);
     fs.writeFileSync(webVisorPath, webHtml, 'utf-8');
     console.log(`  ✓ Web visor built: ${cfg.webVisorFile} (${webHtml.length} bytes)`);
+
+    // 3. Update web product page modal to point cleanly to ./${cfg.webVisorFile}
+    const prodPagePath = path.join(webDir, cfg.webProductPage);
+    if (fs.existsSync(prodPagePath)) {
+        let pContent = fs.readFileSync(prodPagePath, 'utf-8');
+        const oldOpenFnRegex = /function\s+openBookModal\s*\([^)]*\)\s*\{[\s\S]*?frame\.src\s*=\s*['"][^'"]+['"][\s\S]*?\}/;
+        const newOpenFn = `function openBookModal(mode = '3d') {
+            const modal = document.getElementById('book-modal');
+            const frame = document.getElementById('book-modal-frame');
+            if (modal && frame) {
+                const targetSrc = mode === 'interior' 
+                    ? './${cfg.webVisorFile}?mode=interior' 
+                    : './${cfg.webVisorFile}';
+                frame.src = targetSrc;
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+        }`;
+
+        if (oldOpenFnRegex.test(pContent)) {
+            pContent = pContent.replace(oldOpenFnRegex, newOpenFn);
+            fs.writeFileSync(prodPagePath, pContent, 'utf-8');
+            console.log(`  ✓ Product page modal updated: ${cfg.webProductPage}`);
+        }
+    }
 }
 
-console.log("\nAll 7 visors compiled with flawless spherical camera transitions!");
+console.log("\nAll 7 visors compiled with flawless camera transitions!");
