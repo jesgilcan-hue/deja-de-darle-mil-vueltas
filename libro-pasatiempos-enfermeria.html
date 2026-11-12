@@ -257,8 +257,54 @@
                     </div>
                 </div>
 
-                <div class="hero-image fade-in delay-3" style="text-align: center; flex: 1.15; display: flex; justify-content: center; align-items: center;">
-                    <img src="/images/libros-pasatiempos/enfermeria-portadilla.webp" class="cover-zoom" alt="Portadilla oficial de Turno de Noche: Enfermería" style="max-width: 440px; width: 100%; border-radius: 12px; box-shadow: -14px 18px 45px rgba(0,0,0,0.18); border: 1px solid rgba(0,0,0,0.08);" loading="lazy" />
+                <div class="hero-image fade-in delay-3" style="text-align: center; flex: 1.15; display: flex; flex-direction: column; justify-content: center; align-items: center; max-width: 480px; margin: 0 auto; width: 100%;">
+                    <div style="position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: transparent;">
+                        <div id="coverSliderTrack" style="display: flex; transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1); width: 100%;">
+                            <!-- Portada 1: Oficial -->
+                            <div style="min-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
+                                <img src="/images/mockup-pasatiempos-enfermeria-blanco.webp" class="cover-zoom" alt="Portada Oficial · Edición Color Turno - Turno de Noche: Enfermería" style="width: 100%; max-width: 440px; border-radius: 10px; cursor: zoom-in;" loading="lazy" />
+                                <span style="font-size: 0.8rem; color: #64748B; font-weight: 600; margin-top: 8px;">📖 Portada Oficial · Edición Color Turno</span>
+                            </div>
+                            <!-- Portada 2: Alternativa -->
+                            <div style="min-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
+                                <img src="/images/mockup-pasatiempos-enfermeria-disimulo-blanco.webp" class="cover-zoom" alt="Portada Alternativa · Edición Disimulo (Manual Clínico) - Turno de Noche: Enfermería" style="width: 100%; max-width: 440px; border-radius: 10px; cursor: zoom-in;" loading="lazy" />
+                                <span style="font-size: 0.8rem; color: #64748B; font-weight: 600; margin-top: 8px;">📖 Portada Alternativa · Edición Disimulo (Manual Clínico)</span>
+                            </div>
+                        </div>
+
+                        <!-- Flechas de navegación -->
+                        <button type="button" onclick="moveCoverSlide(-1)" aria-label="Portada anterior" style="position: absolute; left: 8px; top: 45%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #111; font-size: 1.2rem; z-index: 5;">‹</button>
+                        <button type="button" onclick="moveCoverSlide(1)" aria-label="Portada siguiente" style="position: absolute; right: 8px; top: 45%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #111; font-size: 1.2rem; z-index: 5;">›</button>
+                    </div>
+
+                    <!-- Dots de portada -->
+                    <div id="coverDots" style="display: flex; justify-content: center; gap: 8px; margin-top: 10px;">
+                        <button type="button" onclick="setCoverSlide(0)" class="cover-dot" style="width: 22px; height: 7px; border-radius: 4px; border: none; background: #1a365d; cursor: pointer; padding: 0;"></button>
+                        <button type="button" onclick="setCoverSlide(1)" class="cover-dot" style="width: 7px; height: 7px; border-radius: 4px; border: none; background: #cbd5e1; cursor: pointer; padding: 0;"></button>
+                    </div>
+
+                    <script>
+                        (function() {
+                            let coverIdx = 0;
+                            const track = document.getElementById('coverSliderTrack');
+                            const dots = document.querySelectorAll('#coverDots .cover-dot');
+                            window.moveCoverSlide = function(delta) {
+                                coverIdx = (coverIdx + delta + 2) % 2;
+                                update();
+                            };
+                            window.setCoverSlide = function(idx) {
+                                coverIdx = idx;
+                                update();
+                            };
+                            function update() {
+                                if (track) track.style.transform = `translateX(-${coverIdx * 100}%)`;
+                                dots.forEach((d, i) => {
+                                    d.style.background = (i === coverIdx) ? '#1a365d' : '#cbd5e1';
+                                    d.style.width = (i === coverIdx) ? '22px' : '7px';
+                                });
+                            }
+                        })();
+                    </script>
                 </div>
             </div>
             <div class="bg-shape"></div>
@@ -411,44 +457,134 @@
         <!-- 4ª SECCIÓN: INTERIOR DEL LIBRO -->
         <section id="interior" class="section" style="background-color: #faf8f5; padding: 75px 0;">
             <div class="container">
-                <div class="section-header" style="text-align: center; max-width: 680px; margin: 0 auto 2.5rem;">
+                <div class="section-header" style="text-align: center; max-width: 680px; margin: 0 auto 2rem;">
                     <h2>Interior del Cuaderno</h2>
-                    <p>Muestra directa de las páginas interiores del Capítulo 1. Haz clic sobre cualquiera de las láminas para ver los detalles con zoom.</p>
+                    <p>Una muestra real de la maquetación interior: casillas amplias de fácil lectura, tipografía nítida y pasatiempos equilibrados para resolver sin esfuerzo visual.</p>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.5rem;">
-                    <div style="background:#ffffff; border-radius:10px; padding:12px; border:1px solid rgba(0,0,0,0.07); text-align:center; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
-                        <img src="/images/libros-pasatiempos/enfermeria-interior-1.webp" alt="Apertura del Capítulo 1 - Turno de Noche: Enfermería" style="width:100%; border-radius:6px;" loading="lazy" />
-                        <strong style="display:block; margin-top:10px; font-size:0.92rem;">Apertura y Lectura del Capítulo</strong>
-                        <span style="font-size:0.8rem; color:var(--color-text-muted);">Relato temático introductorio</span>
-                    </div>
-                    <div style="background:#ffffff; border-radius:10px; padding:12px; border:1px solid rgba(0,0,0,0.07); text-align:center; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
-                        <img src="/images/libros-pasatiempos/enfermeria-interior-2.webp" alt="Palabras Cruzadas - Turno de Noche: Enfermería" style="width:100%; border-radius:6px;" loading="lazy" />
-                        <strong style="display:block; margin-top:10px; font-size:0.92rem;">Palabras Cruzadas Temáticas</strong>
-                        <span style="font-size:0.8rem; color:var(--color-text-muted);">Definiciones con guiños del capítulo</span>
-                    </div>
-                    <div style="background:#ffffff; border-radius:10px; padding:12px; border:1px solid rgba(0,0,0,0.07); text-align:center; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
-                        <img src="/images/libros-pasatiempos/enfermeria-interior-3.webp" alt="Sopa de Letras con Mensaje Secreto - Turno de Noche: Enfermería" style="width:100%; border-radius:6px;" loading="lazy" />
-                        <strong style="display:block; margin-top:10px; font-size:0.92rem;">Sopa con Mensaje Oculto</strong>
-                        <span style="font-size:0.8rem; color:var(--color-text-muted);">Cuadrícula de letra grande + frase secreta</span>
-                    </div>
-                    <div style="background:#ffffff; border-radius:10px; padding:12px; border:1px solid rgba(0,0,0,0.07); text-align:center; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
-                        <img src="/images/libros-pasatiempos/enfermeria-interior-4.webp" alt="Retos de Lógica y Deducción - Turno de Noche: Enfermería" style="width:100%; border-radius:6px;" loading="lazy" />
-                        <strong style="display:block; margin-top:10px; font-size:0.92rem;">Lógica Deductiva y Sudokus</strong>
-                        <span style="font-size:0.8rem; color:var(--color-text-muted);">Retos paso a paso con solución única</span>
+                <!-- CARRUSEL DE MUESTRAS INTERIORES -->
+                <div class="interior-carousel-wrapper" style="max-width: 760px; margin: 1.5rem auto 0; position: relative;">
+                    <div style="background: white; border-radius: 14px; padding: 0.85rem; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.06); position: relative; overflow: hidden;">
+                        
+                        <!-- Track de diapositivas -->
+                        <div id="interiorSliderTrack" style="display: flex; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); width: 100%;">
+                            <!-- Slide 1 -->
+                            <div class="interior-slide" style="min-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
+                                <div style="position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: #FAF7F2; text-align: center;">
+                                    <img src="/images/libros-pasatiempos/enfermeria-interior-1.webp" class="cover-zoom" alt="Pase de Guardia y Crónica Hospitalaria - Turno de Noche: Enfermería" style="width: 100%; max-height: 540px; object-fit: contain; display: block; margin: 0 auto; cursor: zoom-in;" loading="lazy" />
+                                </div>
+                                <div style="text-align: center; margin-top: 1rem; max-width: 600px; padding: 0 1rem;">
+                                    <h3 style="font-size: 1.15rem; font-weight: 700; color: #111; margin-bottom: 0.35rem;">Pase de Guardia y Crónica Hospitalaria</h3>
+                                    <p style="font-size: 0.88rem; color: #64748B; line-height: 1.5; margin: 0;">Relatos de las 22:00 h a las 08:00 h con el humor característico del office de planta.</p>
+                                </div>
+                            </div>
+                            <!-- Slide 2 -->
+                            <div class="interior-slide" style="min-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
+                                <div style="position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: #FAF7F2; text-align: center;">
+                                    <img src="/images/libros-pasatiempos/enfermeria-interior-2.webp" class="cover-zoom" alt="Crucigrama Sanitario de Guardia - Turno de Noche: Enfermería" style="width: 100%; max-height: 540px; object-fit: contain; display: block; margin: 0 auto; cursor: zoom-in;" loading="lazy" />
+                                </div>
+                                <div style="text-align: center; margin-top: 1rem; max-width: 600px; padding: 0 1rem;">
+                                    <h3 style="font-size: 1.15rem; font-weight: 700; color: #111; margin-bottom: 0.35rem;">Crucigrama Sanitario de Guardia</h3>
+                                    <p style="font-size: 0.88rem; color: #64748B; line-height: 1.5; margin: 0;">Fármacos, términos de triaje, timbres nocturnos y definiciones del día a día clínico.</p>
+                                </div>
+                            </div>
+                            <!-- Slide 3 -->
+                            <div class="interior-slide" style="min-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
+                                <div style="position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: #FAF7F2; text-align: center;">
+                                    <img src="/images/libros-pasatiempos/enfermeria-interior-3.webp" class="cover-zoom" alt="Sopa de Letras Hospitalaria - Turno de Noche: Enfermería" style="width: 100%; max-height: 540px; object-fit: contain; display: block; margin: 0 auto; cursor: zoom-in;" loading="lazy" />
+                                </div>
+                                <div style="text-align: center; margin-top: 1rem; max-width: 600px; padding: 0 1rem;">
+                                    <h3 style="font-size: 1.15rem; font-weight: 700; color: #111; margin-bottom: 0.35rem;">Sopa de Letras Hospitalaria</h3>
+                                    <p style="font-size: 0.88rem; color: #64748B; line-height: 1.5; margin: 0;">Material de curas, turnos rotatorios y clave oculta en las letras restantes.</p>
+                                </div>
+                            </div>
+                            <!-- Slide 4 -->
+                            <div class="interior-slide" style="min-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
+                                <div style="position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: #FAF7F2; text-align: center;">
+                                    <img src="/images/libros-pasatiempos/enfermeria-interior-4.webp" class="cover-zoom" alt="Lógica y Desconexión Rápida - Turno de Noche: Enfermería" style="width: 100%; max-height: 540px; object-fit: contain; display: block; margin: 0 auto; cursor: zoom-in;" loading="lazy" />
+                                </div>
+                                <div style="text-align: center; margin-top: 1rem; max-width: 600px; padding: 0 1rem;">
+                                    <h3 style="font-size: 1.15rem; font-weight: 700; color: #111; margin-bottom: 0.35rem;">Lógica y Desconexión Rápida</h3>
+                                    <p style="font-size: 0.88rem; color: #64748B; line-height: 1.5; margin: 0;">Pasatiempos pensados para pausas de café de 10 minutos y noches despejadas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controles de navegación -->
+                        <button type="button" onclick="moveInteriorSlide(-1)" aria-label="Foto anterior" style="position: absolute; left: 1.25rem; top: 40%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.3rem; transition: all 0.2s ease; z-index: 5;">‹</button>
+                        <button type="button" onclick="moveInteriorSlide(1)" aria-label="Siguiente foto" style="position: absolute; right: 1.25rem; top: 40%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.3rem; transition: all 0.2s ease; z-index: 5;">›</button>
+
+                        <!-- Indicadores de puntos (Dots) -->
+                        <div id="interiorDotsContainer" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 1.25rem; margin-bottom: 0.5rem;">
+                            <button type="button" onclick="goToInteriorSlide(0)" class="interior-dot" aria-label="Ir a muestra 1" style="width: 24px; height: 8px; border-radius: 4px; border: none; background: #1a365d; cursor: pointer; transition: all 0.3s ease; padding: 0;"></button>
+<button type="button" onclick="goToInteriorSlide(1)" class="interior-dot" aria-label="Ir a muestra 2" style="width: 8px; height: 8px; border-radius: 4px; border: none; background: #d0c8be; cursor: pointer; transition: all 0.3s ease; padding: 0;"></button>
+<button type="button" onclick="goToInteriorSlide(2)" class="interior-dot" aria-label="Ir a muestra 3" style="width: 8px; height: 8px; border-radius: 4px; border: none; background: #d0c8be; cursor: pointer; transition: all 0.3s ease; padding: 0;"></button>
+<button type="button" onclick="goToInteriorSlide(3)" class="interior-dot" aria-label="Ir a muestra 4" style="width: 8px; height: 8px; border-radius: 4px; border: none; background: #d0c8be; cursor: pointer; transition: all 0.3s ease; padding: 0;"></button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- DETALLES DE LA EDICIÓN IMPRESA -->
-                <div style="background: #ffffff; border-radius: 10px; padding: 1.5rem 2rem; margin-top: 2.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06);">
-                    <h4 style="font-family: var(--font-display); font-size: 1.15rem; color: var(--color-text); margin-bottom: 0.85rem;">
-                        ✦ Detalles de la edición en papel
-                    </h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; font-size: 0.88rem; color: var(--color-text);">
-                        <div><strong style="color:#1a365d;">✔ Gran Formato Cómodo:</strong> 8.5 × 11 pulgadas (21,59 × 27,94 cm) para apoyar y escribir con holgura.</div>
-                        <div><strong style="color:#1a365d;">✔ 160 Páginas con Letra Grande:</strong> Cuadrículas nítidas de alto contraste para leer y resolver sin fatiga visual.</div>
-                        <div><strong style="color:#1a365d;">✔ Solución Única Comprobada:</strong> Todos los retos están revisados para resolverse por pura lógica sin adivinar.</div>
-                        <div><strong style="color:#1a365d;">✔ Solucionario Incluido:</strong> Respuestas completas dentro del propio libro sin depender de pantallas.</div>
+                <script>
+                    (function() {
+                        let currentInteriorIndex = 0;
+                        const totalSlides = 4;
+                        const track = document.getElementById('interiorSliderTrack');
+                        const dots = document.querySelectorAll('.interior-dot');
+
+                        window.updateInteriorSlide = function() {
+                            if (!track) return;
+                            track.style.transform = `translateX(-${currentInteriorIndex * 100}%)`;
+                            dots.forEach((dot, idx) => {
+                                if (idx === currentInteriorIndex) {
+                                    dot.style.background = '#1a365d';
+                                    dot.style.width = '24px';
+                                } else {
+                                    dot.style.background = '#d0c8be';
+                                    dot.style.width = '8px';
+                                }
+                            });
+                        };
+
+                        window.moveInteriorSlide = function(delta) {
+                            currentInteriorIndex = (currentInteriorIndex + delta + totalSlides) % totalSlides;
+                            window.updateInteriorSlide();
+                        };
+
+                        window.goToInteriorSlide = function(idx) {
+                            currentInteriorIndex = idx;
+                            window.updateInteriorSlide();
+                        };
+
+                        let touchStartX = 0;
+                        let touchEndX = 0;
+                        if (track) {
+                            track.addEventListener('touchstart', e => {
+                                touchStartX = e.changedTouches[0].screenX;
+                            }, { passive: true });
+
+                            track.addEventListener('touchend', e => {
+                                touchEndX = e.changedTouches[0].screenX;
+                                if (touchStartX - touchEndX > 45) {
+                                    window.moveInteriorSlide(1);
+                                } else if (touchEndX - touchStartX > 45) {
+                                    window.moveInteriorSlide(-1);
+                                }
+                            }, { passive: true });
+                        }
+                    })();
+                </script>
+
+                <!-- BANNER DESTACADO: EXPERIENCIA INTERACTIVA -->
+                <div style="background: linear-gradient(135deg, #24201c 0%, #171513 100%); border-radius: 12px; padding: 2rem 2.25rem; margin-top: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.12); max-width: 760px; margin-left: auto; margin-right: auto; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+                    <div style="max-width: 520px;">
+                        <span style="background: rgba(196, 124, 93, 0.2); color: #d98e6e; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 0.6rem;">Experiencia interactiva</span>
+                        <h3 style="font-family: var(--font-display, serif); font-size: 1.35rem; color: #f5f2eb; margin-bottom: 0.4rem; letter-spacing: -0.01em;">Hojea una muestra de las primeras 7 páginas</h3>
+                        <p style="font-size: 0.92rem; color: #a69e94; line-height: 1.6; margin: 0;">Descubre la portada, las instrucciones y los primeros 3 pasatiempos (hasta cruzadas de números) con sonido realista de papel.</p>
+                    </div>
+                    <div>
+                        <button type="button" onclick="openBookModal()" class="btn-primary" style="background: #1a365d; color: #ffffff; padding: 0.85rem 1.6rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); transition: all 0.2s ease;">
+                            <span>📖</span> Hojear en 3D
+                        </button>
                     </div>
                 </div>
             </div>
