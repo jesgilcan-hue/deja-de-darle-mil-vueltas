@@ -19,6 +19,75 @@
     <!-- Styles -->
     <link rel="stylesheet" href="./style.css" />
     <link rel="stylesheet" href="./diagnostic.css" />
+
+    <style>
+        .book-modal-backdrop {
+            display: none !important;
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 16, 14, 0.92);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 100000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .book-modal-backdrop.is-open {
+            display: flex !important;
+        }
+        .book-modal-window {
+            position: relative;
+            width: 100%;
+            max-width: 1240px;
+            height: 90vh;
+            height: 90dvh;
+            background: #141414;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .book-modal-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #141414;
+        }
+        .book-modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 1000;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(20, 20, 20, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .book-modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.08);
+        }
+        @media (max-width: 768px) {
+            .book-modal-backdrop {
+                padding: 10px;
+            }
+            .book-modal-window {
+                height: 94vh;
+                height: 94dvh;
+                border-radius: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -148,6 +217,9 @@
                 <a href="#lecturas-asociadas">📖 Lecturas</a>
             </div>
             <div class="subnav-actions-group">
+                <button type="button" class="subnav-3d-btn" onclick="openBookModal()">
+                    <span>📖</span> Hojear en 3D
+                </button>
                 <a href="#prueba-y-descarga" class="subnav-3d-btn" style="text-decoration:none;">
                     <span>🖨️</span> Muestra 4 págs.
                 </a>
@@ -174,6 +246,10 @@
                     </div>
 
                     <div class="cta-group fade-in-up delay-2" style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn-secondary" onclick="openBookModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <span>📖</span> Hojear en 3D
+                        </button>
+                        
                         <span class="btn-primary" style="background:#2d4a3e; opacity:0.92; cursor:default;">📦 Próximamente en Amazon</span>
                         <a href="#prueba-y-descarga" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                             <span>🖨️</span> Prueba el libro gratis (4 págs. PDF)
@@ -614,6 +690,55 @@
                     a.remove();
                 });
             });
+        });
+    </script>
+
+    <!-- MODAL VISOR 3D HÍBRIDO -->
+    <div id="book-modal" class="book-modal-backdrop" aria-hidden="true">
+        <div class="book-modal-window">
+            <button class="book-modal-close-btn" onclick="closeBookModal()" aria-label="Cerrar modal">&times;</button>
+            <iframe id="book-modal-frame" class="book-modal-iframe" title="Visor 3D y muestra de páginas" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function openBookModal(mode = '3d') {
+            const modal = document.getElementById('book-modal');
+            const frame = document.getElementById('book-modal-frame');
+            if (modal && frame) {
+                const targetSrc = mode === 'interior' 
+                    ? './visor-libro-pasatiempos-abuelos.html?mode=interior' 
+                    : './visor-libro-pasatiempos-abuelos.html';
+                frame.src = targetSrc;
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeBookModal() {
+            const modal = document.getElementById('book-modal');
+            const frame = document.getElementById('book-modal-frame');
+            if (modal) {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+            if (frame) {
+                frame.src = 'about:blank';
+            }
+        }
+
+        document.getElementById('book-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBookModal();
+            }
+        });
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBookModal();
+            }
         });
     </script>
 </body>

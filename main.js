@@ -488,10 +488,11 @@ if ('serviceWorker' in navigator) {
         </a>
         <div class="mobile-planners-accordion" style="margin:0;">
           <button type="button" class="mobile-planners-toggle" style="padding:6px 8px; font-size:0.82rem;">
-            <span>▸ Desplegar cuadernos (6)</span>
+            <span>▸ Desplegar cuadernos (7)</span>
             <span class="toggle-icon">▾</span>
           </button>
           <div class="mobile-planners-list">
+            <a href="/afirmaciones-diarias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Afirmaciones Diarias</span></div></a>
             <a href="/habla-claro.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Habla Claro (Límites)</span></div></a>
             <a href="/deja-de-darle-mil-vueltas.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Deja de darle mil vueltas</span></div></a>
             <a href="/planificador-90-dias.html" class="mobile-book-card sub-card" onclick="document.body.classList.remove('nav-open')"><div class="mobile-book-info"><span class="mobile-book-title">Planificador de 90 Días</span></div></a>
@@ -639,8 +640,9 @@ function setupUnifiedNavDropdowns() {
           <a href="/cuadernos.html" class="tree-branch-title" onclick="document.body.classList.remove('nav-open')">Cuadernos y planificadores</a>
           <div class="tree-branch-items">
             <a href="/cuadernos.html" class="tree-item" style="font-weight: 700; color: #111;" onclick="document.body.classList.remove('nav-open')">📖 Compra el tuyo</a>
-            <button type="button" class="tree-sub-toggle">▸ Desplegar cuadernos (6)</button>
+            <button type="button" class="tree-sub-toggle">▸ Desplegar cuadernos (7)</button>
             <div class="tree-sub-collapsible" style="display: none;">
+              <a href="/afirmaciones-diarias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Afirmaciones Diarias</a>
               <a href="/habla-claro.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Habla Claro (Límites)</a>
               <a href="/deja-de-darle-mil-vueltas.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Deja de darle mil vueltas</a>
               <a href="/planificador-90-dias.html" class="tree-item" onclick="document.body.classList.remove('nav-open')">Planificador de 90 Días</a>

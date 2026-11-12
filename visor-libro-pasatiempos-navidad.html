@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 3D Completo · Pasatiempos de Navidad | Editorial Menos Ruido</title>
+    <style>
+        :root {
+            --bg-color: #141414;
+            --text-main: #FFFFFF;
+            --text-muted: #CBD5E1;
+            --accent-gold: #C29B38;
+            --accent-hover: #D4AF37;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+        }
+
+        /* --- VISTA 1: 3D MODELO CERRADO --- */
+        #view-3d {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+        }
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* HEADER SUPERIOR VISOR */
+        .visor-header {
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            right: 20px;
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+        }
+        .book-badge-info {
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 10px 16px;
+            pointer-events: auto;
+            max-width: 380px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .book-badge-info h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            letter-spacing: -0.01em;
+            margin-bottom: 2px;
+        }
+        .book-badge-info p {
+            font-size: 0.78rem;
+            color: #94A3B8;
+            line-height: 1.35;
+        }
+        .book-specs-mini {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+        .spec-tag {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.68rem;
+            color: #E2E8F0;
+            font-weight: 500;
+        }
+
+        .cta-open-interior {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FFFFFF;
+            color: #111111;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 11px 20px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .cta-open-interior:hover {
+            transform: translateY(-2px) scale(1.02);
+            background: #F8FAFC;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
+        }
+        .cta-open-interior svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* CONTROLES INFERIORES FLOTANTES (SCROLLABLE EN MÓVIL) */
+        .controls-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            background: rgba(20, 20, 20, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 40px;
+            padding: 4px;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+            max-width: calc(100vw - 32px);
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .controls-panel::-webkit-scrollbar {
+            display: none;
+        }
+        .controls-scroll-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .control-btn {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .control-btn:hover {
+            color: #FFFFFF;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .control-btn.active {
+            color: #FFFFFF;
+            background: rgba(255, 255, 255, 0.18);
+        }
+        .control-divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.12);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        /* --- VISTA 2: FLIPBOOK HOJEABLE INTERACTIVO --- */
+        #flipbook-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: rgba(14, 14, 14, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #flipbook-modal.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .flipbook-topbar {
+            width: 100%;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 105;
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+        }
+        .flipbook-title-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-back-3d {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 7px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .btn-back-3d:hover {
+            background: rgba(255, 255, 255, 0.22);
+            transform: translateX(-2px);
+        }
+        .flipbook-title-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #F8FAFC;
+        }
+        .flipbook-subtitle {
+            font-size: 0.76rem;
+            color: #94A3B8;
+        }
+
+        .flipbook-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #E2E8F0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #FFFFFF;
+        }
+
+        /* CONTENEDOR DEL LIBRO REALISTA HOJEABLE */
+        .flipbook-viewport {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 10px;
+        }
+        .book-wrapper {
+            position: relative;
+            max-width: 95vw;
+            max-height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-origin: center center;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #book-container {
+            margin: 0 auto;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 100px rgba(0,0,0,0.5);
+        }
+
+        .page-sheet {
+            background-color: #FAF7F2;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .page-sheet img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            display: block;
+            pointer-events: none;
+        }
+        .page-sheet.--left::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 25px;
+            background: linear-gradient(to left, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.04) 50%, rgba(0,0,0,0) 100%);
+            pointer-events: none;
+        }
+        .page-sheet.--right::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 25px;
+            background: linear-gradient(to right, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.04) 50%, rgba(0,0,0,0) 100%);
+            pointer-events: none;
+        }
+        .page-sheet[data-density="hard"] {
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+        }
+
+        /* FLECHAS FLOTANTES DE PASAR PÁGINA */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 110;
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .nav-arrow:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.22);
+            transform: translateY(-50%) scale(1.08);
+        }
+        .nav-arrow:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+        .nav-arrow.prev { left: 24px; }
+        .nav-arrow.next { right: 24px; }
+
+        /* BARRA INFERIOR DE CONTROLES FLIPBOOK */
+        .flipbook-bottombar {
+            width: 100%;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            z-index: 105;
+            background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+        }
+        .page-counter-pill {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #E2E8F0;
+        }
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 2px 6px;
+        }
+        .zoom-btn {
+            background: transparent;
+            border: none;
+            color: #FFFFFF;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .zoom-label {
+            font-size: 0.75rem;
+            color: #CBD5E1;
+            padding: 0 6px;
+            font-weight: 600;
+            min-width: 38px;
+            text-align: center;
+        }
+
+        /* TOOLTIP HINT */
+        .drag-hint {
+            position: absolute;
+            bottom: 74px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            background: rgba(20, 20, 20, 0.65);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            color: #94A3B8;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .visor-header {
+                top: 12px;
+                left: 12px;
+                right: 12px;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .book-badge-info {
+                max-width: 100%;
+                padding: 8px 12px;
+            }
+            .book-badge-info h1 {
+                font-size: 0.95rem;
+            }
+            .cta-open-interior {
+                align-self: flex-start;
+                padding: 8px 14px;
+                font-size: 0.8rem;
+            }
+            .nav-arrow {
+                width: 38px;
+                height: 38px;
+            }
+            .nav-arrow.prev { left: 8px; }
+            .nav-arrow.next { right: 8px; }
+            .drag-hint { display: none; }
+            .controls-panel {
+                bottom: 12px;
+                padding: 3px;
+            }
+            .control-btn {
+                padding: 6px 10px;
+                font-size: 0.74rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== VISTA 1: MODELO 3D REALISTA ==================== -->
+    <div id="view-3d">
+        <div id="canvas-container"></div>
+
+        <header class="visor-header">
+            <div class="book-badge-info">
+                <h1>Pasatiempos de Navidad</h1>
+                <p>Muestra de pasatiempos interior · 16 páginas</p>
+                <div class="book-specs-mini">
+                    <span class="spec-tag">Formato Grande 8.5" × 11" (21,59 × 27,94 cm)</span>
+                    <span class="spec-tag">146 Páginas</span>
+                    <span class="spec-tag">Lomo 0.83 cm (0.329")</span>
+                </div>
+            </div>
+
+            <button type="button" class="cta-open-interior" onclick="openFlipbook()" aria-label="Abrir e interactuar con el interior del libro">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <span>Hojear interior</span>
+            </button>
+        </header>
+
+        <div class="drag-hint" id="drag-hint">
+            <span>Arrastra para rotar en 360° · Rueda para zoom</span>
+        </div>
+
+        <nav class="controls-panel" aria-label="Controles del visor 3D">
+            <div class="controls-scroll-wrapper">
+                <button type="button" class="control-btn active" id="btn-front" onclick="lookAt('front')">
+                    <span>Portada</span>
+                </button>
+                <button type="button" class="control-btn" id="btn-pages" onclick="lookAt('pages')">
+                    <span>Hojas</span>
+                </button>
+                <button type="button" class="control-btn" id="btn-spine" onclick="lookAt('spine')">
+                    <span>Lomo</span>
+                </button>
+                <button type="button" class="control-btn" id="btn-back" onclick="lookAt('back')">
+                    <span>Contra</span>
+                </button>
+                <button type="button" class="control-btn" id="btn-persp" onclick="lookAt('persp')">
+                    <span>Persp.</span>
+                </button>
+                <div class="control-divider"></div>
+                <button type="button" class="control-btn active" id="btn-rotate" onclick="toggleAutoRotate()" title="Pausar o reanudar rotación continua">
+                    <span>Giro</span>
+                </button>
+                <button type="button" class="control-btn" onclick="openFlipbook()" style="color: #FFFFFF; font-weight: 700;">
+                    <span>📖 Abrir</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- ==================== VISTA 2: FLIPBOOK HOJEABLE ==================== -->
+    <div id="flipbook-modal" role="dialog" aria-modal="true" aria-label="Muestra hojeable del interior">
+        <header class="flipbook-topbar">
+            <div class="flipbook-title-area">
+                <button type="button" class="btn-back-3d" onclick="closeFlipbook()" aria-label="Volver a la vista 3D del libro cerrado">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Cerrar libro (3D)</span>
+                </button>
+                <div>
+                    <div class="flipbook-title-text">Pasatiempos de Navidad</div>
+                    <div class="flipbook-subtitle">Muestra de pasatiempos interior · 16 páginas</div>
+                </div>
+            </div>
+
+            <div class="flipbook-actions">
+                <button type="button" class="icon-btn" id="btn-sound-toggle" title="Activar/desactivar sonido de papel">
+                    <span id="sound-icon">🔊</span>
+                </button>
+                <button type="button" class="icon-btn" onclick="closeFlipbook()" title="Cerrar interior (Esc)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="flipbook-viewport">
+            <button type="button" class="nav-arrow prev" id="btn-prev" aria-label="Página anterior" disabled>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+
+            <div class="book-wrapper">
+                <div id="book-container">
+                    <div class="page-sheet --right" data-density="hard">
+                        <img src="/books/libro-pasatiempos-navidad/page_01.webp" alt="Página 1 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left">
+                        <img src="/books/libro-pasatiempos-navidad/page_02.webp" alt="Página 2 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --right">
+                        <img src="/books/libro-pasatiempos-navidad/page_03.webp" alt="Página 3 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left">
+                        <img src="/books/libro-pasatiempos-navidad/page_04.webp" alt="Página 4 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --right">
+                        <img src="/books/libro-pasatiempos-navidad/page_05.webp" alt="Página 5 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left">
+                        <img src="/books/libro-pasatiempos-navidad/page_06.webp" alt="Página 6 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --right">
+                        <img src="/books/libro-pasatiempos-navidad/page_07.webp" alt="Página 7 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left">
+                        <img src="/books/libro-pasatiempos-navidad/page_08.webp" alt="Página 8 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --right">
+                        <img src="/books/libro-pasatiempos-navidad/page_09.webp" alt="Página 9 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left">
+                        <img src="/books/libro-pasatiempos-navidad/page_10.webp" alt="Página 10 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --right">
+                        <img src="/books/libro-pasatiempos-navidad/page_11.webp" alt="Página 11 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left">
+                        <img src="/books/libro-pasatiempos-navidad/page_12.webp" alt="Página 12 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --right">
+                        <img src="/books/libro-pasatiempos-navidad/page_13.webp" alt="Página 13 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left">
+                        <img src="/books/libro-pasatiempos-navidad/page_14.webp" alt="Página 14 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --right">
+                        <img src="/books/libro-pasatiempos-navidad/page_15.webp" alt="Página 15 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                    <div class="page-sheet --left" data-density="hard">
+                        <img src="/books/libro-pasatiempos-navidad/page_16.webp" alt="Página 16 de Pasatiempos de Navidad" loading="lazy" />
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="nav-arrow next" id="btn-next" aria-label="Página siguiente">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+        </main>
+
+        <footer class="flipbook-bottombar">
+            <div class="page-counter-pill" id="page-counter">
+                Cargando páginas...
+            </div>
+
+            <div class="zoom-controls">
+                <button type="button" class="zoom-btn" id="btn-zoom-out" title="Reducir zoom">−</button>
+                <span class="zoom-label" id="zoom-label">100%</span>
+                <button type="button" class="zoom-btn" id="btn-zoom-in" title="Aumentar zoom">+</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Standalone / Web Scripts -->
+    <script src="/three.min.js"></script>
+    <script src="/orbit-controls.js"></script>
+    <script src="/page-flip.browser.js"></script>
+    <script>
+        if (typeof window.St === 'undefined') {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js';
+            document.head.appendChild(s);
+        }
+    </script>
+
+    <script>
+        /* =========================================================================
+           1. THREE.JS MOTOR 3D CERRADO ORBITAL CON TRANSICIÓN CILÍNDRICA Y RESIZEOBSERVER
+           ========================================================================= */
+        const BOOK_W = 8.5;
+        const BOOK_H = 11;
+        const BOOK_D = 0.3288;
+
+        let scene, camera, renderer, controls, bookMesh;
+        let isAutoRotating = true;
+        let isTransitioning = false;
+        
+        // Parámetros de transición orbital cilíndrica (garantía matemática de no cortar el centro jamás)
+        let transStartAngle = 0;
+        let transDiffAngle = 0;
+        let transStartY = 0;
+        let transTargetY = 0;
+        let transStartRadius = 20;
+        let transTargetRadius = 20;
+        let transStartTime = 0;
+        const TRANS_DURATION = 420; // ms
+
+        const container = document.getElementById('canvas-container');
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x141414);
+
+        const initW = Math.max(container.clientWidth || window.innerWidth, 300);
+        const initH = Math.max(container.clientHeight || window.innerHeight, 200);
+        const aspect = initW / initH;
+        camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
+        camera.position.set(0, 0, 20);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        renderer.setSize(initW, initH);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+        container.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.maxDistance = 45;
+        controls.minDistance = 6;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.4;
+
+        // Si el usuario toca o arrastra, cancelamos cualquier animación automática
+        controls.addEventListener('start', () => {
+            isTransitioning = false;
+        });
+
+        // Iluminación
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        scene.add(ambientLight);
+
+        const keyLight = new THREE.DirectionalLight(0xfff6ea, 1.25);
+        keyLight.position.set(12, 18, 14);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 2048;
+        keyLight.shadow.mapSize.height = 2048;
+        keyLight.shadow.camera.near = 1;
+        keyLight.shadow.camera.far = 40;
+        keyLight.shadow.bias = -0.0001;
+        scene.add(keyLight);
+
+        const fillLight = new THREE.DirectionalLight(0xe8f0ff, 0.6);
+        fillLight.position.set(-14, 8, 10);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        rimLight.position.set(0, -10, -15);
+        scene.add(rimLight);
+
+        // Suelo con sombra
+        const shadowPlaneGeo = new THREE.PlaneGeometry(35, 35);
+        const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.28 });
+        const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
+        shadowPlane.rotation.x = -Math.PI / 2;
+        shadowPlane.position.y = - (BOOK_H / 2) - 0.05;
+        shadowPlane.receiveShadow = true;
+        scene.add(shadowPlane);
+
+        // Texturas con callback y colores base seguros
+        const texLoader = new THREE.TextureLoader();
+        function loadTex(url, srgb = true) {
+            const t = texLoader.load(
+                url,
+                () => renderer.render(scene, camera),
+                undefined,
+                (err) => console.warn('Textura no cargada:', url, err)
+            );
+            if (srgb) t.encoding = THREE.sRGBEncoding;
+            t.generateMipmaps = true;
+            t.minFilter = THREE.LinearMipmapLinearFilter;
+            t.magFilter = THREE.LinearFilter;
+            return t;
+        }
+
+        const texFront = loadTex('/books/libro-pasatiempos-navidad/3d/front.jpg', true);
+        const texSpine = loadTex('/books/libro-pasatiempos-navidad/3d/spine.jpg', true);
+        const texBack = loadTex('/books/libro-pasatiempos-navidad/3d/back.jpg', true);
+        const texEdge = loadTex('/books/libro-pasatiempos-navidad/3d/pages_edge.jpg', true);
+        const bumpEdge = loadTex('/books/libro-pasatiempos-navidad/3d/pages_bump.jpg', false);
+        const texTop = loadTex('/books/libro-pasatiempos-navidad/3d/pages_top.jpg', true);
+        const bumpTop = loadTex('/books/libro-pasatiempos-navidad/3d/pages_top_bump.jpg', false);
+
+        const matEdge = new THREE.MeshStandardMaterial({
+            color: 0xFAF7F2,
+            map: texEdge,
+            bumpMap: bumpEdge,
+            bumpScale: 0.03,
+            roughness: 0.85,
+            metalness: 0.02
+        });
+        const matSpine = new THREE.MeshStandardMaterial({
+            color: 0x222222,
+            map: texSpine,
+            roughness: 0.5,
+            metalness: 0.05
+        });
+        const matTop = new THREE.MeshStandardMaterial({
+            color: 0xFAF7F2,
+            map: texTop,
+            bumpMap: bumpTop,
+            bumpScale: 0.025,
+            roughness: 0.85,
+            metalness: 0.02
+        });
+        const matBottom = matTop;
+        const matFront = new THREE.MeshStandardMaterial({
+            color: 0x2A2A2A,
+            map: texFront,
+            roughness: 0.45,
+            metalness: 0.04
+        });
+        const matBack = new THREE.MeshStandardMaterial({
+            color: 0x2A2A2A,
+            map: texBack,
+            roughness: 0.45,
+            metalness: 0.04
+        });
+
+        const materials = [
+            matEdge,    // +X (Corte derecho)
+            matSpine,   // -X (Lomo izquierdo)
+            matTop,     // +Y (Corte superior)
+            matBottom,  // -Y (Corte inferior)
+            matFront,   // +Z (Portada)
+            matBack     // -Z (Contraportada)
+        ];
+
+        const geometry = new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D, 4, 8, 4);
+        bookMesh = new THREE.Mesh(geometry, materials);
+        bookMesh.castShadow = true;
+        bookMesh.receiveShadow = true;
+        scene.add(bookMesh);
+
+        // Click en libro abre interior
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let mouseDownPos = { x: 0, y: 0 };
+
+        window.addEventListener('pointerdown', (e) => {
+            mouseDownPos = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            const dx = Math.abs(e.clientX - mouseDownPos.x);
+            const dy = Math.abs(e.clientY - mouseDownPos.y);
+            if (dx > 6 || dy > 6) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObject(bookMesh);
+            if (intersects.length > 0) {
+                openFlipbook();
+            }
+        });
+
+        // Bucle de render y animación orbital cilíndrica garantizada
+        function animate(now) {
+            requestAnimationFrame(animate);
+
+            if (isTransitioning) {
+                const elapsed = (now || performance.now()) - transStartTime;
+                const p = Math.min(1, Math.max(0, elapsed / TRANS_DURATION));
+                const ease = 1 - Math.pow(1 - p, 3); // Cubic ease-out
+
+                const currentAngle = transStartAngle + transDiffAngle * ease;
+                const currentRadius = transStartRadius + (transTargetRadius - transStartRadius) * ease;
+                const currentY = transStartY + (transTargetY - transStartY) * ease;
+
+                camera.position.x = Math.sin(currentAngle) * currentRadius;
+                camera.position.z = Math.cos(currentAngle) * currentRadius;
+                camera.position.y = currentY;
+
+                controls.target.set(0, 0, 0);
+                camera.lookAt(0, 0, 0);
+                controls.update();
+
+                if (p >= 1) {
+                    isTransitioning = false;
+                }
+            } else {
+                controls.update();
+            }
+
+            renderer.render(scene, camera);
+        }
+        requestAnimationFrame(animate);
+
+        // Redimensionamiento robusto con ResizeObserver
+        function handleResize() {
+            const w = container.clientWidth || window.innerWidth;
+            const h = container.clientHeight || window.innerHeight;
+            if (w > 10 && h > 10) {
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+        if (typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(handleResize);
+            ro.observe(container);
+            ro.observe(document.body);
+        }
+        setTimeout(handleResize, 100);
+        setTimeout(handleResize, 350);
+
+        // Controles de cámara con órbita cilíndrica exterior (el libro NUNCA desaparece ni corta por dentro)
+        window.lookAt = function(view) {
+            setActiveButton('btn-' + view);
+            controls.autoRotate = false;
+            const btnRotate = document.getElementById('btn-rotate');
+            if (btnRotate) btnRotate.classList.remove('active');
+
+            const dist = 20;
+            let targetAngle = 0;
+            let targetY = 0;
+            let targetRadius = dist;
+
+            switch(view) {
+                case 'front':
+                    targetAngle = 0;
+                    targetY = 0;
+                    targetRadius = dist;
+                    break;
+                case 'back':
+                    targetAngle = Math.PI;
+                    targetY = 0;
+                    targetRadius = dist;
+                    break;
+                case 'spine':
+                    targetAngle = -Math.PI / 2;
+                    targetY = 0;
+                    targetRadius = dist;
+                    break;
+                case 'pages':
+                    targetAngle = Math.PI / 2;
+                    targetY = 0;
+                    targetRadius = dist;
+                    break;
+                case 'persp':
+                default:
+                    targetAngle = -0.55;
+                    targetY = dist * 0.28;
+                    targetRadius = dist;
+                    break;
+            }
+
+            const currX = camera.position.x;
+            const currZ = camera.position.z;
+            const currHorizRadius = Math.max(0.5, Math.sqrt(currX * currX + currZ * currZ));
+
+            transStartAngle = Math.atan2(currX, currZ);
+            let diff = targetAngle - transStartAngle;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+
+            transDiffAngle = diff;
+            transStartY = camera.position.y;
+            transTargetY = targetY;
+            transStartRadius = currHorizRadius;
+            transTargetRadius = targetRadius;
+            transStartTime = performance.now();
+            isTransitioning = true;
+        };
+
+        window.toggleAutoRotate = function() {
+            controls.autoRotate = !controls.autoRotate;
+            const btnRotate = document.getElementById('btn-rotate');
+            if (btnRotate) btnRotate.classList.toggle('active', controls.autoRotate);
+            if (controls.autoRotate) {
+                isTransitioning = false;
+            }
+        };
+
+        function setActiveButton(btnId) {
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                if (btn.id !== 'btn-rotate') btn.classList.remove('active');
+            });
+            const targetBtn = document.getElementById(btnId);
+            if (targetBtn) targetBtn.classList.add('active');
+        }
+
+        /* =========================================================================
+           2. STPAGEFLIP MOTOR HOJEABLE REALISTA
+           ========================================================================= */
+        let pageFlip = null;
+        let audioCtx = null;
+        let soundEnabled = true;
+        let currentZoom = 1.0;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playPaperSound() {
+            if (!soundEnabled || !audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const bufferSize = audioCtx.sampleRate * 0.12;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                }
+
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(800, now);
+                filter.Q.setValueAtTime(1.8, now);
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                noise.start(now);
+                noise.stop(now + 0.12);
+            } catch (e) {
+                // Silencioso si audio no está permitido aún
+            }
+        }
+
+        function initPageFlip() {
+            if (pageFlip) return;
+
+            const container = document.getElementById('book-container');
+            const baseW = 550;
+            const baseH = 712;
+
+            pageFlip = new St.PageFlip(container, {
+                width: baseW,
+                height: baseH,
+                size: "stretch",
+                minWidth: 260,
+                maxWidth: 900,
+                minHeight: 340,
+                maxHeight: 1100,
+                maxShadowOpacity: 0.45,
+                showCover: true,
+                usePortrait: true,
+                mobileScrollSupport: false,
+                drawShadow: true,
+                autoSize: true,
+                swipeDistance: 25
+            });
+
+            const sheets = container.querySelectorAll('.page-sheet');
+            pageFlip.loadFromHTML(sheets);
+
+            pageFlip.on('flip', (e) => {
+                playPaperSound();
+                updateCounter(e.data);
+            });
+
+            pageFlip.on('init', () => {
+                updateCounter(0);
+            });
+        }
+
+        function updateCounter(pageIdx) {
+            const counter = document.getElementById('page-counter');
+            if (!counter || !pageFlip) return;
+            const total = pageFlip.getPageCount();
+            const curr = (pageIdx !== undefined) ? pageIdx : pageFlip.getCurrentPageIndex();
+
+            if (curr === 0) {
+                counter.innerText = 'Portada Exterior';
+            } else if (curr === total - 1) {
+                counter.innerText = 'Contraportada';
+            } else {
+                counter.innerText = `Página ${curr} de ${total - 2}`;
+            }
+
+            document.getElementById('btn-prev').disabled = (curr === 0);
+            document.getElementById('btn-next').disabled = (curr >= total - 1);
+        }
+
+        window.openFlipbook = function() {
+            initAudio();
+            controls.autoRotate = false;
+            const btnRotate = document.getElementById('btn-rotate');
+            if (btnRotate) btnRotate.classList.remove('active');
+
+            const modal = document.getElementById('flipbook-modal');
+            modal.classList.add('visible');
+            initPageFlip();
+
+            setTimeout(() => {
+                if (pageFlip) {
+                    pageFlip.update();
+                    updateCounter();
+                }
+            }, 80);
+        };
+
+        window.closeFlipbook = function() {
+            const modal = document.getElementById('flipbook-modal');
+            modal.classList.remove('visible');
+            controls.autoRotate = isAutoRotating;
+            const btnRotate = document.getElementById('btn-rotate');
+            if (btnRotate) btnRotate.classList.toggle('active', isAutoRotating);
+        };
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            initAudio();
+            if (pageFlip) pageFlip.flipPrev();
+        });
+        document.getElementById('btn-next').addEventListener('click', () => {
+            initAudio();
+            if (pageFlip) pageFlip.flipNext();
+        });
+
+        // Zoom Controls
+        const bookWrapper = document.querySelector('.book-wrapper');
+        const zoomLabel = document.getElementById('zoom-label');
+
+        function setZoom(val) {
+            currentZoom = Math.min(1.4, Math.max(0.75, val));
+            bookWrapper.style.transform = `scale(${currentZoom})`;
+            zoomLabel.innerText = Math.round(currentZoom * 100) + '%';
+        }
+
+        document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(currentZoom + 0.1));
+        document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(currentZoom - 0.1));
+        zoomLabel.addEventListener('click', () => setZoom(1.0));
+
+        // Sonido toggle
+        const soundBtn = document.getElementById('btn-sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundIcon.innerText = soundEnabled ? '🔊' : '🔇';
+            soundBtn.title = soundEnabled ? 'Sonido de papel activado' : 'Sonido desactivado';
+        });
+
+        // Teclado
+        window.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('flipbook-modal');
+            if (!modal.classList.contains('visible')) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    openFlipbook();
+                }
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                closeFlipbook();
+            } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                initAudio();
+                if (pageFlip) pageFlip.flipNext();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                initAudio();
+                if (pageFlip) pageFlip.flipPrev();
+            } else if (e.key === '+' || e.key === '=') {
+                setZoom(currentZoom + 0.1);
+            } else if (e.key === '-' || e.key === '_') {
+                setZoom(currentZoom - 0.1);
+            } else if (e.key === '0') {
+                setZoom(1.0);
+            }
+        });
+
+        // Auto-abrir interior si viene parámetro ?mode=interior
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'interior') {
+                setTimeout(openFlipbook, 150);
+            }
+        });
+    </script>
+</body>
+</html>
