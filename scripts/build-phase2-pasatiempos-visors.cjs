@@ -73,41 +73,49 @@ function generateHtml(book, isLocal) {
         </div>`;
   html = html.replace(headerRegex, newHeader);
 
-  // 3. Modal header title
+  // 3. Toolbar button (7 págs)
+  html = html.replace(
+    /<span>📖<\/span>\s*Hojear interior \([0-9]+ págs\)/,
+    `<span>📖</span> Hojear interior (7 págs)`
+  );
+
+  // 4. Modal header title & subtitle
   html = html.replace(
     /<div class="modal-book-title">.*?<\/div>/,
     `<div class="modal-book-title">${book.title}</div>`
   );
   html = html.replace(
     /<div class="modal-book-subtitle">.*?<\/div>/,
-    `<div class="modal-book-subtitle">Muestra de pasatiempos interior · 16 páginas</div>`
+    `<div class="modal-book-subtitle">Muestra de pasatiempos interior · 7 páginas</div>`
   );
 
-  // 4. Page images
+  // 5. Replace #book-container sheets with EXACTLY 7 sheets
   const pagesBasePath = isLocal ? './pages' : `/books/${book.slug}`;
-  for (let i = 1; i <= 16; i++) {
+  let sheetsHtml = `<div id="book-container">\n`;
+  for (let i = 1; i <= 7; i++) {
     const numStr = String(i).padStart(2, '0');
-    const oldRegex = new RegExp(
-      `/books/planificador-90-dias/page_${numStr}\\.webp`,
-      'g'
-    );
-    html = html.replace(oldRegex, `${pagesBasePath}/page_${numStr}.webp`);
+    const sideClass = (i % 2 === 1) ? '--right' : '--left';
+    const densityAttr = (i === 1) ? ' data-density="hard"' : '';
+    sheetsHtml += `                    <div class="page-sheet ${sideClass}"${densityAttr}>
+                        <img src="${pagesBasePath}/page_${numStr}.webp" alt="Página ${i} de ${book.title}" loading="lazy" />
+                    </div>\n`;
   }
-  // Alt text
-  html = html.replace(/Planificador 90 Días/g, book.title);
+  sheetsHtml += `                </div>`;
 
-  // 5. Script paths for local vs web
+  html = html.replace(/<div id="book-container">[\s\S]*?<\/div>\s*<\/div>\s*<\/main>/, `${sheetsHtml}\n            </div>\n        </main>`);
+
+  // 6. Script paths for local vs web
   if (isLocal) {
     html = html.replace(/src="\/three\.min\.js"/g, 'src="./three.min.js"');
     html = html.replace(/src="\/orbit-controls\.js"/g, 'src="./orbit-controls.js"');
     html = html.replace(/src="\/page-flip\.browser\.js"/g, 'src="./page-flip.browser.js"');
   }
 
-  // 6. Texture paths
+  // 7. Texture paths
   const texBasePath = isLocal ? './textures' : `/books/${book.slug}/3d`;
   html = html.replace(/\/books\/planificador-90-dias\/3d/g, texBasePath);
 
-  // 7. BOOK DIMENSIONS & CAMERA DISTANCE
+  // 8. BOOK DIMENSIONS & CAMERA DISTANCE
   html = html.replace(/const BOOK_W = 6;/, `const BOOK_W = ${book.bookW};`);
   html = html.replace(/const BOOK_H = 9;/, `const BOOK_H = ${book.bookH};`);
   html = html.replace(/const BOOK_D = 0\.3355;/, `const BOOK_D = ${book.bookD};`);
@@ -118,8 +126,7 @@ function generateHtml(book, isLocal) {
   html = html.replace(/let transTargetRadius = 20;/, 'let transTargetRadius = 24;');
   html = html.replace(/const dist = 20;/, 'const dist = 24;');
 
-  // 8. BRIGHTNESS & COLORS: PREVENT MURKY/DARK COVERS
-  // Set material colors to 0xffffff so cover textures are rendered at 100% full original brightness
+  // 9. BRIGHTNESS & COLORS: PREVENT MURKY/DARK COVERS
   html = html.replace(
     /const matSpine = new THREE\.MeshStandardMaterial\(\{[\s\S]*?color:\s*0x[0-9a-fA-F]+,/m,
     `const matSpine = new THREE.MeshStandardMaterial({\n            color: 0xffffff,`
@@ -132,8 +139,7 @@ function generateHtml(book, isLocal) {
     /const matBack = new THREE\.MeshStandardMaterial\(\{[\s\S]*?color:\s*0x[0-9a-fA-F]+,/m,
     `const matBack = new THREE.MeshStandardMaterial({\n            color: 0xffffff,`
   );
-  // Slightly higher roughness/metalness tuning for soft cover
-  html = html.replace(/roughness: 0\.5,/g, 'roughness: 0.45,');
+  html = html.replace(/roughness: 0\.5,/g, 'roughness: 0.42,');
   html = html.replace(/metalness: 0\.05/g, 'metalness: 0.02');
   html = html.replace(/roughness: 0\.45,/g, 'roughness: 0.42,');
   html = html.replace(/metalness: 0\.04/g, 'metalness: 0.02');
@@ -160,9 +166,7 @@ function generateHtml(book, isLocal) {
     'renderer.toneMappingExposure = 1.15;'
   );
 
-  // 9. FLIPBOOK SIZE & PROPORTIONS FOR 8.5" x 11"
-  // For 8.5x11, single page aspect ratio is 8.5:11 (0.7727)
-  // baseW = 550, baseH = 712 (550 * 11 / 8.5 = 711.76)
+  // 10. FLIPBOOK SIZE & PROPORTIONS FOR 8.5" x 11"
   html = html.replace(/const baseW = 550;\s*const baseH = 825;/, 'const baseW = 550;\n            const baseH = 712;');
   html = html.replace(/minWidth: 260,\s*maxWidth: 900,\s*minHeight: 380,\s*maxHeight: 900,/, 'minWidth: 280,\n                maxWidth: 1200,\n                minHeight: 360,\n                maxHeight: 1200,');
 
@@ -199,4 +203,4 @@ BOOKS.forEach((book) => {
   console.log(`[OK] Local visor escrito: ${localPath}`);
 });
 
-console.log('¡Todos los visores regenerados con el template exacto del Planificador 90 Días!');
+console.log('¡Todos los visores regenerados con exactamente 7 páginas!');
