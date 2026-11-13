@@ -99,7 +99,7 @@ export async function sendSilentDeviceVerificationEmail(user, pendingDevice) {
       ? window.location.origin
       : 'https://www.editorialmenosruido.com';
 
-    const verifyUrl = `${origin}/mi-espacio.html?device_email_verify=${encodeURIComponent(pendingDevice.emailVerificationCode)}`;
+    const verifyUrl = `${origin}/mi-espacio?device_email_verify=${encodeURIComponent(pendingDevice.emailVerificationCode)}`;
     const dateFormatted = new Date(pendingDevice.detectedAt || Date.now()).toLocaleString('es-ES', {
       day: '2-digit',
       month: '2-digit',

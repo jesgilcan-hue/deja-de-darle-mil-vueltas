@@ -49,7 +49,7 @@ function kickOut(reason = 'Acceso no autorizado') {
     sessionStorage.removeItem('mr_admin_pin_verified');
     sessionStorage.removeItem('mr_dev_pin_verified');
   } catch (e) {}
-  window.location.replace('/404.html');
+  window.location.replace('/404');
 }
 
 function revealPage() {

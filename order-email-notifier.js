@@ -95,12 +95,12 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
     const tracking = order.shipping?.trackingNumber || order.luluJob?.trackingCode || 'CEX-84920144';
     const luluJobId = order.luluJob?.jobId || ('LULU-' + Math.floor(100000 + Math.random() * 900000));
 
-    const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
+    const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
     let orderEncoded = '';
     try {
       orderEncoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(order)))));
     } catch (e) {}
-    const adminOrderTargetUrl = `https://www.editorialmenosruido.com/admin-pedidos.html?orderId=${encodeURIComponent(order.id || orderNumber)}${orderEncoded ? `&orderData=${orderEncoded}` : ''}`;
+    const adminOrderTargetUrl = `https://www.editorialmenosruido.com/admin-pedidos?orderId=${encodeURIComponent(order.id || orderNumber)}${orderEncoded ? `&orderData=${orderEncoded}` : ''}`;
 
     let clientSubject = '';
     let clientBody = '';

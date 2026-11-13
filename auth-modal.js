@@ -283,7 +283,7 @@ export function setupNavbarAuth() {
         drawerBtn.title = `Mi Espacio (${name})`;
         drawerBtn.onclick = () => {
           document.body.classList.remove('nav-open');
-          window.location.href = '/mi-espacio.html';
+          window.location.href = '/mi-espacio';
         };
       }
 
@@ -298,14 +298,14 @@ export function setupNavbarAuth() {
               </div>
             </div>
             <div class="drawer-user-card-links">
-              <a href="/mi-espacio.html" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
+              <a href="/mi-espacio" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
                 👤 Mi Espacio
               </a>
-              <a href="/mi-espacio.html?tab=disenos" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
+              <a href="/mi-espacio?tab=disenos" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
                 📐 Mis Plantillas
               </a>
               ${isTestCustomer(user) || isDeveloper(user) ? `
-              <a href="/mi-espacio.html?tab=pedidos" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
+              <a href="/mi-espacio?tab=pedidos" class="drawer-user-pill-link" onclick="document.body.classList.remove('nav-open')">
                 📦 Mis Pedidos y Cesta
               </a>
               ` : ''}
@@ -406,30 +406,30 @@ export function setupNavbarAuth() {
               <div class="dropdown-user-email">${escapeHtml(email || '')}</div>
             </div>
             <div class="dropdown-user-divider"></div>
-            <a href="/mi-espacio.html" class="dropdown-user-item">
+            <a href="/mi-espacio" class="dropdown-user-item">
               <span class="item-icon">👤</span>
               <span>Mi Espacio</span>
             </a>
-            <a href="/mi-espacio.html?tab=disenos" class="dropdown-user-item">
+            <a href="/mi-espacio?tab=disenos" class="dropdown-user-item">
               <span class="item-icon">📐</span>
               <span>Mis Plantillas y Diseños</span>
             </a>
-            <a href="/mi-espacio.html?tab=hoy" class="dropdown-user-item">
+            <a href="/mi-espacio?tab=hoy" class="dropdown-user-item">
               <span class="item-icon">🎯</span>
               <span>Retos de Hoy</span>
             </a>
             ${canSeeOrders ? `
-            <a href="/mi-espacio.html?tab=pedidos" class="dropdown-user-item">
+            <a href="/mi-espacio?tab=pedidos" class="dropdown-user-item">
               <span class="item-icon">📦</span>
               <span>Mis Pedidos y Cesta</span>
             </a>
             ` : ''}
-            <a href="/mi-espacio.html?tab=ajustes" class="dropdown-user-item">
+            <a href="/mi-espacio?tab=ajustes" class="dropdown-user-item">
               <span class="item-icon">⚙️</span>
               <span>Ajustes de cuenta</span>
             </a>
             ${isDev ? `
-            <a href="/mi-espacio.html?tab=dev" class="dropdown-user-item item-dev" id="nav-dropdown-dev-link">
+            <a href="/mi-espacio?tab=dev" class="dropdown-user-item item-dev" id="nav-dropdown-dev-link">
               <span class="item-icon">⚡</span>
               <span>Panel Desarrollador</span>
               <span class="dev-badge">DEV</span>

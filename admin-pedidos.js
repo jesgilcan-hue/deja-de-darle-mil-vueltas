@@ -145,7 +145,7 @@ function kickOut(reason = 'Acceso no autorizado') {
     sessionStorage.removeItem('mr_dev_pin_verified');
   } catch (e) {}
   // Expulsión fulminante a 404: para cualquier tercero la página no existe
-  window.location.replace('/404.html');
+  window.location.replace('/404');
 }
 
 function revealPage() {
@@ -1099,7 +1099,7 @@ window.downloadOrderCoverPdf = function(orderId, itemIndex = 0) {
     }));
   } catch(e) {}
   showToast(`📥 Descargando Portada PDF de «${targetBook.title || order.orderNumber}»...`);
-  window.open(`/generador-portadas.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&title=${encodeURIComponent(targetBook.title || '')}&pages=${targetBook.pageCount || 144}&binding=${targetBook.bindingType || 'softcover'}`, '_blank');
+  window.open(`/generador-portadas?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&title=${encodeURIComponent(targetBook.title || '')}&pages=${targetBook.pageCount || 144}&binding=${targetBook.bindingType || 'softcover'}`, '_blank');
 };
 
 window.downloadOrderInteriorPdf = function(orderId, itemIndex = 0) {
@@ -1116,7 +1116,7 @@ window.downloadOrderInteriorPdf = function(orderId, itemIndex = 0) {
     }));
   } catch(e) {}
   showToast(`📥 Descargando Interior PDF de «${targetBook.title || order.orderNumber}»...`);
-  window.open(`/generador-libro-completo.html?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&pages=${targetBook.pageCount || 144}&binding=${targetBook.bindingType || 'softcover'}`, '_blank');
+  window.open(`/generador-libro-completo?download_direct=1&orderId=${encodeURIComponent(order.orderNumber)}&pages=${targetBook.pageCount || 144}&binding=${targetBook.bindingType || 'softcover'}`, '_blank');
 };
 
 // 6. MODALES: PREVISUALIZACIÓN DE PDFS Y EDICIÓN DE DIRECCIÓN
@@ -1146,7 +1146,7 @@ window.openPdfPreviewModal = function(orderId) {
         data: {}
       }));
     } catch(e) {}
-    window.open(`/generador-portadas.html?download_direct=1&previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
+    window.open(`/generador-portadas?download_direct=1&previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
   };
 
   btnInterior.onclick = () => {
@@ -1158,7 +1158,7 @@ window.openPdfPreviewModal = function(orderId) {
         bindingType: order.book?.bindingType || 'softcover'
       }));
     } catch(e) {}
-    window.open(`/generador-libro-completo.html?download_direct=1&previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
+    window.open(`/generador-libro-completo?download_direct=1&previewOrder=${encodeURIComponent(order.orderNumber)}`, '_blank');
   };
 
   const btnApprove = document.getElementById('btnModalQuickApprove');

@@ -969,7 +969,7 @@ function openDownloadModal(item) {
 
 function triggerHeadlessDownload(isBlank) {
   if (!activeDownloadItem) return;
-  const rawUrl = activeDownloadItem.editUrl || '/generador-planificador-semanal.html';
+  const rawUrl = activeDownloadItem.editUrl || '/generador-planificador-semanal';
   const sep = rawUrl.includes('?') ? '&' : '?';
   const downloadUrl = `${rawUrl}${sep}load=${encodeURIComponent(activeDownloadItem.id)}&autodownload=1${isBlank ? '&blank=1' : ''}`;
   showToast('Preparando y descargando PDF...');
@@ -999,7 +999,7 @@ async function handleModalSendEmail() {
   try {
     const isBlank = modalEmailIsBlank ? modalEmailIsBlank.checked : false;
     if (activeDownloadItem) {
-      const rawUrl = activeDownloadItem.editUrl || '/generador-planificador-semanal.html';
+      const rawUrl = activeDownloadItem.editUrl || '/generador-planificador-semanal';
       const sep = rawUrl.includes('?') ? '&' : '?';
       const sendUrl = `${rawUrl}${sep}load=${encodeURIComponent(activeDownloadItem.id)}&email=${encodeURIComponent(email)}${isBlank ? '&blank=1' : ''}`;
       if (headlessPdfFrame) headlessPdfFrame.src = sendUrl;
@@ -1546,21 +1546,21 @@ function renderDesignsGrid() {
     let rawTargetUrl = item.editUrl;
     const typeLow = (item.type || '').toLowerCase();
     if (!rawTargetUrl) {
-      if (typeLow.includes('portada') && typeLow.includes('pasatiempo')) rawTargetUrl = '/generador-portadas-pasatiempos.html';
-      else if (typeLow.includes('portada')) rawTargetUrl = '/generador-portadas.html';
-      else if (typeLow.includes('pasatiempo')) rawTargetUrl = '/generador-libro-pasatiempos.html';
-      else if (typeLow.includes('sudoku')) rawTargetUrl = '/generador-sudokus.html';
-      else if (typeLow.includes('calcudoku')) rawTargetUrl = '/generador-calcudoku.html';
-      else if (typeLow.includes('kakuro')) rawTargetUrl = '/generador-kakuro.html';
-      else if (typeLow.includes('sopa')) rawTargetUrl = '/generador-sopas.html';
-      else if (typeLow.includes('cruzada')) rawTargetUrl = '/generador-cruzadas.html';
-      else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) rawTargetUrl = '/generador-libro-completo.html';
-      else if (typeLow.includes('diario')) rawTargetUrl = '/generador-planificador-diario.html';
-      else if (typeLow.includes('mensual')) rawTargetUrl = '/generador-planificador-mensual.html';
-      else if (typeLow.includes('habito')) rawTargetUrl = '/generador-planificador-habitos.html';
-      else if (typeLow.includes('horario')) rawTargetUrl = '/generador-planificador-horario.html';
-      else if (typeLow.includes('anual')) rawTargetUrl = '/generador-planificador-anual.html';
-      else rawTargetUrl = '/generador-planificador-semanal.html';
+      if (typeLow.includes('portada') && typeLow.includes('pasatiempo')) rawTargetUrl = '/generador-portadas-pasatiempos';
+      else if (typeLow.includes('portada')) rawTargetUrl = '/generador-portadas';
+      else if (typeLow.includes('pasatiempo')) rawTargetUrl = '/generador-libro-pasatiempos';
+      else if (typeLow.includes('sudoku')) rawTargetUrl = '/generador-sudokus';
+      else if (typeLow.includes('calcudoku')) rawTargetUrl = '/generador-calcudoku';
+      else if (typeLow.includes('kakuro')) rawTargetUrl = '/generador-kakuro';
+      else if (typeLow.includes('sopa')) rawTargetUrl = '/generador-sopas';
+      else if (typeLow.includes('cruzada')) rawTargetUrl = '/generador-cruzadas';
+      else if (typeLow.includes('libro') || typeLow.includes('completo') || typeLow.includes('cuaderno')) rawTargetUrl = '/generador-libro-completo';
+      else if (typeLow.includes('diario')) rawTargetUrl = '/generador-planificador-diario';
+      else if (typeLow.includes('mensual')) rawTargetUrl = '/generador-planificador-mensual';
+      else if (typeLow.includes('habito')) rawTargetUrl = '/generador-planificador-habitos';
+      else if (typeLow.includes('horario')) rawTargetUrl = '/generador-planificador-horario';
+      else if (typeLow.includes('anual')) rawTargetUrl = '/generador-planificador-anual';
+      else rawTargetUrl = '/generador-planificador-semanal';
     }
 
     const loadUrl = rawTargetUrl.includes('?') 
@@ -2975,7 +2975,7 @@ async function checkAndHandleStripeCheckoutReturn() {
       showToast('🎉 ¡Pago completado con éxito en Stripe! Pedido #' + orderNumber + ' registrado.');
 
       try {
-        window.history.replaceState({}, document.title, '/mi-espacio.html?tab=pedidos&orderId=' + encodeURIComponent(orderNumber));
+        window.history.replaceState({}, document.title, '/mi-espacio?tab=pedidos&orderId=' + encodeURIComponent(orderNumber));
       } catch(e) {}
 
       renderClientOrdersAndBasketViews(user || auth.currentUser || currentUser);
@@ -3006,7 +3006,7 @@ function handleBasketCoverPdfClick(id) {
   } catch (e) {}
 
   showToast('⏳ Preparando y descargando Portada en PDF...');
-  const targetCoverUrl = isPuzzle ? '/generador-portadas-pasatiempos.html' : '/generador-portadas.html';
+  const targetCoverUrl = isPuzzle ? '/generador-portadas-pasatiempos' : '/generador-portadas';
   window.open(`${targetCoverUrl}?download_direct=1&ts=${Date.now()}`, '_blank');
 }
 
@@ -3028,7 +3028,7 @@ function handleBasketInteriorPdfClick(id) {
       }));
     } catch (e) {}
     showToast('⏳ Preparando y descargando Interior de Pasatiempos en PDF...');
-    window.open(`/generador-libro-pasatiempos.html?download_direct=1&ts=${Date.now()}`, '_blank');
+    window.open(`/generador-libro-pasatiempos?download_direct=1&ts=${Date.now()}`, '_blank');
   } else {
     try {
       localStorage.setItem('mr_complete_book_config', JSON.stringify({
@@ -3040,7 +3040,7 @@ function handleBasketInteriorPdfClick(id) {
       }));
     } catch (e) {}
     showToast('⏳ Preparando y descargando Interior Completo en PDF...');
-    window.open(`/generador-libro-completo.html?download_direct=1&ts=${Date.now()}`, '_blank');
+    window.open(`/generador-libro-completo?download_direct=1&ts=${Date.now()}`, '_blank');
   }
 }
 
@@ -3556,7 +3556,7 @@ function renderClientOrdersAndBasketViews(user) {
           }
         }
         showToast('⏳ Preparando y descargando Interior en PDF...');
-        const targetInterior = isPuzz ? '/generador-libro-pasatiempos.html' : '/generador-libro-completo.html';
+        const targetInterior = isPuzz ? '/generador-libro-pasatiempos' : '/generador-libro-completo';
         const iframe = document.getElementById('headless-pdf-frame');
         if (iframe) {
           iframe.src = `${targetInterior}?download_direct=1&ts=${Date.now()}`;
@@ -3585,7 +3585,7 @@ function renderClientOrdersAndBasketViews(user) {
           } catch (e) {}
         }
         showToast('⏳ Preparando y descargando Portada en PDF...');
-        const targetCover = isPuzz ? '/generador-portadas-pasatiempos.html' : '/generador-portadas.html';
+        const targetCover = isPuzz ? '/generador-portadas-pasatiempos' : '/generador-portadas';
         const iframe = document.getElementById('headless-pdf-frame');
         if (iframe) {
           iframe.src = `${targetCover}?download_direct=1&ts=${Date.now()}`;

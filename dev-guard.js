@@ -44,7 +44,7 @@ function kickOut() {
     localStorage.removeItem('mr_dev_authorized');
     sessionStorage.removeItem('mr_dev_authorized');
   } catch (e) {}
-  window.location.replace('/404.html');
+  window.location.replace('/404');
 }
 
 function revealPage() {

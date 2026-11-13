@@ -55,23 +55,23 @@ export default async function handler(req, res) {
     let bookRecommendation = {
       title: 'Planificador Semanal Atemporal',
       desc: 'Si te gusta planificar tu semana en papel y prefieres tenerlo todo encuadernado sobre tu mesa en lugar de acumular folios sueltos, tienes el cuaderno completo aquí:',
-      webUrl: 'https://www.editorialmenosruido.com/planificador-semanal-simple.html',
-      amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-semanal-simple.html'
+      webUrl: 'https://www.editorialmenosruido.com/planificador-semanal-simple',
+      amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-semanal-simple'
     };
 
     if (nameLower.includes('diario') || nameLower.includes('90') || nameLower.includes('anual')) {
       bookRecommendation = {
         title: 'Planificador de 90 Días',
         desc: 'Si buscas una estructura diaria para enfocarte en una sola prioridad y no dispersarte con listas interminables, este es el cuaderno físico diseñado para acompañarte día a día:',
-        webUrl: 'https://www.editorialmenosruido.com/planificador-90-dias.html',
-        amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-90-dias.html'
+        webUrl: 'https://www.editorialmenosruido.com/planificador-90-dias',
+        amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-90-dias'
       };
     } else if (nameLower.includes('horario') || nameLower.includes('reversible')) {
       bookRecommendation = {
         title: 'Planificador Semanal Reversible',
         desc: 'Si necesitas organizar tu tiempo por horas y prefieres tener todas las semanas reunidas en un solo cuaderno en tu mesa, puedes ver el formato físico aquí:',
-        webUrl: 'https://www.editorialmenosruido.com/planificador-semanal-reversible.html',
-        amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-semanal-reversible.html'
+        webUrl: 'https://www.editorialmenosruido.com/planificador-semanal-reversible',
+        amazonUrl: 'https://www.editorialmenosruido.com/ir/amazon-semanal-reversible'
       };
     }
 
@@ -123,7 +123,7 @@ export default async function handler(req, res) {
         Si no deseas recibir más avisos ni recursos de la editorial, puedes darte de baja en cualquier momento con este botón:
       </p>
       <div>
-        <a href="https://www.editorialmenosruido.com/baja.html" style="display: inline-block; padding: 6px 14px; font-size: 12px; color: #555555; background-color: #faf7f2; border: 1px solid #d4cdc3; border-radius: 4px; text-decoration: none; font-weight: 500;">
+        <a href="https://www.editorialmenosruido.com/baja" style="display: inline-block; padding: 6px 14px; font-size: 12px; color: #555555; background-color: #faf7f2; border: 1px solid #d4cdc3; border-radius: 4px; text-decoration: none; font-weight: 500;">
           Darme de baja
         </a>
       </div>

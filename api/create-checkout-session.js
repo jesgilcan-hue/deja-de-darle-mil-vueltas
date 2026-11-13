@@ -158,8 +158,8 @@ export default async function handler(req, res) {
 
     // 3. Crear sesión en Stripe Checkout API v1 (MODO TEST)
     const origin = (returnOrigin || 'https://www.editorialmenosruido.com').replace(/\/$/, '');
-    const successUrl = `${origin}/mi-espacio.html?tab=pedidos&stripe_success=1&order=${encodeURIComponent(orderNumber)}&session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${origin}/mi-espacio.html?tab=pedidos&stripe_cancel=1`;
+    const successUrl = `${origin}/mi-espacio?tab=pedidos&stripe_success=1&order=${encodeURIComponent(orderNumber)}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin}/mi-espacio?tab=pedidos&stripe_cancel=1`;
 
     const params = new URLSearchParams();
     params.append('mode', 'payment');

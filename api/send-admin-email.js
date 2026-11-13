@@ -157,7 +157,7 @@ export default async function handler(req, res) {
     if (showUnsubscribe) {
       unsubscribeHtml = `
         <div style="font-size: 11px; color: #9c9184; margin-top: 10px;">
-          Si prefieres no recibir más correos de seguimiento, puedes <a href="https://www.editorialmenosruido.com/baja.html" style="color: #87553b; text-decoration: underline;">desactivarlos aquí</a>.
+          Si prefieres no recibir más correos de seguimiento, puedes <a href="https://www.editorialmenosruido.com/baja" style="color: #87553b; text-decoration: underline;">desactivarlos aquí</a>.
         </div>
       `;
     }

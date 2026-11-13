@@ -266,8 +266,8 @@ export default async function handler(req, res) {
     }
 
     if (isPaid && !alreadyProcessed) {
-      const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio.html?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
-      const adminOrderUrl = `https://www.editorialmenosruido.com/admin-pedidos.html?orderId=${encodeURIComponent(orderNumber)}`;
+      const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
+      const adminOrderUrl = `https://www.editorialmenosruido.com/admin-pedidos?orderId=${encodeURIComponent(orderNumber)}`;
 
       const clientSubject = `📦 Confirmación de tu pedido #${orderNumber} · Editorial Menos Ruido`;
       const clientParagraphs = [
