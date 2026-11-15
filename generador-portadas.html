@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -30,6 +30,180 @@
 
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="./style.css" />
+    <script>
+      (function () {
+        var p = new URLSearchParams(window.location.search);
+        if (p.get('embed') === '1') {
+          document.documentElement.classList.add('embed-mode');
+        } else if (window.self === window.top && !p.get('load') && !p.get('preview_modal') && !p.get('download_direct')) {
+          window.location.replace('/crear-planificador-completo');
+        }
+      })();
+    </script>
+    <style>
+      html.embed-mode .navbar,
+      html.embed-mode .header-title-box,
+      html.embed-mode .footer,
+      html.embed-mode .top-nav,
+      html.embed-mode .top-back-nav,
+      html.embed-mode .top-action-bar,
+      html.embed-mode:not(.cover-list-mode) .panel-tabs { display: none !important; }
+      html.embed-mode body { padding-top: 6px !important; }
+      html.embed-mode #tabSec-texts > .control-card:first-child { display: none !important; }
+      html.embed-mode:not(.cover-list-mode) #photoSideSwitcherWrap { display: none !important; }
+      #customColorPickerModal {
+        position: fixed; inset: 0; background: rgba(20,18,16,0.62);
+        z-index: 100000; display: none; align-items: center; justify-content: center; padding: 16px;
+      }
+      #customColorPickerModal.open { display: flex; }
+      .ccp-card {
+        background: #ffffff; border: 1px solid #e0d8cc; border-radius: 14px;
+        width: 100%; max-width: 340px; padding: 16px; box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+        display: flex; flex-direction: column; gap: 12px;
+      }
+      .ccp-swatches {
+        display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+      }
+      .ccp-swatch {
+        width: 100%; aspect-ratio: 1; border-radius: 8px; border: 2px solid rgba(0,0,0,0.14);
+        cursor: pointer; transition: transform 0.12s;
+      }
+      .ccp-swatch:hover { transform: scale(1.06); }
+      .ccp-swatch.active { border-color: #22382c; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #22382c; }
+      .ccp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+      .ccp-btn {
+        border: 1px solid #d5cbbd; background: #faf8f5; color: #3b3228;
+        border-radius: 8px; padding: 9px 16px; font-size: 0.86rem; font-weight: 700; cursor: pointer;
+      }
+      .ccp-btn.ok { background: #215c38; color: #ffffff; border-color: #215c38; min-width: 96px; }
+      html.embed-mode #coverPreviewCanvas { cursor: zoom-in; }
+      html.embed-mode #enlargeCoverModal {
+        position: fixed; inset: 0; background: rgba(20,18,16,0.84);
+        z-index: 99999; display: none; align-items: center; justify-content: center; padding: 14px;
+      }
+      html.embed-mode #enlargeCoverModal.open { display: flex; }
+      html.embed-mode .cover-guided-box {
+        background: #ffffff; border: 1.5px solid #dfd7ca; border-radius: 12px;
+        padding: 12px 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+      }
+      html.embed-mode .cover-guided-top {
+        display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      }
+      html.embed-mode .cover-countdown {
+        display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 800;
+        padding: 5px 10px; border-radius: 999px; background: #fef3c7; color: #92400e; border: 1px solid #f59e0b;
+      }
+      html.embed-mode .cover-countdown.all-done {
+        background: #eaf5ee; color: #166534; border-color: #86efac;
+      }
+      html.embed-mode .cover-mode-toggle {
+        border: none; background: transparent; color: #66615b; font-size: 0.74rem;
+        font-weight: 700; text-decoration: underline; cursor: pointer; padding: 2px 4px;
+      }
+      html.embed-mode .cover-guided-pills {
+        display: flex; flex-wrap: wrap; gap: 5px;
+      }
+      html.embed-mode .cover-step-pill {
+        border: 1.5px solid #d6cdc0; background: #faf8f5; color: #211c18;
+        font-size: 0.72rem; font-weight: 700; padding: 5px 9px; border-radius: 999px; cursor: pointer;
+      }
+      html.embed-mode .cover-step-pill.is-done { background: #eaf5ee; border-color: #215c38; color: #215c38; }
+      html.embed-mode .cover-step-pill.is-current { background: #22382c; border-color: #22382c; color: #ffffff; }
+      html.embed-mode .cover-warn-msg {
+        background: #fef3c7; border: 1px solid #f59e0b; color: #92400e;
+        border-radius: 8px; padding: 8px 10px; font-size: 0.78rem; font-weight: 600; line-height: 1.35;
+      }
+      html.embed-mode .cover-guided-nav {
+        display: flex; gap: 8px; margin-top: 12px;
+      }
+      html.embed-mode .cover-btn-prev {
+        border: 1px solid #cfc5b6; background: #fff; color: #211c18;
+        font-size: 0.8rem; font-weight: 700; padding: 10px 14px; border-radius: 9px; cursor: pointer; min-height: 44px;
+      }
+      html.embed-mode .cover-btn-prev:disabled { opacity: 0.35; cursor: not-allowed; }
+      html.embed-mode .cover-btn-next {
+        flex: 1; border: none; background: #87553b; color: #fff;
+        font-size: 0.82rem; font-weight: 700; padding: 10px 14px; border-radius: 9px; cursor: pointer; min-height: 44px;
+      }
+      html.embed-mode .cover-btn-next.is-final { background: #22382c; }
+      @keyframes coverPulse {
+        0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.75); transform: scale(1); }
+        50% { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); transform: scale(1.03); }
+        100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); transform: scale(1); }
+      }
+      html.embed-mode .cover-pulse-highlight {
+        animation: coverPulse 0.9s ease-in-out 3;
+        outline: 3px solid #f59e0b !important;
+      }
+
+      /* ADAPTACIÓN MÓVIL (PORTADA ARRIBA EN FLUJO NORMAL + CONTROLES ABAJO) */
+      @media (max-width: 900px) {
+        html.embed-mode,
+        html.embed-mode body {
+          width: 100% !important;
+          max-width: 100vw !important;
+          padding: 6px 8px 64px !important;
+          overflow-x: hidden !important;
+          box-sizing: border-box !important;
+        }
+        html.embed-mode .studio-workspace,
+        html.embed-mode .cover-workspace,
+        html.embed-mode .controls-panel,
+        html.embed-mode .control-card,
+        html.embed-mode main {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 10px !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+        }
+        html.embed-mode .btn-sync-locked {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+          white-space: normal !important;
+          flex-wrap: wrap !important;
+          gap: 6px !important;
+          font-size: 0.78rem !important;
+          padding: 9px 10px !important;
+          text-align: left !important;
+        }
+        html.embed-mode .preview-stage-panel {
+          order: -1 !important;
+          position: relative !important;
+          background: #f4efe6 !important;
+          padding: 8px !important;
+          border-radius: 12px !important;
+          border: 1px solid #d5ccb9 !important;
+        }
+        html.embed-mode .canvas-container-outer {
+          padding: 10px !important;
+        }
+        html.embed-mode #coverPreviewCanvas {
+          max-height: 27vh !important;
+          width: auto !important;
+          max-width: 100% !important;
+          object-fit: contain !important;
+        }
+        html.embed-mode .tech-specs-banner {
+          font-size: 0.7rem !important;
+          padding: 6px 10px !important;
+        }
+        html.embed-mode .binding-selector-group {
+          flex-wrap: wrap !important;
+          gap: 6px !important;
+        }
+        html.embed-mode .binding-pill-btn {
+          flex: 1 1 30% !important;
+          min-height: 42px !important;
+          font-size: 0.76rem !important;
+        }
+      }
+    </style>
 
     <style>
         :root {
@@ -1319,7 +1493,7 @@
                     <div class="control-card-title" style="flex-wrap: wrap; gap: 6px;">
                         <span>Fotografía Personal</span>
                         <!-- Selector de cara donde editar/ver la foto (arriba a la derecha) -->
-                        <div style="display:inline-flex; background:#e9e2d6; border-radius:999px; padding:2px; gap:2px; border:1px solid #d5cbbd;">
+                        <div id="photoSideSwitcherWrap" style="display:inline-flex; background:#e9e2d6; border-radius:999px; padding:2px; gap:2px; border:1px solid #d5cbbd;">
                             <button type="button" id="btnPhotoTargetFront" onclick="selectPhotoSide('front')" style="border:none; background:#211c18; color:#ffffff; font-size:0.67rem; font-weight:800; padding:3px 9px; border-radius:999px; cursor:pointer; transition:all 0.15s;">
                                 📖 Portada <span id="badgePhotoFrontStatus" style="opacity:0.85;"></span>
                             </button>
@@ -1474,27 +1648,27 @@
                         <button type="button" onclick="resetAllSectionTextColors()" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.66rem; font-weight:700; border-radius:6px; padding:3px 8px; cursor:pointer;">↺ Colores de paleta</button>
                     </div>
                     <div class="field-group">
-                        <label for="inpKicker"><span>Sello Superior y Pie Editorial:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_frontBranding" value="#ffffff" oninput="setSectionTextColor('frontBranding', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('frontBranding')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpKicker"><span>Sello Superior y Pie Editorial:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_frontBranding" value="#ffffff" oninput="setSectionTextColor('frontBranding', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('frontBranding')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpKicker" value="MENOS RUIDO" readonly disabled>
                     </div>
                     <div class="field-group">
-                        <label for="inpTitle"><span>Título Principal:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_title" value="#ffffff" oninput="setSectionTextColor('title', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('title')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpTitle"><span>Título Principal:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_title" value="#ffffff" oninput="setSectionTextColor('title', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('title')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpTitle" value="Planificador anual" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBadge"><span>Cintillo en Acento:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_badge" value="#ffffff" oninput="setSectionTextColor('badge', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('badge')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpBadge"><span>Cintillo en Acento:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_badge" value="#ffffff" oninput="setSectionTextColor('badge', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('badge')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpBadge" value="52 SEMANAS, 12 MESES Y HABIT TRACKER" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpSubtitle"><span>Subtítulo:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_subtitle" value="#ffffff" oninput="setSectionTextColor('subtitle', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('subtitle')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpSubtitle"><span>Subtítulo:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_subtitle" value="#ffffff" oninput="setSectionTextColor('subtitle', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('subtitle')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpSubtitle" value="52 semanas, 12 meses y seguimiento de hábitos" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpFrontDesc"><span>Descripción delantera:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_frontDesc" value="#ffffff" oninput="setSectionTextColor('frontDesc', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('frontDesc')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpFrontDesc"><span>Descripción delantera:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_frontDesc" value="#ffffff" oninput="setSectionTextColor('frontDesc', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('frontDesc')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <textarea id="inpFrontDesc" rows="2" oninput="updateConfigFromUI()">Saca las ideas de la cabeza. Estructura tus meses, diseña tus hábitos y organiza tus semanas con claridad y enfoque.</textarea>
                     </div>
                     <div class="field-group">
-                        <label for="inpAuthor"><span>Propietario / Pie de portada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_author" value="#ffffff" oninput="setSectionTextColor('author', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('author')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpAuthor"><span>Propietario / Pie de portada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_author" value="#ffffff" oninput="setSectionTextColor('author', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('author')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpAuthor" value="Edición Personalizada · Planificador anual" oninput="updateConfigFromUI()">
                     </div>
                     <label style="display:flex; align-items:center; gap:8px; font-size:0.76rem; color:#4b433b; cursor:pointer; margin-top:4px; padding-top:6px; border-top:1px dashed #e2d9cc;">
@@ -1509,22 +1683,22 @@
                         <span style="font-size:0.66rem; color:#776f65; font-weight:600;">🎨 Color por sección</span>
                     </div>
                     <div class="field-group">
-                        <label for="inpSpineText"><span>Texto del Lomo (Tapa Blanda / Dura):</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_spineText" value="#ffffff" oninput="setSectionTextColor('spineText', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('spineText')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpSpineText"><span>Texto del Lomo (Tapa Blanda / Dura):</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_spineText" value="#ffffff" oninput="setSectionTextColor('spineText', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('spineText')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpSpineText" value="MENOS RUIDO  •  PLANIFICADOR ANUAL" disabled oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label><span>Sello y Pie Web Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backBranding" value="#ffffff" oninput="setSectionTextColor('backBranding', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backBranding')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label><span>Sello y Pie Web Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backBranding" value="#ffffff" oninput="setSectionTextColor('backBranding', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('backBranding')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                     </div>
                     <div class="field-group">
-                        <label for="inpBackTitle"><span>Título de Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backTitle" value="#ffffff" oninput="setSectionTextColor('backTitle', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backTitle')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpBackTitle"><span>Título de Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backTitle" value="#ffffff" oninput="setSectionTextColor('backTitle', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('backTitle')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <input type="text" id="inpBackTitle" value="Pensar en Papel" oninput="updateConfigFromUI()">
                     </div>
                     <div class="field-group">
-                        <label for="inpBackIntro"><span>Párrafo de Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backIntro" value="#ffffff" oninput="setSectionTextColor('backIntro', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backIntro')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpBackIntro"><span>Párrafo de Contraportada:</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backIntro" value="#ffffff" oninput="setSectionTextColor('backIntro', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('backIntro')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <textarea id="inpBackIntro" rows="3" oninput="updateConfigFromUI()">Este planificador anual te invita a recuperar la concentración durante los próximos 12 meses. Sin notificaciones, sin batería, sin distracciones. Solo tus prioridades puestas por escrito con claridad y sencillez.</textarea>
                     </div>
                     <div class="field-group">
-                        <label for="inpBackBullets"><span>Lista de Contenidos (Editable):</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backBullets" value="#ffffff" oninput="setSectionTextColor('backBullets', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;"><button type="button" onclick="resetSectionTextColor('backBullets')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
+                        <label for="inpBackBullets"><span>Lista de Contenidos (Editable):</span> <span style="display:inline-flex; align-items:center; gap:4px;" title="Cambiar color de letra de esta sección"><input type="color" id="col_backBullets" value="#ffffff" oninput="setSectionTextColor('backBullets', this.value)" style="width:22px; height:22px; padding:0; border:1px solid #c9bfb0; border-radius:4px; background:transparent; cursor:pointer;" onclick="return window.openCustomColorModal(this, event);"><button type="button" onclick="resetSectionTextColor('backBullets')" title="Restablecer al color de la paleta" style="border:1px solid #d5cbbd; background:#f5efe6; color:#5a5248; font-size:0.65rem; border-radius:4px; padding:1px 5px; cursor:pointer; line-height:1.2;">↺</button></span></label>
                         <textarea id="inpBackBullets" rows="5" oninput="updateBulletsFromUI()">Calendario panorámico de 12 meses
 Planificador anual por trimestres (1 pág.)
 Planificador mensual estructurado (12 meses)
@@ -4884,6 +5058,528 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
         setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData, { isPremium: true, generatorType: 'cover' });
         checkAndLoadSavedDesign(applySavedCoverDesign);
+    </script>
+
+    <!-- MODO GUIADO PASO A PASO PARA PORTADA (SOLO EN EMBED-MODE) -->
+    <script>
+      (function initGuidedCoverFlow() {
+        if (!document.documentElement.classList.contains('embed-mode')) return;
+
+        const COVER_STEPS = [
+          { id: 'sync', label: '1. Sincronizar' },
+          { id: 'binding', label: '2. Encuadernación' },
+          { id: 'style0', label: '3. Color' },
+          { id: 'style1', label: '4. Gráficos' },
+          { id: 'style2', label: '5. Guías' },
+          { id: 'photoFront', label: '6. Foto Portada' },
+          { id: 'photoBack', label: '7. Foto Contraportada' },
+          { id: 'textFront', label: '8. Texto Portada' },
+          { id: 'textBack', label: '9. Contraportada y Lomo' },
+          { id: 'specs', label: '10. Medidas' },
+        ];
+
+        let stepIdx = 0;
+        let doneSteps = {};
+        let currentPhotoSide = 'front';
+        let listMode = false;
+        let coverWarnText = '';
+
+        function setupEnlargeCanvas() {
+          const canvas = document.getElementById('coverPreviewCanvas');
+          if (!canvas || document.getElementById('enlargeCoverModal')) return;
+          const modal = document.createElement('div');
+          modal.id = 'enlargeCoverModal';
+          modal.innerHTML = `
+            <div style="position:relative; max-width:96vw; max-height:90vh; background:#fff; border-radius:12px; padding:10px; overflow:auto;">
+              <button type="button" id="btnCloseCoverZoom" style="position:sticky; top:4px; float:right; border:1px solid #ccc; background:#fff; border-radius:999px; width:32px; height:32px; font-weight:800; cursor:pointer;">✕</button>
+              <img id="enlargeCoverImg" style="max-width:100%; height:auto; display:block;" alt="Vista ampliada de portada" />
+            </div>
+          `;
+          document.body.appendChild(modal);
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.id === 'btnCloseCoverZoom') modal.classList.remove('open');
+          });
+          canvas.addEventListener('click', () => {
+            const img = document.getElementById('enlargeCoverImg');
+            img.src = canvas.toDataURL('image/png');
+            modal.classList.add('open');
+          });
+        }
+
+        function patchPhotoUX() {
+          // 1) Al hacer clic en subir foto, abrir directo el selector de archivo para la cara activa sin preguntar otra vez
+          window.openPhotoSideChoicePrompt = function () {
+            if (typeof window.triggerPhotoFileDialog === 'function') {
+              window.triggerPhotoFileDialog(currentPhotoSide);
+            }
+          };
+
+          const origSelectSide = window.selectPhotoSide;
+          window.selectPhotoSide = function (side) {
+            currentPhotoSide = side === 'back' ? 'back' : 'front';
+            if (typeof origSelectSide === 'function') origSelectSide.apply(this, arguments);
+            if (typeof window.setCoilPreviewMode === 'function') {
+              window.setCoilPreviewMode(currentPhotoSide === 'front' ? 'front' : 'back');
+            }
+            requestAnimationFrame(() => {
+              if (typeof window.renderCoverPreview === 'function') window.renderCoverPreview();
+            });
+            syncUploadZoneVisibility();
+          };
+
+          const origUpload = window.handlePhotoUpload;
+          window.handlePhotoUpload = function () {
+            if (typeof origUpload === 'function') origUpload.apply(this, arguments);
+            if (typeof window.setCoilPreviewMode === 'function') {
+              window.setCoilPreviewMode(currentPhotoSide === 'front' ? 'front' : 'back');
+            }
+            setTimeout(() => {
+              syncUploadZoneVisibility();
+              if (typeof window.renderCoverPreview === 'function') window.renderCoverPreview();
+            }, 80);
+          };
+        }
+
+        function syncUploadZoneVisibility() {
+          const zone = document.querySelector('#tabSec-photo .photo-upload-zone');
+          const controlsWrap = document.getElementById('photoControlsWrap');
+          if (!zone || !controlsWrap) return;
+          const hasPhoto = controlsWrap.style.display !== 'none';
+          zone.style.display = hasPhoto ? 'none' : '';
+        }
+
+        function renderCoverGuidedStep() {
+          const panel = document.querySelector('.controls-panel');
+          if (!panel) return;
+
+          let box = document.getElementById('coverGuidedBox');
+          if (!box) {
+            box = document.createElement('div');
+            box.id = 'coverGuidedBox';
+            box.className = 'cover-guided-box';
+            panel.insertBefore(box, panel.firstChild);
+          }
+
+          let customContainer = document.getElementById('coverStepCustomBody');
+          if (!customContainer) {
+            customContainer = document.createElement('div');
+            customContainer.id = 'coverStepCustomBody';
+            box.insertAdjacentElement('afterend', customContainer);
+          }
+
+          let navBar = document.getElementById('coverGuidedNav');
+          if (!navBar) {
+            navBar = document.createElement('div');
+            navBar.id = 'coverGuidedNav';
+            navBar.className = 'cover-guided-nav';
+            panel.appendChild(navBar);
+          }
+
+          const cur = COVER_STEPS[stepIdx];
+          const remainingCount = COVER_STEPS.filter(s => !doneSteps[s.id]).length;
+          document.documentElement.classList.toggle('cover-list-mode', listMode);
+
+          box.innerHTML = `
+            <div class="cover-guided-top">
+              <span class="cover-countdown ${remainingCount === 0 ? 'all-done' : ''}">
+                ${remainingCount === 0
+                  ? `✅ Todas las etapas validadas (${COVER_STEPS.length})`
+                  : `⏳ Faltan ${remainingCount} etapas por validar (de ${COVER_STEPS.length})`}
+              </span>
+              <button type="button" class="cover-mode-toggle" id="btnToggleCoverListMode">
+                ${listMode ? 'Volver a paso a paso' : 'Ver todas en lista'}
+              </button>
+            </div>
+            <div class="cover-guided-pills">
+              ${COVER_STEPS.map((st, i) => `
+                <button type="button" class="cover-step-pill ${!listMode && i === stepIdx ? 'is-current' : doneSteps[st.id] ? 'is-done' : ''}" data-cstep="${i}">
+                  ${doneSteps[st.id] ? '✓ ' : '• '}${st.label}
+                </button>
+              `).join('')}
+            </div>
+            ${coverWarnText ? `<div class="cover-warn-msg">${coverWarnText}</div>` : ''}
+          `;
+
+          box.querySelector('#btnToggleCoverListMode').addEventListener('click', () => {
+            listMode = !listMode;
+            renderCoverGuidedStep();
+          });
+
+          box.querySelectorAll('[data-cstep]').forEach(b => {
+            b.addEventListener('click', () => {
+              listMode = false;
+              coverWarnText = '';
+              stepIdx = Number(b.dataset.cstep);
+              renderCoverGuidedStep();
+            });
+          });
+
+          if (listMode) {
+            customContainer.innerHTML = '';
+            navBar.style.display = 'none';
+            document.querySelectorAll('.tab-section').forEach(t => {
+              t.style.removeProperty('display');
+            });
+            document.querySelectorAll('.tab-section .control-card').forEach(c => {
+              c.style.removeProperty('display');
+            });
+            if (typeof window.switchTab === 'function') window.switchTab('style');
+            return;
+          }
+
+          navBar.style.display = 'flex';
+
+          // Ocultar todas las tab-section primero
+          document.querySelectorAll('.tab-section').forEach(t => {
+            t.classList.remove('active');
+            t.style.setProperty('display', 'none', 'important');
+          });
+          document.querySelectorAll('.tab-section .control-card').forEach(c => {
+            c.style.removeProperty('display');
+          });
+          customContainer.innerHTML = '';
+
+          if (cur.id === 'sync') {
+            const bookName = (document.getElementById('topSyncedBookPill') && document.getElementById('topSyncedBookPill').textContent) || 'Interior sincronizado';
+            customContainer.innerHTML = `
+              <div class="control-card" style="gap:10px;">
+                <div class="control-card-title"><span>1. Sincronización con el Interior</span></div>
+                <p style="margin:0; font-size:0.84rem; color:#5a5147; line-height:1.45;">
+                  Tu portada está vinculada automáticamente con: <strong>${bookName}</strong>. Pulsa para verificar los datos sincronizados antes de elegir la encuadernación.
+                </p>
+                <button type="button" id="btnTriggerSyncPopup" class="cover-btn-next" style="width:100%;">
+                  🔄 Ver detalles de sincronización
+                </button>
+              </div>
+            `;
+            customContainer.querySelector('#btnTriggerSyncPopup').addEventListener('click', () => {
+              if (typeof window.openSyncInteriorModal === 'function') window.openSyncInteriorModal();
+            });
+          } else if (cur.id === 'binding') {
+            const btnCoil = document.getElementById('btnBindCoil');
+            const btnPerfect = document.getElementById('btnBindPerfect');
+            const btnHard = document.getElementById('btnBindHardcover');
+            const activeBind = btnHard?.classList.contains('active')
+              ? 'hardcover'
+              : btnPerfect?.classList.contains('active')
+              ? 'perfect'
+              : 'coil';
+            const opts = [
+              { id: 'coil', label: '🌀 Anillas', el: btnCoil, rule: '16–450 págs.' },
+              { id: 'perfect', label: '📕 Tapa Blanda', el: btnPerfect, rule: '32–365 págs.' },
+              { id: 'hardcover', label: '📘 Tapa Dura', el: btnHard, rule: '60–365 págs.' },
+            ];
+            customContainer.innerHTML = `
+              <div class="control-card" style="gap:10px;">
+                <div class="control-card-title"><span>2. Elige la Encuadernación</span></div>
+                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+                  ${opts.map(o => {
+                    const isDis = o.el && (o.el.disabled || o.el.classList.contains('binding-disabled'));
+                    return `
+                      <button type="button" class="binding-pill-btn ${activeBind === o.id ? 'active' : ''}" data-gbind="${o.id}" style="flex-direction:column; padding:10px 6px; ${isDis ? 'opacity:0.48;' : ''}">
+                        <span>${o.label}</span>
+                        <small style="font-size:0.65rem; font-weight:600; opacity:0.8;">${o.rule}</small>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+                <div id="bindingReasonWarn" class="cover-warn-msg" style="display:none;"></div>
+              </div>
+            `;
+            customContainer.querySelectorAll('[data-gbind]').forEach(b => {
+              b.addEventListener('click', () => {
+                const targetOpt = opts.find(o => o.id === b.dataset.gbind);
+                const isDis = targetOpt && targetOpt.el && (targetOpt.el.disabled || targetOpt.el.classList.contains('binding-disabled'));
+                const warnBox = customContainer.querySelector('#bindingReasonWarn');
+                if (isDis) {
+                  const reason = targetOpt.el.title || `No compatible con el número actual de páginas (${targetOpt.rule}).`;
+                  if (warnBox) {
+                    warnBox.textContent = `⚠️ ${reason}`;
+                    warnBox.style.display = 'block';
+                  }
+                  return;
+                }
+                if (warnBox) warnBox.style.display = 'none';
+                if (typeof window.setBindingType === 'function') window.setBindingType(b.dataset.gbind);
+                renderCoverGuidedStep();
+              });
+            });
+          } else if (cur.id.startsWith('style')) {
+            const idx = Number(cur.id.replace('style', ''));
+            const tab = document.getElementById('tabSec-style');
+            if (tab) {
+              tab.style.setProperty('display', 'flex', 'important');
+              const cards = tab.querySelectorAll(':scope > .control-card');
+              cards.forEach((c, ci) => { c.style.setProperty('display', ci === idx ? 'flex' : 'none', 'important'); });
+            }
+          } else if (cur.id === 'photoFront' || cur.id === 'photoBack') {
+            const side = cur.id === 'photoFront' ? 'front' : 'back';
+            const tab = document.getElementById('tabSec-photo');
+            if (tab) tab.style.setProperty('display', 'flex', 'important');
+            if (typeof window.selectPhotoSide === 'function') window.selectPhotoSide(side);
+            if (typeof window.setCoilPreviewMode === 'function') window.setCoilPreviewMode(side);
+            const mainTxt = document.getElementById('lblPhotoUploadMainText');
+            if (mainTxt) {
+              mainTxt.textContent = side === 'front'
+                ? 'Haz clic para subir la foto de Portada'
+                : 'Haz clic para subir la foto de Contraportada';
+              const subTxt = mainTxt.nextElementSibling;
+              if (subTxt) {
+                subTxt.textContent = side === 'front'
+                  ? 'Se aplicará directamente en la portada delantera'
+                  : 'Se aplicará directamente en la contraportada trasera';
+              }
+            }
+            requestAnimationFrame(() => {
+              if (typeof window.renderCoverPreview === 'function') window.renderCoverPreview();
+            });
+            syncUploadZoneVisibility();
+          } else if (cur.id === 'textFront') {
+            const tab = document.getElementById('tabSec-texts');
+            if (tab) {
+              tab.style.setProperty('display', 'flex', 'important');
+              const cards = tab.querySelectorAll(':scope > .control-card');
+              cards.forEach((c, ci) => { c.style.setProperty('display', ci === 1 ? 'flex' : 'none', 'important'); });
+            }
+            if (typeof window.setCoilPreviewMode === 'function') window.setCoilPreviewMode('front');
+            requestAnimationFrame(() => {
+              if (typeof window.renderCoverPreview === 'function') window.renderCoverPreview();
+            });
+          } else if (cur.id === 'textBack') {
+            const tab = document.getElementById('tabSec-texts');
+            if (tab) {
+              tab.style.setProperty('display', 'flex', 'important');
+              const cards = tab.querySelectorAll(':scope > .control-card');
+              cards.forEach((c, ci) => { c.style.setProperty('display', ci === 2 ? 'flex' : 'none', 'important'); });
+            }
+            const isCoil = document.getElementById('btnBindCoil')?.classList.contains('active');
+            if (typeof window.setCoilPreviewMode === 'function') {
+              window.setCoilPreviewMode(isCoil ? 'back' : 'spread');
+            }
+            requestAnimationFrame(() => {
+              if (typeof window.renderCoverPreview === 'function') window.renderCoverPreview();
+            });
+          } else if (cur.id === 'specs') {
+            const tab = document.getElementById('tabSec-specs');
+            if (tab) tab.style.setProperty('display', 'flex', 'important');
+            if (typeof window.setCoilPreviewMode === 'function') window.setCoilPreviewMode('spread');
+            requestAnimationFrame(() => {
+              if (typeof window.renderCoverPreview === 'function') window.renderCoverPreview();
+            });
+          }
+
+          const isLast = stepIdx === COVER_STEPS.length - 1;
+          navBar.innerHTML = `
+            <button type="button" class="cover-btn-prev" id="btnCoverPrev" ${stepIdx === 0 ? 'disabled' : ''}>← Anterior</button>
+            <button type="button" class="cover-btn-next ${isLast ? 'is-final' : ''}" id="btnCoverNext">
+              ${isLast ? '✓ Verificar textos y finalizar →' : '✓ Aceptar y seguir →'}
+            </button>
+          `;
+
+          navBar.querySelector('#btnCoverPrev').addEventListener('click', () => {
+            coverWarnText = '';
+            if (stepIdx > 0) { stepIdx -= 1; renderCoverGuidedStep(); }
+          });
+
+          navBar.querySelector('#btnCoverNext').addEventListener('click', () => {
+            coverWarnText = '';
+            doneSteps[cur.id] = true;
+            const nextPending = COVER_STEPS.findIndex((s, i) => i > stepIdx && !doneSteps[s.id]);
+            if (nextPending !== -1) {
+              stepIdx = nextPending;
+              renderCoverGuidedStep();
+            } else if (COVER_STEPS.some(s => !doneSteps[s.id])) {
+              stepIdx = COVER_STEPS.findIndex(s => !doneSteps[s.id]);
+              renderCoverGuidedStep();
+            } else {
+              renderCoverGuidedStep();
+              if (typeof window.openValidateCoverTextsModal === 'function') {
+                window.openValidateCoverTextsModal();
+              } else if (window.parent !== window) {
+                window.parent.postMessage({ type: 'COVER_VALIDATED' }, '*');
+              }
+            }
+          });
+        }
+
+        // Al aceptar el modal de verificación de textos de portada, pasar al Paso 3 (Descargar PDF + Guardar en Mi Espacio)
+        const origConfirm = window.confirmCoverTextsAndAddToCart;
+        window.confirmCoverTextsAndAddToCart = function () {
+          if (typeof window.closeValidateCoverTextsModal === 'function') {
+            window.closeValidateCoverTextsModal();
+          }
+          if (window.parent !== window) {
+            window.parent.postMessage({ type: 'COVER_VALIDATED' }, '*');
+          } else if (typeof origConfirm === 'function') {
+            origConfirm.apply(this, arguments);
+          }
+        };
+
+        window.addEventListener('message', (ev) => {
+          if (ev.data && ev.data.type === 'SYNC_INTERIOR_CHANGES') {
+            try {
+              const raw = localStorage.getItem('mr_complete_book_config');
+              if (!raw) return;
+              const saved = JSON.parse(raw);
+              const oldPages = parseInt(coverState.pageCount, 10) || 144;
+              const oldBinding = coverState.bindingType;
+              const realPages = parseInt(saved.pageCount, 10);
+              const calc = typeof calculatePagesFromSections === 'function'
+                ? calculatePagesFromSections(saved.sections, saved.layoutMode)
+                : null;
+              const newPages = (realPages && realPages >= 1) ? realPages : (calc ? calc.totalPages : oldPages);
+
+              coverState.pageCount = newPages;
+              const inpP = document.getElementById('inpPageCount');
+              if (inpP) inpP.value = newPages;
+              if (saved.validated !== undefined) {
+                coverState.syncedBookValidated = !!saved.validated;
+              }
+              const ownerSuffix = (saved.owner && saved.owner.trim()) ? ` · ${saved.owner.trim()}` : '';
+              coverState.syncedBookName = `${saved.title || coverState.title}${ownerSuffix} (${newPages} págs)`;
+
+              if (typeof updateBindingAvailability === 'function') updateBindingAvailability();
+              if (typeof updateSpecsLabels === 'function') updateSpecsLabels();
+              if (typeof updateSyncedBookLabels === 'function') updateSyncedBookLabels();
+              if (typeof renderCoverPreview === 'function') renderCoverPreview();
+
+              if (oldBinding !== coverState.bindingType) {
+                doneSteps['binding'] = false;
+                doneSteps['specs'] = false;
+                listMode = false;
+                stepIdx = COVER_STEPS.findIndex(s => s.id === 'binding');
+                const bindLabel = typeof getBindingLabelName === 'function' ? getBindingLabelName(coverState.bindingType) : coverState.bindingType;
+                coverWarnText = `⚠️ El interior ahora tiene ${newPages} págs. y tu encuadernación anterior ya no es compatible; se cambió a ${bindLabel}. Revisa y confirma.`;
+                renderCoverGuidedStep();
+              } else if (oldPages !== newPages) {
+                doneSteps['specs'] = false;
+                const spineStr = typeof getCalculatedSpineMm === 'function' ? getCalculatedSpineMm().toFixed(2) : '--';
+                coverWarnText = coverState.bindingType === 'coil'
+                  ? `ℹ️ El interior se actualizó de ${oldPages} a ${newPages} páginas. Revisa el paso 10. Medidas.`
+                  : `ℹ️ El interior cambió de ${oldPages} a ${newPages} páginas. El lomo se ha recalculado a ${spineStr} mm; revisa el paso 10. Medidas.`;
+                renderCoverGuidedStep();
+              }
+            } catch (e) {
+              console.warn('Error en SYNC_INTERIOR_CHANGES:', e);
+            }
+            return;
+          }
+          if (ev.data && ev.data.type === 'REQUEST_VALIDATE_COVER') {
+            const firstPending = COVER_STEPS.findIndex(s => !doneSteps[s.id]);
+            if (firstPending !== -1) {
+              listMode = false;
+              stepIdx = firstPending;
+              coverWarnText = `⚠️ Te falta aceptar o configurar las etapas de la portada (quedan ${COVER_STEPS.filter(s => !doneSteps[s.id]).length}). Pulsa el botón resaltado «✓ Aceptar y seguir».`;
+              renderCoverGuidedStep();
+              const nextBtn = document.getElementById('btnCoverNext');
+              if (nextBtn) {
+                nextBtn.classList.remove('cover-pulse-highlight');
+                void nextBtn.offsetWidth;
+                nextBtn.classList.add('cover-pulse-highlight');
+                nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+              return;
+            }
+            if (typeof window.openValidateCoverTextsModal === 'function') {
+              window.openValidateCoverTextsModal();
+            }
+          }
+        });
+
+        setTimeout(() => {
+          setupEnlargeCanvas();
+          patchPhotoUX();
+          renderCoverGuidedStep();
+        }, 160);
+      })();
+    </script>
+
+    <div id="customColorPickerModal">
+      <div class="ccp-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:0.95rem; color:#1f1c19;">Elegir color de texto</strong>
+          <span id="ccpPreviewDot" style="width:24px; height:24px; border-radius:6px; border:1px solid #ccc; display:inline-block;"></span>
+        </div>
+        <div class="ccp-swatches" id="ccpSwatchesWrap"></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:0.78rem; color:#5a5147; font-weight:700;">Otro tono:</label>
+          <input type="color" id="ccpNativeInput" style="width:38px; height:32px; padding:0; border:1px solid #c9bfb0; border-radius:6px; cursor:pointer;">
+          <input type="text" id="ccpHexInput" maxlength="7" style="flex:1; padding:6px 8px; border:1px solid #d5cbbd; border-radius:6px; font-size:0.82rem; font-family:monospace;">
+        </div>
+        <div class="ccp-actions">
+          <button type="button" class="ccp-btn" id="ccpCancelBtn">Cancelar</button>
+          <button type="button" class="ccp-btn ok" id="ccpOkBtn">✓ OK</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const modal = document.getElementById('customColorPickerModal');
+        const swatchesWrap = document.getElementById('ccpSwatchesWrap');
+        if (!modal || !swatchesWrap) return;
+
+        const SWATCHES = ['#1c1917', '#ffffff', '#f5f0e6', '#22382c', '#87553b', '#1e3240', '#464f41', '#6b2d3b', '#b8860b', '#665e54'];
+        swatchesWrap.innerHTML = SWATCHES.map(hex => `<button type="button" class="ccp-swatch" data-hex="${hex}" style="background:${hex};" title="${hex}"></button>`).join('');
+
+        let activeInput = null;
+        let initialVal = '#ffffff';
+
+        const applyLiveColor = (hex) => {
+          if (!activeInput || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+          activeInput.value = hex;
+          document.getElementById('ccpNativeInput').value = hex;
+          document.getElementById('ccpHexInput').value = hex.toUpperCase();
+          document.getElementById('ccpPreviewDot').style.background = hex;
+          modal.querySelectorAll('.ccp-swatch').forEach(s => {
+            s.classList.toggle('active', s.dataset.hex.toLowerCase() === hex.toLowerCase());
+          });
+          const secKey = activeInput.id.replace(/^col_/, '');
+          if (typeof window.setSectionTextColor === 'function') {
+            window.setSectionTextColor(secKey, hex);
+          }
+        };
+
+        modal.querySelectorAll('.ccp-swatch').forEach(btn => {
+          btn.addEventListener('click', () => applyLiveColor(btn.dataset.hex));
+        });
+        document.getElementById('ccpNativeInput').addEventListener('input', (e) => applyLiveColor(e.target.value));
+        document.getElementById('ccpHexInput').addEventListener('input', (e) => {
+          const v = e.target.value.trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(v)) applyLiveColor(v);
+        });
+        document.getElementById('ccpOkBtn').addEventListener('click', () => {
+          modal.classList.remove('open');
+          activeInput = null;
+        });
+        document.getElementById('ccpCancelBtn').addEventListener('click', () => {
+          if (activeInput) applyLiveColor(initialVal);
+          modal.classList.remove('open');
+          activeInput = null;
+        });
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) document.getElementById('ccpOkBtn').click();
+        });
+
+        window.openCustomColorModal = function (inp, e) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          if (!inp) return false;
+          activeInput = inp;
+          initialVal = inp.value || '#ffffff';
+          applyLiveColor(initialVal);
+          modal.classList.add('open');
+          return false;
+        };
+
+        document.addEventListener('click', (e) => {
+          const inp = e.target && e.target.closest ? e.target.closest('input[type="color"][id^="col_"]') : null;
+          if (!inp) return;
+          window.openCustomColorModal(inp, e);
+        }, true);
+      })();
     </script>
 </body>
 </html>

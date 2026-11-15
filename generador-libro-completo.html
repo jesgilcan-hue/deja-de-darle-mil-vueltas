@@ -38,6 +38,102 @@
 
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="./style.css" />
+    <script>
+      (function () {
+        var p = new URLSearchParams(window.location.search);
+        if (p.get('embed') === '1') {
+          document.documentElement.classList.add('embed-mode');
+        } else if (window.self === window.top && !p.get('load')) {
+          window.location.replace('/crear-planificador-completo');
+        }
+      })();
+    </script>
+    <style>
+      html.embed-mode .navbar,
+      html.embed-mode .header-title-box,
+      html.embed-mode .planner-amazon-promo,
+      html.embed-mode .footer,
+      html.embed-mode .top-nav,
+      html.embed-mode .top-back-nav,
+      html.embed-mode .main-control-bar,
+      html.embed-mode .options-row { display: none !important; }
+      html.embed-mode.show-preset-screen .workspace-grid { display: none !important; }
+      html.embed-mode:not(.show-preset-screen) #presetStartScreen { display: none !important; }
+      html.embed-mode #presetStartScreen {
+        width: 100%;
+        max-width: 720px;
+        margin: 14px auto;
+        background: #ffffff;
+        border: 1px solid #dcd7ce;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        box-sizing: border-box;
+      }
+      html.embed-mode .preset-start-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+        gap: 8px;
+      }
+      html.embed-mode .preset-start-card {
+        border: 1.5px solid #e0d8cc;
+        background: #faf8f5;
+        border-radius: 10px;
+        padding: 11px 10px;
+        text-align: left;
+        cursor: pointer;
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #211c18;
+        transition: all 0.15s ease;
+      }
+      html.embed-mode .preset-start-card.active {
+        border-color: #22382c;
+        background: #eaf5ee;
+        color: #22382c;
+      }
+      html.embed-mode #interactiveBookPage { cursor: zoom-in; }
+      html.embed-mode #enlargeInteriorModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(20,18,16,0.82);
+        z-index: 99999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      html.embed-mode #enlargeInteriorModal.open { display: flex; }
+      html.embed-mode #enlargeInteriorModalBody {
+        background: #fffefb;
+        border-radius: 10px;
+        max-width: 96vw;
+        max-height: 90vh;
+        overflow: auto;
+        padding: 12px;
+        position: relative;
+      }
+      html.embed-mode body { padding-top: 6px !important; }
+      html.embed-mode #bookIndexCard.is-collapsed .book-index-content,
+      html.embed-mode #bookIndexCard.is-collapsed .index-view-tabs { display: none !important; }
+      html.embed-mode .btn-toggle-index {
+        width: 100%;
+        border: 1px solid #d5ccb9;
+        background: #faf6ef;
+        color: #211c18;
+        font-size: 0.84rem;
+        font-weight: 700;
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+    </style>
 
     <style>
         :root {
@@ -2681,15 +2777,16 @@
             return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
 
-        // DESELECCIONAR PREAJUSTE Y MARCAR PERSONALIZADO
-        function markCustomPresetActive() {
+        // DESELECCIONAR PREAJUSTE Y MARCAR PERSONALIZADO SIN CAMBIAR TÍTULO DE PORTADA
+        function markCustomPresetActive(reasonLabel) {
             const currentActive = document.querySelector('.btn-preset.active');
             const wasPreset = currentActive ? currentActive.getAttribute('data-preset') : null;
             document.querySelectorAll('.btn-preset').forEach(b => {
                 b.classList.toggle('active', b.getAttribute('data-preset') === 'libre');
             });
-            if (wasPreset && wasPreset !== 'libre' && presets[wasPreset] && bookConfig.title === presets[wasPreset].title) {
-                bookConfig.title = presets.libre.title;
+            if (wasPreset && wasPreset !== 'libre') {
+                window._customPresetPrev = presets[wasPreset] ? presets[wasPreset].title : wasPreset;
+                window._customPresetReason = reasonLabel || 'modificar las secciones del interior';
             }
         }
 
@@ -3032,7 +3129,11 @@
                 window.setUnsavedChanges(false);
             }
 
-            // Navegar directamente a diseñar portada
+            // Navegar directamente a diseñar portada (o avisar al shell unificado en embed=1)
+            if (new URLSearchParams(window.location.search).get('embed') === '1' && window.parent !== window) {
+                window.parent.postMessage({ type: 'GO_COVER_STEP' }, '*');
+                return;
+            }
             window.location.href = '/generador-portadas?from=interior';
         }
         window.confirmInteriorTextsAndGoCover = confirmInteriorTextsAndGoCover;
@@ -7661,5 +7762,781 @@
             }
         };
     </script>
+
+    <!-- MODO GUIADO PASO A PASO + CUENTA ATRÁS DE PÁGINAS POR VALIDAR (SOLO PROPUESTA LOCAL) -->
+    <style>
+      .guided-box {
+        background: #ffffff;
+        border: 1.5px solid #dfd7ca;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+      }
+      .guided-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .guided-countdown {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #f59e0b;
+      }
+      .guided-countdown.all-done {
+        background: #eaf5ee;
+        color: #166534;
+        border-color: #86efac;
+      }
+      .guided-mode-toggle {
+        border: none;
+        background: transparent;
+        color: #66615b;
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-decoration: underline;
+        cursor: pointer;
+        padding: 2px 4px;
+      }
+      .guided-pills-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .guided-sec-pill {
+        border: 1.5px solid #d6cdc0;
+        background: #faf8f5;
+        color: #211c18;
+        font-size: 0.74rem;
+        font-weight: 700;
+        padding: 5px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.15s ease;
+      }
+      .guided-sec-pill.is-inactive {
+        opacity: 0.48;
+        border-style: dashed;
+        background: #f1ede6;
+        color: #776f65;
+      }
+      .guided-sec-pill.is-validated {
+        background: #eaf5ee;
+        border-color: #215c38;
+        color: #215c38;
+      }
+      .guided-sec-pill.is-current {
+        background: #22382c;
+        border-color: #22382c;
+        color: #ffffff;
+        opacity: 1;
+      }
+      .guided-nav-bar {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .guided-btn-prev {
+        border: 1px solid #cfc5b6;
+        background: #ffffff;
+        color: #211c18;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 9px 12px;
+        border-radius: 9px;
+        cursor: pointer;
+      }
+      .guided-btn-prev:disabled { opacity: 0.35; cursor: not-allowed; }
+      .guided-btn-accept {
+        flex: 1;
+        border: none;
+        background: #87553b;
+        color: #ffffff;
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 9px 14px;
+        border-radius: 9px;
+        cursor: pointer;
+      }
+      .guided-btn-accept.done-ready {
+        background: #22382c;
+      }
+      @keyframes guidedPulse {
+        0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.75); transform: scale(1); }
+        50% { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); transform: scale(1.03); }
+        100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); transform: scale(1); }
+      }
+      .guided-pulse-highlight {
+        animation: guidedPulse 0.9s ease-in-out 3;
+        outline: 3px solid #f59e0b !important;
+      }
+      .guided-warn-msg {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        color: #92400e;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      .guided-date-box {
+        background: #faf8f5;
+        border: 1px solid #e2dad0;
+        border-radius: 9px;
+        padding: 9px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .guided-date-box label {
+        font-size: 0.76rem;
+        font-weight: 700;
+        color: #443c35;
+      }
+    </style>
+    <script>
+      (function initGuidedSectionFlow() {
+        let guidedMode = true;
+        let guidedSectionId = 'cover';
+        let validatedMap = {};
+        let guidedWarningText = '';
+
+        function getActiveSections() {
+          return (bookConfig && Array.isArray(bookConfig.sections))
+            ? bookConfig.sections.filter(s => s.active)
+            : [];
+        }
+
+        function getSectionPageCount(secId) {
+          if (!Array.isArray(generatedPageList)) return 0;
+          return generatedPageList.filter(p => p.sectionId === secId).length;
+        }
+
+        function ensureGuidedSelection() {
+          const all = (bookConfig && bookConfig.sections) || [];
+          if (!all.some(s => s.id === guidedSectionId)) {
+            const firstActive = getActiveSections()[0] || all[0];
+            guidedSectionId = firstActive ? firstActive.id : 'cover';
+          }
+        }
+
+        function getPageCountdown() {
+          const active = getActiveSections();
+          let total = 0;
+          let remaining = 0;
+          active.forEach(sec => {
+            const cnt = getSectionPageCount(sec.id);
+            total += cnt;
+            if (!validatedMap[sec.id]) remaining += cnt;
+          });
+          return { total, remaining };
+        }
+
+        function renderGuidedUI() {
+          const panel = document.querySelector('.builder-panel');
+          const listEl = document.getElementById('sectionsListContainer');
+          if (!panel || !listEl || !bookConfig || !Array.isArray(bookConfig.sections)) return;
+
+          ensureGuidedSelection();
+          const { total, remaining } = getPageCountdown();
+
+          let box = document.getElementById('guidedSectionBox');
+          if (!box) {
+            box = document.createElement('div');
+            box.id = 'guidedSectionBox';
+            box.className = 'guided-box';
+            panel.insertBefore(box, listEl);
+          }
+
+          let navBar = document.getElementById('guidedSectionNavBar');
+          if (!navBar) {
+            navBar = document.createElement('div');
+            navBar.id = 'guidedSectionNavBar';
+            navBar.className = 'guided-nav-bar';
+            listEl.insertAdjacentElement('afterend', navBar);
+          }
+
+          const pillsHtml = bookConfig.sections.map(sec => {
+            const isCurrent = guidedMode && sec.id === guidedSectionId;
+            const isVal = !!validatedMap[sec.id] && sec.active;
+            const cls = [
+              'guided-sec-pill',
+              !sec.active ? 'is-inactive' : '',
+              isVal ? 'is-validated' : '',
+              isCurrent ? 'is-current' : ''
+            ].filter(Boolean).join(' ');
+            const shortName = sec.name.replace('Planificador ', '').replace('Rastreador de ', '').replace(' (4 Trimestres)', '').replace(' (31 días)', '');
+            const icon = !sec.active ? '○' : isVal ? '✓' : '•';
+            return `<button type="button" class="${cls}" data-guided-sec="${sec.id}">${icon} ${shortName}</button>`;
+          }).join('');
+
+          const curDateVal = (document.getElementById('dateModeSelect') && document.getElementById('dateModeSelect').value) || 'auto2026';
+          const showDatePickerInStep1 = guidedMode && guidedSectionId === 'cover';
+
+          box.innerHTML = `
+            <div class="guided-top-row">
+              <span class="guided-countdown ${remaining === 0 ? 'all-done' : ''}">
+                ${remaining === 0
+                  ? `✅ Todas las páginas validadas (${total} págs.)`
+                  : `⏳ Faltan ${remaining} págs. por validar (de ${total})`}
+              </span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" class="guided-mode-toggle" id="btnBackToPresetStart">← Modelo</button>
+                <button type="button" class="guided-mode-toggle" id="btnToggleGuidedMode">
+                  ${guidedMode ? 'Ver todas' : 'Paso a paso'}
+                </button>
+              </div>
+            </div>
+            <div class="guided-pills-wrap">${pillsHtml}</div>
+            ${
+              showDatePickerInStep1
+                ? `<div class="guided-date-box">
+                    <label for="guidedDateSelect">📅 1º Elige las fechas del libro:</label>
+                    <select id="guidedDateSelect" class="select-control">
+                      <option value="auto2026" ${curDateVal === 'auto2026' ? 'selected' : ''}>📅 Con Fechas (Año 2026)</option>
+                      <option value="auto2027" ${curDateVal === 'auto2027' ? 'selected' : ''}>📅 Con Fechas (Año 2027)</option>
+                      <option value="blank" ${curDateVal === 'blank' ? 'selected' : ''}>⚪ En Blanco (Atemporal / Escribir a mano)</option>
+                    </select>
+                  </div>
+                  <div class="guided-date-box" id="guidedCoverTextInputs">
+                    <label for="gInpCoverTitle">✏️ Título de Portada Interior:</label>
+                    <input type="text" id="gInpCoverTitle" class="select-control" maxlength="55" value="${String(bookConfig.title || '').replace(/"/g, '&quot;')}" />
+                    <label for="gInpCoverSub" style="margin-top:4px;">Subtítulo:</label>
+                    <input type="text" id="gInpCoverSub" class="select-control" maxlength="100" value="${String(bookConfig.subtitle || '').replace(/"/g, '&quot;')}" />
+                    <label for="gInpCoverOwner" style="margin-top:4px;">Propietario (Ex Libris):</label>
+                    <input type="text" id="gInpCoverOwner" class="select-control" maxlength="55" value="${String(bookConfig.owner || '').replace(/"/g, '&quot;')}" />
+                    <label for="gInpCoverDed" style="margin-top:4px;">Dedicatoria / Cita:</label>
+                    <textarea id="gInpCoverDed" class="select-control" rows="2" maxlength="140" style="resize:vertical;">${String(bookConfig.dedication || '')}</textarea>
+                  </div>`
+                : ''
+            }
+            ${guidedWarningText ? `<div class="guided-warn-msg">${guidedWarningText}</div>` : ''}
+          `;
+
+          const gDateSel = box.querySelector('#guidedDateSelect');
+          if (gDateSel) {
+            gDateSel.addEventListener('change', (e) => {
+              const origSel = document.getElementById('dateModeSelect');
+              if (origSel) {
+                origSel.value = e.target.value;
+                if (typeof handleDateModeChange === 'function') handleDateModeChange();
+              }
+            });
+          }
+
+          [
+            ['#gInpCoverTitle', 'title'],
+            ['#gInpCoverSub', 'subtitle'],
+            ['#gInpCoverOwner', 'owner'],
+            ['#gInpCoverDed', 'dedication'],
+          ].forEach(([sel, key]) => {
+            const el = box.querySelector(sel);
+            if (!el) return;
+            el.addEventListener('input', () => {
+              bookConfig[key] = el.value;
+              if (typeof saveCompleteBookConfigLocally === 'function') saveCompleteBookConfigLocally();
+              if (typeof renderPreviewPage === 'function') renderPreviewPage();
+            });
+          });
+
+          box.querySelector('#btnBackToPresetStart')?.addEventListener('click', () => {
+            document.documentElement.classList.add('show-preset-screen');
+            if (typeof window.renderPresetStartScreen === 'function') window.renderPresetStartScreen();
+          });
+          box.querySelector('#btnToggleGuidedMode').addEventListener('click', () => {
+            guidedMode = !guidedMode;
+            applyCardVisibility();
+            renderGuidedUI();
+          });
+
+          box.querySelectorAll('[data-guided-sec]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              guidedMode = true;
+              guidedSectionId = btn.dataset.guidedSec;
+              const secObj = bookConfig.sections.find(s => s.id === guidedSectionId);
+              if (secObj && secObj.active && typeof jumpToSection === 'function') {
+                jumpToSection(guidedSectionId);
+              }
+              applyCardVisibility();
+              renderGuidedUI();
+            });
+          });
+
+          applyCardVisibility();
+
+          const activeList = getActiveSections();
+          const curIdx = activeList.findIndex(s => s.id === guidedSectionId);
+          const curSec = bookConfig.sections.find(s => s.id === guidedSectionId);
+          const curPages = getSectionPageCount(guidedSectionId);
+
+          if (!guidedMode) {
+            navBar.style.display = 'none';
+          } else {
+            navBar.style.display = 'flex';
+            const isLastActive = curIdx === activeList.length - 1 && activeList.length > 0;
+            const acceptLabel = !curSec || !curSec.active
+              ? 'Activa esta sección arriba para añadirla'
+              : (isLastActive && remaining <= curPages)
+                ? `✓ Validar (${curPages} págs.) e ir a Portada →`
+                : `✓ Aceptar (${curPages} págs.) y seguir →`;
+
+            navBar.innerHTML = `
+              <button type="button" class="guided-btn-prev" id="btnGuidedPrev" ${curIdx <= 0 ? 'disabled' : ''}>← Anterior</button>
+              <button type="button" class="guided-btn-accept ${isLastActive && remaining <= curPages ? 'done-ready' : ''}" id="btnGuidedAccept" ${!curSec || !curSec.active ? 'disabled' : ''}>
+                ${acceptLabel}
+              </button>
+            `;
+
+            navBar.querySelector('#btnGuidedPrev').addEventListener('click', () => {
+              if (curIdx > 0) {
+                guidedSectionId = activeList[curIdx - 1].id;
+                if (typeof jumpToSection === 'function') jumpToSection(guidedSectionId);
+                applyCardVisibility();
+                renderGuidedUI();
+              }
+            });
+
+            navBar.querySelector('#btnGuidedAccept').addEventListener('click', () => {
+              if (!curSec || !curSec.active) return;
+              guidedWarningText = '';
+              validatedMap[curSec.id] = true;
+              const nextUnvalidated = activeList.find((s, i) => i > curIdx && !validatedMap[s.id])
+                || activeList.find(s => !validatedMap[s.id]);
+              if (nextUnvalidated) {
+                guidedSectionId = nextUnvalidated.id;
+                if (typeof jumpToSection === 'function') jumpToSection(guidedSectionId);
+                applyCardVisibility();
+                renderGuidedUI();
+              } else {
+                renderGuidedUI();
+                if (typeof openValidateInteriorTextsModal === 'function') {
+                  openValidateInteriorTextsModal();
+                }
+              }
+            });
+          }
+
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'INTERIOR_PROGRESS',
+              totalPages: total,
+              remainingPages: remaining,
+              currentSectionName: curSec ? curSec.name : ''
+            }, '*');
+          }
+        }
+
+        function setupCollapsibleIndex() {
+          if (!document.documentElement.classList.contains('embed-mode')) return;
+          const card = document.getElementById('bookIndexCard');
+          const aside = document.querySelector('.index-sidebar-panel');
+          if (!card || !aside || document.getElementById('btnToggleBookIndex')) return;
+
+          card.classList.add('is-collapsed');
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.id = 'btnToggleBookIndex';
+          btn.className = 'btn-toggle-index';
+          btn.innerHTML = '<span>📖 Ver Índice del Libro</span><span>▾</span>';
+          btn.addEventListener('click', () => {
+            const collapsed = card.classList.toggle('is-collapsed');
+            btn.innerHTML = collapsed
+              ? '<span>📖 Ver Índice del Libro</span><span>▾</span>'
+              : '<span>📖 Ocultar Índice del Libro</span><span>▴</span>';
+          });
+          aside.insertBefore(btn, card);
+        }
+
+        function tryAdvanceToCover() {
+          const { remaining } = getPageCountdown();
+          if (remaining > 0) {
+            guidedMode = true;
+            const activeList = getActiveSections();
+            const firstPending = activeList.find(s => !validatedMap[s.id]);
+            if (firstPending) {
+              guidedSectionId = firstPending.id;
+              if (typeof jumpToSection === 'function') jumpToSection(guidedSectionId);
+            }
+            guidedWarningText = `⚠️ Te falta aceptar o configurar el interior (quedan ${remaining} págs. por validar). Pulsa el botón resaltado «✓ Aceptar y seguir».`;
+            applyCardVisibility();
+            renderGuidedUI();
+            const acceptBtn = document.getElementById('btnGuidedAccept');
+            if (acceptBtn) {
+              acceptBtn.classList.remove('guided-pulse-highlight');
+              void acceptBtn.offsetWidth;
+              acceptBtn.classList.add('guided-pulse-highlight');
+              acceptBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+          }
+          guidedWarningText = '';
+          if (typeof openValidateInteriorTextsModal === 'function') {
+            openValidateInteriorTextsModal();
+          }
+        }
+
+        window.addEventListener('message', (ev) => {
+          if (ev.data && ev.data.type === 'REQUEST_GO_COVER') {
+            tryAdvanceToCover();
+          }
+        });
+
+        function applyCardVisibility() {
+          const cards = document.querySelectorAll('#sectionsListContainer .section-item-card');
+          cards.forEach(card => {
+            if (!guidedMode) {
+              card.style.display = '';
+            } else {
+              const sid = card.getAttribute('data-section-id');
+              card.style.display = (sid === guidedSectionId) ? '' : 'none';
+            }
+          });
+        }
+
+        if (typeof window.renderSectionsList === 'function') {
+          const origRender = window.renderSectionsList;
+          window.renderSectionsList = function () {
+            origRender.apply(this, arguments);
+            renderGuidedUI();
+          };
+        }
+
+        if (typeof window.applyPreset === 'function') {
+          const origPreset = window.applyPreset;
+          window.applyPreset = function () {
+            validatedMap = {};
+            const res = origPreset.apply(this, arguments);
+            const firstAct = getActiveSections()[0];
+            if (firstAct) guidedSectionId = firstAct.id;
+            renderGuidedUI();
+            return res;
+          };
+        }
+
+        if (typeof window.toggleSection === 'function') {
+          const origToggle = window.toggleSection;
+          window.toggleSection = function (id) {
+            const sec = bookConfig.sections.find(s => s.id === id);
+            const wasActive = sec ? sec.active : false;
+            delete validatedMap[id];
+            const res = origToggle.apply(this, arguments);
+            if (sec && sec.active !== wasActive) {
+              window._customPresetReason = `cambiar «${sec.name}» en el interior`;
+            }
+            renderGuidedUI();
+            return res;
+          };
+        }
+
+        if (typeof window.updateSectionPages === 'function') {
+          const origUpdatePages = window.updateSectionPages;
+          window.updateSectionPages = function (id) {
+            delete validatedMap[id];
+            const sec = bookConfig.sections.find(s => s.id === id);
+            if (sec) window._customPresetReason = `modificar páginas de «${sec.name}»`;
+            const res = origUpdatePages.apply(this, arguments);
+            renderGuidedUI();
+            return res;
+          };
+        }
+
+        function setupPresetStartScreen() {
+          if (!document.documentElement.classList.contains('embed-mode')) return;
+          document.documentElement.classList.add('show-preset-screen');
+          const wrap = document.querySelector('.generator-container-wrap');
+          if (!wrap || document.getElementById('presetStartScreen')) return;
+
+          const screen = document.createElement('section');
+          screen.id = 'presetStartScreen';
+          wrap.insertBefore(screen, wrap.firstChild);
+
+          window.renderPresetStartScreen = function () {
+            const activeKey = (typeof getActivePresetKey === 'function') ? getActivePresetKey() : 'anual';
+            const curDate = (document.getElementById('dateModeSelect') && document.getElementById('dateModeSelect').value) || 'auto2026';
+            const reasonHtml = (activeKey === 'libre' && window._customPresetReason)
+              ? `<div class="guided-warn-msg">ℹ️ El modelo rápido se cambió a <strong>Personalizado</strong> por ${window._customPresetReason}. (Tus textos de portada interior se han mantenido intactos).</div>`
+              : '';
+
+            const cardsHtml = Array.from(document.querySelectorAll('.presets-buttons-wrap .btn-preset')).map(btn => {
+              const key = btn.getAttribute('data-preset');
+              const isAct = btn.classList.contains('active');
+              return `<button type="button" class="preset-start-card ${isAct ? 'active' : ''}" data-start-preset="${key}">${btn.textContent.trim()}</button>`;
+            }).join('');
+
+            screen.innerHTML = `
+              <div>
+                <h2 style="font-family:'Playfair Display',serif; margin:0 0 4px; font-size:1.35rem;">1. Elige tu Modelo de Planificador</h2>
+                <p style="margin:0; font-size:0.84rem; color:#66615b;">Selecciona una estructura base y las fechas. Después irás validando sección por sección.</p>
+              </div>
+              ${reasonHtml}
+              <div class="preset-start-grid">${cardsHtml}</div>
+              <div class="guided-date-box">
+                <label for="startScreenDateSelect">📅 Fechas del Libro:</label>
+                <select id="startScreenDateSelect" class="select-control">
+                  <option value="auto2026" ${curDate === 'auto2026' ? 'selected' : ''}>📅 Con Fechas (Año 2026)</option>
+                  <option value="auto2027" ${curDate === 'auto2027' ? 'selected' : ''}>📅 Con Fechas (Año 2027)</option>
+                  <option value="blank" ${curDate === 'blank' ? 'selected' : ''}>⚪ En Blanco (Atemporal / Escribir a mano)</option>
+                </select>
+              </div>
+              <button type="button" id="btnEnterGuidedSections" class="guided-btn-accept done-ready" style="padding:12px 16px; font-size:0.9rem;">
+                Continuar a Secciones →
+              </button>
+            `;
+
+            screen.querySelectorAll('[data-start-preset]').forEach(b => {
+              b.addEventListener('click', () => {
+                window._customPresetReason = '';
+                if (typeof applyPreset === 'function') applyPreset(b.dataset.startPreset);
+                window.renderPresetStartScreen();
+              });
+            });
+
+            screen.querySelector('#startScreenDateSelect').addEventListener('change', (e) => {
+              const origSel = document.getElementById('dateModeSelect');
+              if (origSel) {
+                origSel.value = e.target.value;
+                if (typeof handleDateModeChange === 'function') handleDateModeChange();
+              }
+            });
+
+            screen.querySelector('#btnEnterGuidedSections').addEventListener('click', () => {
+              document.documentElement.classList.remove('show-preset-screen');
+              setTimeout(() => {
+                if (typeof fitMobilePreviewPage === 'function') fitMobilePreviewPage();
+              }, 80);
+            });
+          };
+
+          window.renderPresetStartScreen();
+        }
+
+        function setupClickToEnlargePage() {
+          if (!document.documentElement.classList.contains('embed-mode')) return;
+          const pageEl = document.getElementById('interactiveBookPage');
+          if (!pageEl || document.getElementById('enlargeInteriorModal')) return;
+
+          const modal = document.createElement('div');
+          modal.id = 'enlargeInteriorModal';
+          modal.innerHTML = `
+            <div id="enlargeInteriorModalBody">
+              <button type="button" id="btnCloseEnlargeInterior" style="position:sticky; top:4px; float:right; border:1px solid #ccc; background:#fff; border-radius:999px; width:32px; height:32px; font-weight:800; cursor:pointer; z-index:5;">✕</button>
+              <div id="enlargeInteriorClone"></div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.id === 'btnCloseEnlargeInterior') {
+              modal.classList.remove('open');
+            }
+          });
+
+          pageEl.addEventListener('click', (e) => {
+            if (e.target.closest('[contenteditable="true"]')) return;
+            const clone = document.getElementById('enlargeInteriorClone');
+            clone.innerHTML = `<div class="interactive-book-page" style="width:680px; max-width:none; margin:0 auto;">${pageEl.innerHTML}</div>`;
+            modal.classList.add('open');
+          });
+        }
+
+        setTimeout(() => {
+          setupPresetStartScreen();
+          renderGuidedUI();
+          setupCollapsibleIndex();
+          setupClickToEnlargePage();
+        }, 120);
+
+        // Escalado automático 1:1 para móvil sin desbordamiento horizontal
+        function fitMobilePreviewPage() {
+          const page = document.getElementById('interactiveBookPage');
+          const panel = document.querySelector('.preview-panel');
+          if (!page || !panel) return;
+          if (window.innerWidth <= 900) {
+            const availW = Math.max(260, panel.clientWidth - 16);
+            const naturalW = 680;
+            const scale = Math.min(1, availW / naturalW);
+            page.style.transformOrigin = 'top left';
+            page.style.transform = `scale(${scale})`;
+            const naturalH = page.offsetHeight || 495;
+            page.style.marginBottom = `-${Math.max(0, Math.round(naturalH * (1 - scale)))}px`;
+            page.style.marginRight = `-${Math.max(0, Math.round(naturalW * (1 - scale)))}px`;
+          } else {
+            page.style.transform = '';
+            page.style.marginBottom = '';
+            page.style.marginRight = '';
+          }
+        }
+        window.addEventListener('resize', fitMobilePreviewPage);
+        setTimeout(fitMobilePreviewPage, 250);
+      })();
+    </script>
+
+    <!-- OVERRIDES MÓVILES AL FINAL PARA PRIORIDAD DE CASCADA -->
+    <style id="mobileEmbedOverrides">
+      @media (max-width: 900px) {
+        html.embed-mode,
+        html.embed-mode body {
+          width: 100% !important;
+          max-width: 100vw !important;
+          overflow-x: hidden !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        html.embed-mode .generator-container-wrap {
+          width: 100% !important;
+          max-width: 100vw !important;
+          padding: 6px 6px 72px !important;
+          box-sizing: border-box !important;
+          overflow-x: hidden !important;
+        }
+        html.embed-mode .book-index-card,
+        html.embed-mode .book-index-content {
+          max-height: none !important;
+          overflow: visible !important;
+        }
+        html.embed-mode .main-control-bar,
+        html.embed-mode .workspace-grid,
+        html.embed-mode .builder-panel,
+        html.embed-mode .preview-panel,
+        html.embed-mode .index-sidebar-panel,
+        html.embed-mode .guided-box,
+        html.embed-mode .section-item-card {
+          width: 100% !important;
+          max-width: calc(100vw - 12px) !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+        }
+        html.embed-mode .main-control-bar {
+          padding: 10px !important;
+          margin-bottom: 10px !important;
+          gap: 8px !important;
+        }
+        html.embed-mode .presets-row {
+          flex-direction: column !important;
+          align-items: stretch !important;
+          gap: 6px !important;
+        }
+        html.embed-mode .presets-buttons-wrap {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 6px !important;
+          overflow: visible !important;
+        }
+        html.embed-mode .btn-preset {
+          font-size: 0.74rem !important;
+          padding: 6px 9px !important;
+          flex: 1 1 auto !important;
+          text-align: center !important;
+        }
+        html.embed-mode .options-row {
+          flex-direction: column !important;
+          align-items: stretch !important;
+          gap: 8px !important;
+        }
+        html.embed-mode .options-left,
+        html.embed-mode .control-item {
+          width: 100% !important;
+          flex-direction: column !important;
+          align-items: stretch !important;
+          gap: 4px !important;
+        }
+        html.embed-mode .select-control {
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        html.embed-mode .options-row > div:last-child {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 6px !important;
+          width: 100% !important;
+        }
+        html.embed-mode #btn-save-generator-design {
+          display: none !important;
+        }
+        html.embed-mode .btn-compile-pdf {
+          min-width: 0 !important;
+          font-size: 0.74rem !important;
+          padding: 9px 6px !important;
+          justify-content: center !important;
+          white-space: normal !important;
+          line-height: 1.2 !important;
+          text-align: center !important;
+        }
+        html.embed-mode .workspace-grid {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 10px !important;
+        }
+        html.embed-mode .preview-panel {
+          order: -1 !important;
+          position: relative !important;
+          padding: 8px !important;
+          border-radius: 10px !important;
+          border: 1px solid #dcd7ce !important;
+          overflow: hidden !important;
+        }
+        html.embed-mode .viewer-nav-bar {
+          flex-wrap: wrap !important;
+          gap: 6px !important;
+          margin-bottom: 6px !important;
+        }
+        html.embed-mode .viewer-nav-buttons > div:first-child {
+          display: none !important;
+        }
+        html.embed-mode .interactive-book-page {
+          width: 680px !important;
+          min-width: 680px !important;
+          max-width: none !important;
+        }
+        html.embed-mode .builder-panel {
+          padding: 10px !important;
+        }
+        html.embed-mode .builder-panel-title {
+          flex-wrap: wrap !important;
+          gap: 6px !important;
+        }
+        html.embed-mode .guided-pills-wrap {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 5px !important;
+          overflow: visible !important;
+        }
+        html.embed-mode .guided-sec-pill {
+          font-size: 0.72rem !important;
+          padding: 5px 8px !important;
+          max-width: 100% !important;
+          white-space: normal !important;
+          text-align: left !important;
+        }
+        html.embed-mode .guided-nav-bar {
+          display: flex !important;
+          width: 100% !important;
+          gap: 6px !important;
+        }
+        html.embed-mode .guided-btn-accept,
+        html.embed-mode .guided-btn-prev {
+          min-height: 44px !important;
+          min-width: 0 !important;
+          white-space: normal !important;
+          line-height: 1.2 !important;
+        }
+      }
+    </style>
 </body>
 </html>
