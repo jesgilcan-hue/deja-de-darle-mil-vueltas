@@ -3445,7 +3445,13 @@ function renderClientOrdersAndBasketViews(user) {
                !m.includes('en modo Simulación') &&
                !m.includes('SIMULACIÓN') &&
                !m.includes('Emails de Etapa') &&
-               !m.includes('a Cliente y Gestor');
+               !m.includes('a Cliente y Gestor') &&
+               !m.includes('Print Job') &&
+               !m.includes('Webhook Lulu') &&
+               !m.includes('Consulta Lulu') &&
+               !m.includes('[sandbox]') &&
+               !m.includes('[production]') &&
+               !m.includes('REJECTED');
       });
       const timelineHtml = cleanTimeline.slice().reverse().map(ev => `
         <div style="display: flex; gap: 10px; font-size: 0.8rem; color: #38322c; padding: 6px 0; border-bottom: 1px dashed #ebe5da;">

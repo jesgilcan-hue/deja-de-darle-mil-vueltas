@@ -976,7 +976,10 @@ window.approveAndSendToLulu = async function(orderId) {
         cost: parseFloat(cost),
         createdAt: new Date().toISOString()
       };
-      addTimelineEvent(order, `Print Job real creado en Lulu [${order.luluJob.environment}] (ID: ${order.luluJob.jobId} · ${order.luluJob.status})`);
+      const alreadyHasJobEv = (order.timeline || []).some(ev => (ev.message || '').includes(`ID: ${order.luluJob.jobId}`));
+      if (!alreadyHasJobEv) {
+        addTimelineEvent(order, `Print Job real creado en Lulu [${order.luluJob.environment}] (ID: ${order.luluJob.jobId} · ${order.luluJob.status})`);
+      }
       syncOrderToCloud(order);
       saveOrdersState();
       sortAndRenderOrders();

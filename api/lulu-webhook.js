@@ -124,17 +124,31 @@ export default async function handler(req, res) {
         lastCarrierMessage: `Lulu (${luluStatusName}): ${messagesText}`
       };
 
+      const newEvents = [
+        {
+          date: new Date().toISOString(),
+          message: `Webhook Lulu [${luluStatusName}]${trackingId ? ` · Tracking: ${trackingId}` : ''} · ${messagesText}`
+        }
+      ];
+      if (mappedStatus === 'printing') {
+        newEvents.push({
+          date: new Date().toISOString(),
+          message: 'Tu ejemplar ha pasado la revisión técnica y está en producción.'
+        });
+      } else if (mappedStatus === 'shipped') {
+        newEvents.push({
+          date: new Date().toISOString(),
+          message: trackingId
+            ? `Tu pedido ha salido de imprenta (Seguimiento: ${trackingId}).`
+            : 'Tu pedido ha salido de imprenta.'
+        });
+      }
+
       const patch = {
         status: mappedStatus,
         luluJob: updatedLuluJob,
         shipping: updatedShipping,
-        timeline: [
-          ...prevTimeline,
-          {
-            date: new Date().toISOString(),
-            message: `Webhook Lulu [${luluStatusName}]${trackingId ? ` · Tracking: ${trackingId}` : ''} · ${messagesText}`
-          }
-        ]
+        timeline: [...prevTimeline, ...newEvents]
       };
 
       await setDoc(doc(firestoreDb, 'orders', dSnap.id), patch, { merge: true });
