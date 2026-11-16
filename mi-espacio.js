@@ -2807,7 +2807,12 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
         city: firstShip.city,
         province: firstShip.province,
         notes: firstShip.notes || '',
-        returnOrigin: window.location.origin
+        returnOrigin: window.location.origin,
+        bookId: primaryItem.bookId || primaryItem.id || '',
+        isTestBook: Boolean(primaryItem.isTestBook || primaryItem.id === 'evangelios-2027-test'),
+        interiorPdfUrl: primaryItem.interiorPdfUrl || primaryItem.data?.interiorPdfUrl || '',
+        coverPdfUrl: primaryItem.coverPdfUrl || primaryItem.data?.coverPdfUrl || '',
+        luluEnv: primaryItem.luluEnv || 'sandbox'
       })
     });
 
@@ -3193,11 +3198,24 @@ function renderClientOrdersAndBasketViews(user) {
   // 1. RENDERIZAR BLOQUE A: CESTA / PENDIENTES DE PAGO EN EL PERFIL DEL CLIENTE
   const pendingContainer = document.getElementById('client-pending-basket-list');
   if (pendingContainer) {
+    const uEmail = (user ? getUserEmail(user) : '').toLowerCase().trim();
+    const uName = uEmail.split('@')[0];
+    const isTestAccount = uName.startsWith('jesgilcan') || uName.startsWith('jesusgil_87') || uName.startsWith('jesusgil87');
+    const hasEvangeliosTest = clientPendingBasket.some(it => it.id === 'evangelios-2027-test');
+    const devSeedBanner = (isTestAccount && !hasEvangeliosTest)
+      ? `<div style="margin-top: 10px; text-align: right;">
+           <button type="button" onclick="window.loadEvangeliosTestBookToBasket()" style="background:#1f1c19; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">
+             🧪 Cargar libro de prueba: Evangelios 2027 (Lulu Sandbox · 397 págs)
+           </button>
+         </div>`
+      : '';
+
     if (clientPendingBasket.length === 0) {
       pendingContainer.innerHTML = `
         <div style="padding: 18px; text-align: center; color: #786e63; font-size: 0.88rem; background: #ffffff; border-radius: 8px; border: 1px dashed #dcd4c6;">
           No tienes cuadernos pendientes de pago en tu cesta ahora mismo.
         </div>
+        ${devSeedBanner}
       `;
     } else {
       pendingContainer.innerHTML = clientPendingBasket.map((item, idx) => {
@@ -3354,7 +3372,7 @@ function renderClientOrdersAndBasketViews(user) {
             </div>
           </div>
         `;
-      }).join('');
+      }).join('') + devSeedBanner;
     }
   }
 
@@ -3713,6 +3731,60 @@ function renderClientOrdersAndBasketViews(user) {
 }
 
 
+
+window.loadEvangeliosTestBookToBasket = function() {
+  const user = auth.currentUser;
+  const email = (user ? getUserEmail(user) : '').toLowerCase().trim();
+  const uname = email.split('@')[0];
+  if (!uname.startsWith('jesgilcan') && !uname.startsWith('jesusgil_87') && !uname.startsWith('jesusgil87')) {
+    alert('Solo disponible para cuentas de prueba autorizadas.');
+    return;
+  }
+  const existingIdx = clientPendingBasket.findIndex(it => it.id === 'evangelios-2027-test');
+  const testItem = {
+    id: 'evangelios-2027-test',
+    bookId: 'evangelios-2027-test',
+    isTestBook: true,
+    luluEnv: 'sandbox',
+    title: 'Evangelios 2027 (Prueba Lulu Sandbox)',
+    subtitle: 'Edición Personal · 6×9" Tapa Blanda Mate',
+    bindingType: 'softcover',
+    pageCount: 397,
+    quantity: 1,
+    textsConfirmed: false,
+    interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-397p-IpVr0vXqc0sdA7hr0tcWZDjdNMuS0R.pdf',
+    coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-HoqgVZ275wMNb0U7c5DE27lWEj7Ax6.pdf',
+    paperLabel: 'Papel Crema 90g',
+    fileSizeMb: '4.0',
+    data: {
+      title: 'Evangelios 2027',
+      subtitle: 'Edición Personal 2027',
+      interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-397p-IpVr0vXqc0sdA7hr0tcWZDjdNMuS0R.pdf',
+      coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-HoqgVZ275wMNb0U7c5DE27lWEj7Ax6.pdf'
+    },
+    shipping: {
+      name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+      email: email || 'jesusgil_87@hotmail.com',
+      address: 'Calle Serrano 42, 4º Derecha',
+      postalCode: '28001',
+      city: 'Madrid',
+      province: 'Madrid',
+      country: 'ES',
+      phone: '+34 600 000 000',
+      notes: 'Prueba completa Lulu Sandbox + Stripe Test'
+    }
+  };
+  if (existingIdx >= 0) {
+    clientPendingBasket[existingIdx] = testItem;
+  } else {
+    clientPendingBasket.unshift(testItem);
+  }
+  saveClientOrdersAndBasketState(user);
+  renderClientOrdersAndBasketViews(user);
+  if (typeof showToast === 'function') {
+    showToast('🧪 Evangelios 2027 cargado en tu cesta (Lulu Sandbox · 397 págs)');
+  }
+};
 
 window.initClientOrdersAndBasketModule = initClientOrdersAndBasketModule;
 window.renderClientOrdersAndBasketViews = renderClientOrdersAndBasketViews;
