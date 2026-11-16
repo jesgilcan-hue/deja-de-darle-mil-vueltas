@@ -2862,21 +2862,25 @@ async function checkAndHandleStripeCheckoutReturn() {
     }
 
     if (stripeVerified) {
-      // Retirar de la cesta pendiente todos los libros comprados
+      // Retirar de la cesta pendiente todos los libros comprados (tanto en local como en Firestore)
       try {
-        const pendingRaw = localStorage.getItem('mr_pending_payment_books');
-        if (pendingRaw) {
-          let pList = JSON.parse(pendingRaw);
-          const itemsList = activeData?.items || (activeData?.item ? [activeData.item] : []);
-          const boughtTitles = itemsList.map(x => x.title);
-          if (boughtTitles.length > 0) {
-            pList = pList.filter(x => !boughtTitles.includes(x.title));
-          } else {
-            pList = [];
-          }
-          localStorage.setItem('mr_pending_payment_books', JSON.stringify(pList));
-          clientPendingBasket = pList;
+        const itemsList = activeData?.items || (activeData?.item ? [activeData.item] : []);
+        const boughtTitles = itemsList.map(x => x.title).filter(Boolean);
+        if (stripeData?.metadata?.book_title) boughtTitles.push(stripeData.metadata.book_title);
+        const boughtIds = itemsList.map(x => x.id).filter(Boolean);
+        if (stripeData?.metadata?.book_id) boughtIds.push(stripeData.metadata.book_id);
+
+        let pList = Array.isArray(clientPendingBasket) && clientPendingBasket.length
+          ? [...clientPendingBasket]
+          : JSON.parse(localStorage.getItem('mr_pending_payment_books') || '[]');
+
+        if (boughtTitles.length > 0 || boughtIds.length > 0) {
+          pList = pList.filter(x => !boughtTitles.includes(x.title) && !boughtIds.includes(x.id) && !boughtIds.includes(x.bookId));
+        } else {
+          pList = [];
         }
+        clientPendingBasket = pList;
+        localStorage.setItem('mr_pending_payment_books', JSON.stringify(pList));
         localStorage.removeItem('mr_cart_cover_item');
         localStorage.removeItem('mr_active_checkout_order');
       } catch(e) {}
@@ -2973,6 +2977,11 @@ async function checkAndHandleStripeCheckoutReturn() {
       }
       try {
         localStorage.setItem('mr_simulated_orders', JSON.stringify(clientProfileOrders));
+      } catch(e) {}
+
+      // Persistir también la cesta actualizada en Firestore para que no reaparezca al recargar
+      try {
+        await saveClientOrdersAndBasketState(user || auth.currentUser || currentUser);
       } catch(e) {}
 
       subscribeToIndividualOrders([finalOrder]);
