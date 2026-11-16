@@ -844,19 +844,30 @@ function renderActionButtonsForOrder(order) {
       </div>
     `;
   } else if (st === 'approved_printing') {
+    const isRealJob = order.luluJob?.jobId && !String(order.luluJob.jobId).startsWith('LULU-');
     return `
       <div style="background:#e0f2fe; color:#0369a1; padding:8px 10px; border-radius:6px; font-size:0.78rem; text-align:center; font-weight:700;">
-        ⏳ Transmitiendo archivos a Lulu API...
+        ${isRealJob ? `🖨️ Lulu [${escapeHtml(order.luluJob.environment || 'sandbox')}] Job #${escapeHtml(order.luluJob.jobId)} (${escapeHtml(order.luluJob.status || 'CREATED')})` : '⏳ Transmitiendo archivos a Lulu API...'}
       </div>
-      <button type="button" class="btn-order-secondary" onclick="simulateLuluProgress('${id}', 'printing')">
-        <span>🖨️</span> Simular que Lulu inicia impresión (+Emails)
+      ${isRealJob ? `<button type="button" class="btn-order-secondary" onclick="syncLuluOrderStatus('${id}')"><span>🔄</span> Consultar estado real en Lulu</button>` : `<button type="button" class="btn-order-secondary" onclick="simulateLuluProgress('${id}', 'printing')"><span>🖨️</span> Simular que Lulu inicia impresión (+Emails)</button>`}
+    `;
+  } else if (st === 'lulu_error') {
+    return `
+      <div style="background:#fee2e2; color:#991b1b; padding:8px 10px; border-radius:6px; font-size:0.78rem; text-align:center; font-weight:700;">
+        ⚠️ Lulu reportó error (${escapeHtml(order.luluJob?.status || 'REJECTED')})
+      </div>
+      <button type="button" class="btn-order-approve" onclick="approveAndSendToLulu('${id}')">
+        <span>🔁</span> Reintentar envío a Lulu
       </button>
+      ${order.luluJob?.jobId ? `<button type="button" class="btn-order-secondary" onclick="syncLuluOrderStatus('${id}')"><span>🔄</span> Consultar detalle en Lulu</button>` : ''}
     `;
   } else if (st === 'printing') {
+    const isRealJob = order.luluJob?.jobId && !String(order.luluJob.jobId).startsWith('LULU-');
     return `
       <div style="background:#f3e8ff; color:#6b21a8; padding:8px 10px; border-radius:6px; font-size:0.78rem; text-align:center; font-weight:700;">
         🖨️ En fabricación (Lulu Job: ${escapeHtml(order.luluJob?.jobId || 'LULU-9812')})
       </div>
+      ${isRealJob ? `<button type="button" class="btn-order-secondary" onclick="syncLuluOrderStatus('${id}')"><span>🔄</span> Consultar estado real en Lulu</button>` : ''}
       <button type="button" class="btn-order-approve" style="background:#2563eb;" onclick="simulateLuluProgress('${id}', 'shipped')">
         <span>📦</span> 3. Marcar como Enviado / Tracking (+Emails)
       </button>
@@ -917,15 +928,66 @@ function renderActionButtonsForOrder(order) {
 // 5. ACCIONES DE GESTIÓN OPERATIVA
 // =========================================================================
 
-// Aprobar y enviar a Lulu
+// Aprobar y enviar a Lulu (real si tiene URLs de PDF; simulación en pedidos antiguos)
 window.approveAndSendToLulu = async function(orderId) {
   if (!assertAuthorized()) return;
   const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
   if (!order) return;
 
   const cost = (order.pricing?.luluCostEstimate || 10.50).toFixed(2);
-  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Coste estimado de imprenta Lulu: ${cost} €\n• Se ordenará la impresión en ${getBindingDisplayName(order.book?.bindingType)}.\n• Se enviarán emails reales desde pedidos@editorialmenosruido.com al Cliente (jesusgil_87@hotmail.com) y al Gestor (jesgilcan@gmail.com).`);
+  const interiorUrl = order.book?.interiorPdfUrl || order.book?.data?.interiorPdfUrl || '';
+  const coverUrl = order.book?.coverPdfUrl || order.book?.data?.coverPdfUrl || '';
+  const hasRealPdfs = interiorUrl.startsWith('https://') && coverUrl.startsWith('https://');
+  const targetEnv = order.book?.luluEnv || 'sandbox';
+
+  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Modo Lulu: ${hasRealPdfs ? targetEnv.toUpperCase() + ' (API REAL)' : 'Simulación local (sin URLs PDF)'}\n• Coste estimado de imprenta Lulu: ${cost} €\n• Encuadernación: ${getBindingDisplayName(order.book?.bindingType)}.`);
   if (!ok) return;
+
+  if (hasRealPdfs) {
+    try {
+      showToast(`⏳ Enviando Print Job real a Lulu [${targetEnv}]...`);
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+      const resp = await fetch('/api/lulu-create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          orderId: order.id || order.orderNumber,
+          orderNumber: order.orderNumber,
+          book: { ...order.book, interiorPdfUrl: interiorUrl, coverPdfUrl: coverUrl },
+          shipping: order.shipping || {},
+          customer: order.customer || {},
+          luluEnv: targetEnv
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        const msg = data.details ? JSON.stringify(data.details) : (data.error || 'Error enviando a Lulu');
+        alert(`Lulu [${targetEnv}] rechazó el envío:\n${msg}`);
+        return;
+      }
+      order.status = 'approved_printing';
+      order.luluJob = {
+        status: data.status || 'CREATED',
+        environment: data.environment || targetEnv,
+        jobId: String(data.luluJobId),
+        cost: parseFloat(cost),
+        createdAt: new Date().toISOString()
+      };
+      addTimelineEvent(order, `Print Job real creado en Lulu [${order.luluJob.environment}] (ID: ${order.luluJob.jobId} · ${order.luluJob.status})`);
+      syncOrderToCloud(order);
+      saveOrdersState();
+      sortAndRenderOrders();
+      if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
+      showToast(`✓ Pedido enviado a Lulu [${order.luluJob.environment}] · Job #${order.luluJob.jobId}`);
+      return;
+    } catch (err) {
+      alert('Error conectando con /api/lulu-create-order: ' + err.message);
+      return;
+    }
+  }
 
   order.status = 'approved_printing';
   order.luluJob = {
@@ -957,6 +1019,48 @@ window.approveAndSendToLulu = async function(orderId) {
     await sendOrderLifecycleEmails(order, 'status_printing');
     showToast(`✉️ Emails de Etapa 2/4 (En Imprenta) enviados a Cliente y Gestor`);
   }, 1200);
+};
+
+window.syncLuluOrderStatus = async function(orderId) {
+  if (!assertAuthorized()) return;
+  const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
+  if (!order || !order.luluJob?.jobId) return;
+
+  try {
+    const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+    const env = order.luluJob.environment || order.book?.luluEnv || 'sandbox';
+    showToast(`🔄 Consultando Lulu [${env}] para Job #${order.luluJob.jobId}...`);
+    const resp = await fetch(`/api/lulu-status?jobId=${encodeURIComponent(order.luluJob.jobId)}&env=${encodeURIComponent(env)}`, {
+      headers: { Authorization: `Bearer ${idToken}` }
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      alert('Error consultando estado en Lulu: ' + (data.error || JSON.stringify(data)));
+      return;
+    }
+    const msgs = Array.isArray(data.statusMessages) && data.statusMessages.length ? data.statusMessages.join(' | ') : 'Sin mensajes';
+    order.luluJob.status = data.statusName || order.luluJob.status;
+    if (data.trackingId) {
+      order.luluJob.trackingCode = data.trackingId;
+      if (!order.shipping) order.shipping = {};
+      order.shipping.trackingNumber = data.trackingId;
+      if (data.trackingUrls?.[0]) order.shipping.trackingUrl = data.trackingUrls[0];
+    }
+    if (['REJECTED', 'ERROR', 'CANCELED'].includes(String(data.statusName).toUpperCase())) {
+      order.status = 'lulu_error';
+    } else if (String(data.statusName).toUpperCase() === 'SHIPPED') {
+      order.status = 'shipped';
+    } else if (['IN_PRODUCTION', 'PRODUCTION_READY', 'PRODUCTION_DELAYED'].includes(String(data.statusName).toUpperCase())) {
+      order.status = 'printing';
+    }
+    addTimelineEvent(order, `Consulta Lulu [${env}] → ${data.statusName}: ${msgs}`);
+    syncOrderToCloud(order);
+    saveOrdersState();
+    sortAndRenderOrders();
+    alert(`Estado real en Lulu [${env}] (Job #${data.luluJobId}):\n\n• Estado: ${data.statusName}\n• Mensajes: ${msgs}${data.trackingId ? `\n• Tracking: ${data.trackingId}` : ''}`);
+  } catch (err) {
+    alert('Error consultando Lulu: ' + err.message);
+  }
 };
 
 // Simular progreso de Lulu
@@ -1582,6 +1686,8 @@ function getStatusMeta(status) {
       return { label: '4/4 Entregado en Domicilio', badgeClass: 'status-shipped', icon: '🎉' };
     case 'paused':
       return { label: 'Pausado', badgeClass: 'status-paused', icon: '⏸️' };
+    case 'lulu_error':
+      return { label: 'Error / Rechazo Lulu', badgeClass: 'status-paused', icon: '⚠️' };
     default:
       return { label: 'Pendiente', badgeClass: 'status-pending', icon: '🟡' };
   }

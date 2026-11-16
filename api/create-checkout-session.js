@@ -118,7 +118,12 @@ export default async function handler(req, res) {
       country = 'ES',
       notes = '',
       simulateSpike = false,
-      returnOrigin = 'https://www.editorialmenosruido.com'
+      returnOrigin = 'https://www.editorialmenosruido.com',
+      bookId = '',
+      isTestBook = false,
+      interiorPdfUrl = '',
+      coverPdfUrl = '',
+      luluEnv = undefined
     } = req.body || {};
 
     // Validación estricta de servidor para datos postales y de contacto
@@ -143,7 +148,10 @@ export default async function handler(req, res) {
       city,
       province,
       country,
-      simulateSpike
+      simulateSpike,
+      luluEnv,
+      bookId,
+      isTestBook
     });
 
     if (!quote.canPurchase || quote.circuitBreakerTriggered) {
@@ -240,6 +248,10 @@ export default async function handler(req, res) {
     params.append('metadata[binding_type]', cleanItems[0].bindingType);
     params.append('metadata[page_count]', String(cleanItems[0].pageCount));
     params.append('metadata[pod_package_id]', quote.product.podPackageId);
+    if (interiorPdfUrl) params.append('metadata[interior_pdf_url]', String(interiorPdfUrl).slice(0, 490));
+    if (coverPdfUrl) params.append('metadata[cover_pdf_url]', String(coverPdfUrl).slice(0, 490));
+    if (bookId) params.append('metadata[book_id]', String(bookId).slice(0, 100));
+    if (quote.luluEnv) params.append('metadata[lulu_env]', String(quote.luluEnv));
     params.append('metadata[lulu_total_cost_eur]', String(quote.pricing.luluTotalCost));
     params.append('metadata[net_margin_eur]', String(quote.pricing.netMargin));
     params.append('metadata[customer_name]', customerName || 'Cliente');

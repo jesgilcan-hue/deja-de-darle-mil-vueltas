@@ -2,12 +2,11 @@
 // Cotización en tiempo real contra Lulu Direct API + Cortacircuitos de Margen Mínimo (Safety Guard)
 // Exclusivo para desarrollador autenticado (jesgilcan@gmail.com) durante fase de pruebas
 
+import { luluApiRequest } from './lulu-client.js';
+
 const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
 const ALLOWED_TEST_CUSTOMER_EMAILS = ['jesusgil_87@hotmail.com', 'jesusgil_87@gmail.com'];
 const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf-8');
-
-// Credenciales Lulu Direct API (prioriza variable de entorno en Vercel)
-const LULU_AUTH_BASIC = process.env.LULU_AUTH_BASIC || 'Basic MDQzYjg2NWUtNjRmNC00MzA0LTg5ZTctZTJmZDMzNWI0ZjQwOmpDSkJhMXJVOUNKSnpOMHEzd29ZSEk5MFNSS3czRVM4NmdNWHZmeko0OFRuR0NnOGxZVG5JZkRkUDdZWjI5cHRwOE5pVjVvTGFSSnFUemRGeGN0U0JQ';
 
 // Tabla de Precios Base de Venta al Público (PVP con envío incluido hasta 150 págs)
 export const FIXED_RETAIL_PRICES = {
@@ -103,32 +102,18 @@ export async function calculateLuluQuoteAndSafety({
   province = 'M',
   country = 'ES',
   shippingOption = 'MAIL',
-  simulateSpike = false
+  simulateSpike = false,
+  luluEnv = undefined,
+  bookId = '',
+  isTestBook = false
 }) {
   const productConfig = FIXED_RETAIL_PRICES[bindingType] || FIXED_RETAIL_PRICES.softcover;
   const safePageCount = Math.max(32, Math.min(800, parseInt(pageCount, 10) || 120));
   const retailPrice = calculateDynamicRetailPrice(bindingType, safePageCount);
+  const isEvangeliosTest = Boolean(isTestBook) || bookId === 'evangelios-2027-test';
+  const effectiveMinSafeMargin = isEvangeliosTest ? 0.00 : MIN_SAFE_MARGIN_EUR;
 
-  // 1. Obtener token OAuth2 de Lulu Direct API
-  const tokenRes = await fetch(
-    'https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token',
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': LULU_AUTH_BASIC,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials'
-    }
-  );
-
-  if (!tokenRes.ok) {
-    throw new Error(`Error autenticando con Lulu API (${tokenRes.status})`);
-  }
-  const tokenData = await tokenRes.json();
-  const accessToken = tokenData.access_token;
-
-  // 2. Consultar coste exacto en tiempo real a Lulu (/print-job-cost-calculations/)
+  // 1-2. Consultar coste exacto en tiempo real a Lulu (/print-job-cost-calculations/)
   const calcPayload = {
     line_items: [
       {
@@ -148,20 +133,16 @@ export async function calculateLuluQuoteAndSafety({
     shipping_option: shippingOption || 'MAIL'
   };
 
-  const costRes = await fetch('https://api.lulu.com/print-job-cost-calculations/', {
+  const luluRes = await luluApiRequest('/print-job-cost-calculations/', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache'
-    },
-    body: JSON.stringify(calcPayload)
+    body: calcPayload,
+    env: luluEnv
   });
 
-  const costData = await costRes.json();
-  if (!costRes.ok) {
+  const costData = luluRes.data || {};
+  if (!luluRes.ok) {
     const detail = JSON.stringify(costData);
-    throw new Error(`Lulu rechazó el cálculo de envío/impresión: ${detail}`);
+    throw new Error(`Lulu [${luluRes.env}] rechazó el cálculo de envío/impresión: ${detail}`);
   }
 
   let printCostExclTax = parseFloat(costData.line_item_costs?.[0]?.total_cost_excl_tax || '0');
@@ -192,10 +173,10 @@ export async function calculateLuluQuoteAndSafety({
     circuitBreakerTriggered = true;
     blockReason = `ALERTA CRÍTICA: El coste de Lulu (${luluTotalCost.toFixed(2)} €) supera el precio de venta fijado (${retailPrice.toFixed(2)} €). Pérdida directa de ${Math.abs(netMargin).toFixed(2)} €. Botón de compra bloqueado automáticamente.`;
     publicErrorMessage = 'Envío temporalmente no disponible para este código postal o configuración. Por favor, escríbenos a contacto@editorialmenosruido.com.';
-  } else if (netMargin < MIN_SAFE_MARGIN_EUR) {
+  } else if (netMargin < effectiveMinSafeMargin) {
     canPurchase = false;
     circuitBreakerTriggered = true;
-    blockReason = `CORTACIRCUITOS ACTIVO: El margen neto limpio (${netMargin.toFixed(2)} €) cae por debajo del mínimo de seguridad establecido (${MIN_SAFE_MARGIN_EUR.toFixed(2)} €) debido al coste de Lulu (${luluTotalCost.toFixed(2)} €). Botón de compra deshabilitado.`;
+    blockReason = `CORTACIRCUITOS ACTIVO: El margen neto limpio (${netMargin.toFixed(2)} €) cae por debajo del mínimo de seguridad establecido (${effectiveMinSafeMargin.toFixed(2)} €) debido al coste de Lulu (${luluTotalCost.toFixed(2)} €). Botón de compra deshabilitado.`;
     publicErrorMessage = 'No podemos procesar el envío estándar a esta zona en este momento. Consulta con contacto@editorialmenosruido.com.';
   }
 
@@ -205,6 +186,7 @@ export async function calculateLuluQuoteAndSafety({
     blockReason,
     publicErrorMessage,
     simulatedSpike: Boolean(simulateSpike),
+    luluEnv: luluRes.env,
     product: {
       bindingType,
       label: productConfig.label,
@@ -214,7 +196,7 @@ export async function calculateLuluQuoteAndSafety({
     pricing: {
       currency: 'EUR',
       retailPrice: +retailPrice.toFixed(2),
-      minSafeMargin: +MIN_SAFE_MARGIN_EUR.toFixed(2),
+      minSafeMargin: +effectiveMinSafeMargin.toFixed(2),
       luluPrintCost: +printCostExclTax.toFixed(2),
       luluShippingCost: +shippingCostExclTax.toFixed(2),
       luluTax: +totalTax.toFixed(2),

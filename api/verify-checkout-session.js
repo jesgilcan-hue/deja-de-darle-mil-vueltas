@@ -214,10 +214,15 @@ export default async function handler(req, res) {
         entregado: { sent: false }
       },
       book: {
+        id: metadata.book_id || '',
         title: metadata.book_title || bookTitle,
         subtitle: metadata.book_subtitle || 'Edición Personalizada',
         bindingType: metadata.binding_type || 'softcover',
         pageCount: parseInt(metadata.page_count || 144, 10),
+        podPackageId: metadata.pod_package_id || '',
+        interiorPdfUrl: metadata.interior_pdf_url || '',
+        coverPdfUrl: metadata.cover_pdf_url || '',
+        luluEnv: metadata.lulu_env || 'sandbox',
         quantity: 1,
         size: '8.25x6',
         spineWidthMm: (parseInt(metadata.page_count || 144, 10) * 0.057).toFixed(1)
