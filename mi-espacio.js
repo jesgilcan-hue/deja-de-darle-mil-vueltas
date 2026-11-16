@@ -332,7 +332,12 @@ document.addEventListener('DOMContentLoaded', () => {
       checkUrlTab(false);
       // Cargar datos de usuario y plantillas EN PARALELO para máxima velocidad
       await Promise.all([loadUserData(user), loadUserDesigns(user)]);
-      await initClientOrdersAndBasketModule(user);
+      if (!window.__mrOrdersInitPromise) {
+        window.__mrOrdersInitPromise = initClientOrdersAndBasketModule(user).finally(() => {
+          window.__mrOrdersInitPromise = null;
+        });
+      }
+      await window.__mrOrdersInitPromise;
     } else {
       try { localStorage.removeItem('mr_cached_user'); } catch (e) {}
       const urlParams = new URLSearchParams(window.location.search);
@@ -419,7 +424,11 @@ function activateTab(tabId) {
     }
   });
 
-  // Reflejar en URL sin recargar
+  // Reflejar en URL sin recargar (preservando parámetros de retorno de Stripe si existen)
+  const currentParams = new URLSearchParams(window.location.search);
+  if (currentParams.get('stripe_success') === '1' || currentParams.get('stripe_test_success') === '1' || currentParams.get('session_id')) {
+    return;
+  }
   const urlParam = tabId.replace('tab-', '');
   const cleanUrl = window.location.pathname + '?tab=' + urlParam;
   window.history.replaceState({}, document.title, cleanUrl);
@@ -1156,7 +1165,11 @@ function renderAuthenticatedView(user) {
         deviceResult.currentToken,
         deviceResult.pendingDevices || []
       );
-      initClientOrdersAndBasketModule(user);
+      if (!window.__mrOrdersInitPromise) {
+        window.__mrOrdersInitPromise = initClientOrdersAndBasketModule(user).finally(() => {
+          window.__mrOrdersInitPromise = null;
+        });
+      }
 
       // Si acaba de pulsar el enlace de verificación del email desde este dispositivo autorizado:
       if (deviceResult.emailJustVerified) {
@@ -2714,8 +2727,8 @@ async function handleConfirmCheckoutOrder() {
     notes: shipNotes || 'Sin instrucciones adicionales'
   };
 
-  const customerPlatformName = shipName;
-  const customerPlatformEmail = shipEmail;
+  const customerPlatformName = (user ? getUserDisplayName(user) : '') || shipName;
+  const customerPlatformEmail = (user ? getUserEmail(user) : '') || shipEmail;
   const firstShip = shippingObj;
 
   // Verificar que todos los libros de la cesta tengan páginas pares
