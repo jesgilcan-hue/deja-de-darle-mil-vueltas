@@ -3205,7 +3205,7 @@ function renderClientOrdersAndBasketViews(user) {
     const devSeedBanner = (isTestAccount && !hasEvangeliosTest)
       ? `<div style="margin-top: 10px; text-align: right;">
            <button type="button" onclick="window.loadEvangeliosTestBookToBasket()" style="background:#1f1c19; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">
-             🧪 Cargar libro de prueba: Evangelios 2027 (Lulu Sandbox · 397 págs)
+             🧪 Cargar libro de prueba: Evangelios 2027 (Lulu Sandbox · 398 págs)
            </button>
          </div>`
       : '';
@@ -3749,17 +3749,17 @@ window.loadEvangeliosTestBookToBasket = function() {
     title: 'Evangelios 2027 (Prueba Lulu Sandbox)',
     subtitle: 'Edición Personal · 6×9" Tapa Blanda Mate',
     bindingType: 'softcover',
-    pageCount: 397,
+    pageCount: 398,
     quantity: 1,
     textsConfirmed: false,
-    interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-397p-IpVr0vXqc0sdA7hr0tcWZDjdNMuS0R.pdf',
+    interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-8csVKN5JR9w2NxVD0PHfSOuIg1Xc8O.pdf',
     coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-HoqgVZ275wMNb0U7c5DE27lWEj7Ax6.pdf',
     paperLabel: 'Papel Crema 90g',
     fileSizeMb: '4.0',
     data: {
       title: 'Evangelios 2027',
       subtitle: 'Edición Personal 2027',
-      interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-397p-IpVr0vXqc0sdA7hr0tcWZDjdNMuS0R.pdf',
+      interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-8csVKN5JR9w2NxVD0PHfSOuIg1Xc8O.pdf',
       coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-HoqgVZ275wMNb0U7c5DE27lWEj7Ax6.pdf'
     },
     shipping: {
@@ -3782,7 +3782,7 @@ window.loadEvangeliosTestBookToBasket = function() {
   saveClientOrdersAndBasketState(user);
   renderClientOrdersAndBasketViews(user);
   if (typeof showToast === 'function') {
-    showToast('🧪 Evangelios 2027 cargado en tu cesta (Lulu Sandbox · 397 págs)');
+    showToast('🧪 Evangelios 2027 cargado en tu cesta (Lulu Sandbox · 398 págs)');
   }
 };
 
