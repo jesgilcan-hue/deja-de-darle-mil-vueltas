@@ -3775,14 +3775,14 @@ window.loadEvangeliosTestBookToBasket = function() {
     quantity: 1,
     textsConfirmed: false,
     interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-8csVKN5JR9w2NxVD0PHfSOuIg1Xc8O.pdf',
-    coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-HoqgVZ275wMNb0U7c5DE27lWEj7Ax6.pdf',
+    coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-300dpi-OY4DdzLDxdewyMz8RL5T7mJGSQ5NqW.pdf',
     paperLabel: 'Papel Crema 90g',
     fileSizeMb: '4.0',
     data: {
       title: 'Evangelios 2027',
       subtitle: 'Edición Personal 2027',
       interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-8csVKN5JR9w2NxVD0PHfSOuIg1Xc8O.pdf',
-      coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-HoqgVZ275wMNb0U7c5DE27lWEj7Ax6.pdf'
+      coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-300dpi-OY4DdzLDxdewyMz8RL5T7mJGSQ5NqW.pdf'
     },
     shipping: {
       name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',

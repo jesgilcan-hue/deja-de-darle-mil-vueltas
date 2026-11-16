@@ -64,12 +64,27 @@ export default async function handler(req, res) {
 
     const job = luluRes.data || {};
     const lineItem = Array.isArray(job.line_items) ? job.line_items[0] || {} : {};
+    const statusMessages = [];
+    if (job.status?.message) statusMessages.push(String(job.status.message));
+    if (Array.isArray(job.status?.messages)) {
+      job.status.messages.forEach(m => statusMessages.push(typeof m === 'string' ? m : JSON.stringify(m)));
+    }
+    const liMsgs = lineItem?.status?.messages;
+    if (Array.isArray(liMsgs)) {
+      liMsgs.forEach(m => statusMessages.push(typeof m === 'string' ? m : JSON.stringify(m)));
+    } else if (liMsgs && typeof liMsgs === 'object') {
+      const norm = liMsgs.printable_normalization || liMsgs;
+      Object.entries(norm).forEach(([k, v]) => {
+        if (Array.isArray(v)) v.forEach(x => statusMessages.push(`${k}: ${String(x).trim()}`));
+        else if (v) statusMessages.push(`${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`);
+      });
+    }
     return res.status(200).json({
       ok: true,
       environment: luluRes.env,
       luluJobId: String(job.id || jobId),
       statusName: job.status?.name || '',
-      statusMessages: job.status?.messages || [],
+      statusMessages,
       trackingId: lineItem.tracking_id || '',
       trackingUrls: lineItem.tracking_urls || [],
       raw: job

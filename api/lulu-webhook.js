@@ -21,6 +21,28 @@ const firebaseApp = getApps().length
 const firestoreDb = getFirestore(firebaseApp);
 const OWNER_EMAIL = 'jesgilcan@gmail.com';
 
+function extractLuluMessages(job) {
+  const out = [];
+  if (job?.status?.message) out.push(String(job.status.message));
+  if (Array.isArray(job?.status?.messages)) {
+    job.status.messages.forEach(m => out.push(typeof m === 'string' ? m : JSON.stringify(m)));
+  }
+  const items = Array.isArray(job?.line_items) ? job.line_items : [];
+  items.forEach(it => {
+    const msgs = it?.status?.messages;
+    if (Array.isArray(msgs)) {
+      msgs.forEach(m => out.push(typeof m === 'string' ? m : JSON.stringify(m)));
+    } else if (msgs && typeof msgs === 'object') {
+      const norm = msgs.printable_normalization || msgs;
+      Object.entries(norm).forEach(([k, v]) => {
+        if (Array.isArray(v)) v.forEach(x => out.push(`${k}: ${String(x).trim()}`));
+        else if (v) out.push(`${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`);
+      });
+    }
+  });
+  return out;
+}
+
 function mapLuluStatusToOrderStatus(luluStatusName) {
   const s = String(luluStatusName || '').toUpperCase();
   if (s === 'SHIPPED') return 'shipped';
@@ -44,7 +66,7 @@ export default async function handler(req, res) {
     const jobId = job.id ? String(job.id) : '';
     const externalId = job.external_id ? String(job.external_id) : '';
     const luluStatusName = job.status?.name || 'UNKNOWN';
-    const statusMessages = Array.isArray(job.status?.messages) ? job.status.messages : [];
+    const statusMessages = extractLuluMessages(job);
     const lineItem = Array.isArray(job.line_items) ? job.line_items[0] || {} : {};
     const trackingId = lineItem.tracking_id || '';
     const trackingUrl = Array.isArray(lineItem.tracking_urls) ? lineItem.tracking_urls[0] || '' : '';
@@ -66,28 +88,30 @@ export default async function handler(req, res) {
       console.warn('No se pudo guardar log en lulu_webhooks:', logErr.message);
     }
 
-    // Buscar pedido en Firestore por orderNumber (external_id) o luluJob.jobId
-    let orderDocSnap = null;
+    // Buscar pedido(s) en Firestore por orderNumber (external_id) o luluJob.jobId
+    let matchingDocs = [];
     if (externalId) {
       const q1 = query(collection(firestoreDb, 'orders'), where('orderNumber', '==', externalId));
       const snap1 = await getDocs(q1);
-      if (!snap1.empty) orderDocSnap = snap1.docs[0];
+      if (!snap1.empty) matchingDocs = snap1.docs;
     }
-    if (!orderDocSnap && jobId) {
+    if (!matchingDocs.length && jobId) {
       const q2 = query(collection(firestoreDb, 'orders'), where('luluJob.jobId', '==', jobId));
       const snap2 = await getDocs(q2);
-      if (!snap2.empty) orderDocSnap = snap2.docs[0];
+      if (!snap2.empty) matchingDocs = snap2.docs;
     }
 
+    const orderDocSnap = matchingDocs[0] || null;
     const order = orderDocSnap ? orderDocSnap.data() : null;
     const mappedStatus = mapLuluStatusToOrderStatus(luluStatusName);
     const messagesText = statusMessages.length ? statusMessages.join(' | ') : 'Sin mensajes adicionales';
 
-    if (orderDocSnap && order) {
-      const prevTimeline = Array.isArray(order.timeline) ? order.timeline : [];
+    for (const dSnap of matchingDocs) {
+      const dData = dSnap.data() || {};
+      const prevTimeline = Array.isArray(dData.timeline) ? dData.timeline : [];
       const updatedLuluJob = {
-        ...(order.luluJob || {}),
-        jobId: jobId || order.luluJob?.jobId || '',
+        ...(dData.luluJob || {}),
+        jobId: jobId || dData.luluJob?.jobId || '',
         status: luluStatusName,
         rawStatus: job.status || null,
         lastWebhookAt: new Date().toISOString(),
@@ -95,27 +119,28 @@ export default async function handler(req, res) {
       };
 
       const updatedShipping = {
-        ...(order.shipping || {}),
+        ...(dData.shipping || {}),
         ...(trackingId ? { trackingNumber: trackingId, trackingUrl } : {}),
         lastCarrierMessage: `Lulu (${luluStatusName}): ${messagesText}`
       };
 
-      await setDoc(
-        doc(firestoreDb, 'orders', orderDocSnap.id),
-        {
-          status: mappedStatus,
-          luluJob: updatedLuluJob,
-          shipping: updatedShipping,
-          timeline: [
-            ...prevTimeline,
-            {
-              date: new Date().toISOString(),
-              message: `Webhook Lulu [${luluStatusName}]${trackingId ? ` · Tracking: ${trackingId}` : ''} · ${messagesText}`
-            }
-          ]
-        },
-        { merge: true }
-      );
+      const patch = {
+        status: mappedStatus,
+        luluJob: updatedLuluJob,
+        shipping: updatedShipping,
+        timeline: [
+          ...prevTimeline,
+          {
+            date: new Date().toISOString(),
+            message: `Webhook Lulu [${luluStatusName}]${trackingId ? ` · Tracking: ${trackingId}` : ''} · ${messagesText}`
+          }
+        ]
+      };
+
+      await setDoc(doc(firestoreDb, 'orders', dSnap.id), patch, { merge: true });
+      if (dData.customer?.uid && dData.orderNumber) {
+        await setDoc(doc(firestoreDb, 'users', dData.customer.uid, 'orders', dData.orderNumber), patch, { merge: true }).catch(() => {});
+      }
     }
 
     // Enviar aviso al desarrollador/admin con el estado real que devolvió Lulu
