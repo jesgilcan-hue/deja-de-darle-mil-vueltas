@@ -34,9 +34,10 @@ function mergeOrderRecords(existing, incoming) {
   const statusPriority = {
     'pending_review': 1,
     'approved_printing': 2,
-    'printing': 2,
-    'shipped': 3,
-    'delivered': 4,
+    'lulu_error': 3,
+    'printing': 3,
+    'shipped': 4,
+    'delivered': 5,
     'paused': 1
   };
 
@@ -481,6 +482,7 @@ function updateKPICounters() {
   let shippedCount = 0;
   let deliveredCount = 0;
   let pausedCount = 0;
+  let luluErrorCount = 0;
 
   allOrders.forEach(o => {
     const st = o.status || 'pending_review';
@@ -498,6 +500,7 @@ function updateKPICounters() {
     else if (st === 'shipped') shippedCount++;
     else if (st === 'delivered') deliveredCount++;
     else if (st === 'paused') pausedCount++;
+    else if (st === 'lulu_error') luluErrorCount++;
   });
 
   const netMargin = Math.max(0, totalSales - totalCost - (totalSales * 0.02)); // margen tras costes y Stripe
@@ -516,6 +519,8 @@ function updateKPICounters() {
   if (countShipped) countShipped.textContent = shippedCount;
   if (countDelivered) countDelivered.textContent = deliveredCount;
   if (countPaused) countPaused.textContent = pausedCount;
+  const countLuluError = document.getElementById('countLuluError');
+  if (countLuluError) countLuluError.textContent = luluErrorCount;
 }
 
 // =========================================================================
@@ -852,9 +857,11 @@ function renderActionButtonsForOrder(order) {
       ${isRealJob ? `<button type="button" class="btn-order-secondary" onclick="syncLuluOrderStatus('${id}')"><span>🔄</span> Consultar estado real en Lulu</button>` : `<button type="button" class="btn-order-secondary" onclick="simulateLuluProgress('${id}', 'printing')"><span>🖨️</span> Simular que Lulu inicia impresión (+Emails)</button>`}
     `;
   } else if (st === 'lulu_error') {
+    const errMsg = order.shipping?.lastCarrierMessage || 'Rechazado en validación automática de Lulu.';
     return `
-      <div style="background:#fee2e2; color:#991b1b; padding:8px 10px; border-radius:6px; font-size:0.78rem; text-align:center; font-weight:700;">
-        ⚠️ Lulu reportó error (${escapeHtml(order.luluJob?.status || 'REJECTED')})
+      <div style="background:#fee2e2; color:#991b1b; padding:8px 10px; border-radius:6px; font-size:0.78rem; text-align:left; font-weight:600; border:1px solid #fca5a5;">
+        <div style="font-weight:800; margin-bottom:3px;">⚠️ Lulu reportó error (${escapeHtml(order.luluJob?.status || 'REJECTED')})</div>
+        <div style="font-size:0.74rem; line-height:1.35; color:#7f1d1d;">${escapeHtml(errMsg)}</div>
       </div>
       <button type="button" class="btn-order-approve" onclick="approveAndSendToLulu('${id}')">
         <span>🔁</span> Reintentar envío a Lulu
