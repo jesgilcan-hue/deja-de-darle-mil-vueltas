@@ -3780,14 +3780,14 @@ window.loadEvangeliosTestBookToBasket = function() {
     pageCount: 398,
     quantity: 1,
     textsConfirmed: false,
-    interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-8csVKN5JR9w2NxVD0PHfSOuIg1Xc8O.pdf',
+    interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-300dpi-t3LHfIlUTIZL23U0NIazk3PyqgDzoD.pdf',
     coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-300dpi-OY4DdzLDxdewyMz8RL5T7mJGSQ5NqW.pdf',
     paperLabel: 'Papel Crema 90g',
-    fileSizeMb: '4.0',
+    fileSizeMb: '42.2',
     data: {
       title: 'Evangelios 2027',
       subtitle: 'Edición Personal 2027',
-      interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-8csVKN5JR9w2NxVD0PHfSOuIg1Xc8O.pdf',
+      interiorPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-interior-398p-300dpi-t3LHfIlUTIZL23U0NIazk3PyqgDzoD.pdf',
       coverPdfUrl: 'https://d7wwojtqpxspsunv.public.blob.vercel-storage.com/pruebas/evangelios-2027-portada-300dpi-OY4DdzLDxdewyMz8RL5T7mJGSQ5NqW.pdf'
     },
     shipping: {
