@@ -2506,8 +2506,11 @@ Sección de notas libres (10 páginas)</textarea>
                 const reqId = urlParams.get('reqId') || '';
                 setTimeout(async () => {
                     try {
-                        const { doc, filename } = compileHighResCoverPdf();
+                        const { doc, filename } = await Promise.resolve(compileHighResCoverPdf());
                         const pdfBlob = doc.output('blob');
+                        for (let w = 0; w < 60 && typeof window.uploadPdfBlobToCloud !== 'function'; w++) {
+                            await new Promise(r => setTimeout(r, 150));
+                        }
                         if (typeof window.uploadPdfBlobToCloud !== 'function') {
                             throw new Error('Cargador de Vercel Blob no disponible.');
                         }

@@ -3298,6 +3298,9 @@
                         }
                         const { doc, filename } = await generateBookPdfDocument(false);
                         const pdfBlob = doc.output('blob');
+                        for (let w = 0; w < 60 && typeof window.uploadPdfBlobToCloud !== 'function'; w++) {
+                            await new Promise(r => setTimeout(r, 150));
+                        }
                         if (typeof window.uploadPdfBlobToCloud !== 'function') {
                             throw new Error('Cargador de Vercel Blob no disponible.');
                         }
