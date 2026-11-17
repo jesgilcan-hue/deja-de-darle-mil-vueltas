@@ -3637,6 +3637,10 @@ function renderClientOrdersAndBasketViews(user) {
               <button type="button" data-download-pdf-cover="${escapeHtml(ord.id)}" style="background: #22382c; color: #ffffff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.80rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                 <span>🎨</span> Portada en PDF
               </button>
+              ${(ord.status === 'pending_review' && (!ord.book?.interiorPdfUrl?.startsWith('https://') || !ord.book?.coverPdfUrl?.startsWith('https://'))) ? `
+              <button type="button" data-retry-cloud-upload="${escapeHtml(ord.orderNumber || ord.id)}" style="background: #b45309; color: #ffffff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.80rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>📤</span> Subir PDFs a imprenta
+              </button>` : ''}
             </div>
           </div>
 
@@ -3653,6 +3657,64 @@ function renderClientOrdersAndBasketViews(user) {
     }
 
 
+
+    ordersContainer.querySelectorAll('[data-retry-cloud-upload]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key = btn.getAttribute('data-retry-cloud-upload');
+        const ord = clientProfileOrders.find(o => (o.orderNumber || o.id) === key);
+        if (!ord) return;
+        btn.disabled = true;
+        btn.textContent = '⏳ Subiendo...';
+        const bgItem = {
+          id: ord.book?.id || '',
+          bookId: ord.book?.id || '',
+          designId: ord.book?.id || '',
+          title: ord.book?.title || 'Mi Planificador',
+          subtitle: ord.book?.subtitle || '',
+          bindingType: ord.book?.bindingType || 'softcover',
+          pageCount: ord.book?.pageCount || 144,
+          interiorPdfUrl: ord.book?.interiorPdfUrl || '',
+          coverPdfUrl: ord.book?.coverPdfUrl || ''
+        };
+        const banner = document.createElement('div');
+        banner.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:99999; background:#1f1c19; color:#ffffff; padding:16px 22px; border-radius:12px; border:2px solid #87553b; box-shadow:0 12px 32px rgba(0,0,0,0.35); font-size:0.92rem; font-weight:600; max-width:400px; line-height:1.45;';
+        banner.innerHTML = '⏳ <strong>Generando y subiendo PDFs de #' + escapeHtml(ord.orderNumber) + '...</strong><br><span style="font-size:0.82rem; font-weight:400; color:#e5ddd3;">No cierres ni cambies de pestaña hasta ver el aviso verde.</span>';
+        document.body.appendChild(banner);
+        try {
+          await ensureItemPdfsUploadedToCloud(bgItem, (lbl) => {
+            banner.innerHTML = `⏳ <strong>${lbl}</strong><br><span style="font-size:0.82rem; font-weight:400; color:#e5ddd3;">No cierres ni cambies de pestaña.</span>`;
+          });
+          const pdfPatch = {
+            book: {
+              ...(ord.book || {}),
+              interiorPdfUrl: bgItem.interiorPdfUrl,
+              coverPdfUrl: bgItem.coverPdfUrl
+            }
+          };
+          ord.book = pdfPatch.book;
+          if (ord.orderNumber) {
+            await setDoc(doc(db, 'orders', ord.orderNumber), pdfPatch, { merge: true });
+          }
+          const u = user || auth.currentUser;
+          if (u && u.uid && ord.orderNumber) {
+            await setDoc(doc(db, 'users', u.uid, 'orders', ord.orderNumber), pdfPatch, { merge: true });
+          }
+          if (orderSyncChannel) {
+            orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order: ord });
+          }
+          banner.style.background = '#166534';
+          banner.textContent = '✅ PDFs de imprenta guardados en tu pedido #' + ord.orderNumber;
+          setTimeout(() => banner.remove(), 5000);
+          renderClientOrdersAndBasketViews(u);
+        } catch (err) {
+          console.error('Error reintentando subida PDF:', err);
+          btn.disabled = false;
+          btn.textContent = '📤 Subir PDFs a imprenta';
+          banner.style.background = '#991b1b';
+          banner.innerHTML = '⚠️ <strong>Error subiendo PDFs:</strong> ' + escapeHtml(err.message || 'Error desconocido') + ' <button type="button" onclick="this.parentElement.remove()" style="margin-left:8px; background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:4px; padding:2px 8px; cursor:pointer;">✕</button>';
+        }
+      });
+    });
 
     ordersContainer.querySelectorAll('[data-download-pdf-interior]').forEach(btn => {
       btn.addEventListener('click', () => {
