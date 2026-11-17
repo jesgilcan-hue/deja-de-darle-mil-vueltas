@@ -844,8 +844,14 @@ function renderActionButtonsForOrder(order) {
   const id = order.id || order.orderNumber;
 
   if (st === 'pending_review') {
+    const intOk = (order.book?.interiorPdfUrl || order.book?.data?.interiorPdfUrl || '').startsWith('https://');
+    const covOk = (order.book?.coverPdfUrl || order.book?.data?.coverPdfUrl || '').startsWith('https://');
+    const pdfsReady = intOk && covOk;
     return `
-      <button type="button" class="btn-order-approve" onclick="approveAndSendToLulu('${id}')">
+      <div style="padding:7px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center; margin-bottom:6px; ${pdfsReady ? 'background:#dcfce7; color:#166534; border:1px solid #86efac;' : 'background:#fef3c7; color:#92400e; border:1px solid #fcd34d;'}">
+        ${pdfsReady ? '✅ Archivos PDF subidos (Interior + Portada)' : '⏳ Esperando subida de PDFs... (no aprobar aún)'}
+      </div>
+      <button type="button" class="btn-order-approve" style="${pdfsReady ? '' : 'opacity:0.6;'}" onclick="approveAndSendToLulu('${id}')">
         <span>✅</span> 2. Aprobar y Enviar a Lulu
       </button>
       <div style="display:flex; gap:6px;">
