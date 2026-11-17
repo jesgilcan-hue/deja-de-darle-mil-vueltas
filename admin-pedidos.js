@@ -888,11 +888,13 @@ function renderActionButtonsForOrder(order) {
       </button>
     `;
   } else if (st === 'shipped') {
-    const tracking = order.luluJob?.trackingCode || order.shipping?.trackingNumber || 'ES84920491028';
+    const tracking = order.luluJob?.trackingCode || order.shipping?.trackingNumber || 'Pendiente';
+    const carrierName = order.shipping?.carrier || order.luluJob?.carrier || 'Transportista';
+    const trackUrl = order.shipping?.trackingUrl || order.luluJob?.trackingUrl || `https://www.correos.es/es/es/herramientas/localizador/envios?numero=${encodeURIComponent(tracking)}`;
     return `
       <div style="background:#dcfce7; color:#15803d; padding:8px 10px; border-radius:6px; font-size:0.78rem;">
-        <div><strong>🚚 Etapa 3/4: En camino con Correos Express</strong></div>
-        <div style="margin-top:2px;">Tracking: <a href="https://www.correos.es/es/es/herramientas/localizador/envios?numero=${tracking}" target="_blank" style="color:#15803d; font-weight:700; text-decoration:underline;">${tracking} ↗</a></div>
+        <div><strong>🚚 Etapa 3/4: En camino con ${escapeHtml(carrierName)}</strong></div>
+        <div style="margin-top:2px;">Tracking: <a href="${escapeHtml(trackUrl)}" target="_blank" style="color:#15803d; font-weight:700; text-decoration:underline;">${escapeHtml(tracking)} ↗</a></div>
       </div>
       <button type="button" class="btn-order-approve" style="background:#166534; margin-top:4px;" onclick="simulateLuluProgress('${id}', 'delivered')">
         <span>🎉</span> 4. Marcar como Entregado (+Emails)
@@ -1060,9 +1062,14 @@ window.syncLuluOrderStatus = async function(orderId) {
     order.luluJob.status = data.statusName || order.luluJob.status;
     if (data.trackingId) {
       order.luluJob.trackingCode = data.trackingId;
+      if (data.carrierName) order.luluJob.carrier = data.carrierName;
       if (!order.shipping) order.shipping = {};
+      if (data.carrierName) order.shipping.carrier = data.carrierName;
       order.shipping.trackingNumber = data.trackingId;
-      if (data.trackingUrls?.[0]) order.shipping.trackingUrl = data.trackingUrls[0];
+      if (data.trackingUrls?.[0]) {
+        order.shipping.trackingUrl = data.trackingUrls[0];
+        order.luluJob.trackingUrl = data.trackingUrls[0];
+      }
     }
     if (['REJECTED', 'ERROR', 'CANCELED'].includes(String(data.statusName).toUpperCase())) {
       order.status = 'lulu_error';

@@ -70,6 +70,7 @@ export default async function handler(req, res) {
     const luluStatusName = job.status?.name || 'UNKNOWN';
     const statusMessages = extractLuluMessages(job);
     const lineItem = Array.isArray(job.line_items) ? job.line_items[0] || {} : {};
+    const carrierName = lineItem.carrier_name || '';
     const trackingId = lineItem.tracking_id || '';
     const trackingUrl = Array.isArray(lineItem.tracking_urls) ? lineItem.tracking_urls[0] || '' : '';
 
@@ -124,11 +125,13 @@ export default async function handler(req, res) {
         rawStatus: job.status || null,
         lastWebhookAt: new Date().toISOString(),
         ...(actionGuides.length ? { actionGuide: actionGuides.join(' ') } : {}),
+        ...(carrierName ? { carrier: carrierName } : {}),
         ...(trackingId ? { trackingCode: trackingId, trackingUrl } : {})
       };
 
       const updatedShipping = {
         ...(dData.shipping || {}),
+        ...(carrierName ? { carrier: carrierName } : {}),
         ...(trackingId ? { trackingNumber: trackingId, trackingUrl } : {}),
         lastCarrierMessage: `Lulu (${luluStatusName}): ${messagesText}`
       };

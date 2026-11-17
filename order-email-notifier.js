@@ -71,7 +71,13 @@ export async function sendOrderLifecycleEmails(order, eventType, extraInfo = {})
     const customerName = order.customer?.name || 'Cliente';
     const customerEmail = order.customer?.email || TEST_CLIENT_EMAIL;
     const customerPhone = order.customer?.phone || '+34 600 000 000';
-    const fullAddress = `${order.customer?.address || 'Calle Serrano 42'}, ${order.customer?.postalCode || '28001'} ${order.customer?.city || 'Madrid'} (${order.customer?.province || 'Madrid'})`;
+    const rawAddr = order.customer?.address || 'Calle Serrano 42';
+    const cp = order.customer?.postalCode || '';
+    const city = order.customer?.city || '';
+    const prov = order.customer?.province || '';
+    const fullAddress = (cp && rawAddr.includes(cp))
+      ? rawAddr
+      : `${rawAddr}${cp || city ? `, ${cp} ${city}` : ''}${prov ? ` (${prov})` : ''}`.trim();
     const customerNotes = order.customer?.notes || 'Sin instrucciones adicionales';
 
     const itemsList = (order.items && order.items.length > 0) ? order.items : [order.book || {}];

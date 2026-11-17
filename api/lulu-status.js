@@ -85,6 +85,7 @@ export default async function handler(req, res) {
       luluJobId: String(job.id || jobId),
       statusName: job.status?.name || '',
       statusMessages,
+      carrierName: lineItem.carrier_name || '',
       trackingId: lineItem.tracking_id || '',
       trackingUrls: lineItem.tracking_urls || [],
       raw: job

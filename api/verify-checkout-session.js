@@ -214,8 +214,8 @@ export default async function handler(req, res) {
         isRegistered: true
       },
       shipping: {
-        carrier: 'Correos Express',
-        trackingNumber: 'CEX-' + Math.floor(10000000 + Math.random() * 90000000),
+        carrier: 'Pendiente de asignación en imprenta',
+        trackingNumber: '',
         lastCarrierMessage: 'Pedido recibido. En fase 1: En Revisión Técnica de tripas y maquetación.'
       },
       comms: {
