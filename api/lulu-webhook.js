@@ -46,6 +46,7 @@ function extractLuluMessages(job) {
 
 function mapLuluStatusToOrderStatus(luluStatusName, isSandbox = false) {
   const s = String(luluStatusName || '').toUpperCase();
+  if (s === 'DELIVERED') return 'delivered';
   if (s === 'SHIPPED') return 'shipped';
   if (s === 'IN_PRODUCTION' || s === 'PRODUCTION_READY' || s === 'PRODUCTION_DELAYED') return 'printing';
   if (isSandbox && s === 'UNPAID') return 'printing';
@@ -114,6 +115,8 @@ export default async function handler(req, res) {
       mappedStatus === 'printing' && !order?.comms?.imprenta?.sent;
     const shouldNotifyCustomerShipped =
       mappedStatus === 'shipped' && !order?.comms?.tracking?.sent;
+    const shouldNotifyCustomerDelivered =
+      mappedStatus === 'delivered' && !order?.comms?.entregado?.sent;
 
     for (const dSnap of matchingDocs) {
       const dData = dSnap.data() || {};
@@ -143,6 +146,9 @@ export default async function handler(req, res) {
       if (shouldNotifyCustomerShipped) {
         updatedComms.tracking = { sent: true, date: new Date().toISOString() };
       }
+      if (shouldNotifyCustomerDelivered) {
+        updatedComms.entregado = { sent: true, date: new Date().toISOString() };
+      }
 
       const newEvents = [
         {
@@ -161,6 +167,11 @@ export default async function handler(req, res) {
           message: trackingId
             ? `Tu pedido ha salido de imprenta (Seguimiento: ${trackingId}).`
             : 'Tu pedido ha salido de imprenta.'
+        });
+      } else if (mappedStatus === 'delivered') {
+        newEvents.push({
+          date: new Date().toISOString(),
+          message: 'Tu pedido ha sido entregado en tu dirección.'
         });
       }
 
@@ -206,27 +217,37 @@ export default async function handler(req, res) {
       }
     });
 
-    // Notificar al cliente SOLO cuando Lulu confirma producción o envío (una sola vez por hito)
+    // Notificar al cliente SOLO cuando Lulu confirma producción, envío o entrega (una sola vez por hito)
     const customerEmail = order?.customer?.email;
-    if (customerEmail && (shouldNotifyCustomerPrinting || shouldNotifyCustomerShipped)) {
+    if (customerEmail && (shouldNotifyCustomerPrinting || shouldNotifyCustomerShipped || shouldNotifyCustomerDelivered)) {
+      const isDelivered = shouldNotifyCustomerDelivered;
       const isShipped = shouldNotifyCustomerShipped;
+      const carrierLabel = carrierName || order?.shipping?.carrier || 'la empresa repartidora';
       await sendEditorialEmail({
         to: customerEmail,
-        subject: isShipped
+        subject: isDelivered
+          ? `Tu pedido #${orderNum} ha sido entregado`
+          : isShipped
           ? `Tu pedido #${orderNum} ha salido de imprenta`
           : `Tu pedido #${orderNum} ha sido validado y está en impresión`,
-        paragraphs: isShipped
+        paragraphs: isDelivered
           ? [
               `Hola ${order?.customer?.name || ''},`,
-              `Tu ejemplar «${bookTitle}» ya ha salido de imprenta y está en camino.`,
+              `La empresa repartidora (${carrierLabel}) nos confirma que tu pedido #${orderNum} («${bookTitle}») ha sido entregado en tu dirección.`,
+              `Gracias por confiar en Editorial Menos Ruido.`
+            ]
+          : isShipped
+          ? [
+              `Hola ${order?.customer?.name || ''},`,
+              `Tu ejemplar «${bookTitle}» ya ha salido de imprenta y está en camino con ${carrierLabel}.`,
               trackingId ? `Número de seguimiento: ${trackingId}` : 'En breve recibirás los detalles de entrega.'
             ]
           : [
               `Hola ${order?.customer?.name || ''},`,
               `La imprenta ha validado correctamente los archivos de «${bookTitle}» y tu pedido ya está en producción.`
             ],
-        buttonText: trackingUrl ? 'Seguir envío' : 'Ver mi pedido',
-        buttonUrl: trackingUrl || `https://www.editorialmenosruido.com/mi-espacio?tab=pedidos&orderId=${encodeURIComponent(orderNum)}`,
+        buttonText: (!isDelivered && trackingUrl) ? 'Seguir envío' : 'Ver mi pedido',
+        buttonUrl: (!isDelivered && trackingUrl) ? trackingUrl : `https://www.editorialmenosruido.com/mi-espacio?tab=pedidos&orderId=${encodeURIComponent(orderNum)}`,
         highlightDetails: {
           orderNumber: orderNum,
           bookTitle,

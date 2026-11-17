@@ -1073,6 +1073,8 @@ window.syncLuluOrderStatus = async function(orderId) {
     }
     if (['REJECTED', 'ERROR', 'CANCELED'].includes(String(data.statusName).toUpperCase())) {
       order.status = 'lulu_error';
+    } else if (String(data.statusName).toUpperCase() === 'DELIVERED') {
+      order.status = 'delivered';
     } else if (String(data.statusName).toUpperCase() === 'SHIPPED') {
       order.status = 'shipped';
     } else if (['IN_PRODUCTION', 'PRODUCTION_READY', 'PRODUCTION_DELAYED'].includes(String(data.statusName).toUpperCase())) {
