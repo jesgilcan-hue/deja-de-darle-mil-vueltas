@@ -5760,14 +5760,16 @@
 
                 const page = generatedPageList[i];
                 const pageNum = i + 1;
-                const percent = Math.round(((i + 1) / total) * 100);
-                if (progressFill) progressFill.style.width = percent + '%';
-                if (statusText) statusText.textContent = `Compilando página ${pageNum} de ${total} (${page.sectionName})...`;
+                if (i % 10 === 0 || i === total - 1) {
+                    const percent = Math.round(((i + 1) / total) * 100);
+                    if (progressFill) progressFill.style.width = percent + '%';
+                    if (statusText) statusText.textContent = `Compilando página ${pageNum} de ${total} (${page.sectionName})...`;
+                }
 
                 drawPdfPageExact(doc, page, pageNum, total, W, H, M, forceBlank);
 
-                if (i % 2 === 0) {
-                    await new Promise(r => setTimeout(r, 10));
+                if (i % 25 === 0) {
+                    await new Promise(r => setTimeout(r, 0));
                 }
             }
 

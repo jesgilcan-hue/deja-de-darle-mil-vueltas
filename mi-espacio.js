@@ -3085,8 +3085,7 @@ async function checkAndHandleStripeCheckoutReturn() {
           } catch (bgErr) {
             console.error('Error subiendo PDFs en segundo plano tras Stripe:', bgErr);
             banner.style.background = '#991b1b';
-            banner.textContent = '⚠️ Error subiendo PDFs: ' + (bgErr.message || 'Reinténtalo');
-            setTimeout(() => banner.remove(), 8000);
+            banner.innerHTML = '⚠️ <strong>Error subiendo PDFs:</strong> ' + (bgErr.message || 'Error desconocido') + ' <button type="button" onclick="this.parentElement.remove()" style="margin-left:8px; background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:4px; padding:2px 8px; cursor:pointer;">✕</button>';
           }
         })();
       }
@@ -3842,7 +3841,7 @@ function renderClientOrdersAndBasketViews(user) {
 
 
 
-async function generateAndUploadPdfViaIframe(iframeUrl, reqId, timeoutMs = 150000) {
+async function generateAndUploadPdfViaIframe(iframeUrl, reqId, timeoutMs = 420000) {
   return new Promise((resolve, reject) => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:1280px; height:900px; opacity:0; pointer-events:none;';
