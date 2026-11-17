@@ -500,7 +500,8 @@ export function checkAndLoadSavedDesign(applyDataFn) {
   const runLoad = async (user) => {
     if (!user) return;
     try {
-      const designDocRef = doc(db, 'users', user.uid, 'designs', designId);
+      const targetUid = params.get('uid') || user.uid;
+      const designDocRef = doc(db, 'users', targetUid, 'designs', designId);
       const snap = await getDoc(designDocRef);
       if (snap.exists()) {
         const item = snap.data();

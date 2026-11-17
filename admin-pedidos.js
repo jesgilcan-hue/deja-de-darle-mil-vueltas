@@ -851,6 +851,10 @@ function renderActionButtonsForOrder(order) {
       <div style="padding:7px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center; margin-bottom:6px; ${pdfsReady ? 'background:#dcfce7; color:#166534; border:1px solid #86efac;' : 'background:#fef3c7; color:#92400e; border:1px solid #fcd34d;'}">
         ${pdfsReady ? '✅ Archivos PDF subidos (Interior + Portada)' : '⏳ Esperando subida de PDFs... (no aprobar aún)'}
       </div>
+      ${!pdfsReady ? `
+      <button type="button" class="btn-order-secondary" style="width:100%; background:#b45309; color:#ffffff; border:none; font-weight:700; margin-bottom:6px;" onclick="generateAndUploadOrderPdfs('${id}', this)">
+        <span>📤</span> Subir PDFs a imprenta (Admin)
+      </button>` : ''}
       <button type="button" class="btn-order-approve" style="${pdfsReady ? '' : 'opacity:0.6;'}" onclick="approveAndSendToLulu('${id}')">
         <span>✅</span> 2. Aprobar y Enviar a Lulu
       </button>
@@ -953,6 +957,111 @@ function renderActionButtonsForOrder(order) {
 // =========================================================================
 // 5. ACCIONES DE GESTIÓN OPERATIVA
 // =========================================================================
+
+function generateAndUploadAdminPdfViaIframe(iframeUrl, reqId, timeoutMs = 420000) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:1280px; height:900px; opacity:0; pointer-events:none;';
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('message', onMsg);
+      iframe.remove();
+      reject(new Error('Tiempo agotado generando/subiendo el PDF a Vercel Blob.'));
+    }, timeoutMs);
+
+    function onMsg(ev) {
+      if (ev.origin !== window.location.origin) return;
+      const d = ev.data || {};
+      if (d.reqId !== reqId) return;
+      if (d.type === 'MR_BLOB_UPLOAD_DONE' && d.url) {
+        done = true;
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        iframe.remove();
+        resolve(d.url);
+      } else if (d.type === 'MR_BLOB_UPLOAD_ERROR') {
+        done = true;
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        iframe.remove();
+        reject(new Error(d.error || 'Error subiendo PDF en el generador.'));
+      }
+    }
+
+    window.addEventListener('message', onMsg);
+    iframe.src = iframeUrl;
+    document.body.appendChild(iframe);
+  });
+}
+
+window.generateAndUploadOrderPdfs = async function(orderId, btnEl) {
+  if (!assertAuthorized()) return;
+  const order = allOrders.find(o => (o.id || o.orderNumber) === orderId);
+  if (!order) return;
+
+  const origHtml = btnEl ? btnEl.innerHTML : '';
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span>⏳</span> Generando y subiendo PDFs...';
+  }
+
+  try {
+    const bk = order.book || {};
+    const designId = bk.id || '';
+    const customerUid = order.customer?.uid || '';
+    const isPuzzle = String(bk.title || '').toLowerCase().includes('pasatiempo') || String(bk.subtitle || '').toLowerCase().includes('pasatiempo');
+
+    if (!bk.interiorPdfUrl?.startsWith('https://')) {
+      showToast('⏳ Generando y subiendo Interior PDF (1/2)...');
+      if (btnEl) btnEl.innerHTML = '<span>⏳</span> Subiendo Interior PDF (1/2)...';
+      const reqId = 'adm_int_' + Date.now();
+      const baseGen = isPuzzle ? '/generador-libro-pasatiempos' : '/generador-libro-completo';
+      const q = new URLSearchParams({ upload_blob: '1', reqId });
+      if (designId) q.set('load', designId);
+      if (customerUid) q.set('uid', customerUid);
+      bk.interiorPdfUrl = await generateAndUploadAdminPdfViaIframe(`${baseGen}?${q.toString()}`, reqId);
+    }
+
+    if (!bk.coverPdfUrl?.startsWith('https://')) {
+      showToast('⏳ Generando y subiendo Portada PDF (2/2)...');
+      if (btnEl) btnEl.innerHTML = '<span>⏳</span> Subiendo Portada PDF (2/2)...';
+      try {
+        localStorage.setItem('mr_cover_sync_data', JSON.stringify({
+          title: bk.title || 'Mi Planificador',
+          subtitle: bk.subtitle || '',
+          pageCount: bk.pageCount || 144,
+          bindingType: bk.bindingType || 'softcover',
+          paperType: bk.paperType || 'cream_90',
+          designId
+        }));
+      } catch (e) {}
+      const reqId = 'adm_cov_' + Date.now();
+      const baseCover = isPuzzle ? '/generador-portadas-pasatiempos' : '/generador-portadas';
+      const q = new URLSearchParams({ upload_blob: '1', reqId });
+      if (bk.coverDesignId) {
+        q.set('load', bk.coverDesignId);
+        if (customerUid) q.set('uid', customerUid);
+      }
+      bk.coverPdfUrl = await generateAndUploadAdminPdfViaIframe(`${baseCover}?${q.toString()}`, reqId);
+    }
+
+    order.book = bk;
+    syncOrderToCloud(order);
+    saveOrdersState();
+    sortAndRenderOrders();
+    if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
+    showToast(`✅ PDFs subidos a Vercel Blob para #${order.orderNumber}`);
+  } catch (err) {
+    console.error('Error subiendo PDFs desde admin-pedidos:', err);
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.innerHTML = origHtml || '<span>📤</span> Subir PDFs a imprenta (Admin)';
+    }
+    alert('⚠️ Error subiendo PDFs a Vercel Blob:\n\n' + (err.message || 'Error desconocido'));
+  }
+};
 
 // Aprobar y enviar a Lulu (real si tiene URLs de PDF; simulación en pedidos antiguos)
 window.approveAndSendToLulu = async function(orderId) {
