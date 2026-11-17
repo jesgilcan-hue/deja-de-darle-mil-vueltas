@@ -957,8 +957,13 @@ window.approveAndSendToLulu = async function(orderId) {
   const hasRealPdfs = interiorUrl.startsWith('https://') && coverUrl.startsWith('https://');
   const targetEnv = order.book?.luluEnv || 'sandbox';
 
-  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Modo Lulu: ${hasRealPdfs ? targetEnv.toUpperCase() + ' (API REAL)' : 'Simulación local (sin URLs PDF)'}\n• Coste estimado de imprenta Lulu: ${cost} €\n• Encuadernación: ${getBindingDisplayName(order.book?.bindingType)}.\n\nNota: Al cliente NO se le enviará el email de "En imprenta" todavía; se le avisará automáticamente cuando Lulu valide los PDFs.`);
+  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Modo Lulu: ${hasRealPdfs ? targetEnv.toUpperCase() + ' (API REAL)' : 'Sin URLs PDF'}\n• Coste estimado de imprenta Lulu: ${cost} €\n• Encuadernación: ${getBindingDisplayName(order.book?.bindingType)}.\n\nNota: Al cliente NO se le enviará el email de "En imprenta" todavía; se le avisará automáticamente cuando Lulu valide los PDFs.`);
   if (!ok) return;
+
+  if (!hasRealPdfs && order.pricing?.stripePaymentId) {
+    alert('⏳ Este pedido pagado con Stripe aún no tiene las URLs de Interior PDF y Portada PDF guardadas en la nube.\n\nEspera unos segundos a que termine de subirlos la ventana del cliente (y recarga esta página) antes de enviarlo a Lulu.');
+    return;
+  }
 
   if (hasRealPdfs) {
     try {

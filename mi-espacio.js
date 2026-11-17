@@ -3052,9 +3052,15 @@ async function checkAndHandleStripeCheckoutReturn() {
           coverPdfUrl: finalOrder.book?.coverPdfUrl || ''
         };
         (async () => {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; background:#1f1c19; color:#ffffff; padding:12px 18px; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.25); font-size:0.86rem; font-weight:600; max-width:360px;';
+          banner.textContent = '⏳ Generando y subiendo tus PDFs de imprenta (no cierres esta pestaña unos segundos)...';
+          document.body.appendChild(banner);
           try {
-            showToast('⏳ Preparando y subiendo tus PDFs de imprenta en segundo plano...');
-            await ensureItemPdfsUploadedToCloud(bgItem, (lbl) => showToast(lbl));
+            await ensureItemPdfsUploadedToCloud(bgItem, (lbl) => {
+              banner.textContent = lbl + ' (no cierres esta pestaña)';
+              showToast(lbl);
+            });
             const pdfPatch = {
               book: {
                 ...(finalOrder.book || {}),
@@ -3070,9 +3076,14 @@ async function checkAndHandleStripeCheckoutReturn() {
             if (u && u.uid && finalOrder.orderNumber) {
               await setDoc(doc(db, 'users', u.uid, 'orders', finalOrder.orderNumber), pdfPatch, { merge: true });
             }
-            showToast('✅ PDFs de imprenta guardados en tu pedido #' + finalOrder.orderNumber);
+            banner.style.background = '#166534';
+            banner.textContent = '✅ PDFs de imprenta guardados en tu pedido #' + finalOrder.orderNumber;
+            setTimeout(() => banner.remove(), 5000);
           } catch (bgErr) {
             console.error('Error subiendo PDFs en segundo plano tras Stripe:', bgErr);
+            banner.style.background = '#991b1b';
+            banner.textContent = '⚠️ Error subiendo PDFs: ' + (bgErr.message || 'Reinténtalo');
+            setTimeout(() => banner.remove(), 8000);
           }
         })();
       }
