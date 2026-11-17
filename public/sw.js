@@ -1,4 +1,4 @@
-const CACHE_NAME = 'menos-ruido-v9';
+const CACHE_NAME = 'menos-ruido-v10';
 const STATIC_ASSETS = [
   '/',
   '/hoy',
@@ -44,22 +44,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Recursos estáticos locales: Stale-while-revalidate
+  // Recursos estáticos locales: Network-first para evitar servir JS/CSS antiguos
   if (url.origin === location.origin) {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              const responseClone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-            }
-            return networkResponse;
-          })
-          .catch(() => cachedResponse);
-
-        return cachedResponse || fetchPromise;
-      })
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
     );
   }
 });
