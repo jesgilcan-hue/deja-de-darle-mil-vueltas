@@ -2797,31 +2797,7 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
     return;
   }
 
-  // Si el libro aún no tiene PDFs subidos a Vercel Blob, los generamos y subimos automáticamente ahora
-  if (!primaryItem.interiorPdfUrl?.startsWith('https://') || !primaryItem.coverPdfUrl?.startsWith('https://')) {
-    try {
-      const hadInt = primaryItem.interiorPdfUrl?.startsWith('https://');
-      const hadCov = primaryItem.coverPdfUrl?.startsWith('https://');
-      await ensureItemPdfsUploadedToCloud(primaryItem, (statusLabel) => {
-        if (confirmTxt) confirmTxt.textContent = statusLabel;
-      });
-      const tempUrls = [];
-      if (!hadInt && primaryItem.interiorPdfUrl) tempUrls.push(primaryItem.interiorPdfUrl);
-      if (!hadCov && primaryItem.coverPdfUrl) tempUrls.push(primaryItem.coverPdfUrl);
-      if (tempUrls.length) {
-        try { localStorage.setItem('mr_pending_stripe_blob_urls', JSON.stringify(tempUrls)); } catch(e) {}
-      }
-      saveClientOrdersAndBasketState(user);
-    } catch (upErr) {
-      console.error('Error generando/subiendo PDFs antes de Stripe:', upErr);
-      alert('⚠️ No se pudieron generar y subir los PDFs de imprenta: ' + (upErr.message || 'Inténtalo de nuevo.'));
-      if (confirmBtn) confirmBtn.disabled = false;
-      if (confirmTxt) confirmTxt.textContent = `Pagar con Tarjeta · ${totalAmount.toFixed(2).replace('.', ',')} € (Envío incluido)`;
-      return;
-    }
-  }
-
-  // Iniciar sesión segura en Stripe Checkout
+  // Iniciar sesión segura en Stripe Checkout al instante (0s espera; los PDFs se suben tras confirmar pago)
   try {
     const idToken = user ? await user.getIdToken() : '';
     const res = await fetch('/api/create-checkout-session', {
@@ -3058,6 +3034,48 @@ async function checkAndHandleStripeCheckoutReturn() {
 
       renderClientOrdersAndBasketViews(user || auth.currentUser || currentUser);
       activateTab('tab-pedidos');
+
+      // Si el pedido recién pagado aún no tiene PDFs subidos a Vercel Blob, los generamos y subimos en segundo plano sin bloquear al usuario
+      const needsInt = !finalOrder.book?.interiorPdfUrl?.startsWith('https://');
+      const needsCov = !finalOrder.book?.coverPdfUrl?.startsWith('https://');
+      if (needsInt || needsCov) {
+        const bgItem = {
+          ...(activeData?.items?.[0] || activeData?.item || {}),
+          id: finalOrder.book?.id || activeData?.items?.[0]?.id || '',
+          bookId: finalOrder.book?.id || activeData?.items?.[0]?.bookId || '',
+          designId: activeData?.items?.[0]?.designId || finalOrder.book?.id || '',
+          title: finalOrder.book?.title || 'Mi Planificador',
+          subtitle: finalOrder.book?.subtitle || '',
+          bindingType: finalOrder.book?.bindingType || 'softcover',
+          pageCount: finalOrder.book?.pageCount || 144,
+          interiorPdfUrl: finalOrder.book?.interiorPdfUrl || '',
+          coverPdfUrl: finalOrder.book?.coverPdfUrl || ''
+        };
+        (async () => {
+          try {
+            showToast('⏳ Preparando y subiendo tus PDFs de imprenta en segundo plano...');
+            await ensureItemPdfsUploadedToCloud(bgItem, (lbl) => showToast(lbl));
+            const pdfPatch = {
+              book: {
+                ...(finalOrder.book || {}),
+                interiorPdfUrl: bgItem.interiorPdfUrl,
+                coverPdfUrl: bgItem.coverPdfUrl
+              }
+            };
+            finalOrder.book = pdfPatch.book;
+            if (finalOrder.orderNumber) {
+              await setDoc(doc(db, 'orders', finalOrder.orderNumber), pdfPatch, { merge: true });
+            }
+            const u = user || auth.currentUser;
+            if (u && u.uid && finalOrder.orderNumber) {
+              await setDoc(doc(db, 'users', u.uid, 'orders', finalOrder.orderNumber), pdfPatch, { merge: true });
+            }
+            showToast('✅ PDFs de imprenta guardados en tu pedido #' + finalOrder.orderNumber);
+          } catch (bgErr) {
+            console.error('Error subiendo PDFs en segundo plano tras Stripe:', bgErr);
+          }
+        })();
+      }
     }
   } catch(err) {
     console.error('Error procesando retorno de Stripe:', err);

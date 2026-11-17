@@ -3284,8 +3284,18 @@
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('upload_blob') === '1') {
                 const reqId = urlParams.get('reqId') || '';
-                setTimeout(async () => {
+                const hasLoadParam = !!urlParams.get('load');
+                (async () => {
                     try {
+                        if (hasLoadParam) {
+                            await new Promise((resolve) => {
+                                if (window.__mrDesignLoaded) return resolve();
+                                const t = setTimeout(resolve, 12000);
+                                window.addEventListener('mr-design-loaded', () => { clearTimeout(t); resolve(); }, { once: true });
+                            });
+                        } else {
+                            await new Promise(r => setTimeout(r, 400));
+                        }
                         const { doc, filename } = await generateBookPdfDocument(false);
                         const pdfBlob = doc.output('blob');
                         if (typeof window.uploadPdfBlobToCloud !== 'function') {
@@ -3297,7 +3307,7 @@
                         console.error('Error subiendo PDF interior a Vercel Blob:', err);
                         window.parent.postMessage({ type: 'MR_BLOB_UPLOAD_ERROR', reqId, kind: 'interior', error: err.message || 'Error subiendo interior' }, window.location.origin);
                     }
-                }, 400);
+                })();
             } else if (urlParams.get('download_direct') === '1' || urlParams.get('preview_modal') === '1') {
                 const notice = document.createElement('div');
                 notice.style.position = 'fixed';
@@ -7720,6 +7730,8 @@
             if (typeof applyCompleteBookData === 'function') {
                 applyCompleteBookData(data);
             }
+            window.__mrDesignLoaded = true;
+            window.dispatchEvent(new Event('mr-design-loaded'));
         });
 
         // Guardado directo y limpio en Firestore sin intermediarios
