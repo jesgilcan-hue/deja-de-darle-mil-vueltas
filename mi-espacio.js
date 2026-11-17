@@ -2800,9 +2800,17 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
   // Si el libro aún no tiene PDFs subidos a Vercel Blob, los generamos y subimos automáticamente ahora
   if (!primaryItem.interiorPdfUrl?.startsWith('https://') || !primaryItem.coverPdfUrl?.startsWith('https://')) {
     try {
+      const hadInt = primaryItem.interiorPdfUrl?.startsWith('https://');
+      const hadCov = primaryItem.coverPdfUrl?.startsWith('https://');
       await ensureItemPdfsUploadedToCloud(primaryItem, (statusLabel) => {
         if (confirmTxt) confirmTxt.textContent = statusLabel;
       });
+      const tempUrls = [];
+      if (!hadInt && primaryItem.interiorPdfUrl) tempUrls.push(primaryItem.interiorPdfUrl);
+      if (!hadCov && primaryItem.coverPdfUrl) tempUrls.push(primaryItem.coverPdfUrl);
+      if (tempUrls.length) {
+        try { localStorage.setItem('mr_pending_stripe_blob_urls', JSON.stringify(tempUrls)); } catch(e) {}
+      }
       saveClientOrdersAndBasketState(user);
     } catch (upErr) {
       console.error('Error generando/subiendo PDFs antes de Stripe:', upErr);
@@ -2865,6 +2873,32 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
 
 async function checkAndHandleStripeCheckoutReturn() {
   const urlParams = new URLSearchParams(window.location.search);
+  const isStripeCancel = urlParams.get('stripe_cancel') === '1';
+  if (isStripeCancel) {
+    try {
+      const rawUrls = localStorage.getItem('mr_pending_stripe_blob_urls');
+      const urls = rawUrls ? JSON.parse(rawUrls) : [];
+      localStorage.removeItem('mr_pending_stripe_blob_urls');
+      if (urls.length && auth.currentUser) {
+        const idToken = await auth.currentUser.getIdToken();
+        fetch('/api/cleanup-pdfs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+          body: JSON.stringify({ urls })
+        }).catch(() => {});
+        // Limpiar las URLs recién borradas de la cesta para que se regeneren si vuelve a intentar pagar
+        clientPendingBasket.forEach(it => {
+          if (urls.includes(it.interiorPdfUrl)) { it.interiorPdfUrl = ''; if (it.data) it.data.interiorPdfUrl = ''; }
+          if (urls.includes(it.coverPdfUrl)) { it.coverPdfUrl = ''; if (it.data) it.data.coverPdfUrl = ''; }
+        });
+        saveClientOrdersAndBasketState(auth.currentUser);
+      }
+      if (typeof showToast === 'function') showToast('Pago cancelado. Archivos temporales limpiados.');
+      window.history.replaceState({}, document.title, '/mi-espacio?tab=pedidos');
+    } catch (e) {}
+    return;
+  }
+
   const isStripeSuccess = urlParams.get('stripe_success') === '1' || urlParams.get('stripe_test_success') === '1';
   const sessionId = urlParams.get('session_id');
   const ordNumber = urlParams.get('order');
@@ -2912,6 +2946,7 @@ async function checkAndHandleStripeCheckoutReturn() {
         localStorage.setItem('mr_pending_payment_books', JSON.stringify(pList));
         localStorage.removeItem('mr_cart_cover_item');
         localStorage.removeItem('mr_active_checkout_order');
+        localStorage.removeItem('mr_pending_stripe_blob_urls');
       } catch(e) {}
 
       const user = auth.currentUser;
