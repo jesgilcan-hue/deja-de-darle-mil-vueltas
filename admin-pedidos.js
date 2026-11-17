@@ -1,6 +1,7 @@
 import { auth, db, isDeveloper, DEVELOPER_PIN, getUserEmail } from './firebase-config.js';
 import { verifyAndEnforceThreeDevices } from './device-guard.js';
 import { sendOrderLifecycleEmails } from './order-email-notifier.js';
+import { explainLuluErrors } from './api/lulu-error-guide.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   collection,
@@ -837,7 +838,7 @@ function renderActionButtonsForOrder(order) {
   if (st === 'pending_review') {
     return `
       <button type="button" class="btn-order-approve" onclick="approveAndSendToLulu('${id}')">
-        <span>✅</span> 2. Aprobar y Enviar a Imprenta (+Emails)
+        <span>✅</span> 2. Aprobar y Enviar a Lulu
       </button>
       <div style="display:flex; gap:6px;">
         <button type="button" class="btn-order-secondary" style="flex:1;" onclick="openEditAddressModal('${id}')">
@@ -858,10 +859,12 @@ function renderActionButtonsForOrder(order) {
     `;
   } else if (st === 'lulu_error') {
     const errMsg = order.shipping?.lastCarrierMessage || 'Rechazado en validación automática de Lulu.';
+    const guides = explainLuluErrors([errMsg]);
     return `
-      <div style="background:#fee2e2; color:#991b1b; padding:8px 10px; border-radius:6px; font-size:0.78rem; text-align:left; font-weight:600; border:1px solid #fca5a5;">
+      <div style="background:#fee2e2; color:#991b1b; padding:9px 10px; border-radius:6px; font-size:0.78rem; text-align:left; font-weight:600; border:1px solid #fca5a5;">
         <div style="font-weight:800; margin-bottom:3px;">⚠️ Lulu reportó error (${escapeHtml(order.luluJob?.status || 'REJECTED')})</div>
-        <div style="font-size:0.74rem; line-height:1.35; color:#7f1d1d;">${escapeHtml(errMsg)}</div>
+        <div style="font-size:0.73rem; line-height:1.35; color:#7f1d1d; margin-bottom:5px;">${escapeHtml(errMsg)}</div>
+        ${guides.length ? `<div style="background:#fff1f2; border-radius:4px; padding:6px 8px; font-size:0.72rem; line-height:1.35; color:#881337; border-left:3px solid #e11d48;"><strong>Qué hacer:</strong> ${escapeHtml(guides.join(' '))}</div>` : ''}
       </div>
       <button type="button" class="btn-order-approve" onclick="approveAndSendToLulu('${id}')">
         <span>🔁</span> Reintentar envío a Lulu
@@ -947,7 +950,7 @@ window.approveAndSendToLulu = async function(orderId) {
   const hasRealPdfs = interiorUrl.startsWith('https://') && coverUrl.startsWith('https://');
   const targetEnv = order.book?.luluEnv || 'sandbox';
 
-  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Modo Lulu: ${hasRealPdfs ? targetEnv.toUpperCase() + ' (API REAL)' : 'Simulación local (sin URLs PDF)'}\n• Coste estimado de imprenta Lulu: ${cost} €\n• Encuadernación: ${getBindingDisplayName(order.book?.bindingType)}.`);
+  const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Modo Lulu: ${hasRealPdfs ? targetEnv.toUpperCase() + ' (API REAL)' : 'Simulación local (sin URLs PDF)'}\n• Coste estimado de imprenta Lulu: ${cost} €\n• Encuadernación: ${getBindingDisplayName(order.book?.bindingType)}.\n\nNota: Al cliente NO se le enviará el email de "En imprenta" todavía; se le avisará automáticamente cuando Lulu valide los PDFs.`);
   if (!ok) return;
 
   if (hasRealPdfs) {

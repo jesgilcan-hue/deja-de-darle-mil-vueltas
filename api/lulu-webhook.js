@@ -5,6 +5,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { sendEditorialEmail } from './email-helper.js';
+import { explainLuluErrors } from './lulu-error-guide.js';
 
 const FIREBASE_WEB_API_KEY =
   process.env.VITE_FIREBASE_API_KEY ||
@@ -105,6 +106,11 @@ export default async function handler(req, res) {
     const order = orderDocSnap ? orderDocSnap.data() : null;
     const mappedStatus = mapLuluStatusToOrderStatus(luluStatusName);
     const messagesText = statusMessages.length ? statusMessages.join(' | ') : 'Sin mensajes adicionales';
+    const actionGuides = mappedStatus === 'lulu_error' ? explainLuluErrors(statusMessages) : [];
+    const shouldNotifyCustomerPrinting =
+      mappedStatus === 'printing' && !order?.comms?.imprenta?.sent;
+    const shouldNotifyCustomerShipped =
+      mappedStatus === 'shipped' && !order?.comms?.tracking?.sent;
 
     for (const dSnap of matchingDocs) {
       const dData = dSnap.data() || {};
@@ -115,6 +121,7 @@ export default async function handler(req, res) {
         status: luluStatusName,
         rawStatus: job.status || null,
         lastWebhookAt: new Date().toISOString(),
+        ...(actionGuides.length ? { actionGuide: actionGuides.join(' ') } : {}),
         ...(trackingId ? { trackingCode: trackingId, trackingUrl } : {})
       };
 
@@ -123,6 +130,14 @@ export default async function handler(req, res) {
         ...(trackingId ? { trackingNumber: trackingId, trackingUrl } : {}),
         lastCarrierMessage: `Lulu (${luluStatusName}): ${messagesText}`
       };
+
+      const updatedComms = { ...(dData.comms || {}) };
+      if (shouldNotifyCustomerPrinting) {
+        updatedComms.imprenta = { sent: true, date: new Date().toISOString() };
+      }
+      if (shouldNotifyCustomerShipped) {
+        updatedComms.tracking = { sent: true, date: new Date().toISOString() };
+      }
 
       const newEvents = [
         {
@@ -148,6 +163,7 @@ export default async function handler(req, res) {
         status: mappedStatus,
         luluJob: updatedLuluJob,
         shipping: updatedShipping,
+        comms: updatedComms,
         timeline: [...prevTimeline, ...newEvents]
       };
 
@@ -157,18 +173,23 @@ export default async function handler(req, res) {
       }
     }
 
-    // Enviar aviso al desarrollador/admin con el estado real que devolvió Lulu
+    // Enviar aviso al desarrollador/admin con el estado real y qué hacer si hay rechazo
     const orderNum = order?.orderNumber || externalId || jobId || 'DESCONOCIDO';
     const bookTitle = order?.book?.title || lineItem.title || 'Libro POD';
+    const adminParagraphs = [
+      `Lulu acaba de enviar una notificación automática (${topic}).`,
+      `Estado recibido: ${luluStatusName}`,
+      `Mensaje técnico de Lulu: ${messagesText}`
+    ];
+    if (actionGuides.length) {
+      adminParagraphs.push(`Qué hacer para solucionarlo:\n${actionGuides.join('\n')}`);
+      adminParagraphs.push('Nota: NO se ha enviado ningún correo al cliente para no confirmarle nada hasta que Lulu acepte los archivos.');
+    }
 
     await sendEditorialEmail({
       to: OWNER_EMAIL,
       subject: `[LULU WEBHOOK] Pedido #${orderNum} → ${luluStatusName}`,
-      paragraphs: [
-        `Lulu acaba de enviar una notificación automática (${topic}).`,
-        `Estado recibido: ${luluStatusName}`,
-        `Mensajes de Lulu: ${messagesText}`
-      ],
+      paragraphs: adminParagraphs,
       buttonText: 'Ver pedido en Admin',
       buttonUrl: `https://www.editorialmenosruido.com/admin-pedidos?orderId=${encodeURIComponent(orderNum)}`,
       highlightDetails: {
@@ -180,15 +201,15 @@ export default async function handler(req, res) {
       }
     });
 
-    // Notificar al cliente solo en hitos clave (en producción o enviado)
+    // Notificar al cliente SOLO cuando Lulu confirma producción o envío (una sola vez por hito)
     const customerEmail = order?.customer?.email;
-    if (customerEmail && (mappedStatus === 'printing' || mappedStatus === 'shipped')) {
-      const isShipped = mappedStatus === 'shipped';
+    if (customerEmail && (shouldNotifyCustomerPrinting || shouldNotifyCustomerShipped)) {
+      const isShipped = shouldNotifyCustomerShipped;
       await sendEditorialEmail({
         to: customerEmail,
         subject: isShipped
           ? `Tu pedido #${orderNum} ha salido de imprenta`
-          : `Tu pedido #${orderNum} está en impresión`,
+          : `Tu pedido #${orderNum} ha sido validado y está en impresión`,
         paragraphs: isShipped
           ? [
               `Hola ${order?.customer?.name || ''},`,
@@ -197,7 +218,7 @@ export default async function handler(req, res) {
             ]
           : [
               `Hola ${order?.customer?.name || ''},`,
-              `Lulu ha validado los archivos de «${bookTitle}» y tu pedido ya está en producción.`
+              `La imprenta ha validado correctamente los archivos de «${bookTitle}» y tu pedido ya está en producción.`
             ],
         buttonText: trackingUrl ? 'Seguir envío' : 'Ver mi pedido',
         buttonUrl: trackingUrl || `https://www.editorialmenosruido.com/mi-espacio?tab=pedidos&orderId=${encodeURIComponent(orderNum)}`,
