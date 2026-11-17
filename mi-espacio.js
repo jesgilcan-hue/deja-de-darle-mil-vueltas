@@ -3053,12 +3053,12 @@ async function checkAndHandleStripeCheckoutReturn() {
         };
         (async () => {
           const banner = document.createElement('div');
-          banner.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; background:#1f1c19; color:#ffffff; padding:12px 18px; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.25); font-size:0.86rem; font-weight:600; max-width:360px;';
-          banner.textContent = '⏳ Generando y subiendo tus PDFs de imprenta (no cierres esta pestaña unos segundos)...';
+          banner.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:99999; background:#1f1c19; color:#ffffff; padding:16px 22px; border-radius:12px; border:2px solid #87553b; box-shadow:0 12px 32px rgba(0,0,0,0.35); font-size:0.92rem; font-weight:600; max-width:400px; line-height:1.45;';
+          banner.innerHTML = '⏳ <strong>Generando archivos de imprenta...</strong><br><span style="font-size:0.82rem; font-weight:400; color:#e5ddd3;">No cierres ni cambies de pestaña (~45-90s para 420 págs) hasta ver el aviso verde.</span>';
           document.body.appendChild(banner);
           try {
             await ensureItemPdfsUploadedToCloud(bgItem, (lbl) => {
-              banner.textContent = lbl + ' (no cierres esta pestaña)';
+              banner.innerHTML = `⏳ <strong>${lbl}</strong><br><span style="font-size:0.82rem; font-weight:400; color:#e5ddd3;">No cierres ni cambies de pestaña hasta que se ponga verde.</span>`;
               showToast(lbl);
             });
             const pdfPatch = {
