@@ -2797,6 +2797,22 @@ Para imprenta el número de páginas debe ser estrictamente par. Ajusta el inter
     return;
   }
 
+  // Si el libro aún no tiene PDFs subidos a Vercel Blob, los generamos y subimos automáticamente ahora
+  if (!primaryItem.interiorPdfUrl?.startsWith('https://') || !primaryItem.coverPdfUrl?.startsWith('https://')) {
+    try {
+      await ensureItemPdfsUploadedToCloud(primaryItem, (statusLabel) => {
+        if (confirmTxt) confirmTxt.textContent = statusLabel;
+      });
+      saveClientOrdersAndBasketState(user);
+    } catch (upErr) {
+      console.error('Error generando/subiendo PDFs antes de Stripe:', upErr);
+      alert('⚠️ No se pudieron generar y subir los PDFs de imprenta: ' + (upErr.message || 'Inténtalo de nuevo.'));
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (confirmTxt) confirmTxt.textContent = `Pagar con Tarjeta · ${totalAmount.toFixed(2).replace('.', ',')} € (Envío incluido)`;
+      return;
+    }
+  }
+
   // Iniciar sesión segura en Stripe Checkout
   try {
     const idToken = user ? await user.getIdToken() : '';
@@ -3224,11 +3240,10 @@ function renderClientOrdersAndBasketViews(user) {
     const uName = uEmail.split('@')[0];
     const isTestAccount = uName.startsWith('jesgilcan') || uName.startsWith('jesusgil_87') || uName.startsWith('jesusgil87');
     const hasEvangeliosTest = clientPendingBasket.some(it => it.id === 'evangelios-2027-test');
-    const devSeedBanner = (isTestAccount && !hasEvangeliosTest)
-      ? `<div style="margin-top: 10px; text-align: right;">
-           <button type="button" onclick="window.loadEvangeliosTestBookToBasket()" style="background:#1f1c19; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">
-             🧪 Cargar libro de prueba: Evangelios 2027 (Lulu Sandbox · 398 págs)
-           </button>
+    const devSeedBanner = (isTestAccount)
+      ? `<div style="margin-top: 10px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;">
+           ${!hasEvangeliosTest ? `<button type="button" onclick="window.loadEvangeliosTestBookToBasket()" style="background:#1f1c19; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">🧪 Cargar Evangelios 2027 (Lulu Sandbox · 398 págs)</button>` : ''}
+           <button type="button" onclick="window.loadPlanificador420TestToBasket()" style="background:#87553b; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">🧪 Cargar Planificador Anual Personal (420 págs · Auto-PDF)</button>
          </div>`
       : '';
 
@@ -3759,6 +3774,129 @@ function renderClientOrdersAndBasketViews(user) {
 }
 
 
+
+async function generateAndUploadPdfViaIframe(iframeUrl, reqId, timeoutMs = 150000) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:1280px; height:900px; opacity:0; pointer-events:none;';
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('message', onMsg);
+      iframe.remove();
+      reject(new Error('Tiempo agotado generando/subiendo el PDF a la nube.'));
+    }, timeoutMs);
+
+    function onMsg(ev) {
+      if (ev.origin !== window.location.origin) return;
+      const d = ev.data || {};
+      if (d.reqId !== reqId) return;
+      if (d.type === 'MR_BLOB_UPLOAD_DONE' && d.url) {
+        done = true;
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        iframe.remove();
+        resolve(d.url);
+      } else if (d.type === 'MR_BLOB_UPLOAD_ERROR') {
+        done = true;
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        iframe.remove();
+        reject(new Error(d.error || 'Error subiendo PDF en el generador.'));
+      }
+    }
+
+    window.addEventListener('message', onMsg);
+    iframe.src = iframeUrl;
+    document.body.appendChild(iframe);
+  });
+}
+
+async function ensureItemPdfsUploadedToCloud(item, onProgress) {
+  const designId = item.designId || item.bookId || item.id || '';
+  if (!item.interiorPdfUrl?.startsWith('https://')) {
+    if (onProgress) onProgress('⏳ Generando y subiendo Interior PDF (1/2)...');
+    const reqId = 'int_' + Date.now();
+    const isPuzzle = Boolean(item.isPuzzle || String(item.type || '').toLowerCase().includes('pasatiempo'));
+    const baseGen = isPuzzle ? '/generador-libro-pasatiempos' : '/generador-libro-completo';
+    const url = designId
+      ? `${baseGen}?load=${encodeURIComponent(designId)}&upload_blob=1&reqId=${reqId}`
+      : `${baseGen}?upload_blob=1&reqId=${reqId}`;
+    item.interiorPdfUrl = await generateAndUploadPdfViaIframe(url, reqId);
+    if (!item.data) item.data = {};
+    item.data.interiorPdfUrl = item.interiorPdfUrl;
+  }
+
+  if (!item.coverPdfUrl?.startsWith('https://')) {
+    if (onProgress) onProgress('⏳ Generando y subiendo Portada PDF (2/2)...');
+    try {
+      localStorage.setItem('mr_cover_sync_data', JSON.stringify({
+        title: item.title || 'Mi Planificador',
+        subtitle: item.subtitle || '',
+        pageCount: item.pageCount || 144,
+        bindingType: item.bindingType || 'softcover',
+        paperType: item.paperType || 'cream_90',
+        designId
+      }));
+    } catch (e) {}
+    const reqId = 'cov_' + Date.now();
+    const isPuzzle = Boolean(item.isPuzzle || String(item.type || '').toLowerCase().includes('pasatiempo'));
+    const baseCover = isPuzzle ? '/generador-portadas-pasatiempos' : '/generador-portadas';
+    const coverUrl = item.coverDesignId
+      ? `${baseCover}?load=${encodeURIComponent(item.coverDesignId)}&upload_blob=1&reqId=${reqId}`
+      : `${baseCover}?upload_blob=1&reqId=${reqId}`;
+    item.coverPdfUrl = await generateAndUploadPdfViaIframe(coverUrl, reqId);
+    if (!item.data) item.data = {};
+    item.data.coverPdfUrl = item.coverPdfUrl;
+  }
+}
+
+window.loadPlanificador420TestToBasket = function() {
+  const user = auth.currentUser;
+  const email = (user ? getUserEmail(user) : '').toLowerCase().trim();
+  const uname = email.split('@')[0];
+  if (!uname.startsWith('jesgilcan') && !uname.startsWith('jesusgil_87') && !uname.startsWith('jesusgil87')) {
+    alert('Solo disponible para cuentas de prueba autorizadas.');
+    return;
+  }
+  const found = (allDesigns || []).find(d => d.id === 'book_1794936214192' || String(d.name || '').toLowerCase().includes('planificador anual personal'));
+  const designId = found ? found.id : 'book_1794936214192';
+  const pages = Number(found?.data?.pageCount || 420);
+  const testItem = {
+    id: 'planificador-420-test',
+    bookId: designId,
+    designId,
+    luluEnv: 'sandbox',
+    title: found?.name || 'Planificador Anual Personal',
+    subtitle: 'Planificador Completo · 6×9" Tapa Blanda Mate',
+    bindingType: 'softcover',
+    pageCount: pages,
+    quantity: 1,
+    textsConfirmed: false,
+    paperLabel: 'Papel Crema 90g',
+    data: { ...(found?.data || {}), title: found?.name || 'Planificador Anual Personal' },
+    shipping: {
+      name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
+      email: email || 'jesusgil_87@hotmail.com',
+      address: 'Gran via, 08014 Barcelona (Barcelona)',
+      postalCode: '08014',
+      city: 'Barcelona',
+      province: 'Barcelona',
+      country: 'ES',
+      phone: '+34 987 654 321',
+      notes: 'Prueba automática Planificador 420 págs → Vercel Blob → Lulu Sandbox'
+    }
+  };
+  const existingIdx = clientPendingBasket.findIndex(it => it.id === 'planificador-420-test');
+  if (existingIdx >= 0) clientPendingBasket[existingIdx] = testItem;
+  else clientPendingBasket.unshift(testItem);
+  saveClientOrdersAndBasketState(user);
+  renderClientOrdersAndBasketViews(user);
+  if (typeof showToast === 'function') {
+    showToast(`🧪 ${testItem.title} (${pages} págs) añadido a la cesta. Al pagar se subirán sus PDFs automáticamente.`);
+  }
+};
 
 window.loadEvangeliosTestBookToBasket = function() {
   const user = auth.currentUser;

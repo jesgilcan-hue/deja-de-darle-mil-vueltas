@@ -3280,9 +3280,25 @@
             renderSectionsList();
             renderPreviewPage();
 
-            // Descarga directa y previsualización de PDF interior
+            // Descarga directa, previsualización o subida automática a Vercel Blob
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('download_direct') === '1' || urlParams.get('preview_modal') === '1') {
+            if (urlParams.get('upload_blob') === '1') {
+                const reqId = urlParams.get('reqId') || '';
+                setTimeout(async () => {
+                    try {
+                        const { doc, filename } = await generateBookPdfDocument(false);
+                        const pdfBlob = doc.output('blob');
+                        if (typeof window.uploadPdfBlobToCloud !== 'function') {
+                            throw new Error('Cargador de Vercel Blob no disponible.');
+                        }
+                        const url = await window.uploadPdfBlobToCloud(pdfBlob, filename, 'pedidos/interior');
+                        window.parent.postMessage({ type: 'MR_BLOB_UPLOAD_DONE', reqId, kind: 'interior', url }, window.location.origin);
+                    } catch (err) {
+                        console.error('Error subiendo PDF interior a Vercel Blob:', err);
+                        window.parent.postMessage({ type: 'MR_BLOB_UPLOAD_ERROR', reqId, kind: 'interior', error: err.message || 'Error subiendo interior' }, window.location.origin);
+                    }
+                }, 400);
+            } else if (urlParams.get('download_direct') === '1' || urlParams.get('preview_modal') === '1') {
                 const notice = document.createElement('div');
                 notice.style.position = 'fixed';
                 notice.style.top = '22px';

@@ -1,6 +1,7 @@
 import './mr-popup.js';
 import './auth-modal.js';
 import './pwa-install.js';
+import './pdf-blob-uploader.js';
 
 // Set current year in footer
 const yearEl = document.getElementById('year');
