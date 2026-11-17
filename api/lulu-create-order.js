@@ -80,7 +80,36 @@ export default async function handler(req, res) {
       (FIXED_RETAIL_PRICES[bindingType] || FIXED_RETAIL_PRICES.softcover).podPackageId;
 
     const extId = String(orderNumber || orderId || `MR-${Date.now()}`);
-    const addr = shipping.address || shipping || {};
+    const addrObj = (shipping.address && typeof shipping.address === 'object') ? shipping.address : {};
+
+    const rawCustomerAddr = typeof customer.address === 'string' ? customer.address.trim() : '';
+    const cpFromAddr = rawCustomerAddr.match(/\b(\d{5})\b/)?.[1] || '';
+    const streetFromCustomer = rawCustomerAddr.includes(',')
+      ? rawCustomerAddr.split(',')[0].trim()
+      : rawCustomerAddr;
+
+    const street1 =
+      addrObj.street ||
+      addrObj.street1 ||
+      shipping.street1 ||
+      (typeof shipping.address === 'string' ? shipping.address.trim() : '') ||
+      streetFromCustomer;
+    const postcode = String(
+      addrObj.postalCode || addrObj.postcode || shipping.postalCode || customer.postalCode || cpFromAddr
+    ).trim();
+    const city = String(addrObj.city || shipping.city || customer.city || '').trim();
+    const stateCode = String(addrObj.province || addrObj.state_code || customer.province || city || '').trim().slice(0, 30);
+
+    const rawCountry = String(addrObj.country || addrObj.country_code || shipping.country || customer.country || 'ES').trim();
+    const countryCode = /^(espa[ñn]a|spain|es)$/i.test(rawCountry)
+      ? 'ES'
+      : rawCountry.slice(0, 2).toUpperCase();
+
+    if (!street1 || !postcode || !city) {
+      return res.status(400).json({
+        error: `Dirección de envío incompleta para Lulu (street1="${street1}", postcode="${postcode}", city="${city}").`
+      });
+    }
 
     const payload = {
       contact_email: 'pedidos@editorialmenosruido.com',
@@ -99,11 +128,11 @@ export default async function handler(req, res) {
       ],
       shipping_address: {
         name: shipping.name || customer.name || 'Cliente Editorial Menos Ruido',
-        street1: addr.street || addr.street1 || shipping.street1 || 'Calle de Alcalá 1',
-        city: addr.city || shipping.city || 'Madrid',
-        postcode: String(addr.postalCode || addr.postcode || shipping.postalCode || '28001').trim(),
-        country_code: String(addr.country || addr.country_code || 'ES').toUpperCase(),
-        state_code: String(addr.province || addr.state_code || 'M').trim().slice(0, 10),
+        street1,
+        city,
+        postcode,
+        country_code: countryCode,
+        state_code: stateCode || city,
         phone_number: shipping.phone || customer.phone || '+34600000000'
       },
       shipping_level: shipping.shippingLevel || 'MAIL'
