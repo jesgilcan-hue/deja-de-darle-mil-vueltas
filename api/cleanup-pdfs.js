@@ -4,7 +4,8 @@
 
 import { list, del } from '@vercel/blob';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { sendEditorialEmail } from '../lib/email-helper.js';
 
 const FIREBASE_WEB_API_KEY =
   process.env.VITE_FIREBASE_API_KEY ||
@@ -60,16 +61,31 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, deleted: safeUrls.length });
   }
 
-  // 2. Limpieza programada por Vercel Cron
+  // 2. Limpieza programada por Vercel Cron + Email de seguimiento a los 15 días
   if (req.method === 'GET') {
     const now = Date.now();
     const paidUrls = new Set();
+    const followUpCandidates = [];
     try {
       const snap = await getDocs(collection(firestoreDb, 'orders'));
       snap.forEach(d => {
-        const b = d.data()?.book || {};
+        const data = d.data() || {};
+        const b = data.book || {};
         if (b.interiorPdfUrl) paidUrls.add(b.interiorPdfUrl);
         if (b.coverPdfUrl) paidUrls.add(b.coverPdfUrl);
+
+        // Candidatos para email de primeras experiencias (15 días tras entrega/pedido)
+        const hasStripe = Boolean(data.pricing?.stripePaymentId);
+        const alreadySent = Boolean(data.comms?.seguimiento15d?.sent);
+        const email = String(data.customer?.email || '').trim();
+        const isEligibleStatus = data.status === 'delivered' || data.status === 'shipped';
+        if (hasStripe && !alreadySent && email && isEligibleStatus) {
+          const rawDate = data.deliveredAt || data.createdAt;
+          const tsMs = rawDate?.toMillis ? rawDate.toMillis() : new Date(rawDate || 0).getTime();
+          if (tsMs > 0 && now - tsMs >= PAID_TTL_MS) {
+            followUpCandidates.push({ id: d.id, data, email });
+          }
+        }
       });
     } catch (e) {
       console.warn('No se pudo leer orders en cleanup-pdfs:', e.message);
@@ -92,7 +108,48 @@ export default async function handler(req, res) {
     if (toDelete.length) {
       await del(toDelete, { token });
     }
-    return res.status(200).json({ ok: true, deleted: toDelete.length });
+
+    let followUpsSent = 0;
+    for (const item of followUpCandidates) {
+      const o = item.data;
+      const orderNum = o.orderNumber || item.id;
+      const customerName = String(o.customer?.name || '').split(' ')[0] || 'hola';
+      const bookTitle = o.book?.title || o.items?.[0]?.title || 'tu cuaderno';
+      try {
+        const resEmail = await sendEditorialEmail({
+          to: item.email,
+          subject: `¿Qué tal estos primeros días con "${bookTitle}"?`,
+          paragraphs: [
+            `Hola ${customerName},`,
+            `Hace un par de semanas que salió tu pedido #${orderNum} ("${bookTitle}") y nos gustaría saber qué te está pareciendo en el día a día.`,
+            `¿El papel, el tamaño y la estructura se ajustan a lo que buscabas? Si hay algo que mejorarías o algún detalle que te haya resultado especialmente útil, puedes responder directamente a este correo: lo leemos todo para afinar las próximas ediciones.`
+          ],
+          buttonText: 'Ver mi pedido en Mi Espacio',
+          buttonUrl: 'https://www.editorialmenosruido.com/mi-espacio?tab=pedidos'
+        });
+        if (resEmail?.ok) {
+          const patch = {
+            comms: {
+              ...(o.comms || {}),
+              seguimiento15d: {
+                sent: true,
+                date: new Date().toISOString(),
+                id: resEmail.id || ''
+              }
+            }
+          };
+          await setDoc(doc(firestoreDb, 'orders', item.id), patch, { merge: true });
+          if (o.uid) {
+            await setDoc(doc(firestoreDb, 'users', o.uid, 'orders', item.id), patch, { merge: true }).catch(() => {});
+          }
+          followUpsSent++;
+        }
+      } catch (errMail) {
+        console.warn('Error enviando seguimiento 15d a', item.email, errMail.message);
+      }
+    }
+
+    return res.status(200).json({ ok: true, deleted: toDelete.length, followUpsSent });
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
