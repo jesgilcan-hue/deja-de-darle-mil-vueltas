@@ -44,10 +44,11 @@ function extractLuluMessages(job) {
   return out;
 }
 
-function mapLuluStatusToOrderStatus(luluStatusName) {
+function mapLuluStatusToOrderStatus(luluStatusName, isSandbox = false) {
   const s = String(luluStatusName || '').toUpperCase();
   if (s === 'SHIPPED') return 'shipped';
   if (s === 'IN_PRODUCTION' || s === 'PRODUCTION_READY' || s === 'PRODUCTION_DELAYED') return 'printing';
+  if (isSandbox && s === 'UNPAID') return 'printing';
   if (s === 'REJECTED' || s === 'ERROR' || s === 'CANCELED') return 'lulu_error';
   return 'approved_printing';
 }
@@ -104,7 +105,8 @@ export default async function handler(req, res) {
 
     const orderDocSnap = matchingDocs[0] || null;
     const order = orderDocSnap ? orderDocSnap.data() : null;
-    const mappedStatus = mapLuluStatusToOrderStatus(luluStatusName);
+    const isSandboxOrder = (order?.luluJob?.environment || order?.book?.luluEnv || 'sandbox') === 'sandbox';
+    const mappedStatus = mapLuluStatusToOrderStatus(luluStatusName, isSandboxOrder);
     const messagesText = statusMessages.length ? statusMessages.join(' | ') : 'Sin mensajes adicionales';
     const actionGuides = mappedStatus === 'lulu_error' ? explainLuluErrors(statusMessages) : [];
     const shouldNotifyCustomerPrinting =
