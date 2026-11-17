@@ -5,6 +5,9 @@ import { auth } from './firebase-config.js';
  * Sube un Blob PDF directamente desde el navegador a Vercel Blob usando token autenticado.
  */
 export async function uploadPdfBlobToCloud(pdfBlob, filename = 'documento.pdf', folder = 'pedidos') {
+  if (!auth.currentUser && typeof auth.authStateReady === 'function') {
+    await auth.authStateReady();
+  }
   const user = auth.currentUser;
   if (!user) {
     throw new Error('Debes iniciar sesión para subir PDFs a la nube.');
