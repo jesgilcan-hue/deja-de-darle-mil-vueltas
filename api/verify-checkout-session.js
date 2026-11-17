@@ -187,6 +187,13 @@ export default async function handler(req, res) {
       }];
     }
 
+    const rawAddress = metadata.shipping_address || 'Calle Serrano 42, 28001 Madrid';
+    const parsedCpMatch = rawAddress.match(/\b(\d{5})\b/);
+    const parsedPostalCode = metadata.postal_code || (parsedCpMatch ? parsedCpMatch[1] : '');
+    const parsedCity = metadata.city || '';
+    const parsedProvince = metadata.province || '';
+    const streetOnly = metadata.street_address || rawAddress;
+
     const orderDoc = {
       id: 'ord_' + (session.created ? session.created * 1000 : Date.now()),
       orderNumber: orderNumber,
@@ -198,7 +205,11 @@ export default async function handler(req, res) {
         name: customerName,
         email: safeCustomerEmail,
         phone: metadata.customer_phone || '+34 600 000 000',
-        address: address,
+        address: streetOnly,
+        postalCode: parsedPostalCode,
+        city: parsedCity,
+        province: parsedProvince,
+        country: 'España',
         notes: customerNotes,
         isRegistered: true
       },

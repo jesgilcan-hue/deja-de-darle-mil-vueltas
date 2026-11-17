@@ -260,6 +260,10 @@ export default async function handler(req, res) {
     params.append('metadata[customer_phone]', customerPhone);
     params.append('metadata[customer_notes]', notes || 'Sin indicaciones adicionales');
     params.append('metadata[shipping_address]', `${address}, ${postalCode} ${city} (${province})`);
+    params.append('metadata[street_address]', String(address || ''));
+    params.append('metadata[postal_code]', String(postalCode || ''));
+    params.append('metadata[city]', String(city || ''));
+    params.append('metadata[province]', String(province || ''));
     params.append('metadata[environment]', 'STRIPE_TEST_OFFICIAL');
 
     const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {

@@ -625,11 +625,14 @@ function validateCustomerData(customer) {
     result.phoneStatus = 'other';
   }
 
-  // 3. Código Postal español (5 dígitos)
-  const cp = (customer.postalCode || '').trim();
+  // 3. Código Postal español (5 dígitos) — con respaldo por si viene incrustado en address
+  const cpMatch = (customer.address || '').match(/\b(\d{5})\b/);
+  const cp = (customer.postalCode || (cpMatch ? cpMatch[1] : '')).trim();
   if (!/^\d{5}$/.test(cp)) {
     result.postalStatus = 'invalid';
     result.isValid = false;
+  } else {
+    result.resolvedPostalCode = cp;
   }
 
   return result;
@@ -727,13 +730,15 @@ function createOrderCardElement(order) {
           <div>• Novedades y ofertas (Boletín): <strong>${custVal.newsletterConsent ? '✅ Consentimiento activo (Ticket verde)' : '⚪ Sin consentimiento comercial'}</strong></div>
           <div>• Email de contacto: <strong>${custVal.emailStatus === 'correct' ? '✅ Verificado' : custVal.emailStatus === 'typo' ? '⚠️ Posible errata en dominio' : '❌ Inválido'}</strong></div>
           <div>• Móvil para mensajería: <strong>${custVal.phoneStatus === 'mobile_ok' ? '✅ Móvil nacional OK (SMS)' : custVal.phoneStatus === 'landline' ? '☎️ Fijo (sin SMS)' : '⚠️ Revisar formato'}</strong></div>
-          <div>• Código Postal: <strong>${custVal.postalStatus === 'correct' ? `✅ CP ${escapeHtml(order.customer?.postalCode || '')} España` : '⚠️ Código postal inválido'}</strong></div>
+          <div>• Código Postal: <strong>${custVal.postalStatus === 'correct' ? `✅ CP ${escapeHtml(custVal.resolvedPostalCode || order.customer?.postalCode || '')} España` : '⚠️ Código postal inválido'}</strong></div>
         </div>
 
         <div class="order-address-box">
           <strong>Dirección de entrega:</strong><br>
           ${escapeHtml(order.customer?.address || '')}<br>
-          ${escapeHtml(order.customer?.postalCode || '')} ${escapeHtml(order.customer?.city || '')} (${escapeHtml(order.customer?.province || '')})<br>
+          ${(order.customer?.postalCode || order.customer?.city || order.customer?.province)
+            ? `${escapeHtml(order.customer?.postalCode || '')} ${escapeHtml(order.customer?.city || '')}${order.customer?.province ? ` (${escapeHtml(order.customer.province)})` : ''}<br>`
+            : ''}
           <em>${escapeHtml(order.customer?.country || 'España')}</em>
           ${order.customer?.notes ? `<div style="margin-top:4px; font-size:0.76rem; color:#87553b;"><strong>Nota:</strong> ${escapeHtml(order.customer.notes)}</div>` : ''}
         </div>
