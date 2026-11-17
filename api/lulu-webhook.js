@@ -4,8 +4,8 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
-import { sendEditorialEmail } from './email-helper.js';
-import { explainLuluErrors } from './lulu-error-guide.js';
+import { sendEditorialEmail } from '../lib/email-helper.js';
+import { explainLuluErrors } from '../lib/lulu-error-guide.js';
 
 const FIREBASE_WEB_API_KEY =
   process.env.VITE_FIREBASE_API_KEY ||

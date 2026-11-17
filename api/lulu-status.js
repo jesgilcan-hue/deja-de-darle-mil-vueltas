@@ -1,7 +1,7 @@
 // Serverless Function para Vercel: /api/lulu-status
 // Consulta el estado en tiempo real de un Print Job en Lulu Direct API (Sandbox o Producción)
 
-import { luluApiRequest } from './lulu-client.js';
+import { luluApiRequest } from '../lib/lulu-client.js';
 
 const FIREBASE_WEB_API_KEY =
   process.env.VITE_FIREBASE_API_KEY ||

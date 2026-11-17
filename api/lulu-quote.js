@@ -2,7 +2,7 @@
 // Cotización en tiempo real contra Lulu Direct API + Cortacircuitos de Margen Mínimo (Safety Guard)
 // Exclusivo para desarrollador autenticado (jesgilcan@gmail.com) durante fase de pruebas
 
-import { luluApiRequest } from './lulu-client.js';
+import { luluApiRequest } from '../lib/lulu-client.js';
 
 const ALLOWED_ADMIN_EMAIL = 'jesgilcan@gmail.com';
 const ALLOWED_TEST_CUSTOMER_EMAILS = ['jesusgil_87@hotmail.com', 'jesusgil_87@gmail.com'];

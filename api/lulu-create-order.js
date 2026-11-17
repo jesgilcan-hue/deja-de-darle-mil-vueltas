@@ -3,7 +3,7 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
-import { luluApiRequest } from './lulu-client.js';
+import { luluApiRequest } from '../lib/lulu-client.js';
 import { FIXED_RETAIL_PRICES } from './lulu-quote.js';
 
 const FIREBASE_WEB_API_KEY =

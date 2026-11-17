@@ -1,7 +1,7 @@
 import { auth, db, isDeveloper, DEVELOPER_PIN, getUserEmail } from './firebase-config.js';
 import { verifyAndEnforceThreeDevices } from './device-guard.js';
 import { sendOrderLifecycleEmails } from './order-email-notifier.js';
-import { explainLuluErrors } from './api/lulu-error-guide.js';
+import { explainLuluErrors } from './lib/lulu-error-guide.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   collection,
