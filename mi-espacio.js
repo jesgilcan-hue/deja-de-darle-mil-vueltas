@@ -3076,6 +3076,9 @@ async function checkAndHandleStripeCheckoutReturn() {
             if (u && u.uid && finalOrder.orderNumber) {
               await setDoc(doc(db, 'users', u.uid, 'orders', finalOrder.orderNumber), pdfPatch, { merge: true });
             }
+            if (orderSyncChannel) {
+              orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order: finalOrder });
+            }
             banner.style.background = '#166534';
             banner.textContent = '✅ PDFs de imprenta guardados en tu pedido #' + finalOrder.orderNumber;
             setTimeout(() => banner.remove(), 5000);

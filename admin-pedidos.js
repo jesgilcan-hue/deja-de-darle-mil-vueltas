@@ -782,6 +782,9 @@ function createOrderCardElement(order) {
                   ? `<div style="color:#166534;">✓ Páginas pares exactas: <strong>Sí (${bPages} págs)</strong></div>` 
                   : `<div style="color:#dc2626; font-weight:700;">✗ Páginas pares: <strong>No (${bPages} págs - Error: Imprenta exige número par)</strong></div>`}
                 <div>✓ Lomo calculado: <strong>${bSpine} mm</strong></div>
+                ${(bk?.interiorPdfUrl || order.book?.interiorPdfUrl || '').startsWith('https://') && (bk?.coverPdfUrl || order.book?.coverPdfUrl || '').startsWith('https://')
+                  ? `<div style="color:#166534; font-weight:700;">✓ PDFs en Vercel Blob: <strong>Listos para Lulu</strong></div>`
+                  : `<div style="color:#b45309; font-weight:700;">⏳ PDFs en nube: <strong>Pendiente de subida</strong></div>`}
               </div>
               <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
                 <button type="button" class="btn-order-secondary" style="flex:1; min-width:110px; font-weight:700; font-size:0.75rem;" onclick="downloadOrderCoverPdf('${order.id || order.orderNumber}', ${bIdx})" title="Descargar Portada PDF">
@@ -960,8 +963,8 @@ window.approveAndSendToLulu = async function(orderId) {
   const ok = confirm(`¿Confirmas la aprobación del pedido #${order.orderNumber}?\n\n• Modo Lulu: ${hasRealPdfs ? targetEnv.toUpperCase() + ' (API REAL)' : 'Sin URLs PDF'}\n• Coste estimado de imprenta Lulu: ${cost} €\n• Encuadernación: ${getBindingDisplayName(order.book?.bindingType)}.\n\nNota: Al cliente NO se le enviará el email de "En imprenta" todavía; se le avisará automáticamente cuando Lulu valide los PDFs.`);
   if (!ok) return;
 
-  if (!hasRealPdfs && order.pricing?.stripePaymentId) {
-    alert('⏳ Este pedido pagado con Stripe aún no tiene las URLs de Interior PDF y Portada PDF guardadas en la nube.\n\nEspera unos segundos a que termine de subirlos la ventana del cliente (y recarga esta página) antes de enviarlo a Lulu.');
+  if (!hasRealPdfs) {
+    alert('⏳ Este pedido todavía NO tiene las URLs de Interior PDF y Portada PDF guardadas en Vercel Blob.\n\nEspera unos segundos a que la pestaña de Mi Espacio muestre el aviso verde "✅ PDFs de imprenta guardados" y recarga esta página antes de enviarlo a Lulu.');
     return;
   }
 
