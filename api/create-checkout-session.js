@@ -190,7 +190,7 @@ export default async function handler(req, res) {
 
         params.append(`line_items[${i}][price_data][currency]`, 'eur');
         params.append(`line_items[${i}][price_data][unit_amount]`, String(itAmountCents));
-        params.append(`line_items[${i}][price_data][product_data][name]`, it.title || 'Cuaderno Personalizado');
+        params.append(`line_items[${i}][price_data][product_data][name]`, `#${orderNumber} · ${it.title || 'Cuaderno Personalizado'}`);
         params.append(
           `line_items[${i}][price_data][product_data][description]`,
           `${it.subtitle || 'Edición Personalizada'} · ${itPages} págs (${itBinding})`
@@ -210,7 +210,7 @@ export default async function handler(req, res) {
     } else {
       params.append('line_items[0][price_data][currency]', 'eur');
       params.append('line_items[0][price_data][unit_amount]', String(amountCents));
-      params.append('line_items[0][price_data][product_data][name]', `${bookTitle} — ${quote.product.label}`);
+      params.append('line_items[0][price_data][product_data][name]', `#${orderNumber} · ${bookTitle} — ${quote.product.label}`);
       params.append(
         'line_items[0][price_data][product_data][description]',
         `${bookSubtitle} · ${quote.product.pageCount} págs · Envío incluido a ${postalCode} ${city}`
@@ -228,6 +228,7 @@ export default async function handler(req, res) {
     }
 
     const itemsSummary = cleanItems.map(x => `${x.quantity}x ${x.title}`).join(', ');
+    params.append('payment_intent_data[description]', `Pedido #${orderNumber} · ${itemsSummary}`.slice(0, 480));
 
     // Metadatos consolidados
     params.append('metadata[order_number]', orderNumber);
