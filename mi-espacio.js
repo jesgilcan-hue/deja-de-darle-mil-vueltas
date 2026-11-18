@@ -3627,7 +3627,7 @@ function renderClientOrdersAndBasketViews(user) {
                 📖 Archivos en PDF de tu Cuaderno
               </div>
               <div style="font-size: 0.76rem; color: #665e54; margin-top: 2px;">
-                Tus archivos listos para imprenta están guardados en tu perfil para que puedas consultarlos o descargarlos en cualquier momento.
+                Recuerda descargar y guardar tus PDFs antes de 15 días desde la compra; pasado ese plazo se eliminan automáticamente del servidor.
               </div>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">

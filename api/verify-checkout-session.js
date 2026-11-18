@@ -309,7 +309,7 @@ export default async function handler(req, res) {
         `Hemos recibido correctamente tu pedido #${orderNumber} (${amountTotal.toFixed(2)} € · Envío incluido).`,
         `Adjuntamos tu factura simplificada (${invoiceMeta.invoiceNumber}) en PDF en este mismo correo.`,
         `Tu cuaderno «${bookTitle}» ha entrado en revisión técnica antes de su encuadernación en imprenta.`,
-        `Puedes consultar y descargar tus archivos en PDF en cualquier momento desde el apartado «Mis Pedidos y Cesta» de tu perfil.`,
+        `Puedes descargar tus archivos en PDF desde el apartado «Mis Pedidos y Cesta» de tu perfil. Recuerda guardarlos en tu dispositivo antes de 15 días, ya que pasado ese plazo se eliminan automáticamente del servidor.`,
         `¿Qué pasa ahora?\nYa estamos comprobando que todos los textos y márgenes cumplan las especificaciones de imprenta. En cuanto entre en máquinas te avisaremos por aquí.`
       ];
 
