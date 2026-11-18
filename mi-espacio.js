@@ -958,9 +958,9 @@ function openDownloadModal(item) {
     if (t.includes('portada')) {
       dlModalBadge.innerHTML = '<span>🎨</span> Cubierta Exterior';
     } else if (t.includes('completo') || t.includes('libro')) {
-      dlModalBadge.innerHTML = '<span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm)';
+      dlModalBadge.innerHTML = '<span>📐</span> Formato Libro 9" × 7" (228,6 × 177,8 mm)';
     } else {
-      dlModalBadge.innerHTML = '<span>📐</span> Formato Libro 8.25" × 6" (210 × 152 mm)';
+      dlModalBadge.innerHTML = '<span>📐</span> Formato Libro 9" × 7" (228,6 × 177,8 mm)';
     }
   }
   if (modalEmailInput) {
@@ -2971,7 +2971,7 @@ async function checkAndHandleStripeCheckoutReturn() {
           bindingType: stripeData?.metadata?.binding_type || activeData?.item?.bindingType || 'softcover',
           pageCount: pageCount,
           quantity: 1,
-          size: '8.25x6',
+          size: '9x7',
           spineWidthMm: spineWidth
         },
         pricing: {
@@ -3428,7 +3428,7 @@ function renderClientOrdersAndBasketViews(user) {
                       <strong>Encuadernación:</strong><br>${getBindingLabelForProfile(item.bindingType)}
                     </div>
                     <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
-                      <strong>Formato:</strong><br>Apaisado 8.25" × 6" (210 × 152 mm)
+                      <strong>Formato:</strong><br>Apaisado 9" × 7" (228,6 × 177,8 mm)
                     </div>
                     <div style="background: #fdfbf7; padding: 8px 10px; border-radius: 6px; border: 1px solid #eee7dc;">
                       <strong>Páginas interiores:</strong><br>${item.pageCount} páginas (Papel crema 80g)
