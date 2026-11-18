@@ -59,6 +59,8 @@ export default defineConfig({
         ensayoSopasLetras: resolve(__dirname, 'sopas-de-letras-agilidad-verbal-beneficios-cerebro.html'),
         ensayoMurdle: resolve(__dirname, 'murdle-murdoku-pasatiempos-logica-amazon.html'),
         ensayoRegalos: resolve(__dirname, 'regalar-planificador-o-libro-pasatiempos-personalizado.html'),
+        ensayoPasatiemposPadresAbuelos: resolve(__dirname, 'hacer-pasatiempos-en-papel-con-tus-padres-o-abuelos.html'),
+        ensayoReunionTresLineas: resolve(__dirname, 'cuando-una-reunion-podria-haber-sido-un-papel-de-tres-lineas.html'),
         links: resolve(__dirname, 'links.html'),
         visorDeja: resolve(__dirname, 'visor-deja-de-darle-mil-vueltas.html'),
         visorHabla: resolve(__dirname, 'visor-habla-claro.html'),
