@@ -3028,6 +3028,27 @@ Soluciones completas verificadas al final del libro</textarea>
                     pending.unshift(bookItem);
                 }
                 localStorage.setItem('mr_pending_payment_books', JSON.stringify(pending));
+
+                // Subir en segundo plano la portada real diseñada por el usuario (1 página a 300 DPI, <1s)
+                if (typeof window.uploadPdfBlobToCloud === 'function') {
+                    setTimeout(async () => {
+                        try {
+                            const { doc, filename } = compileHighResCoverPdf();
+                            const covBlob = doc.output('blob');
+                            const covUrl = await window.uploadPdfBlobToCloud(covBlob, filename, 'pedidos/portadas');
+                            if (covUrl) {
+                                const list = JSON.parse(localStorage.getItem('mr_pending_payment_books') || '[]');
+                                const target = list.find(x => x.id === bookItem.id);
+                                if (target) {
+                                    target.coverPdfUrl = covUrl;
+                                    if (!target.data) target.data = {};
+                                    target.data.coverPdfUrl = covUrl;
+                                    localStorage.setItem('mr_pending_payment_books', JSON.stringify(list));
+                                }
+                            }
+                        } catch (e) { console.warn('Aviso pre-subida portada pasatiempos:', e.message); }
+                    }, 50);
+                }
             } catch (e) {}
 
             // Calcular precio y rellenar pop-up

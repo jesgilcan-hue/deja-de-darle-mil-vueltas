@@ -3309,7 +3309,7 @@ function renderClientOrdersAndBasketViews(user) {
     const devSeedBanner = (isTestAccount)
       ? `<div style="margin-top: 10px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;">
            ${!hasEvangeliosTest ? `<button type="button" onclick="window.loadEvangeliosTestBookToBasket()" style="background:#1f1c19; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">🧪 Cargar Evangelios 2027 (Lulu Sandbox · 398 págs)</button>` : ''}
-           <button type="button" onclick="window.loadPlanificador420TestToBasket()" style="background:#87553b; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">🧪 Cargar Planificador Anual Personal (420 págs · Auto-PDF)</button>
+           <button type="button" onclick="window.loadPlanificador420TestToBasket()" style="background:#87553b; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">🧪 Cargar Planificador Diario 9×7" (206 págs · 2 días/pág)</button>
          </div>`
       : '';
 
@@ -3926,22 +3926,39 @@ window.loadPlanificador420TestToBasket = function() {
     alert('Solo disponible para cuentas de prueba autorizadas.');
     return;
   }
-  const found = (allDesigns || []).find(d => d.id === 'book_1794936214192' || String(d.name || '').toLowerCase().includes('planificador anual personal'));
-  const designId = found ? found.id : 'book_1794936214192';
-  const pages = Number(found?.data?.pageCount || 420);
+  const designId = 'book_planificador_9x7_test';
+  const pages = 206;
+  const designData = {
+    title: 'Planificador Diario Anual 9×7',
+    subtitle: '365 días en 2 días por página · Menos Ruido',
+    presetKey: 'libre',
+    layoutMode: 'blocks',
+    dateMode: 'auto2027',
+    year: 2027,
+    pageCount: pages,
+    sections: [
+      { id: 'cover', active: true, pages: 1 },
+      { id: 'calendar', active: true, pages: 1, design: { yearMode: '2027', showWeekNumbers: true } },
+      { id: 'monthly', active: true, pages: 12 },
+      { id: 'habits', active: false, pages: 12 },
+      { id: 'weekly', active: false, pages: 52 },
+      { id: 'daily', active: true, pages: 365, design: { twoDaysPerPage: true } },
+      { id: 'notes', active: true, pages: 6 }
+    ]
+  };
   const testItem = {
-    id: 'planificador-420-test',
+    id: 'planificador-9x7-test',
     bookId: designId,
     designId,
     luluEnv: 'sandbox',
-    title: found?.name || 'Planificador Anual Personal',
-    subtitle: 'Planificador Completo · 6×9" Tapa Blanda Mate',
+    title: 'Planificador Diario Anual 9×7',
+    subtitle: 'Planificador Completo · 9×7" Tapa Blanda Mate (2 días/pág)',
     bindingType: 'softcover',
     pageCount: pages,
     quantity: 1,
     textsConfirmed: false,
     paperLabel: 'Papel Crema 90g',
-    data: { ...(found?.data || {}), title: found?.name || 'Planificador Anual Personal' },
+    data: designData,
     shipping: {
       name: (user ? getUserDisplayName(user) : '') || 'Cliente Menos Ruido',
       email: email || 'jesusgil_87@hotmail.com',
@@ -3951,16 +3968,16 @@ window.loadPlanificador420TestToBasket = function() {
       province: 'Barcelona',
       country: 'ES',
       phone: '+34 987 654 321',
-      notes: 'Prueba automática Planificador 420 págs → Vercel Blob → Lulu Sandbox'
+      notes: 'Prueba automática Planificador 9x7 (206 págs) → Vercel Blob → Lulu Sandbox'
     }
   };
-  const existingIdx = clientPendingBasket.findIndex(it => it.id === 'planificador-420-test');
+  const existingIdx = clientPendingBasket.findIndex(it => it.id === 'planificador-9x7-test' || it.id === 'planificador-420-test');
   if (existingIdx >= 0) clientPendingBasket[existingIdx] = testItem;
   else clientPendingBasket.unshift(testItem);
   saveClientOrdersAndBasketState(user);
   renderClientOrdersAndBasketViews(user);
   if (typeof showToast === 'function') {
-    showToast(`🧪 ${testItem.title} (${pages} págs) añadido a la cesta. Al pagar se subirán sus PDFs automáticamente.`);
+    showToast(`🧪 ${testItem.title} (${pages} págs · 9×7") añadido a la cesta.`);
   }
 };
 
