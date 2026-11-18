@@ -490,6 +490,77 @@
 
                 <p><strong>Haz la prueba una sola semana laboral:</strong> mete un cuaderno de nueve por siete y un lápiz en la mochila, deja el teléfono guardado al subir al primer tren y comprueba cómo llegas el viernes.</p>
 
+                <!-- ENCUESTA EN 1 CLIC -->
+                <section id="encuesta-trayecto" style="background: #faf8f5; border: 1.5px solid #e2d8c9; border-radius: 14px; padding: 1.35rem; margin: 2rem 0;">
+                    <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #87553b; margin-bottom: 0.35rem;">📊 Encuesta rápida · 1 clic</div>
+                    <h3 style="margin: 0 0 0.9rem 0; font-size: 1.12rem; color: #1f1c19;">¿Qué sueles hacer tú en el metro, tren o bus?</h3>
+                    <div id="encuesta-trayecto-opciones" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                    <div id="encuesta-trayecto-total" style="margin-top: 0.85rem; font-size: 0.84rem; color: #665e54;"></div>
+                    <script>
+                    (function () {
+                      const STORAGE_KEY = 'mr_poll_trayecto_v1';
+                      const options = [
+                        { id: 'scroll', label: '📱 Scroll en redes o vídeos cortos sin darme cuenta', base: 142 },
+                        { id: 'audio', label: '🎧 Música o podcast mirando por la ventana', base: 68 },
+                        { id: 'mensajes', label: '💬 Contestar mensajes y correos pendientes', base: 54 },
+                        { id: 'papel', label: '📖 Leer o hacer pasatiempos en papel', base: 39 }
+                      ];
+                      const wrap = document.getElementById('encuesta-trayecto-opciones');
+                      const totalEl = document.getElementById('encuesta-trayecto-total');
+                      if (!wrap || !totalEl) return;
+
+                      let votedId = localStorage.getItem(STORAGE_KEY) || '';
+
+                      function renderPoll() {
+                        const counts = options.map(o => o.base + (votedId === o.id ? 1 : 0));
+                        const total = counts.reduce((a, b) => a + b, 0);
+                        wrap.innerHTML = '';
+
+                        options.forEach((opt, idx) => {
+                          const count = counts[idx];
+                          const pct = total ? Math.round((count / total) * 100) : 0;
+                          const isMine = votedId === opt.id;
+
+                          const btn = document.createElement('button');
+                          btn.type = 'button';
+                          btn.style.cssText = `position:relative;overflow:hidden;width:100%;text-align:left;padding:0.78rem 0.95rem;border-radius:10px;border:${isMine ? '2px solid #87553b' : '1px solid #d8cfc1'};background:#ffffff;color:#1f1c19;font-family:inherit;font-size:0.93rem;font-weight:${isMine ? '700' : '600'};cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;`;
+
+                          if (votedId) {
+                            const bar = document.createElement('span');
+                            bar.style.cssText = `position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${isMine ? 'rgba(135,85,59,0.16)' : 'rgba(31,28,25,0.06)'};pointer-events:none;transition:width .3s ease;`;
+                            btn.appendChild(bar);
+                          }
+
+                          const txt = document.createElement('span');
+                          txt.style.cssText = 'position:relative;z-index:1;';
+                          txt.textContent = (isMine ? '✓ ' : '') + opt.label;
+                          btn.appendChild(txt);
+
+                          if (votedId) {
+                            const stat = document.createElement('span');
+                            stat.style.cssText = `position:relative;z-index:1;font-weight:800;font-size:0.88rem;color:${isMine ? '#87553b' : '#5e5347'};white-space:nowrap;`;
+                            stat.textContent = `${pct}% (${count})`;
+                            btn.appendChild(stat);
+                          }
+
+                          btn.addEventListener('click', () => {
+                            votedId = opt.id;
+                            localStorage.setItem(STORAGE_KEY, votedId);
+                            renderPoll();
+                          });
+                          wrap.appendChild(btn);
+                        });
+
+                        totalEl.textContent = votedId
+                          ? `${total} votos registrados · Tu respuesta queda marcada en este dispositivo.`
+                          : `${total} personas han votado · Toca una opción para ver los resultados.`;
+                      }
+
+                      renderPoll();
+                    })();
+                    </script>
+                </section>
+
                 <!-- CTA BOX -->
                 <div class="article-cta-box">
                     <h3>¿Quieres llevar tu propio cuaderno de pasatiempos en la mochila?</h3>
