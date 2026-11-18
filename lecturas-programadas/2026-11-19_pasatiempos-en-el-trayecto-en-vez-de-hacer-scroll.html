@@ -228,6 +228,22 @@
 
     <main>
         <article class="article-wrapper">
+            <!-- BARRA DE PROGRESO DE LECTURA -->
+            <div id="mr-reading-progress" style="position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: #87553b; z-index: 9999; transition: width 0.08s linear; pointer-events: none;"></div>
+            <script>
+            (function () {
+              const bar = document.getElementById('mr-reading-progress');
+              if (!bar) return;
+              function updateBar() {
+                const doc = document.documentElement;
+                const max = doc.scrollHeight - window.innerHeight;
+                const pct = max > 0 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 0;
+                bar.style.width = pct.toFixed(1) + '%';
+              }
+              window.addEventListener('scroll', updateBar, { passive: true });
+              updateBar();
+            })();
+            </script>
             <header class="article-header">
                 <span class="reading-tag">Pasatiempos &amp; Trayectos</span>
                 <h1>Pasatiempos en el trayecto en vez de hacer scroll (y llegar con la cabeza intacta)</h1>
@@ -339,6 +355,11 @@
                             <span id="trayecto-mins-label" style="font-weight: 800; color: #87553b; min-width: 95px;">40 min / día</span>
                         </div>
                         <div id="trayecto-calc-result" style="margin-top: 0.55rem; font-size: 0.9rem; color: #4a423a; background: #faf8f5; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #eae3d7;"></div>
+                        <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end;">
+                            <a id="btn-share-whatsapp-trayecto" href="#" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 7px; background: #1e6b3a; color: #ffffff; text-decoration: none; padding: 0.55rem 0.95rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700;">
+                                💬 Compartir por WhatsApp
+                            </a>
+                        </div>
                     </div>
 
                     <script>
@@ -438,6 +459,7 @@
                       const slider = document.getElementById('trayecto-mins-slider');
                       const minsLabel = document.getElementById('trayecto-mins-label');
                       const calcOut = document.getElementById('trayecto-calc-result');
+                      const waBtn = document.getElementById('btn-share-whatsapp-trayecto');
                       function updateCalc() {
                         if (!slider || !minsLabel || !calcOut) return;
                         const mins = Number(slider.value);
@@ -445,6 +467,11 @@
                         const booksYear = Math.max(1, Math.round(hoursYear / 18));
                         minsLabel.textContent = `${mins} min / día`;
                         calcOut.innerHTML = `En 220 días laborables son <strong>${hoursYear} horas al año</strong>: tiempo suficiente para completar unos <strong>${booksYear} cuadernos de pasatiempos</strong> en vez de pasar ${hoursYear} horas deslizando el móvil.`;
+                        if (waBtn) {
+                          const shareUrl = 'https://www.editorialmenosruido.com/pasatiempos-en-el-trayecto-en-vez-de-hacer-scroll';
+                          const text = `Me acabo de calcular ${hoursYear} horas al año de trayecto en transporte (${booksYear} cuadernos de pasatiempos en vez de scroll). Échale un ojo al mini-reto: ${shareUrl}`;
+                          waBtn.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                        }
                       }
                       slider?.addEventListener('input', updateCalc);
                       updateCalc();
