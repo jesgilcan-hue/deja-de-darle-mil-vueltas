@@ -12,23 +12,23 @@ const FIREBASE_WEB_API_KEY = process.env.VITE_FIREBASE_API_KEY || Buffer.from('Q
 export const FIXED_RETAIL_PRICES = {
   softcover: {
     basePrice: 24.90,
-    label: 'Tapa blanda (Rústica Fresada · Mate)',
-    podPackageId: '0600X0900BWSTDPB060UC444MXX'
+    label: 'Tapa blanda (Rústica Fresada · Mate · 9×7")',
+    podPackageId: '0900X0700BWSTDPB060UC444MXX'
   },
   perfect: {
     basePrice: 24.90,
-    label: 'Tapa blanda (Rústica Fresada · Mate)',
-    podPackageId: '0600X0900BWSTDPB060UC444MXX'
+    label: 'Tapa blanda (Rústica Fresada · Mate · 9×7")',
+    podPackageId: '0900X0700BWSTDPB060UC444MXX'
   },
   coil: {
     basePrice: 27.90,
-    label: 'Encuadernación Anillas (Espiral Wire-O · Mate)',
-    podPackageId: '0600X0900BWSTDCO060UC444MXX'
+    label: 'Encuadernación Anillas (Espiral Wire-O · Mate · 9×7")',
+    podPackageId: '0900X0700BWSTDCO060UC444MXX'
   },
   hardcover: {
     basePrice: 32.90,
-    label: 'Tapa dura (Casewrap · Mate)',
-    podPackageId: '0600X0900BWSTDCW060UC444MXX'
+    label: 'Tapa dura (Casewrap · Mate · 9×7")',
+    podPackageId: '0900X0700BWSTDCW060UC444MXX'
   }
 };
 
@@ -37,7 +37,7 @@ export const FIXED_RETAIL_PRICES = {
  */
 export function calculateDynamicRetailPrice(bindingType = 'coil', pageCount = 120, paperType = 'cream_90') {
   const cfg = FIXED_RETAIL_PRICES[bindingType] || FIXED_RETAIL_PRICES.coil;
-  const pages = Math.max(32, Math.min(800, parseInt(pageCount, 10) || 120));
+  const pages = Math.max(32, Math.min(250, parseInt(pageCount, 10) || 120));
   let extraPagesFee = 0;
   if (pages > 300) {
     extraPagesFee = 5.00;

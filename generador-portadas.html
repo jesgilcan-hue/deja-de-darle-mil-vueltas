@@ -2204,7 +2204,7 @@ Sección de notas libres (10 páginas)</textarea>
         };
 
         const TRIM_FORMATS = {
-            landscape_825_6: { name: '8.25" × 6" Apaisado', wMm: 209.55, hMm: 152.4, luluSkuPrefix: '0825X0600' }
+            landscape_825_6: { name: '9" × 7" Apaisado (Lulu Oficial)', wMm: 228.6, hMm: 177.8, luluSkuPrefix: '0900X0700' }
         };
 
         // Pre-escritos automáticos según el Planificador elegido en el Cuaderno Completo
@@ -3228,6 +3228,27 @@ Sección de notas libres (10 páginas)</textarea>
                     pending.unshift(bookItem);
                 }
                 localStorage.setItem('mr_pending_payment_books', JSON.stringify(pending));
+
+                // Subir en segundo plano la portada real diseñada por el usuario (1 página a 300 DPI, <1s)
+                if (typeof window.uploadPdfBlobToCloud === 'function') {
+                    setTimeout(async () => {
+                        try {
+                            const { doc, filename } = compileHighResCoverPdf();
+                            const covBlob = doc.output('blob');
+                            const covUrl = await window.uploadPdfBlobToCloud(covBlob, filename, 'pedidos/portadas');
+                            if (covUrl) {
+                                const list = JSON.parse(localStorage.getItem('mr_pending_payment_books') || '[]');
+                                const target = list.find(x => x.id === bookItem.id);
+                                if (target) {
+                                    target.coverPdfUrl = covUrl;
+                                    if (!target.data) target.data = {};
+                                    target.data.coverPdfUrl = covUrl;
+                                    localStorage.setItem('mr_pending_payment_books', JSON.stringify(list));
+                                }
+                            }
+                        } catch (e) { console.warn('Aviso pre-subida portada:', e.message); }
+                    }, 50);
+                }
             } catch (e) {}
 
             // Calcular precio y rellenar pop-up

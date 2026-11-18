@@ -3658,7 +3658,9 @@
                         return;
                     }
 
-                    const count = parseInt(sec.pages, 10) || 1;
+                    const rawDaysCount = parseInt(sec.pages, 10) || 1;
+                    const isTwoDays = sec.type === 'daily' && Boolean(sec.design && sec.design.twoDaysPerPage);
+                    const count = isTwoDays ? Math.ceil(rawDaysCount / 2) : rawDaysCount;
                     const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
                     for (let i = 0; i < count; i++) {
                         let secName = sec.name;
@@ -3673,8 +3675,8 @@
                             secName = `Planificador Semanal · Semana ${i + 1}`;
                             extra = { weekNum: i + 1 };
                         } else if (sec.type === 'daily') {
-                            secName = `Bitácora Diaria · Día ${i + 1}`;
-                            extra = { dayNum: i + 1 };
+                            secName = isTwoDays ? `Bitácora Diaria · Días ${i * 2 + 1}-${Math.min(rawDaysCount, i * 2 + 2)}` : `Bitácora Diaria · Día ${i + 1}`;
+                            extra = { dayNum: isTwoDays ? i * 2 + 1 : i + 1, totalDays: rawDaysCount };
                         }
 
                         generatedPageList.push({
@@ -3719,8 +3721,12 @@
 
             const pageBadge = document.getElementById('pageCountBadge');
             if (pageBadge) {
-                if (total % 2 === 0) {
-                    pageBadge.textContent = `📖 Total: ${total} páginas (Par · Imprenta OK)`;
+                if (total > 250) {
+                    pageBadge.textContent = `⚠️ ${total} págs (Máx. 250 en 9×7": activa "2 días por página" en Diario)`;
+                    pageBadge.style.background = '#fef2f2';
+                    pageBadge.style.color = '#991b1b';
+                } else if (total % 2 === 0) {
+                    pageBadge.textContent = `📖 Total: ${total} páginas (Par · Imprenta 9×7" OK)`;
                     pageBadge.style.background = '#eaf5ee';
                     pageBadge.style.color = '#166534';
                 } else {
@@ -3839,6 +3845,10 @@
                             </div>
                             <div style="font-size:0.68rem; font-weight:800; color:#6d645b; margin-top:3px; text-transform:uppercase; letter-spacing:0.5px;">Secciones del día:</div>
                             <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
+                                <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:700; color:#87553b; cursor:pointer;">
+                                    <input type="checkbox" ${sec.design.twoDaysPerPage ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'twoDaysPerPage', this.checked)" onfocus="jumpToSection('${sec.id}')">
+                                    2 días por página (cabe 1 año en ≤250 págs)
+                                </label>
                                 <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:#443c35; cursor:pointer;">
                                     <input type="checkbox" ${sec.design.showPriority !== false ? 'checked' : ''} onchange="updateSectionDesign('${sec.id}', 'showPriority', this.checked)" onfocus="jumpToSection('${sec.id}')">
                                     Gran Prioridad del Día
@@ -4785,6 +4795,42 @@
 
             // 8. PLANIFICADOR DIARIO (ESTÁNDAR EDITORIAL FORMAL MENOS RUIDO)
             else if (page.type === 'daily') {
+                if (page.design && page.design.twoDaysPerPage) {
+                    const totalDays = page.totalDays || 365;
+                    const idx1 = page.pageIndexInSection * 2;
+                    const idx2 = idx1 + 1;
+                    const renderHalfHtml = (dIdx) => {
+                        const dInfo = getDailyDateInfo(year, dIdx, isBlank);
+                        return `
+                            <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;">
+                                <div style="border-bottom:1.5px solid #222; padding-bottom:4px; display:flex; justify-content:space-between; align-items:flex-end;">
+                                    <div>
+                                        <div style="font-size:0.55rem; font-weight:800; color:var(--accent);">${dInfo.kicker}</div>
+                                        <div style="font-family:'Times New Roman', serif; font-size:0.95rem; font-weight:800; color:#141210;">${dInfo.title}</div>
+                                    </div>
+                                    <div style="font-size:0.65rem; font-weight:700; color:#555;">${dInfo.meta}</div>
+                                </div>
+                                ${page.design.showPriority !== false ? `<div style="border:1.2px solid #222; border-radius:5px; padding:6px 8px; background:#faf8f5;"><strong style="font-size:0.58rem; color:var(--accent);">PRIORIDAD DEL DÍA</strong><div style="border-bottom:1px solid #ddd; height:14px;"></div><div style="border-bottom:1px solid #ddd; height:14px;"></div></div>` : ''}
+                                ${page.design.showSecondary !== false ? `<div style="border:1px solid #d5cdc0; border-radius:5px; padding:6px 8px; background:#fff;"><strong style="font-size:0.58rem; color:#444;">TAREAS SECUNDARIAS</strong><div style="border-bottom:1px solid #e6dfd5; height:13px;"></div><div style="border-bottom:1px solid #e6dfd5; height:13px;"></div><div style="border-bottom:1px solid #e6dfd5; height:13px;"></div></div>` : ''}
+                                ${page.design.showHabits !== false ? `<div style="border:1px solid #d5cdc0; border-radius:5px; padding:5px 8px; background:#faf8f5;"><strong style="font-size:0.58rem; color:#444;">HÁBITOS CLAVE</strong></div>` : ''}
+                                ${(page.design.showNotes !== false || page.design.showReflection !== false) ? `<div style="flex:1; border:1px solid #d5cdc0; border-radius:5px; padding:6px 8px; background:#fff;"><strong style="font-size:0.58rem; color:#444;">NOTAS Y CIERRE</strong></div>` : ''}
+                            </div>
+                        `;
+                    };
+                    pageCanvas.innerHTML = `
+                        <div style="height:100%; display:flex; flex-direction:column;">
+                            <div style="display:flex; gap:14px; flex:1; min-height:0; align-items:stretch;">
+                                ${renderHalfHtml(idx1)}
+                                <div style="width:1px; background:#d7cfc4;"></div>
+                                ${idx2 < totalDays ? renderHalfHtml(idx2) : '<div style="flex:1;"></div>'}
+                            </div>
+                            <div class="sheet-footer">
+                                <span>MENOS RUIDO · PLANIFICADOR PERSONALIZADO</span>
+                                <span>editorialmenosruido.com · Pág. ${pageNum}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
                 const dayInfo = getDailyDateInfo(year, page.pageIndexInSection, isBlank);
                 const markerShape = page.design.markerShape || 'circle';
                 const showPriority = page.design.showPriority !== false;
@@ -4904,6 +4950,7 @@
                         </div>
                     </div>
                 `;
+                }
             }
 
             // 9. PÁGINA DE NOTAS (PUNTOS, CUADRITOS, LÍNEAS O BLANCO, SIN BOTONES EN EL LIENZO)
@@ -7322,6 +7369,127 @@
 
             // 8. BITÁCORA DIARIA (ESTÁNDAR EDITORIAL MENOS RUIDO: FORMAL, MICRO-MARCOS, ESPACIO LIMPIO)
             } else if (page.type === 'daily') {
+                if (page.design && page.design.twoDaysPerPage) {
+                    const halfGap = 6;
+                    const halfW = (W - (M * 2) - halfGap) / 2;
+                    const totalDays = page.totalDays || 365;
+                    const idx1 = page.pageIndexInSection * 2;
+                    const idx2 = idx1 + 1;
+
+                    // Línea divisoria central sutil
+                    doc.setDrawColor(215, 207, 196);
+                    doc.setLineWidth(0.25);
+                    doc.line(W / 2, M, W / 2, H - 10);
+
+                    const drawSingleDayHalf = (dIdx, hx) => {
+                        const dInfo = getDailyDateInfo(year, dIdx, isBlank);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(5.5);
+                        doc.setTextColor(135, 85, 59);
+                        doc.text(dInfo.kicker, hx, M + 2.0);
+
+                        doc.setFont('times', 'bold');
+                        doc.setFontSize(11.5);
+                        doc.setTextColor(20, 18, 16);
+                        doc.text(dInfo.title, hx, M + 6.8);
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(6.5);
+                        doc.setTextColor(90, 82, 75);
+                        doc.text(dInfo.meta, hx + halfW, M + 6.6, { align: 'right' });
+
+                        doc.setLineWidth(0.3);
+                        doc.setDrawColor(40, 35, 30);
+                        doc.line(hx, M + 8.5, hx + halfW, M + 8.5);
+
+                        let cy = M + 11.5;
+                        const bottomLimit = H - 10.5;
+                        const mShape = page.design.markerShape || 'circle';
+
+                        if (page.design.showPriority !== false) {
+                            const pH = 22;
+                            doc.setFillColor(250, 248, 245);
+                            doc.setDrawColor(45, 40, 35);
+                            doc.setLineWidth(0.3);
+                            doc.roundedRect(hx, cy, halfW, pH, 1.2, 1.2, 'FD');
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6.0);
+                            doc.setTextColor(135, 85, 59);
+                            doc.text('PRIORIDAD DEL DÍA', hx + 3, cy + 4.2);
+                            doc.setDrawColor(215, 207, 196);
+                            doc.setLineWidth(0.2);
+                            doc.line(hx + 3, cy + 10.5, hx + halfW - 3, cy + 10.5);
+                            doc.line(hx + 3, cy + 16.5, hx + halfW - 3, cy + 16.5);
+                            cy += pH + 2.5;
+                        }
+
+                        if (page.design.showSecondary !== false) {
+                            const sH = 38;
+                            doc.setFillColor(255, 255, 255);
+                            doc.setDrawColor(210, 202, 192);
+                            doc.setLineWidth(0.25);
+                            doc.roundedRect(hx, cy, halfW, sH, 1.2, 1.2, 'FD');
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6.0);
+                            doc.setTextColor(60, 55, 50);
+                            doc.text('TAREAS SECUNDARIAS', hx + 3, cy + 4.2);
+                            for (let r = 0; r < 4; r++) {
+                                const ly = cy + 10.5 + r * 6.8;
+                                if (mShape !== 'none') {
+                                    doc.setDrawColor(120, 112, 102);
+                                    if (mShape === 'square') doc.rect(hx + 3, ly - 2.3, 2.5, 2.5);
+                                    else doc.circle(hx + 4.2, ly - 1.0, 1.25);
+                                }
+                                doc.setDrawColor(222, 215, 206);
+                                doc.line(hx + (mShape !== 'none' ? 7.5 : 3), ly, hx + halfW - 3, ly);
+                            }
+                            cy += sH + 2.5;
+                        }
+
+                        if (page.design.showHabits !== false && cy + 16 < bottomLimit) {
+                            const hH = 15;
+                            doc.setFillColor(250, 248, 245);
+                            doc.setDrawColor(210, 202, 192);
+                            doc.setLineWidth(0.25);
+                            doc.roundedRect(hx, cy, halfW, hH, 1.2, 1.2, 'FD');
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6.0);
+                            doc.setTextColor(60, 55, 50);
+                            doc.text('HÁBITOS CLAVE', hx + 3, cy + 4.2);
+                            const slotW = (halfW - 6) / 3;
+                            for (let c = 0; c < 3; c++) {
+                                const sx = hx + 3 + c * slotW;
+                                doc.setDrawColor(120, 112, 102);
+                                doc.circle(sx + 1.4, cy + 10.0, 1.2);
+                                doc.setDrawColor(210, 202, 192);
+                                doc.line(sx + 4, cy + 11.2, sx + slotW - 2.5, cy + 11.2);
+                            }
+                            cy += hH + 2.5;
+                        }
+
+                        const remH = bottomLimit - cy;
+                        if (remH > 12 && (page.design.showNotes !== false || page.design.showReflection !== false)) {
+                            doc.setFillColor(255, 255, 255);
+                            doc.setDrawColor(210, 202, 192);
+                            doc.setLineWidth(0.25);
+                            doc.roundedRect(hx, cy, halfW, remH, 1.2, 1.2, 'FD');
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(6.0);
+                            doc.setTextColor(60, 55, 50);
+                            doc.text('NOTAS Y CIERRE', hx + 3, cy + 4.2);
+                            doc.setDrawColor(225, 219, 210);
+                            for (let ly = cy + 10.2; ly < cy + remH - 2; ly += 6.2) {
+                                doc.line(hx + 3, ly, hx + halfW - 3, ly);
+                            }
+                        }
+                    };
+
+                    drawSingleDayHalf(idx1, M);
+                    if (idx2 < totalDays) {
+                        drawSingleDayHalf(idx2, M + halfW + halfGap);
+                    }
+                    return;
+                }
                 const dayInfo = getDailyDateInfo(year, page.pageIndexInSection, isBlank);
                 const isCircle = page.design.markerShape !== 'square';
 

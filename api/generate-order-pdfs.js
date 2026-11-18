@@ -112,13 +112,16 @@ export default async function handler(req, res) {
     }
 
     if (!coverPdfUrl.startsWith('https://')) {
+      const rawPkg = bk.podPackageId || '0900X0700BWSTDPB060UC444MXX';
+      const targetPkg = rawPkg.startsWith('0600X0900') ? rawPkg.replace('0600X0900', '0900X0700') : rawPkg;
       const { buffer: covBuf } = await renderCoverPdfBuffer({
         title: bk.title || designData.title || 'Planificador Personalizado',
         subtitle: bk.subtitle || designData.subtitle || 'Edición Personalizada',
         colophon: designData.data?.colophon || designData.colophon,
         pageCount: finalPageCount,
         bindingType: bk.bindingType || 'softcover',
-        podPackageId: bk.podPackageId || '0600X0900BWSTDPB060UC444MXX',
+        podPackageId: targetPkg,
+        palette: bk.coverPalette || bk.palette || 'forest',
         luluEnv: bk.luluEnv || 'sandbox'
       });
       const covBlob = await put(`pedidos/portadas/${folderUid}/${orderNumber}_portada.pdf`, covBuf, {
