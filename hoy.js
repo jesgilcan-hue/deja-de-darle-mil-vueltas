@@ -71,20 +71,22 @@ import {
         /* ==============================================================
            ESTRUCTURA DE JUEGOS Y CONTROLADORES NATIVOS
            ============================================================== */
-        const GAME_KEYS = ['sudoku', 'calcudoku', 'kakuro', 'cruzadas', 'sopa'];
+        const GAME_KEYS = ['sudoku', 'calcudoku', 'kakuro', 'cruzadas', 'sopa', 'caso'];
         const GAME_TITLES = {
             sudoku: 'Sudoku del Día',
             calcudoku: 'Calcudoku del Día',
             kakuro: 'Kakuro del Día',
             cruzadas: 'Cruzadas del Día',
-            sopa: 'Sopa de Letras del Día'
+            sopa: 'Sopa de Letras del Día',
+            caso: 'Caso del Día'
         };
         const GAME_EMOJIS = {
             sudoku: '🧩',
             calcudoku: '🧮',
             kakuro: '📐',
             cruzadas: '🔠',
-            sopa: '🔤'
+            sopa: '🔤',
+            caso: '🕵️'
         };
 
         const GAME_RULES = {
@@ -92,7 +94,8 @@ import {
             calcudoku: 'Números sin repetir por fila/columna. Los grupos delimitados deben cumplir el cálculo matemático.',
             kakuro: 'Rellena casillas blancas del 1 al 9. Las pistas diagonales indican la suma horizontal (→) y vertical (↓) sin números repetidos.',
             cruzadas: 'Encaja las palabras del banco según su longitud y las letras cruzadas compartidas.',
-            sopa: 'Encuentra las palabras escondidas en el tablero deslizando o tocando sus casillas.'
+            sopa: 'Encuentra las palabras escondidas en el tablero deslizando o tocando sus casillas.',
+            caso: 'Cruza las pistas en la tabla (toca para alternar ✗ y ✓) y señala al responsable único del caso.'
         };
 
         let activeGame = 'sudoku';
@@ -103,7 +106,8 @@ import {
             calcudoku: { timerSecs: 0, timerRunning: false, isPaused: false, isCompleted: false, hasStarted: false },
             kakuro: { timerSecs: 0, timerRunning: false, isPaused: false, isCompleted: false, hasStarted: false },
             cruzadas: { timerSecs: 0, timerRunning: false, isPaused: false, isCompleted: false, hasStarted: false },
-            sopa: { timerSecs: 0, timerRunning: false, isPaused: false, isCompleted: false, hasStarted: false }
+            sopa: { timerSecs: 0, timerRunning: false, isPaused: false, isCompleted: false, hasStarted: false },
+            caso: { timerSecs: 0, timerRunning: false, isPaused: false, isCompleted: false, hasStarted: false }
         };
 
         let globalTimerInterval = null;
@@ -2298,6 +2302,387 @@ import {
         })();
 
         /* ==============================================================
+           6. MOTOR NATIVO: CASO DEL DÍA (LÓGICA DEDUCTIVA DIARIA)
+           ============================================================== */
+        const CasoEngine = (function() {
+            const SCENARIOS = [
+                {
+                    title: 'El expediente desaparecido',
+                    incident: 'Al volver del café, la carpeta verde ya no estaba sobre la mesa.',
+                    suspects: ['Laura', 'Marcos', 'Sofía', 'Javier'],
+                    places: ['Archivo', 'Recepción', 'Cocina', 'Sala 4'],
+                    times: ['09:00', '10:00', '11:00', '12:00']
+                },
+                {
+                    title: 'La taza cambiada en la cafetería',
+                    incident: 'Alguien se llevó por error el termo metálico de la barra.',
+                    suspects: ['Elena', 'Dani', 'Clara', 'Pablo'],
+                    places: ['Barra', 'Terraza', 'Mesa 2', 'Pasillo'],
+                    times: ['08:30', '09:30', '10:30', '11:30']
+                },
+                {
+                    title: 'Las llaves del trastero',
+                    incident: 'El llavero con la etiqueta roja desapareció del tablón del portal.',
+                    suspects: ['Carmen', 'Hugo', 'Nuria', 'Raúl'],
+                    places: ['Portal', 'Azotea', 'Garaje', 'Patio'],
+                    times: ['17:00', '18:00', '19:00', '20:00']
+                },
+                {
+                    title: 'El examen sin nombre',
+                    incident: 'Al recoger los folios, alguien dejó una hoja suelta en el aula equivocada.',
+                    suspects: ['Lucía', 'Álvaro', 'Marta', 'Diego'],
+                    places: ['Aula 3', 'Conserjería', 'Biblioteca', 'Laboratorio'],
+                    times: ['09:00', '10:00', '11:00', '12:00']
+                },
+                {
+                    title: 'La maleta en el Cercanías',
+                    incident: 'Un paquete envuelto en papel kraft quedó olvidado en el vagón.',
+                    suspects: ['Bea', 'Sergio', 'Irene', 'Tomás'],
+                    places: ['Vagón 1', 'Vagón 3', 'Vestíbulo', 'Andén 2'],
+                    times: ['07:45', '08:15', '08:45', '09:15']
+                },
+                {
+                    title: 'El último trozo de tarta',
+                    incident: 'Alguien abrió la caja de la nevera antes de cantar el cumpleaños.',
+                    suspects: ['Ana', 'Carlos', 'Paula', 'Iván'],
+                    places: ['Salón', 'Jardín', 'Despensa', 'Porche'],
+                    times: ['16:00', '17:00', '18:00', '19:00']
+                },
+                {
+                    title: 'El fonendo extraviado',
+                    incident: 'En el cambio de turno faltaba un equipo recién revisado.',
+                    suspects: ['Sonia', 'Víctor', 'Alba', 'Óscar'],
+                    places: ['Control', 'Box 2', 'Office', 'Almacén'],
+                    times: ['22:00', '23:00', '00:00', '01:00']
+                },
+                {
+                    title: 'La bici sin candado',
+                    incident: 'Alguien movió la bicicleta plegable de sitio para hacer hueco.',
+                    suspects: ['Noelia', 'Adrián', 'Eva', 'Rubén'],
+                    places: ['Taller', 'Entrada', 'Trastienda', 'Rampa'],
+                    times: ['10:00', '11:00', '12:00', '13:00']
+                }
+            ];
+
+            let caseData = null;
+            let gridPlaces = []; // 4x4: 0=empty, 1=X, 2=check
+            let gridTimes = [];  // 4x4: 0=empty, 1=X, 2=check
+            let crossedClues = {};
+
+            function seededRng(str) {
+                let h = 2166136261 >>> 0;
+                for (let i = 0; i < str.length; i++) {
+                    h ^= str.charCodeAt(i);
+                    h = Math.imul(h, 16777619);
+                }
+                return function() {
+                    h += 0x6D2B79F5;
+                    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+                    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+                    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+                };
+            }
+
+            function allPerms4() {
+                const res = [];
+                const arr = [0, 1, 2, 3];
+                function permute(a, l) {
+                    if (l === 4) { res.push(a.slice()); return; }
+                    for (let i = l; i < 4; i++) {
+                        [a[l], a[i]] = [a[i], a[l]];
+                        permute(a, l + 1);
+                        [a[l], a[i]] = [a[i], a[l]];
+                    }
+                }
+                permute(arr, 0);
+                return res;
+            }
+
+            function buildDailyCase(todayStr) {
+                const rng = seededRng(`mr_caso_${todayStr}`);
+                const scen = SCENARIOS[Math.floor(rng() * SCENARIOS.length)];
+                const perms = allPerms4();
+                const permP = perms[Math.floor(rng() * perms.length)];
+                const permT = perms[Math.floor(rng() * perms.length)];
+                const culprit = Math.floor(rng() * 4);
+
+                const scenePlace = permP[culprit];
+                const sceneTime = permT[culprit];
+
+                // Generar pool de pistas lógicas verificables
+                const pool = [];
+                const S = scen.suspects;
+                const P = scen.places;
+                const T = scen.times;
+
+                // Pistas de relación lugar-hora (incluyendo la escena del hecho)
+                for (let s = 0; s < 4; s++) {
+                    if (s === culprit) continue;
+                    const p = permP[s], t = permT[s];
+                    pool.push({
+                        text: `Quien estuvo en <strong>${P[p]}</strong> lo hizo a las <strong>${T[t]}</strong>.`,
+                        test: (pp, pt) => pp.indexOf(p) === pt.indexOf(t)
+                    });
+                }
+
+                // Pistas negativas sospechoso-lugar y sospechoso-hora
+                for (let s = 0; s < 4; s++) {
+                    for (let p = 0; p < 4; p++) {
+                        if (permP[s] !== p) {
+                            pool.push({
+                                text: `<strong>${S[s]}</strong> no pisó <strong>${P[p]}</strong>.`,
+                                test: (pp) => pp[s] !== p
+                            });
+                        }
+                    }
+                    for (let t = 0; t < 4; t++) {
+                        if (permT[s] !== t) {
+                            pool.push({
+                                text: `<strong>${S[s]}</strong> no estuvo presente a las <strong>${T[t]}</strong>.`,
+                                test: (_pp, pt) => pt[s] !== t
+                            });
+                        }
+                    }
+                }
+
+                // Pistas de orden temporal entre sospechosos
+                for (let a = 0; a < 4; a++) {
+                    for (let b = 0; b < 4; b++) {
+                        if (a !== b && permT[a] === permT[b] - 1) {
+                            pool.push({
+                                text: `<strong>${S[a]}</strong> estuvo justo una franja antes que <strong>${S[b]}</strong>.`,
+                                test: (_pp, pt) => pt[a] === pt[b] - 1
+                            });
+                        }
+                    }
+                }
+
+                // Barajar pool con semilla del día
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+
+                // Generar todas las 576 combinaciones posibles
+                let candidates = [];
+                for (const pp of perms) {
+                    for (const pt of perms) {
+                        candidates.push([pp, pt]);
+                    }
+                }
+
+                // Pista 1 obligatoria: dónde y cuándo ocurrió el incidente
+                const sceneClue = {
+                    text: `El incidente ocurrió en <strong>${P[scenePlace]}</strong> a las <strong>${T[sceneTime]}</strong>.`,
+                    test: (pp, pt) => pp.indexOf(scenePlace) === pt.indexOf(sceneTime)
+                };
+                candidates = candidates.filter(([pp, pt]) => sceneClue.test(pp, pt));
+                const chosenClues = [sceneClue.text];
+
+                for (const clue of pool) {
+                    if (candidates.length <= 1) break;
+                    const next = candidates.filter(([pp, pt]) => clue.test(pp, pt));
+                    if (next.length >= 1 && next.length < candidates.length) {
+                        candidates = next;
+                        chosenClues.push(clue.text);
+                    }
+                }
+
+                return {
+                    scenario: scen,
+                    clues: chosenClues,
+                    culprit,
+                    scenePlace,
+                    sceneTime
+                };
+            }
+
+            function init() {
+                const todayStr = getTodayString();
+                caseData = buildDailyCase(todayStr);
+
+                const savedRaw = localStorage.getItem(`mr_caso_state_${todayStr}`);
+                gridPlaces = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+                gridTimes = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+                crossedClues = {};
+                gameStates.caso.isCompleted = false;
+                gameStates.caso.timerSecs = 0;
+
+                if (savedRaw) {
+                    try {
+                        const s = JSON.parse(savedRaw);
+                        if (Array.isArray(s.gridPlaces) && s.gridPlaces.length === 4) gridPlaces = s.gridPlaces;
+                        if (Array.isArray(s.gridTimes) && s.gridTimes.length === 4) gridTimes = s.gridTimes;
+                        if (s.crossedClues) crossedClues = s.crossedClues;
+                        if (s.isCompleted) gameStates.caso.isCompleted = true;
+                        if (typeof s.timerSecs === 'number') gameStates.caso.timerSecs = s.timerSecs;
+                    } catch (e) {}
+                }
+
+                render();
+                renderSuspectButtons();
+            }
+
+            function saveProgress() {
+                const todayStr = getTodayString();
+                try {
+                    localStorage.setItem(`mr_caso_state_${todayStr}`, JSON.stringify({
+                        gridPlaces,
+                        gridTimes,
+                        crossedClues,
+                        isCompleted: gameStates.caso.isCompleted,
+                        timerSecs: gameStates.caso.timerSecs
+                    }));
+                } catch (e) {}
+            }
+
+            function cellSymbol(v) {
+                if (v === 1) return '✗';
+                if (v === 2) return '✓';
+                return '';
+            }
+
+            function renderTable(headers, gridArr, type) {
+                const S = caseData.scenario.suspects;
+                let html = `<table style="width:100%; border-collapse:collapse; font-size:0.76rem; background:#fff; border:1.5px solid #1f1c19; border-radius:8px; overflow:hidden;">
+                    <thead><tr style="background:#1f1c19; color:#fff;"><th style="padding:5px 6px; text-align:left;">Sospechoso</th>`;
+                headers.forEach(h => {
+                    html += `<th style="padding:5px 4px; text-align:center; font-weight:700;">${h}</th>`;
+                });
+                html += `</tr></thead><tbody>`;
+                S.forEach((name, r) => {
+                    html += `<tr style="border-top:1px solid #e6dfd4;"><td style="padding:5px 6px; font-weight:700; background:#faf8f5;">${name}</td>`;
+                    for (let c = 0; c < 4; c++) {
+                        const val = gridArr[r][c];
+                        const bg = val === 2 ? '#dcfce7' : val === 1 ? '#fee2e2' : '#ffffff';
+                        const color = val === 2 ? '#166534' : val === 1 ? '#b91c1c' : '#888';
+                        html += `<td style="padding:0; border-left:1px solid #e6dfd4; text-align:center;">
+                            <button type="button" data-caso-cell="${type}-${r}-${c}" style="width:100%; height:32px; border:none; background:${bg}; color:${color}; font-weight:800; font-size:0.95rem; cursor:pointer;">${cellSymbol(val)}</button>
+                        </td>`;
+                    }
+                    html += `</tr>`;
+                });
+                html += `</tbody></table>`;
+                return html;
+            }
+
+            function render() {
+                const stage = document.getElementById('casoStage');
+                if (!stage || !caseData) return;
+                const sc = caseData.scenario;
+
+                const cluesHtml = caseData.clues.map((txt, idx) => {
+                    const done = !!crossedClues[idx];
+                    return `<li data-caso-clue="${idx}" style="cursor:pointer; margin-bottom:4px; line-height:1.4; opacity:${done ? '0.48' : '1'}; text-decoration:${done ? 'line-through' : 'none'};">${txt}</li>`;
+                }).join('');
+
+                stage.innerHTML = `
+                    <div style="background:#faf8f5; border:1px solid #e2d8c9; border-left:4px solid #87553b; border-radius:8px; padding:10px 12px; margin-bottom:10px;">
+                        <div style="font-weight:800; font-size:0.96rem; color:#1f1c19;">🕵️ ${sc.title}</div>
+                        <div style="font-size:0.82rem; color:#4a423a; margin-top:2px;">${sc.incident}</div>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#87553b; margin-bottom:4px;">Pistas (toca una pista para tacharla):</div>
+                        <ol style="margin:0; padding-left:18px; font-size:0.81rem;">${cluesHtml}</ol>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+                        ${renderTable(sc.places, gridPlaces, 'p')}
+                        ${renderTable(sc.times, gridTimes, 't')}
+                    </div>
+                `;
+
+                stage.querySelectorAll('[data-caso-clue]').forEach(li => {
+                    li.addEventListener('click', () => {
+                        const idx = li.getAttribute('data-caso-clue');
+                        crossedClues[idx] = !crossedClues[idx];
+                        saveProgress();
+                        render();
+                    });
+                });
+
+                stage.querySelectorAll('[data-caso-cell]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (gameStates.caso.isCompleted || gameStates.caso.isPaused) return;
+                        ensureActiveTimerRunning();
+                        const [type, rStr, cStr] = btn.getAttribute('data-caso-cell').split('-');
+                        const r = Number(rStr), c = Number(cStr);
+                        const target = type === 'p' ? gridPlaces : gridTimes;
+                        target[r][c] = (target[r][c] + 1) % 3;
+                        saveProgress();
+                        render();
+                    });
+                });
+            }
+
+            function renderSuspectButtons() {
+                const wrap = document.getElementById('casoSuspectButtons');
+                const msg = document.getElementById('casoFeedbackMsg');
+                if (!wrap || !caseData) return;
+                wrap.innerHTML = '';
+                if (msg) {
+                    msg.textContent = gameStates.caso.isCompleted
+                        ? `✓ Caso resuelto: fue ${caseData.scenario.suspects[caseData.culprit]}.`
+                        : '';
+                    msg.style.color = '#166534';
+                }
+
+                caseData.scenario.suspects.forEach((name, idx) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    const isCulpritSolved = gameStates.caso.isCompleted && idx === caseData.culprit;
+                    btn.textContent = isCulpritSolved ? `✓ ${name}` : name;
+                    btn.style.cssText = `padding:9px 14px; border-radius:8px; border:1.5px solid ${isCulpritSolved ? '#166534' : '#1f1c19'}; background:${isCulpritSolved ? '#dcfce7' : '#ffffff'}; color:${isCulpritSolved ? '#166534' : '#1f1c19'}; font-weight:700; font-size:0.88rem; cursor:pointer;`;
+                    btn.addEventListener('click', () => {
+                        if (gameStates.caso.isCompleted || gameStates.caso.isPaused) return;
+                        ensureActiveTimerRunning();
+                        if (idx === caseData.culprit) {
+                            gameStates.caso.isCompleted = true;
+                            gameStates.caso.timerRunning = false;
+                            saveProgress();
+                            renderSuspectButtons();
+                            onGameComplete('caso', gameStates.caso.timerSecs);
+                        } else {
+                            if (msg) {
+                                msg.style.color = '#b91c1c';
+                                msg.textContent = `No fue ${name}. Revisa las pistas y vuelve a intentarlo.`;
+                            }
+                        }
+                    });
+                    wrap.appendChild(btn);
+                });
+            }
+
+            function hint() {
+                if (gameStates.caso.isCompleted) return;
+                ensureActiveTimerRunning();
+                const r = caseData.culprit;
+                gridPlaces[r][caseData.scenePlace] = 2;
+                gridTimes[r][caseData.sceneTime] = 2;
+                saveProgress();
+                render();
+                showToast(`💡 Pista: ${caseData.scenario.suspects[r]} estuvo en ${caseData.scenario.places[caseData.scenePlace]} a las ${caseData.scenario.times[caseData.sceneTime]}.`);
+            }
+
+            function restart() {
+                if (!confirm('¿Reiniciar el Caso del Día?')) return;
+                gridPlaces = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+                gridTimes = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+                crossedClues = {};
+                gameStates.caso.timerSecs = 0;
+                gameStates.caso.isCompleted = false;
+                gameStates.caso.hasStarted = false;
+                gameStates.caso.timerRunning = false;
+                saveProgress();
+                render();
+                renderSuspectButtons();
+                updateTimerDisplay();
+                showToast('↺ Caso reiniciado');
+            }
+
+            return { init, hint, restart };
+        })();
+
+        /* ==============================================================
            GESTIÓN CENTRALIZADA DE LA INTERFAZ Y CAMBIO DE JUEGOS
            ============================================================== */
         function switchGame(targetGame) {
@@ -2419,10 +2804,12 @@ import {
             const numDock = document.getElementById('dockNumericKeypad');
             const cruzadasDock = document.getElementById('dockCruzadasWords');
             const sopaDock = document.getElementById('dockSopaWords');
+            const casoDock = document.getElementById('dockCasoControls');
 
             if (numDock) numDock.style.display = 'none';
             if (cruzadasDock) cruzadasDock.style.display = 'none';
             if (sopaDock) sopaDock.style.display = 'none';
+            if (casoDock) casoDock.style.display = 'none';
 
             if (activeGame === 'sudoku') {
                 if (numDock) {
@@ -2445,6 +2832,8 @@ import {
                 if (cruzadasDock) cruzadasDock.style.display = 'flex';
             } else if (activeGame === 'sopa') {
                 if (sopaDock) sopaDock.style.display = 'flex';
+            } else if (activeGame === 'caso') {
+                if (casoDock) casoDock.style.display = 'flex';
             }
         }
 
@@ -2529,6 +2918,9 @@ import {
                     if (crs.lastSolvedDate === todayStr) return true;
                 } else if (key === 'sopa') {
                     if (localStorage.getItem(`mr_sopa_solved_${todayStr}`) === 'true') return true;
+                } else if (key === 'caso') {
+                    const cs = JSON.parse(localStorage.getItem(`mr_caso_state_${todayStr}`) || '{}');
+                    if (cs.isCompleted) return true;
                 }
             } catch(e) {}
             return false;
@@ -2642,6 +3034,11 @@ import {
                     streak = parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10);
                     const bt = localStorage.getItem('mr_sopa_best_time');
                     bestTime = bt && bt !== '99999' ? formatTime(parseInt(bt, 10)) : '--:--';
+                } else if (activeGame === 'caso') {
+                    const st = JSON.parse(localStorage.getItem('mr_caso_stats_v1') || '{}');
+                    completed = st.completed || 0;
+                    streak = st.streak || 0;
+                    bestTime = st.bestTime ? formatTime(st.bestTime) : '--:--';
                 }
             } catch(e) {}
 
@@ -2702,6 +3099,14 @@ import {
                     localStorage.setItem('mr_sopa_total_wins', comp.toString());
                     localStorage.setItem('mr_sopa_best_time', bt.toString());
                     localStorage.setItem(`mr_sopa_solved_${todayStr}`, 'true');
+                } else if (gameKey === 'caso') {
+                    const st = JSON.parse(localStorage.getItem('mr_caso_stats_v1') || '{}');
+                    const comp = (st.completed || 0) + 1;
+                    const strk = (st.streak || 0) + 1;
+                    const bt = st.bestTime ? Math.min(st.bestTime, timeSecs) : timeSecs;
+                    localStorage.setItem('mr_caso_stats_v1', JSON.stringify({
+                        completed: comp, streak: strk, bestTime: bt, lastDate: todayStr
+                    }));
                 }
             } catch(e) {}
 
@@ -2992,6 +3397,7 @@ import {
             else if (activeGame === 'kakuro') KakuroEngine.hint();
             else if (activeGame === 'cruzadas') CruzadasEngine.hint();
             else if (activeGame === 'sopa') SopaEngine.hint();
+            else if (activeGame === 'caso') CasoEngine.hint();
         });
 
         document.getElementById('btnOuterRestart')?.addEventListener('click', () => {
@@ -3000,6 +3406,7 @@ import {
             else if (activeGame === 'kakuro') KakuroEngine.restart();
             else if (activeGame === 'cruzadas') CruzadasEngine.restart();
             else if (activeGame === 'sopa') SopaEngine.restart();
+            else if (activeGame === 'caso') CasoEngine.restart();
         });
 
         document.getElementById('btnOuterStats')?.addEventListener('click', () => {
@@ -3030,6 +3437,11 @@ import {
                     streak = parseInt(localStorage.getItem('mr_sopa_streak') || '0', 10);
                     const bt = localStorage.getItem('mr_sopa_best_time');
                     bestTime = bt && bt !== '99999' ? formatTime(parseInt(bt, 10)) : '--:--';
+                } else if (activeGame === 'caso') {
+                    const st = JSON.parse(localStorage.getItem('mr_caso_stats_v1') || '{}');
+                    completed = st.completed || 0;
+                    streak = st.streak || 0;
+                    bestTime = st.bestTime ? formatTime(st.bestTime) : '--:--';
                 }
             } catch(e) {}
 
@@ -3226,6 +3638,7 @@ import {
             KakuroEngine.init(6);
             CruzadasEngine.init();
             SopaEngine.init();
+            CasoEngine.init();
 
             // Revisar si la URL traía hash (soporta tanto #juego-[game] como #[game])
             function getGameFromHash(h) {
