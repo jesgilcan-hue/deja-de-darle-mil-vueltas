@@ -2852,24 +2852,10 @@ async function checkAndHandleStripeCheckoutReturn() {
   const isStripeCancel = urlParams.get('stripe_cancel') === '1';
   if (isStripeCancel) {
     try {
-      const rawUrls = localStorage.getItem('mr_pending_stripe_blob_urls');
-      const urls = rawUrls ? JSON.parse(rawUrls) : [];
+      // Mantenemos los PDFs en la cesta por si el usuario vuelve a intentar pagar hoy;
+      // si no completa el pago en 24h, el cron nocturno (/api/cleanup-pdfs) los limpiará automáticamente.
       localStorage.removeItem('mr_pending_stripe_blob_urls');
-      if (urls.length && auth.currentUser) {
-        const idToken = await auth.currentUser.getIdToken();
-        fetch('/api/cleanup-pdfs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-          body: JSON.stringify({ urls })
-        }).catch(() => {});
-        // Limpiar las URLs recién borradas de la cesta para que se regeneren si vuelve a intentar pagar
-        clientPendingBasket.forEach(it => {
-          if (urls.includes(it.interiorPdfUrl)) { it.interiorPdfUrl = ''; if (it.data) it.data.interiorPdfUrl = ''; }
-          if (urls.includes(it.coverPdfUrl)) { it.coverPdfUrl = ''; if (it.data) it.data.coverPdfUrl = ''; }
-        });
-        saveClientOrdersAndBasketState(auth.currentUser);
-      }
-      if (typeof showToast === 'function') showToast('Pago cancelado. Archivos temporales limpiados.');
+      if (typeof showToast === 'function') showToast('Pago cancelado. Tu libro sigue guardado en la cesta.');
       window.history.replaceState({}, document.title, '/mi-espacio?tab=pedidos');
     } catch (e) {}
     return;

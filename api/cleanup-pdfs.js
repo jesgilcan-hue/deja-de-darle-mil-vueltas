@@ -1,6 +1,6 @@
 // Serverless Function para Vercel: /api/cleanup-pdfs
-// 1) POST autenticado { urls }: borra al instante PDFs temporales si el usuario cancela Stripe (?stripe_cancel=1)
-// 2) GET (Vercel Cron diario): borra PDFs no pagados (> 30 min) y PDFs de pedidos pagados (> 15 días)
+// 1) POST autenticado { urls }: borra al instante PDFs temporales bajo demanda
+// 2) GET (Vercel Cron diario): borra PDFs no pagados (> 24 horas) y PDFs de pedidos pagados (> 15 días)
 
 import { list, del } from '@vercel/blob';
 import { initializeApp, getApps } from 'firebase/app';
@@ -21,7 +21,7 @@ const firebaseApp = getApps().length
 
 const firestoreDb = getFirestore(firebaseApp);
 
-const UNPAID_TTL_MS = 30 * 60 * 1000; // 30 minutos si no completó el pago
+const UNPAID_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas si no completó el pago
 const PAID_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 días si sí compró
 
 async function verifyUserBearer(req) {
