@@ -1960,9 +1960,9 @@ Soluciones completas verificadas al final del libro</textarea>
                 <div style="font-weight: 800; color: #1f1c19; margin-bottom: 4px;" id="saveCoverModalInfoDisplay">📖 Libro interior sincronizado: -- págs</div>
                 <div style="margin-top: 6px; font-size: 0.78rem; color: #443c33;">
                     <strong>Compatibilidad física de imprenta:</strong><br>
-                    • <strong>Anillas (Wire-O):</strong> 16 a 450 págs.<br>
-                    • <strong>Tapa Blanda:</strong> 32 a 365 págs.<br>
-                    • <strong>Tapa Dura:</strong> 60 a 365 págs.<br>
+                    • <strong>Anillas (Wire-O):</strong> 16 a 250 págs.<br>
+                    • <strong>Tapa Blanda:</strong> 32 a 250 págs.<br>
+                    • <strong>Tapa Dura:</strong> 32 a 250 págs.<br>
                     <em>* Requisito estricto: Páginas pares e interior revisado.</em>
                 </div>
             </div>
@@ -2789,8 +2789,8 @@ Soluciones completas verificadas al final del libro</textarea>
                 let statusHtml = '';
                 if (!isEven) {
                     statusHtml = '<span style="color:#dc2626; font-weight:700;">⚠️ Páginas impares</span>';
-                } else if (pages > 450) {
-                    statusHtml = '<span style="color:#dc2626; font-weight:700;">⚠️ Supera 450 págs</span>';
+                } else if (pages > 250) {
+                    statusHtml = '<span style="color:#dc2626; font-weight:700;">⚠️ Supera 250 págs</span>';
                 } else {
                     statusHtml = '<span style="color:#166534; font-weight:700;">✓ Apto para imprenta</span>';
                 }
@@ -2842,16 +2842,16 @@ Soluciones completas verificadas al final del libro</textarea>
                 alert(`⚠️ Se requiere un mínimo de 16 páginas para cualquier tipo de libro físico en imprenta.`);
                 return;
             }
-            if (pages > 450) {
-                alert(`⚠️ El libro tiene ${pages} páginas y supera el límite de 450 páginas de imprenta (anillas Wire-O).\n\nReduce el número de páginas en el interior para poder imprimirlo.`);
+            if (pages > 250) {
+                alert(`⚠️ El libro tiene ${pages} páginas y supera el límite de 250 páginas de imprenta (anillas Wire-O).\n\nReduce el número de páginas en el interior para poder imprimirlo.`);
                 return;
             }
-            if (coverState.bindingType === 'hardcover' && (pages < 60 || pages > 365)) {
-                alert(`⚠️ La encuadernación en tapa dura requiere entre 60 y 365 páginas (actualmente tiene ${pages} págs).`);
+            if (coverState.bindingType === 'hardcover' && (pages < 32 || pages > 250)) {
+                alert(`⚠️ La encuadernación en tapa dura requiere entre 32 y 250 páginas (actualmente tiene ${pages} págs).`);
                 return;
             }
-            if (coverState.bindingType === 'perfect' && (pages < 32 || pages > 365)) {
-                alert(`⚠️ La encuadernación en tapa blanda requiere entre 32 y 365 páginas (actualmente tiene ${pages} págs).`);
+            if (coverState.bindingType === 'perfect' && (pages < 32 || pages > 250)) {
+                alert(`⚠️ La encuadernación en tapa blanda requiere entre 32 y 250 páginas (actualmente tiene ${pages} págs).`);
                 return;
             }
 
@@ -2937,7 +2937,7 @@ Soluciones completas verificadas al final del libro</textarea>
         }
 
         // 2. Comprobación de límites por encuadernación
-        if (coverState.bindingType === 'hardcover' && pages < 60) {
+        if (coverState.bindingType === 'hardcover' && pages < 32) {
             alert(`⚠️ La tapa dura requiere un mínimo de 60 páginas (actualmente tiene ${pages}).\n\nCambia a Tapa Blanda o Anillas, o añade más páginas al interior.`);
             return;
         }
@@ -3099,30 +3099,30 @@ Soluciones completas verificadas al final del libro</textarea>
             const btnHard = document.getElementById('btnBindHardcover');
 
             // 1. Anillas (Wire-O): mín 16, máx 450
-            const coilAllowed = pages >= 16 && pages <= 450;
-            let coilTooltip = 'Encuadernación con anillas metálicas Wire-O (mínimo 16 páginas, máximo 450 páginas)';
+            const coilAllowed = pages >= 16 && pages <= 250;
+            let coilTooltip = 'Encuadernación con anillas metálicas Wire-O (mínimo 16 páginas, máximo 250 páginas)';
             if (pages < 16) {
                 coilTooltip = `Te faltan ${16 - pages} páginas para encuadernación en anillas (mínimo 16 páginas, actualmente tiene ${pages})`;
-            } else if (pages > 450) {
-                coilTooltip = `Supera el límite de 450 páginas para anillas metálicas (actualmente tiene ${pages} páginas)`;
+            } else if (pages > 250) {
+                coilTooltip = `Supera el límite de 250 páginas para anillas metálicas (actualmente tiene ${pages} páginas)`;
             }
 
             // 2. Tapa Blanda: mín 32, máx 365
-            const perfectAllowed = pages >= 32 && pages <= 365;
-            let perfectTooltip = 'Encuadernación rústica fresada en tapa blanda mate (mínimo 32 páginas, máximo 365 páginas)';
+            const perfectAllowed = pages >= 32 && pages <= 250;
+            let perfectTooltip = 'Encuadernación rústica fresada en tapa blanda mate (mínimo 32 páginas, máximo 250 páginas)';
             if (pages < 32) {
                 perfectTooltip = `Te faltan ${32 - pages} páginas para tapa blanda (mínimo 32 páginas, actualmente tiene ${pages})`;
-            } else if (pages > 365) {
-                perfectTooltip = `Supera el límite de 365 páginas para tapa blanda (actualmente tiene ${pages} páginas)`;
+            } else if (pages > 250) {
+                perfectTooltip = `Supera el límite de 250 páginas para tapa blanda (actualmente tiene ${pages} páginas)`;
             }
 
             // 3. Tapa Dura: mín 60, máx 365
-            const hardAllowed = pages >= 60 && pages <= 365;
-            let hardTooltip = 'Encuadernación rígida en tapa dura casewrap con lomo impreso (mínimo 60 páginas, máximo 365 páginas)';
-            if (pages < 60) {
-                hardTooltip = `Te faltan ${60 - pages} páginas para tapa dura (mínimo 60 páginas, actualmente tiene ${pages})`;
-            } else if (pages > 365) {
-                hardTooltip = `Supera el límite de 365 páginas para tapa dura (actualmente tiene ${pages} páginas)`;
+            const hardAllowed = pages >= 32 && pages <= 250;
+            let hardTooltip = 'Encuadernación rígida en tapa dura casewrap con lomo impreso (mínimo 32 páginas, máximo 250 páginas)';
+            if (pages < 32) {
+                hardTooltip = `Te faltan ${60 - pages} páginas para tapa dura (mínimo 32 páginas, actualmente tiene ${pages})`;
+            } else if (pages > 250) {
+                hardTooltip = `Supera el límite de 250 páginas para tapa dura (actualmente tiene ${pages} páginas)`;
             }
 
             const applyBtn = (btn, allowed, tooltip) => {
@@ -3162,7 +3162,7 @@ Soluciones completas verificadas al final del libro</textarea>
         function setBindingType(type, silent = false) {
             const pages = parseInt(coverState.pageCount, 10) || 0;
             if (!silent) {
-                if (type === 'hardcover' && pages < 60) {
+                if (type === 'hardcover' && pages < 32) {
                     alert(`Te faltan ${60 - pages} páginas para encuadernación en tapa dura.
 
 El mínimo técnico para tapa dura con lomo rígido impreso es de 60 páginas (actualmente tiene ${pages}).`);

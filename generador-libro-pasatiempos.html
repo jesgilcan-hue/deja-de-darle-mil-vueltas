@@ -8672,14 +8672,14 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
         function handlePagesChange(val) {
             let p = parseInt(val, 10) || 180;
-            const maxP = bookState.format === '6x9' ? 450 : 248;
+            const maxP = 248;
             p = Math.min(maxP, Math.max(48, Math.round(p / 4) * 4));
             bookState.totalPages = p;
             autoBalancePages();
         }
 
         function autoBalancePages() {
-            const maxP = bookState.format === '6x9' ? 450 : 248;
+            const maxP = 248;
             bookState.totalPages = Math.min(maxP, Math.max(48, Math.round(bookState.totalPages / 4) * 4));
             const target = bookState.totalPages;
             const activeKeys = Object.keys(bookState.sections).filter(k => bookState.sections[k].active);
@@ -10420,7 +10420,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                         totalPages: b.currentTotal,
                         targetTotal: b.targetTotal,
                         remainingPages: remaining,
-                        isExact: (b.currentTotal === b.targetTotal && b.currentTotal >= 48 && b.currentTotal <= 450)
+                        isExact: (b.currentTotal === b.targetTotal && b.currentTotal >= 48 && b.currentTotal <= 250)
                     }, '*');
                 }
             }
@@ -10441,8 +10441,8 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             window.addEventListener('message', (ev) => {
                 if (ev.data && ev.data.type === 'REQUEST_GO_COVER') {
                     const b = typeof calculatePageBreakdown === 'function' ? calculatePageBreakdown() : { currentTotal: 180, targetTotal: 180 };
-                    if (b.currentTotal > 450) {
-                        alert(`El libro tiene ${b.currentTotal} páginas y supera el máximo de 450 páginas de encuadernación. Reduce alguna sección antes de continuar.`);
+                    if (b.currentTotal > 250) {
+                        alert(`El libro tiene ${b.currentTotal} páginas y supera el máximo de 250 páginas de encuadernación. Reduce alguna sección antes de continuar.`);
                         return;
                     }
                     if (b.currentTotal !== b.targetTotal || b.currentTotal < 48) {
