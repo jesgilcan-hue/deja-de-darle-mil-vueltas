@@ -365,22 +365,32 @@
                     <script>
                     (function () {
                       const puzzle = [
-                        [1, 0, 0, 4],
+                        [1, 2, 0, 4],
                         [0, 4, 1, 0],
                         [0, 1, 4, 0],
                         [4, 0, 0, 1]
                       ];
-                      const solution = [
-                        [1, 2, 3, 4],
-                        [3, 4, 1, 2],
-                        [2, 1, 4, 3],
-                        [4, 3, 2, 1]
-                      ];
                       let state = puzzle.map(row => row.slice());
-                      let selected = { r: 0, c: 1 };
+                      let selected = { r: 0, c: 2 };
                       const gridEl = document.getElementById('trayecto-sudoku-grid');
                       const msgEl = document.getElementById('mini-sudoku-msg');
                       if (!gridEl) return;
+
+                      function hasConflict(r, c, val) {
+                        if (!val) return false;
+                        for (let i = 0; i < 4; i++) {
+                          if (i !== c && state[r][i] === val) return true;
+                          if (i !== r && state[i][c] === val) return true;
+                        }
+                        const br = Math.floor(r / 2) * 2;
+                        const bc = Math.floor(c / 2) * 2;
+                        for (let rr = br; rr < br + 2; rr++) {
+                          for (let cc = bc; cc < bc + 2; cc++) {
+                            if ((rr !== r || cc !== c) && state[rr][cc] === val) return true;
+                          }
+                        }
+                        return false;
+                      }
 
                       function render(highlightResults) {
                         gridEl.innerHTML = '';
@@ -397,8 +407,8 @@
                             if (isSel && !fixed) bg = '#fff1e6';
                             if (highlightResults && !fixed) {
                               if (state[r][c] === 0) bg = '#fffaf2';
-                              else if (state[r][c] === solution[r][c]) bg = '#eaf5ec';
-                              else bg = '#fde8e8';
+                              else if (hasConflict(r, c, state[r][c])) bg = '#fde8e8';
+                              else bg = '#eaf5ec';
                             }
                             btn.style.cssText = `box-sizing:border-box;width:100%;aspect-ratio:1/1;min-height:48px;padding:0;margin:0;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:1.25rem;font-weight:${fixed ? '800' : '700'};border:none;border-right:${c === 3 ? 'none' : borderRight};border-bottom:${r === 3 ? 'none' : borderBottom};background:${bg};color:${fixed ? '#1f1c19' : '#87553b'};cursor:${fixed ? 'default' : 'pointer'};box-shadow:${isSel && !fixed ? 'inset 0 0 0 2px #87553b' : 'none'};-webkit-appearance:none;`;
                             if (!fixed) {
@@ -431,7 +441,7 @@
                           for (let c = 0; c < 4; c++) {
                             if (puzzle[r][c] !== 0) continue;
                             if (!state[r][c]) empty++;
-                            else if (state[r][c] !== solution[r][c]) errors++;
+                            else if (hasConflict(r, c, state[r][c])) errors++;
                           }
                         }
                         render(true);
@@ -449,7 +459,7 @@
 
                       document.getElementById('btn-reset-mini-sudoku')?.addEventListener('click', () => {
                         state = puzzle.map(row => row.slice());
-                        selected = { r: 0, c: 1 };
+                        selected = { r: 0, c: 2 };
                         msgEl.style.color = '#4a423a';
                         msgEl.textContent = 'Toca una casilla vacía y elige un número del 1 al 4.';
                         render(false);
