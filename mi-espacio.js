@@ -3054,28 +3054,28 @@ async function checkAndHandleStripeCheckoutReturn() {
         (async () => {
           const banner = document.createElement('div');
           banner.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:99999; background:#1f1c19; color:#ffffff; padding:16px 22px; border-radius:12px; border:2px solid #87553b; box-shadow:0 12px 32px rgba(0,0,0,0.35); font-size:0.92rem; font-weight:600; max-width:400px; line-height:1.45;';
-          banner.innerHTML = '⏳ <strong>Generando archivos de imprenta...</strong><br><span style="font-size:0.82rem; font-weight:400; color:#e5ddd3;">No cierres ni cambies de pestaña (~45-90s para 420 págs) hasta ver el aviso verde.</span>';
+          banner.innerHTML = '⏳ <strong>Generando tus PDFs de imprenta en servidor...</strong><br><span style="font-size:0.82rem; font-weight:400; color:#e5ddd3;">Solo tarda unos segundos.</span>';
           document.body.appendChild(banner);
           try {
-            await ensureItemPdfsUploadedToCloud(bgItem, (lbl) => {
-              banner.innerHTML = `⏳ <strong>${lbl}</strong><br><span style="font-size:0.82rem; font-weight:400; color:#e5ddd3;">No cierres ni cambies de pestaña hasta que se ponga verde.</span>`;
-              showToast(lbl);
-            });
-            const pdfPatch = {
-              book: {
-                ...(finalOrder.book || {}),
-                interiorPdfUrl: bgItem.interiorPdfUrl,
-                coverPdfUrl: bgItem.coverPdfUrl
-              }
-            };
-            finalOrder.book = pdfPatch.book;
-            if (finalOrder.orderNumber) {
-              await setDoc(doc(db, 'orders', finalOrder.orderNumber), pdfPatch, { merge: true });
-            }
             const u = user || auth.currentUser;
-            if (u && u.uid && finalOrder.orderNumber) {
-              await setDoc(doc(db, 'users', u.uid, 'orders', finalOrder.orderNumber), pdfPatch, { merge: true });
+            const idToken = u ? await u.getIdToken() : '';
+            const genRes = await fetch('/api/generate-order-pdfs', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${idToken}`
+              },
+              body: JSON.stringify({ orderNumber: finalOrder.orderNumber })
+            });
+            const genData = await genRes.json();
+            if (!genRes.ok || !genData.ok) {
+              throw new Error(genData.error || 'Error generando PDFs en servidor');
             }
+            finalOrder.book = {
+              ...(finalOrder.book || {}),
+              interiorPdfUrl: genData.interiorPdfUrl,
+              coverPdfUrl: genData.coverPdfUrl
+            };
             if (orderSyncChannel) {
               orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order: finalOrder });
             }
@@ -3083,9 +3083,9 @@ async function checkAndHandleStripeCheckoutReturn() {
             banner.textContent = '✅ PDFs de imprenta guardados en tu pedido #' + finalOrder.orderNumber;
             setTimeout(() => banner.remove(), 5000);
           } catch (bgErr) {
-            console.error('Error subiendo PDFs en segundo plano tras Stripe:', bgErr);
+            console.error('Error generando PDFs en servidor tras Stripe:', bgErr);
             banner.style.background = '#991b1b';
-            banner.innerHTML = '⚠️ <strong>Error subiendo PDFs:</strong> ' + (bgErr.message || 'Error desconocido') + ' <button type="button" onclick="this.parentElement.remove()" style="margin-left:8px; background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:4px; padding:2px 8px; cursor:pointer;">✕</button>';
+            banner.innerHTML = '⚠️ <strong>Error generando PDFs:</strong> ' + (bgErr.message || 'Error desconocido') + ' <button type="button" onclick="this.parentElement.remove()" style="margin-left:8px; background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:4px; padding:2px 8px; cursor:pointer;">✕</button>';
           }
         })();
       }

@@ -1004,62 +1004,41 @@ window.generateAndUploadOrderPdfs = async function(orderId, btnEl) {
   const origHtml = btnEl ? btnEl.innerHTML : '';
   if (btnEl) {
     btnEl.disabled = true;
-    btnEl.innerHTML = '<span>⏳</span> Generando y subiendo PDFs...';
+    btnEl.innerHTML = '<span>⏳</span> Generando PDFs en servidor...';
   }
 
   try {
-    const bk = order.book || {};
-    const designId = bk.id || '';
-    const customerUid = order.customer?.uid || '';
-    const isPuzzle = String(bk.title || '').toLowerCase().includes('pasatiempo') || String(bk.subtitle || '').toLowerCase().includes('pasatiempo');
-
-    if (!bk.interiorPdfUrl?.startsWith('https://')) {
-      showToast('⏳ Generando y subiendo Interior PDF (1/2)...');
-      if (btnEl) btnEl.innerHTML = '<span>⏳</span> Subiendo Interior PDF (1/2)...';
-      const reqId = 'adm_int_' + Date.now();
-      const baseGen = isPuzzle ? '/generador-libro-pasatiempos' : '/generador-libro-completo';
-      const q = new URLSearchParams({ upload_blob: '1', reqId });
-      if (designId) q.set('load', designId);
-      if (customerUid) q.set('uid', customerUid);
-      bk.interiorPdfUrl = await generateAndUploadAdminPdfViaIframe(`${baseGen}?${q.toString()}`, reqId);
+    showToast('⏳ Generando Interior y Portada en servidor (~3s)...');
+    const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+    const resp = await fetch('/api/generate-order-pdfs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`
+      },
+      body: JSON.stringify({ orderNumber: order.orderNumber })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      throw new Error(data.error || 'Error generando PDFs en servidor');
     }
 
-    if (!bk.coverPdfUrl?.startsWith('https://')) {
-      showToast('⏳ Generando y subiendo Portada PDF (2/2)...');
-      if (btnEl) btnEl.innerHTML = '<span>⏳</span> Subiendo Portada PDF (2/2)...';
-      try {
-        localStorage.setItem('mr_cover_sync_data', JSON.stringify({
-          title: bk.title || 'Mi Planificador',
-          subtitle: bk.subtitle || '',
-          pageCount: bk.pageCount || 144,
-          bindingType: bk.bindingType || 'softcover',
-          paperType: bk.paperType || 'cream_90',
-          designId
-        }));
-      } catch (e) {}
-      const reqId = 'adm_cov_' + Date.now();
-      const baseCover = isPuzzle ? '/generador-portadas-pasatiempos' : '/generador-portadas';
-      const q = new URLSearchParams({ upload_blob: '1', reqId });
-      if (bk.coverDesignId) {
-        q.set('load', bk.coverDesignId);
-        if (customerUid) q.set('uid', customerUid);
-      }
-      bk.coverPdfUrl = await generateAndUploadAdminPdfViaIframe(`${baseCover}?${q.toString()}`, reqId);
-    }
-
-    order.book = bk;
-    syncOrderToCloud(order);
+    order.book = {
+      ...(order.book || {}),
+      interiorPdfUrl: data.interiorPdfUrl,
+      coverPdfUrl: data.coverPdfUrl
+    };
     saveOrdersState();
     sortAndRenderOrders();
     if (orderSyncChannel) orderSyncChannel.postMessage({ type: 'ORDER_UPDATED', order });
-    showToast(`✅ PDFs subidos a Vercel Blob para #${order.orderNumber}`);
+    showToast(`✅ PDFs generados y subidos en ${((data.elapsedMs || 0) / 1000).toFixed(1)}s para #${order.orderNumber}`);
   } catch (err) {
-    console.error('Error subiendo PDFs desde admin-pedidos:', err);
+    console.error('Error generando PDFs desde admin-pedidos:', err);
     if (btnEl) {
       btnEl.disabled = false;
       btnEl.innerHTML = origHtml || '<span>📤</span> Subir PDFs a imprenta (Admin)';
     }
-    alert('⚠️ Error subiendo PDFs a Vercel Blob:\n\n' + (err.message || 'Error desconocido'));
+    alert('⚠️ Error generando PDFs en servidor:\n\n' + (err.message || 'Error desconocido'));
   }
 };
 
