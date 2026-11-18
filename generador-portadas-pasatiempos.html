@@ -30,6 +30,14 @@
 
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="./style.css" />
+    <script>
+        (function(){
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('embed') === '1') {
+                document.documentElement.classList.add('embed-mode');
+            }
+        })();
+    </script>
 
     <style>
         :root {
@@ -47,6 +55,46 @@
             --shadow-subtle: 0 4px 20px rgba(0,0,0,0.05);
             --shadow-paper: 0 18px 50px rgba(0,0,0,0.16);
         }
+
+        html.embed-mode .navbar,
+        html.embed-mode .top-nav,
+        html.embed-mode .header-title-box,
+        html.embed-mode .top-cta-group,
+        html.embed-mode .footer {
+            display: none !important;
+        }
+        html.embed-mode .generator-container-wrap {
+            padding-top: 8px !important;
+        }
+        html.embed-mode .top-action-bar {
+            margin-top: 4px !important;
+            padding: 10px 14px !important;
+        }
+        #customColorPickerModal {
+            position: fixed; inset: 0; background: rgba(20,18,16,0.62);
+            z-index: 100000; display: none; align-items: center; justify-content: center; padding: 16px;
+        }
+        #customColorPickerModal.open { display: flex; }
+        .ccp-card {
+            background: #ffffff; border: 1px solid #e0d8cc; border-radius: 14px;
+            width: 100%; max-width: 340px; padding: 16px; box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .ccp-swatches {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+        }
+        .ccp-swatch {
+            width: 100%; aspect-ratio: 1; border-radius: 8px; border: 2px solid rgba(0,0,0,0.14);
+            cursor: pointer; transition: transform 0.12s;
+        }
+        .ccp-swatch:hover { transform: scale(1.06); }
+        .ccp-swatch.active { border-color: #22382c; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #22382c; }
+        .ccp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+        .ccp-btn {
+            border: 1px solid #d5cbbd; background: #faf8f5; color: #3b3228;
+            border-radius: 8px; padding: 9px 16px; font-size: 0.86rem; font-weight: 700; cursor: pointer;
+        }
+        .ccp-btn.ok { background: #215c38; color: #ffffff; border-color: #215c38; min-width: 96px; }
 
         * {
             box-sizing: border-box;
@@ -305,6 +353,63 @@
         @media (max-width: 1120px) {
             .workspace-layout {
                 grid-template-columns: 1fr;
+            }
+            .preview-panel {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+            }
+            .generator-container-wrap {
+                padding: 8px 10px 24px !important;
+            }
+            .top-action-bar {
+                padding: 10px !important;
+                gap: 8px !important;
+            }
+            .binding-selector-group {
+                width: 100%;
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px !important;
+            }
+            .binding-label {
+                grid-column: 1 / -1;
+                font-size: 0.76rem;
+            }
+            .binding-pill-btn {
+                font-size: 0.72rem !important;
+                padding: 7px 4px !important;
+                justify-content: center;
+                text-align: center;
+                white-space: normal !important;
+            }
+            .workspace-layout {
+                gap: 14px;
+            }
+            .controls-panel,
+            .preview-panel {
+                min-width: 0;
+                max-width: 100%;
+                padding: 12px !important;
+            }
+            .panel-tabs {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 4px;
+            }
+            .panel-tab-btn {
+                font-size: 0.74rem;
+                padding: 8px 6px;
+            }
+            .canvas-container-outer {
+                padding: 12px 8px;
+            }
+            .specs-banner {
+                font-size: 0.72rem;
+                padding: 7px 10px;
             }
         }
 
@@ -1543,7 +1648,7 @@ Soluciones completas verificadas al final del libro</textarea>
                     <div class="field-group">
                         <label for="selTrimFormat">Formato del Libro de Pasatiempos:</label>
                         <select id="selTrimFormat" onchange="updateConfigFromUI()">
-                            <option value="landscape_825_6" selected>📐 Apaisado 8.25" × 6" (209.55 × 152.4 mm)</option>
+                            <option value="landscape_825_6" selected>📐 Apaisado 9" × 7" (228,6 × 177,8 mm)</option>
                             <option value="portrait_6_9">📏 Vertical 6" × 9" (152.4 × 228.6 mm)</option>
                         </select>
                         <span style="font-size:0.7rem; color:#776f65;">Se sincroniza con el formato elegido en el Constructor de Pasatiempos.</span>
@@ -1690,7 +1795,7 @@ Soluciones completas verificadas al final del libro</textarea>
             <p class="modal-desc">Tu portada exterior personalizada se compila con sangría de imprenta lista para encuadernar con tu interior.</p>
 
             <div class="modal-format-badge" id="modalDownloadFormatBadge">
-                <span>📐</span> Formato Libro 8.25" × 6" (209.55 × 152.4 mm)
+                <span>📐</span> Formato Libro 9" × 7" (228,6 × 177,8 mm)
             </div>
 
             <div class="compile-summary-box">
@@ -1787,7 +1892,7 @@ Soluciones completas verificadas al final del libro</textarea>
                 <div>
                     <div style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:#215c38; letter-spacing:0.4px;">✓ Sincronizado actualmente con:</div>
                     <div style="font-size:0.95rem; font-weight:800; color:#163d25; margin-top:3px;" id="modalCurrentSyncedBookTitle">Gran Libro de Pasatiempos</div>
-                    <div style="font-size:0.78rem; color:#2a5c3d; margin-top:2px;" id="modalCurrentSyncedBookMeta">180 páginas interiores · Formato 8.25" × 6"</div>
+                    <div style="font-size:0.78rem; color:#2a5c3d; margin-top:2px;" id="modalCurrentSyncedBookMeta">180 páginas interiores · Formato 9" × 7"</div>
                 </div>
                 <button type="button" onclick="syncFromBookBuilder(true); closeSyncInteriorModal();" style="background:#215c38; color:#fff; border:none; border-radius:8px; padding:7px 12px; font-size:0.75rem; font-weight:700; cursor:pointer; white-space:nowrap;">
                     ⚡ Re-sincronizar activo
@@ -2058,10 +2163,10 @@ Soluciones completas verificadas al final del libro</textarea>
         // Formatos de corte en milímetros para Libros de Pasatiempos (8.25" x 6" Apaisado y 6" x 9" Vertical)
         const TRIM_FORMATS = {
             landscape_825_6: {
-                name: '8.25" × 6" Apaisado',
-                wMm: 209.55,
-                hMm: 152.4,
-                luluSkuPrefix: '0825X0600'
+                name: '9" × 7" Apaisado (Lulu Oficial)',
+                wMm: 228.6,
+                hMm: 177.8,
+                luluSkuPrefix: '0900X0700'
             },
             portrait_6_9: {
                 name: '6" × 9" Vertical',
@@ -2357,7 +2462,7 @@ Soluciones completas verificadas al final del libro</textarea>
                     const pages = calc ? calc.totalPages : (parseInt(parsed.totalPages || parsed.pageCount, 10) || 180);
                     const title = parsed.title || 'Gran Libro de Pasatiempos';
                     const owner = parsed.owner ? ` · ${parsed.owner}` : '';
-                    const fmtLabel = parsed.format === '6x9' ? '6"×9"' : '8.25"×6"';
+                    const fmtLabel = parsed.format === '6x9' ? '6"×9"' : '9"×7"';
                     list.push({
                         id: 'active_draft',
                         name: `${title}${owner} (Constructor activo)`,
@@ -2389,7 +2494,7 @@ Soluciones completas verificadas al final del libro</textarea>
                     const calc = calculatePagesFromPuzzleBook(item.data);
                     const pages = calc ? calc.totalPages : (parseInt(item.data?.totalPages, 10) || 180);
                     const displayName = item.name || item.data?.title || 'Libro de Pasatiempos Guardado';
-                    const fmtLabel = item.data?.format === '6x9' ? '6"×9"' : '8.25"×6"';
+                    const fmtLabel = item.data?.format === '6x9' ? '6"×9"' : '9"×7"';
                     list.push({
                         id: item.id,
                         name: displayName,
@@ -2467,7 +2572,7 @@ Soluciones completas verificadas al final del libro</textarea>
             coverState.spineText = `MENOS RUIDO  •  ${(coverState.title || 'LIBRO DE PASATIEMPOS').toUpperCase()}`;
             document.getElementById('inpSpineText').value = coverState.spineText;
 
-            const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '8.25"×6"';
+            const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '9"×7"';
             coverState.syncedBookName = `${bookObj.shortName || coverState.title} (${coverState.pageCount} págs · ${fmtShort})`;
 
             updateBindingAvailability();
@@ -2591,7 +2696,7 @@ Soluciones completas verificadas al final del libro</textarea>
             coverState.pageCount = preset.defaultPages;
             document.getElementById('inpPageCount').value = preset.defaultPages;
 
-            const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '8.25"×6"';
+            const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '9"×7"';
             coverState.syncedBookName = `${preset.title} (${preset.defaultPages} págs · ${fmtShort})`;
 
             if (shouldRender) {
@@ -2655,7 +2760,7 @@ Soluciones completas verificadas al final del libro</textarea>
                 document.getElementById('inpSpineText').value = coverState.spineText;
 
                 const ownerSuffix = (saved.owner && saved.owner.trim()) ? ` · ${saved.owner.trim()}` : '';
-                const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '8.25"×6"';
+                const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '9"×7"';
                 coverState.syncedBookName = `${coverState.title}${ownerSuffix} (${coverState.pageCount} págs · ${fmtShort})`;
 
                 updateConfigFromUI(false);
@@ -2814,6 +2919,10 @@ Soluciones completas verificadas al final del libro</textarea>
                 return;
             }
             closeValidateCoverTextsModal();
+            if (document.documentElement.classList.contains('embed-mode') && window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'COVER_VALIDATED' }, '*');
+                return;
+            }
             handleAddToCart();
         }
         window.confirmCoverTextsAndAddToCart = confirmCoverTextsAndAddToCart;
@@ -4579,7 +4688,7 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
             const bindLabel = coverState.bindingType === 'coil'
                 ? 'Anillas'
                 : (coverState.bindingType === 'hardcover' ? 'Tapa Dura' : 'Tapa Blanda');
-            const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '8.25"×6"';
+            const fmtShort = coverState.trimFormat === 'portrait_6_9' ? '6"×9"' : '9"×7"';
             const coverTitle = (coverState.title || '').trim();
             return {
                 name: coverTitle ? `Portada · ${coverTitle}` : 'Portada de Pasatiempos',
@@ -4751,6 +4860,136 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
 
         setupGeneratorSave('btn-save-generator-design', getCoverGeneratorData, { isPremium: true, generatorType: 'cover' });
         checkAndLoadSavedDesign(applySavedCoverDesign);
+
+        // Puente para modo embebido (Paso 2 de crear-libro-pasatiempos.html)
+        (function setupPuzzleCoverEmbedBridge() {
+            if (document.documentElement.classList.contains('embed-mode')) {
+                const confirmBtn = document.querySelector('#modalValidateCoverTexts button[onclick="confirmCoverTextsAndAddToCart()"]');
+                if (confirmBtn) {
+                    confirmBtn.textContent = 'Confirmar y Finalizar Libro →';
+                }
+            }
+
+            window.addEventListener('message', (ev) => {
+                if (ev.data && ev.data.type === 'SYNC_INTERIOR_CHANGES') {
+                    try {
+                        const raw = localStorage.getItem('mr_puzzle_book_config');
+                        if (!raw) return;
+                        const saved = JSON.parse(raw);
+                        const newPages = parseInt(saved.pageCount || saved.totalPages, 10) || coverState.pageCount || 180;
+                        coverState.pageCount = newPages;
+                        if (saved.format) {
+                            coverState.format = saved.format;
+                        }
+                        const inpP = document.getElementById('inpPageCount');
+                        if (inpP) inpP.value = newPages;
+                        const pill = document.getElementById('topSyncedBookPill');
+                        if (pill) {
+                            pill.textContent = `${saved.title || coverState.title || 'Libro de Pasatiempos'} (${newPages} págs)`;
+                        }
+                        if (typeof updateBindingAvailability === 'function') updateBindingAvailability();
+                        if (typeof updateSpecsLabels === 'function') updateSpecsLabels();
+                        if (typeof renderCoverPreview === 'function') renderCoverPreview();
+                    } catch (e) {
+                        console.warn('Error en SYNC_INTERIOR_CHANGES (pasatiempos):', e);
+                    }
+                } else if (ev.data && ev.data.type === 'REQUEST_VALIDATE_COVER') {
+                    if (typeof window.openValidateCoverTextsModal === 'function') {
+                        window.openValidateCoverTextsModal();
+                    } else if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'COVER_VALIDATED' }, '*');
+                    }
+                }
+            });
+        })();
+    </script>
+
+    <div id="customColorPickerModal">
+      <div class="ccp-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:0.95rem; color:#1f1c19;">Elegir color de texto</strong>
+          <span id="ccpPreviewDot" style="width:24px; height:24px; border-radius:6px; border:1px solid #ccc; display:inline-block;"></span>
+        </div>
+        <div class="ccp-swatches" id="ccpSwatchesWrap"></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:0.78rem; color:#5a5147; font-weight:700;">Otro tono:</label>
+          <input type="color" id="ccpNativeInput" style="width:38px; height:32px; padding:0; border:1px solid #c9bfb0; border-radius:6px; cursor:pointer;">
+          <input type="text" id="ccpHexInput" maxlength="7" style="flex:1; padding:6px 8px; border:1px solid #d5cbbd; border-radius:6px; font-size:0.82rem; font-family:monospace;">
+        </div>
+        <div class="ccp-actions">
+          <button type="button" class="ccp-btn" id="ccpCancelBtn">Cancelar</button>
+          <button type="button" class="ccp-btn ok" id="ccpOkBtn">✓ OK</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const modal = document.getElementById('customColorPickerModal');
+        const swatchesWrap = document.getElementById('ccpSwatchesWrap');
+        if (!modal || !swatchesWrap) return;
+
+        const SWATCHES = ['#1c1917', '#ffffff', '#f5f0e6', '#22382c', '#87553b', '#1e3240', '#464f41', '#6b2d3b', '#b8860b', '#665e54'];
+        swatchesWrap.innerHTML = SWATCHES.map(hex => `<button type="button" class="ccp-swatch" data-hex="${hex}" style="background:${hex};" title="${hex}"></button>`).join('');
+
+        let activeInput = null;
+        let initialVal = '#ffffff';
+
+        const applyLiveColor = (hex) => {
+          if (!activeInput || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+          activeInput.value = hex;
+          document.getElementById('ccpNativeInput').value = hex;
+          document.getElementById('ccpHexInput').value = hex.toUpperCase();
+          document.getElementById('ccpPreviewDot').style.background = hex;
+          modal.querySelectorAll('.ccp-swatch').forEach(s => {
+            s.classList.toggle('active', s.dataset.hex.toLowerCase() === hex.toLowerCase());
+          });
+          const secKey = activeInput.id.replace(/^col_/, '');
+          if (typeof window.setSectionTextColor === 'function') {
+            window.setSectionTextColor(secKey, hex);
+          }
+        };
+
+        modal.querySelectorAll('.ccp-swatch').forEach(btn => {
+          btn.addEventListener('click', () => applyLiveColor(btn.dataset.hex));
+        });
+        document.getElementById('ccpNativeInput').addEventListener('input', (e) => applyLiveColor(e.target.value));
+        document.getElementById('ccpHexInput').addEventListener('input', (e) => {
+          const v = e.target.value.trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(v)) applyLiveColor(v);
+        });
+        document.getElementById('ccpOkBtn').addEventListener('click', () => {
+          modal.classList.remove('open');
+          activeInput = null;
+        });
+        document.getElementById('ccpCancelBtn').addEventListener('click', () => {
+          if (activeInput) applyLiveColor(initialVal);
+          modal.classList.remove('open');
+          activeInput = null;
+        });
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) document.getElementById('ccpOkBtn').click();
+        });
+
+        window.openCustomColorModal = function (inp, e) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          if (!inp) return false;
+          activeInput = inp;
+          initialVal = inp.value || '#ffffff';
+          applyLiveColor(initialVal);
+          modal.classList.add('open');
+          return false;
+        };
+
+        document.addEventListener('click', (e) => {
+          const inp = e.target && e.target.closest ? e.target.closest('input[type="color"][id^="col_"]') : null;
+          if (!inp) return;
+          window.openCustomColorModal(inp, e);
+        }, true);
+      })();
     </script>
 </body>
 </html>

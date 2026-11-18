@@ -9,6 +9,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
+    <script>
+        (function(){
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('embed') === '1') {
+                document.documentElement.classList.add('embed-mode');
+            }
+        })();
+    </script>
     <script src="./jspdf.umd.min.js"></script>
     <script>
         if (!window.jspdf && !window.jsPDF) {
@@ -40,6 +48,21 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        html.embed-mode .navbar,
+        html.embed-mode .top-nav-bar,
+        html.embed-mode .header-title-box,
+        html.embed-mode .options-right,
+        html.embed-mode .footer {
+            display: none !important;
+        }
+        html.embed-mode .generator-container-wrap {
+            padding-top: 10px !important;
+            padding-bottom: 18px !important;
+        }
+        html.embed-mode .main-control-bar {
+            margin-top: 0 !important;
         }
 
         .generator-container-wrap {
@@ -253,6 +276,74 @@
             }
             .preview-panel {
                 order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+            }
+            .generator-container-wrap {
+                padding: 10px 10px 24px !important;
+            }
+            .main-control-bar {
+                padding: 12px !important;
+                gap: 10px !important;
+            }
+            .presets-buttons-wrap {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                width: 100%;
+            }
+            .btn-preset {
+                font-size: 0.78rem;
+                padding: 8px 6px;
+                text-align: center;
+                white-space: normal;
+            }
+            .options-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .options-left {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                width: 100%;
+            }
+            .opt-item {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .opt-select {
+                flex: 1;
+                min-width: 0;
+                max-width: 210px;
+            }
+            .builder-panel,
+            .preview-panel,
+            .index-sidebar-panel {
+                min-width: 0;
+                max-width: 100%;
+                padding: 12px !important;
+            }
+            .preview-toolbar {
+                flex-wrap: wrap;
+                gap: 8px;
+                justify-content: center;
+            }
+            .preview-stage-outer {
+                overflow: hidden !important;
+                padding: 8px 4px !important;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+            }
+            .game-toggle-header {
+                flex-wrap: wrap;
+                gap: 8px;
             }
         }
 
@@ -481,7 +572,7 @@
 
         .page-sheet-container.format-8x6 {
             width: 820px;
-            height: 596px;
+            height: 638px;
             max-width: 100%;
         }
 
@@ -1222,18 +1313,23 @@
         <!-- TÍTULO Y DESCRIPCIÓN -->
         <div class="header-title-box">
             <h1>Generador de Libro Completo de Pasatiempos</h1>
-            <p>Elige tu selección de pasatiempos, balancea las páginas y compila tu ejemplar completo listo para imprimir.</p>
+            <p>Elige tu selección de pasatiempos, balancea las páginas y crea tu ejemplar completo listo para imprimir.</p>
         </div>
 
         <!-- BARRA PRINCIPAL DE PREAJUSTES Y ACCIONES -->
         <div class="main-control-bar">
-            <div class="presets-row">
-                <span class="presets-label">Modelos Rápidos:</span>
-                <div class="presets-buttons-wrap">
-                    <button type="button" class="btn-preset active" id="presetMix" onclick="applyPreset('mix')">Variado Equilibrado</button>
-                    <button type="button" class="btn-preset" id="presetNumbers" onclick="applyPreset('numbers')">Solo Lógica Numérica</button>
-                    <button type="button" class="btn-preset" id="presetWords" onclick="applyPreset('words')">Solo Palabras y Letras</button>
-                    <button type="button" class="btn-preset" id="presetCustom" onclick="applyPreset('custom')">Personalizado</button>
+            <div class="presets-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; width:100%;">
+                    <span class="presets-label">Modelos Rápidos:</span>
+                    <div class="presets-buttons-wrap">
+                        <button type="button" class="btn-preset active" id="presetMix" onclick="applyPreset('mix')">Variado Equilibrado</button>
+                        <button type="button" class="btn-preset" id="presetNumbers" onclick="applyPreset('numbers')">Solo Lógica Numérica</button>
+                        <button type="button" class="btn-preset" id="presetWords" onclick="applyPreset('words')">Solo Palabras y Letras</button>
+                        <button type="button" class="btn-preset" id="presetCustom" onclick="applyPreset('custom')">Personalizado</button>
+                    </div>
+                </div>
+                <div id="presetDescriptionNote" style="font-size:0.78rem; color:#5a5248; background:#faf7f2; border:1px solid #e6dfd3; border-radius:8px; padding:7px 12px; width:100%; line-height:1.4;">
+                    <strong>Variado Equilibrado:</strong> Incluye Sudokus 9×9, Calcudoku, Kakuro, Palabras Cruzadas y Sopas de Letras con soluciones al final. <em>Más adelante podrás modificar cualquier juego, dificultad o página a tu gusto.</em>
                 </div>
             </div>
 
@@ -1242,7 +1338,7 @@
                     <div class="opt-item">
                         <span class="opt-label">Formato:</span>
                         <select id="selFormat" class="opt-select" onchange="handleFormatChange(this.value)">
-                            <option value="8x6" selected>8.25" × 6" (Apaisado)</option>
+                            <option value="8x6" selected>9" × 7" (Apaisado · Máx. 250 págs)</option>
                             <option value="6x9">6" × 9" (Vertical)</option>
                         </select>
                     </div>
@@ -1270,7 +1366,7 @@
                         🎨 Diseñar Portada
                     </a>
                     <button type="button" class="btn-action-primary" onclick="openDownloadModal()">
-                        📄 Descargar PDF
+                        📄 Crear PDF
                     </button>
                 </div>
             </div>
@@ -1506,25 +1602,25 @@
         <div class="modal-box" style="max-width: 540px; text-align: center; border-radius: 14px; padding: 24px;">
             <button type="button" class="modal-close-x" onclick="closeDownloadModal()">✕</button>
             <h3 style="font-family: var(--font-serif); font-size: 1.35rem; color: #1e1916; margin-bottom: 4px;">Descargar Libro Completo de Pasatiempos</h3>
-            <p style="font-size: 0.82rem; color: #666; line-height: 1.45; margin-bottom: 12px;">Comprueba el índice estructurado, la cantidad de retos por juego y el tamaño estimado antes de compilar el interior listo para imprenta.</p>
+            <p style="font-size: 0.82rem; color: #666; line-height: 1.45; margin-bottom: 12px;">Comprueba el índice estructurado, la cantidad de retos por juego y el tamaño estimado antes de crear el PDF del interior listo para imprenta.</p>
 
             <div style="display: inline-flex; align-items: center; gap: 6px; background: #f4efe6; color: #6e442e; border: 1px solid #e2d7c5; padding: 4px 12px; border-radius: 20px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.4px; margin-bottom: 14px;" id="modalFormatBadge">
-                <span>📐</span> Formato Libro 8.25" × 6" (Apaisado)
+                <span>📐</span> Formato Libro 9" × 7" (Apaisado · 228,6 × 177,8 mm)
             </div>
 
             <div class="compile-summary-box" id="compileSummaryBox" style="background: #fbf9f5; border: 1px solid #e7dfd2; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.82rem; color: #4b4239; text-align: left;">
                 <!-- Resumen dinámico del libro inyectado por JS -->
             </div>
 
-            <!-- BARRA DE PROGRESO DE COMPILACIÓN -->
+            <!-- BARRA DE PROGRESO DE CREACIÓN PDF -->
             <div id="pdfProgressBarWrap" style="height: 8px; background: #eee8de; border-radius: 6px; overflow: hidden; margin-bottom: 10px; display: none;">
                 <div id="pdfProgressBarFill" style="height: 100%; width: 0%; background: #87553b; transition: width 0.15s ease;"></div>
             </div>
-            <div id="pdfProgressNotice" style="font-size: 0.82rem; font-weight: 700; color: #87553b; text-align: center; margin-bottom: 12px; display: none;">Compilando páginas...</div>
+            <div id="pdfProgressNotice" style="font-size: 0.82rem; font-weight: 700; color: #87553b; text-align: center; margin-bottom: 12px; display: none;">Creando PDF...</div>
 
             <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px;">
                 <button type="button" class="btn-compile-pdf" id="btnExecutePdfGeneration" onclick="compileFullBookPdf()" style="width: 100%; justify-content: center; padding: 12px 18px; font-size: 0.92rem; font-weight: 700; background: #87553b; color: #fff; border: none; border-radius: 8px; cursor: pointer;">
-                    📥 Descargar Libro Completo en PDF
+                    📥 Crear Interior PDF
                 </button>
             </div>
         </div>
@@ -8576,15 +8672,15 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
         function handlePagesChange(val) {
             let p = parseInt(val, 10) || 180;
-            // Garantizar mínimo de 48 páginas y múltiplo de 4
-            p = Math.max(48, Math.round(p / 4) * 4);
+            // Garantizar mínimo de 48 páginas, máximo 450 y múltiplo de 4
+            p = Math.min(450, Math.max(48, Math.round(p / 4) * 4));
             bookState.totalPages = p;
             autoBalancePages();
         }
 
         function autoBalancePages() {
-            // Asegurar siempre múltiplo de 4 y mínimo 48 páginas
-            bookState.totalPages = Math.max(48, Math.round(bookState.totalPages / 4) * 4);
+            // Asegurar siempre múltiplo de 4, mínimo 48 y máximo 450 páginas
+            bookState.totalPages = Math.min(450, Math.max(48, Math.round(bookState.totalPages / 4) * 4));
             const target = bookState.totalPages;
             const activeKeys = Object.keys(bookState.sections).filter(k => bookState.sections[k].active);
 
@@ -8642,6 +8738,15 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                 bookState.sections.cruzadas.active = true;
                 bookState.sections.sopas.active = true;
             }
+
+            const PRESET_NOTES = {
+                mix: '<strong>Variado Equilibrado:</strong> Incluye Sudokus 9×9, Calcudoku, Kakuro, Palabras Cruzadas y Sopas de Letras con soluciones al final. <em>Más adelante podrás modificar cualquier juego, dificultad o página a tu gusto.</em>',
+                numbers: '<strong>Solo Lógica Numérica:</strong> Incluye Sudokus 9×9, Calcudoku y Kakuro (sin juegos de palabras). <em>Más adelante podrás modificar cualquier juego, dificultad o página a tu gusto.</em>',
+                words: '<strong>Solo Palabras y Letras:</strong> Incluye Palabras Cruzadas y Sopas de Letras. <em>Más adelante podrás modificar cualquier juego, dificultad o página a tu gusto.</em>',
+                custom: '<strong>Personalizado:</strong> Activa o desactiva libremente los juegos que quieras y ajusta sus páginas y dificultad a tu gusto.'
+            };
+            const noteEl = document.getElementById('presetDescriptionNote');
+            if (noteEl && PRESET_NOTES[type]) noteEl.innerHTML = PRESET_NOTES[type];
 
             ['sudoku', 'calcudoku', 'kakuro', 'cruzadas', 'sopas'].forEach(k => {
                 const chk = document.getElementById(`chk${k.charAt(0).toUpperCase() + k.slice(1)}Active`);
@@ -9386,7 +9491,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             const is6x9 = bookState.format === '6x9';
             const fmtBadge = document.getElementById('modalFormatBadge');
             if (fmtBadge) {
-                fmtBadge.innerHTML = is6x9 ? '<span>📐</span> Formato Libro 6" × 9" (Vertical · 152.4 × 228.6 mm)' : '<span>📐</span> Formato Libro 8.25" × 6" (Apaisado · 209.55 × 152.4 mm)';
+                fmtBadge.innerHTML = is6x9 ? '<span>📐</span> Formato Libro 6" × 9" (Vertical · 152.4 × 228.6 mm)' : '<span>📐</span> Formato Libro 9" × 7" (Apaisado · 228.6 × 177.8 mm)';
             }
 
             // Estimación de peso del archivo PDF (~32 KB por página con gráficos vectoriales nítidos)
@@ -9436,7 +9541,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                             💾 ~${estMb} MB estimados
                         </span>
                     </div>
-                    <strong style="color:#111;">Índice y Estructura del Libro a Compilar:</strong>
+                    <strong style="color:#111;">Índice y Estructura del Libro para Crear PDF:</strong>
                     <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.55; color: #443c35; font-size: 0.82rem;">
                         <li><strong>Preliminares:</strong> Portada interior, Créditos editoriales, Índice general y Reglas analógicas (Págs. 1 a 4).</li>
                         ${countDetails.join('')}
@@ -9482,8 +9587,8 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             if (pBarFill) pBarFill.style.width = '0%';
 
             const is6x9 = bookState.format === '6x9';
-            const widthMm = is6x9 ? 152.4 : 209.55;
-            const heightMm = is6x9 ? 228.6 : 152.4;
+            const widthMm = is6x9 ? 152.4 : 228.6;
+            const heightMm = is6x9 ? 228.6 : 177.8;
             const orientation = is6x9 ? 'portrait' : 'landscape';
 
             const doc = new jsPDFClass({
@@ -9506,7 +9611,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
                 const cur = plan[pIdx];
                 const pageNum = pIdx + 1;
-                if (notice) notice.textContent = `Compilando página ${pageNum} de ${total} (${cur.sidebarTitle || cur.type})...`;
+                if (notice) notice.textContent = `Creando PDF · página ${pageNum} de ${total} (${cur.sidebarTitle || cur.type})...`;
                 if (document.getElementById('pdfProgressBarFill')) {
                     document.getElementById('pdfProgressBarFill').style.width = `${Math.round((pageNum / total) * 100)}%`;
                 }
@@ -10231,7 +10336,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
         // INTEGRACIÓN CON GUARDADO EN MI ESPACIO (IGUAL QUE SUDOKU)
         function getGeneratorPayload() {
-            const fmtLabel = bookState.format === '6x9' ? '6" × 9"' : '8.25" × 6"';
+            const fmtLabel = bookState.format === '6x9' ? '6" × 9"' : '9" × 7"';
             return {
                 name: `${bookState.title || 'Libro de Pasatiempos'} (${bookState.totalPages} págs)`,
                 type: 'Libro Completo de Pasatiempos',
@@ -10303,6 +10408,99 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
         checkAndLoadSavedDesign(applySavedBookDesign);
 
         onAuthStateChanged(auth, () => {});
+
+        // Puente para modo embebido (Paso 1 de crear-libro-pasatiempos.html)
+        (function setupPuzzleInteriorEmbedBridge() {
+            function notifyParentProgress() {
+                if (window.parent && window.parent !== window && typeof calculatePageBreakdown === 'function') {
+                    const b = calculatePageBreakdown();
+                    const remaining = Math.abs(b.targetTotal - b.currentTotal);
+                    window.parent.postMessage({
+                        type: 'INTERIOR_PROGRESS',
+                        totalPages: b.currentTotal,
+                        targetTotal: b.targetTotal,
+                        remainingPages: remaining,
+                        isExact: (b.currentTotal === b.targetTotal && b.currentTotal >= 48 && b.currentTotal <= 450)
+                    }, '*');
+                }
+            }
+
+            if (typeof window.updateBudgetUI === 'function') {
+                const origUpdateBudget = window.updateBudgetUI;
+                window.updateBudgetUI = function () {
+                    origUpdateBudget.apply(this, arguments);
+                    notifyParentProgress();
+                };
+            }
+
+            window.openSavePuzzleModal = function () {
+                const btn = document.getElementById('btn-save-generator-design');
+                if (btn) btn.click();
+            };
+
+            window.addEventListener('message', (ev) => {
+                if (ev.data && ev.data.type === 'REQUEST_GO_COVER') {
+                    const b = typeof calculatePageBreakdown === 'function' ? calculatePageBreakdown() : { currentTotal: 180, targetTotal: 180 };
+                    if (b.currentTotal > 450) {
+                        alert(`El libro tiene ${b.currentTotal} páginas y supera el máximo de 450 páginas de encuadernación. Reduce alguna sección antes de continuar.`);
+                        return;
+                    }
+                    if (b.currentTotal !== b.targetTotal || b.currentTotal < 48) {
+                        const badge = document.getElementById('budgetDisplay');
+                        if (badge) badge.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        alert(`Ajusta las páginas de tus secciones para cuadrar el total (${b.currentTotal} / ${b.targetTotal} páginas) antes de pasar a la portada.`);
+                        return;
+                    }
+                    if (typeof persistPuzzleBookDraftToLocalStorage === 'function') {
+                        persistPuzzleBookDraftToLocalStorage();
+                    }
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'GO_COVER_STEP' }, '*');
+                    }
+                }
+            });
+
+            setTimeout(() => {
+                if (typeof persistPuzzleBookDraftToLocalStorage === 'function') {
+                    persistPuzzleBookDraftToLocalStorage();
+                }
+                notifyParentProgress();
+                fitPuzzlePreviewToViewport();
+            }, 250);
+
+            function fitPuzzlePreviewToViewport() {
+                const sheet = document.getElementById('pageSheetWrapper');
+                const stage = sheet ? sheet.parentElement : null;
+                if (!sheet || !stage) return;
+                const naturalW = sheet.classList.contains('format-6x9') ? 580 : 820;
+                const naturalH = sheet.classList.contains('format-6x9') ? 870 : 596;
+                const availW = Math.max(240, stage.clientWidth - 16);
+                if (availW < naturalW) {
+                    const scale = availW / naturalW;
+                    sheet.style.width = naturalW + 'px';
+                    sheet.style.height = naturalH + 'px';
+                    sheet.style.maxWidth = 'none';
+                    sheet.style.transformOrigin = 'top center';
+                    sheet.style.transform = `scale(${scale.toFixed(4)})`;
+                    sheet.style.marginBottom = `-${Math.round(naturalH * (1 - scale))}px`;
+                } else {
+                    sheet.style.width = '';
+                    sheet.style.height = '';
+                    sheet.style.maxWidth = '';
+                    sheet.style.transform = '';
+                    sheet.style.marginBottom = '';
+                }
+            }
+            window.fitPuzzlePreviewToViewport = fitPuzzlePreviewToViewport;
+            window.addEventListener('resize', fitPuzzlePreviewToViewport);
+            if (typeof window.renderPreviewPage === 'function') {
+                const origRenderPrev = window.renderPreviewPage;
+                window.renderPreviewPage = function () {
+                    origRenderPrev.apply(this, arguments);
+                    fitPuzzlePreviewToViewport();
+                };
+            }
+        })();
     </script>
     <script type="module" src="./main.js"></script>
 </body>
