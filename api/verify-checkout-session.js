@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { buildInvoiceMetadata, generateCustomerInvoicePdfBuffer } from '../lib/invoice-pdf.js';
 
 const firebaseConfig = {
   apiKey: process.env.VITE_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RGlXblE1eS1BOG51emFaa1Z5ZTBvWWZIMUQxdVJxVXl3', 'base64').toString('utf8'),
@@ -18,7 +19,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from('cmVfS0NueGN6OH
 const OWNER_EMAIL = 'jesgilcan@gmail.com';
 const TEST_CLIENT_EMAIL = 'jesusgil_87@hotmail.com';
 
-async function sendEmailViaResend(toEmail, subject, bodyParagraphs, buttonText, buttonUrl, highlightDetails) {
+async function sendEmailViaResend(toEmail, subject, bodyParagraphs, buttonText, buttonUrl, highlightDetails, attachments = []) {
   if (!RESEND_API_KEY) return { ok: false, error: 'No RESEND_API_KEY' };
 
   const safeBodyHtml = bodyParagraphs
@@ -114,7 +115,8 @@ async function sendEmailViaResend(toEmail, subject, bodyParagraphs, buttonText, 
         to: [toEmail],
         reply_to: 'pedidos@editorialmenosruido.com',
         subject: subject,
-        html: fullHtml
+        html: fullHtml,
+        ...(Array.isArray(attachments) && attachments.length ? { attachments } : {})
       })
     });
     const d = await res.json();
@@ -257,6 +259,9 @@ export default async function handler(req, res) {
       ]
     };
 
+    const invoiceMeta = buildInvoiceMetadata(orderDoc);
+    orderDoc.invoice = invoiceMeta;
+
     let alreadyProcessed = false;
     if (isPaid) {
       try {
@@ -282,6 +287,19 @@ export default async function handler(req, res) {
     }
 
     if (isPaid && !alreadyProcessed) {
+      let invoiceAttachments = [];
+      try {
+        const invoicePdfBuffer = await generateCustomerInvoicePdfBuffer(orderDoc);
+        invoiceAttachments = [
+          {
+            filename: `Factura_${orderNumber}.pdf`,
+            content: invoicePdfBuffer.toString('base64')
+          }
+        ];
+      } catch (invErr) {
+        console.warn('No se pudo generar la factura PDF adjunta:', invErr.message);
+      }
+
       const clientProfileUrl = `https://www.editorialmenosruido.com/mi-espacio?tab=pedidos&orderId=${encodeURIComponent(orderNumber)}`;
       const adminOrderUrl = `https://www.editorialmenosruido.com/admin-pedidos?orderId=${encodeURIComponent(orderNumber)}`;
 
@@ -289,6 +307,7 @@ export default async function handler(req, res) {
       const clientParagraphs = [
         `Hola ${customerName},`,
         `Hemos recibido correctamente tu pedido #${orderNumber} (${amountTotal.toFixed(2)} € · Envío incluido).`,
+        `Adjuntamos tu factura simplificada (${invoiceMeta.invoiceNumber}) en PDF en este mismo correo.`,
         `Tu cuaderno «${bookTitle}» ha entrado en revisión técnica antes de su encuadernación en imprenta.`,
         `Puedes consultar y descargar tus archivos en PDF en cualquier momento desde el apartado «Mis Pedidos y Cesta» de tu perfil.`,
         `¿Qué pasa ahora?\nYa estamos comprobando que todos los textos y márgenes cumplan las especificaciones de imprenta. En cuanto entre en máquinas te avisaremos por aquí.`
@@ -300,16 +319,17 @@ export default async function handler(req, res) {
         clientParagraphs,
         '📦 Ver mi pedido y archivos en Mi Espacio',
         clientProfileUrl,
-        { orderNumber, bookTitle, address }
+        { orderNumber, bookTitle, address },
+        invoiceAttachments
       );
       emailSentToClient = clientRes.ok;
 
       const managerSubject = `🔔 [GESTOR WEB] Nueva venta #${orderNumber} (${amountTotal.toFixed(2)} €) · Notificación Stripe`;
       const managerParagraphs = [
-        `Se ha registrado un nuevo pedido pagado mediante Stripe (#${orderNumber}).`,
+        `Se ha registrado un nuevo pedido pagado mediante Stripe (#${orderNumber} · Factura ${invoiceMeta.invoiceNumber}).`,
         `DATOS DEL CLIENTE:\n• Nombre: ${customerName}\n• Email: ${clientEmailTarget}\n• Dirección: ${address}\n• Notas para repartidor: ${customerNotes}`,
         `EJEMPLARES:\n• ${metadata.items_summary || bookTitle}`,
-        `IMPORTE TOTAL COBRADO: ${amountTotal.toFixed(2)} € (Envío incluido)`,
+        `DESGLOSE ECONÓMICO ESTIMADO:\n• Cobrado al cliente (Stripe): ${invoiceMeta.totalPaid.toFixed(2)} € (Base: ${invoiceMeta.baseImponible.toFixed(2)} € + IVA 4%: ${invoiceMeta.ivaAmount.toFixed(2)} €)\n• Coste estimado Lulu (imprenta + envío): ${invoiceMeta.luluCost.toFixed(2)} €\n• Comisión estimada Stripe (~1,5% + 0,25 €): ${invoiceMeta.stripeFeeEst.toFixed(2)} €\n• Margen neto estimado: ${invoiceMeta.netMarginEst.toFixed(2)} €`,
         `Puedes revisar la portada y el interior desde el Gestor de Pedidos para aprobar su impresión.`
       ];
 
@@ -319,7 +339,8 @@ export default async function handler(req, res) {
         managerParagraphs,
         '⚡ Abrir este pedido en el Gestor',
         adminOrderUrl,
-        { orderNumber, bookTitle, address }
+        { orderNumber, bookTitle, address },
+        invoiceAttachments
       );
       emailSentToManager = managerRes.ok;
     }

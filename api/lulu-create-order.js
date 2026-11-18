@@ -156,6 +156,10 @@ export default async function handler(req, res) {
     const jobData = luluRes.data || {};
     const jobId = String(jobData.id || '');
     const luluStatus = jobData.status?.name || 'CREATED';
+    const luluCosts = jobData.costs || null;
+    const realLuluTotal = luluCosts
+      ? parseFloat(luluCosts.total_cost_incl_tax || luluCosts.total_cost_excl_tax || 0)
+      : null;
 
     if (orderId) {
       try {
@@ -163,16 +167,29 @@ export default async function handler(req, res) {
         const snap = await getDoc(orderRef);
         const existing = snap.exists() ? snap.data() : {};
         const prevTimeline = Array.isArray(existing.timeline) ? existing.timeline : [];
+        const totalPaid = Number(existing.pricing?.totalPaid || 0);
+        const stripeFeeEst = totalPaid > 0 ? +(totalPaid * 0.015 + 0.25).toFixed(2) : 0;
+        const pricingPatch =
+          realLuluTotal && realLuluTotal > 0
+            ? {
+                ...(existing.pricing || {}),
+                luluCostReal: +realLuluTotal.toFixed(2),
+                netMarginReal: +(totalPaid - realLuluTotal - stripeFeeEst).toFixed(2)
+              }
+            : existing.pricing;
+
         await setDoc(
           orderRef,
           {
             status: 'approved_printing',
+            ...(pricingPatch ? { pricing: pricingPatch } : {}),
             luluJob: {
               ...(existing.luluJob || {}),
               jobId,
               environment: luluRes.env,
               status: luluStatus,
               rawStatus: jobData.status || null,
+              ...(luluCosts ? { costs: luluCosts } : {}),
               createdAt: new Date().toISOString()
             },
             timeline: [

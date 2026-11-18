@@ -121,12 +121,20 @@ export default async function handler(req, res) {
     for (const dSnap of matchingDocs) {
       const dData = dSnap.data() || {};
       const prevTimeline = Array.isArray(dData.timeline) ? dData.timeline : [];
+      const luluCosts = job.costs || null;
+      const realLuluTotal = luluCosts
+        ? parseFloat(luluCosts.total_cost_incl_tax || luluCosts.total_cost_excl_tax || 0)
+        : null;
+      const totalPaid = Number(dData.pricing?.totalPaid || 0);
+      const stripeFeeEst = totalPaid > 0 ? +(totalPaid * 0.015 + 0.25).toFixed(2) : 0;
+
       const updatedLuluJob = {
         ...(dData.luluJob || {}),
         jobId: jobId || dData.luluJob?.jobId || '',
         status: luluStatusName,
         rawStatus: job.status || null,
         lastWebhookAt: new Date().toISOString(),
+        ...(luluCosts ? { costs: luluCosts } : {}),
         ...(actionGuides.length ? { actionGuide: actionGuides.join(' ') } : {}),
         ...(carrierName ? { carrier: carrierName } : {}),
         ...(trackingId ? { trackingCode: trackingId, trackingUrl } : {})
@@ -180,7 +188,16 @@ export default async function handler(req, res) {
         luluJob: updatedLuluJob,
         shipping: updatedShipping,
         comms: updatedComms,
-        timeline: [...prevTimeline, ...newEvents]
+        timeline: [...prevTimeline, ...newEvents],
+        ...(realLuluTotal && realLuluTotal > 0
+          ? {
+              pricing: {
+                ...(dData.pricing || {}),
+                luluCostReal: +realLuluTotal.toFixed(2),
+                netMarginReal: +(totalPaid - realLuluTotal - stripeFeeEst).toFixed(2)
+              }
+            }
+          : {})
       };
 
       await setDoc(doc(firestoreDb, 'orders', dSnap.id), patch, { merge: true });
