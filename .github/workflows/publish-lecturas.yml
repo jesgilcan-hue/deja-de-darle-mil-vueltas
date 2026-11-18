@@ -1,0 +1,47 @@
+name: Publicar Lecturas Programadas
+
+on:
+  schedule:
+    # Todos los días a las 07:00 UTC (08:00 CET / 09:00 CEST)
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-lecturas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Publicar lecturas programadas del día
+        run: node scripts/publish-scheduled-lecturas.mjs
+
+      - name: Verificar build de Vite si hay cambios
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            npm run build
+          fi
+
+      - name: Commit y push a main (dispara deploy automático en Vercel)
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore(lecturas): publicacion diaria programada"
+            git push
+          else
+            echo "Sin lecturas programadas para hoy."
+          fi
