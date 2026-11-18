@@ -2412,9 +2412,9 @@
                 <div style="font-weight: 800; color: #1f1c19; margin-bottom: 4px;" id="saveModalPagesCountDisplay">📖 Total actual: -- páginas</div>
                 <div style="margin-top: 6px; font-size: 0.78rem; color: #443c33;">
                     <strong>Especificaciones físicas de imprenta:</strong><br>
-                    • <strong>Anillas metálicas (Wire-O):</strong> Mínimo 16 págs · Máximo 450 págs.<br>
-                    • <strong>Tapa blanda (fresada):</strong> Mínimo 32 págs · Máximo 365 págs.<br>
-                    • <strong>Tapa dura (Casewrap):</strong> Mínimo 60 págs · Máximo 365 págs.<br>
+                    • <strong>Anillas metálicas (Wire-O):</strong> Mínimo 16 págs · Máximo 250 págs.<br>
+                    • <strong>Tapa blanda (fresada):</strong> Mínimo 32 págs · Máximo 250 págs.<br>
+                    • <strong>Tapa dura (Casewrap):</strong> Mínimo 32 págs · Máximo 250 págs.<br>
                     <em>* Requisito físico estricto: El número total de páginas siempre debe ser par.</em>
                 </div>
             </div>
@@ -2620,7 +2620,7 @@
             },
             alterno: {
                 title: "Planificador anual Intercalado",
-                subtitle: "Estructura intercalada: Mes, hábitos, semanas y días organizados por ciclos",
+                subtitle: "Estructura intercalada: 12 meses, 12 hábitos y 365 días (2 días/pág)",
                 pdfBase: "Menos_Ruido_Planificador_Anual_Intercalado",
                 layoutMode: "alterno",
                 sectionsState: {
@@ -2629,10 +2629,10 @@
                     annual: { active: false, pages: 1 },
                     monthly: { active: true, pages: 12 },
                     habits: { active: true, pages: 12 },
-                    weekly: { active: true, pages: 52 },
+                    weekly: { active: false, pages: 52 },
                     hourly: { active: false, pages: 4 },
-                    daily: { active: true, pages: 365 },
-                    notes: { active: true, pages: 6 }
+                    daily: { active: true, pages: 365, design: { twoDaysPerPage: true } },
+                    notes: { active: true, pages: 4 }
                 }
             },
             trimestre: {
@@ -3187,9 +3187,10 @@
                 if (!isEven) {
                     statusHtml = '<span style="color:#dc2626; font-weight:700;">Número impar ⚠️ No apto para imprenta</span>';
                 } else if (total > 450) {
-                    statusHtml = '<span style="color:#dc2626; font-weight:700;">Supera el límite de 450 págs ⚠️ No apto para imprenta</span>';
-                } else if (total > 365) {
-                    statusHtml = '<span style="color:#166534; font-weight:700;">Número par ✓ Apto solo para Anillas (máx. 450 págs)</span>';
+                    statusHtml = '<span style="color:#dc2626; font-weight:700;">Supera el límite de 250 págs ⚠️ Reduce secciones o activa "2 días/pág"</span>';
+                } else {
+                    statusHtml = '<span style="color:#166534; font-weight:700;">Número par ✓ Apto para imprenta 9×7" (máx. 250 págs)</span>';
+                }
                 } else {
                     statusHtml = '<span style="color:#166534; font-weight:700;">Número par ✓ Apto para imprenta (Tapa blanda, dura o anillas)</span>';
                 }
@@ -3365,6 +3366,12 @@
                 if (p.sectionsState[sec.id]) {
                     sec.active = p.sectionsState[sec.id].active;
                     sec.pages = p.sectionsState[sec.id].pages;
+                    if (!sec.design) sec.design = {};
+                    if (p.sectionsState[sec.id].design) {
+                        sec.design = { ...sec.design, ...p.sectionsState[sec.id].design };
+                    } else if (sec.id === 'daily') {
+                        sec.design.twoDaysPerPage = false;
+                    }
                 }
             });
 
@@ -3542,17 +3549,38 @@
                         }
 
                         if (dailySec && dailySec.active) {
-                            for (let d = 0; d < 7; d++) {
-                                globalDayCount++;
-                                generatedPageList.push({
-                                    type: 'daily',
-                                    sectionId: 'daily',
-                                    sectionName: `Bitácora Diaria (Día ${globalDayCount})`,
-                                    pageIndexInSection: globalDayCount - 1,
-                                    dayNum: globalDayCount,
-                                    totalPagesInSection: 365,
-                                    design: dailySec.design || {}
-                                });
+                            const rawTotalDays = parseInt(dailySec.pages, 10) || 365;
+                            const isTwo = Boolean(dailySec.design && dailySec.design.twoDaysPerPage);
+                            if (isTwo) {
+                                const maxSpreads = Math.ceil(rawTotalDays / 2);
+                                const spreadsPerWeek = 4;
+                                for (let d = 0; d < spreadsPerWeek && Math.floor(globalDayCount / 2) < maxSpreads; d++) {
+                                    const spreadIdx = Math.floor(globalDayCount / 2);
+                                    globalDayCount += 2;
+                                    generatedPageList.push({
+                                        type: 'daily',
+                                        sectionId: 'daily',
+                                        sectionName: `Bitácora Diaria (Días ${spreadIdx * 2 + 1}-${Math.min(rawTotalDays, spreadIdx * 2 + 2)})`,
+                                        pageIndexInSection: spreadIdx,
+                                        dayNum: spreadIdx * 2 + 1,
+                                        totalDays: rawTotalDays,
+                                        totalPagesInSection: maxSpreads,
+                                        design: dailySec.design || {}
+                                    });
+                                }
+                            } else {
+                                for (let d = 0; d < 7 && globalDayCount < rawTotalDays; d++) {
+                                    globalDayCount++;
+                                    generatedPageList.push({
+                                        type: 'daily',
+                                        sectionId: 'daily',
+                                        sectionName: `Bitácora Diaria (Día ${globalDayCount})`,
+                                        pageIndexInSection: globalDayCount - 1,
+                                        dayNum: globalDayCount,
+                                        totalPagesInSection: rawTotalDays,
+                                        design: dailySec.design || {}
+                                    });
+                                }
                             }
                         }
                     }
@@ -4037,7 +4065,7 @@
             }
         }
 
-        const MAX_BOOK_PAGES = 450;
+        const MAX_BOOK_PAGES = 250;
 
         function getOtherSectionsTotalPages(excludeId) {
             let total = 0;
@@ -8394,7 +8422,7 @@
         function tryAdvanceToCover() {
           const total = (typeof generatedPageList !== 'undefined' && Array.isArray(generatedPageList)) ? generatedPageList.length : 0;
           if (total > 450) {
-            guidedWarningText = `⚠️ El libro tiene ${total} páginas y supera el máximo de 450 páginas de encuadernación. Reduce alguna sección antes de continuar.`;
+            guidedWarningText = `⚠️ El libro tiene ${total} páginas y supera el máximo de 250 páginas en 9×7". Reduce alguna sección o activa "2 días por página" en Diario.`;
             renderGuidedUI();
             return;
           }
@@ -8506,8 +8534,8 @@
               detail: 'Portada interior, Calendario 12 meses, Planificador Mensual (12 págs.), Seguimiento de Hábitos (12 págs.), Vista Semanal (52 págs.), Notas (8 págs.) y cierre.'
             },
             alterno: {
-              short: 'Año completo intercalado · 450 págs.',
-              detail: 'Estructura completa por ciclos (máx. 450 págs.): Portada, Calendario, 12 meses, 12 hábitos, 52 semanas, 365 páginas diarias y 6 páginas de notas.'
+              short: 'Año completo intercalado · ~218 págs.',
+              detail: 'Estructura completa por ciclos (≤250 págs.): Portada, Calendario, 12 meses, 12 hábitos, 365 días (2 días/pág) y 4 páginas de notas.'
             },
             trimestre: {
               short: '90 días de foco · 124 págs.',
@@ -8553,7 +8581,7 @@
             screen.innerHTML = `
               <div>
                 <h2 style="font-family:'Playfair Display',serif; margin:0 0 4px; font-size:1.35rem;">1. Elige tu Modelo de Planificador</h2>
-                <p style="margin:0; font-size:0.84rem; color:#66615b;">Selecciona una estructura base y las fechas. <strong>Más adelante podrás añadir, quitar o modificar todas las secciones y páginas a tu gusto</strong> (máx. 450 págs.).</p>
+                <p style="margin:0; font-size:0.84rem; color:#66615b;">Selecciona una estructura base y las fechas. <strong>Más adelante podrás añadir, quitar o modificar todas las secciones y páginas a tu gusto</strong> (máx. 250 págs.).</p>
               </div>
               ${reasonHtml}
               <div class="preset-start-grid">${cardsHtml}</div>

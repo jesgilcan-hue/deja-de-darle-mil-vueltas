@@ -8672,15 +8672,15 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
 
         function handlePagesChange(val) {
             let p = parseInt(val, 10) || 180;
-            // Garantizar mínimo de 48 páginas, máximo 450 y múltiplo de 4
-            p = Math.min(450, Math.max(48, Math.round(p / 4) * 4));
+            const maxP = bookState.format === '6x9' ? 450 : 248;
+            p = Math.min(maxP, Math.max(48, Math.round(p / 4) * 4));
             bookState.totalPages = p;
             autoBalancePages();
         }
 
         function autoBalancePages() {
-            // Asegurar siempre múltiplo de 4, mínimo 48 y máximo 450 páginas
-            bookState.totalPages = Math.min(450, Math.max(48, Math.round(bookState.totalPages / 4) * 4));
+            const maxP = bookState.format === '6x9' ? 450 : 248;
+            bookState.totalPages = Math.min(maxP, Math.max(48, Math.round(bookState.totalPages / 4) * 4));
             const target = bookState.totalPages;
             const activeKeys = Object.keys(bookState.sections).filter(k => bookState.sections[k].active);
 
