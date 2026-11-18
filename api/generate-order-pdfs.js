@@ -139,8 +139,14 @@ export default async function handler(req, res) {
       }
     };
     await setDoc(orderRef, pdfPatch, { merge: true });
+    if (order.id && String(order.id) !== String(orderNumber)) {
+      await setDoc(doc(firestoreDb, 'orders', String(order.id)), pdfPatch, { merge: true }).catch(() => {});
+    }
     if (customerUid) {
       await setDoc(doc(firestoreDb, 'users', customerUid, 'orders', String(orderNumber)), pdfPatch, { merge: true }).catch(() => {});
+      if (order.id && String(order.id) !== String(orderNumber)) {
+        await setDoc(doc(firestoreDb, 'users', customerUid, 'orders', String(order.id)), pdfPatch, { merge: true }).catch(() => {});
+      }
     }
 
     return res.status(200).json({
