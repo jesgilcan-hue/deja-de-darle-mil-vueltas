@@ -466,6 +466,7 @@ import {
                 const cells = document.querySelectorAll('.sudoku-cell');
                 cells.forEach(el => el.classList.remove('error'));
 
+                let hasAnyConflict = false;
                 for (let r = 0; r < size; r++) {
                     for (let c = 0; c < size; c++) {
                         const val = currentGrid[r][c];
@@ -474,12 +475,14 @@ import {
                                 if (col2 !== c && currentGrid[r][col2] === val) {
                                     markError(r, c);
                                     markError(r, col2);
+                                    hasAnyConflict = true;
                                 }
                             }
                             for (let row2 = 0; row2 < size; row2++) {
                                 if (row2 !== r && currentGrid[row2][c] === val) {
                                     markError(r, c);
                                     markError(row2, c);
+                                    hasAnyConflict = true;
                                 }
                             }
                             const startR = Math.floor(r / subgrid) * subgrid;
@@ -489,12 +492,14 @@ import {
                                     if ((br !== r || bc !== c) && currentGrid[br][bc] === val) {
                                         markError(r, c);
                                         markError(br, bc);
+                                        hasAnyConflict = true;
                                     }
                                 }
                             }
                         }
                     }
                 }
+                return hasAnyConflict;
             }
 
             function markError(r, c) {
@@ -533,9 +538,12 @@ import {
             function checkVictory() {
                 for (let r = 0; r < size; r++) {
                     for (let c = 0; c < size; c++) {
-                        if (currentGrid[r][c] !== solution[r][c]) return;
+                        const val = currentGrid[r][c];
+                        if (val < 1 || val > size) return;
+                        if (initialGrid[r][c] !== 0 && val !== initialGrid[r][c]) return;
                     }
                 }
+                if (checkConflicts()) return;
                 gameStates.sudoku.isCompleted = true;
                 gameStates.sudoku.timerRunning = false;
                 saveProgress();
