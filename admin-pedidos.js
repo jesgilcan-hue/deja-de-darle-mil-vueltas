@@ -52,7 +52,12 @@ function mergeOrderRecords(existing, incoming) {
     ...loser,
     ...winner,
     customer: { ...(loser.customer || {}), ...(winner.customer || {}) },
-    book: { ...(loser.book || {}), ...(winner.book || {}) },
+    book: {
+      ...(loser.book || {}),
+      ...(winner.book || {}),
+      interiorPdfUrl: winner.book?.interiorPdfUrl || loser.book?.interiorPdfUrl || '',
+      coverPdfUrl: winner.book?.coverPdfUrl || loser.book?.coverPdfUrl || ''
+    },
     pricing: { ...(loser.pricing || {}), ...(winner.pricing || {}) },
     shipping: { ...(loser.shipping || {}), ...(winner.shipping || {}) },
     luluJob: { ...(loser.luluJob || {}), ...(winner.luluJob || {}) },
@@ -432,10 +437,16 @@ async function loadAllOrders() {
     console.warn('Aviso parseando orderData de URL:', err);
   }
 
-  // Combinar sin duplicados
+  // Combinar sin duplicados usando siempre orderNumber como clave principal
   const map = new Map();
-  localSim.forEach(o => map.set(o.id || o.orderNumber, o));
-  loaded.forEach(o => map.set(o.id || o.orderNumber, o));
+  localSim.forEach(o => {
+    const key = o.orderNumber || o.id;
+    map.set(key, mergeOrderRecords(map.get(key), o));
+  });
+  loaded.forEach(o => {
+    const key = o.orderNumber || o.id;
+    map.set(key, mergeOrderRecords(map.get(key), o));
+  });
 
   allOrders = Array.from(map.values());
 
