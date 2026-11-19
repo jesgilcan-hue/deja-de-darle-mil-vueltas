@@ -53,6 +53,7 @@
         html.embed-mode .navbar,
         html.embed-mode .top-nav-bar,
         html.embed-mode .header-title-box,
+        html.embed-mode .main-control-bar,
         html.embed-mode .options-right,
         html.embed-mode .footer {
             display: none !important;
@@ -63,6 +64,132 @@
         }
         html.embed-mode .main-control-bar {
             margin-top: 0 !important;
+        }
+        .puzzle-guided-box {
+            background: #fdfaf5;
+            border: 1.5px solid #dfd4c3;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .puzzle-guided-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .puzzle-guided-step-label {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #215c38;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .puzzle-mode-toggle {
+            border: 1px solid #d5cbbd;
+            background: #ffffff;
+            color: #5a5248;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+        .puzzle-guided-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+        }
+        .puzzle-guided-btn {
+            flex: 1;
+            border: 1px solid #d5cbbd;
+            background: #ffffff;
+            color: #2b2622;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 9px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .puzzle-guided-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .puzzle-guided-btn.primary {
+            background: #215c38;
+            border-color: #215c38;
+            color: #ffffff;
+            flex: 1.5;
+        }
+        html.embed-mode .book-index-card.is-collapsed {
+            display: none !important;
+        }
+        html.embed-mode .btn-toggle-index {
+            width: 100%;
+            border: 1px solid #d5ccb9;
+            background: #faf6ef;
+            color: #211c18;
+            font-size: 0.84rem;
+            font-weight: 700;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        #cardSecPresetFormat,
+        #cardSecPresetFormat * {
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+        #cardSecPresetFormat .presets-row {
+            width: 100%;
+            margin: 0;
+        }
+        #cardSecPresetFormat .presets-buttons-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            width: 100%;
+        }
+        #cardSecPresetFormat .btn-preset {
+            width: 100%;
+            min-width: 0;
+            white-space: normal;
+            text-align: center;
+            padding: 7px 6px;
+            font-size: 0.76rem;
+        }
+        #cardSecPresetFormat .options-left {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+        }
+        #cardSecPresetFormat .opt-item {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 4px;
+            width: 100%;
+        }
+        #cardSecPresetFormat .opt-select {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .builder-panel,
+        .game-toggle-card,
+        .interior-texts-box,
+        .interior-text-input {
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .generator-container-wrap {
@@ -1338,8 +1465,8 @@
                     <div class="opt-item">
                         <span class="opt-label">Formato:</span>
                         <select id="selFormat" class="opt-select" onchange="handleFormatChange(this.value)">
-                            <option value="8x6" selected>9" × 7" (Apaisado · Máx. 250 págs)</option>
-                            <option value="6x9">6" × 9" (Vertical)</option>
+                            <option value="8x6" selected>9" × 7" (Apaisado · Máx. 248 págs)</option>
+                            <option value="6x9">6" × 9" (Vertical · Máx. 248 págs)</option>
                         </select>
                     </div>
 
@@ -1354,6 +1481,7 @@
                             <option value="180" selected>180 Páginas (Recomendado)</option>
                             <option value="200">200 Páginas</option>
                             <option value="240">240 Páginas</option>
+                            <option value="248">248 Páginas (Máximo)</option>
                         </select>
                     </div>
                 </div>
@@ -8687,19 +8815,22 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             if (activeKeys.length === 0) return;
 
             let iterations = 0;
-            while (iterations < 20) {
+            while (iterations < 200) {
                 const b = calculatePageBreakdown();
                 const diff = target - b.currentTotal;
                 if (diff === 0) break;
 
                 const step = diff > 0 ? 1 : -1;
+                let changed = false;
                 for (const key of activeKeys) {
                     if (bookState.sections[key].pages + step >= 1) {
                         bookState.sections[key].pages += step;
+                        changed = true;
                         const check = calculatePageBreakdown();
                         if (check.currentTotal === target) break;
                     }
                 }
+                if (!changed) break;
                 iterations++;
             }
 
@@ -9257,9 +9388,9 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                     }
                 }
 
-                const colsCount = is6x9 ? 3 : 2;
+                const colsCount = is6x9 ? 2 : 1;
                 const wordsColsHtml = sopa.words.map(w => `
-                    <div style="display:flex; align-items:center; gap:5px; font-weight:700; color:#221f1d; font-size:0.64rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    <div style="display:flex; align-items:center; gap:6px; font-weight:700; color:#221f1d; font-size:0.64rem; line-height:1.3;">
                         <span style="display:inline-block; width:7px; height:7px; border:1px solid #8c8275; border-radius:50%; flex-shrink:0;"></span>
                         <span>${w}</span>
                     </div>
@@ -9273,9 +9404,9 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                             </div>
                         </div>
                         <div class="sopas-words-area">
-                            <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; margin-bottom:6px; color:#111; border-bottom:1.5px solid #221f1d; padding-bottom:3px; display:flex; justify-content:space-between;">
+                            <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; margin-bottom:6px; color:#111; border-bottom:1.5px solid #221f1d; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center; gap:6px;">
                                 <span>PALABRAS A BUSCAR</span>
-                                <span style="color:#666;">${sopa.words.length} PALABRAS</span>
+                                <span style="color:#666; white-space:nowrap;">${sopa.words.length}</span>
                             </div>
                             <div style="display:grid; grid-template-columns: repeat(${colsCount}, minmax(0, 1fr)); gap:5px 8px;">
                                 ${wordsColsHtml}
@@ -10420,7 +10551,7 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
                         totalPages: b.currentTotal,
                         targetTotal: b.targetTotal,
                         remainingPages: remaining,
-                        isExact: (b.currentTotal === b.targetTotal && b.currentTotal >= 48 && b.currentTotal <= 250)
+                        isExact: (b.currentTotal >= 48 && b.currentTotal <= 248 && b.challengePages > 0)
                     }, '*');
                 }
             }
@@ -10441,15 +10572,19 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             window.addEventListener('message', (ev) => {
                 if (ev.data && ev.data.type === 'REQUEST_GO_COVER') {
                     const b = typeof calculatePageBreakdown === 'function' ? calculatePageBreakdown() : { currentTotal: 180, targetTotal: 180 };
-                    if (b.currentTotal > 250) {
-                        alert(`El libro tiene ${b.currentTotal} páginas y supera el máximo de 250 páginas de encuadernación. Reduce alguna sección antes de continuar.`);
+                    if (b.currentTotal > 248) {
+                        alert(`El libro tiene ${b.currentTotal} páginas y supera el máximo de 248 páginas de encuadernación. Reduce alguna sección antes de continuar.`);
                         return;
                     }
-                    if (b.currentTotal !== b.targetTotal || b.currentTotal < 48) {
+                    if (b.currentTotal < 48 || b.challengePages <= 0) {
                         const badge = document.getElementById('budgetDisplay');
                         if (badge) badge.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        alert(`Ajusta las páginas de tus secciones para cuadrar el total (${b.currentTotal} / ${b.targetTotal} páginas) antes de pasar a la portada.`);
+                        alert(`El libro necesita al menos 48 páginas y algún juego activo (actualmente tiene ${b.currentTotal} páginas).`);
                         return;
+                    }
+                    if (b.currentTotal !== b.targetTotal) {
+                        bookState.totalPages = b.currentTotal;
+                        if (typeof updateBudgetUI === 'function') updateBudgetUI();
                     }
                     if (typeof persistPuzzleBookDraftToLocalStorage === 'function') {
                         persistPuzzleBookDraftToLocalStorage();
@@ -10461,12 +10596,178 @@ function generateSopaPuzzle(format = '8x6', difficulty = 'easy', themeKey = 'des
             });
 
             setTimeout(() => {
+                if (typeof autoBalancePages === 'function') {
+                    autoBalancePages();
+                }
                 if (typeof persistPuzzleBookDraftToLocalStorage === 'function') {
                     persistPuzzleBookDraftToLocalStorage();
                 }
                 notifyParentProgress();
                 fitPuzzlePreviewToViewport();
+                initPuzzleGuidedMode();
+                setupCollapsibleIndex();
             }, 250);
+
+            function setupCollapsibleIndex() {
+                if (!document.documentElement.classList.contains('embed-mode')) return;
+                const aside = document.querySelector('.index-sidebar-panel');
+                const card = aside ? aside.querySelector('.book-index-card') : null;
+                if (!card || !aside || document.getElementById('btnToggleBookIndex')) return;
+
+                card.classList.add('is-collapsed');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.id = 'btnToggleBookIndex';
+                btn.className = 'btn-toggle-index';
+                btn.innerHTML = '<span>📖 Ver Índice del Libro</span><span>▾</span>';
+                btn.addEventListener('click', () => {
+                    const collapsed = card.classList.toggle('is-collapsed');
+                    btn.innerHTML = collapsed
+                        ? '<span>📖 Ver Índice del Libro</span><span>▾</span>'
+                        : '<span>📖 Ocultar Índice del Libro</span><span>▴</span>';
+                });
+                aside.insertBefore(btn, card);
+            }
+
+            function initPuzzleGuidedMode() {
+                const panel = document.querySelector('.builder-panel');
+                if (!panel || document.getElementById('puzzleGuidedBox')) return;
+
+                // Integrar Modelos Rápidos, Formato y Páginas dentro del Paso 1 del configurador
+                let presetCard = document.getElementById('cardSecPresetFormat');
+                if (!presetCard && document.documentElement.classList.contains('embed-mode')) {
+                    presetCard = document.createElement('div');
+                    presetCard.id = 'cardSecPresetFormat';
+                    presetCard.className = 'game-toggle-card';
+                    presetCard.style.display = 'flex';
+                    presetCard.style.flexDirection = 'column';
+                    presetCard.style.gap = '12px';
+
+                    const presetsRow = document.querySelector('.main-control-bar .presets-row');
+                    const optionsLeft = document.querySelector('.main-control-bar .options-left');
+                    if (presetsRow) presetCard.appendChild(presetsRow);
+                    if (optionsLeft) {
+                        optionsLeft.style.flexDirection = 'column';
+                        optionsLeft.style.alignItems = 'stretch';
+                        optionsLeft.style.gap = '8px';
+                        presetCard.appendChild(optionsLeft);
+                    }
+                    const budgetWrap = panel.querySelector('.budget-bar-wrap');
+                    if (budgetWrap && budgetWrap.nextSibling) {
+                        panel.insertBefore(presetCard, budgetWrap.nextSibling);
+                    } else {
+                        panel.appendChild(presetCard);
+                    }
+                }
+
+                const STEPS = [
+                    ...(presetCard ? [{ id: 'preset', label: 'Paso 1 de 7 · Modelo, Formato y Páginas', selector: '#cardSecPresetFormat', secKey: null }] : []),
+                    { id: 'info', label: presetCard ? 'Paso 2 de 7 · Datos del Libro' : 'Paso 1 de 6 · Datos del Libro', selector: '.interior-texts-box', secKey: null },
+                    { id: 'sudoku', label: presetCard ? 'Paso 3 de 7 · Sudokus 9×9' : 'Paso 2 de 6 · Sudokus 9×9', selector: '#cardSecSudoku', secKey: 'sudoku' },
+                    { id: 'calcudoku', label: presetCard ? 'Paso 4 de 7 · Calcudoku' : 'Paso 3 de 6 · Calcudoku', selector: '#cardSecCalcudoku', secKey: 'calcudoku' },
+                    { id: 'kakuro', label: presetCard ? 'Paso 5 de 7 · Kakuro' : 'Paso 4 de 6 · Kakuro', selector: '#cardSecKakuro', secKey: 'kakuro' },
+                    { id: 'cruzadas', label: presetCard ? 'Paso 6 de 7 · Palabras Cruzadas' : 'Paso 5 de 6 · Palabras Cruzadas', selector: '#cardSecCruzadas', secKey: 'cruzadas' },
+                    { id: 'sopas', label: presetCard ? 'Paso 7 de 7 · Sopas de Letras' : 'Paso 6 de 6 · Sopas de Letras', selector: '#cardSecSopas', secKey: 'sopas' }
+                ];
+
+                let guidedMode = document.documentElement.classList.contains('embed-mode');
+                let stepIdx = 0;
+
+                const box = document.createElement('div');
+                box.id = 'puzzleGuidedBox';
+                box.className = 'puzzle-guided-box';
+                box.innerHTML = `
+                    <div class="puzzle-guided-top">
+                        <span class="puzzle-guided-step-label" id="lblPuzzleGuidedStep">Paso 1 de 6</span>
+                        <button type="button" class="puzzle-mode-toggle" id="btnTogglePuzzleMode">📋 Ver todo en lista</button>
+                    </div>
+                    <div class="puzzle-guided-nav" id="puzzleGuidedNavRow">
+                        <button type="button" class="puzzle-guided-btn" id="btnPuzzleStepPrev">← Anterior</button>
+                        <button type="button" class="puzzle-guided-btn primary" id="btnPuzzleStepNext">✓ Aceptar y seguir →</button>
+                    </div>
+                `;
+
+                const budgetWrap = panel.querySelector('.budget-bar-wrap');
+                if (budgetWrap && budgetWrap.nextSibling) {
+                    panel.insertBefore(box, budgetWrap.nextSibling);
+                } else {
+                    panel.appendChild(box);
+                }
+
+                function jumpPreviewToSection(secKey) {
+                    if (!secKey) {
+                        bookState.currentPage = 1;
+                        if (typeof renderPreviewPage === 'function') renderPreviewPage();
+                        if (typeof renderIndexSidebar === 'function') renderIndexSidebar();
+                        return;
+                    }
+                    if (typeof buildFullPagePlan === 'function') {
+                        const plan = buildFullPagePlan();
+                        const targetType = secKey.toUpperCase();
+                        const idx = plan.findIndex(p => p && String(p.type || '').toUpperCase() === targetType);
+                        if (idx !== -1) {
+                            bookState.currentPage = idx + 1;
+                            if (typeof renderPreviewPage === 'function') renderPreviewPage();
+                            if (typeof renderIndexSidebar === 'function') renderIndexSidebar();
+                        }
+                    }
+                }
+
+                function renderGuidedUI() {
+                    const lbl = document.getElementById('lblPuzzleGuidedStep');
+                    const toggleBtn = document.getElementById('btnTogglePuzzleMode');
+                    const navRow = document.getElementById('puzzleGuidedNavRow');
+                    const prevBtn = document.getElementById('btnPuzzleStepPrev');
+                    const nextBtn = document.getElementById('btnPuzzleStepNext');
+                    const cur = STEPS[stepIdx];
+
+                    if (toggleBtn) {
+                        toggleBtn.textContent = guidedMode ? '📋 Ver todo en lista' : '🧭 Modo Paso a Paso';
+                    }
+                    if (navRow) {
+                        navRow.style.display = guidedMode ? 'flex' : 'none';
+                    }
+                    if (lbl) {
+                        lbl.textContent = guidedMode ? cur.label : 'Vista completa · Todos los juegos';
+                    }
+
+                    STEPS.forEach((s, i) => {
+                        const el = panel.querySelector(s.selector);
+                        if (!el) return;
+                        el.style.display = (!guidedMode || i === stepIdx) ? '' : 'none';
+                    });
+
+                    if (prevBtn) prevBtn.disabled = stepIdx === 0;
+                    if (nextBtn) {
+                        nextBtn.textContent = stepIdx === STEPS.length - 1
+                            ? '✓ Validar e ir a Portada →'
+                            : '✓ Aceptar y seguir →';
+                    }
+                }
+
+                document.getElementById('btnTogglePuzzleMode').addEventListener('click', () => {
+                    guidedMode = !guidedMode;
+                    renderGuidedUI();
+                });
+                document.getElementById('btnPuzzleStepPrev').addEventListener('click', () => {
+                    if (stepIdx > 0) {
+                        stepIdx--;
+                        renderGuidedUI();
+                        jumpPreviewToSection(STEPS[stepIdx].secKey);
+                    }
+                });
+                document.getElementById('btnPuzzleStepNext').addEventListener('click', () => {
+                    if (stepIdx < STEPS.length - 1) {
+                        stepIdx++;
+                        renderGuidedUI();
+                        jumpPreviewToSection(STEPS[stepIdx].secKey);
+                    } else {
+                        window.dispatchEvent(new MessageEvent('message', { data: { type: 'REQUEST_GO_COVER' } }));
+                    }
+                });
+
+                renderGuidedUI();
+            }
 
             function fitPuzzlePreviewToViewport() {
                 const sheet = document.getElementById('pageSheetWrapper');

@@ -59,6 +59,7 @@
         html.embed-mode .navbar,
         html.embed-mode .top-nav,
         html.embed-mode .header-title-box,
+        html.embed-mode .top-action-bar,
         html.embed-mode .top-cta-group,
         html.embed-mode .footer {
             display: none !important;
@@ -69,6 +70,68 @@
         html.embed-mode .top-action-bar {
             margin-top: 4px !important;
             padding: 10px 14px !important;
+        }
+        html:not(.cover-list-mode) .panel-tabs {
+            display: none !important;
+        }
+        .cover-guided-box {
+            background: #fdfaf5;
+            border: 1.5px solid #dfd4c3;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .cover-guided-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .cover-guided-step-label {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #215c38;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .cover-mode-toggle {
+            border: 1px solid #d5cbbd;
+            background: #ffffff;
+            color: #5a5248;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+        .cover-guided-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+        }
+        .cover-guided-btn {
+            flex: 1;
+            border: 1px solid #d5cbbd;
+            background: #ffffff;
+            color: #2b2622;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 9px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .cover-guided-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .cover-guided-btn.primary {
+            background: #215c38;
+            border-color: #215c38;
+            color: #ffffff;
+            flex: 1.5;
         }
         #customColorPickerModal {
             position: fixed; inset: 0; background: rgba(20,18,16,0.62);
@@ -95,6 +158,17 @@
             border-radius: 8px; padding: 9px 16px; font-size: 0.86rem; font-weight: 700; cursor: pointer;
         }
         .ccp-btn.ok { background: #215c38; color: #ffffff; border-color: #215c38; min-width: 96px; }
+        html.embed-mode #coverPreviewCanvas { cursor: zoom-in; }
+        #enlargeCoverModal {
+            position: fixed; inset: 0; background: rgba(15,13,11,0.82); z-index: 99999;
+            display: none; align-items: center; justify-content: center; padding: 14px;
+        }
+        #enlargeCoverModal.open { display: flex; }
+        .controls-panel,
+        .controls-panel * {
+            box-sizing: border-box;
+            max-width: 100%;
+        }
 
         * {
             box-sizing: border-box;
@@ -1960,9 +2034,9 @@ Soluciones completas verificadas al final del libro</textarea>
                 <div style="font-weight: 800; color: #1f1c19; margin-bottom: 4px;" id="saveCoverModalInfoDisplay">📖 Libro interior sincronizado: -- págs</div>
                 <div style="margin-top: 6px; font-size: 0.78rem; color: #443c33;">
                     <strong>Compatibilidad física de imprenta:</strong><br>
-                    • <strong>Anillas (Wire-O):</strong> 16 a 250 págs.<br>
-                    • <strong>Tapa Blanda:</strong> 32 a 250 págs.<br>
-                    • <strong>Tapa Dura:</strong> 32 a 250 págs.<br>
+                    • <strong>Anillas (Wire-O):</strong> 16 a 248 págs.<br>
+                    • <strong>Tapa Blanda:</strong> 32 a 248 págs.<br>
+                    • <strong>Tapa Dura:</strong> 32 a 248 págs.<br>
                     <em>* Requisito estricto: Páginas pares e interior revisado.</em>
                 </div>
             </div>
@@ -2789,8 +2863,8 @@ Soluciones completas verificadas al final del libro</textarea>
                 let statusHtml = '';
                 if (!isEven) {
                     statusHtml = '<span style="color:#dc2626; font-weight:700;">⚠️ Páginas impares</span>';
-                } else if (pages > 250) {
-                    statusHtml = '<span style="color:#dc2626; font-weight:700;">⚠️ Supera 250 págs</span>';
+                } else if (pages > 248) {
+                    statusHtml = '<span style="color:#dc2626; font-weight:700;">⚠️ Supera 248 págs</span>';
                 } else {
                     statusHtml = '<span style="color:#166534; font-weight:700;">✓ Apto para imprenta</span>';
                 }
@@ -2842,16 +2916,16 @@ Soluciones completas verificadas al final del libro</textarea>
                 alert(`⚠️ Se requiere un mínimo de 16 páginas para cualquier tipo de libro físico en imprenta.`);
                 return;
             }
-            if (pages > 250) {
-                alert(`⚠️ El libro tiene ${pages} páginas y supera el límite de 250 páginas de imprenta (anillas Wire-O).\n\nReduce el número de páginas en el interior para poder imprimirlo.`);
+            if (pages > 248) {
+                alert(`⚠️ El libro tiene ${pages} páginas y supera el límite de 248 páginas de imprenta.\n\nReduce el número de páginas en el interior para poder imprimirlo.`);
                 return;
             }
-            if (coverState.bindingType === 'hardcover' && (pages < 32 || pages > 250)) {
-                alert(`⚠️ La encuadernación en tapa dura requiere entre 32 y 250 páginas (actualmente tiene ${pages} págs).`);
+            if (coverState.bindingType === 'hardcover' && (pages < 32 || pages > 248)) {
+                alert(`⚠️ La encuadernación en tapa dura requiere entre 32 y 248 páginas (actualmente tiene ${pages} págs).`);
                 return;
             }
-            if (coverState.bindingType === 'perfect' && (pages < 32 || pages > 250)) {
-                alert(`⚠️ La encuadernación en tapa blanda requiere entre 32 y 250 páginas (actualmente tiene ${pages} págs).`);
+            if (coverState.bindingType === 'perfect' && (pages < 32 || pages > 248)) {
+                alert(`⚠️ La encuadernación en tapa blanda requiere entre 32 y 248 páginas (actualmente tiene ${pages} págs).`);
                 return;
             }
 
@@ -3119,31 +3193,31 @@ Soluciones completas verificadas al final del libro</textarea>
             const btnPerfect = document.getElementById('btnBindPerfect');
             const btnHard = document.getElementById('btnBindHardcover');
 
-            // 1. Anillas (Wire-O): mín 16, máx 450
-            const coilAllowed = pages >= 16 && pages <= 250;
-            let coilTooltip = 'Encuadernación con anillas metálicas Wire-O (mínimo 16 páginas, máximo 250 páginas)';
+            // 1. Anillas (Wire-O): mín 16, máx 248
+            const coilAllowed = pages >= 16 && pages <= 248;
+            let coilTooltip = 'Encuadernación con anillas metálicas Wire-O (mínimo 16 páginas, máximo 248 páginas)';
             if (pages < 16) {
                 coilTooltip = `Te faltan ${16 - pages} páginas para encuadernación en anillas (mínimo 16 páginas, actualmente tiene ${pages})`;
-            } else if (pages > 250) {
-                coilTooltip = `Supera el límite de 250 páginas para anillas metálicas (actualmente tiene ${pages} páginas)`;
+            } else if (pages > 248) {
+                coilTooltip = `Supera el límite de 248 páginas para anillas metálicas (actualmente tiene ${pages} páginas)`;
             }
 
-            // 2. Tapa Blanda: mín 32, máx 365
-            const perfectAllowed = pages >= 32 && pages <= 250;
-            let perfectTooltip = 'Encuadernación rústica fresada en tapa blanda mate (mínimo 32 páginas, máximo 250 páginas)';
+            // 2. Tapa Blanda: mín 32, máx 248
+            const perfectAllowed = pages >= 32 && pages <= 248;
+            let perfectTooltip = 'Encuadernación rústica fresada en tapa blanda mate (mínimo 32 páginas, máximo 248 páginas)';
             if (pages < 32) {
                 perfectTooltip = `Te faltan ${32 - pages} páginas para tapa blanda (mínimo 32 páginas, actualmente tiene ${pages})`;
-            } else if (pages > 250) {
-                perfectTooltip = `Supera el límite de 250 páginas para tapa blanda (actualmente tiene ${pages} páginas)`;
+            } else if (pages > 248) {
+                perfectTooltip = `Supera el límite de 248 páginas para tapa blanda (actualmente tiene ${pages} páginas)`;
             }
 
-            // 3. Tapa Dura: mín 60, máx 365
-            const hardAllowed = pages >= 32 && pages <= 250;
-            let hardTooltip = 'Encuadernación rígida en tapa dura casewrap con lomo impreso (mínimo 32 páginas, máximo 250 páginas)';
+            // 3. Tapa Dura: mín 32, máx 248
+            const hardAllowed = pages >= 32 && pages <= 248;
+            let hardTooltip = 'Encuadernación rígida en tapa dura casewrap con lomo impreso (mínimo 32 páginas, máximo 248 páginas)';
             if (pages < 32) {
                 hardTooltip = `Te faltan ${60 - pages} páginas para tapa dura (mínimo 32 páginas, actualmente tiene ${pages})`;
-            } else if (pages > 250) {
-                hardTooltip = `Supera el límite de 250 páginas para tapa dura (actualmente tiene ${pages} páginas)`;
+            } else if (pages > 248) {
+                hardTooltip = `Supera el límite de 248 páginas para tapa dura (actualmente tiene ${pages} páginas)`;
             }
 
             const applyBtn = (btn, allowed, tooltip) => {
@@ -4891,29 +4965,42 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                 }
             }
 
+            function syncInteriorFormatAndPages() {
+                try {
+                    const raw = localStorage.getItem('mr_puzzle_book_config');
+                    if (!raw) return;
+                    const saved = JSON.parse(raw);
+                    const newPages = parseInt(saved.pageCount || saved.totalPages, 10) || coverState.pageCount || 180;
+                    coverState.pageCount = newPages;
+                    if (saved.format) {
+                        const mappedTrim = saved.format === '6x9' ? 'portrait_6_9' : 'landscape_825_6';
+                        coverState.trimFormat = mappedTrim;
+                        const selT = document.getElementById('selTrimFormat');
+                        if (selT) {
+                            selT.value = mappedTrim;
+                            if (document.documentElement.classList.contains('embed-mode')) {
+                                selT.disabled = true;
+                                selT.title = 'El formato se sincroniza automáticamente con el interior';
+                            }
+                        }
+                    }
+                    const inpP = document.getElementById('inpPageCount');
+                    if (inpP) inpP.value = newPages;
+                    const pill = document.getElementById('topSyncedBookPill');
+                    if (pill) {
+                        pill.textContent = `${saved.title || coverState.title || 'Libro de Pasatiempos'} (${newPages} págs)`;
+                    }
+                    if (typeof updateBindingAvailability === 'function') updateBindingAvailability();
+                    if (typeof updateSpecsLabels === 'function') updateSpecsLabels();
+                    if (typeof renderCoverPreview === 'function') renderCoverPreview();
+                } catch (e) {
+                    console.warn('Error en syncInteriorFormatAndPages:', e);
+                }
+            }
+
             window.addEventListener('message', (ev) => {
                 if (ev.data && ev.data.type === 'SYNC_INTERIOR_CHANGES') {
-                    try {
-                        const raw = localStorage.getItem('mr_puzzle_book_config');
-                        if (!raw) return;
-                        const saved = JSON.parse(raw);
-                        const newPages = parseInt(saved.pageCount || saved.totalPages, 10) || coverState.pageCount || 180;
-                        coverState.pageCount = newPages;
-                        if (saved.format) {
-                            coverState.format = saved.format;
-                        }
-                        const inpP = document.getElementById('inpPageCount');
-                        if (inpP) inpP.value = newPages;
-                        const pill = document.getElementById('topSyncedBookPill');
-                        if (pill) {
-                            pill.textContent = `${saved.title || coverState.title || 'Libro de Pasatiempos'} (${newPages} págs)`;
-                        }
-                        if (typeof updateBindingAvailability === 'function') updateBindingAvailability();
-                        if (typeof updateSpecsLabels === 'function') updateSpecsLabels();
-                        if (typeof renderCoverPreview === 'function') renderCoverPreview();
-                    } catch (e) {
-                        console.warn('Error en SYNC_INTERIOR_CHANGES (pasatiempos):', e);
-                    }
+                    syncInteriorFormatAndPages();
                 } else if (ev.data && ev.data.type === 'REQUEST_VALIDATE_COVER') {
                     if (typeof window.openValidateCoverTextsModal === 'function') {
                         window.openValidateCoverTextsModal();
@@ -4922,6 +5009,188 @@ El mínimo técnico para encuadernación en anillas es de 16 páginas (actualmen
                     }
                 }
             });
+
+            function initCoverGuidedMode() {
+                const panel = document.querySelector('.controls-panel');
+                if (!panel || document.getElementById('coverGuidedBox')) return;
+
+                // Integrar la selección de encuadernación dentro del Paso 1
+                let bindingCard = document.getElementById('cardCoverBindingStep');
+                if (!bindingCard && document.documentElement.classList.contains('embed-mode')) {
+                    const bindGroup = document.querySelector('.top-action-bar .binding-selector-group');
+                    if (bindGroup) {
+                        bindingCard = document.createElement('div');
+                        bindingCard.id = 'cardCoverBindingStep';
+                        bindingCard.className = 'control-card';
+                        bindingCard.innerHTML = '<div class="control-card-title"><span>1. Tipo de Encuadernación</span></div>';
+                        bindGroup.style.display = 'flex';
+                        bindGroup.style.flexDirection = 'column';
+                        bindGroup.style.alignItems = 'stretch';
+                        bindGroup.style.gap = '8px';
+                        const lbl = bindGroup.querySelector('.binding-label');
+                        if (lbl) lbl.style.display = 'none';
+                        bindingCard.appendChild(bindGroup);
+                        panel.insertBefore(bindingCard, panel.firstChild);
+                    }
+                }
+
+                // En modo guiado, abrir subida directa de foto sin preguntar cara otra vez
+                window.openPhotoSideChoicePrompt = function () {
+                    if (!guidedMode) {
+                        const box = document.getElementById('photoSideChoiceBox');
+                        if (box) box.style.display = 'flex';
+                        return;
+                    }
+                    const curStep = STEPS[stepIdx];
+                    const side = (curStep && curStep.photoSide) ? curStep.photoSide : (window.activePhotoSide || 'front');
+                    if (typeof window.triggerPhotoFileDialog === 'function') {
+                        window.triggerPhotoFileDialog(side);
+                    }
+                };
+
+                const STEPS = [
+                    ...(bindingCard ? [{ id: 'binding', label: 'Paso 1 de 8 · Encuadernación', cardEl: bindingCard }] : []),
+                    { id: 'style', label: bindingCard ? 'Paso 2 de 8 · Diseño y Estilo' : 'Paso 1 de 7 · Diseño y Estilo', tab: 'tabSec-style', cards: [0] },
+                    { id: 'palette', label: bindingCard ? 'Paso 3 de 8 · Paleta y Ornamentos' : 'Paso 2 de 7 · Paleta y Ornamentos', tab: 'tabSec-style', cards: [1, 2] },
+                    { id: 'photo_front', label: bindingCard ? 'Paso 4 de 8 · Foto Portada' : 'Paso 3 de 7 · Foto Portada', tab: 'tabSec-photo', cards: [0], photoSide: 'front' },
+                    { id: 'photo_back', label: bindingCard ? 'Paso 5 de 8 · Foto Contraportada' : 'Paso 4 de 7 · Foto Contraportada', tab: 'tabSec-photo', cards: [0], photoSide: 'back' },
+                    { id: 'texts_front', label: bindingCard ? 'Paso 6 de 8 · Textos Portada' : 'Paso 5 de 7 · Textos Portada', tab: 'tabSec-texts', cards: [1] },
+                    { id: 'texts_back', label: bindingCard ? 'Paso 7 de 8 · Contraportada y Lomo' : 'Paso 6 de 7 · Contraportada y Lomo', tab: 'tabSec-texts', cards: [2] },
+                    { id: 'specs', label: bindingCard ? 'Paso 8 de 8 · Medidas y Confirmar' : 'Paso 7 de 7 · Medidas y Confirmar', tab: 'tabSec-specs', cards: [0] }
+                ];
+
+                let guidedMode = true;
+                let stepIdx = 0;
+
+                const box = document.createElement('div');
+                box.id = 'coverGuidedBox';
+                box.className = 'cover-guided-box';
+                box.innerHTML = `
+                    <div class="cover-guided-top">
+                        <span class="cover-guided-step-label" id="lblCoverGuidedStep">Paso 1 de 7</span>
+                        <button type="button" class="cover-mode-toggle" id="btnToggleCoverMode">📋 Ver todo en pestañas</button>
+                    </div>
+                    <div class="cover-guided-nav" id="coverGuidedNavRow">
+                        <button type="button" class="cover-guided-btn" id="btnCoverStepPrev">← Anterior</button>
+                        <button type="button" class="cover-guided-btn primary" id="btnCoverStepNext">✓ Aceptar y seguir →</button>
+                    </div>
+                `;
+                panel.insertBefore(box, panel.firstChild);
+
+                const photoSwitcherPill = document.querySelector('#tabSec-photo .control-card-title > div');
+
+                function renderCoverGuidedUI() {
+                    const lbl = document.getElementById('lblCoverGuidedStep');
+                    const toggleBtn = document.getElementById('btnToggleCoverMode');
+                    const navRow = document.getElementById('coverGuidedNavRow');
+                    const prevBtn = document.getElementById('btnCoverStepPrev');
+                    const nextBtn = document.getElementById('btnCoverStepNext');
+                    const cur = STEPS[stepIdx];
+
+                    document.documentElement.classList.toggle('cover-list-mode', !guidedMode);
+
+                    if (toggleBtn) {
+                        toggleBtn.textContent = guidedMode ? '📋 Ver todo en pestañas' : '🧭 Modo Paso a Paso';
+                    }
+                    if (navRow) {
+                        navRow.style.display = guidedMode ? 'flex' : 'none';
+                    }
+                    if (lbl) {
+                        lbl.textContent = guidedMode ? cur.label : 'Vista completa · Todas las pestañas';
+                    }
+
+                    const allSections = panel.querySelectorAll('.tab-section');
+                    if (guidedMode) {
+                        if (bindingCard) {
+                            bindingCard.style.display = cur.cardEl === bindingCard ? '' : 'none';
+                        }
+                        allSections.forEach(sec => {
+                            const isCur = cur.tab && sec.id === cur.tab;
+                            sec.classList.toggle('active', !!isCur);
+                            sec.style.display = isCur ? 'flex' : 'none';
+                            if (isCur) {
+                                const cards = sec.querySelectorAll(':scope > .control-card');
+                                cards.forEach((c, idx) => {
+                                    c.style.display = cur.cards.includes(idx) ? '' : 'none';
+                                });
+                            }
+                        });
+                        if (cur.photoSide && typeof window.selectPhotoSide === 'function') {
+                            window.selectPhotoSide(cur.photoSide);
+                        }
+                        if (photoSwitcherPill) {
+                            photoSwitcherPill.style.display = 'none';
+                        }
+                    } else {
+                        if (bindingCard) {
+                            bindingCard.style.display = '';
+                        }
+                        allSections.forEach(sec => {
+                            sec.style.display = '';
+                            sec.querySelectorAll(':scope > .control-card').forEach(c => {
+                                c.style.display = '';
+                            });
+                        });
+                        if (photoSwitcherPill) {
+                            photoSwitcherPill.style.display = 'inline-flex';
+                        }
+                    }
+
+                    if (prevBtn) prevBtn.disabled = stepIdx === 0;
+                    if (nextBtn) {
+                        nextBtn.textContent = stepIdx === STEPS.length - 1
+                            ? '✓ Confirmar y Finalizar Libro →'
+                            : '✓ Aceptar y seguir →';
+                    }
+                }
+
+                document.getElementById('btnToggleCoverMode').addEventListener('click', () => {
+                    guidedMode = !guidedMode;
+                    renderCoverGuidedUI();
+                });
+                document.getElementById('btnCoverStepPrev').addEventListener('click', () => {
+                    if (stepIdx > 0) {
+                        stepIdx--;
+                        renderCoverGuidedUI();
+                    }
+                });
+                document.getElementById('btnCoverStepNext').addEventListener('click', () => {
+                    if (stepIdx < STEPS.length - 1) {
+                        stepIdx++;
+                        renderCoverGuidedUI();
+                    } else {
+                        window.dispatchEvent(new MessageEvent('message', { data: { type: 'REQUEST_VALIDATE_COVER' } }));
+                    }
+                });
+
+                renderCoverGuidedUI();
+            }
+
+            syncInteriorFormatAndPages();
+            initCoverGuidedMode();
+            setupEnlargeCoverCanvas();
+
+            function setupEnlargeCoverCanvas() {
+                const canvas = document.getElementById('coverPreviewCanvas');
+                if (!canvas || document.getElementById('enlargeCoverModal')) return;
+                const modal = document.createElement('div');
+                modal.id = 'enlargeCoverModal';
+                modal.innerHTML = `
+                    <div style="position:relative; max-width:96vw; max-height:90vh; background:#fff; border-radius:12px; padding:10px; overflow:auto;">
+                        <button type="button" id="btnCloseCoverZoom" style="position:sticky; top:4px; float:right; border:1px solid #ccc; background:#fff; border-radius:999px; width:32px; height:32px; font-weight:800; cursor:pointer;">✕</button>
+                        <img id="enlargeCoverImg" style="max-width:100%; height:auto; display:block;" alt="Vista ampliada de portada" />
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal || e.target.id === 'btnCloseCoverZoom') modal.classList.remove('open');
+                });
+                canvas.addEventListener('click', () => {
+                    const img = document.getElementById('enlargeCoverImg');
+                    img.src = canvas.toDataURL('image/png');
+                    modal.classList.add('open');
+                });
+            }
         })();
     </script>
 
