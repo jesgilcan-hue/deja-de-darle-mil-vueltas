@@ -32,7 +32,8 @@ function escapeHtml(str) {
 
 function buildCardHtml(meta) {
   const isPasatiempos = meta.section === 'pasatiempos';
-  const borderColor = isPasatiempos ? '#111111' : 'var(--color-accent)';
+  const isEntreno = meta.section === 'entreno';
+  const borderColor = isPasatiempos ? '#111111' : (isEntreno ? '#2d4a3e' : 'var(--color-accent)');
   const badgeText = meta.badge || 'Nuevo';
   const slugUrl = `/${meta.slug}`;
 
@@ -119,6 +120,8 @@ function main() {
       const marker =
         meta.section === 'pasatiempos'
           ? '<!-- AUTO-PASATIEMPOS-INICIO -->'
+          : meta.section === 'entreno'
+          ? '<!-- AUTO-ENTRENO-INICIO -->'
           : '<!-- AUTO-LECTURAS-INICIO -->';
       if (lecturasHtml.includes(marker)) {
         lecturasHtml = lecturasHtml.replace(marker, `${marker}\n${buildCardHtml(meta)}`);
