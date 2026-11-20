@@ -38,6 +38,8 @@ export default defineConfig({
         simuladorSimple: resolve(__dirname, 'simulador-semanal-simple.html'),
         simuladorReversible: resolve(__dirname, 'simulador-semanal-reversible.html'),
         lecturas: resolve(__dirname, 'lecturas.html'),
+        ensayoFisicaPoleas: resolve(__dirname, 'fisica-poleas-gimnasio-peso-real-cuerdas-y-mancuernas.html'),
+        ensayoConversorLibras: resolve(__dirname, 'conversor-libras-a-kilos-y-discos-gimnasio.html'),
         ensayoCasosLogica: resolve(__dirname, 'casos-de-logica-diarios-por-que-deducir-cinco-minutos-ordena-la-cabeza.html'),
         ensayoAmigoInvisible: resolve(__dirname, 'regalos-de-amigo-invisible-que-no-acaban-en-un-cajon.html'),
         ensayoDomingoLunes: resolve(__dirname, 'el-domingo-por-la-tarde-y-el-runrun-del-lunes.html'),
